@@ -1,0 +1,48 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: Flask",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "flask",
+            "env": {
+                // Можно оставить пустым или добавить другие переменные
+            },
+            "envFile": "${workspaceFolder}/.flaskenv",
+            "args": [
+                "run",
+                "--no-debugger"
+            ],
+            "jinja": true,
+            "justMyCode": true
+        },
+        {
+            "name": "Launch Chrome",
+            "request": "launch",
+            "type": "chrome",
+            "url": "http://localhost:8080",
+            "webRoot": "${workspaceFolder}"
+        },
+        {
+            "name": "Python: Current File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py",
+            "justMyCode": false,
+            "console": "integratedTerminal"
+        },
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py"
+        },
+        {
+            "name": "Python Debugger: Python File",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "run.py"
+        }
+    ]
+}

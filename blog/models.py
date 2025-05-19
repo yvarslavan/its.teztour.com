@@ -1,0 +1,191 @@
+from datetime import datetime, timezone
+from flask import current_app
+from flask_login import UserMixin
+from sqlalchemy import text
+from mysql_db import QualityBase
+from blog.db_config import db # Импортируем db из нового файла
+from blog import login_manager
+
+# Создаем алиас внутри модуля
+db_call = db
+
+@login_manager.user_loader
+def load_user(user_id):
+    with current_app.app_context():
+        return User.query.get(int(user_id))
+
+class User(db.Model, UserMixin):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    office = db.Column(db.String(120), unique=False, nullable=True)
+    image_file = db.Column(db.String(20), nullable=False, default="default.jpg")
+    password = db.Column(db.String(60), nullable=False)
+    last_seen = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    full_name = db.Column(db.String(255), unique=False, nullable=True)
+    department = db.Column(db.String(120), unique=False, nullable=True)
+    position = db.Column(db.String(120), unique=False, nullable=True)
+    phone = db.Column(db.String(30), unique=False, nullable=True)
+    vpn = db.Column(db.Integer, unique=False, nullable=True)
+    vpn_end_date = db.Column(
+        db.String(30), unique=False, nullable=True, default="<Дата не определена>"
+    )
+    vacuum_im_notifications = db.Column(db.Integer, default=0)
+    online = db.Column(db.Boolean, default=False)
+    is_redmine_user = db.Column(db.Boolean, default=False)
+    id_redmine_user = db.Column(db.Integer, default=4)
+    is_admin = db.Column(db.Boolean, default=False)
+    can_access_quality_control = db.Column(db.Boolean, default=False, nullable=False)
+    posts = db.relationship("Post", backref="author", lazy=True)
+
+    def __repr__(self):
+        return f"User({self.id}, {self.username}, {self.email},  {self.office}, {self.image_file}, {self.password}, {self.last_seen}, {self.full_name}, {self.department}, {self.position}, {self.vpn}, {self.vpn_end_date}, {self.vacuum_im_notifications}, {self.online}, {self.is_redmine_user}, {self.id_redmine_user}, can_access_quality_control={self.can_access_quality_control})"
+
+class Post(db.Model):
+    __tablename__ = "posts"
+
+    id = db.Column(db.Integer, primary_key=True)
+    title = db.Column(db.String(100), nullable=False)
+    date_posted = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    content = db.Column(db.Text(60), nullable=False)
+    image_post = db.Column(db.String(30), nullable=True)  # , default='default.jpg'
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+
+    def __repr__(self):
+        return f"Post({self.title}, {self.date_posted}, {self.image_post})"
+
+class Notifications(db.Model):
+    __tablename__ = "notifications"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    issue_id = db.Column(db.Integer)
+    old_status = db.Column(db.String(20))
+    new_status = db.Column(db.String(20))
+    old_subj = db.Column(db.String(500))
+    date_created = db.Column(db.DateTime)
+
+    def __init__(
+        self, user_id, issue_id, old_status, new_status, old_subj, date_created
+    ):
+        self.user_id = user_id
+        self.issue_id = issue_id
+        self.old_status = old_status
+        self.new_status = new_status
+        self.old_subj = old_subj
+        self.date_created = date_created
+
+class NotificationsAddNotes(db.Model):
+    __tablename__ = "notifications_add_notes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer)
+    issue_id = db.Column(db.Integer)
+    author = db.Column(db.String(100))
+    notes = db.Column(db.Text)
+    date_created = db.Column(db.DateTime)
+
+    def __init__(self, user_id, issue_id, author, notes, date_created):
+        self.user_id = user_id
+        self.issue_id = issue_id
+        self.author = author
+        self.notes = notes
+        self.date_created = date_created
+
+
+class AgencyPhone(db.Model):
+    """Модель для хранения информации о телефонах агентств"""
+    __tablename__ = "T_AGENCY_PHONE"
+    __table_args__ = {'extend_existing': True}
+
+    # Объявляем все колонки явно вместо autoload
+    agency_id = db.Column("AGENCY_ID", db.Numeric(8, 0), primary_key=True)
+    agency_phone = db.Column("AGENCY_PHONE", db.String(1000), nullable=True)
+    oc_rowid = db.Column("OC_ROWID", db.String(18), nullable=True)
+    o_rowid = db.Column("O_ROWID", db.String(18), nullable=True)
+
+
+class CallInfo(db.Model):
+    __tablename__ = "T_CALL_INFO"
+    __table_args__ = {'extend_existing': True}
+
+    id = db.Column("CALL_INFO_ID", db.Integer, primary_key=True, autoincrement=True)
+    time_begin = db.Column("TIME_BEGIN", db.DateTime, index=True)
+    time_end = db.Column("TIME_END", db.DateTime, index=True)
+    agency_id = db.Column("AGENCY_ID", db.String(255), index=True)
+    tel_number = db.Column("PHONE_NUMBER", db.String(15), index=True)
+    currator = db.Column("CURRATOR", db.String(128), index=True)
+    theme = db.Column("THEME", db.String(128), index=True)
+    region = db.Column("REGION", db.String(3), index=True)
+    agency_manager = db.Column("AGENCY_MANAGER", db.String(50), index=True)
+    agency_name = db.Column("AGENCY_NAME", db.String(255), index=True)
+
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_messages'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    message_id = db.Column(db.String, unique=True, nullable=False)
+    from_jid = db.Column(db.String, nullable=False)
+    to_jid = db.Column(db.String, nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    type = db.Column(db.String, nullable=False)
+    status = db.Column(db.String, default='unread')
+    contact_name = db.Column(db.String)
+    contact_status = db.Column(db.String)
+    is_archived = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<ChatMessage {self.message_id}>"
+
+
+class Journal(QualityBase):
+    __tablename__ = "journals"
+    __bind_key__ = 'quality'
+
+    __table_args__ = (
+        db.Index("index_journals_on_created_on", "created_on"),
+        db.Index("index_journals_on_easy_type", "easy_type", mysql_length=191),
+        db.Index("index_journals_on_journalized_id", "journalized_id"),
+        db.Index("index_journals_on_user_id", "user_id"),
+        db.Index("journals_journalized_id", "journalized_id", "journalized_type"),
+        {
+            "mysql_engine": "InnoDB",
+            "mysql_charset": "utf8",
+            "mysql_collate": "utf8_general_ci",
+            "schema": "redmine"
+        },
+    )
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    journalized_id = db.Column(
+        db.Integer,
+        nullable=False,
+        server_default=text("0")
+    )
+    journalized_type = db.Column(
+        db.String(30),
+        nullable=False,
+        server_default=text("''")
+    )
+    user_id = db.Column(
+        db.Integer,
+        nullable=False,
+        server_default=text("0")
+    )
+    notes = db.Column(db.Text, nullable=True)
+    created_on = db.Column(db.DateTime, nullable=False)
+    private_notes = db.Column(
+        db.Boolean,
+        nullable=False,
+        server_default=text("0")
+    )
+    easy_type = db.Column(db.String(255), nullable=True)
+
+    def __repr__(self):
+        return f"<Journal {self.id} (Issue {self.journalized_id})>"
+
+# QualityBase.metadata.reflect(quality_engine)

@@ -1,0 +1,39 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        {% for post in posts.items %}
+            <div class="col-md-4 mb-3">
+                <div class="card border-primary d-flex flex-column h-100">
+                    <!-- Шапка (bg-success - цвет фона, text-white - цвет текста) -->
+                    <div class="card-header bg-success text-white">
+                        <h6 class="card-subtitle mb-2 text-muted">
+                            <img src="{{ url_for('static', filename='profile_pics/' + post.author.username + '/' + 'account_img' + '/' + post.author.image_file) }}"
+                                alt="" class="rounded-circle" style="width:40px;">
+                            <!-- Изменен класс на text-white для изменения цвета текста -->
+                            <a class="mr-2 text-white" href="{{ url_for('users.user_posts', username=post.author.username) }}">{{ post.author.full_name }}</a><br>
+                            <small style="font-size: 1.35rem;">{{ post.date_posted.strftime('%d.%m.%Y-%H.%M') }}</small>
+                        </h6>
+                    </div>
+                    <!-- Текстовый контент -->
+                    <div class="card-body">
+                        <h5 class="card-title"><a href="{{ url_for('post.post', post_id=post.id) }}">{{ post.title }}</a></h5>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="pagination">
+        {% if posts.has_prev %}
+            <a class="btn btn-primary mb-4" href="{{ url_for('main.blog', page=posts.prev_num) }}">Предыдущая</a>
+        {% endif %}
+        {% if posts.has_next %}
+            <a class="btn btn-primary mb-4" href="{{ url_for('main.blog', page=posts.next_num) }}">Следующая</a>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

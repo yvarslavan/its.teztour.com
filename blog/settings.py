@@ -1,0 +1,55 @@
+import os
+from pathlib import Path
+import sys
+
+from dotenv import load_dotenv
+
+basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, ".env"))
+
+base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+db_dir = os.path.join(base_dir, 'blog', 'db')
+os.makedirs(db_dir, exist_ok=True)
+
+class Config:
+    SECRET_KEY = os.urandom(36)
+    SESSION_TYPE = 'filesystem'
+    # SQLite соединение
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(db_dir, "blog.db")}'
+
+    # Проверяем наличие переменных и устанавливаем безопасные значения для разработки,
+    # чтобы избежать ошибок при импорте модулей
+
+    # Oracle CRM соединение
+    _oracle_crm = os.environ.get("SQLALCHEMY_DATABASE_URI_ORACLE_CRM")
+    if _oracle_crm:
+        SQLALCHEMY_DATABASE_URI_ORACLE_CRM = _oracle_crm
+    else:
+        print("ВНИМАНИЕ: SQLALCHEMY_DATABASE_URI_ORACLE_CRM не установлена!")
+        # Фиктивное соединение для безопасного импорта (не будет использоваться)
+        SQLALCHEMY_DATABASE_URI_ORACLE_CRM = "sqlite:///db/dummy_oracle.db"
+
+    # Oracle SALES соединение
+    _oracle_sales = os.environ.get("SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES")
+    if _oracle_sales:
+        SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES = _oracle_sales
+    else:
+        print("ВНИМАНИЕ: SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES не установлена!")
+        # Фиктивное соединение для безопасного импорта (не будет использоваться)
+        SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES = "sqlite:///db/dummy_sales.db"
+
+    SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+
+    # SQLALCHEMY_BINDS = {
+    #     "oracle_crm": SQLALCHEMY_DATABASE_URI_ORACLE_CRM,
+    #     "sales_schema": SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES,
+    # }
+    # SQLALCHEMY_ENGINE_OPTIONS = {
+    #     "connect_args": {},
+    #     "oracle_crm": {
+    #         "connect_args": {}
+    #     },
+    #     "sales_schema": {
+    #         "connect_args": {}
+    #     }
+    # }

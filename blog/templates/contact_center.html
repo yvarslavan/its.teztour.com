@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Contact Center for Agencies</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet"> <!-- Подключаем шрифт Roboto -->
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif; /* Устанавливаем шрифт Roboto */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center; /* Центрируем по вертикали */
+            height: 100vh;
+            background-color: #f4f4f4;
+        }
+        .container {
+            display: flex; /* Используем флексбокс для компоновки */
+            width: 100%;
+            max-width: 1200px; /* Устанавливаем максимальную ширину контейнера */
+            justify-content: space-between; /* Распределяем пространство между элементами */
+        }
+        .sidebar {
+            width: 400px; /* Увеличенная ширина для боковой панели */
+            background-color: white;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            margin-right: 20px; /* Отступ между боковой панелью и основным контентом */
+            overflow-y: auto; /* Добавляем прокрутку, если контент превышает высоту */
+            max-height: 80vh; /* Максимальная высота боковой панели */
+        }
+        .call-item {
+            border: 1px solid #ccc; /* Рамка вокруг каждого элемента */
+            border-radius: 5px; /* Закругленные углы */
+            padding: 10px; /* Отступ внутри элемента */
+            margin-bottom: 10px; /* Отступ между элементами */
+            background-color: #f9f9f9; /* Цвет фона для выделения */
+        }
+        .main-content {
+            flex: 1; /* Занимает оставшееся пространство */
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            display: flex; /* Используем флексбокс для выравнивания колокольчика */
+            flex-direction: column; /* Вертикальное выравнивание */
+            align-items: center; /* Центрируем содержимое по горизонтали */
+            justify-content: center; /* Центрируем содержимое по вертикали */
+        }
+        h1, h3 {
+            color: #333;
+            text-align: center; /* Центрируем заголовки */
+        }
+        ul {
+            list-style-type: none; /* Убираем стандартное оформление списка */
+            padding: 0;
+        }
+        /* Анимация колокольчика */
+        @keyframes bell-ring {
+            0% { transform: rotate(0); }
+            10% { transform: rotate(30deg); }
+            20% { transform: rotate(-30deg); }
+            30% { transform: rotate(15deg); }
+            40% { transform: rotate(-15deg); }
+            50% { transform: rotate(0); }
+            100% { transform: rotate(0); }
+        }
+        .bell-icon {
+            animation: bell-ring 1s ease-in-out infinite; /* Применяем анимацию */
+        }
+        /* Жирный шрифт для значений полей */
+        .call-item p {
+            margin: 0; /* Убираем отступы */
+        }
+        .call-item p span {
+            font-weight: bold; /* Делаем текст жирным */
+        }
+        /* Стили для индикатора загрузки */
+        .loader {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(52, 152, 219, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 1000;
+            animation: fadeInOut 0.5s ease-in-out;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .loader.show {
+            display: block;
+        }
+
+        .call-item.error {
+            background-color: #ffe6e6;
+            color: #d63031;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+        }
+
+        /* Стили для заголовка */
+        .header-title {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 2.5em;
+            font-weight: 700;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            padding-bottom: 15px;
+        }
+
+        .header-title::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            border-radius: 2px;
+        }
+
+        /* Добавляем стиль для футера */
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #95a5a6;
+            font-size: 12px;
+            position: absolute;
+            bottom: 10px;
+            width: 100%;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="sidebar" id="sideRight">
+            <div id="list_calls">
+                <h3>Calls History (the 5 latest calls)</h3> <!-- Подпись для истории вызовов -->
+                <ul>
+                    {% for call in call_history %}
+                        <li class="call-item"> <!-- Добавляем класс для элемента звонка -->
+                            <p>Time Begin: <span>
+                                {% if call.TIME_BEGIN %}
+                                    {{ call.TIME_BEGIN.strftime('%d.%m.%Y %H:%M') if call.TIME_BEGIN.strftime else call.TIME_BEGIN }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span></p>
+                            <p>Time End: <span>
+                                {% if call.TIME_END %}
+                                    {{ call.TIME_END.strftime('%d.%m.%Y %H:%M') if call.TIME_END.strftime else call.TIME_END }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span></p>
+                            <p>Phone Number: <span>{{ call.PHONE_NUMBER }}</span></p>
+                            <p>Curator: <span>{{ call.CURRATOR }}</span></p>
+                            <p>Agency Manager: <span>{{ call.AGENCY_MANAGER }}</span></p>
+                            <p>Agency Name: <span>{{ call.AGENCY_NAME }}</span></p>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+        <div class="main-content">
+            <h1 class="header-title">Contact Center</h1>
+            <img src="{{ url_for('static', filename='img/notification-bell.png') }}" width="142" height="142" alt="Bell Icon" class="bell-icon"/><br>
+            <p class="large-text" style="font-weight: bold;">There are no calls yet</p>
+        </div>
+    </div>
+
+    <!-- Добавляем футер -->
+    <div class="footer">
+        © 2024-2025 — Tez Tour
+    </div>
+
+    <div class="loader" id="updateLoader">Updating the call list...</div>
+
+    <script>
+        let updateInterval;
+
+        function showLoader() {
+            const loader = document.getElementById('updateLoader');
+            loader.classList.add('show');
+            // Добавляем искусственную задержку в 1.5 секунды
+            return new Promise(resolve => setTimeout(resolve, 1500));
+        }
+
+        function hideLoader() {
+            const loader = document.getElementById('updateLoader');
+            loader.classList.remove('show');
+        }
+
+        async function updateCallsList() {
+            console.log('Запрос обновления списка звонков...');
+
+            try {
+                await showLoader();
+                const response = await fetch('/get_latest_calls');
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || `Ошибка сервера: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (!data.calls || !Array.isArray(data.calls)) {
+                    throw new Error('Некорректный формат данных от сервера');
+                }
+
+                const callsList = document.querySelector('#list_calls ul');
+                if (callsList) {
+                    let newHtml = '';
+                    data.calls.forEach(call => {
+                        // Безопасное получение значений
+                        const timeBegin = call.TIME_BEGIN || 'N/A';
+                        const timeEnd = call.TIME_END || 'N/A';
+                        const phoneNumber = call.PHONE_NUMBER || '';
+                        const curator = call.CURRATOR || '';
+                        const agencyManager = call.AGENCY_MANAGER || '';
+                        const agencyName = call.AGENCY_NAME || '';
+
+                        newHtml += `
+                            <li class="call-item">
+                                <p>Time Begin: <span>${timeBegin}</span></p>
+                                <p>Time End: <span>${timeEnd}</span></p>
+                                <p>Phone Number: <span>${phoneNumber}</span></p>
+                                <p>Curator: <span>${curator}</span></p>
+                                <p>Agency Manager: <span>${agencyManager}</span></p>
+                                <p>Agency Name: <span>${agencyName}</span></p>
+                            </li>
+                        `;
+                    });
+                    callsList.innerHTML = newHtml;
+                }
+            } catch (error) {
+                console.error('Ошибка при обновлении списка звонков:', error);
+                // Добавляем визуальное уведомление об ошибке для пользователя
+                const callsList = document.querySelector('#list_calls ul');
+                if (callsList) {
+                    callsList.innerHTML = `<li class="call-item error">Ошибка загрузки данных: ${error.message}</li>`;
+                }
+            } finally {
+                hideLoader();
+            }
+        }
+
+        // Функция запуска автообновления
+        function startAutoUpdate() {
+            updateCallsList(); // Первое обновление
+            // Устанавливаем интервал обновления каждые 60 секунд
+            updateInterval = setInterval(updateCallsList, 60000);
+        }
+
+        // Запуск при загрузке страницы
+        document.addEventListener('DOMContentLoaded', startAutoUpdate);
+
+        // Обработка видимости страницы
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                clearInterval(updateInterval);
+            } else {
+                startAutoUpdate();
+            }
+        });
+    </script>
+</body>
+</html>

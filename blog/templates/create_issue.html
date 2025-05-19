@@ -1,0 +1,114 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form action="" method="POST" enctype="multipart/form-data" class="border p-4 rounded post-container">
+                {{ form.hidden_tag() }}
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-primary">Новая заявка</h1>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.subject.label(class="form-label") }}
+                    {{ form.subject(class="form-control", placeholder="Тема") }}
+                    {% for error in form.subject.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.description.label(class="form-label") }}
+                    {{ form.description(class="form-control description-field", placeholder="Описание вашей заявки") }}
+                    {% for error in form.description.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.upload_files.label(class="form-label") }}
+                    {{ form.upload_files(class="form-control") }}
+                    <small class="form-text text-muted" style="color: blue !important;">
+                        При множественном выборе файлов, удерживайте клавишу Ctrl (Cmd на Mac) и щелкая мышью
+                    </small>
+                    {% for error in form.upload_files.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+                <button type="submit" class="btn btn-primary" style="font-size: 16px;">Создать</button>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.getElementById("upload_files").addEventListener("change", function() {
+        var allowedExtensions = ["png", "pdf", "jpg", "jpeg", "pdf", "doc", "docx", "xls", "xlsx"];
+        var files = this.files;
+        var isValid = true;
+        for (var i = 0; i < files.length; i++) {
+            var file = files[i];
+            var extension = file.name.split('.').pop().toLowerCase();
+            if (allowedExtensions.indexOf(extension) === -1) {
+                isValid = false;
+                break;
+            }
+        }
+        if (!isValid) {
+            alert("Некорректное расширение файла. Допустимые расширения: " + allowedExtensions.join(', '));
+            // Очищаем input файл
+            this.value = "";
+        }
+    });
+</script>
+
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Общие стили */
+    .post-container {
+        background-color: #f8f9fa; /* Серый цвет фона */
+        padding: 20px; /* Поля вокруг контейнера */
+        border-radius: 10px; /* Закругленные углы */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    }
+
+    /* Стили для заголовка */
+    .post-title {
+        margin-bottom: 20px; /* Отступ снизу */
+        font-size: 24px; /* Размер шрифта */
+        color: #333; /* Цвет текста */
+        text-align: center; /* Выравнивание по центру */
+    }
+
+    /* Стили для кнопки */
+    .post-button {
+        background-color: #007bff; /* Цвет фона кнопки */
+        border: none; /* Убираем границы */
+        border-radius: 5px; /* Закругленные углы */
+        padding: 10px 20px; /* Поля внутри кнопки */
+        color: #fff; /* Цвет текста */
+        font-weight: bold; /* Жирный текст */
+        text-transform: uppercase; /* Верхний регистр */
+        cursor: pointer; /* Изменяем указатель при наведении */
+        transition: background-color 0.3s; /* Плавное изменение цвета фона */
+    }
+
+    .post-button:hover {
+        background-color: #0056b3; /* Новый цвет фона при наведении */
+    }
+
+    /* Стили для ссылки */
+    .post-link {
+        color: #007bff; /* Цвет текста */
+        text-decoration: none; /* Убираем подчеркивание */
+        transition: color 0.3s; /* Плавное изменение цвета текста */
+    }
+
+    .post-link:hover {
+        color: #0056b3; /* Новый цвет текста при наведении */
+    }
+    </style>
+{% endblock styles%}

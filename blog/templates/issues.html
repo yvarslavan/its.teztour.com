@@ -1,0 +1,242 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+<div id="loading-spinner" style="display: none; text-align: center; padding: 20px;">
+    <i class="fas fa-spinner fa-spin fa-3x"></i>
+    <p>Загрузка...</p>
+</div>
+
+<h5 style="margin: -50px 0 20px 0;">
+    <i class="fas fa-ticket-alt"></i>
+    <a href="https://helpdesk.teztour.com" target="_blank" style="color: #007bff; text-decoration: none; font-family: 'Roboto', sans-serif; font-size: 1.5em;">
+        Мои заявки в ИТ-Департамент
+        <i class="fas fa-external-link-alt" style="margin-left: 5px;"></i>
+    </a>
+</h5>
+
+<div id="statusFilter" style="margin-top: -20px;"> </div>
+
+
+<table id="issue" class="table table-striped" style="margin-top: -10px;">
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Обновлено</th>
+            <th>Тема</th>
+            <th>Статус</th>
+        </tr>
+    </thead>
+    <tbody id="table-body">
+    </tbody>
+</table>
+
+
+{% endblock main_page %}
+
+{% block styles %}
+<style>
+  /* Стили для DataTables */
+  #issue {
+    font-family: Arial, sans-serif;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #issue th,
+  #issue td {
+    border: 2px solid #ddd;
+    padding: 8px;
+    text-align: left;
+  }
+
+  #issue th {
+    background-color: #f2f2f2;
+  }
+
+  #issue tr:nth-child(even) {
+    background-color: #f9f9f9;
+  }
+
+  /* Стили для фильтрации и поиска */
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_length {
+    white-space: nowrap;
+    margin-bottom: 10px;
+    display: inline-block;
+  }
+
+  .dataTables_wrapper .dataTables_filter {
+    float: right;
+  }
+
+  .dataTables_wrapper .dataTables_filter label,
+  .dataTables_wrapper .dataTables_length label {
+    margin-right: 5px;
+  }
+
+  /* Стили для перемещения по записям */
+  .dataTables_wrapper .dataTables_paginate {
+    margin-top: 10px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    box-sizing: border-box;
+    display: inline-block;
+    min-width: 1.5em;
+    padding: 0.5em 1em;
+    margin-left: 2px;
+    text-align: center;
+    text-decoration: none !important;
+    cursor: pointer;
+    cursor: hand;
+    color: #333 !important;
+    border: 1px solid transparent;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #eee;
+    color: #666 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    color: #fff !important;
+    border: 1px solid #007bff;
+    background-color: #007bff;
+    background: -webkit-gradient(linear, left top, left bottom, color-stop(0%, #007bff), color-stop(100%, #0056b3));
+    background: -webkit-linear-gradient(top, #007bff 0%, #0056b3 100%);
+    background: -moz-linear-gradient(top, #007bff 0%, #0056b3 100%);
+    background: -ms-linear-gradient(top, #007bff 0%, #0056b3 100%);
+    background: -o-linear-gradient(top, #007bff 0%, #0056b3 100%);
+    background: linear-gradient(to bottom, #007bff 0%, #0056b3 100%);
+  }
+/* Стили для DataTables */
+#issue {
+  font-family: Arial, sans-serif;
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#issue th,
+#issue td {
+  border: 2px solid #ddd;
+  padding: 12px; /* Измененный размер отступов */
+  text-align: left;
+  font-size: 16px; /* Измененный размер шрифта */
+}
+
+#issue th {
+  background-color: #f2f2f2;
+}
+
+#issue tr:nth-child(even) {
+  background-color: #f9f9f9;
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+
+<script>
+$(document).ready(function() {
+    // Показываем спиннер перед отправкой запроса
+    $('#loading-spinner').show();
+
+    $.ajax({
+        url: '/get-my-issues',
+        method: 'GET',
+        crossDomain: true,
+        xhrFields: {
+            withCredentials: true
+        },
+        success: function(response) {
+            // Создаем фильтр статусов
+            let statusFilter = '<label for="status-filter">Фильтр статуса:</label>' +
+                             '<select id="status-filter" class="form-control">' +
+                             '<option value="">Все</option>';
+
+            // Добавляем все возможные статусы в фильтр
+            response.statuses.forEach(function(status) {
+                statusFilter += `<option value="${status.name}">${status.name}</option>`;
+            });
+
+            statusFilter += '</select>';
+            $('#statusFilter').html(statusFilter);
+
+            // Заполняем таблицу данными
+            let tableBody = '';
+            response.issues.forEach(function(issue) {
+                tableBody += `
+                    <tr>
+                        <td><a href="/my-issues/${issue.id}">#${issue.id}</a></td>
+                        <td data-sort="${issue.updated_on}">${formatDate(issue.updated_on)}</td>
+                        <td>${issue.subject}</td>
+                        <td>${issue.status_name}</td>
+                    </tr>
+                `;
+            });
+            $('#table-body').html(tableBody);
+
+            // Функция форматирования даты
+            function formatDate(dateString) {
+                const date = new Date(dateString);
+                if (isNaN(date.getTime())) {
+                    return 'Нет даты';
+                }
+                return date.toLocaleDateString('ru-RU', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                });
+            }
+
+            // Инициализируем DataTables с настройкой фильтрации
+            let table = $('#issue').DataTable({
+                "language": {
+                    "url": "/static/js/datatables/Russian.json"
+                },
+                "order": [[1, 'desc']], // Сортировка по второй колонке (индекс 1) по убыванию
+                "columnDefs": [{
+                    "targets": 1,
+                    "type": "date",
+                    "render": function(data, type, row) {
+                        if (type === 'display') {
+                            return formatDate(data);
+                        }
+                        return data;
+                    }
+                }]
+            });
+
+            // Добавляем обработчик изменения фильтра статусов
+            $('#status-filter').on('change', function() {
+                let selectedStatus = $(this).val();
+
+                // Применяем фильтр к колонке статуса (индекс 3)
+                table.column(3).search(selectedStatus).draw();
+            });
+        },
+        error: function(xhr, status, error) {
+            console.error('Error:', error);
+            $('#table-body').html('<tr><td colspan="4">Ошибка загрузки данных</td></tr>');
+        },
+        complete: function() {
+            // Скрываем спиннер после завершения запроса
+            $('#loading-spinner').hide();
+        }
+    });
+});
+</script>
+
+<style>
+.highlighted-row {
+    background-color: #f0f0f0;
+}
+
+
+
+
+
+</script>
+
+{% endblock %}

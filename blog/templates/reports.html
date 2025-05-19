@@ -1,0 +1,205 @@
+{% extends "layout.html" %}
+{% block content %}
+<style>
+.page-container {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 0;
+}
+
+.page-title {
+    text-align: center;
+    padding: 0;
+    margin-bottom: 0;
+}
+
+.content-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    width: 100%;
+    padding-bottom: 40px;
+}
+
+.charts-container {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 0 auto;
+    width: 100%;
+    margin-bottom: 40px;
+}
+
+.card {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin: 10px;
+    height: 100%;
+}
+
+.card-body {
+    padding: 20px;
+    height: 600px;
+}
+
+.row {
+    margin: 0;
+    display: flex;
+    justify-content: space-between;
+}
+
+.col-md-6 {
+    flex: 0 0 48%;
+    max-width: 48%;
+    margin: 10px 0;
+}
+
+@media (max-width: 768px) {
+    .card-body {
+        height: 400px;
+    }
+
+    .col-md-6 {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+}
+</style>
+
+<div class="page-container">
+    <div class="page-title">
+        <h2>Статистика заявок</h2>
+    </div>
+
+    <div class="content-container">
+        <div class="charts-container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <canvas id="pieChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-body">
+                            <canvas id="barChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript код остается без изменений -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const labels = {{ labels|tojson }};
+    const data = {{ data|tojson }};
+
+    // Обновленные цвета для лучшего различия
+    const colors = {
+        'Новая': '#FF6B6B',            // Яркий красный
+        'В работе': '#4ECDC4',         // Бирюзовый
+        'Закрыта': '#FFD93D',          // Желтый
+        'Отклонена': '#95A5A6',        // Серый
+        'Выполнена': '#6C5CE7',        // Фиолетовый
+        'Запрошено уточнение': '#FF8C00', // Оранжевый
+        'Приостановлена': '#FF69B4',    // Розовый
+        'Протестирована': '#2ECC71',    // Зеленый
+        'Перенаправлена': '#3498DB',    // Синий
+        'На согласовании': '#8E44AD',   // Темно-фиолетовый
+        'Заморожена': '#34495E',        // Темно-синий
+        'Открыта': '#16A085',           // Изумрудный
+        'На тестировании': '#E67E22',   // Морковный
+        'Бэклог': '#7F8C8D'             // Темно-серый
+    };
+
+    // Получаем цвета в том же порядке, что и метки
+    const colorArray = labels.map(label => colors[label] || '#000000');
+
+    // Круговая диаграмма
+    new Chart(document.getElementById('pieChart'), {
+        type: 'pie',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colorArray
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 20,
+                        font: {
+                            size: 12
+                        }
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Распределение заявок по статусам'
+                }
+            }
+        }
+    });
+
+    // Столбчаая диаграмма
+    new Chart(document.getElementById('barChart'), {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Количество заявок',
+                data: data,
+                backgroundColor: colorArray
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                },
+                title: {
+                    display: true,
+                    text: 'Количество заявок по статусам'
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        // Используем целые числа
+                        stepSize: 5,
+                        precision: 0
+                    },
+                    // Динамически устанавливаем максимальное значение
+                    suggestedMax: function(context) {
+                        const max = Math.max(...context.chart.data.datasets[0].data);
+                        return max + Math.ceil(max * 0.1); // Добавляем 10% сверху
+                    }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
+                    }
+                }
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

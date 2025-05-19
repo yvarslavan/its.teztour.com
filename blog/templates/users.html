@@ -1,0 +1,347 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<div class="row">
+    <div class="col">
+        <div class="users-container">
+            <div class="content-section">
+                <div class="table-container">
+                    <div style="height: 800px; overflow: auto;">
+                    <table class="table">
+                        <thead class="table-header">
+                            <tr class="users-table-header">
+                                <th colspan="8" style="background-color: #f0f0f0; border-bottom: none;">
+                                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                                        <!-- Оба блока внутри одного контейнера -->
+                                        <div style="display: flex; align-items: center;">
+                                            <span style="margin-right: 12px; font-size: 18px;">Пользователи</span>
+                                            <div style="width: 30px; height: 30px; background-color: #007bff; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px;">{{ users|length }}</div>
+                                        </div>
+                                        <!-- Поле "Найти" -->
+                                        <div style="display: flex; align-items: center;">
+                                            <input type="text" id="search-input" placeholder="Найти...">
+                                        </div>
+                                    </div>
+                                </th>
+                            </tr>
+
+                            <tr>
+                                <th class="sortable table-users-header" data-sort="username" style="text-align: center;">
+                                    <div style="display: flex; justify-content: center; align-items: center;">
+                                        <a href="#" title="Нажмите для сортировки" style="color: white;">Пользователь</a>
+                                        <div class="sort-indicator">
+                                            <i class="fa fa-sort" aria-hidden="true"></i>
+                                        </div>
+                                    </div>
+                                </th>
+                                <th class="text-primary table-users-header">Email</th>
+                                <th class="text-primary table-users-header">ФИО</th>
+                                <th class="text-primary table-users-header">Офис</th>
+                                <th class="text-primary table-users-header">Отдел</th>
+                                <th class="text-primary table-users-header">Должность</th>
+                                <th class="text-primary table-users-header">Тел.вн</th>
+                                <th class="text-primary table-users-header"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in users %}
+                                <tr>
+                                    <td data-column="username">
+                                        <div style="display: flex; align-items: center;">
+                                            <div style="margin-right: 10px;">
+                                                <a href="{{ url_for('users.user_profile', user_id=user.id) }}">
+                                                    <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                                                        alt="{{ user.username }}"
+                                                        class="user-avatar rounded-circle"
+                                                        title="Пользователь:&#13;&#10; Имя: {{ user.username }}&#13;&#10; Email: {{ user.email }}&#13;&#10; Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') }}"
+                                                    >
+                                                </a>
+                                            </div>
+                                            <div style="font-size: 16px; margin-right: 5px;">{{ user.username }}</div>
+                                            {% if user.online %}
+                                                <span class="online-indicator pulsating"
+                                                    style="background-color: green; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;"
+                                                    title="online"></span>
+                                            {% endif %}
+
+                                        </div>
+
+                                    </td>
+                                    <td><a href="mailto:{{ user.email }}" class="email-link" style="font-size: 16px;">{{ user.email }}</a></td>
+                                    <td><span style="font-size: 16px;">{{ user.full_name }}</span></td>
+                                    <td><span style="font-size: 16px;">{{ user.office }}</span></td>
+                                    <td><span style="font-size: 16px;">{{ user.department }}</span></td>
+                                    <td><span style="font-size: 16px;">{{ user.position }}</span></td>
+                                    <td style="text-align: center;">
+                                        <span style="font-size: 16px;">{{ user.phone }}</span>
+                                    </td>
+
+                                    <td style="text-align: center;">
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="btn btn-primary" title="Просмотр">
+                                                <i class="fas fa-eye fa-xs"></i>
+                                            </a>
+                                            <a href="{{ url_for('users.delete_user', username=user.username) }}" class="btn btn-danger disabled" title="Удалить" style="opacity: 0.2;">
+                                                <i class="fas fa-trash fa-xs"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.users-container {
+    margin-top: -60px;  /* Увеличиваем отрицательный отступ сверху с -20px до -40px */
+    margin-bottom: 60px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    overflow-y: auto;
+}
+
+/* Улучшенные стили для полосы прокрутки */
+.users-container::-webkit-scrollbar {
+    width: 8px;  /* Уменьшаем ширину полосы */
+}
+
+.users-container::-webkit-scrollbar-track {
+    background: #f8f9fa;  /* Светлый фон трека */
+    border-radius: 4px;
+}
+
+.users-container::-webkit-scrollbar-thumb {
+    background-color: #dee2e6;  /* Светло-серый цвет ползунка */
+    border-radius: 4px;
+}
+
+.users-container::-webkit-scrollbar-thumb:hover {
+    background-color: #adb5bd;  /* Более темный при наведении */
+}
+
+/* Дополнительные стили для таблицы, если нужно */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+.row {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+}
+
+.col {
+    padding: 0;
+}
+
+/* Убираем лишние отступы у вложенных элементов */
+.content-section {
+    margin: 0;
+    padding: 0;
+}
+
+.table-container {
+    margin: 0;
+    padding: 0;
+}
+
+/* Стили для таблицы */
+.table {
+    width: 100%;
+    border-spacing: 0;
+    border-collapse: separate;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+/* Стили для заголовка таблицы */
+.table-header {
+    background: linear-gradient(90deg, #71cfee, #2196F3);
+}
+
+.users-table-header {
+    background: transparent;
+}
+
+.table-users-header {
+    padding: 15px !important;
+    font-weight: 500 !important;
+    color: white !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease;
+}
+
+/* Стили для строк таблицы */
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+    transform: scale(1.002);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+/* Стили для ячеек */
+.table td {
+    padding: 12px 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e9ecef;
+}
+
+/* Стили для аватара */
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border: 2px solid #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease;
+}
+
+.user-avatar:hover {
+    transform: scale(1.1);
+}
+
+/* Стили для кнопок действий */
+.btn-group {
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+}
+
+.btn-group:hover {
+    opacity: 1;
+}
+
+.btn {
+    padding: 6px 12px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* Стили для поля поиска */
+#search-input {
+    padding: 8px 12px;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    width: 200px;
+    transition: all 0.3s ease;
+}
+
+#search-input:focus {
+    outline: none;
+    border-color: #71cfee;
+    box-shadow: 0 0 0 2px rgba(113, 207, 238, 0.2);
+}
+
+/* Индикатор онлайн статуса */
+.online-indicator {
+    width: 8px;
+    height: 8px;
+    background-color: #28a745;
+    border-radius: 50%;
+    display: inline-block;
+    margin-left: 5px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-input');
+
+    searchInput.addEventListener('input', function() {
+        const searchText = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.table tbody tr');
+
+        rows.forEach(row => {
+            const username = row.querySelector('td[data-column="username"]').textContent.trim().toLowerCase();
+
+            if (username.includes(searchText)) {
+                row.style.display = ''; // Показываем строку, если текст найден в имени пользователя
+            } else {
+                row.style.display = 'none'; // Скрываем строку, если текст не найден в имени пользователя
+            }
+        });
+    });
+});
+
+document.addEventListener('DOMContentLoaded', function () {
+    const headers = document.querySelectorAll('th[data-sort]');
+    headers.forEach(header => {
+        header.addEventListener('click', () => {
+            const column = header.getAttribute('data-sort');
+            const order = (header.classList.contains('asc') ? 'desc' : 'asc');
+            sortTable(column, order);
+            updateSortIndicator(header, order);
+            headers.forEach(h => {
+                if (h !== header) {
+                    h.classList.remove('asc', 'desc');
+                    resetSortIndicator(h);
+                }
+            });
+            header.classList.toggle('asc', order === 'asc');
+            header.classList.toggle('desc', order === 'desc');
+        });
+    });
+
+    function sortTable(column, order) {
+        const tbody = document.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const sortedRows = rows.sort((a, b) => {
+            const aValue = getValue(a, column);
+            const bValue = getValue(b, column);
+            if (order === 'asc') {
+                return aValue.localeCompare(bValue, 'ru-RU', { sensitivity: 'base', numeric: true });
+            } else {
+                return bValue.localeCompare(aValue, 'ru-RU', { sensitivity: 'base', numeric: true });
+            }
+        });
+        tbody.innerHTML = '';
+        sortedRows.forEach(row => tbody.appendChild(row));
+    }
+
+    function getValue(row, column) {
+        const cell = row.querySelector(`td[data-column="${column}"]`);
+        if (cell) {
+            return cell.textContent.trim();
+        }
+        return '';
+    }
+
+    function updateSortIndicator(header, order) {
+        const indicator = header.querySelector('.sort-indicator i');
+        if (order === 'asc') {
+            indicator.className = 'fa fa-sort-up';
+        } else {
+            indicator.className = 'fa fa-sort-down';
+        }
+    }
+
+    function resetSortIndicator(header) {
+        const indicator = header.querySelector('.sort-indicator i');
+        indicator.className = 'fa fa-sort';
+    }
+});
+
+</script>
+{% endblock %}

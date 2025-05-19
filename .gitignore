@@ -1,0 +1,11 @@
+.idea/
+__pycache__/
+.git/
+*.pyc
+.env
+.log
+venv/
+blog/db/blog.db
+flask_errors.log
+flask_session/
+app_err.log

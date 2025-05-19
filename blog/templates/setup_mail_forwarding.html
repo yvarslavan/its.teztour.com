@@ -1,0 +1,233 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>Настройка переадресации почты</title>
+    <style>
+<style>
+body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f7f7f7;
+        }
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 80vh; /* Ограничиваем высоту контейнера */
+}
+
+/* Стили для линейки прокрутки */
+.container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+    border: 3px solid #f1f1f1;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.image-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.image-wrapper img {
+    max-width: 100%;
+    height: auto;
+}
+
+p {
+    margin-bottom: 15px;
+}
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .image-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .image-wrapper img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+</style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-weight: bold;">Настройка переадресации почты</h1>
+		<title></title>
+            <style>
+                .note {
+                    background-color: #9aeaf2;
+                    border-left: 6px solid #007bff; /* Цвет левой границы блока */
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    font-size: 18px;
+                }
+            </style>
+            </head>
+            <body>
+                <p style="font-size: 18px;">💡 <strong>Как зайти в почтовый веб-интерфейс?</strong></p>
+                <p style="font-size: 18px;">Откройте браузер и перейдите по <a href="https://mail.tez-tour.com/?Skin=hPronto-">данному адресу</a>.</p>
+                <p style="font-size: 18px;">Появится страница входа.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/ProntoLoginOpen.png" alt="">
+                </div>
+                <p style="font-size: 18px;">Введите ваш почтовый логин или имя вашего почтового ящика полностью,
+                    в который требуется войти, и пароль от него. Нажмите на кнопку <strong>«Войти».</strong></p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/ProntoLogin.png" alt="">
+                </div>
+                <p style="font-size: 18px;">Откроется web-интерфейс к Вашему почтовому ящику.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoMail.png" alt="">
+                </div>
+
+                <p style="font-size: 18px;">💡 <strong>Создание правил</strong></p>
+                <p style="font-size: 18px;">Вы можете создавать, редактировать и удалять правила, а так же устанавливать порядок их выполнения.
+                    В т.ч. с помощью правила можно переадресовывать или перенаправлять сообщения электронной почты, соответствующие условиям.
+                    Для настройки переадресации Вашей почты создайте соответствующее правило:</p>
+                <p style="font-size: 18px;">1. Выберите меню <strong>«Настройки» -> «Правила»</strong></p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoRulesMail.png" alt="">
+                </div><br>
+                <div style="display: flex; align-items: center;">
+                    <p style="font-size: 18px;">2.Чтобы создать новое правило, нажмите кнопку
+                     <img src="/static/profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png" alt=""></p>
+                </div>
+                <p style="font-size: 18px;">Откроется форма создания правила.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoNameRule.png" alt="">
+                </div>
+                <p style="font-size: 18px;">3.Введите название правила.</p>
+                <p style="font-size: 18px;">4. Нажмите кнопку <strong>«Расширенный режим».</strong></p>
+                <p style="font-size: 18px;">Откроется форма создания характеристик правила.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoCreateRule.png" alt="">
+                </div>
+
+                <div style="display: flex; align-items:     ;">
+                    <p style="font-size: 18px;">В разделе <strong>«Применить к»</strong> выберите одну или несколько характеристик для входящих писем,
+                     которые будут проверяться. Как только в письме встретится такая характеристика, начнет выполняться правило.
+                      Добавьте нужные характеристики с помощью кнопки
+                     <img src="/static/profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png" alt=""></p>
+                </div>
+                <div class="note">
+                    <p style="font-size: 20px;">🔥Внимание</p>
+                    <strong>Пожалуйста, обратите внимание, что все правила будут выполняться для всех входящих писем. Выполнение произойдет в указанном порядке</strong></p>
+                </div>
+                <p style="font-size: 18px;">Правило может относиться к элементам письма: <strong>Тема, Отправитель, Получатель, Скрытая копия, Ответить</strong>.
+                     Например, для перенаправления почты необходимо выбрать в разделе <strong>«Применить к»</strong> характеристику <strong>«Отправитель»</strong>,
+                      в поле справа ввести ваш почтовый адрес. Далее в разделе <strong>«Действие»</strong> выбрать характеристику <strong>«Перенаправить к»</strong>
+                       и в поле справа ввести почтовый адрес получателя кому Вы хотите перенаправить письмо.</p>
+                <p style="font-size: 18px;">6.Чтобы редактировать существующее правило, выберите кнопку <strong>«Модифицировать»</strong> (или иконку с зубчатым колесом)</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoEditRule.png" alt="">
+                </div>
+                <p style="font-size: 18px;">Откроется форма создания\изменения характеристик правила.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/900px-ProntoCreateRule.png" alt="">
+                </div>
+                <p style="font-size: 18px;">Чтобы удалить правило, нажмите <strong>Delete</strong> (иконка с мусорной корзиной)</p>
+                <p style="font-size: 18px;">Чтобы установить порядок, в котором правила исполняются, нажмите на стрелку слева от имени правила и выберите нужный номер.</p>
+                <div class="note">
+                    <p style="font-size: 20px;">🔥Внимание</p>
+                    <strong>Всегда нажимайте <strong>«Записать»</strong>, после того, как завершили работу с настройками.</p>
+                </div>
+
+{% endblock content %}
+
+{% block styles %}
+<style>
+  .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .article {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        margin-bottom: 50px;
+        text-align: justify;
+    }
+
+    .section {
+        margin-bottom: 30px;
+        text-align: justify;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    figcaption {
+        font-style: italic;
+        color: #666;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+ 	.custom-p {
+        font-size: 16px;
+        border: 2px solid #2a83a0;
+        background-color: lightblue;
+        padding: 10px;
+        border-radius: 5px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .icon {
+        font-size: 24px;
+        color: #2a83a0;
+        margin-right: 10px;
+        flex-shrink: 0;
+        border: 2px solid #2a83a0;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #5bc0de; /* Светло-голубой цвет */
+    	color: #fff; /* Белый цвет для контраста */
+    }
+</style>
+{% endblock styles %}

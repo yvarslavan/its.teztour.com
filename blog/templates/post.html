@@ -1,0 +1,50 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container scroll-container">
+    <div class="card text-center mx-auto mt-5">
+        <div class="bg-success p-2" style="background-color: rgb(207, 238, 207) !important;">
+            <img src="{{ url_for('static', filename='profile_pics/' + post.author.username + '/' + post.author.image_file) }}" alt="" class="mr-3 mt-3 rounded-circle" style="width:40px;">
+            <span>Автор: </span>
+            <a class="mr-2" href="{{ url_for('users.user_posts', username=post.author.username)}}"> {{ post.author.full_name }}</a>
+            <small class="text-muted">от {{ post.date_posted.strftime('%d.%m.%Y-%H.%M') }}</small>
+            {% if post.author == current_user %}
+                <a class="btn btn-secondary btn-sm m-2" href="{{ url_for('post.update_post', post_id=post.id) }}" style="border: 1px solid #6c757d; background-color: #6c757d; color: white;">Обновить</a>
+                <button type="button" class="btn btn-danger btn-sm m-1" data-bs-toggle="modal" data-bs-target="#deleteModal">Удалить</button>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <h1 class="card-title">{{ post.title | safe }}</h1>
+            <p class="card-text" style="text-align: justify;">{{ post.content | safe }}</p>
+            {% if img_file_path %}
+                <img src="{{ img_file_path }}" alt="post_img" class="img-fluid">
+            {% endif %}
+            {% if posts and posts.has_prev %}
+                <a href="{{ url_for('main.blog', page=posts.prev_num) }}" class="btn btn-primary">Назад</a>
+            {% endif %}
+        </div>
+
+        <!-- Modal -->
+        <div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="deleteModalLabel">Подтверждение удаления</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        Вы уверены, что хотите удалить эту статью?
+                    </div>
+                    <div class="modal-footer">
+                        <form action="{{ url_for('post.delete_post', post_id=post.id) }}" method="post">
+                            <button type="submit" class="btn btn-danger">Удалить</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

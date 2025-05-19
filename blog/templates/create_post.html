@@ -1,0 +1,90 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form action="" method="POST" enctype="multipart/form-data" class="border p-4 rounded post-container">
+                {{ form.hidden_tag() }}
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-primary">Создать новую статью</h1>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.title.label(class="form-label") }}
+                    {{ form.title(class="form-control", placeholder="Заголовок") }}
+                    {% for error in form.title.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.content.label(class="form-label") }}
+                    {{ form.content(class="form-control", placeholder="Текст статьи") }}
+                    {% for error in form.content.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3">
+                    {{ form.picture.label(class="form-label") }}
+                    {{ form.picture(class="form-control") }}
+                    {% for error in form.picture.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Создать</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block styles %}
+<style>
+    /* Общие стили */
+    .post-container {
+        background-color: #f8f9fa; /* Серый цвет фона */
+        padding: 20px; /* Поля вокруг контейнера */
+        border-radius: 10px; /* Закругленные углы */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    }
+
+    /* Стили для заголовка */
+    .post-title {
+        margin-bottom: 20px; /* Отступ снизу */
+        font-size: 24px; /* Размер шрифта */
+        color: #333; /* Цвет текста */
+        text-align: center; /* Выравнивание по центру */
+    }
+
+    /* Стили для кнопки */
+    .post-button {
+        background-color: #007bff; /* Цвет фона кнопки */
+        border: none; /* Убираем границы */
+        border-radius: 5px; /* Закругленные углы */
+        padding: 10px 20px; /* Поля внутри кнопки */
+        color: #fff; /* Цвет текста */
+        font-weight: bold; /* Жирный текст */
+        text-transform: uppercase; /* Верхний регистр */
+        cursor: pointer; /* Изменяем указатель при наведении */
+        transition: background-color 0.3s; /* Плавное изменение цвета фона */
+    }
+
+    .post-button:hover {
+        background-color: #0056b3; /* Новый цвет фона при наведении */
+    }
+
+    /* Стили для ссылки */
+    .post-link {
+        color: #007bff; /* Цвет текста */
+        text-decoration: none; /* Убираем подчеркивание */
+        transition: color 0.3s; /* Плавное изменение цвета текста */
+    }
+
+    .post-link:hover {
+        color: #0056b3; /* Новый цвет текста при наведении */
+    }
+    </style>
+{% endblock styles%}

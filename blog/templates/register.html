@@ -1,0 +1,121 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form action="" method="POST" class="border p-4 rounded register-container">
+                {{ form.hidden_tag() }}
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-primary">Регистрация</h1>
+                </div>
+                <div class="mb-3">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control", placeholder="Логин ERP") }}
+                    {% for error in form.username.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3 position-relative">
+                    {{ form.password.label(class="form-label") }}
+                    <div class="input-group">
+                        {{ form.password(class="form-control", placeholder="Пароль ERP", type="password") }}
+                        <span class="input-group-text">
+                            <span class="fa fa-fw fa-eye field-icon toggle-password" style="cursor: pointer;"></span>
+                        </span>
+                    </div>
+                    {% for error in form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3 position-relative">
+                    {{ form.confirm_password.label(class="form-label") }}
+                    <div class="input-group">
+                        {{ form.confirm_password(class="form-control", placeholder="Подтвердите пароль ERP", type="password") }}
+                        <span class="input-group-text">
+                            <span class="fa fa-fw fa-eye field-icon toggle-password" style="cursor: pointer;"></span>
+                        </span>
+                    </div>
+                    {% for error in form.confirm_password.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>			
+
+                <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
+
+                <div class="mt-3 text-center">
+                    Уже есть аккаунт? <a href="{{ url_for('users.login') }}">Войти</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var togglePassword = document.querySelectorAll('.toggle-password');
+
+        togglePassword.forEach(function (icon) {
+            icon.addEventListener('click', function () {
+                var input = icon.closest('.position-relative').querySelector('input');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                } else {
+                    input.type = 'password';
+                }
+            });
+        });
+    });
+</script>
+
+{% endblock content %}
+{% block styles %}
+<style>
+    /* Общие стили для страницы REGISTER/ */
+    .register-container {
+        background-color: #f8f9fa; /* Серый цвет фона */
+        padding: 20px; /* Поля вокруг контейнера */
+        border-radius: 10px; /* Закругленные углы */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    }
+
+    /* Стили для заголовка */
+    .register-title {
+        margin-bottom: 20px; /* Отступ снизу */
+        font-size: 24px; /* Размер шрифта */
+        color: #333; /* Цвет текста */
+        text-align: center; /* Выравнивание по центру */
+    }
+
+    /* Стили для кнопки */
+    .register-button {
+        background-color: #007bff; /* Цвет фона кнопки */
+        border: none; /* Убираем границы */
+        border-radius: 5px; /* Закругленные углы */
+        padding: 10px 20px; /* Поля внутри кнопки */
+        color: #fff; /* Цвет текста */
+        font-weight: bold; /* Жирный текст */
+        text-transform: uppercase; /* Верхний регистр */
+        cursor: pointer; /* Изменяем указатель при наведении */
+        transition: background-color 0.3s; /* Плавное изменение цвета фона */
+    }
+
+    .register-button:hover {
+        background-color: #0056b3; /* Новый цвет фона при наведении */
+    }
+
+    /* Стили для ссылки */
+    .register-link {
+        color: #007bff; /* Цвет текста */
+        text-decoration: none; /* Убираем подчеркивание */
+        transition: color 0.3s; /* Плавное изменение цвета текста */
+    }
+
+    .register-link:hover {
+        color: #0056b3; /* Новый цвет текста при наведении */
+    }
+</style>
+{% endblock styles %}

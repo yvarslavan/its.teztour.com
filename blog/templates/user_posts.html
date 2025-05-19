@@ -1,0 +1,62 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container">
+    <div class="row">
+        {% if posts.total == 0 %}
+            <div style="display: flex; justify-content: center; align-items: center; height: 80vh;">
+                <div style="text-align: center;">
+                    <h4>Здесь будут опубликованы ваши статьи (посты)</h4>
+                    <br>
+                    <img src="{{ url_for('static', filename='img/post.png') }}" width="142" height="142" alt="Пост" style="display: block; margin: 0 auto; border: none;">
+                    <p class="large-text" style="font-weight: bold;">У вас пока еще нет статей (постов)</p>
+                </div>
+            </div>
+        {% else %}
+            <div class="post-container">
+                {% for post in posts.items %}
+                    <div class="post">
+                        <div class="post-header">
+                            <p>Дата публикации: {{ post.date_posted.strftime('%d.%m.%Y-%H.%M') }}</p>
+                        </div>
+                        <div class="post-body">
+                            <h4><a href="{{ url_for('post.post', post_id=post.id) }}">{{ post.title | safe }}</a></h4>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<nav aria-label="post_paginate">
+  <ul class="pagination justify-content-center">
+    <li class="page-item disabled">
+        {% if posts.has_prev %}  
+           <a class="page-link" href="{{ url_for('main.blog', page=posts.prev_num) }}" tabindex="-1" aria-disabled="true">Предыдущая</a>
+        {% endif %}
+    </li>
+    
+    {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=3) %}
+        {% if page_num %}
+            {% if posts.page == page_num %}
+                <li class="page-item active"><a class="page-link" href="{{ url_for('users.user_posts', username=user.username, page=page_num) }}">{{ page_num }}</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="{{ url_for('users.user_posts', username=user.username, page=page_num) }}">{{ page_num }}</a></li>
+            {% endif %}
+        {% else %}
+            <li class="page-item disabled"><span class="page-link">...</span></li>
+        {% endif %}
+    {% endfor %}
+    
+    <li class="page-item">
+        {% if posts.has_next %}
+           <a class="page-link" href="{{ url_for('main.blog', page=posts.next_num) }}">Следующая</a>
+        {% endif %}    
+    </li>
+  </ul>
+</nav>
+{% endblock %}
+
+

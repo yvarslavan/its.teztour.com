@@ -1,0 +1,203 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>Корпоративная адресная книга</title>
+    <style>
+ <style>
+body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            background-color: #f7f7f7;
+        }
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 80vh; /* Ограничиваем высоту контейнера */
+}
+
+/* Стили для линейки прокрутки */
+.container::-webkit-scrollbar {
+    width: 12px;
+}
+
+.container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+.container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+    border: 3px solid #f1f1f1;
+}
+
+.container::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.image-wrapper {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.image-wrapper img {
+    max-width: 100%;
+    height: auto;
+}
+
+p {
+    margin-bottom: 15px;
+}
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .image-wrapper {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .image-wrapper img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+</style>
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 style="font-weight: bold;">📖Корпоративная адресная книга</h1>
+		<title></title>
+
+        </head>
+            <body>
+                <p style="font-size: 18px;">Для подключения к общей адресной книге компании, берущей адреса электронной почты из ситемы ЕРП необходимо настроить ваш почтовый клиент.</p>
+                <p style="font-size: 18px;">💡 <strong>Настройка Mozila Thrunderbird</strong></p>
+                <p style="font-size: 18px;">В меню Thunderbird <strong>«Инструменты»</strong> или спомощью комбинации клавиш <strong>Ctrl + Shift + B</strong> открываем <strong>«Адресная книга»</strong>
+                    и cоздаем новую адресную книгу при помощи меню  <strong>«Новая адресная книга -> Добавить адресную книгу LDAP»</strong>.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_address_book_add.jpg" alt="">
+                </div>
+                <p style="font-size: 18px;">📌Заполняем поля на вкладке <strong>«Основное»</strong><br>
+                🔹 Название: Любое имя вашей новой адресной книги, используется только для отображения<br>
+                🔹 Имя сервера: noodle.tez-tour.com<br>
+                🔹 Корневой элемент (Base DN): dc=teztour,dc=com<br>
+                🔹 Порт: 389<br>
+                🔹 Имя пользователя (Bind DN): Оставить пустым</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book.jpg" alt="">
+                </div>
+                <p style="font-size: 18px;">📌Открываем вкладку <strong>«Дополнительно»</strong><br>
+                Заполняем поля:<br>
+                    🔹 Не возвращать более чем: 1000 результатов<br>
+                    🔹 Область поиска: Поддерево<br>
+                    🔹 Фильтр поиска: (objectclass=*)<br>
+                    🔹  Способ аутентификации: Простой</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_add_on.jpg" alt="">
+                </div>
+                <p style="font-size: 18px;">📌Нажимаем кнопку <strong>Ок</strong><br>
+                    📌Закрываем адресную книгу<br>
+                📌Открываем <strong>«Инструменты« -> «Настройки» -> «Составление» -> </strong>Вкладка <strong>«Адресация»</strong><br>
+                 Пункт  <strong>«При вводе адреса искать подходящие почтовые адреса в:»</strong>. Отмечаем <strong>«Сервере каталогов»</strong> и указываем наш сервер.
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_setup.jpg" alt="">
+                </div>
+                <p style="font-size: 18px;">📌Перезапускаем Mozilla Thrunderbird.<br>
+                Теперь при составлении нового письма, начав вводить фамилию сотрудника будет выполнен поиск в ЕРП и если совпадения будут
+                 найдены вы их увидите. Для того, чтобы увидеть адреса всех сотрудников, откройте адресную книгу Mozila Thrunderbird,
+                  выберите общую книгу и в строке поиска введите символ @ и мы получим полный список адресов сотрудников.</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_search.jpg" alt="">
+                </div>
+                <p style="font-size: 18px;">Теперь когда пользователь в адресной строке Thrunderbird вводит первые буквы почтового адреса или имени пользователя,
+                 и Thrunderbird, в случае наличия в ЕРП адреса(ов) подобных пользователей, автоматически предлагает подходящий почтовый адрес(а).</p>
+                <div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_users.jpg" alt="">
+                </div>
+
+
+{% endblock content %}
+
+{% block styles %}
+<style>
+  .container {
+        max-width: 1400px;
+        margin: 0 auto;
+    }
+
+    .article {
+        font-family: Arial, sans-serif;
+        line-height: 1.6;
+        padding: 20px;
+        margin-bottom: 50px;
+        text-align: justify;
+    }
+
+    .section {
+        margin-bottom: 30px;
+        text-align: justify;
+    }
+
+    .center {
+        text-align: center;
+    }
+
+    img {
+        max-width: 100%;
+        height: auto;
+    }
+
+    figcaption {
+        font-style: italic;
+        color: #666;
+        text-align: center;
+        margin-top: 10px;
+    }
+
+ 	.custom-p {
+        font-size: 16px;
+        border: 2px solid #2a83a0;
+        background-color: lightblue;
+        padding: 10px;
+        border-radius: 5px;
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .icon {
+        font-size: 24px;
+        color: #2a83a0;
+        margin-right: 10px;
+        flex-shrink: 0;
+        border: 2px solid #2a83a0;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #5bc0de; /* Светло-голубой цвет */
+    	color: #fff; /* Белый цвет для контраста */
+    }
+</style>
+{% endblock styles %}

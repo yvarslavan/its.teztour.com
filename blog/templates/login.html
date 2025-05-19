@@ -1,0 +1,144 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" action="" class="border p-4 rounded auth-container">
+                {{ form.hidden_tag() }}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold text-primary">Вход</h1>
+                </div>
+
+                <div class="mb-3">
+                    {{ form.username.label(class="form-label") }}
+                    {{ form.username(class="form-control", placeholder="Логин ERP") }}
+                    {% for error in form.username.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+                <div class="mb-3 position-relative">
+                    {{ form.password.label(class="form-label") }}
+                    <div class="input-group">
+                        {{ form.password(class="form-control", placeholder="Пароль ERP", type="password") }}
+                        <span class="input-group-text">
+                            <span class="fa fa-fw fa-eye field-icon toggle-password" style="cursor: pointer;"></span>
+                        </span>
+                    </div>
+                    {% for error in form.password.errors %}
+                        <div class="invalid-feedback d-block">{{ error }}</div>
+                    {% endfor %}
+                </div>
+
+
+                <div class="mb-3 form-check">
+                    {{ form.remember(class='form-check-input') }}
+                    {{ form.remember.label(class='form-check-label') }}
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block">Войти</button>
+
+                <div class="mt-3 text-center">
+                    Нет аккаунта? <a href="{{ url_for('users.register') }}">Зарегистрируйтесь!</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+                                $(document).ready(function() {
+                                // Удаляем все стандартные flash-сообщения
+                                $('.alert').remove();
+
+                                var flashMessages = JSON.parse('{{ get_flashed_messages(with_categories=true) | tojson | safe }}');
+                                if (flashMessages.length > 0) {
+                                    flashMessages.forEach(function(flash) {
+                                        var category = flash[0];
+                                        var message = flash[1];
+
+                                        var icon = 'info';
+                                        if (category === 'success') icon = 'success';
+                                        if (category === 'error') icon = 'error';
+                                        if (category === 'warning') icon = 'warning';
+
+                                        Swal.fire({
+                                            icon: icon,
+                                            title: category.charAt(0).toUpperCase() + category.slice(1),
+                                            text: message,
+                                            timer: 5000,
+                                            showConfirmButton: false,
+                                            toast: true,
+                                            position: 'top-end',
+                                            timerProgressBar: true
+                                        });
+                                    });
+                                }
+                            });
+    $(document).ready(function() {
+        $(".toggle-password").click(function() {
+            $(this).toggleClass("fa-eye fa-eye-slash");
+            var input = $(this).closest('.input-group').find('input');
+            if (input.attr("type") == "password") {
+                input.attr("type", "text");
+            } else {
+                input.attr("type", "password");
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Общие стили */
+    .auth-container {
+        background-color: #f8f9fa; /* Серый цвет фона */
+        padding: 20px; /* Поля вокруг контейнера */
+        border-radius: 10px; /* Закругленные углы */
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    }
+
+    /* Стили для заголовка */
+    .auth-title {
+        margin-bottom: 20px; /* Отступ снизу */
+        font-size: 24px; /* Размер шрифта */
+        color: #333; /* Цвет текста */
+        text-align: center; /* Выравнивание по центру */
+    }
+
+    /* Стили для кнопки */
+    .auth-button {
+        background-color: #007bff; /* Цвет фона кнопки */
+        border: none; /* Убираем границы */
+        border-radius: 5px; /* Закругленные углы */
+        padding: 10px 20px; /* Поля внутри кнопки */
+        color: #fff; /* Цвет текста */
+        font-weight: bold; /* Жирный текст */
+        text-transform: uppercase; /* Верхний регистр */
+        cursor: pointer; /* Изменяем указатель при наведении */
+        transition: background-color 0.3s; /* Плавное изменение цвета фона */
+    }
+
+    .auth-button:hover {
+        background-color: #0056b3; /* Новый цвет фона при наведении */
+    }
+
+    /* Стили для ссылки */
+    .auth-link {
+        color: #007bff; /* Цвет текста */
+        text-decoration: none; /* Убираем подчеркивание */
+        transition: color 0.3s; /* Плавное изменение цвета текста */
+    }
+
+    .auth-link:hover {
+        color: #0056b3; /* Новый цвет текста при наведении */
+    }
+    </style>
+{% endblock styles%}

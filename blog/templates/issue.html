@@ -1,0 +1,377 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+
+<style>
+
+    .description-wrapper {
+        max-height: 150px;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .description-wrapper.expanded {
+        max-height: none;
+    }
+
+    .switchFull {
+        color: #007bff;
+        text-decoration: underline;
+        cursor: pointer;
+    }
+
+    .card-container {
+        max-width: 100%;
+        overflow: hidden;
+    }
+
+    .card {
+        border: 1px solid #dfe1e5;
+        border-radius: 4px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+        margin-bottom: 16px;
+    }
+
+    .card-header {
+        background-color: #bae6df;
+        border-bottom: 1px solid #dfe1e5;
+        padding: 12px 16px;
+        border-radius: 4px 4px 0 0;
+    }
+     .list-group-item-custom {
+            border: none !important; /* Убираем рамку */
+        }
+
+</style>
+
+<script>
+
+     function toggleDescription() {
+        var descriptionWrapper = document.querySelector('.description-wrapper');
+        descriptionWrapper.classList.toggle('expanded');
+        var switchFull = document.querySelector('.switchFull');
+        if (descriptionWrapper.classList.contains('expanded')) {
+            switchFull.textContent = 'Скрыть...';
+        } else {
+            switchFull.textContent = 'Читать далее...';
+        }
+    }
+
+    function toggleCommentInput() {
+        var commentInput = document.getElementById("commentForm");
+        if (commentInput.style.display === "none") {
+            commentInput.style.display = "block";
+        } else {
+            commentInput.style.display = "none";
+        }
+    }
+
+    function disableSubmitButton() {
+        var submitButton = document.getElementById("submitBtn");
+        submitButton.disabled = true;
+        submitButton.innerText = 'Отправка, ожидайте...';
+    }
+
+
+</script>
+
+<div class="card" style="background-color: #e8f5f3; border-radius: 8px; border: none;">
+    <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #e8f5f3; border-bottom: none;">
+        <h2 style="font-family: 'Roboto', sans-serif; font-size: 1.8em; color: #333; margin: 15px 0; font-weight: bold;">
+            #{{issue_detail.id}} - {{issue_detail.subject}}
+        </h2>
+    </div>
+    <div class="card-body">
+        <div class="accordion accordion-flush" id="accordionFlushDetails">
+            <div class="accordion-item" style="background-color: transparent; border: none;">
+                <h2 class="accordion-header" id="detailsHeading">
+                    <button id="accordionButtonIssueInfo"
+                            class="accordion-button"
+                            type="button"
+                            data-bs-toggle="collapse"
+                            data-bs-target="#detailsCollapse"
+                            aria-expanded="true"
+                            aria-controls="detailsCollapse"
+                            style="background-color: #0d6efd; color: white; font-weight: 500; border-radius: 4px;">
+                        Сведения о задаче...
+                    </button>
+                </h2>
+                <div id="detailsCollapse" class="accordion-collapse collapse show" aria-labelledby="accordionFlushDetails">
+                    <div class="accordion-body" style="background-color: white; border: 1px solid #dfe1e6; border-radius: 4px; padding: 15px; margin-top: 10px;">
+                        <div style="display: flex; flex-wrap: wrap; gap: 20px;">
+                            <div style="flex: 1; display: flex; flex-direction: column;">
+                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                    <span style="color: black; font-weight: bold; font-size: 16px;">Статус:</span>
+                                    {% if issue_detail.status_name in 'Закрыта' %}
+                                        <span style="color: white; margin-left: 10px; background-color: rgb(5, 102, 57); padding: 2px 5px; border-radius: 5px; font-size: 14px;">{{ issue_detail.status_name }}</span>
+                                    {% else %}
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.status_name }}</span>
+                                    {% endif %}
+                                </div>
+
+                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                    <span style="color: black; font-weight: bold; font-size: 16px;">Автор:</span>
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">
+                                            {% if issue_detail.author_lastname is defined and issue_detail.author_lastname is not none %}
+                                                {{ issue_detail.author_lastname }} {{ issue_detail.author_firstname }}
+                                            {% else %}
+                                                Нет данных
+                                            {% endif %}
+                                    </span>
+                                </div>
+
+                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                    <span style="color: black; font-weight: bold; font-size: 16px;">Исполнитель:</span>
+                                    <span style="color: black; margin-left: 10px; font-size: 16px;">
+                                        {% if issue_detail.assigned_to_lastname is defined and issue_detail.assigned_to_lastname is not none %}
+                                            {{ issue_detail.assigned_to_lastname }} {{ issue_detail.assigned_to_firstname }}
+                                        {% else %}
+                                            Нет данных
+                                        {% endif %}
+                                    </span>
+                                </div>
+
+                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                    <span style="color: black; font-weight: bold; font-size: 16px;">Создана:</span>
+                                    <span style="color: black; margin-left: 10px; font-size: 16px;">{{issue_detail.created_on.strftime('%d.%m.%Y %H:%M')}}</span>
+                                </div>
+
+                                {% if issue_detail.closed_on %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Закрыта:</span>
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.closed_on.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    </div>
+                                {% endif %}
+
+                                <!-- Последнее обновление задачи -->
+                                {% if not issue_detail.closed_on %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Последнее обновление задачи:</span>
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{issue_detail.updated_on.strftime('%d.%m.%Y %H:%M')}}</span>
+                                    </div>
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Обновлено пользователем:</span>
+                                        {% if issue_detail.last_updated_by_lastname is defined and issue_detail.last_updated_by_lastname is not none %}
+                                             <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}</span>
+                                        {% else %}
+                                            Нет данных
+                                        {% endif %}
+                                    </div>
+
+                                {% endif %}
+                            </div>
+
+                            <div style="flex: 2; display: flex; flex-direction: column;">
+                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                    <span style="color: black; font-weight: bold; font-size: 16px;">Приоритет:</span>
+                                    {% if issue_detail.priority_name in ['Высокий', 'Срочный', 'Неотложный'] %}
+                                        <span style="color: white; margin-left: 10px; background-color: red; padding: 2px 5px; border-radius: 5px; font-size: 16px;">{{ issue_detail.priority_name }}</span>
+                                    {% else %}
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.priority_name }}</span>
+                                    {% endif %}
+                                </div>
+
+                                {% if issue_detail.start_date %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Дата начала:</span>
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.start_date.strftime('%d.%m.%Y') }}</span>
+                                    </div>
+                                {% endif %}
+
+                                {% if issue_detail.due_date %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Дата окончания:</span>
+                                       <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.due_date.strftime('%d.%m.%Y') }}</span>
+                                    </div>
+                                {% endif %}
+
+                                {% if issue_detail.easy_email_to %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Отправитель:</span>
+                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.easy_email_to }}</span>
+                                    </div>
+                                {% endif %}
+
+                                {% if issue_detail.easy_email_cc %}
+                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                                        <span style="color: black; font-weight: bold; font-size: 16px;">Копия письма:</span>
+                                        <span style="color: black; margin-left: 10px;font-size: 16px;">{{ issue_detail.easy_email_cc }}</span>
+                                    </div>
+                                 {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Аккордеон "Аттачменты" -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="filesHeading">
+                    <button id="accordionButtonIssueFiles" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#filesCollapse" aria-expanded="true" aria-controls="filesCollapse">
+                        Вложения...
+                    </button>
+                </h2>
+                <div id="filesCollapse" class="accordion-collapse collapse show" aria-labelledby="accordionFlushFiles">
+                    <div class="accordion-body" style="background-color: #e9ecef; border: 2px solid #dfe1e6; border-radius: 4px; padding: 10px;">
+                        <div style="display: flex;">
+                            <!-- Вывод прикрепленных файлов -->
+                            <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
+                            <span style="color: black; font-weight: bold; font-size: 14px;">Файлы:</span>
+                            <div style="margin-left: 10px; font-size: 14px;">
+                                {% if attachment_list %}
+                                    {% for attachment in attachment_list %}
+                                        <a href="{{ attachment.url }}" target="_blank" title="Скачать">{{ attachment.filename }}</a>
+                                        <span style="margin-left: 5px; color: #666;">{{ attachment.author }}, {{ convert_datetime_msk_format(attachment.created_on) }}</span><br>
+                                    {% endfor %}
+                                {% else %}
+                                    Нет прикрепленных файлов
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Аккордеон "История заявки" -->
+            <div class="accordion-item">
+                <h2 class="accordion-header" id="historyHeading">
+                    <button id="accordionButtonIssueHistory" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#historyCollapse" aria-expanded="true" aria-controls="historyCollapse">
+                        История задачи...
+                     </button>
+                </h2>
+                <div id="historyCollapse" class="accordion-collapse collapse" aria-labelledby="historyHeading">
+                    <div class="accordion-body" style="background-color: #e9ecef; border: 2px solid #dfe1e5; border-radius: 4px; padding: 10px;">
+                        <style>
+                            /* Стили для списка истории */
+                            ul.issue-history {
+                                list-style-type: none;
+                                padding-left: 0;
+                            }
+
+                            /* Стили для каждой записи журнала */
+                            .journal-entry {
+                                margin-bottom: 20px;
+                            }
+
+                            /* Стили для информации о пользователе и времени создания записи */
+                            .journal-info {
+                                font-weight: bold;
+                            }
+
+                            /* Стили для списка деталей изменений */
+                            .detail-list {
+                                list-style-type: none;
+                                padding-left: 0;
+                            }
+
+                            /* Стили для каждой детали изменения */
+                            .detail-item {
+                                margin-bottom: 5px;
+                            }
+
+                            /* Стили для комментария, если он есть */
+                            .journal-notes {
+                                font-style: italic;
+                                margin-top: 10px;
+                            }
+
+                            /* Стили для разделительной линии между записями истории */
+                            .history-divider {
+                                border-top: 1px solid #ccc;
+                                margin-top: 20px;
+                            }
+
+                            .accordion-button {
+                                background-color: #007bff !important;
+                                color: white !important;
+                                border-color: black !important;
+                            }
+
+                            .accordion-button:focus {
+                                background-color: #0056b3 !important;
+                                color: white !important;
+                                border-color: black !important;
+                            }
+
+                            .accordion-button:not(.collapsed) {
+                                background-color: #0056b3 !important;
+                                color: white !important;
+                                border-color: black !important;
+                            }
+
+                        </style>
+                        <ul class="issue-history">
+                            {% for journal in issue_history %}
+                                <div class="journal-info" style="color:#1E90FF;">
+                                    <p style="font-size: 14px;  font-family: 'Roboto', sans-serif;">{{ journal.user }} {{ convert_datetime_msk_format(journal.created_on) }} изменил задачу:</p>
+                                </div>
+                                    {% if journal.notes is defined and journal.notes %}
+                                        {% if not journal.private_notes %}
+                                            <div class="comment-container" style="background-color: white; border: 2px solid #ccc; padding: 10px; margin-top: 10px;">
+                                                <p class="journal-notes">{{ journal.notes | safe }}</p>
+                                            </div>
+                                        {% else %}
+                                            <div class="comment-container" style="background-color: white; border: 2px solid #ccc; padding: 5px; margin-top: 0px;">
+                                                <p class="journal-notes" style="font-style: normal;">&#x26D4; <span>Комментарий закрыт исполнителем</span></p>
+                                            </div>
+                                        {% endif %}
+                                    {% endif %}
+
+                                   <li class="journal-entry">
+                                            <ul class="detail-list">
+                                                {% for detail in journal.details %}
+                                                    {% set old_value = detail.get('old_value') %}
+                                                    {% set new_value = detail.get('new_value') %}
+                                                    {% set property_name = get_property_name(detail['property'], detail['name'], old_value, new_value) %}
+                                                    {% if property_name is not none %}
+                                                        <li class="detail-item"><span style="font-size: 12px;">✔️ {{ property_name | safe }}</span></li>
+                                                    {% else %}
+				                                        <li class="detail-item"><span style="font-size: 12px;">&#10060;<i> Неактуально, информация для исполнителя задачи</i></span></li>
+                                                    {% endif %}
+
+                                                {% endfor %}
+                                            </ul>
+                                   </li>
+                            {% endfor %}
+                            <li>
+                                <!-- Кнопка "Добавить комментарий" в стиле Bootstrap -->
+                                <button class="btn btn-primary custom-btn" onclick="toggleCommentInput()">
+                                    <i class="fas fa-pencil-alt"></i> Добавить комментарий в задачу
+                                </button>
+                                <!-- Поле для ввода комментария -->
+                                <form id="commentForm" action="" method="POST" enctype="multipart/form-data" style="display: none; margin-top: 10px;">
+                                    {{ form.hidden_tag() }} <!-- Добавляем скрытые поля -->
+                                    {{ form.comment.label(class="label-large") }} <!-- Выводим метку поля комментария -->
+                                    {{ form.comment(class="form-control input-large", rows="10") }}<!-- Выводим поле комментария -->
+                                    <!-- Выводим кнопку отправки -->
+                                    <button class="btn btn-success mt-2 custom-button" id="submitBtn" onclick="disableSubmitButton(); this.form.submit();">Отправить комментарий</button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div class="issue-wrapper">
+                <div class="accordion" id="accordionDescription">
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="headingDescription">
+                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
+                                Описание заявки...
+                            </button>
+                        </h2>
+                        <div id="collapseDescription" class="accordion-collapse collapse show" aria-labelledby="headingDescription" data-bs-parent="#accordionDescription">
+                            <div class="accordion-body">
+                                <!-- Описание задачи -->
+                                <div class="description-wrapper">
+                                    {{ issue_detail.description | safe }}
+                                </div>
+                                {% if issue_detail.description | length > 200 %}
+                                    <a class="switchFull" onclick="toggleDescription()">Читать далее...</a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+        </div>
+</div>
+</div>
+
+{% endblock main_page %}
