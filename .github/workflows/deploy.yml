@@ -1,0 +1,40 @@
+name: Deploy Flask App
+
+on:
+  push:
+    branches:
+      - main # Запускать при push в ветку main
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22 # Укажите другой порт, если используется нестандартный
+        script: |
+          set -e # Останавливать скрипт при любой ошибке
+          echo ">>> Connecting to server"
+          cd /var/www/flask_helpdesk/ # <<< ЗАМЕНИТЕ ЭТОТ ПУТЬ!
+          echo ">>> Discarding local changes"
+          git reset --hard HEAD # Отменяем локальные изменения
+          git clean -fd         # Удаляем неотслеживаемые файлы/директории
+          echo ">>> Pulling latest changes"
+          git checkout main
+          git pull origin main
+          echo ">>> Activating virtual environment"
+          source /home/yvarslavan/flask_venv/bin/activate # <<< ПРАВИЛЬНЫЙ ПУТЬ
+          echo ">>> Installing dependencies"
+          pip install -r requirements.txt
+          echo ">>> Restarting application"
+          # --- ЗАМЕНИТЕ КОМАНДУ НИЖЕ НА ВАШУ! ---
+          sudo systemctl restart flask_helpdesk
+          # или: sudo supervisorctl restart flask_helpdesk
+          # или: другая команда перезапуска Gunicorn/uWSGI
+          # --- ----------------------------- ---
+          echo ">>> Deployment finished"
