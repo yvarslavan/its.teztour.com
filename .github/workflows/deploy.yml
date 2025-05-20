@@ -12,36 +12,20 @@ jobs:
     steps:
     - name: Deploy to server
       uses: appleboy/ssh-action@v0.1.10
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        TEST_VAR: "Hello from env block"
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22 # Укажите другой порт, если используется нестандартный
+        port: 22
         script: |
-          set -e # Останавливать скрипт при любой ошибке
+          set -e
           echo ">>> Connecting to server..."
 
-          echo ">>> DEBUG: Checking TEST_VAR..."
-          if [ -z "$TEST_VAR" ]; then
-            echo ">>> DEBUG: TEST_VAR is EMPTY or NOT SET."
-          else
-            echo ">>> DEBUG: TEST_VAR = $TEST_VAR"
-          fi
-
           PROJECT_DIR="/var/www/flask_helpdesk"
-          GIT_REPO_URL_WITH_TOKEN="https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}.git"
+          GIT_REPO_URL_WITH_TOKEN='https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git'
 
-          echo ">>> Checking GITHUB_TOKEN..."
-          if [ -z "$GITHUB_TOKEN" ]; then
-            echo "Ошибка: Переменная GITHUB_TOKEN не установлена или пуста." >&2
-            echo "Убедитесь, что GITHUB_TOKEN корректно передается в 'env' блока 'uses: appleboy/ssh-action@v0.1.10'." >&2
-            exit 1
-          else
-            echo "Переменная GITHUB_TOKEN установлена."
-          fi
+          echo ">>> DEBUG: GIT_REPO_URL_WITH_TOKEN (check if token is embedded):"
+          echo "$GIT_REPO_URL_WITH_TOKEN"
 
           echo ">>> Removing old project directory (if exists): $PROJECT_DIR"
           sudo rm -rf "$PROJECT_DIR"
@@ -58,8 +42,7 @@ jobs:
           git log -n 1
 
           echo ">>> Activating virtual environment"
-          # Убедитесь, что VENV_PATH указывает на правильный путь к venv
-          VENV_PATH="/home/${{ secrets.SSH_USER }}/flask_venv/bin/activate" # Используем secrets.SSH_USER
+          VENV_PATH="/home/${{ secrets.SSH_USER }}/flask_venv/bin/activate"
           if [ ! -f "$VENV_PATH" ]; then
               echo "Ошибка: Файл активации виртуального окружения не найден: $VENV_PATH" >&2
               exit 1
