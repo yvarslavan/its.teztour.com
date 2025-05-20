@@ -20,22 +20,39 @@ jobs:
         script: |
           set -e # Останавливать скрипт при любой ошибке
           echo ">>> Connecting to server"
-          cd /var/www/flask_helpdesk/
-          echo ">>> Force fetching all from origin and updating refs"
-          git fetch --all --force --prune # Принудительно получаем все, обновляем ссылки, удаляем устаревшие удаленные ветки
-          echo ">>> Resetting local main to the latest origin/main"
-          git reset --hard origin/main # Жестко сбрасываем локальную main на состояние origin/main
-          # git clean -fd # Эту команду можно оставить, если хотите удалять неотслеживаемые файлы
+          # Определяем имя директории проекта
+          PROJECT_DIR_NAME="flask_helpdesk"
+          BASE_PROJECT_PATH="/var/www" # Базовый путь к проектам
+          PROJECT_FULL_PATH="${BASE_PROJECT_PATH}/${PROJECT_DIR_NAME}"
+          GIT_REPO_URL="https://github.com/${{ github.repository }}.git" # URL вашего репозитория
+
+          echo ">>> Removing old project directory (if exists)"
+          # Удаляем старую директорию проекта, если она существует
+          # ОСТОРОЖНО: это удалит все содержимое!
+          if [ -d "${PROJECT_FULL_PATH}" ]; then
+            sudo rm -rf "${PROJECT_FULL_PATH}"
+          fi
+
+          echo ">>> Creating project directory"
+          sudo mkdir -p "${PROJECT_FULL_PATH}"
+          sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "${PROJECT_FULL_PATH}" # Даем права текущему пользователю
+          cd "${PROJECT_FULL_PATH}" # Переходим в только что созданную директорию
+
+          echo ">>> Cloning repository"
+          # Клонируем только ветку main, без полной истории для скорости
+          git clone --branch main --single-branch "${GIT_REPO_URL}" . # Клонируем в текущую директорию "."
+
           echo ">>> Verifying current commit"
-          git log -n 1 # Показываем, на каком коммите мы сейчас
+          git log -n 1
+
           echo ">>> Activating virtual environment"
-          source /home/yvarslavan/flask_venv/bin/activate
+          # Путь к venv теперь относительно новой структуры или абсолютный
+          source /home/yvarslavan/flask_venv/bin/activate # Убедитесь, что venv находится ВНЕ удаляемой директории
+
           echo ">>> Installing dependencies"
           pip install -r requirements.txt
+
           echo ">>> Restarting application"
-          # --- ЗАМЕНИТЕ КОМАНДУ НИЖЕ НА ВАШУ! ---
           sudo systemctl restart flask_helpdesk
-          # или: sudo supervisorctl restart flask_helpdesk
-          # или: другая команда перезапуска Gunicorn/uWSGI
-          # --- ----------------------------- ---
+
           echo ">>> Deployment finished"
