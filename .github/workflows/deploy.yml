@@ -3,25 +3,18 @@ name: Deploy Flask App
 on:
   push:
     branches:
-      - main  # Запускать при пуше в main
+      - main
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-      # Настраиваем SSH‑ключ и known_hosts для git clone по SSH
-      - name: Setup SSH
-        run: |
-          mkdir -p ~/.ssh
-          # Добавляем приватный ключ в id_rsa
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          # Добавляем GitHub в known_hosts, чтобы git clone не падал на проверке хоста
-          ssh-keyscan github.com >> ~/.ssh/known_hosts
-
       - name: Deploy to server
         uses: appleboy/ssh-action@master
+        # env — на том же уровне, что и with
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
@@ -30,29 +23,22 @@ jobs:
           script: |
             set -e
 
-            echo ">>> Определяем пути"
-            PROJECT_DIR_NAME="flask_helpdesk"
-            BASE_PROJECT_PATH="/var/www"
-            PROJECT_FULL_PATH="${BASE_PROJECT_PATH}/${PROJECT_DIR_NAME}"
-            GIT_REPO_SSH="git@github.com:${{ github.repository }}.git"
+            PROJECT_DIR="/var/www/flask_helpdesk"
+            # используем переданный GITHUB_TOKEN, а не хардкодим его
+            REPO="https://$GITHUB_TOKEN@github.com/${{ github.repository }}.git"
 
-            echo ">>> Удаляем старую директорию"
-            if [ -d "${PROJECT_FULL_PATH}" ]; then
-              sudo rm -rf "${PROJECT_FULL_PATH}"
-            fi
+            echo ">>> Удаляем старую папку"
+            sudo rm -rf "$PROJECT_DIR"
 
-            echo ">>> Создаём директорию и задаём права"
-            sudo mkdir -p "${PROJECT_FULL_PATH}"
-            sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "${PROJECT_FULL_PATH}"
+            echo ">>> Создаём папку и даём права"
+            sudo mkdir -p "$PROJECT_DIR"
+            sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR"
+            cd "$PROJECT_DIR"
 
-            cd "${PROJECT_FULL_PATH}"
-            echo ">>> Клонируем репозиторий по SSH"
-            git clone --branch main --single-branch "${GIT_REPO_SSH}" .
+            echo ">>> Клонируем репозиторий"
+            git clone --branch main --single-branch "$REPO" .
 
-            echo ">>> Текущий коммит:"
-            git log -1 --oneline
-
-            echo ">>> Активируем виртуальное окружение"
+            echo ">>> Активируем venv"
             source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
 
             echo ">>> Устанавливаем зависимости"
