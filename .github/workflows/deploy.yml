@@ -21,12 +21,13 @@ jobs:
           set -e # Останавливать скрипт при любой ошибке
           echo ">>> Connecting to server"
           cd /var/www/flask_helpdesk/ # <<< ЗАМЕНИТЕ ЭТОТ ПУТЬ!
-          echo ">>> Discarding local changes"
-          git reset --hard HEAD # Отменяем локальные изменения
-          git clean -fd         # Удаляем неотслеживаемые файлы/директории
-          echo ">>> Pulling latest changes"
-          git checkout main
-          git pull origin main
+          echo ">>> Discarding local changes and fetching latest from origin"
+          git reset --hard HEAD
+          git clean -fd
+          git fetch origin # Явно запрашиваем все изменения с origin
+          echo ">>> Forcing checkout to latest origin/main"
+          git checkout -B main origin/main # Принудительно переключаем локальную main на origin/main
+          # git pull origin main # Эту команду можно закомментировать или удалить, т.к. checkout -B ... origin/main уже должен сделать всё необходимое
           echo ">>> Activating virtual environment"
           source /home/yvarslavan/flask_venv/bin/activate # <<< ПРАВИЛЬНЫЙ ПУТЬ
           echo ">>> Installing dependencies"
