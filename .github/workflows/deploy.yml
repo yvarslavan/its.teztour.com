@@ -2,42 +2,52 @@ name: Deploy Flask App
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main # Запускать при push в ветку main
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-      - name: Deploy to server
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.SSH_HOST }}
-          username: ${{ secrets.SSH_USER }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          port: 22
-          script: |
-            set -e
-            PROJECT_DIR="/var/www/flask_helpdesk"
-            REPO="https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}.git"
+    - name: Deploy to server
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22 # Укажите другой порт, если используется нестандартный
+        script: |
+          set -e # Останавливать скрипт при любой ошибке
+          echo ">>> Connecting to server"
+          # Определяем имя директории проекта
+          PROJECT_DIR="/var/www/flask_helpdesk"
+          # используем переданный GITHUB_TOKEN, а не хардкодим его
+          REPO="https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}.git"
 
-            echo ">>> Удаляем старую папку"
-            sudo rm -rf "$PROJECT_DIR"
+          echo ">>> Удаляем старую папку"
+          sudo rm -rf "$PROJECT_DIR"
 
-            echo ">>> Создаём папку и даём права"
-            sudo mkdir -p "$PROJECT_DIR"
-            sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR"
-            cd "$PROJECT_DIR"
+          echo ">>> Создаём папку и даём права"
+          sudo mkdir -p "$PROJECT_DIR"
+          sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR" # Даем права текущему пользователю
+          cd "$PROJECT_DIR" # Переходим в только что созданную директорию
 
-            echo ">>> Клонируем репозиторий"
-            git clone --branch main --single-branch "$REPO" .
+          echo ">>> Cloning repository"
+          # Клонируем только ветку main, без полной истории для скорости
+          git clone --branch main --single-branch "${REPO}" . # Клонируем в текущую директорию "."
 
-            echo ">>> Активируем venv"
-            source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
+          echo ">>> Verifying current commit"
+          git log -n 1
 
-            echo ">>> Устанавливаем зависимости"
-            pip install --upgrade pip
-            pip install -r requirements.txt
+          echo ">>> Activating virtual environment"
+          # Путь к venv теперь относительно новой структуры или абсолютный
+          source /home/yvarslavan/flask_venv/bin/activate # Убедитесь, что venv находится ВНЕ удаляемой директории
 
-            echo ">>> Перезапускаем сервис"
-            sudo systemctl restart flask_helpdesk
+          echo ">>> Installing dependencies"
+          pip install -r requirements.txt
+
+          echo ">>> Restarting application"
+          sudo systemctl restart flask_helpdesk
+
+          echo ">>> Deployment finished"
