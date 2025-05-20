@@ -12,6 +12,8 @@ jobs:
     steps:
     - name: Deploy to server
       uses: appleboy/ssh-action@master
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
@@ -19,40 +21,49 @@ jobs:
         port: 22 # Укажите другой порт, если используется нестандартный
         script: |
           set -e # Останавливать скрипт при любой ошибке
-          echo ">>> Connecting to server"
-          # Определяем имя директории проекта
-          PROJECT_DIR_NAME="flask_helpdesk"
-          BASE_PROJECT_PATH="/var/www" # Базовый путь к проектам
-          PROJECT_FULL_PATH="${BASE_PROJECT_PATH}/${PROJECT_DIR_NAME}"
-          GIT_REPO_URL="https://github.com/${{ github.repository }}.git" # URL вашего репозитория
+          echo ">>> Connecting to server..."
 
-          echo ">>> Removing old project directory (if exists)"
-          # Удаляем старую директорию проекта, если она существует
-          # ОСТОРОЖНО: это удалит все содержимое!
-          if [ -d "${PROJECT_FULL_PATH}" ]; then
-            sudo rm -rf "${PROJECT_FULL_PATH}"
+          PROJECT_DIR="/var/www/flask_helpdesk"
+          GIT_REPO_URL_WITH_TOKEN="https://x-access-token:$GITHUB_TOKEN@github.com/${{ github.repository }}.git"
+
+          echo ">>> Checking GITHUB_TOKEN..."
+          if [ -z "$GITHUB_TOKEN" ]; then
+            echo "Ошибка: Переменная GITHUB_TOKEN не установлена или пуста." >&2
+            echo "Убедитесь, что GITHUB_TOKEN корректно передается в 'env' блока 'uses: appleboy/ssh-action@master'." >&2
+            exit 1
+          else
+            echo "Переменная GITHUB_TOKEN установлена."
           fi
 
-          echo ">>> Creating project directory"
-          sudo mkdir -p "${PROJECT_FULL_PATH}"
-          sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "${PROJECT_FULL_PATH}" # Даем права текущему пользователю
-          cd "${PROJECT_FULL_PATH}" # Переходим в только что созданную директорию
+          echo ">>> Removing old project directory (if exists): $PROJECT_DIR"
+          sudo rm -rf "$PROJECT_DIR"
 
-          echo ">>> Cloning repository"
-          # Клонируем только ветку main, без полной истории для скорости
-          git clone --branch main --single-branch "${GIT_REPO_URL}" . # Клонируем в текущую директорию "."
+          echo ">>> Creating project directory and setting permissions: $PROJECT_DIR"
+          sudo mkdir -p "$PROJECT_DIR"
+          sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR"
+          cd "$PROJECT_DIR"
 
-          echo ">>> Verifying current commit"
+          echo ">>> Cloning repository: ${{ github.repository }} (branch: main)"
+          git clone --branch main --single-branch "$GIT_REPO_URL_WITH_TOKEN" .
+
+          echo ">>> Verifying current commit in cloned repository"
           git log -n 1
 
           echo ">>> Activating virtual environment"
-          # Путь к venv теперь относительно новой структуры или абсолютный
-          source /home/yvarslavan/flask_venv/bin/activate # Убедитесь, что venv находится ВНЕ удаляемой директории
+          # Убедитесь, что VENV_PATH указывает на правильный путь к venv
+          VENV_PATH="/home/${{ secrets.SSH_USER }}/flask_venv/bin/activate" # Используем secrets.SSH_USER
+          if [ ! -f "$VENV_PATH" ]; then
+              echo "Ошибка: Файл активации виртуального окружения не найден: $VENV_PATH" >&2
+              exit 1
+          fi
+          source "$VENV_PATH"
+          echo "Virtual environment activated."
 
-          echo ">>> Installing dependencies"
+          echo ">>> Upgrading pip and installing dependencies from requirements.txt"
+          pip install --upgrade pip
           pip install -r requirements.txt
 
-          echo ">>> Restarting application"
+          echo ">>> Restarting application: flask_helpdesk"
           sudo systemctl restart flask_helpdesk
 
-          echo ">>> Deployment finished"
+          echo ">>> Deployment successfully finished!"

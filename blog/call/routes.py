@@ -1003,7 +1003,7 @@ def contact_center_moscow(ani=None, agent_id=None):
                         'has_client_card': has_client_card,
                         'is_unknown': is_unknown,
                         'id': call.get("id"),
-                        'pp_id': call.get("privat_processing_id"),
+                        'pp_id': str(call.get("privat_processing_id")).split(':')[0] if call.get("privat_processing_id") else None,
                         'result': call.get("result"), # Добавляем числовой результат
                         'call_result_text': call.get("call_result_text"), # Добавляем текстовый результат
                         'card_id': call.get("card_id"), # <<< Добавляем недостающий card_id

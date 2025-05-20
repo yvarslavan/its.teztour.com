@@ -2533,8 +2533,16 @@
              modal.style.opacity = '1';
         }, 10); // Небольшая задержка для срабатывания transition
 
-        fetch(`/api/agency-call-info/${ppId}`)
-            .then(response => response.json())
+        fetch(`/api/call-agency-data/${ppId}`)
+            .then(response => {
+                if (!response.ok) {
+                    // Попытаемся прочитать текст ошибки, если это не JSON
+                    return response.text().then(text => {
+                        throw new Error(`Ошибка сервера: ${response.status} - ${text || 'Без дополнительной информации'}`);
+                    });
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success && data.agency_data) {
                     // Используем новую функцию для форматирования
