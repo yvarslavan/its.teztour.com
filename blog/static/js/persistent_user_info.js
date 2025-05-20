@@ -265,7 +265,7 @@
                 // Предполагаем, что базовый цвет текста и фона задается классом .finesse-mention
                 // и они достаточно контрастны. Если нет, можно добавить:
                 // finesseMention.style.color = 'white';
-                // finesseMention.style.backgroundColor = '#28a745'; // Пример основного зеленого
+                finesseMention.style.backgroundColor = '#007bff'; // Голубой цвет кнопки
 
                 const originalBgColor = getComputedStyle(finesseMention).backgroundColor;
                 // Яркий зеленый для ховера, который хорошо сочетается с белым текстом
