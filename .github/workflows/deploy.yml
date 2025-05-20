@@ -11,7 +11,7 @@ jobs:
 
     steps:
     - name: Deploy to server
-      uses: appleboy/ssh-action@master
+      uses: appleboy/ssh-action@v0.1.10
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         TEST_VAR: "Hello from env block"
@@ -37,7 +37,7 @@ jobs:
           echo ">>> Checking GITHUB_TOKEN..."
           if [ -z "$GITHUB_TOKEN" ]; then
             echo "Ошибка: Переменная GITHUB_TOKEN не установлена или пуста." >&2
-            echo "Убедитесь, что GITHUB_TOKEN корректно передается в 'env' блока 'uses: appleboy/ssh-action@master'." >&2
+            echo "Убедитесь, что GITHUB_TOKEN корректно передается в 'env' блока 'uses: appleboy/ssh-action@v0.1.10'." >&2
             exit 1
           else
             echo "Переменная GITHUB_TOKEN установлена."
