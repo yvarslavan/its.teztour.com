@@ -3,56 +3,63 @@ name: Deploy Flask App
 on:
   push:
     branches:
-      - main # Запускать при push в ветку main
+      - main  # Запускать при пуше в main
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-    - name: Deploy to server
-      uses: appleboy/ssh-action@master
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22 # Укажите другой порт, если используется нестандартный
-        script: |
-          set -e # Останавливать скрипт при любой ошибке
-          echo ">>> Connecting to server"
-          # Определяем имя директории проекта
-          PROJECT_DIR_NAME="flask_helpdesk"
-          BASE_PROJECT_PATH="/var/www" # Базовый путь к проектам
-          PROJECT_FULL_PATH="${BASE_PROJECT_PATH}/${PROJECT_DIR_NAME}"
-          GIT_REPO_URL="https://github.com/${{ github.repository }}.git" # URL вашего репозитория
+      - name: Подготовка known_hosts
+        uses: webfactory/ssh-agent@v0.8.1
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      - name: Добавить github.com в known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
 
-          echo ">>> Removing old project directory (if exists)"
-          # Удаляем старую директорию проекта, если она существует
-          # ОСТОРОЖНО: это удалит все содержимое!
-          if [ -d "${PROJECT_FULL_PATH}" ]; then
-            sudo rm -rf "${PROJECT_FULL_PATH}"
-          fi
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
 
-          echo ">>> Creating project directory"
-          sudo mkdir -p "${PROJECT_FULL_PATH}"
-          sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "${PROJECT_FULL_PATH}" # Даем права текущему пользователю
-          cd "${PROJECT_FULL_PATH}" # Переходим в только что созданную директорию
+            echo ">>> Определяем пути"
+            PROJECT_DIR_NAME="flask_helpdesk"
+            BASE_PROJECT_PATH="/var/www"
+            PROJECT_FULL_PATH="${BASE_PROJECT_PATH}/${PROJECT_DIR_NAME}"
+            GIT_REPO_SSH="git@github.com:${{ github.repository }}.git"
 
-          echo ">>> Cloning repository"
-          # Клонируем только ветку main, без полной истории для скорости
-          git clone --branch main --single-branch "${GIT_REPO_URL}" . # Клонируем в текущую директорию "."
+            echo ">>> Удаляем старую директорию"
+            if [ -d "${PROJECT_FULL_PATH}" ]; then
+              sudo rm -rf "${PROJECT_FULL_PATH}"
+            fi
 
-          echo ">>> Verifying current commit"
-          git log -n 1
+            echo ">>> Создаём директорию и задаём права"
+            sudo mkdir -p "${PROJECT_FULL_PATH}"
+            sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "${PROJECT_FULL_PATH}"
 
-          echo ">>> Activating virtual environment"
-          # Путь к venv теперь относительно новой структуры или абсолютный
-          source /home/yvarslavan/flask_venv/bin/activate # Убедитесь, что venv находится ВНЕ удаляемой директории
+            cd "${PROJECT_FULL_PATH}"
+            echo ">>> Клонируем репозиторий по SSH"
+            git clone --branch main --single-branch "${GIT_REPO_SSH}" .
 
-          echo ">>> Installing dependencies"
-          pip install -r requirements.txt
+            echo ">>> Текущий коммит:"
+            git log -1 --oneline
 
-          echo ">>> Restarting application"
-          sudo systemctl restart flask_helpdesk
+            echo ">>> Активируем виртуальное окружение"
+            # Предполагаем, что ВО уже создано и находится вне PROJECT_FULL_PATH
+            source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
 
-          echo ">>> Deployment finished"
+            echo ">>> Устанавливаем зависимости"
+            pip install --upgrade pip
+            pip install -r requirements.txt
+
+            echo ">>> Перезапускаем сервис"
+            sudo systemctl restart flask_helpdesk
+
+            echo ">>> Готово!"
