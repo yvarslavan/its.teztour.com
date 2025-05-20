@@ -10,13 +10,14 @@ jobs:
     runs-on: self-hosted
 
     steps:
-      - name: Подготовка known_hosts
-        uses: webfactory/ssh-agent@v0.8.1
-        with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
-      - name: Добавить github.com в known_hosts
+      # Настраиваем SSH‑ключ и known_hosts для git clone по SSH
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
+          # Добавляем приватный ключ в id_rsa
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          # Добавляем GitHub в known_hosts, чтобы git clone не падал на проверке хоста
           ssh-keyscan github.com >> ~/.ssh/known_hosts
 
       - name: Deploy to server
@@ -52,7 +53,6 @@ jobs:
             git log -1 --oneline
 
             echo ">>> Активируем виртуальное окружение"
-            # Предполагаем, что ВО уже создано и находится вне PROJECT_FULL_PATH
             source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
 
             echo ">>> Устанавливаем зависимости"
