@@ -2,48 +2,42 @@ name: Deploy Flask App
 
 on:
   push:
-    branches:
-      - main
+    branches: [main]
 
 jobs:
   deploy:
     runs-on: self-hosted
 
     steps:
-- name: Deploy to server
-  uses: appleboy/ssh-action@master
-  with:
-    host: ${{ secrets.SSH_HOST }}
-    username: ${{ secrets.SSH_USER }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    port: 22
-    script: |
-      set -e
+      - name: Deploy to server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            set -e
+            PROJECT_DIR="/var/www/flask_helpdesk"
+            REPO="https://${{ secrets.PERSONAL_ACCESS_TOKEN }}@github.com/${{ github.repository }}.git"
 
-      PROJECT_DIR="/var/www/flask_helpdesk"
-      # ========== Вот здесь подставляем токен на этапе render, до SSH ========
-      REPO="https://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@github.com/yvarslavan/flask_helpdesk.git"
+            echo ">>> Удаляем старую папку"
+            sudo rm -rf "$PROJECT_DIR"
 
-      echo ">>> Удаляем старую папку"
-      sudo rm -rf "$PROJECT_DIR"
+            echo ">>> Создаём папку и даём права"
+            sudo mkdir -p "$PROJECT_DIR"
+            sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR"
+            cd "$PROJECT_DIR"
 
-      echo ">>> Создаём папку и даём права"
-      sudo mkdir -p "$PROJECT_DIR"
-      sudo chown ${{ secrets.SSH_USER }}:${{ secrets.SSH_USER }} "$PROJECT_DIR"
-      cd "$PROJECT_DIR"
+            echo ">>> Клонируем репозиторий"
+            git clone --branch main --single-branch "$REPO" .
 
-      echo ">>> Клонируем репозиторий"
-      git clone --branch main --single-branch "$REPO" .
+            echo ">>> Активируем venv"
+            source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
 
-      echo ">>> Активируем venv"
-      source /home/${{ secrets.SSH_USER }}/flask_venv/bin/activate
+            echo ">>> Устанавливаем зависимости"
+            pip install --upgrade pip
+            pip install -r requirements.txt
 
-      echo ">>> Устанавливаем зависимости"
-      pip install --upgrade pip
-      pip install -r requirements.txt
-
-      echo ">>> Перезапускаем сервис"
-      sudo systemctl restart flask_helpdesk
-
-      echo ">>> Готово!"
-
+            echo ">>> Перезапускаем сервис"
+            sudo systemctl restart flask_helpdesk
