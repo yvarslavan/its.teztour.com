@@ -3,6 +3,131 @@
 {% block main_page %}
 
 <style>
+    /* Общие стили страницы и основной карточки */
+    .issue-page-container {
+        padding: 20px; /* Отступы для всей страницы */
+        background-color: #f4f7f6; /* Светлый фон как на странице списка заявок */
+        margin-top: -50px; /* Уменьшаем отступ от главного меню */
+    }
+
+    .issue-details-card {
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 25px;
+        border: none; /* Убираем стандартную границу bootstrap card */
+    }
+
+    .issue-card-header {
+        background-color: #ffffff; /* Убираем фон у заголовка карточки */
+        border-bottom: 1px solid #e0e0e0; /* Тонкая линия-разделитель */
+        padding: 20px 25px;
+        display: flex;
+        align-items: center;
+    }
+
+    .issue-title-text {
+        font-family: 'Roboto', sans-serif;
+        font-size: 2em; /* Увеличенный размер заголовка */
+        color: #333;
+        font-weight: 700; /* Более жирный шрифт */
+        margin: 0;
+        margin-left: 10px; /* Отступ от иконки статуса */
+    }
+
+    .status-icon-title {
+        font-size: 1.8em; /* Размер иконки статуса в заголовке */
+        /* Цвета будут определяться ниже в зависимости от статуса */
+    }
+
+    /* Стили для статусов (можно расширить как в issues.html) */
+    .status-icon-closed { color: #28a745; }
+    .status-icon-open { color: #007bff; }
+    .status-icon-in-progress { color: #ffc107; }
+    .status-icon-rejected { color: #dc3545; }
+    .status-icon-default { color: #6c757d; }
+
+    /* НОВЫЕ СТИЛИ ДЛЯ АККОРДЕОНА - АНАЛОГИЧНО contact_center_moscow.html */
+    .accordion-panel {
+        background-color: #fff;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+        border: 1px solid #e3e6f0;
+    }
+
+    .accordion-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        cursor: pointer;
+        border-bottom: 1px solid #d0e8ef; /* Слегка адаптируем цвет границы */
+        background-color: #e0f7fa; /* Новый фон цвета морской волны */
+        border-radius: 8px 8px 0 0; /* Скругление только верхних углов */
+        transition: background-color 0.2s ease;
+    }
+
+    .accordion-header:hover {
+        background-color: #ccecf2; /* Более темный оттенок при наведении */
+    }
+
+    .accordion-header h5 { /* Используем h5 для заголовка аккордеона */
+        margin: 0;
+        font-size: 1.1em;
+        font-weight: 600;
+        color: #5a5c69;
+        display: flex;
+        align-items: center;
+    }
+
+    .panel-icon { /* Иконка рядом с заголовком панели */
+        margin-right: 10px;
+        color: #4e73df; /* Пример основного цвета */
+        font-size: 1.2em;
+    }
+
+    .accordion-icon {
+        font-size: 1em;
+        color: #858796;
+        transition: transform 0.3s ease;
+    }
+
+    .accordion-header[aria-expanded="true"] .accordion-icon {
+        transform: rotate(180deg);
+    }
+
+    .accordion-content { /* Ранее .accordion-body-styled */
+        padding: 20px;
+        background-color: #e0f7fa; /* Новый фон цвета морской волны для контента */
+        border-top: none;
+        border-radius: 0 0 8px 8px; /* Скругление нижних углов */
+    }
+    /* Конец новых стилей для аккордеона */
+
+    .info-item {
+        display: flex;
+        align-items: center; /* Выравнивание иконки и текста по вертикали */
+        margin-bottom: 8px; /* Отступ между элементами информации */
+        font-family: 'Helvetica Neue', Arial, sans-serif;
+        font-size: 16px;
+    }
+
+    .info-item .info-icon {
+        margin-right: 10px; /* Отступ иконки от текста */
+        color: #555; /* Цвет иконок */
+        width: 20px; /* Фиксированная ширина для выравнивания */
+    }
+
+    .info-item .info-label {
+        color: black;
+        font-weight: bold;
+    }
+
+    .info-item .info-value {
+        color: black;
+        margin-left: 10px;
+    }
 
     .description-wrapper {
         max-height: 150px;
@@ -42,18 +167,342 @@
             border: none !important; /* Убираем рамку */
         }
 
+    /* Стили для блока ВЛОЖЕНИЙ */
+    .attachment-list {
+        list-style-type: none;
+        padding-left: 0;
+        margin-top: 0; /* Убираем верхний отступ, если accordion-content уже дает padding */
+    }
+
+    .attachment-item {
+        display: flex;
+        align-items: center;
+        padding: 12px 15px; /* Оптимизированные отступы */
+        border: 1px solid #e9ecef; /* Светлая граница */
+        border-radius: 6px;
+        margin-bottom: 10px;
+        background-color: #f8f9fc;
+        transition: background-color 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .attachment-item:last-child {
+        margin-bottom: 0; /* Убираем отступ у последнего элемента */
+    }
+
+    .attachment-item:hover {
+        background-color: #f1f3f8;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .attachment-icon-wrapper { /* Обертка для иконки, чтобы управлять размером и выравниванием */
+        font-size: 1.7em; /* Размер иконки файла */
+        margin-right: 15px;
+        width: 30px;
+        min-width: 30px; /* Гарантируем минимальную ширину */
+        text-align: center;
+        line-height: 1; /* Для лучшего вертикального выравнивания иконки */
+    }
+
+    /* Иконки для разных типов файлов (Font Awesome) */
+    .attachment-icon.fa-file-pdf { color: #e63946; }
+    .attachment-icon.fa-file-word { color: #007bff; }
+    .attachment-icon.fa-file-excel { color: #28a745; }
+    .attachment-icon.fa-file-powerpoint { color: #fd7e14; }
+    .attachment-icon.fa-file-image { color: #6f42c1; }
+    .attachment-icon.fa-file-archive { color: #ffc107; }
+    .attachment-icon.fa-file-audio { color: #17a2b8; }
+    .attachment-icon.fa-file-video { color: #e83e8c; }
+    .attachment-icon.fa-file-code { color: #343a40; }
+    .attachment-icon.fa-file-csv { color: #1aaa55; }
+    .attachment-icon.fa-file-alt { color: #6c757d; } /* Для остальных */
+
+
+    .attachment-details {
+        flex-grow: 1;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden; /* Чтобы длинные имена файлов не ломали верстку */
+    }
+
+    .attachment-filename {
+        font-weight: 500;
+        color: #343a40;
+        text-decoration: none;
+        font-size: 0.95em;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* Добавляем многоточие для длинных имен */
+    }
+    .attachment-filename:hover {
+        text-decoration: underline;
+        color: #0056b3;
+    }
+
+    .attachment-meta {
+        font-size: 0.8em;
+        color: #6c757d;
+        margin-top: 3px;
+    }
+
+    .attachment-actions {
+        margin-left: 15px;
+        flex-shrink: 0; /* Чтобы кнопка не сжималась */
+    }
+
+    .download-btn {
+        color: #007bff;
+        text-decoration: none;
+        padding: 6px 10px;
+        border-radius: 5px;
+        transition: background-color 0.2s ease, color 0.2s ease;
+        border: 1px solid #007bff;
+        display: inline-flex; /* Для выравнивания иконки и текста */
+        align-items: center;
+        font-size: 0.85em;
+    }
+    .download-btn:hover {
+        background-color: #0056b3;
+        color: #fff;
+        border-color: #0056b3;
+    }
+    .download-btn i {
+        margin-right: 6px;
+    }
+    /* Конец стилей для ВЛОЖЕНИЙ */
+
+    /* Стили для ИСТОРИИ ЗАДАЧИ */
+    .issue-history-list {
+        list-style-type: none;
+        padding-left: 0;
+        position: relative; /* Для timeline */
+        margin-top: 10px;
+    }
+
+    /* Стили для timeline (вертикальная линия) */
+    .issue-history-list::before {
+        content: '';
+        position: absolute;
+        left: 20px; /* Позиционирование линии относительно иконок */
+        top: 10px;
+        bottom: 10px;
+        width: 2px;
+        background-color: #e3e6f0; /* Цвет линии */
+        z-index: 1;
+    }
+
+    .history-entry {
+        padding: 15px 0 15px 55px; /* Отступ слева для размещения иконки и линии */
+        position: relative; /* Для позиционирования элементов внутри */
+        margin-bottom: 15px;
+        background-color: #fff; /* Фон для карточки события */
+        border-radius: 6px;
+        border: 1px solid #e9ecef;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+
+    .history-entry:last-child {
+        margin-bottom: 0;
+    }
+
+    .history-icon-wrapper {
+        position: absolute;
+        left: 10px; /* Позиционируем иконку на линии */
+        top: 18px;
+        width: 22px; /* Размер контейнера иконки */
+        height: 22px;
+        border-radius: 50%;
+        background-color: #fff; /* Фон чтобы перекрыть линию */
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2; /* Чтобы иконка была над линией */
+        border: 2px solid #e3e6f0; /* Рамка вокруг иконки */
+    }
+
+    .history-icon {
+        font-size: 0.8em;
+        color: #4e73df; /* Основной цвет для иконок событий */
+    }
+
+    /* Разные цвета для иконок событий */
+    .history-icon.fa-comment-dots { color: #1cc88a; } /* Зеленый для комментариев */
+    .history-icon.fa-comment-slash { color: #e74a3b; } /* Красный для закрытых комментариев */
+    .history-icon.fa-tag { color: #f6c23e; } /* Желтый для смены статуса */
+    .history-icon.fa-edit { color: #36b9cc; } /* Бирюзовый для других изменений */
+    .history-icon.fa-plus-circle { color: #4e73df; } /* Синий для создания */
+
+
+    .history-info {
+        font-size: 0.9em;
+        color: #5a5c69;
+        margin-bottom: 8px;
+    }
+
+    .history-user {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .history-date {
+        color: #858796;
+        font-size: 0.9em;
+        margin-left: 5px;
+    }
+
+    .history-details-list {
+        list-style-type: none;
+        padding-left: 0;
+        font-size: 0.85em;
+        margin-bottom: 0;
+    }
+
+    .history-detail-item {
+        padding: 3px 0;
+        color: #5a5c69;
+        display: flex;
+        align-items: center;
+    }
+    .history-detail-item .fas { /* Иконка для элемента детали */
+        margin-right: 8px;
+        font-size: 0.9em;
+        color: #858796;
+    }
+
+    .history-detail-item .fa-check-circle { color: #1cc88a; } /* Зеленый для успешных изменений */
+    .history-detail-item .fa-times-circle { color: #e74a3b; } /* Красный для отклонений */
+    .history-detail-item .fa-arrow-right { color: #f6c23e; } /* Желтый для "было -> стало" */
+
+
+    .history-notes {
+        background-color: #f8f9fc; /* Светлый фон для комментариев */
+        border: 1px solid #e3e6f0;
+        padding: 10px 15px;
+        border-radius: 5px;
+        font-size: 0.9em;
+        color: #343a40;
+        margin-top: 10px;
+        word-wrap: break-word;
+    }
+
+    .history-notes.private {
+        background-color: #fdf3f2; /* Другой фон для приватных */
+        border-color: #f5c6cb;
+        color: #721c24;
+    }
+    .history-notes.private .fas {
+        margin-right: 5px;
+    }
+
+    .add-comment-section {
+        padding-bottom: 15px; /* Отступ снизу до разделителя */
+        margin-bottom: 20px; /* Отступ снизу до списка истории */
+        border-bottom: 1px solid #e3e6f0; /* Разделитель снизу */
+    }
+
+    .add-comment-btn {
+        display: inline-flex;
+        align-items: center;
+        font-size: 0.95em;
+        padding: 8px 15px;
+    }
+    .add-comment-btn i {
+        margin-right: 8px;
+    }
+
+    .history-detail-item strong { /* Добавляем отступы для жирных элементов в истории */
+        margin-left: 3px;
+        margin-right: 3px;
+    }
+    /* Конец стилей для ИСТОРИИ ЗАДАЧИ */
+
+    /* Стили для ОПИСАНИЯ ЗАЯВКИ */
+    .description-content-wrapper { /* Обёртка для всего содержимого описания, включая кнопку */
+        /* Можно добавить общий стиль, если нужно */
+    }
+
+    .description-text-block { /* Блок с самим текстом описания */
+        font-size: 0.95em;
+        line-height: 1.6;
+        color: #343a40;
+        padding: 15px;
+        background-color: #f8f9fc; /* Очень светлый фон */
+        border-radius: 5px;
+        white-space: pre-wrap; /* Сохраняем пробелы и переносы строк */
+        word-wrap: break-word; /* Для переноса очень длинных слов без пробелов */
+    }
+
+    .description-wrapper { /* Контейнер для ограничения высоты текста */
+        max-height: 180px; /* Начальная максимальная высота */
+        overflow: hidden;
+        position: relative;
+        transition: max-height 0.4s ease-in-out;
+    }
+
+    .description-wrapper.expanded {
+        max-height: 1500px; /* Достаточно большая высота для полного текста */
+    }
+
+    .toggle-description-btn {
+        display: inline-flex; /* Для выравнивания иконки и текста */
+        align-items: center;
+        margin-top: 12px;
+        padding: 7px 14px;
+        font-size: 0.9em;
+        font-weight: 500;
+        color: #007bff;
+        background-color: transparent;
+        border: 1px solid #007bff;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .toggle-description-btn:hover {
+        background-color: #0069d9;
+        color: #fff;
+        border-color: #0062cc;
+    }
+
+    .toggle-description-btn .btn-icon {
+        margin-right: 7px;
+    }
+    /* Конец стилей для ОПИСАНИЯ ЗАЯВКИ */
+
+    /* Удаление старых стилей для истории, если они специфичны */
+    /* ul.issue-history { ... } */
+    /* .journal-entry { ... } */
+    /* .journal-info { ... } */
+    /* .detail-list { ... } */
+    /* .detail-item { ... } */
+    /* .journal-notes { ... } */
+    /* .comment-container { ... } */
+
+
+    /* Обновленные стили для всех кнопок аккордеонов - УДАЛЯЕМ СТАРЫЕ СТИЛИ */
+    /* .accordion-button { ... } */
+    /* .accordion-button:focus { ... } */
+    /* .accordion-button:not(.collapsed) { ... } */
+
 </style>
 
 <script>
 
      function toggleDescription() {
         var descriptionWrapper = document.querySelector('.description-wrapper');
+        var toggleButton = document.getElementById('toggleDescriptionBtn');
+        var buttonIcon = toggleButton.querySelector('.btn-icon');
+        var buttonText = toggleButton.querySelector('.btn-text');
+
         descriptionWrapper.classList.toggle('expanded');
-        var switchFull = document.querySelector('.switchFull');
+
         if (descriptionWrapper.classList.contains('expanded')) {
-            switchFull.textContent = 'Скрыть...';
+            buttonText.textContent = 'Скрыть';
+            buttonIcon.classList.remove('fa-chevron-down');
+            buttonIcon.classList.add('fa-chevron-up');
         } else {
-            switchFull.textContent = 'Читать далее...';
+            buttonText.textContent = 'Читать далее';
+            buttonIcon.classList.remove('fa-chevron-up');
+            buttonIcon.classList.add('fa-chevron-down');
         }
     }
 
@@ -72,57 +521,72 @@
         submitButton.innerText = 'Отправка, ожидайте...';
     }
 
-
 </script>
 
-<div class="card" style="background-color: #e8f5f3; border-radius: 8px; border: none;">
-    <div class="card-header d-flex justify-content-between align-items-center" style="background-color: #e8f5f3; border-bottom: none;">
-        <h2 style="font-family: 'Roboto', sans-serif; font-size: 1.8em; color: #333; margin: 15px 0; font-weight: bold;">
+<div class="issue-page-container">
+<div class="issue-details-card">
+    <div class="issue-card-header">
+        {% set status_class = 'status-icon-default' %}
+        {% set status_icon_tag = 'fas fa-question-circle' %}
+        {% if issue_detail.status_name in ['Закрыта', 'Closed', 'Resolved'] %}
+            {% set status_class = 'status-icon-closed' %}
+            {% set status_icon_tag = 'fas fa-check-circle' %}
+        {% elif issue_detail.status_name in ['Новая', 'Открыта', 'Open', 'New'] %}
+            {% set status_class = 'status-icon-open' %}
+            {% set status_icon_tag = 'fas fa-folder-open' %}
+        {% elif issue_detail.status_name in ['В работе', 'In Progress'] %}
+            {% set status_class = 'status-icon-in-progress' %}
+            {% set status_icon_tag = 'fas fa-clock' %}
+        {% elif issue_detail.status_name in ['Отклонена', 'Rejected'] %}
+            {% set status_class = 'status-icon-rejected' %}
+            {% set status_icon_tag = 'fas fa-times-circle' %}
+        {% endif %}
+        <i class="{{ status_icon_tag }} status-icon-title {{ status_class }}"></i>
+        <h2 class="issue-title-text">
             #{{issue_detail.id}} - {{issue_detail.subject}}
         </h2>
     </div>
-    <div class="card-body">
-        <div class="accordion accordion-flush" id="accordionFlushDetails">
-            <div class="accordion-item" style="background-color: transparent; border: none;">
-                <h2 class="accordion-header" id="detailsHeading">
-                    <button id="accordionButtonIssueInfo"
-                            class="accordion-button"
-                            type="button"
-                            data-bs-toggle="collapse"
-                            data-bs-target="#detailsCollapse"
-                            aria-expanded="true"
-                            aria-controls="detailsCollapse"
-                            style="background-color: #0d6efd; color: white; font-weight: 500; border-radius: 4px;">
-                        Сведения о задаче...
-                    </button>
-                </h2>
-                <div id="detailsCollapse" class="accordion-collapse collapse show" aria-labelledby="accordionFlushDetails">
-                    <div class="accordion-body" style="background-color: white; border: 1px solid #dfe1e6; border-radius: 4px; padding: 15px; margin-top: 10px;">
+    <div class="card-body" style="padding: 20px 25px;">
+        <div class="accordion" id="accordionFlushDetails">
+            <!-- Сведения о задаче -->
+            <div class="accordion-panel">
+                <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#detailsCollapse" aria-expanded="true" aria-controls="detailsCollapse">
+                    <h5><i class="fas fa-info-circle panel-icon"></i>Сведения о задаче</h5>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </div>
+                <div id="detailsCollapse" class="accordion-collapse collapse show">
+                    <div class="accordion-content">
                         <div style="display: flex; flex-wrap: wrap; gap: 20px;">
-                            <div style="flex: 1; display: flex; flex-direction: column;">
-                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                    <span style="color: black; font-weight: bold; font-size: 16px;">Статус:</span>
+                            <div style="flex: 1; display: flex; flex-direction: column; gap: 5px;">
+                                <div class="info-item">
+                                    <span class="info-label">Статус:</span>
                                     {% if issue_detail.status_name in 'Закрыта' %}
-                                        <span style="color: white; margin-left: 10px; background-color: rgb(5, 102, 57); padding: 2px 5px; border-radius: 5px; font-size: 14px;">{{ issue_detail.status_name }}</span>
+                                        <span class="info-value" style="color: white; background-color: #28a745; padding: 3px 8px; border-radius: 4px; font-size: 14px;">{{ issue_detail.status_name }}</span>
+                                    {% elif issue_detail.status_name in ['В работе', 'In Progress'] %}
+                                        <span class="info-value" style="color: black; background-color: #ffc107; padding: 3px 8px; border-radius: 4px; font-size: 14px;">{{ issue_detail.status_name }}</span>
+                                    {% elif issue_detail.status_name in ['Отклонена', 'Rejected'] %}
+                                        <span class="info-value" style="color: white; background-color: #dc3545; padding: 3px 8px; border-radius: 4px; font-size: 14px;">{{ issue_detail.status_name }}</span>
                                     {% else %}
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.status_name }}</span>
+                                        <span class="info-value" style="color: black; background-color: #f0f0f0; padding: 3px 8px; border-radius: 4px; font-size: 14px;">{{ issue_detail.status_name }}</span>
                                     {% endif %}
                                 </div>
 
-                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                    <span style="color: black; font-weight: bold; font-size: 16px;">Автор:</span>
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">
-                                            {% if issue_detail.author_lastname is defined and issue_detail.author_lastname is not none %}
-                                                {{ issue_detail.author_lastname }} {{ issue_detail.author_firstname }}
-                                            {% else %}
-                                                Нет данных
-                                            {% endif %}
+                                <div class="info-item">
+                                    <i class="fas fa-user fa-fw info-icon"></i>
+                                    <span class="info-label">Автор:</span>
+                                    <span class="info-value">
+                                        {% if issue_detail.author_lastname is defined and issue_detail.author_lastname is not none %}
+                                            {{ issue_detail.author_lastname }} {{ issue_detail.author_firstname }}
+                                        {% else %}
+                                            Нет данных
+                                        {% endif %}
                                     </span>
                                 </div>
 
-                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                    <span style="color: black; font-weight: bold; font-size: 16px;">Исполнитель:</span>
-                                    <span style="color: black; margin-left: 10px; font-size: 16px;">
+                                <div class="info-item">
+                                    <i class="fas fa-user-cog fa-fw info-icon"></i>
+                                    <span class="info-label">Исполнитель:</span>
+                                    <span class="info-value">
                                         {% if issue_detail.assigned_to_lastname is defined and issue_detail.assigned_to_lastname is not none %}
                                             {{ issue_detail.assigned_to_lastname }} {{ issue_detail.assigned_to_firstname }}
                                         {% else %}
@@ -131,71 +595,81 @@
                                     </span>
                                 </div>
 
-                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                    <span style="color: black; font-weight: bold; font-size: 16px;">Создана:</span>
-                                    <span style="color: black; margin-left: 10px; font-size: 16px;">{{issue_detail.created_on.strftime('%d.%m.%Y %H:%M')}}</span>
+                                <div class="info-item">
+                                    <i class="far fa-calendar-plus fa-fw info-icon"></i>
+                                    <span class="info-label">Создана:</span>
+                                    <span class="info-value">{{issue_detail.created_on.strftime('%d.%m.%Y %H:%M')}}</span>
                                 </div>
 
                                 {% if issue_detail.closed_on %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Закрыта:</span>
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.closed_on.strftime('%d.%m.%Y %H:%M') }}</span>
+                                    <div class="info-item">
+                                        <i class="far fa-calendar-check fa-fw info-icon"></i>
+                                        <span class="info-label">Закрыта:</span>
+                                        <span class="info-value">{{ issue_detail.closed_on.strftime('%d.%m.%Y %H:%M') }}</span>
                                     </div>
                                 {% endif %}
 
                                 <!-- Последнее обновление задачи -->
                                 {% if not issue_detail.closed_on %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Последнее обновление задачи:</span>
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{issue_detail.updated_on.strftime('%d.%m.%Y %H:%M')}}</span>
+                                    <div class="info-item">
+                                        <i class="fas fa-history fa-fw info-icon"></i>
+                                        <span class="info-label">Обновлено:</span>
+                                        <span class="info-value">{{issue_detail.updated_on.strftime('%d.%m.%Y %H:%M')}}</span>
                                     </div>
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Обновлено пользователем:</span>
+                                    <div class="info-item">
+                                        <i class="fas fa-user-edit fa-fw info-icon"></i>
+                                        <span class="info-label">Кем:</span>
+                                        <span class="info-value">
                                         {% if issue_detail.last_updated_by_lastname is defined and issue_detail.last_updated_by_lastname is not none %}
-                                             <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}</span>
+                                             {{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}
                                         {% else %}
                                             Нет данных
                                         {% endif %}
+                                        </span>
                                     </div>
 
                                 {% endif %}
                             </div>
 
-                            <div style="flex: 2; display: flex; flex-direction: column;">
-                                <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                    <span style="color: black; font-weight: bold; font-size: 16px;">Приоритет:</span>
+                            <div style="flex: 2; display: flex; flex-direction: column; gap: 5px;">
+                                <div class="info-item">
+                                    <span class="info-label">Приоритет:</span>
                                     {% if issue_detail.priority_name in ['Высокий', 'Срочный', 'Неотложный'] %}
-                                        <span style="color: white; margin-left: 10px; background-color: red; padding: 2px 5px; border-radius: 5px; font-size: 16px;">{{ issue_detail.priority_name }}</span>
+                                        <span class="info-value" style="color: white; background-color: red; padding: 3px 8px; border-radius: 4px; font-size: 14px;">{{ issue_detail.priority_name }}</span>
                                     {% else %}
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.priority_name }}</span>
+                                        <span class="info-value" style="padding: 3px 8px; border-radius: 4px; font-size: 14px; background-color: #f0f0f0; color: black;">{{ issue_detail.priority_name }}</span>
                                     {% endif %}
                                 </div>
 
                                 {% if issue_detail.start_date %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Дата начала:</span>
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.start_date.strftime('%d.%m.%Y') }}</span>
+                                    <div class="info-item">
+                                        <i class="far fa-calendar-alt fa-fw info-icon"></i>
+                                        <span class="info-label">Дата начала:</span>
+                                        <span class="info-value">{{ issue_detail.start_date.strftime('%d.%m.%Y') }}</span>
                                     </div>
                                 {% endif %}
 
                                 {% if issue_detail.due_date %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Дата окончания:</span>
-                                       <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.due_date.strftime('%d.%m.%Y') }}</span>
+                                    <div class="info-item">
+                                        <i class="far fa-calendar-times fa-fw info-icon"></i>
+                                        <span class="info-label">Дата окончания:</span>
+                                       <span class="info-value">{{ issue_detail.due_date.strftime('%d.%m.%Y') }}</span>
                                     </div>
                                 {% endif %}
 
                                 {% if issue_detail.easy_email_to %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Отправитель:</span>
-                                        <span style="color: black; margin-left: 10px; font-size: 16px;">{{ issue_detail.easy_email_to }}</span>
+                                    <div class="info-item">
+                                        <i class="fas fa-envelope-open-text fa-fw info-icon"></i>
+                                        <span class="info-label">Отправитель:</span>
+                                        <span class="info-value"><a href="mailto:{{ issue_detail.easy_email_to }}" style="color: #007bff; text-decoration: none;">{{ issue_detail.easy_email_to }}</a></span>
                                     </div>
                                 {% endif %}
 
                                 {% if issue_detail.easy_email_cc %}
-                                    <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                                        <span style="color: black; font-weight: bold; font-size: 16px;">Копия письма:</span>
-                                        <span style="color: black; margin-left: 10px;font-size: 16px;">{{ issue_detail.easy_email_cc }}</span>
+                                    <div class="info-item">
+                                        <i class="fas fa-envelope-square fa-fw info-icon"></i>
+                                        <span class="info-label">Копия письма:</span>
+                                        <span class="info-value">{{ issue_detail.easy_email_cc }}</span>
                                     </div>
                                  {% endif %}
                             </div>
@@ -204,168 +678,182 @@
                 </div>
             </div>
             <!-- Аккордеон "Аттачменты" -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="filesHeading">
-                    <button id="accordionButtonIssueFiles" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#filesCollapse" aria-expanded="true" aria-controls="filesCollapse">
-                        Вложения...
-                    </button>
-                </h2>
-                <div id="filesCollapse" class="accordion-collapse collapse show" aria-labelledby="accordionFlushFiles">
-                    <div class="accordion-body" style="background-color: #e9ecef; border: 2px solid #dfe1e6; border-radius: 4px; padding: 10px;">
-                        <div style="display: flex;">
-                            <!-- Вывод прикрепленных файлов -->
-                            <div style="display: flex; align-items: center; font-family: 'Helvetica Neue', Arial, sans-serif;">
-                            <span style="color: black; font-weight: bold; font-size: 14px;">Файлы:</span>
-                            <div style="margin-left: 10px; font-size: 14px;">
-                                {% if attachment_list %}
-                                    {% for attachment in attachment_list %}
-                                        <a href="{{ attachment.url }}" target="_blank" title="Скачать">{{ attachment.filename }}</a>
-                                        <span style="margin-left: 5px; color: #666;">{{ attachment.author }}, {{ convert_datetime_msk_format(attachment.created_on) }}</span><br>
-                                    {% endfor %}
-                                {% else %}
-                                    Нет прикрепленных файлов
-                                {% endif %}
-                            </div>
-                        </div>
+            <div class="accordion-panel">
+                <div class="accordion-header collapsed" data-bs-toggle="collapse" data-bs-target="#filesCollapse" aria-expanded="false" aria-controls="filesCollapse">
+                    <h5><i class="fas fa-paperclip panel-icon"></i>Вложения</h5>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </div>
+                <div id="filesCollapse" class="accordion-collapse collapse">
+                    <div class="accordion-content">
+                        {% if attachment_list %}
+                            <ul class="attachment-list">
+                                {% for attachment in attachment_list %}
+                                    {% set filename_lower = attachment.filename.lower() %}
+                                    {% set icon_class = 'fas fa-file-alt' %} {# Иконка по умолчанию #}
+                                    {% if '.pdf' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-pdf' %}
+                                    {% elif '.doc' in filename_lower or '.docx' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-word' %}
+                                    {% elif '.xls' in filename_lower or '.xlsx' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-excel' %}
+                                    {% elif '.ppt' in filename_lower or '.pptx' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-powerpoint' %}
+                                    {% elif '.png' in filename_lower or '.jpg' in filename_lower or '.jpeg' in filename_lower or '.gif' in filename_lower or '.bmp' in filename_lower or '.svg' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-image' %}
+                                    {% elif '.zip' in filename_lower or '.rar' in filename_lower or '.7z' in filename_lower or '.tar' in filename_lower or '.gz' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-archive' %}
+                                    {% elif '.mp3' in filename_lower or '.wav' in filename_lower or '.ogg' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-audio' %}
+                                    {% elif '.mp4' in filename_lower or '.mov' in filename_lower or '.avi' in filename_lower or '.mkv' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-video' %}
+                                    {% elif '.txt' in filename_lower or '.log' in filename_lower or '.csv' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-alt' %} {# Можно заменить на fa-file-csv если нужно #}
+                                    {% elif '.py' in filename_lower or '.js' in filename_lower or '.html' in filename_lower or '.css' in filename_lower or '.java' in filename_lower or '.c' in filename_lower or '.cpp' in filename_lower %}
+                                        {% set icon_class = 'fas fa-file-code' %}
+                                    {% endif %}
+
+                                    <li class="attachment-item">
+                                        <div class="attachment-icon-wrapper">
+                                            <i class="{{ icon_class }} attachment-icon"></i>
+                                        </div>
+                                        <div class="attachment-details">
+                                            <a href="{{ attachment.url }}" target="_blank" class="attachment-filename" title="{{ attachment.filename }}">{{ attachment.filename }}</a>
+                                            <span class="attachment-meta">
+                                                Автор: {{ attachment.author if attachment.author else 'Не указан' }},
+                                                Добавлено: {{ convert_datetime_msk_format(attachment.created_on) }}
+                                            </span>
+                                        </div>
+                                        <div class="attachment-actions">
+                                            <a href="{{ attachment.url }}" target="_blank" class="download-btn" title="Скачать {{ attachment.filename }}">
+                                                <i class="fas fa-download"></i>Скачать
+                                            </a>
+                                        </div>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p style="text-align: center; color: #6c757d; margin-top:10px;">Нет прикрепленных файлов</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             <!-- Аккордеон "История заявки" -->
-            <div class="accordion-item">
-                <h2 class="accordion-header" id="historyHeading">
-                    <button id="accordionButtonIssueHistory" class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#historyCollapse" aria-expanded="true" aria-controls="historyCollapse">
-                        История задачи...
-                     </button>
-                </h2>
-                <div id="historyCollapse" class="accordion-collapse collapse" aria-labelledby="historyHeading">
-                    <div class="accordion-body" style="background-color: #e9ecef; border: 2px solid #dfe1e5; border-radius: 4px; padding: 10px;">
-                        <style>
-                            /* Стили для списка истории */
-                            ul.issue-history {
-                                list-style-type: none;
-                                padding-left: 0;
-                            }
-
-                            /* Стили для каждой записи журнала */
-                            .journal-entry {
-                                margin-bottom: 20px;
-                            }
-
-                            /* Стили для информации о пользователе и времени создания записи */
-                            .journal-info {
-                                font-weight: bold;
-                            }
-
-                            /* Стили для списка деталей изменений */
-                            .detail-list {
-                                list-style-type: none;
-                                padding-left: 0;
-                            }
-
-                            /* Стили для каждой детали изменения */
-                            .detail-item {
-                                margin-bottom: 5px;
-                            }
-
-                            /* Стили для комментария, если он есть */
-                            .journal-notes {
-                                font-style: italic;
-                                margin-top: 10px;
-                            }
-
-                            /* Стили для разделительной линии между записями истории */
-                            .history-divider {
-                                border-top: 1px solid #ccc;
-                                margin-top: 20px;
-                            }
-
-                            .accordion-button {
-                                background-color: #007bff !important;
-                                color: white !important;
-                                border-color: black !important;
-                            }
-
-                            .accordion-button:focus {
-                                background-color: #0056b3 !important;
-                                color: white !important;
-                                border-color: black !important;
-                            }
-
-                            .accordion-button:not(.collapsed) {
-                                background-color: #0056b3 !important;
-                                color: white !important;
-                                border-color: black !important;
-                            }
-
-                        </style>
-                        <ul class="issue-history">
-                            {% for journal in issue_history %}
-                                <div class="journal-info" style="color:#1E90FF;">
-                                    <p style="font-size: 14px;  font-family: 'Roboto', sans-serif;">{{ journal.user }} {{ convert_datetime_msk_format(journal.created_on) }} изменил задачу:</p>
+            <div class="accordion-panel">
+                 <div class="accordion-header collapsed" data-bs-toggle="collapse" data-bs-target="#historyCollapse" aria-expanded="false" aria-controls="historyCollapse">
+                    <h5>
+                        <i class="fas fa-history panel-icon"></i>История задачи
+                        {% if issue_history %}({{ issue_history | length }}){% endif %}
+                    </h5>
+                    <i class="fas fa-chevron-down accordion-icon"></i>
+                </div>
+                <div id="historyCollapse" class="accordion-collapse collapse">
+                    <div class="accordion-content">
+                        <div class="add-comment-section">
+                            <button class="btn btn-primary add-comment-btn" onclick="toggleCommentInput()">
+                                <i class="fas fa-pencil-alt"></i> Добавить комментарий
+                            </button>
+                            <form id="commentForm" action="" method="POST" enctype="multipart/form-data" style="display: none; margin-top: 15px;">
+                                {{ form.hidden_tag() }}
+                                <div class="mb-3">
+                                    {{ form.comment.label(class="form-label") }}
+                                    {{ form.comment(class="form-control", rows="5") }}
                                 </div>
-                                    {% if journal.notes is defined and journal.notes %}
-                                        {% if not journal.private_notes %}
-                                            <div class="comment-container" style="background-color: white; border: 2px solid #ccc; padding: 10px; margin-top: 10px;">
-                                                <p class="journal-notes">{{ journal.notes | safe }}</p>
-                                            </div>
-                                        {% else %}
-                                            <div class="comment-container" style="background-color: white; border: 2px solid #ccc; padding: 5px; margin-top: 0px;">
-                                                <p class="journal-notes" style="font-style: normal;">&#x26D4; <span>Комментарий закрыт исполнителем</span></p>
-                                            </div>
-                                        {% endif %}
-                                    {% endif %}
+                                <button type="submit" class="btn btn-success" id="submitBtn" onclick="disableSubmitButton(); this.form.submit();">
+                                    <i class="fas fa-paper-plane"></i> Отправить
+                                </button>
+                            </form>
+                        </div>
 
-                                   <li class="journal-entry">
-                                            <ul class="detail-list">
-                                                {% for detail in journal.details %}
+                        {% if issue_history %}
+                            <ul class="issue-history-list">
+                                {% for journal_entry in issue_history %}
+                                    <li class="history-entry">
+                                        <div class="history-icon-wrapper">
+                                            {# Логика для определения иконки события #}
+                                            {% set event_icon = 'fas fa-edit' %} {# По умолчанию - изменение #}
+                                            {% if journal_entry.notes and journal_entry.private_notes %}
+                                                {% set event_icon = 'fas fa-comment-slash history-icon-private' %}
+                                            {% elif journal_entry.notes %}
+                                                {% set event_icon = 'fas fa-comment-dots history-icon-comment' %}
+                                            {% elif journal_entry.details and journal_entry.details | selectattr('name', 'equalto', 'status_id') | list | length > 0 %}
+                                                {% set event_icon = 'fas fa-tag history-icon-status' %}
+                                            {% endif %}
+                                            <i class="{{ event_icon }} history-icon"></i>
+                                        </div>
+
+                                        <div class="history-info">
+                                            <span class="history-user">{{ journal_entry.user if journal_entry.user else 'Система' }}</span>
+                                            <span class="history-date">{{ convert_datetime_msk_format(journal_entry.created_on) }}</span>
+                                        </div>
+
+                                        {% if journal_entry.details %}
+                                            <ul class="history-details-list">
+                                                {% for detail in journal_entry.details %}
                                                     {% set old_value = detail.get('old_value') %}
                                                     {% set new_value = detail.get('new_value') %}
-                                                    {% set property_name = get_property_name(detail['property'], detail['name'], old_value, new_value) %}
-                                                    {% if property_name is not none %}
-                                                        <li class="detail-item"><span style="font-size: 12px;">✔️ {{ property_name | safe }}</span></li>
-                                                    {% else %}
-				                                        <li class="detail-item"><span style="font-size: 12px;">&#10060;<i> Неактуально, информация для исполнителя задачи</i></span></li>
-                                                    {% endif %}
+                                                    {% set property_name_html = get_property_name(detail['property'], detail['name'], old_value, new_value) %}
 
+                                                    {% if property_name_html %}
+                                                        {# Определяем иконку для детали изменения #}
+                                                        {% set detail_icon = 'fas fa-check-circle' %}
+                                                        {% if 'статус' in property_name_html | lower and ('закрыта' in new_value | lower or 'resolved' in new_value | lower) %}
+                                                            {# Особая иконка или стиль для закрытия задачи, если нужно #}
+                                                        {% elif 'отклонена' in new_value | lower or 'rejected' in new_value | lower %}
+                                                            {% set detail_icon = 'fas fa-times-circle' %}
+                                                        {% elif old_value and new_value %}
+                                                            {% set detail_icon = 'fas fa-arrow-right' %}
+                                                        {% endif %}
+
+                                                        <li class="history-detail-item">
+                                                           <i class="{{ detail_icon }}"></i> {{ property_name_html | safe }}
+                                                        </li>
+                                                    {% else %}
+                                                         <li class="history-detail-item"><i class="fas fa-ban"></i> <i>Неактуально, информация для исполнителя задачи</i></li>
+                                                    {% endif %}
                                                 {% endfor %}
                                             </ul>
-                                   </li>
-                            {% endfor %}
-                            <li>
-                                <!-- Кнопка "Добавить комментарий" в стиле Bootstrap -->
-                                <button class="btn btn-primary custom-btn" onclick="toggleCommentInput()">
-                                    <i class="fas fa-pencil-alt"></i> Добавить комментарий в задачу
-                                </button>
-                                <!-- Поле для ввода комментария -->
-                                <form id="commentForm" action="" method="POST" enctype="multipart/form-data" style="display: none; margin-top: 10px;">
-                                    {{ form.hidden_tag() }} <!-- Добавляем скрытые поля -->
-                                    {{ form.comment.label(class="label-large") }} <!-- Выводим метку поля комментария -->
-                                    {{ form.comment(class="form-control input-large", rows="10") }}<!-- Выводим поле комментария -->
-                                    <!-- Выводим кнопку отправки -->
-                                    <button class="btn btn-success mt-2 custom-button" id="submitBtn" onclick="disableSubmitButton(); this.form.submit();">Отправить комментарий</button>
-                                </form>
-                            </li>
-                        </ul>
+                                        {% endif %}
+
+                                        {% if journal_entry.notes %}
+                                            <div class="history-notes {% if journal_entry.private_notes %}private{% endif %}">
+                                                {% if journal_entry.private_notes %}
+                                                    <i class="fas fa-lock"></i> <span>Комментарий закрыт исполнителем.</span>
+                                                {% else %}
+                                                    {{ journal_entry.notes | safe }}
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p style="text-align: center; color: #6c757d;">История изменений пуста.</p>
+                        {% endif %}
                     </div>
                 </div>
             </div>
             <div class="issue-wrapper">
                 <div class="accordion" id="accordionDescription">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header" id="headingDescription">
-                            <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
-                                Описание заявки...
-                            </button>
-                        </h2>
-                        <div id="collapseDescription" class="accordion-collapse collapse show" aria-labelledby="headingDescription" data-bs-parent="#accordionDescription">
-                            <div class="accordion-body">
-                                <!-- Описание задачи -->
-                                <div class="description-wrapper">
-                                    {{ issue_detail.description | safe }}
+                    <div class="accordion-panel">
+                        <div class="accordion-header" data-bs-toggle="collapse" data-bs-target="#collapseDescription" aria-expanded="true" aria-controls="collapseDescription">
+                            <h5><i class="fas fa-file-alt panel-icon"></i>Описание заявки</h5>
+                            <i class="fas fa-chevron-down accordion-icon"></i>
+                        </div>
+                        <div id="collapseDescription" class="accordion-collapse collapse show">
+                            <div class="accordion-content">
+                                <div class="description-content-wrapper">
+                                    <div class="description-wrapper">
+                                        <div class="description-text-block">
+                                            {{ issue_detail.description | safe }}
+                                        </div>
+                                    </div>
+                                    {% if issue_detail.description and issue_detail.description | length > 200 %} {# Условие показа кнопки, можно настроить #}
+                                        <button id="toggleDescriptionBtn" class="toggle-description-btn" onclick="toggleDescription()">
+                                            <i class="fas fa-chevron-down btn-icon"></i>
+                                            <span class="btn-text">Читать далее</span>
+                                        </button>
+                                    {% endif %}
                                 </div>
-                                {% if issue_detail.description | length > 200 %}
-                                    <a class="switchFull" onclick="toggleDescription()">Читать далее...</a>
-                                {% endif %}
                             </div>
                         </div>
                     </div>
