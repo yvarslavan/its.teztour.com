@@ -172,11 +172,12 @@ def get_property_name(property_name, prop_key, old_value, value):
     connection = get_connection(
         db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
     )
+    result = None # Инициализируем result
     with connection:
         if prop_key == "project_id":
             project_name_from = get_project_name_from_id(connection, old_value)
             project_name_to = get_project_name_from_id(connection, value)
-            result = f"Параметр <b>Проект</b> изменился c <b>{project_name_from or 'None'}</b> на <b>{project_name_to or 'None'}</b>"
+            result = "Параметр&nbsp;<b>Проект</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (project_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (project_name_to or 'None') + "</b>"
 
         elif prop_key == "assigned_to_id":
             assigned_name_from = None
@@ -186,39 +187,41 @@ def get_property_name(property_name, prop_key, old_value, value):
             else:
                 assigned_name_from = get_user_full_name_from_id(connection, old_value)
                 assigned_name_to = get_user_full_name_from_id(connection, value)
-            result = f"Параметр <b>Назначена</b> изменился c <b>{assigned_name_from or 'None'}</b> на <b>{assigned_name_to or 'None'}</b>"
+            result = "Параметр&nbsp;<b>Назначена</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (assigned_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (assigned_name_to or 'None') + "</b>"
 
         elif prop_key == "status_id":
             status_name_from = get_status_name_from_id(connection, old_value)
             status_name_to = get_status_name_from_id(connection, value)
-            result = f"Параметр <b>Статус</b> изменился c <b>{status_name_from}</b> на <b>{status_name_to}</b>"
+            result = "Параметр&nbsp;<b>Статус</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(status_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(status_name_to) + "</b>"
 
         elif prop_key == "priority_id":
             priority_name_from = get_priority_name_from_id(connection, old_value)
             priority_name_to = get_priority_name_from_id(connection, value)
-            result = f"Параметр <b>Приоритет</b> изменился c <b>{priority_name_from}</b> на <b>{priority_name_to}</b>"
+            result = "Параметр&nbsp;<b>Приоритет</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(priority_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(priority_name_to) + "</b>"
 
         elif prop_key == "subject":
             result = (
-                f"Параметр <b>Тема</b> изменился c <b>{old_value}</b> на <b>{value}</b>"
+                "Параметр&nbsp;<b>Тема</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "</b>&nbsp;на&nbsp;<b>" + str(value) + "</b>"
             )
 
         elif prop_key == "easy_helpdesk_need_reaction":
-            result = f"Параметр <b>Нужна реакция?</b> изменился c <b>{'Да' if old_value == '1' else 'Нет'}</b> на <b>{'Да' if value == '1' else 'Нет'}</b>"
+            old_reaction_text = 'Да' if old_value == '1' else 'Нет'
+            new_reaction_text = 'Да' if value == '1' else 'Нет'
+            result = "Параметр&nbsp;<b>Нужна&nbsp;реакция?</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_reaction_text + "</b>&nbsp;на&nbsp;<b>" + new_reaction_text + "</b>"
 
         elif prop_key == "done_ratio":
-            result = f"Параметр <b>Готовность</b> изменился c <b>{old_value}</b> на <b>{value}</b>"
+            result = "Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "%</b>&nbsp;на&nbsp;<b>" + str(value) + "%</b>"
 
         elif property_name == "attachment":
-            result = f"Файл <b>{value}</b> добавлен"
+            result = "Файл&nbsp;<b>" + str(value) + "</b>&nbsp;добавлен"
 
         elif property_name == "relation" and prop_key == "relates":
-            result = f"Задача связана с задачей <b>#{value}</b> добавлен"
+            result = "Задача&nbsp;связана&nbsp;с&nbsp;задачей&nbsp;<b>#" + str(value) + "</b>"
 
         elif (
             prop_key == "subtask" and property_name == "relation" and value is not None
         ):
-            result = f"Добавлена подзадача <b>#{value}</b>"
+            result = "Добавлена&nbsp;подзадача&nbsp;<b>#" + str(value) + "</b>"
 
         else:
             result = None
