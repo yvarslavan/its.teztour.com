@@ -214,6 +214,42 @@
                         color: #666;
                         margin: 0;
                     }
+
+                    /* Стили для пункта меню Уведомления в хедере */
+                    .nav-notification-link .notification-icon {
+                        display: flex;
+                        align-items: center; /* Для выравнивания иконки, текста и бейджа по центру */
+                    }
+
+                    .nav-notification-link .notification-counter {
+                        font-size: 1.1rem; /* Немного увеличим шрифт текста "Уведомления" */
+                        font-weight: 500;  /* Сделаем чуть жирнее */
+                        margin-left: 5px;  /* Небольшой отступ от иконки */
+                        color: #ffffff; /* Сделаем текст белым для лучшего контраста на темном фоне хедера */
+                        transition: color 0.2s ease-in-out;
+                    }
+
+                    .nav-notification-link:hover .notification-counter {
+                        color: #f0f0f0; /* Легкое изменение цвета при наведении */
+                    }
+
+                    .nav-notification-badge {
+                        font-size: 0.8rem !important;    /* Увеличим шрифт в бейдже, !important если нужно перебить стиль Bootstrap */
+                        padding: 0.3em 0.6em !important; /* Увеличим padding для размера самого бейджа */
+                        background-color: #ff4136 !important; /* Ярко-красный, более насыщенный */
+                        color: white !important;
+                        border-radius: 10px !important; /* Более скругленный */
+                        margin-left: 8px !important;   /* Чуть больше отступ слева */
+                        font-weight: bold;
+                        box-shadow: 0 0 5px rgba(255, 65, 54, 0.7); /* Легкое свечение для акцента */
+                    }
+
+                    .nav-item.active .nav-notification-link .notification-counter,
+                    .nav-item .nav-notification-link.active .notification-counter { /* Пример для активной ссылки */
+                        font-weight: bold; /* Еще жирнее, если ссылка активна */
+                    }
+                    /* Конец стилей для пункта меню Уведомления */
+
                 </style>
 
     </head>
@@ -229,11 +265,11 @@
                     <ul class="main_menu">
                         {% if current_user.is_authenticated %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ url_for('main.my_notifications') }}">
+                                <a class="nav-link nav-notification-link" href="{{ url_for('main.my_notifications') }}">
                                     <div class="notification-icon">
                                         <img src="{{ url_for('static', filename='img/notification-bell.png') }}" alt="Notification Icon" style="width: 25px; height: 25px;">
                                         <span id="notification-counter" class="notification-counter">Уведомления</span>
-                                        <span class="badge badge-pill badge-danger ml-2" id="notification-badge" style="display: none;">0</span>
+                                        <span class="badge badge-pill badge-danger ml-2 nav-notification-badge" id="notification-badge" style="display: none;">0</span>
                                     </div>
                                 </a>
                             </li>
