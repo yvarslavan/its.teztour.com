@@ -1,347 +1,397 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-<div class="row">
-    <div class="col">
-        <div class="users-container">
-            <div class="content-section">
-                <div class="table-container">
-                    <div style="height: 800px; overflow: auto;">
-                    <table class="table">
-                        <thead class="table-header">
-                            <tr class="users-table-header">
-                                <th colspan="8" style="background-color: #f0f0f0; border-bottom: none;">
-                                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                                        <!-- Оба блока внутри одного контейнера -->
-                                        <div style="display: flex; align-items: center;">
-                                            <span style="margin-right: 12px; font-size: 18px;">Пользователи</span>
-                                            <div style="width: 30px; height: 30px; background-color: #007bff; color: white; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 14px;">{{ users|length }}</div>
-                                        </div>
-                                        <!-- Поле "Найти" -->
-                                        <div style="display: flex; align-items: center;">
-                                            <input type="text" id="search-input" placeholder="Найти...">
-                                        </div>
-                                    </div>
-                                </th>
-                            </tr>
+<div class="users-page-container container mt-4 mb-5">
+    <div class="title-search-panel row align-items-center py-3 px-3 sticky-top">
+        <div class="col-md-8 col-lg-9 mb-3 mb-md-0">
+            <div class="d-flex align-items-center">
+                <h1 class="page-title mb-0 me-3"><i class="fas fa-users me-2"></i>Пользователи</h1>
+                <span class="user-count-badge">{{ users|length }}</span>
+            </div>
+        </div>
+        <div class="col-md-4 col-lg-3">
+            <div class="search-input-wrapper">
+                <input type="text" id="search-input" class="form-control search-input-field" placeholder="Найти (имя, ФИО, email)...">
+                <span id="clear-search-btn" class="clear-search-icon">&times;</span>
+            </div>
+        </div>
+    </div>
 
-                            <tr>
-                                <th class="sortable table-users-header" data-sort="username" style="text-align: center;">
-                                    <div style="display: flex; justify-content: center; align-items: center;">
-                                        <a href="#" title="Нажмите для сортировки" style="color: white;">Пользователь</a>
-                                        <div class="sort-indicator">
-                                            <i class="fa fa-sort" aria-hidden="true"></i>
-                                        </div>
-                                    </div>
-                                </th>
-                                <th class="text-primary table-users-header">Email</th>
-                                <th class="text-primary table-users-header">ФИО</th>
-                                <th class="text-primary table-users-header">Офис</th>
-                                <th class="text-primary table-users-header">Отдел</th>
-                                <th class="text-primary table-users-header">Должность</th>
-                                <th class="text-primary table-users-header">Тел.вн</th>
-                                <th class="text-primary table-users-header"></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for user in users %}
-                                <tr>
-                                    <td data-column="username">
-                                        <div style="display: flex; align-items: center;">
-                                            <div style="margin-right: 10px;">
-                                                <a href="{{ url_for('users.user_profile', user_id=user.id) }}">
-                                                    <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-                                                        alt="{{ user.username }}"
-                                                        class="user-avatar rounded-circle"
-                                                        title="Пользователь:&#13;&#10; Имя: {{ user.username }}&#13;&#10; Email: {{ user.email }}&#13;&#10; Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') }}"
-                                                    >
-                                                </a>
-                                            </div>
-                                            <div style="font-size: 16px; margin-right: 5px;">{{ user.username }}</div>
-                                            {% if user.online %}
-                                                <span class="online-indicator pulsating"
-                                                    style="background-color: green; width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;"
-                                                    title="online"></span>
-                                            {% endif %}
+    <div class="row align-items-stretch" id="user-cards-container">
+        {% if users %}
+            {% for user in users %}
+            <div class="col-md-6 col-lg-4 mb-4 user-card-wrapper">
+                <div class="card user-card shadow-sm h-100">
+                    <div class="card-body d-flex flex-column">
+                        <div class="d-flex align-items-center mb-3">
+                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="me-3 flex-shrink-0">
+                                <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                                     alt="{{ user.username }}"
+                                     class="user-avatar rounded-circle"
+                                     title="Пользователь: {{ user.username }}
+Email: {{ user.email }}
+Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') if user.last_seen else 'N/A' }}">
+                            </a>
+                            <div class="flex-grow-1">
+                                <h5 class="card-title mb-0">
+                                    <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="text-decoration-none stretched-link user-name-link">{{ user.username }}</a>
+                                    {% if user.online %}
+                                        <span class="online-indicator" title="Online"></span>
+                                    {% endif %}
+                                </h5>
+                                <a href="mailto:{{ user.email }}" class="card-text text-muted small user-email" title="Написать письмо: {{ user.email }}">{{ user.email }}</a>
+                            </div>
+                        </div>
 
-                                        </div>
+                        <div class="user-details flex-grow-1">
+                            {% if user.full_name %}
+                                <p class="card-text mb-1 detail-item" data-search-fio="{{ user.full_name }}"><small><strong class="detail-label">ФИО:</strong> {{ user.full_name }}</small></p>
+                            {% endif %}
 
-                                    </td>
-                                    <td><a href="mailto:{{ user.email }}" class="email-link" style="font-size: 16px;">{{ user.email }}</a></td>
-                                    <td><span style="font-size: 16px;">{{ user.full_name }}</span></td>
-                                    <td><span style="font-size: 16px;">{{ user.office }}</span></td>
-                                    <td><span style="font-size: 16px;">{{ user.department }}</span></td>
-                                    <td><span style="font-size: 16px;">{{ user.position }}</span></td>
-                                    <td style="text-align: center;">
-                                        <span style="font-size: 16px;">{{ user.phone }}</span>
-                                    </td>
+                            <div class="job-details-group">
+                                {% if user.position %}
+                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Должность:</strong> <span title="Должность: {{ user.position }}">{{ user.position }}</span></small></p>
+                                {% endif %}
+                                {% if user.department %}
+                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Отдел:</strong> {{ user.department }}</small></p>
+                                {% endif %}
+                                 {% if user.office %}
+                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Офис:</strong> {{ user.office }}</small></p>
+                                {% endif %}
+                            </div>
 
-                                    <td style="text-align: center;">
-                                        <div class="btn-group">
-                                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="btn btn-primary" title="Просмотр">
-                                                <i class="fas fa-eye fa-xs"></i>
-                                            </a>
-                                            <a href="{{ url_for('users.delete_user', username=user.username) }}" class="btn btn-danger disabled" title="Удалить" style="opacity: 0.2;">
-                                                <i class="fas fa-trash fa-xs"></i>
-                                            </a>
-                                        </div>
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                            {% if user.phone %}
+                                <p class="card-text mb-1 detail-item mt-2"><small><strong class="detail-label">Тел.вн:</strong> {{ user.phone }}</small></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent border-top-0 pt-2 pb-3">
+                        <div class="d-grid">
+                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="btn btn-sm btn-primary view-profile-btn" title="Просмотр профиля">
+                                <i class="fas fa-eye me-1"></i> Просмотр
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
+            {% endfor %}
+        {% else %}
+        <div class="col-12">
+            <p class="text-center text-muted mt-4">Пользователи не найдены.</p>
         </div>
+        {% endif %}
+    </div>
+    <div id="no-results-message-placeholder" class="text-center text-muted mt-4" style="display: none;">
+        По вашему запросу ничего не найдено.
     </div>
 </div>
 
 <style>
-.users-container {
-    margin-top: -60px;  /* Увеличиваем отрицательный отступ сверху с -20px до -40px */
-    margin-bottom: 60px;
-    padding: 20px;
-    background-color: #fff;
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background-color: #f8f9fa; /* Consistent page background */
+    /* Add padding top to body to prevent content from being hidden by fixed navbar in layout.html */
+    /* padding-top: 70px; /* Adjust this value to match your navbar height */
+}
+
+#user-cards-container {
+    padding-top: 5rem; /* Added back to prevent title panel overlapping cards. Adjust as needed. */
+}
+
+.users-page-container {
+    max-width: 1300px;
+}
+
+.title-search-panel {
+    background-color: #ffffff;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow-y: auto;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    z-index: 1000; /* Lowered z-index */
+    top: 60px; /* Increased slightly to avoid overlap with main navbar */
+    /* position: sticky; /* This is handled by Bootstrap's sticky-top class */
 }
 
-/* Улучшенные стили для полосы прокрутки */
-.users-container::-webkit-scrollbar {
-    width: 8px;  /* Уменьшаем ширину полосы */
+.page-title {
+    font-size: 2rem; /* Larger title */
+    font-weight: 700;
+    color: #2c3e50;
 }
 
-.users-container::-webkit-scrollbar-track {
-    background: #f8f9fa;  /* Светлый фон трека */
-    border-radius: 4px;
-}
-
-.users-container::-webkit-scrollbar-thumb {
-    background-color: #dee2e6;  /* Светло-серый цвет ползунка */
-    border-radius: 4px;
-}
-
-.users-container::-webkit-scrollbar-thumb:hover {
-    background-color: #adb5bd;  /* Более темный при наведении */
-}
-
-/* Дополнительные стили для таблицы, если нужно */
-table {
-    width: 100%;
-    border-collapse: collapse;
-}
-
-th, td {
-    padding: 12px;
-    text-align: left;
-    border-bottom: 1px solid #dee2e6;
-}
-
-th {
-    background-color: #f8f9fa;
+.user-count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    font-size: 1.1rem;
     font-weight: 600;
+    color: white;
+    background-color: #3498db;
+    border-radius: 50%;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
 }
 
-.row {
-    margin: 0;
-    padding: 0;
-    width: 100%;
+.search-input-wrapper {
+    position: relative;
 }
 
-.col {
-    padding: 0;
+.search-input-field {
+    padding: 0.65rem 1rem;
+    padding-right: 2.5rem; /* Make space for the clear button */
+    border-radius: 25px;
+    border: 1px solid #dfe6e9;
+    transition: all 0.3s ease-in-out;
+    font-size: 0.9rem;
 }
 
-/* Убираем лишние отступы у вложенных элементов */
-.content-section {
-    margin: 0;
-    padding: 0;
+.search-input-field:focus {
+    border-color: #3498db;
+    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
 }
 
-.table-container {
-    margin: 0;
-    padding: 0;
+.clear-search-icon {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 1.5rem;
+    color: #adb5bd;
+    display: none; /* Hidden by default */
+    line-height: 1;
+}
+.clear-search-icon:hover {
+    color: #343a40;
 }
 
-/* Стили для таблицы */
-.table {
-    width: 100%;
-    border-spacing: 0;
-    border-collapse: separate;
-    border-radius: 8px;
-    overflow: hidden;
+.user-card {
+    border: 1px solid #e9ecef; /* Subtle border */
+    border-radius: 12px;
+    background: #ffffff; /* Solid white for a cleaner look */
+    /* Removed gradient for now, can be added back if preferred */
+    /* box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); */ /* Replaced by shadow-sm and hover effect */
+    transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Crucial to prevent internal scrollbars if content ever overflows */
 }
 
-/* Стили для заголовка таблицы */
-.table-header {
-    background: linear-gradient(90deg, #71cfee, #2196F3);
+.user-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important; /* Stronger shadow on hover */
 }
 
-.users-table-header {
-    background: transparent;
-}
-
-.table-users-header {
-    padding: 15px !important;
-    font-weight: 500 !important;
-    color: white !important;
-    font-size: 14px !important;
-    transition: all 0.3s ease;
-}
-
-/* Стили для строк таблицы */
-.table tbody tr {
-    transition: all 0.2s ease;
-}
-
-.table tbody tr:hover {
-    background-color: #f8f9fa;
-    transform: scale(1.002);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-/* Стили для ячеек */
-.table td {
-    padding: 12px 15px;
-    vertical-align: middle;
-    border-bottom: 1px solid #e9ecef;
-}
-
-/* Стили для аватара */
 .user-avatar {
-    width: 40px;
-    height: 40px;
+    width: 60px; /* Slightly smaller for better balance */
+    height: 60px;
     object-fit: cover;
-    border: 2px solid #fff;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease;
+    border: 3px solid #f0f0f0;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+.user-card:hover .user-avatar {
+    border-color: #3498db;
+    transform: scale(1.08);
 }
 
-.user-avatar:hover {
-    transform: scale(1.1);
+.card-title {
+     line-height: 1.2;
 }
 
-/* Стили для кнопок действий */
-.btn-group {
-    opacity: 0.8;
-    transition: opacity 0.2s ease;
+.user-name-link {
+    color: #34495e;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: color 0.2s ease;
+}
+.user-name-link:hover {
+    color: #3498db;
 }
 
-.btn-group:hover {
-    opacity: 1;
+.user-email {
+    color: #7f8c8d !important;
+    font-size: 0.8rem;
+    transition: color 0.2s ease;
+    word-break: break-all; /* Prevent long emails from breaking layout */
+}
+.user-email:hover {
+    color: #3498db !important;
 }
 
-.btn {
-    padding: 6px 12px;
-    border-radius: 4px;
-    transition: all 0.2s ease;
-}
-
-/* Стили для поля поиска */
-#search-input {
-    padding: 8px 12px;
-    border: 1px solid #dee2e6;
-    border-radius: 4px;
-    width: 200px;
-    transition: all 0.3s ease;
-}
-
-#search-input:focus {
-    outline: none;
-    border-color: #71cfee;
-    box-shadow: 0 0 0 2px rgba(113, 207, 238, 0.2);
-}
-
-/* Индикатор онлайн статуса */
 .online-indicator {
-    width: 8px;
-    height: 8px;
-    background-color: #28a745;
+    width: 10px;
+    height: 10px;
+    background-color: #2ecc71;
     border-radius: 50%;
     display: inline-block;
-    margin-left: 5px;
+    margin-left: 6px;
+    border: 1.5px solid #fff;
+    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.3); /* Softer pulse */
+    animation: pulseOnline 2s infinite ease-in-out;
 }
+
+@keyframes pulseOnline {
+    0%, 100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 0 0 5px rgba(46, 204, 113, 0);
+    }
+}
+
+.user-details {
+    margin-top: 0.75rem;
+}
+
+.user-details .detail-item {
+    font-size: 0.85rem;
+    color: #555e68;
+    margin-bottom: 3px;
+    line-height: 1.4;
+}
+
+.user-details .detail-label {
+    color: #86909c;
+    font-weight: 500;
+}
+
+.job-details-group {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #f0f0f0; /* Lighter separator */
+}
+
+.card-footer {
+    margin-top: auto; /* Pushes footer to the bottom */
+}
+
+.view-profile-btn {
+    background-color: #3498db;
+    border-color: #3498db;
+    color: white;
+    font-weight: 500;
+    padding: 0.45rem 0.9rem;
+    font-size: 0.875rem;
+    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
+}
+.view-profile-btn:hover {
+    background-color: #2980b9;
+    border-color: #2980b9;
+    transform: translateY(-1px);
+}
+.view-profile-btn:active {
+    transform: translateY(0px);
+}
+
+/* Адаптивность */
+@media (max-width: 767.98px) {
+    .title-search-panel {
+        /* position: static; Remove sticky for small screens if it causes issues */
+        /* top: 0; */
+        border-radius: 0;
+        margin-left: -0.75rem; /* Override container padding */
+        margin-right: -0.75rem; /* Override container padding */
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+    .page-title {
+        font-size: 1.5rem;
+    }
+    .user-count-badge {
+        min-width: 32px;
+        height: 32px;
+        font-size: 0.9rem;
+    }
+    .search-input-field {
+        margin-top: 0.5rem; /* Space between title and search on mobile */
+        width: 100%;
+    }
+    .user-card-wrapper {
+        flex: 0 0 100%;
+        max-width: 100%;
+    }
+     .card-body {
+        padding: 1rem; /* Slightly less padding on mobile */
+    }
+    .user-avatar {
+        width: 50px;
+        height: 50px;
+    }
+    .user-name-link {
+        font-size: 1rem;
+    }
+}
+
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
+    const userCardsContainer = document.getElementById('user-cards-container');
+    const noResultsPlaceholder = document.getElementById('no-results-message-placeholder');
+    const clearSearchBtn = document.getElementById('clear-search-btn');
 
-    searchInput.addEventListener('input', function() {
-        const searchText = this.value.toLowerCase();
-        const rows = document.querySelectorAll('.table tbody tr');
+    if (searchInput && userCardsContainer && noResultsPlaceholder && clearSearchBtn) {
+        searchInput.addEventListener('input', function() {
+            const searchText = this.value.toLowerCase().trim();
+            const cards = userCardsContainer.querySelectorAll('.user-card-wrapper');
+            let foundCards = 0;
 
-        rows.forEach(row => {
-            const username = row.querySelector('td[data-column="username"]').textContent.trim().toLowerCase();
-
-            if (username.includes(searchText)) {
-                row.style.display = ''; // Показываем строку, если текст найден в имени пользователя
+            if (searchText.length > 0) {
+                clearSearchBtn.style.display = 'inline';
             } else {
-                row.style.display = 'none'; // Скрываем строку, если текст не найден в имени пользователя
+                clearSearchBtn.style.display = 'none';
             }
-        });
-    });
-});
 
-document.addEventListener('DOMContentLoaded', function () {
-    const headers = document.querySelectorAll('th[data-sort]');
-    headers.forEach(header => {
-        header.addEventListener('click', () => {
-            const column = header.getAttribute('data-sort');
-            const order = (header.classList.contains('asc') ? 'desc' : 'asc');
-            sortTable(column, order);
-            updateSortIndicator(header, order);
-            headers.forEach(h => {
-                if (h !== header) {
-                    h.classList.remove('asc', 'desc');
-                    resetSortIndicator(h);
+            cards.forEach(cardWrapper => {
+                const card = cardWrapper.querySelector('.user-card');
+                if (!card) return;
+
+                const usernameElement = card.querySelector('.user-name-link');
+                const emailElement = card.querySelector('.user-email');
+                const fioElement = card.querySelector('[data-search-fio]');
+
+                const username = usernameElement ? usernameElement.textContent.toLowerCase() : '';
+                const email = emailElement ? emailElement.textContent.toLowerCase() : '';
+                const fio = fioElement ? fioElement.dataset.searchFio.toLowerCase() : '';
+
+                let otherDetailsText = '';
+                card.querySelectorAll('.user-details .detail-item').forEach(detail => {
+                    otherDetailsText += detail.textContent.toLowerCase() + ' ';
+                });
+
+                if (username.includes(searchText) ||
+                    email.includes(searchText) ||
+                    fio.includes(searchText) ||
+                    otherDetailsText.includes(searchText)) {
+                    cardWrapper.style.display = '';
+                    foundCards++;
+                } else {
+                    cardWrapper.style.display = 'none';
                 }
             });
-            header.classList.toggle('asc', order === 'asc');
-            header.classList.toggle('desc', order === 'desc');
-        });
-    });
 
-    function sortTable(column, order) {
-        const tbody = document.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
-        const sortedRows = rows.sort((a, b) => {
-            const aValue = getValue(a, column);
-            const bValue = getValue(b, column);
-            if (order === 'asc') {
-                return aValue.localeCompare(bValue, 'ru-RU', { sensitivity: 'base', numeric: true });
+            if (foundCards === 0 && searchText !== '') {
+                noResultsPlaceholder.style.display = 'block';
             } else {
-                return bValue.localeCompare(aValue, 'ru-RU', { sensitivity: 'base', numeric: true });
+                noResultsPlaceholder.style.display = 'none';
             }
         });
-        tbody.innerHTML = '';
-        sortedRows.forEach(row => tbody.appendChild(row));
-    }
 
-    function getValue(row, column) {
-        const cell = row.querySelector(`td[data-column="${column}"]`);
-        if (cell) {
-            return cell.textContent.trim();
-        }
-        return '';
-    }
+        clearSearchBtn.addEventListener('click', function() {
+            searchInput.value = '';
+            // Trigger the input event to re-filter (which will show all cards)
+            const event = new Event('input', { bubbles: true });
+            searchInput.dispatchEvent(event);
+            // searchInput.focus(); // Optional: focus back on the input
+        });
 
-    function updateSortIndicator(header, order) {
-        const indicator = header.querySelector('.sort-indicator i');
-        if (order === 'asc') {
-            indicator.className = 'fa fa-sort-up';
-        } else {
-            indicator.className = 'fa fa-sort-down';
-        }
-    }
-
-    function resetSortIndicator(header) {
-        const indicator = header.querySelector('.sort-indicator i');
-        indicator.className = 'fa fa-sort';
+    } else {
+        console.warn('Search input, user cards container, no-results placeholder, or clear button not found.');
     }
 });
-
 </script>
 {% endblock %}

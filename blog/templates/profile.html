@@ -1,70 +1,291 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-md-4">
-            <!-- Аватар и карточка пользователя -->
-            <div class="card mb-4">
-                <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}" class="card-img-top" alt="user_img">
-                <div class="card-body" style="margin-bottom: 10px;">
-                    <h5 class="card-title">{{ user.full_name }}</h5>
-                    <p class="card-text">Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') }}</p>
-                    <p class="card-text" style="margin-top: -10px;">Созданные задачи: {{ count_issues }}</p>
+<div class="container my-5 profile-page">
+    <div class="row gx-lg-5">
+        <!-- Левая колонка: Аватар и основная информация -->
+        <div class="col-lg-4 mb-4 mb-lg-0">
+            <div class="card profile-card shadow-sm border-0 rounded-3 text-center p-4 h-100">
+                <div class="profile-avatar-wrapper mx-auto mb-3">
+                    <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                         alt="Аватар {{ user.full_name }}"
+                         class="profile-avatar img-fluid rounded-circle"
+                         data-bs-toggle="modal" data-bs-target="#avatarModal">
+                </div>
+                <h4 class="profile-name fw-bold mb-1">{{ user.full_name }}</h4>
+                <p class="profile-position text-muted mb-3">{{ user.position|default('Должность не указана', true) }}</p>
+
+                {% if user.online %}
+                    <span class="badge bg-success-soft text-success mb-3 align-self-center"><i class="fas fa-circle me-1"></i>Online</span>
+                {% else %}
+                    <span class="badge bg-secondary-soft text-secondary mb-3 align-self-center"><i class="far fa-circle me-1"></i>Offline</span>
+                {% endif %}
+
+                <div class="d-grid gap-2 mb-4">
+                    <a href="mailto:{{ user.email }}" class="btn btn-primary-soft btn-sm"><i class="fas fa-envelope me-2"></i>Написать на E-mail</a>
+                    {% if user.phone %}
+                    <a href="tel:{{ user.phone }}" class="btn btn-secondary-soft btn-sm"><i class="fas fa-phone me-2"></i>Позвонить</a>
+                    {% endif %}
+                </div>
+
+                <div class="profile-meta-info text-start bg-light-subtle p-3 rounded-3">
+                    <p class="meta-item mb-2"><small><i class="far fa-clock me-2 text-muted"></i><strong>Последний вход:</strong><br>{{ user.last_seen.strftime('%d %b %Y, %H:%M') if user.last_seen else 'Неизвестно' }}</small></p>
+                    <p class="meta-item mb-0"><small><i class="fas fa-tasks me-2 text-muted"></i><strong>Созданные задачи:</strong> {{ count_issues }}</small></p>
                 </div>
             </div>
         </div>
 
-        <div class="col-md-8">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="account-full_name">Сотрудник</label>
-                        <input class="form-control" type="text" id="account-full_name" value="{{ user.full_name }}" readonly>
+        <!-- Правая колонка: Детальная информация -->
+        <div class="col-lg-8">
+            <div class="card details-card shadow-sm border-0 rounded-3 p-4">
+                <h5 class="card-header-title mb-4 border-bottom pb-3">Детальная информация</h5>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">Имя пользователя</label>
+                            <p class="info-value">{{ user.username }}</p>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="account-username">Имя пользователя</label>
-                        <input class="form-control" type="email" id="account-username" value="{{ user.username }}" readonly>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">E-mail</label>
+                            <p class="info-value"><a href="mailto:{{ user.email }}">{{ user.email }}</a></p>
+                        </div>
                     </div>
+                     <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">Телефон</label>
+                            <p class="info-value">{{ user.phone|default('Не указан', true) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">Локация (Офис)</label>
+                            <p class="info-value">{{ user.office|default('Не указан', true) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">Подразделение (Отдел)</label>
+                            <p class="info-value">{{ user.department|default('Не указан', true) }}</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">Должность</label>
+                            <p class="info-value">{{ user.position|default('Не указана', true) }}</p>
+                        </div>
+                    </div>
+
+                    <div class="col-md-12 mt-4 pt-3 border-top">
+                        <h6 class="text-muted mb-3">Статусы и доступы</h6>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label class="info-label text-muted">VPN Статус</label>
+                            {% if user.vpn == 1 %}
+                                <p class="info-value mb-1"><span class="badge bg-success-soft text-success"><i class="fas fa-shield-alt me-1"></i>Включен</span></p>
+                                {% if user.vpn_end_date %}
+                                <small class="text-muted d-block mt-1">Срок действия до: {{ user.vpn_end_date }}</small>
+                                {% else %}
+                                <small class="text-muted d-block mt-1">Срок действия не указан</small>
+                                {% endif %}
+                            {% else %}
+                                <p class="info-value"><span class="badge bg-danger-soft text-danger"><i class="fas fa-shield-alt me-1"></i>Выключен</span></p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <!-- Можно добавить другие статусы или доступы здесь -->
                 </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="account-email">E-mail</label>
-                        <a href="mailto:{{ user.email }}" class="form-control">{{ user.email }}</a>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-office">Локация</label>
-                        <input class="form-control" type="text" id="account-office" value="{{ user.office }}" readonly>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="account-phone">Телефон</label>
-                        <input class="form-control" type="text" id="account-phone" value="{{ user.phone }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-department">Подразделение</label>
-                        <input class="form-control" type="text" id="account-department" value="{{ user.department }}" readonly>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label for="account-position">Должность</label>
-                        <input class="form-control" type="text" id="account-position" value="{{ user.position }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        {% if user.vpn == 1 %}
-                            {% set vpn_status = '✅ Включен, заканчивается ' + user.vpn_end_date %}
-                        {% else %}
-                            {% set vpn_status = '❌ Выключен' %}
-                        {% endif %}
-                        <label for="account-vpn">VPN</label>
-                        <input class="form-control" type="text" id="account-vpn" value="{{ vpn_status }}" readonly>
-                    </div>
+                 <div class="mt-4 pt-3 border-top text-end">
+                    <a href="#" class="btn btn-outline-secondary btn-sm disabled" title="Редактирование пока не доступно"><i class="fas fa-edit me-1"></i>Редактировать профиль</a>
                 </div>
             </div>
         </div>
     </div>
+</div>
+
+<!-- Модальное окно для аватара -->
+<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header border-0">
+        <h5 class="modal-title" id="avatarModalLabel">{{ user.full_name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body text-center">
+        <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+             alt="Аватар {{ user.full_name }}"
+             class="img-fluid rounded-circle">
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.profile-page {
+    font-family: 'Inter', sans-serif;
+    color: #333;
+}
+
+.profile-card {
+    background-color: #fff;
+}
+
+.profile-avatar-wrapper {
+    width: 150px; /* Увеличенный размер */
+    height: 150px;
+    border: 4px solid #e9ecef; /* Нейтральная рамка */
+    padding: 4px; /* Небольшой отступ от рамки до изображения */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+.profile-avatar-wrapper:hover {
+    transform: scale(1.03);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.12);
+}
+
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    cursor: pointer;
+}
+
+.profile-name {
+    color: #2c3e50;
+    font-size: 1.5rem; /* Крупнее имя */
+}
+
+.profile-position {
+    font-size: 0.95rem;
+    margin-bottom: 1rem;
+}
+
+.btn-primary-soft {
+    background-color: rgba(52, 152, 219, 0.1);
+    border-color: rgba(52, 152, 219, 0.2);
+    color: #3498db;
+}
+.btn-primary-soft:hover {
+    background-color: rgba(52, 152, 219, 0.2);
+    color: #2980b9;
+}
+
+.btn-secondary-soft {
+    background-color: rgba(128, 140, 152, 0.1);
+    border-color: rgba(128, 140, 152, 0.2);
+    color: #808c98;
+}
+.btn-secondary-soft:hover {
+    background-color: rgba(128, 140, 152, 0.2);
+    color: #5e6a76;
+}
+
+
+.profile-meta-info {
+    /* background-color: #f8f9fa; */
+    border-radius: .5rem;
+}
+.profile-meta-info .meta-item strong {
+    color: #495057;
+}
+.profile-meta-info .meta-item small {
+    line-height: 1.6;
+}
+
+
+.details-card {
+    background-color: #fff;
+}
+.card-header-title {
+    color: #343a40;
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.info-group {
+    margin-bottom: 1.25rem;
+}
+
+.info-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #6c757d; /* Мягкий серый для меток */
+    margin-bottom: 0.25rem;
+    display: block;
+    text-transform: uppercase;
+}
+
+.info-value {
+    font-size: 0.95rem;
+    color: #212529; /* Темнее для значений */
+    background-color: #f8f9fa; /* Легкий фон для значений, имитирующий readonly поле */
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    border: 1px solid #e9ecef;
+    margin-bottom: 0; /* Убираем стандартный отступ параграфа */
+    min-height: 38px; /* Для выравнивания высоты с кнопками/другими элементами */
+    display: flex;
+    align-items: center;
+}
+.info-value a {
+    text-decoration: none;
+    color: #007bff;
+}
+.info-value a:hover {
+    text-decoration: underline;
+}
+
+.info-value-small {
+    font-size: 0.8rem;
+    margin-top: -0.5rem;
+}
+
+.badge.bg-success-soft {
+    background-color: rgba(40, 167, 69, 0.15);
+    color: #28a745 !important;
+    padding: 0.4em 0.7em;
+    font-weight: 500;
+}
+.badge.bg-danger-soft {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545 !important;
+     padding: 0.4em 0.7em;
+     font-weight: 500;
+}
+.badge.bg-secondary-soft {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d !important;
+    padding: 0.4em 0.7em;
+    font-weight: 500;
+}
+
+/* Адаптивность */
+@media (max-width: 991.98px) {
+    .profile-avatar-wrapper {
+        width: 120px;
+        height: 120px;
+    }
+    .profile-name {
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .profile-card {
+        text-align: center; /* Центрируем все в левой колонке на мобильных */
+    }
+    .profile-meta-info {
+        text-align: left; /* Но мета-инфо оставляем слева */
+    }
+    .info-group {
+        margin-bottom: 1rem;
+    }
+}
+
+</style>
+
 {% endblock content %}
