@@ -420,8 +420,8 @@ def new_issue():
 @main.route("/notifications", methods=["GET"])
 @login_required
 def my_notifications():
-    notifications_data = get_notifications()
-    notifications_add_notes_data = get_notifications_add_notes()
+    notifications_data = get_notifications(current_user.id)
+    notifications_add_notes_data = get_notifications_add_notes(current_user.id)
     combined_notifications = {}
 
     if notifications_data is not None:

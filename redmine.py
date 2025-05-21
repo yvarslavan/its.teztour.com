@@ -471,18 +471,18 @@ def get_issues_redmine_author_id(connection, author_id, easy_email_to):
     return issues_data
 
 
-def get_notifications():
+def get_notifications(user_id):
     """Выборка уведомлений об изменении статуса заявки"""
     # Получаем notifications
-    notifications_data = Notifications.query.filter_by(user_id=current_user.id).all()
+    notifications_data = Notifications.query.filter_by(user_id=user_id).all()
     return notifications_data
 
 
-def get_notifications_add_notes():
+def get_notifications_add_notes(user_id):
     """Выборка уведомлений о добавлении комментариев"""
     # Получаем notifications
     notifications_add_notes_data = NotificationsAddNotes.query.filter_by(
-        user_id=current_user.id
+        user_id=user_id
     ).all()
     return notifications_add_notes_data
 
@@ -506,6 +506,7 @@ def get_count_notifications_add_notes(user_id):
 
 
 def check_notifications(easy_email_to, current_user_id):
+    print(f"[DEBUG] Вызвана check_notifications для user_id: {current_user_id}, email: {easy_email_to}")
     connection = get_connection(
         db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
     )
@@ -522,6 +523,7 @@ def check_notifications(easy_email_to, current_user_id):
     try:
         email_part = easy_email_to.split("@")[0]
 
+        print(f"[DEBUG] Обработка уведомлений об изменении статуса для user_id: {current_user_id}")
         # Process status change notifications
         status_change_count = process_status_changes(
             connection,
@@ -531,7 +533,11 @@ def check_notifications(easy_email_to, current_user_id):
             count_vacuum_im_notifications,
             easy_email_to,
         )
+        if status_change_count > 0: # Удаляем, только если что-то обработали
+            print(f"[DEBUG] Вызов delete_notifications для user: {easy_email_to}")
+            delete_notifications(connection, easy_email_to)
 
+        print(f"[DEBUG] Обработка уведомлений о новых комментариях для user_id: {current_user_id}")
         # Process added notes notifications
         added_notes_count = process_added_notes(
             connection,
@@ -541,9 +547,13 @@ def check_notifications(easy_email_to, current_user_id):
             count_vacuum_im_notifications,
             easy_email_to,
         )
+        if added_notes_count > 0: # Удаляем, только если что-то обработали
+            print(f"[DEBUG] Вызов delete_notifications_notes для user: {easy_email_to}")
+            delete_notifications_notes(connection, easy_email_to)
 
         # Return the total count of new notifications
         total_notifications = status_change_count + added_notes_count
+        print(f"[DEBUG] check_notifications завершена для user_id: {current_user_id}. Новых статусов: {status_change_count}, новых комментариев: {added_notes_count}")
         print("check_notifications отработал.")
         return total_notifications
 
@@ -567,11 +577,15 @@ def get_database_cursor(connection):
 
 
 def execute_query(cursor, query, param):
+    print(f"[DB_QUERY] Выполнение запроса: {query} с параметром: {param}")
     try:
         cursor.execute(query, param)
-        return cursor.fetchall()
-    except pymysql.Error:
-        logging.error("Error executing query:", exc_info=True)
+        results = cursor.fetchall()
+        print(f"[DB_QUERY] Запрос выполнен успешно, получено строк: {len(results) if results else 0}")
+        return results
+    except pymysql.Error as e:
+        print(f"[DB_QUERY] Ошибка выполнения запроса: {e}")
+        logger.error("[DB_QUERY] Error executing query:", exc_info=True)
         return None
 
 
@@ -585,28 +599,27 @@ def process_status_changes(
 ):
     query_status_change = """SELECT IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated
                              FROM u_its_update_status
-                             WHERE SUBSTRING_INDEX(Author, '@', 1) = %s ORDER BY RowDateCreated DESC"""
+                             WHERE SUBSTRING_INDEX(Author, '@', 1) = %s ORDER BY RowDateCreated DESC LIMIT 50"""
+    print(f"[PROCESS_STATUS] Запрос для получения статусов: {query_status_change % email_part}")
     rows_status_change = execute_query(cursor, query_status_change, email_part)
+    if rows_status_change:
+        print(f"[PROCESS_STATUS] Получено {len(rows_status_change)} строк статусов. Первая строка (частично): IssueID={rows_status_change[0]['IssueID']}, OldSubj='{rows_status_change[0]['OldSubj'][:100] if rows_status_change[0]['OldSubj'] else ''}'...")
+    else:
+        print(f"[PROCESS_STATUS] Получено 0 строк статусов.")
+
     if rows_status_change is not None and len(rows_status_change) > 0:
-        for row in rows_status_change:
-            add_notification_to_database(
-                {
-                    "user_id": current_user_id,
-                    "issue_id": row["IssueID"],
-                    "old_status": row["OldStatus"],
-                    "new_status": row["NewStatus"],
-                    "old_subj": row["OldSubj"],
-                    "date_created": row["RowDateCreated"],
-                }
-            )
-            send_vacuum_im_notification(
-                count_vacuum_im_notifications,
-                row["IssueID"],
-                row["OldStatus"],
-                row["NewStatus"],
-                easy_email_to,
-            )
-        delete_notifications(connection, easy_email_to)
+        print(f"[PROCESS_STATUS] Найдено {len(rows_status_change)} новых статусов для обработки.")
+        for i, row in enumerate(rows_status_change):
+            print(f"[PROCESS_STATUS] Обработка статуса {i+1}/{len(rows_status_change)}: IssueID={row['IssueID']}, OldStatus='{row['OldStatus']}', NewStatus='{row['NewStatus']}'")
+            notification_data_to_add = {
+                "user_id": current_user_id,
+                "issue_id": row["IssueID"],
+                "old_status": row["OldStatus"],
+                "new_status": row["NewStatus"],
+                "old_subj": row["OldSubj"],
+                "date_created": row["RowDateCreated"],
+            }
+            add_notification_to_database(notification_data_to_add)
     return len(rows_status_change) if rows_status_change else 0
 
 
@@ -621,26 +634,33 @@ def process_added_notes(
     query_add_notes = """SELECT issue_id, Author, notes, date_created
                          FROM u_its_add_notes
                          WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
-                         ORDER BY date_created DESC"""
+                         ORDER BY date_created DESC LIMIT 50"""
+    print(f"[PROCESS_NOTES] Запрос для получения комментариев: {query_add_notes % email_part}")
     rows_add_notes = execute_query(cursor, query_add_notes, email_part)
     if rows_add_notes:
-        for row in rows_add_notes:
-            add_notification_notes_to_database(
-                {
-                    "user_id": current_user_id,
-                    "issue_id": row["issue_id"],
-                    "Author": row["Author"],
-                    "notes": row["notes"],
-                    "date_created": row["date_created"],
-                }
-            )
+        print(f"[PROCESS_NOTES] Получено {len(rows_add_notes)} строк комментариев. Первая строка (частично): IssueID={rows_add_notes[0]['issue_id']}, Author='{rows_add_notes[0]['Author']}', Notes='{rows_add_notes[0]['notes'][:100] if rows_add_notes[0]['notes'] else ''}'...")
+    else:
+        print(f"[PROCESS_NOTES] Получено 0 строк комментариев.")
+
+    if rows_add_notes:
+        print(f"[PROCESS_NOTES] Найдено {len(rows_add_notes)} новых комментариев для обработки.")
+        for i, row in enumerate(rows_add_notes):
+            print(f"[PROCESS_NOTES] Обработка комментария {i+1}/{len(rows_add_notes)}: IssueID={row['issue_id']}, Author='{row['Author']}'")
+            notification_data_to_add = {
+                "user_id": current_user_id,
+                "issue_id": row["issue_id"],
+                "Author": row["Author"],
+                "notes": row["notes"],
+                "date_created": row["date_created"],
+            }
+            print(f"[PROCESS_NOTES] Данные для добавления в SQLite: {notification_data_to_add}")
+            add_notification_notes_to_database(notification_data_to_add)
             send_vacuum_im_notification_add_note(
                 count_vacuum_im_notifications,
                 row["issue_id"],
                 easy_email_to,
                 row["notes"],
             )
-            delete_notifications_notes(connection, easy_email_to)
     return len(rows_add_notes) if rows_add_notes else 0
 
 
@@ -780,6 +800,7 @@ def add_notification_notes_to_database(notification_notes_data):
         author = notification_notes_data.get("Author")
         notes = notification_notes_data.get("notes")
         date_created = notification_notes_data.get("date_created")
+        print(f"[ADD_NOTE_DB] Попытка добавления уведомления в SQLite: user_id={user_id}, issue_id={issue_id}, author={author}, notes_len={len(notes) if notes else 0}, date_created={date_created}")
 
         # Подключаемся к базе данных SQLite
         connection = sqlite3.connect(db_absolute_path)
@@ -792,10 +813,15 @@ def add_notification_notes_to_database(notification_notes_data):
             (user_id, issue_id, author, notes, date_created),
         )
         connection.commit()
+        print(f"[ADD_NOTE_DB] Уведомление успешно добавлено и закоммичено в SQLite.")
         connection.close()
         logger.info("Notification added to the database successfully.")
     except sqlite3.Error as e:
-        logger.error("%s %s", ERROR_MESSAGE, e)
+        print(f"[ADD_NOTE_DB] Ошибка sqlite3 при добавлении уведомления: {e}")
+        logger.error("[ADD_NOTE_DB] %s %s", ERROR_MESSAGE, e, exc_info=True)
+    except Exception as e:
+        print(f"[ADD_NOTE_DB] НЕПРЕДВИДЕННАЯ Ошибка при добавлении уведомления: {e}")
+        logger.error("[ADD_NOTE_DB] Непредвиденная ошибка: %s", e, exc_info=True)
 
 
 def add_notification_to_database(notification_data):

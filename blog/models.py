@@ -62,9 +62,9 @@ class Notifications(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     issue_id = db.Column(db.Integer)
-    old_status = db.Column(db.String(20))
-    new_status = db.Column(db.String(20))
-    old_subj = db.Column(db.String(500))
+    old_status = db.Column(db.Text)
+    new_status = db.Column(db.Text)
+    old_subj = db.Column(db.Text)
     date_created = db.Column(db.DateTime)
 
     def __init__(
@@ -83,7 +83,7 @@ class NotificationsAddNotes(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer)
     issue_id = db.Column(db.Integer)
-    author = db.Column(db.String(100))
+    author = db.Column(db.Text)
     notes = db.Column(db.Text)
     date_created = db.Column(db.DateTime)
 

@@ -1,102 +1,176 @@
 {% extends 'layout.html' %}
 {% block content %}
-<div class="notification-wrapper">
-    <div class="notification-container">
-        {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data %}
-            {% for notification in combined_notifications.notifications_data %}
-                <article class="notification">
-                    <header class="notification-header">
-                        <span class="notification-title">Изменение статуса заявки</span>
-                        <form action="{{ url_for('main.delete_notification_status', notification_issue_id=notification.issue_id) }}" method="POST">
-                            <button type="submit" class="delete-btn">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
-                    </header>
-                    <div class="notification-content">
-                        <time class="notification-meta">{{ notification.date_created }}</time>
-                        <p class="notification-text">
-                            Статус заявки <a href="/my-issues/{{ notification.issue_id }}" class="notification-link">#{{ notification.issue_id }}</a> изменился с
-                            <strong>{{ notification.old_status }}</strong> на
-                            <strong>{{ notification.new_status }}</strong>
-                        </p>
-                        <div class="notification-meta">Тема: {{ notification.old_subj }}</div>
-                    </div>
-                </article>
-            {% endfor %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 
-            {% for notification in combined_notifications.notifications_add_notes_data %}
-                <article class="notification">
-                    <header class="notification-header">
-                        <span class="notification-title">Новый комментарий</span>
-                        <form action="{{ url_for('main.delete_notification_add_notes', notification_add_notes_issue_id=notification.issue_id) }}" method="POST">
-                            <button type="submit" class="delete-btn">
-                                <i class="fas fa-trash-alt"></i>
-                            </button>
-                        </form>
-                    </header>
-                    <div class="notification-content">
-                        <time class="notification-meta">{{ notification.date_created }}</time>
-                        <p class="notification-text">
-                            В заявку <a href="/my-issues/{{ notification.issue_id }}" class="notification-link">#{{ notification.issue_id }}</a>
-                            добавлен новый комментарий
-                        </p>
-                        <div class="description-wrapper">
-                            {% if notification.notes | length > 100 %}
-                                <div class="notification-notes" data-full-text="{{ notification.notes | e }}" data-short-text="{{ notification.notes[:100] | e }}">
-                                    {{ notification.notes[:100] | safe }}...
-                                    <button class="read-more" onclick="toggleDescription(event, this)">Читать далее...</button>
-                                </div>
-                            {% else %}
-                                <div class="notification-notes">{{ notification.notes | safe }}</div>
-                            {% endif %}
+<div class="container-fluid notification-page-container py-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="page-title"><i class="fas fa-bell me-2"></i>Уведомления</h2>
+        </div>
+    </div>
+
+    <div class="notification-wrapper">
+        <div class="notification-container">
+            {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data %}
+                {% for notification in combined_notifications.notifications_data %}
+                <article class="notification notification-status-change">
+                    <div class="notification-icon-area">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="notification-main-content">
+                        <header class="notification-header">
+                            <span class="notification-title">Изменение статуса заявки</span>
+                            <form action="{{ url_for('main.delete_notification_status', notification_issue_id=notification.issue_id) }}" method="POST">
+                                <button type="submit" class="delete-btn">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </header>
+                        <div class="notification-content">
+                            <time class="notification-meta date">{{ notification.date_created }}</time>
+                            <p class="notification-text">
+                                Статус заявки <a href="/my-issues/{{ notification.issue_id }}" class="notification-link">#{{ notification.issue_id }}</a> изменился с
+                                <span class="status-old">{{ notification.old_status }}</span> на
+                                <span class="status-new">{{ notification.new_status }}</span>
+                            </p>
+                            <div class="notification-meta">Тема: {{ notification.old_subj }}</div>
                         </div>
                     </div>
                 </article>
-            {% endfor %}
+                {% endfor %}
 
-            <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-notifications">
-                <button type="submit" class="clear-all-btn">Очистить все уведомления</button>
-            </form>
-        {% else %}
-            <div class="no-notifications">
-                <img src="{{ url_for('static', filename='img/notification-bell.png') }}" alt="Колокольчик"/>
-                <h4>Здесь будут уведомления о новых событиях в ваших заявках</h4>
-                <p>Еще нет уведомлений</p>
-            </div>
-        {% endif %}
+                {% for notification in combined_notifications.notifications_add_notes_data %}
+                <article class="notification notification-new-comment">
+                    <div class="notification-icon-area">
+                        <i class="fas fa-comment-dots"></i>
+                    </div>
+                    <div class="notification-main-content">
+                        <header class="notification-header">
+                            <span class="notification-title">Новый комментарий</span>
+                            <form action="{{ url_for('main.delete_notification_add_notes', notification_add_notes_issue_id=notification.issue_id) }}" method="POST">
+                                <button type="submit" class="delete-btn">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </form>
+                        </header>
+                        <div class="notification-content">
+                            <time class="notification-meta">{{ notification.date_created }}</time>
+                            <p class="notification-text">
+                                В заявку <a href="/my-issues/{{ notification.issue_id }}" class="notification-link">#{{ notification.issue_id }}</a>
+                                добавлен новый комментарий
+                            </p>
+                            <div class="description-wrapper">
+                                {% if notification.notes | length > 100 %}
+                                    <div class="notification-notes" data-full-text="{{ notification.notes | e }}" data-short-text="{{ notification.notes[:100] | e }}">
+                                        {{ notification.notes[:100] | safe }}...
+                                        <button class="read-more" onclick="toggleDescription(event, this)">Читать далее...</button>
+                                    </div>
+                                {% else %}
+                                    <div class="notification-notes">{{ notification.notes | safe }}</div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </article>
+                {% endfor %}
+
+                <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-notifications mt-4">
+                    <button type="submit" class="btn btn-danger w-100">Очистить все уведомления</button>
+                </form>
+            {% else %}
+                <div class="no-notifications text-center py-5">
+                    <i class="fas fa-bell-slash fa-4x text-muted mb-3"></i>
+                    <h4 class="mb-2">У вас пока нет новых уведомлений</h4>
+                    <p class="text-muted">Все новые события по вашим заявкам будут отображаться здесь.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 
 <style>
+/* Общие стили страницы */
+.notification-page-container {
+    background-color: #f4f7f6; /* Светлый фон для всей страницы */
+    min-height: calc(100vh - 56px); /* Высота минус высота хедера, если он есть */
+}
+
+.page-title {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Стили для обертки уведомлений */
 .notification-wrapper {
     width: 100%;
-    min-height: calc(100vh - 100px);
-    padding: 20px;
+    /* min-height: calc(100vh - 100px); Удалено, чтобы контейнер не был слишком высоким без уведомлений */
+    padding: 0; /* Убрали внутренние отступы, так как они теперь у .notification-page-container */
     display: flex;
     justify-content: center;
-    align-items: flex-start;
+    align-items: flex-start; /* Изменено на flex-start для лучшего отображения при малом контенте */
 }
 
 .notification-container {
     width: 100%;
     max-width: 800px;
     background-color: #fff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    overflow: hidden;
+    border-radius: 12px; /* Более современные скругления */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08); /* Улучшенная тень */
+    overflow: hidden; /* Важно, если дочерние элементы выходят за рамки */
+    padding: 20px; /* Добавим паддинг внутрь контейнера */
 }
 
 .notification {
     background-color: #ffffff;
-    border: 1px solid #e9ecef;
+    /* border: 1px solid #e9ecef; */ /* Убрана рамка */
     border-radius: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* Увеличен отступ для лучшего разделения */
     overflow: hidden;
+    transition: box-shadow 0.3s ease; /* Плавная тень при наведении */
+    display: flex; /* Для размещения иконки и контента рядом */
+    align-items: flex-start; /* Выравнивание по верху */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.07); /* Чуть мягче и современнее тень */
+}
+
+.notification:hover {
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1); /* Усиленная тень при наведении */
+}
+
+.notification-icon-area {
+    padding: 25px 20px; /* Больше воздуха вокруг иконки */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* border-right: 1px solid #e9ecef; */ /* Убран разделитель */
+    min-height: 100%; /* Чтобы занимал всю высоту карточки, если контент короткий */
+}
+
+.notification-icon-area i {
+    font-size: 2em; /* Увеличен размер иконки */
+}
+
+.notification-main-content {
+    flex-grow: 1; /* Занимает оставшуюся ширину */
+}
+
+/* Специфичные стили для уведомлений об изменении статуса */
+.notification-status-change .notification-icon-area {
+    background-color: #e7f3fe; /* Светло-голубой акцент */
+}
+.notification-status-change .notification-icon-area i {
+    color: #007bff; /* Синяя иконка */
+}
+
+/* Специфичные стили для уведомлений о новых комментариях */
+.notification-new-comment .notification-icon-area {
+    background-color: #e6fffa; /* Светло-зеленый/мятный акцент */
+}
+.notification-new-comment .notification-icon-area i {
+    color: #17a2b8; /* Бирюзовая иконка */
 }
 
 .notification-content {
-    padding: 20px;
+    padding: 15px; /* Уменьшим паддинг */
     font-weight: normal;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -106,25 +180,56 @@
     margin: 10px 0;
 }
 
+.notification-text .notification-link { /* Стиль для ссылки на заявку */
+    font-weight: 600;
+    color: #0056b3; /* Более насыщенный синий */
+}
+.notification-text .notification-link:hover {
+    text-decoration: underline;
+}
+
+.notification-text .status-old {
+    color: #6c757d;
+    text-decoration: line-through;
+    font-weight: normal;
+    margin: 0 2px; /* Небольшие отступы */
+}
+
+.notification-text .status-new {
+    background-color: #d1f7e8; /* Светло-зеленый фон */
+    color: #107c41; /* Темно-зеленый текст */
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-weight: 500;
+    margin: 0 2px; /* Небольшие отступы */
+}
+
 .notification-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    background-color: #f8f9fa;
-    border-bottom: 1px solid #e9ecef;
+    padding: 15px 20px; /* Обновленный паддинг */
+    /* background-color: #f8f9fa; */ /* Убран фон */
+    border-bottom: 1px solid #f0f0f0; /* Тонкий разделитель */
 }
 .notification-title {
-    font-weight: bold;
-    color: #495057;
+    font-weight: 600; /* Немного жирнее */
+    color: #343a40; /* Темнее для контраста */
+    font-size: 1.1rem; /* Увеличен шрифт */
 }
 .notification-body {
-    padding: 20px;
+    padding: 15px; /* Уменьшим паддинг */
 }
 .notification-meta {
-    font-size: 0.9em;
+    font-size: 0.85em; /* Чуть меньше */
     color: #6c757d;
-    margin-bottom: 10px;
+    margin-bottom: 8px; /* Уменьшим отступ */
+}
+.notification-meta.date { /* Стиль для даты */
+    font-size: 0.8rem;
+    color: #868e96;
+    float: right;
+    line-height: 1.5; /* Для лучшего вертикального выравнивания с заголовком, если они рядом */
 }
 .notification-content {
     color: #212529;
@@ -132,6 +237,7 @@
 .notification-link {
     color: #007bff;
     text-decoration: none;
+    font-weight: 500;
 }
 .notification-link:hover {
     text-decoration: underline;
@@ -139,51 +245,72 @@
 .delete-btn {
     background: none;
     border: none;
-    color: #dc3545;
+    color: #adb5bd; /* Сделать менее навязчивой по умолчанию */
     cursor: pointer;
-    font-size: 1.1em;
+    font-size: 1rem; /* Немного уменьшим */
+    padding: 5px; /* Добавим немного пространства для клика */
+    transition: color 0.2s ease-in-out;
 }
 .delete-btn:hover {
-    color: #c82333;
+    color: #dc3545; /* Яркая при наведении */
 }
-.clear-all-btn {
-    display: block;
-    width: 100%;
-    padding: 10px;
-    background-color: #dc3545;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s ease;
+
+/* Стили для кнопки "Очистить все уведомления" */
+.clear-all-btn { /* Этот класс был у кнопки, теперь он у form */
+    /* display: block; */ /* Уже не нужно, т.к. кнопка внутри формы */
+    /* width: 100%; */ /* Тоже не нужно, если форма будет управлять шириной */
+    /* padding: 10px; */ /* Будет применен стиль .btn */
+    /* background-color: #dc3545; */
+    /* color: white; */
+    /* border: none; */
+    /* border-radius: 4px; */
+    /* cursor: pointer; */
+    /* font-size: 1em; */
+    /* transition: background-color 0.3s ease; */
 }
-.clear-all-btn:hover {
-    background-color: #c82333;
+/* .clear-all-btn:hover { */
+    /* background-color: #c82333; */
+/* } */
+
+.clear-notifications button { /* Стилизуем кнопку внутри формы */
+    width: 100%; /* Кнопка на всю ширину */
+    padding: 12px;
+    font-size: 1rem;
+    font-weight: 500;
 }
+
+
+/* Обновленные стили для "Нет уведомлений" */
 .no-notifications {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 40px 20px;
-    text-align: center;
+    /* display: flex; */ /* Уже есть от text-center */
+    /* flex-direction: column; */
+    /* align-items: center; */
+    /* justify-content: center; */
+    padding: 30px 20px; /* Уменьшим вертикальные паддинги */
+    /* text-align: center; */
+    background-color: #fff; /* Фон как у контейнера, если он будет отдельным */
+    border-radius: 12px; /* Скругления как у контейнера */
+    width: 100%; /* Занимает всю ширину .notification-container */
 }
-.no-notifications img {
-    width: 50px;
-    height: 50px;
-    margin-bottom: 20px;
+
+.no-notifications i { /* Стили для иконки */
+    /* font-size: 3rem; Управляется классом fa-4x */
+    /* color: #6c757d; Управляется классом text-muted */
+    margin-bottom: 1rem; /* Отступ снизу */
 }
+
 .no-notifications h4 {
     color: #333;
-    margin-bottom: 10px;
-    font-size: 1.2rem;
+    margin-bottom: 0.5rem; /* Уменьшим отступ */
+    font-size: 1.3rem; /* Немного увеличим */
+    font-weight: 500;
 }
 .no-notifications p {
-    color: #666;
+    color: #555; /* Чуть темнее для читаемости */
     margin: 0;
-    font-size: 1rem;
+    font-size: 0.95rem;
 }
+
 .description-wrapper {
     position: relative;
     max-height: 100px;
