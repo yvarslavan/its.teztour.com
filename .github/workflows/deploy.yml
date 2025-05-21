@@ -24,8 +24,8 @@ jobs:
           PROJECT_DIR="/var/www/flask_helpdesk"
           GIT_REPO_URL_WITH_TOKEN='https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git'
 
-          echo ">>> DEBUG: GIT_REPO_URL_WITH_TOKEN (check if token is embedded):"
-          echo "$GIT_REPO_URL_WITH_TOKEN"
+          # echo ">>> DEBUG: GIT_REPO_URL_WITH_TOKEN (check if token is embedded):"
+          # echo "$GIT_REPO_URL_WITH_TOKEN" # Закомментировано для безопасности
 
           echo ">>> Removing old project directory (if exists): $PROJECT_DIR"
           sudo rm -rf "$PROJECT_DIR"
