@@ -61,7 +61,7 @@ from pymysql.cursors import DictCursor
 
 
 # Настройка логгирования
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 users = Blueprint("users", __name__)
@@ -356,18 +356,31 @@ def setup_user_as_offline(user):
 
 def start_user_job(current_user_email, current_user_id, timeout):
     job_id = f"notification_job_{current_user_id}"
-    scheduler_instance.add_job(
-        check_notifications,
-        "interval",
-        args=[current_user_email, current_user_id],
-        seconds=timeout,
-        id=job_id,  # Уникальный идентификатор для задачи этого пользователя
-        replace_existing=True,  # Заменяем предыдущую задачу, если она существовала
-    )
+    print(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
+    try:
+        scheduler_instance.add_job(
+            check_notifications,
+            "interval",
+            args=[current_user_email, current_user_id],
+            seconds=timeout,
+            id=job_id,  # Уникальный идентификатор для задачи этого пользователя
+            replace_existing=True,  # Заменяем предыдущую задачу, если она существовала
+        )
+        print(f"[SCHEDULER] Задача {job_id} успешно добавлена/обновлена.")
+    except Exception as e:
+        print(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}")
+        logger.error(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}", exc_info=True)
+
     if not scheduler_instance.running:
-        scheduler_instance.start()
-        print("Шедулер стартовал.")
-    logging.info("User-specific job successfully started or updated.")
+        try:
+            scheduler_instance.start()
+            print("[SCHEDULER] Планировщик стартовал.")
+        except Exception as e:
+            print(f"[SCHEDULER] Ошибка при старте планировщика: {e}")
+            logger.error(f"[SCHEDULER] Ошибка при старте планировщика: {e}", exc_info=True)
+
+    # Это сообщение теперь должно появляться благодаря изменению уровня логирования
+    logger.info(f"User-specific job {job_id} successfully started or updated.")
 
 
 def stop_user_job(user_id):
