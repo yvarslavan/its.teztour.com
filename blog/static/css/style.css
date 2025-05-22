@@ -1493,8 +1493,8 @@ td {
 }
 
 .notification-content a {
-    pointer-events: none;
-    color: #666;
+    pointer-events: auto;
+    color: #007bff;
     text-decoration: none;
 }
 

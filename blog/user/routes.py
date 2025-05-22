@@ -52,6 +52,7 @@ from redmine import (
     db_redmine_password,
     db_redmine_name,
     check_user_active_redmine,
+    generate_email_signature,
 )
 from mysql_db import Issue, Session, init_quality_db
 from flask_wtf.csrf import generate_csrf
@@ -314,8 +315,27 @@ def handle_successful_login(user: User, form: LoginForm) -> redirect:
 
 
 def check_notifications_and_start_scheduler(email, user_id):
-    check_notifications(email, user_id)
-    start_user_job(email, user_id, 60)
+    print(f"[DEBUG] Запуск функции check_notifications_and_start_scheduler для пользователя ID: {user_id}, Email: {email}")
+    # Добавляем подробное логирование перед вызовом функции check_notifications
+    try:
+        print(f"[DEBUG] Попытка вызова check_notifications({email}, {user_id})")
+        import redmine
+        result = redmine.check_notifications(email, user_id)
+        print(f"[DEBUG] Результат вызова check_notifications: {result}")
+    except Exception as e:
+        print(f"[DEBUG] Ошибка при вызове check_notifications: {e}")
+        import traceback
+        print(traceback.format_exc())
+
+    # Запускаем задачу планировщика
+    try:
+        print(f"[DEBUG] Запуск планировщика start_user_job({email}, {user_id}, 60)")
+        start_user_job(email, user_id, 60)
+    except Exception as e:
+        print(f"[DEBUG] Ошибка при запуске планировщика: {e}")
+        import traceback
+        print(traceback.format_exc())
+
 
 def setup_user_as_online(user):
     user.online = True
@@ -358,8 +378,20 @@ def start_user_job(current_user_email, current_user_id, timeout):
     job_id = f"notification_job_{current_user_id}"
     print(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
     try:
+        global scheduler_instance
+        if scheduler_instance is None:
+            print("[DEBUG] scheduler_instance не инициализирован, создаю новый экземпляр")
+            import pytz
+            from apscheduler.schedulers.background import BackgroundScheduler
+            scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
+
+        # Проверяем доступ к планировщику и модулю redmine
+        import redmine
+        print(f"[DEBUG] Модуль redmine доступен, импортирован успешно")
+        print(f"[DEBUG] Функция redmine.check_notifications доступна: {hasattr(redmine, 'check_notifications')}")
+
         scheduler_instance.add_job(
-            check_notifications,
+            redmine.check_notifications,
             "interval",
             args=[current_user_email, current_user_id],
             seconds=timeout,
@@ -369,6 +401,8 @@ def start_user_job(current_user_email, current_user_id, timeout):
         print(f"[SCHEDULER] Задача {job_id} успешно добавлена/обновлена.")
     except Exception as e:
         print(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}")
+        import traceback
+        print(traceback.format_exc())
         logger.error(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}", exc_info=True)
 
     if not scheduler_instance.running:
@@ -404,11 +438,21 @@ def account():
             user_password_erp = None
 
         # Получаем пользователя через текущую сессию
-        user = db.session.query(User).filter_by(username=current_user.username).first()
+        user_obj = db.session.query(User).filter_by(username=current_user.username).first()
         form = UpdateAccountForm()
 
         if request.method == "GET":
             form.username.data = current_user.username
+
+        # Генерируем HTML подпись
+        user_details_for_signature = {
+            'full_name': user_obj.full_name,
+            'position': user_obj.position,
+            'department': user_obj.department,
+            'phone': user_obj.phone,
+            'email': user_obj.email
+        }
+        email_signature_html = generate_email_signature(user_details_for_signature)
 
         image_file = url_for(
             "static",
@@ -425,13 +469,14 @@ def account():
 
         return render_template(
             "account.html",
-            title=user.username,
+            title=user_obj.username,
             user_password_erp=user_password_erp,
             image_file=image_file,
             form=form,
-            user=user,
+            user=user_obj,
             all_users=all_users,
-            vacuum_im_notifications_checked='checked' if user.vacuum_im_notifications else ''
+            vacuum_im_notifications_checked='checked' if user_obj.vacuum_im_notifications else '',
+            email_signature_html=email_signature_html
         )
     except Exception as e:
         db.session.rollback()  # Откатываем сессию в случае ошибки
@@ -442,32 +487,15 @@ def account():
 @users.route("/update_vacuum_im_notifications", methods=["POST"])
 @login_required
 def update_vacuum_im_notifications():
-    if request.method == "POST":
-        # Получаем текущего пользователя
-        user = User.query.filter_by(username=current_user.username).first()
+    # Этот роут будет удален или закомментирован
+    pass
 
-        # Исправление 1: Получаем пользователя через текущую сессию
-        user = db.session.query(User).filter_by(id=current_user.id).first()
 
-        # Исправление 2: Корректно обрабатываем значение чекбокса
-        is_checked = request.form.get("vacuum_im_notifications_checked") == "checked"
-
-        user.vacuum_im_notifications = 1 if is_checked else 0
-
-        try:
-            # Исправление 3: Явно добавляем изменения в сессию
-            db.session.add(user)
-            db.session.commit()
-            print(f"Before commit: {user.vacuum_im_notifications}")
-            db.session.commit()
-            user_after = User.query.get(user.id)
-            print(f"After commit: {user_after.vacuum_im_notifications}")
-            return jsonify({"success": True}), 200
-        except SQLAlchemyError as e:
-            db.session.rollback()
-            current_app.logger.error(f"Database error: {str(e)}")
-            return jsonify({"error": "Database error"}), 500
-    return jsonify({"error": "Method Not Allowed"}), 405
+@users.route("/check_vacuum_im_settings", methods=["GET"])
+@login_required
+def check_vacuum_im_settings():
+    # Этот роут будет удален или закомментирован
+    pass
 
 
 @users.route("/users")
@@ -531,7 +559,10 @@ def user_profile(user_id):
             )
             count_issues = result.scalar()
         return render_template(
-            "profile.html", title="Профиль", user=user_data, count_issues=count_issues
+            "profile.html",
+            title="Профиль",
+            user=user_data,
+            count_issues=count_issues
         )
     except Exception as e:
         current_app.logger.error(f"Ошибка при обработке профиля пользователя с ID {user_id}: {e}")
@@ -927,3 +958,10 @@ def system_status():
     except Exception as e:
         logger.error(f"Ошибка проверки системы: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+
+
+@users.route("/test_xmpp_message", methods=["GET"])
+@login_required
+def test_xmpp_message():
+    # Этот роут будет удален или закомментирован
+    pass

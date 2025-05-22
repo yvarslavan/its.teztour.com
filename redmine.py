@@ -506,64 +506,92 @@ def get_count_notifications_add_notes(user_id):
 
 
 def check_notifications(easy_email_to, current_user_id):
-    print(f"[DEBUG] Вызвана check_notifications для user_id: {current_user_id}, email: {easy_email_to}")
+    print(f"[DEBUG] Вызвана функция check_notifications для user_id: {current_user_id}, email: {easy_email_to}")
+
+    # Устанавливаем соединение с MySQL
     connection = get_connection(
         db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
     )
+    if not connection:
+        print(f"[DEBUG] Не удалось установить соединение с MySQL для user_id: {current_user_id}")
+        return False
+
     cursor = get_database_cursor(connection)
     if not cursor:
+        print(f"[DEBUG] Не удалось получить курсор MySQL для user_id: {current_user_id}")
         return False
-    # Установка соединения с базой данных для проверки настроек пользователя
+
+    # Установка соединения с базой данных SQLite для проверки настроек пользователя
+    print(f"[DEBUG] Попытка соединения с SQLite БД: {db_absolute_path}")
     connection_db = connect_to_database(db_absolute_path)
-    count_vacuum_im_notifications = 0
+
+    # Проверяем настройки уведомлений Vacuum-IM для пользователя
+    vacuum_im_enabled = 0
     if connection_db:
-        count_vacuum_im_notifications = get_count_vacuum_im_notifications(
-            connection_db, current_user_id
-        )
+        try:
+            print(f"[DEBUG] Получение настройки vacuum_im_notifications для user_id: {current_user_id}")
+            vacuum_im_enabled = get_count_vacuum_im_notifications(connection_db, current_user_id)
+            print(f"[DEBUG] Получено значение vacuum_im_notifications: {vacuum_im_enabled}")
+        except Exception as e:
+            print(f"[DEBUG] Ошибка при получении настроек vacuum_im_notifications: {e}")
+    else:
+        print(f"[DEBUG] Не удалось подключиться к SQLite БД для user_id: {current_user_id}")
+
     try:
         email_part = easy_email_to.split("@")[0]
+        print(f"[DEBUG] Email_part: {email_part}")
 
+        # Обработка уведомлений об изменении статуса
         print(f"[DEBUG] Обработка уведомлений об изменении статуса для user_id: {current_user_id}")
-        # Process status change notifications
         status_change_count = process_status_changes(
             connection,
             cursor,
             email_part,
             current_user_id,
-            count_vacuum_im_notifications,
+            vacuum_im_enabled,  # Передаем статус настройки Vacuum-IM
             easy_email_to,
         )
-        if status_change_count > 0: # Удаляем, только если что-то обработали
-            print(f"[DEBUG] Вызов delete_notifications для user: {easy_email_to}")
+        if status_change_count > 0:
+            print(f"[DEBUG] Удаление уведомлений о статусах для: {easy_email_to}, обработано: {status_change_count}")
             delete_notifications(connection, easy_email_to)
+        else:
+            print(f"[DEBUG] Нет новых уведомлений о статусах для: {easy_email_to}")
 
+        # Обработка уведомлений о новых комментариях
         print(f"[DEBUG] Обработка уведомлений о новых комментариях для user_id: {current_user_id}")
-        # Process added notes notifications
         added_notes_count = process_added_notes(
             connection,
             cursor,
             email_part,
             current_user_id,
-            count_vacuum_im_notifications,
+            vacuum_im_enabled,  # Передаем статус настройки Vacuum-IM
             easy_email_to,
         )
-        if added_notes_count > 0: # Удаляем, только если что-то обработали
-            print(f"[DEBUG] Вызов delete_notifications_notes для user: {easy_email_to}")
+        if added_notes_count > 0:
+            print(f"[DEBUG] Удаление уведомлений о комментариях для: {easy_email_to}, обработано: {added_notes_count}")
             delete_notifications_notes(connection, easy_email_to)
+        else:
+            print(f"[DEBUG] Нет новых уведомлений о комментариях для: {easy_email_to}")
 
-        # Return the total count of new notifications
+        # Возвращаем общее количество обработанных уведомлений
         total_notifications = status_change_count + added_notes_count
-        print(f"[DEBUG] check_notifications завершена для user_id: {current_user_id}. Новых статусов: {status_change_count}, новых комментариев: {added_notes_count}")
-        print("check_notifications отработал.")
+        print(f"[DEBUG] Всего обработано уведомлений для {easy_email_to}: {total_notifications}")
         return total_notifications
 
-    except pymysql.Error:
+    except Exception as e:
+        print(f"[DEBUG] Ошибка в check_notifications: {e}")
+        import traceback
+        print(traceback.format_exc())
         logging.error("An error occurred:", exc_info=True)
         return False
 
     finally:
         if cursor:
             cursor.close()
+        if connection:
+            connection.close()
+        if connection_db:
+            connection_db.close()
 
 
 def get_database_cursor(connection):
@@ -620,6 +648,15 @@ def process_status_changes(
                 "date_created": row["RowDateCreated"],
             }
             add_notification_to_database(notification_data_to_add)
+
+            # Добавляем эту строку для отправки уведомления в Vacuum-IM
+            # send_vacuum_im_notification(
+            #     count_vacuum_im_notifications,
+            #     row["IssueID"],
+            #     row["OldStatus"],
+            #     row["NewStatus"],
+            #     easy_email_to,
+            # )
     return len(rows_status_change) if rows_status_change else 0
 
 
@@ -655,12 +692,13 @@ def process_added_notes(
             }
             print(f"[PROCESS_NOTES] Данные для добавления в SQLite: {notification_data_to_add}")
             add_notification_notes_to_database(notification_data_to_add)
-            send_vacuum_im_notification_add_note(
-                count_vacuum_im_notifications,
-                row["issue_id"],
-                easy_email_to,
-                row["notes"],
-            )
+            # Удаляем вызов, связанный с Vacuum-IM
+            # send_vacuum_im_notification_add_note(
+            #     count_vacuum_im_notifications,
+            #     row["issue_id"],
+            #     easy_email_to,
+            #     row["notes"],
+            # )
     return len(rows_add_notes) if rows_add_notes else 0
 
 
@@ -676,89 +714,37 @@ def connect_to_database(database_file):
 
 
 def get_count_vacuum_im_notifications(connection, current_user_id):
+    print(f"[VACUUM_IM] Вызвана функция get_count_vacuum_im_notifications для user_id: {current_user_id}")
     if not connection:
-        return None
-    connection.row_factory = sqlite3.Row
-    vacuum_im_notifications_query = """SELECT count(email) FROM Users WHERE id = ? AND vacuum_im_notifications = ?"""
-    params_user_id = (current_user_id, 1)
-    return execute_sql_query(connection, vacuum_im_notifications_query, params_user_id)
+        print("[VACUUM_IM] Соединение с БД отсутствует, возвращаю 0")
+        return 0
 
+    try:
+        # Исправляем запрос для получения числа напрямую
+        cursor = connection.cursor()
+        vacuum_im_notifications_query = """SELECT vacuum_im_notifications FROM users WHERE id = ?"""
+        print(f"[VACUUM_IM] Выполняю запрос: {vacuum_im_notifications_query} с параметром: {current_user_id}")
+        cursor.execute(vacuum_im_notifications_query, (current_user_id,))
+        result = cursor.fetchone()
 
-def send_vacuum_im_notification(
-    row_count,
-    issue_id=None,
-    old_status=None,
-    new_status=None,
-    easy_email_to=None,
-):
-    """
-    Отправляет уведомление о изменении статуса задачи в Vacuum-IM, если включен параметр "Дублировать уведомления в Vacuum-IM".
-    """
-
-    if row_count and len(row_count) > 0 and row_count[0] and row_count[0][0] > 0:
-        jabberid = config.get("xmpp", "jabberid")
-        sender_password = config.get("xmpp", "sender_password")
-        message = (
-            f"В задаче #{issue_id} изменился статус c {old_status} на {new_status}"
-        )
-        send_xmpp_direct_message(
-            sender_jid=jabberid,
-            password=sender_password,
-            receiver_jid=easy_email_to,
-            message_text=message,
-        )
-
-
-def send_vacuum_im_notification_add_note(
-    row_count,
-    issue_id=None,
-    easy_email_to=None,
-    note=None,
-):
-    """
-    Отправляет уведомление о добавлении комментария в задачу в Vacuum-IM, если включен параметр "Дублировать уведомления в Vacuum-IM".
-    """
-
-    if row_count and len(row_count) > 0 and row_count[0] and row_count[0][0] > 0:
-        jabberid = config.get("xmpp", "jabberid")
-        sender_password = config.get("xmpp", "sender_password")
-        message = cleanhtml(note)
-        # Формируем текст сообщения с темой
-        full_message_text = (
-            f"В задачу #{issue_id} добавлен новый комментарий\n\n{message}"
-        )
-        send_xmpp_direct_message(
-            sender_jid=jabberid,
-            password=sender_password,
-            receiver_jid=easy_email_to,
-            message_text=full_message_text,
-        )
-
-
-def cleanhtml(raw_html):
-    cleanr = re.compile("<[^>]*>")
-    cleantext = re.sub(cleanr, "", raw_html)
-    return cleantext
-
-
-def send_xmpp_direct_message(
-    sender_jid, password, receiver_jid, message_text, debug=False
-):
-    jid = xmpp.protocol.JID(sender_jid)
-    client = xmpp.Client(server=jid.getDomain(), debug=debug)
-
-    if client.connect():
-        if client.auth(jid.getNode(), password, resource=jid.getResource()):
-            message = xmpp.protocol.Message(
-                to=receiver_jid, body=message_text, typ="chat"
-            )
-            client.send(message)
-            client.disconnect()
-            print("Сообщение отправлено")
+        if result and result[0]:
+            value = int(result[0])
+            print(f"[VACUUM_IM] Получено значение: {value}")
+            return value
         else:
-            print("Ошибка аутентификации")
-    else:
-        print("Не удалось подключиться к серверу")
+            print("[VACUUM_IM] Пользователь не найден или vacuum_im_notifications = 0")
+            return 0
+    except sqlite3.Error as e:
+        print(f"[VACUUM_IM] Ошибка SQLite при получении настроек уведомлений: {e}")
+        return 0
+    except Exception as e:
+        print(f"[VACUUM_IM] Неожиданная ошибка: {e}")
+        import traceback
+        print(traceback.format_exc())
+        return 0
+    finally:
+        if cursor:
+            cursor.close()
 
 
 def execute_sql_query(connection, query, params=None, row_factory=None):
