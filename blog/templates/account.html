@@ -1,789 +1,968 @@
 {% extends 'layout.html' %}
 
 {% block content %}
- <style>
-        .alert {
-            display: none !important;
-        }
-    </style>
-<form action="" method="POST" enctype="multipart/form-data">
-    <div class="container-centered">
-        <div class="row">
-            <!-- Левая колонка с аватаром и меню -->
-            <div class="col-lg-3">
-                <!-- Account Sidebar-->
-                <div class="author-card pb-3">
-                    <div class="author-card-cover" style="background-image: url(https://bootdey.com/img/Content/flores-amarillas-wallpaper.jpeg);"></div>
-                    <div class="author-card-profile">
-                        <div class="author-card-avatar"><img src="{{ image_file }}" alt="user_image"></div>
-                        <div class="author-card-details">
-                            <h5 class="author-card-name text-lg">{% set names = user.full_name.split() %}{{ names[0] }} {{ names[1][:1] }}.{{ names[-1][:1] }}.</h5>
-                            <span class="author-card-position">
-                                Последний вход<br>
-                                {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') }} (UTC+3)
-                            </span>
+<div class="container-fluid account-page p-0">
+    <div class="container py-3">
+        <form method="POST" action="{{ url_for('users.account') }}" enctype="multipart/form-data">
+            {{ form.hidden_tag() }}
+            <div class="row gx-4 gy-3">
+                <!-- Левая колонка: Аватар, навигация и форма обновления аватара -->
+                <div class="col-lg-3">
+                    <div class="card profile-sidebar-card shadow-sm border-0 rounded-3 text-center p-3 position-sticky" style="top: 20px;">
+                        <div class="profile-avatar-container mx-auto mb-3">
+                            <img src="{{ image_file }}" alt="Аватар {{ user.full_name }}" class="profile-avatar img-fluid">
                         </div>
-                    </div>
-                </div>
-                <div class="wizard">
-                    <nav class="list-group list-group-flush">
-                        <a class="list-group-item" href="{{ url_for('users.user_posts', username=current_user.username) }}">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i class="fe-icon-shopping-bag mr-1"></i>
-                                    <div class="d-inline-block">Мои статьи</div>
-                                </div>
-                            </div>
-                        </a>
-                        <a class="list-group-item active" href="#"><i class="fe-icon-user"></i>Данные профиля</a>
-                        <a class="list-group-item" href="/my-issues">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <div><i class="fe-icon-tag mr-1"></i>
-                                    <div class="d-inline-block">Мои заявки</div>
-                                </div>
-                            </div>
-                        </a>
 
-                    </nav>
-                </div>
-                <div class="form-group">
-                    {{ form.picture.label() }}
-                    {% if form.picture.errors %}
-                        {{ form.picture(class='form-control form-control-lg is-invalid') }}
-                            <div class="invalid-feedback">
+                        {# Форма обновления аватара из старого account.html, адаптированная #}
+                        <div class="mb-3 px-lg-2">
+                             <label for="pictureUpload" class="form-label visually-hidden">Выберите файл</label>
+                            <div class="input-group input-group-sm">
+                                {{ form.picture(class="form-control form-control-sm", id="pictureUpload") }}
+                                {# Кнопка submit для формы обновления аватара должна быть здесь или ниже, если форма оборачивает только это поле #}
+                                {# Если form action="" направлен на users.account, то эта кнопка будет основной для формы #}
+                            </div>
+                            {% if form.picture.errors %}
                                 {% for error in form.picture.errors %}
-                                    <span class="text-danger">{{ error }}</span><br>
+                                    <div class="text-danger text-start mt-1"><small>{{ error }}</small></div>
                                 {% endfor %}
+                            {% endif %}
+                        </div>
+                        {# Основная кнопка submit формы, если она обновляет что-то еще, или специфичная кнопка для аватара #}
+                        <div class="d-grid mb-3">
+                             {{ form.submit(class='btn btn-primary btn-sm') }} {# Кнопка "Обновить" из UpdateAccountForm #}
+                        </div>
+
+
+                        <h5 class="profile-name fw-bold mb-1">
+                            {% set names = user.full_name.split() %}
+                            {{ names[0] }} {{ names[1][:1] }}.{{ names[-1][:1] if names|length > 2 else '' }}.
+                        </h5>
+                        <p class="profile-position text-muted small mb-2">
+                            Последний вход:<br>
+                            {{ user.last_seen.strftime('%d.%m.%Y %H:%M') if user.last_seen else 'Неизвестно' }}
+                        </p>
+                        <hr class="my-2">
+                        <nav class="nav flex-column nav-pills text-start profile-nav">
+                            <a class="nav-link active" href="{{ url_for('users.account') }}"><i class="fas fa-user-circle me-2"></i>Данные профиля</a>
+                            <a class="nav-link" href="{{ url_for('users.user_posts', username=current_user.username) }}"><i class="fas fa-newspaper me-2"></i>Мои статьи</a>
+                            <a class="nav-link" href="/my-issues"> <i class="fas fa-ticket-alt me-2"></i>Мои заявки</a>
+                        </nav>
+                    </div>
+                </div>
+
+                <!-- Центральная колонка: Основные данные и действия -->
+                <div class="col-lg-6">
+                    <!-- Карточка Сотрудник -->
+                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
+                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
+                            <h5 class="card-title-custom mb-0"><i class="fas fa-user-tie me-2 text-primary"></i>Сотрудник</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="info-label">Полное имя</label>
+                                    <p class="info-value">{{ user.full_name }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">E-mail</label>
+                                    <p class="info-value"><i class="fas fa-envelope fa-xs me-2 text-muted"></i><a href="mailto:{{ user.email }}">{{ user.email }}</a></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">Имя пользователя (логин)</label>
+                                     {# Используем поле из формы, так как оно было readonly в оригинале #}
+                                    {{ form.username(class='form-control form-control-sm readonly-style', readonly=True) }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">Телефон</label>
+                                    <p class="info-value"><i class="fas fa-phone fa-xs me-2 text-muted"></i>{{ user.phone|default('Не указан', true) }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">Локация (Офис)</label>
+                                    <p class="info-value"><i class="fas fa-map-marker-alt fa-xs me-2 text-muted"></i>{{ user.office|default('Не указан', true) }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">Подразделение</label>
+                                    <p class="info-value"><i class="fas fa-sitemap fa-xs me-2 text-muted"></i>{{ user.department|default('Не указан', true) }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="info-label">Должность</label>
+                                    <p class="info-value"><i class="fas fa-briefcase fa-xs me-2 text-muted"></i>{{ user.position|default('Не указана', true) }}</p>
+                                </div>
                             </div>
-                    {% else %}
-                        {{ form.picture(class='form-control form-control-sm') }}
-                    {% endif %}
-                </div>
-            <div class="form-group_button mt-3">
-                {{ form.submit(class='btn btn-primary left-align-btn') }}
-            </div>
-            </div>
-
-            <!-- Центральная колонка с данными -->
-            <div class="col-lg-5">
-                <div class="user-data-section">
-                    {{ form.hidden_tag() }}
-                    <!-- Данные пользователя -->
-                    <div class="form-group">
-                        <label for="account-fn">Сотрудник</label>
-                        <input class="form-control form-control-lg" type="text" id="account-fn"
-                               value="{{ user.full_name }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-email">E-mail</label>
-                        <input class="form-control" type="email" id="account-email" value="{{ user.email }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-office">Локация</label>
-                        <input class="form-control" type="text" id="account-office" value="{{ user.office }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-phone">Телефон</label>
-                        <input class="form-control" type="text" id="account-phone" value="{{ user.phone }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-department">Подразделение</label>
-                        <input class="form-control" type="text" id="account-department" value="{{ user.department }}" readonly>
-                    </div>
-                    <div class="form-group">
-                        <label for="account-position">Должность</label>
-                        <input class="form-control" type="text" id="account-position" value="{{ user.position }}" readonly>
-                    </div>
-
-                    <!-- Поле username -->
-                    <div class="form-group">
-                        {{ form.username.label(class='form-control-label') }}
-                        {{ form.username(class='form-control form-control-lg', id='username-field') }}
-                    </div>
-
-                    <!-- VPN статус -->
-                    <div class="form-group">
-                        <label for="account-vpn">VPN</label>
-                        <div style="width: 120%; margin-left: auto;">
-                            <input class="form-control form-control-lg" type="text" id="account-vpn"
-                                   style="width: 61%; display: inline-block;"
-                                   value="{% if user.vpn_end_date %}✅ Включен, заканчивается {{ user.vpn_end_date }}{% else %}❌ Выключен{% endif %}"
-                                   readonly>
-                            <button class="btn btn-primary" id="update-vpn-date" type="button"
-                                    style="width: 160px; height: 48px; margin-left: 10px;">
-                                Обновить дату VPN
-                            </button>
                         </div>
                     </div>
 
-                    <!-- Пароль TEZ ERP -->
-                    <div class="form-group">
-                        <label for="password">Мой текущий пароль TEZ ERP</label>
-                        <div style="width: 120%; margin-left: auto;">
-                            <input class="form-control" type="password" id="password"
-                                   value="{{ user_password_erp }}"
-                                   style="width: 55%; display: inline-block;"
-                                   readonly>
-                            <button class="btn btn-outline-secondary" type="button" id="togglePassword"
-                                    style="height: 50px; margin-left: 2px;">
-                                <i id="eyeIcon" class="fas fa-eye"></i>
-                            </button>
-                            <button class="btn btn-outline-secondary" type="button" id="copyPassword"
-                                    style="width: 160px; height: 50px; margin-left: 10px;" disabled>
-                                Копировать
-                            </button>
+                    <!-- Карточка Настройки и Доступы (VPN, Пароль ERP, Подпись) -->
+                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
+                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
+                            <h5 class="card-title-custom mb-0"><i class="fas fa-cogs me-2 text-primary"></i>Настройки и доступы</h5>
+                        </div>
+                        <div class="card-body p-4">
+                            <div class="row g-3">
+                                <div class="col-md-12">
+                                    <label class="info-label">VPN Статус</label>
+                                    <div class="input-group input-group-sm mb-1 align-items-stretch fixed-height-input-group">
+                                        <input class="form-control form-control-sm readonly-style flex-grow-1 align-self-stretch" type="text" id="account-vpn-display"
+                                               value="{% if user.vpn_end_date %}Включен, заканчивается {{ user.vpn_end_date }}{% elif user.vpn == 1 and not user.vpn_end_date %}Включен, дата не определена{% else %}Выключен{% endif %}"
+                                               readonly style="height: 38px !important; border-radius: 0.3rem !important;">
+                                        <button class="btn btn-info btn-sm vpn-action-button align-self-stretch" id="update-vpn-date" type="button" style="margin-left: 10px !important; height: 38px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 0.3rem !important;">Обновить дату VPN</button>
+                                    </div>
+                                    <div id="vpn-status-badge-container"> {# Контейнер для бейджа #}
+                                        {% if user.vpn == 1 and user.vpn_end_date %}
+                                             <span class="badge bg-success-tinted text-success-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span>
+                                             <small class="text-muted d-inline-block ms-2">Срок до: {{ user.vpn_end_date }}</small>
+                                        {% elif user.vpn == 1 and not user.vpn_end_date %}
+                                             <span class="badge bg-warning-tinted text-warning-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span>
+                                             <small class="text-muted d-inline-block ms-2">Срок действия не определен</small>
+                                        {% else %}
+                                             <span class="badge bg-danger-tinted text-danger-emphasis"><i class="fas fa-shield-alt me-1"></i>Выключен</span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12">
+                                    <label class="info-label">Мой текущий пароль TEZ ERP</label>
+                                    <div class="input-group input-group-sm password-input-group align-items-stretch fixed-height-input-group">
+                                        <input class="form-control form-control-sm readonly-style flex-grow-1 align-self-stretch" type="password" id="password-display" value="{{ user_password_erp }}" readonly>
+                                        <button class="btn btn-outline-secondary btn-sm password-action-button icon-button align-self-stretch" type="button" id="togglePassword"><i id="eyeIcon" class="fas fa-eye"></i></button>
+                                        <button class="btn btn-outline-secondary btn-sm password-action-button text-button align-self-stretch" type="button" id="copyPassword" disabled><i class="fas fa-copy me-1"></i>Копировать</button>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-12 text-start">
+                                    <label class="info-label">Автоматическая подпись</label>
+                                    <div class="email-signature-preview p-3 border rounded-2 bg-light mb-2">
+                                        {{ email_signature_html|safe if email_signature_html else "Подпись не сформирована." }}
+                                    </div>
+                                    <button class="btn btn-primary-soft btn-sm py-2" type="button" id="copySignatureBtnAccount">
+                                        <i class="fas fa-copy me-2"></i>Копировать подпись
+                                    </button>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Автоматическая подпись -->
-                    <div class="form-group">
-                        <label for="account-position" style="font-size: 16px;">Автоматическая подпись</label>
-                        <div class="email-signature-frame">
-                            <p style="font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 13px; color: #252525;">
-                                С уважением,<br>
-                                <b>{{ user.full_name }}</b>
-                            </p>
-                            <p style="font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 12px; color: #252525;">
-                                {{ user.position }}<br>
-                                {{ user.department }}
-                            </p>
-                            <div style="border-top: 1px solid #252525;"></div><br> <!-- Подчеркивание -->
-                            <a href="http://www.tez-tour.com/" target="_blank">
-                                <img src="http://s.tez-tour.com/article/50001388/teztour_mail_signature_logo_3129.gif" width="150" height="40" border="0">
-                            </a><br>
-                            Тел: внутр. {{ user.phone }}<br>
-                            <a href="mailto:{{ user.email }}">{{ user.email }}</a><br>
-                            <a href="http://www.tez-tour.com">www.tez-tour.com</a><br>
+                     <!-- Карточка Ключевые действия -->
+                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
+                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
+                            <h5 class="card-title-custom mb-0"><i class="fas fa-bolt me-2 text-primary"></i>Ключевые действия</h5>
                         </div>
-                    </div>
-
-                    <!-- Vacuum-IM уведомления -->
-                    <div class="form-group">
-                        <div class="form-check form-switch">
-                            <input class="form-check-input btn-lg" type="checkbox" id="vacuumImSwitch"
-                                   name="vacuum_im_notifications_checked" {{ vacuum_im_notifications_checked }}>
-                            <label class="form-check-label" for="vacuumImSwitch">
-                                Дублировать уведомления в Vacuum-IM
-                            </label>
+                        <div class="card-body p-4">
+                            <div class="d-grid gap-2">
+                                <button id="downloadButton" type="button" class="btn btn-success btn-sm"><i class="fas fa-download me-2"></i>Скачать последнюю версию TEZ ERP</button>
+                                <button class="btn btn-warning btn-sm" type="button" id="sendPasswordButton"><i class="fas fa-key me-2"></i>Выслать мне мой почтовый пароль</button>
+                            </div>
                         </div>
-                    </div>
-
-                    <!-- Кнопки -->
-                    <div class="download-button-block">
-                        <button id="downloadButton" type="button"
-                                class="btn custom-button common-button"
-                                style="width: 100%; padding: 8px 16px;">
-                            Скачать последнюю версию TEZ ERP
-                        </button>
-                    </div>
-
-                    <div class="form-group text-right">
-                        <button class="btn btn-primary btn-lg common-button"
-                                type="button" id="sendPasswordButton"
-                                style="width: 100%; padding: 8px 16px;">
-                            Выслать мне мой почтовый пароль
-                        </button>
                     </div>
                 </div>
-            </div>
 
-            <!-- Правая колонка с админ-панелью -->
-            {% if current_user.is_admin %}
-            <div class="col-lg-4">
-                <div class="admin-panel">
-                    <h4><i class="fas fa-user-shield"></i> Панель администратора</h4>
-                    <div class="table-responsive">
-                        <table class="table table-hover">
-                            <thead>
-                                <tr>
-                                    <th>Пользователь</th>
-                                    <th>Доступ к контролю качества</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for user in all_users %}
-                                <tr>
-                                    <td>{{ user.username }}</td>
-                                    <td>
-                                        <div class="form-check form-switch">
-                                            <input class="form-check-input permission-toggle"
-                                                   type="checkbox"
-                                                   data-user-id="{{ user.id }}"
-                                                   data-type="quality_control"
-                                                   {% if user.can_access_quality_control %}checked{% endif %}>
-                                        </div>
-                                    </td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
+                <!-- Правая колонка: Панель администратора -->
+                {% if current_user.is_admin %}
+                <div class="col-lg-3">
+                    <div class="card data-card shadow-sm border-0 rounded-3">
+                         <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
+                            <h5 class="card-title-custom mb-0"><i class="fas fa-user-shield me-2 text-primary"></i>Панель администратора</h5>
+                        </div>
+                        <div class="card-body p-3">
+                            <div class="table-responsive admin-table-scroll">
+                                <table class="table table-sm table-hover small">
+                                    <thead>
+                                        <tr>
+                                            <th>Пользователь</th>
+                                            <th class="text-center">Контроль качества</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for u_admin in all_users %} {# Изменено имя переменной цикла #}
+                                        <tr>
+                                            <td>{{ u_admin.username }}</td>
+                                            <td class="text-center">
+                                                <div class="form-check form-switch d-flex justify-content-center">
+                                                    <input class="form-check-input permission-toggle"
+                                                           type="checkbox"
+                                                           role="switch"
+                                                           data-user-id="{{ u_admin.id }}"
+                                                           data-type="quality_control"
+                                                           {% if u_admin.can_access_quality_control %}checked{% endif %}>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                {% endif %}
             </div>
-            {% endif %}
-        </div>
+        </form>
     </div>
-</form>
+</div>
 
+{# Стили из profile.html, адаптированные для account.html #}
 <style>
-.container {
-    /* Стили контейнера */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bs-primary-rgb: 0, 123, 255; /* Яркий синий Tez Tour со скриншота */
+    --bs-secondary-rgb: 108, 117, 125;
+    --bs-success-rgb: 25, 135, 84; /* Зеленый со скриншота */
+    --bs-info-rgb: 13, 202, 240;
+    --bs-warning-rgb: 255, 193, 7; /* Желтый со скриншота */
+    --bs-danger-rgb: 220, 53, 69;
+    --bs-light-rgb: 248, 249, 250;
+    --bs-dark-rgb: 33, 37, 41;
+
+    --bs-primary-text-emphasis: #005cbf;
+    --bs-success-text-emphasis: #14754f;
+    --bs-info-text-emphasis: #0aa8c7;
+    --bs-danger-text-emphasis: #b02a37;
+    --bs-secondary-text-emphasis: #545b62;
+    --bs-warning-text-emphasis: #997404;
+
+
+    --bs-body-font-family: 'Inter', sans-serif;
+    --bs-body-font-size: 0.9rem;
+    --bs-body-color: #343a40;
+    --bs-border-radius: .5rem;
+    --bs-card-border-width: 0;
+    --bs-card-cap-bg: transparent;
+    --bs-card-inner-border-radius: .5rem;
+
+    /* Добавляем цвета для soft кнопок, если их нет */
+    --bs-primary-soft-bg: rgba(var(--bs-primary-rgb), 0.1);
+    --bs-primary-soft-border: rgba(var(--bs-primary-rgb), 0.2);
+    --bs-primary-soft-hover-bg: rgba(var(--bs-primary-rgb), 0.15);
+    --bs-info-soft-bg: rgba(var(--bs-info-rgb), 0.1);
+    --bs-info-soft-border: rgba(var(--bs-info-rgb), 0.2);
+    --bs-info-soft-hover-bg: rgba(var(--bs-info-rgb), 0.15);
 }
 
-.settings-block {
-    background-color: white;
-    padding: 10px;
-    margin-top: 10px;
-    text-align: left;
-    border-radius: 5px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    max-width: 525px; /* установим максимальную ширину, чтобы выровнять по правому краю с другими элементами */
+body {
+    background-color: #f4f7f9;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    font-family: 'Inter', sans-serif;
 }
 
-.form-check {
+.account-page {
+    color: var(--bs-body-color);
+    background-color: #f4f7f9;
+    padding: 0;
+    margin: 0;
+}
+
+.account-page .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding-top: 15px;
+    padding-bottom: 20px;
+}
+
+.account-page .row {
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+}
+
+.account-page .col-lg-3,
+.account-page .col-lg-6 {
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+.data-card, .profile-sidebar-card {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+    border: none !important;
+    background-color: #fff;
+    border-radius: 0.5rem;
+}
+
+.card-body {
+    padding: 1.25rem !important;
+}
+
+/* Улучшенные отступы строк в карточках */
+.card-body .row {
+    margin-left: -0.75rem !important;
+    margin-right: -0.75rem !important;
+}
+
+.card-body .col-md-6,
+.card-body .col-md-12 {
+    padding-left: 0.75rem !important;
+    padding-right: 0.75rem !important;
+}
+
+.profile-nav .nav-link {
+    color: var(--bs-secondary-text-emphasis);
+    padding: 0.5rem 0.8rem;
+    font-size: 0.875rem;
+    border-radius: 0.3rem;
+}
+.profile-nav .nav-link:hover {
+    background-color: rgba(var(--bs-primary-rgb), 0.05);
+    color: var(--bs-primary-text-emphasis);
+}
+.profile-nav .nav-link.active {
+    background-color: rgba(var(--bs-primary-rgb), 0.1);
+    color: var(--bs-primary-text-emphasis);
+    font-weight: 500;
+}
+.profile-nav .nav-link i.fas {
+    width: 20px; /* Фиксированная ширина для иконок в меню */
+    text-align: center;
+}
+
+
+.profile-avatar-container {
+    width: 120px; /* Чуть меньше, чем на profile.html */
+    height: 120px;
+    border-radius: 50%;
+    padding: 4px;
+    background: linear-gradient(145deg, #ffffff, #e6e6e6);
+    box-shadow: 4px 4px 8px #d9d9d9, -4px -4px 8px #ffffff;
+    overflow: hidden;
+}
+
+.profile-avatar {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.profile-name {
+    color: #2c3e50;
+    font-size: 1.1rem; /* Чуть меньше для сайдбара */
+    font-weight: 600;
+}
+
+.profile-position { /* Это на самом деле last_seen */
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+}
+
+.card-title-custom {
+    color: var(--bs-primary-text-emphasis);
+    font-weight: 600;
+    font-size: 1.1rem;
     display: flex;
     align-items: center;
-    justify-content: flex-start; /* выравнивание по левому краю */
 }
-.download-button-block {
-    margin-top: 10px;
-}
-
-.form-check-label {
-    float: left;
-    margin-left: 20px;
+.card-title-custom .fas {
+    font-size: 1rem;
 }
 
-
-button {
-    /* Общие стили для кнопок */
-    margin-right: 10px; /*  отступ справа */
-    padding: 8px 15px;
-    border: none;
-    border-radius: 5px;
-    background-color: #007bff;
-    color: white;
-    cursor: pointer;
-    display: inline-block;
-}
-
-.download-button-block, .form-group.text-right {
-    display: flex;
-    flex-direction: column;
-    justify-content: start;
-}
-
-
-#update-vpn-date {
-    width: 160px; /* Increase button width to the right */
-    margin-right: -1px; /* Выровнять кнопку по правому краю */
-}
-
-
-
-button:hover {
-    background-color: #0056b3;
-}
-.custom-button {
-    background-color: green; /* Основной цвет кнопки */
-    color: white; /* Цвет текста */
-    border: none; /* Убираем рамку */
-    padding: 5px 10px; /* Отступы */
-    cursor: pointer; /* Курсор при наведении */
-    border-radius: 5px; /* Закругленные углы */
-    transition: background-color 0.3s ease; /* Плавный переход цвета */
-    font-size: 16px;
-    margin-left: 10px; /*  отступ слева */
-}
-
-#sendPasswordButton, #downloadButton {
-    width: 527px;
-    margin-bottom: 10px; /*  отступ вниз */
-    margin-left: -2px;
-}
-
-.custom-button:hover {
-    background-color: darkgreen; /* Цвет кнопки при наведении */
-    color: white; /* Цвет текста при наведении */
-}
-.form-group {
+.info-group {
     margin-bottom: 1rem;
 }
 
-.vpn-status {
-    margin-top: 0.5rem;
-}
-
-.btn {
-    margin-left: 10px;
-}
-.common-button {
-    margin: 0.5rem 0;
-    padding: 12px 20px;
-}
-
-.admin-panel {
-    background-color: #fff;
-    padding: 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-.admin-panel h4 {
-    font-size: 16px;
-    color: #343a40;
-    margin-bottom: 15px;
-}
-
-.admin-panel .table {
-    font-size: 14px;
-}
-
-.admin-panel .table td,
-.admin-panel .table th {
-    padding: 8px;
-    vertical-align: middle;
-}
-
-.admin-panel .form-check {
-    margin: 0;
-    display: flex;
-    justify-content: center;
-}
-
-.table-responsive {
-    max-height: 300px;
-    overflow-y: auto;
-}
-
-/* Единый размер шрифтов */
-.form-control-label,
-.form-control,
-.form-check-label {
-    font-size: 16px;
-}
-
-/* Адаптивность подписи */
-.email-signature-frame {
-    padding: 1rem;
-    background: #f8f9fa;
-    border-radius: 4px;
-    margin-top: 0.5rem;
-}
-
-/* Единый шрифт для всех labels */
-label {
-    font-family: 'Roboto', sans-serif;
-    font-size: 16px;
-    font-weight: 500;
-}
-
-/* Стили для основных кнопок */
-.common-button {
-    height: 42px;
-    font-size: 15px;
-    font-weight: 500;
+.info-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.3rem;
+    display: block;
+    text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-/* Фиксированная структура для input-group */
-.input-group {
-    width: auto !important;
-    margin-left: 0;
-    display: block;
-}
-
-.vpn-status {
-    height: 50px;
-    padding: 0.75rem 1.15rem;
-    font-size: 1rem;
-}
-
-#update-vpn-date {
-    white-space: normal;
-    padding: 0.5rem;
-    font-size: 14px;
-}
-
-/* Единые стили для всех input элементов */
-.form-control-lg {
-    height: calc(3.5rem + 2px);
-    padding: 0.75rem 1.15rem;
-    font-size: 1rem;
-    line-height: 1.5;
-}
-
-/* Кнопка VPN */
-#update-vpn-date {
-    height: calc(3.5rem + 2px);
-    padding: 0.75rem 1.15rem;
-}
-
-
-
-
-
-/* Выравнивание элементов input-group */
-.input-group {
+.info-value, .readonly-style.form-control {
+    font-size: 0.9rem;
+    color: var(--bs-body-color);
+    background-color: var(--bs-light-rgb);
+    padding: 0.5rem 0.85rem;
+    border-radius: 0.3rem;
+    border: 1px solid #e0e0e0;
+    margin-bottom: 0;
+    min-height: calc(1.5em + .75rem + 2px); /* Bootstrap sm input height */
+    display: flex;
     align-items: center;
+    word-break: break-word;
+}
+.readonly-style.form-control {
+    background-color: var(--bs-light-rgb) !important;
+    border-color: #e0e0e0 !important;
 }
 
-/* Фикс для перекрывающихся стилей */
-.form-control-lg {
-    height: 50px !important;
+
+.info-value i.fas {
+    opacity: 0.7;
 }
 
-/* Фикс ширины для группы VPN */
-.input-group {
+.info-value a {
+    text-decoration: none;
+    color: var(--bs-primary-text-emphasis);
+    font-weight: 500;
+}
+.info-value a:hover {
+    text-decoration: underline;
+}
+
+.badge {
+    padding: 0.45em 0.8em;
+    font-weight: 500;
+    font-size: 0.75rem;
+}
+
+.badge.bg-success-tinted {
+    background-color: rgba(var(--bs-success-rgb), 0.1);
+    color: var(--bs-success-text-emphasis) !important;
+}
+.badge.bg-danger-tinted {
+    background-color: rgba(var(--bs-danger-rgb), 0.1);
+    color: var(--bs-danger-text-emphasis) !important;
+}
+.badge.bg-warning-tinted {
+    background-color: rgba(var(--bs-warning-rgb), 0.15);
+    color: var(--bs-warning-text-emphasis) !important;
+}
+.badge.bg-secondary-soft {
+    background-color: rgba(var(--bs-secondary-rgb), 0.1);
+    color: var(--bs-secondary-text-emphasis) !important;
+}
+
+.email-signature-preview {
+    font-size: 0.85rem;
+    max-height: 250px;
+    overflow-y: auto;
+}
+.email-signature-preview .email-signature-frame {
+    border: none !important;
+    float: none !important;
+    margin: 0;
+}
+.email-signature-preview p {
+    font-family: Tahoma, Verdana, Arial, sans-serif !important;
+    font-size: 12px !important;
+    color: #252525 !important;
+    margin-bottom: 8px;
+    line-height: 1.4;
+}
+.email-signature-preview p b {
+    font-weight: bold;
+}
+.email-signature-preview div[style*="border-top"] {
+    border-top: 1px solid #252525 !important;
+    margin-top: 8px;
+    margin-bottom: 8px;
+}
+.email-signature-preview a {
+    color: #0056b3;
+    text-decoration: none;
+}
+.email-signature-preview a:hover {
+    text-decoration: underline;
+}
+.email-signature-preview img {
+    max-width: 150px;
+    height: auto;
+    border: 0;
+}
+.admin-table-scroll {
+    max-height: 400px; /* Или другая подходящая высота */
+    overflow-y: auto;
+}
+
+.btn-info-soft {
+    background-color: var(--bs-info-soft-bg);
+    border-color: var(--bs-info-soft-border);
+    color: var(--bs-info-text-emphasis);
+}
+.btn-info-soft:hover {
+    background-color: var(--bs-info-soft-hover-bg);
+    color: var(--bs-info-text-emphasis);
+}
+
+/* Styles for input groups to ensure alignment and proper button sizing */
+.fixed-height-input-group.input-group-sm {
+    height: auto; /* Убираем фиксированную высоту */
     display: flex;
     align-items: stretch;
-    width: 100%;
+    margin-bottom: 8px; /* Добавляем отступ снизу */
 }
 
-.vpn-status {
+.fixed-height-input-group.input-group-sm > .form-control-sm,
+.fixed-height-input-group.input-group-sm > .btn-sm {
+    height: 38px; /* Устанавливаем одинаковую высоту для всех элементов */
+    box-sizing: border-box; /* Ensure padding and border are included in height */
+    border: 1px solid #e0e0e0;
+}
+
+.fixed-height-input-group.input-group-sm > .form-control-sm.readonly-style {
     flex-grow: 1;
-    margin-right: 0.5rem;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
 }
 
-#update-vpn-date {
-    flex-shrink: 0;
-    width: auto;
-    white-space: nowrap;
-}
-
-/* Общие стили для всех input-групп */
-.form-group .input-group {
-    width: 72% !important;
-    margin-left: auto;
-}
-
-.vpn-container {
-    display: flex;
+.fixed-height-input-group.input-group-sm > .btn-sm {
+    display: inline-flex;
     align-items: center;
-    gap: 10px;
-    width: 100%;
-    padding: 0;
+    justify-content: center;
+    line-height: 1;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
 }
 
-.vpn-input {
-    flex: 1 1 auto;
-    width: calc(100% - 170px); /* 160px для кнопки + 10px gap */
-    margin: 0;
+/* VPN Button specific */
+.vpn-action-button {
+    margin-left: 10px !important;
+    height: 38px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0.3rem !important;
 }
 
-#update-vpn-date {
-    width: 160px;
+/* Стиль для поля VPN статуса */
+#account-vpn-display {
+    height: 38px !important;
+    border-radius: 0.3rem !important;
+}
+
+/* Password Buttons specific */
+.password-input-group .password-action-button {
     flex-shrink: 0;
-    margin: 0;
+    margin-left: 5px; /* Добавляем отступ между кнопками */
 }
 
-/* Общие стили для всех элементов */
-.form-control, #update-vpn-date {
-    height: 50px;
-    padding: 0.75rem 1.15rem;
+.password-input-group .icon-button {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    border-radius: 0.3rem;
 }
 
-.form-control {
-    height: 50px;
-    padding: 0.75rem 1.15rem;
+.password-input-group .text-button {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+    border-radius: 0.3rem;
 }
 
-#update-vpn-date {
-    padding: 0.75rem 1.15rem;
-    vertical-align: top;
+
+/* Copy Signature button styling */
+#copySignatureBtnAccount.btn-primary-soft {
+    /* Re-using primary-soft, ensure it's defined or adjust */
+    background-color: var(--bs-primary-soft-bg, rgba(var(--bs-primary-rgb), 0.1));
+    border-color: var(--bs-primary-soft-border, rgba(var(--bs-primary-rgb), 0.2));
+    color: var(--bs-primary-text-emphasis, #005cbf);
+    display: inline-block;
+    width: auto;
+    margin-bottom: 10px;
+}
+#copySignatureBtnAccount.btn-primary-soft:hover {
+    background-color: var(--bs-primary-soft-hover-bg, rgba(var(--bs-primary-rgb), 0.15));
+    color: var(--bs-primary-text-emphasis, #005cbf);
+}
+
+/* Primary soft button for copy signature if needed */
+.btn-primary-soft {
+    background-color: var(--bs-primary-soft-bg, rgba(var(--bs-primary-rgb), 0.1));
+    border-color: var(--bs-primary-soft-border, rgba(var(--bs-primary-rgb), 0.2));
+    color: var(--bs-primary-text-emphasis, #005cbf);
+}
+.btn-primary-soft:hover {
+    background-color: var(--bs-primary-soft-hover-bg, rgba(var(--bs-primary-rgb), 0.15));
+    color: var(--bs-primary-text-emphasis, #005cbf);
+}
+
+/* Адаптивность */
+@media (max-width: 991.98px) { /* lg */
+    .profile-sidebar-card {
+        position: static !important;
+    }
+     .account-page .col-lg-3, .account-page .col-lg-6 {
+        margin-bottom: 1rem; /* Добавляем отступ снизу для колонок на планшетах */
+    }
+}
+
+/* Удаляем старые стили, чтобы избежать конфликтов */
+/* form > .container-centered, .author-card, .wizard, .user-data-section, .admin-panel старые стили... */
+/* ... и другие специфичные для account.html стили, которые теперь заменяются общими .card, .info-group и т.д. */
+
+/* Apply a fixed height to input-group and its direct children (input, button) */
+.fixed-height-input-group.input-group-sm {
+    height: auto; /* Убираем фиксированную высоту */
+    display: flex;
+    align-items: stretch;
+    margin-bottom: 8px; /* Добавляем отступ снизу */
+}
+
+.fixed-height-input-group.input-group-sm > .form-control-sm,
+.fixed-height-input-group.input-group-sm > .btn-sm {
+    height: 38px; /* Устанавливаем одинаковую высоту для всех элементов */
+    box-sizing: border-box; /* Ensure padding and border are included in height */
+    border: 1px solid #e0e0e0;
+}
+
+.fixed-height-input-group.input-group-sm > .form-control-sm.readonly-style {
+    flex-grow: 1;
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+    border-right: none;
+}
+
+.fixed-height-input-group.input-group-sm > .btn-sm {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    padding-top: 0;
+    padding-bottom: 0;
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* VPN Button specific */
+.vpn-action-button {
+    margin-left: 10px !important;
+    height: 38px !important;
+    line-height: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border-radius: 0.3rem !important;
+}
+
+/* Стиль для поля VPN статуса */
+#account-vpn-display {
+    height: 38px !important;
+    border-radius: 0.3rem !important;
+}
+
+/* Исправление для кнопки копирования подписи */
+#copySignatureBtnAccount {
+    padding: 8px 16px;
+    margin-bottom: 15px;
+    display: inline-block;
+    min-width: 180px;
+}
+
+/* Убедимся, что у всех элементов с классом info-value отображается граница */
+.info-value {
+    border: 1px solid #e0e0e0 !important;
+    box-shadow: none !important;
+    margin-bottom: 0.5rem !important;
+}
+
+/* Стили для карточки настроек и доступов */
+.card-body .row {
+    margin-bottom: 0.5rem;
+}
+
+.container-fluid.account-page {
+    padding-left: 0;
+    padding-right: 0;
+    margin-top: 0;
+    background-color: #f4f7f9;
+}
+
+/* Убираем отступы у первого ряда */
+.account-page .row.gx-4.gy-3 {
+    margin-top: 0;
+}
+
+.navbar + .container-fluid.account-page {
+    margin-top: 0 !important;
+    padding-top: 0 !important;
 }
 </style>
+
+{% endblock content %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> {# Убедимся, что sweetalert подключен #}
 <script>
-$(document).ready(function() {
-    $('#sendPasswordButton').click(function() {
+document.addEventListener('DOMContentLoaded', function () {
+    // Копирование подписи (новый ID для кнопки)
+    const copySignatureBtnAccount = document.getElementById('copySignatureBtnAccount');
+    if (copySignatureBtnAccount) {
+        copySignatureBtnAccount.addEventListener('click', function () {
+            const signaturePreview = document.querySelector('.email-signature-preview');
+            if (signaturePreview) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = signaturePreview.innerHTML;
+                const plainText = signaturePreview.innerText || signaturePreview.textContent;
 
-        const username = document.getElementById('username-field').value;
-
-        // Проверяем, что имя пользователя не пустое
-        if (!username) {
-            alert('Пожалуйста, введите имя пользователя');
-            return;
-        }
-
-        // Отправка AJAX-запроса
-        $.ajax({
-            url: '/send_password',
-            type: 'POST',
-            data: { Username: username }, // Отправляем данные как form-data
-            success: function(response) {
-                alert(response.message);
-            },
-            error: function(xhr) {
-                alert('Ошибка: ' + (xhr.responseJSON ? xhr.responseJSON.message : 'Неизвестная ошибка'));
+                navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([tempDiv.innerHTML], { type: 'text/html' }),
+                        'text/plain': new Blob([plainText], { type: 'text/plain' })
+                    })
+                ]).then(function () {
+                    const originalText = copySignatureBtnAccount.innerHTML;
+                    copySignatureBtnAccount.innerHTML = '<i class="fas fa-check me-2"></i>Скопировано!';
+                    copySignatureBtnAccount.classList.add('btn-success-soft'); // Используем soft стиль
+                    copySignatureBtnAccount.classList.remove('btn-outline-secondary');
+                    setTimeout(() => {
+                        copySignatureBtnAccount.innerHTML = originalText;
+                        copySignatureBtnAccount.classList.remove('btn-success-soft');
+                        copySignatureBtnAccount.classList.add('btn-outline-secondary');
+                    }, 2000);
+                }).catch(function (error) {
+                    console.error('Ошибка копирования подписи: ', error);
+                    Swal.fire('Ошибка', 'Не удалось скопировать подпись. Пожалуйста, скопируйте вручную.', 'error');
+                });
             }
         });
-    });
-});
+    }
 
+    // Логика для кнопки "Выслать почтовый пароль"
+    const sendPasswordBtn = document.getElementById('sendPasswordButton');
+    if (sendPasswordBtn) {
+        sendPasswordBtn.addEventListener('click', function() {
+            const usernameField = document.querySelector('input.form-control[value="{{ user.username }}"]'); // Более надежный селектор для username
+            const username = usernameField ? usernameField.value : "{{ user.username }}"; // Фоллбэк на user.username
 
-document.getElementById('downloadButton').addEventListener('click', function() {
-    const button = this;
-    button.textContent = 'Загрузка...';
-    button.disabled = true;
-
-    fetch('/download_erp')
-        .then(response => {
-            console.log('Response status:', response.status);
-            console.log('Response headers:', response.headers);
-
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const contentType = response.headers.get('Content-Type');
-            console.log('Content-Type:', contentType);
-
-            if (!contentType || !contentType.includes('application/vnd.microsoft.portable-executable')) {
-                console.warn('Unexpected Content-Type:', contentType);
+            if (!username) {
+                 Swal.fire('Внимание', 'Имя пользователя не найдено для отправки пароля.', 'warning');
+                return;
             }
 
-            return response.blob();
-        })
-        .then(blob => {
-            console.log('Blob size:', blob.size);
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = 'TEZERP.exe';
-            document.body.appendChild(a);
-            a.click();
-            window.URL.revokeObjectURL(url);
-            document.body.removeChild(a);
+            const originalButtonText = sendPasswordBtn.innerHTML;
+            sendPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отправка...';
+            sendPasswordBtn.disabled = true;
 
-            button.textContent = 'Файл TEZERP.exe cкачан в папку «Загрузки»';
-            button.style.backgroundColor = 'green';
-        })
-        .catch(error => {
-            console.error('Подробная ошибка:', error);
-            alert(`Ошибка при скачивании файла: ${error.message}. Попробуйте еще раз.`);
-            button.textContent = 'Скачать последнюю версию TEZ ERP';
-            button.disabled = false;
-            button.style.backgroundColor = '#007bff';
-        });
-});
-
-window.addEventListener('load', function() {
-    document.getElementById('downloadButton').textContent = 'Скачать последнюю версию TEZ ERP';
-});
-
-document.getElementById('update-vpn-date').addEventListener('click', function() {
-    fetch('/update_vpn_date', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    .then(response => response.json())
-    .then(data => {
-        let message = data.message;
-
-        // Обработка случая, когда VPN отключен
-        if (data.vpn_end_date === null) {
-            Swal.fire({
-                icon: 'info',
-                title: 'Информация',
-                text: message
+            fetch("{{ url_for('users.send_password') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                },
+                body: 'Username=' + encodeURIComponent(username)
+            })
+            .then(response => response.json().then(data => ({ status: response.status, body: data })))
+            .then(result => {
+                Swal.fire(
+                    result.status === 200 ? 'Успешно!' : 'Ошибка',
+                    result.body.message,
+                    result.status === 200 ? 'success' : 'error'
+                );
+            })
+            .catch(error => {
+                console.error('Ошибка при отправке пароля:', error);
+                Swal.fire('Сетевая ошибка', 'Произошла ошибка при отправке запроса.', 'error');
+            })
+            .finally(() => {
+                sendPasswordBtn.innerHTML = originalButtonText;
+                sendPasswordBtn.disabled = false;
             });
-            document.getElementById('account-vpn').value = `❌ Выключен`;
-            return; // Завершаем выполнение функции
-        }
-
-        // Обработка успешного обновления даты
-        Swal.fire({
-            icon: 'success',
-            title: 'Результат',
-            text: message
         });
-        document.getElementById('account-vpn').value = `✅ Включен, заканчивается ${data.vpn_end_date}`;
-    })
-    .catch(error => {
-        console.error('Ошибка:', error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Ошибка',
-            text: 'Ошибка при обновлении даты VPN. Попробуйте еще раз.'
+    }
+
+    // Логика для кнопки "Скачать TEZ ERP"
+    const downloadErpBtn = document.getElementById('downloadButton');
+    if (downloadErpBtn) {
+        downloadErpBtn.addEventListener('click', function() {
+            const button = this;
+            const originalButtonText = button.innerHTML;
+            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
+            button.disabled = true;
+
+            fetch("{{ url_for('users.download_erp') }}")
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Ошибка HTTP: ${response.status}`);
+                    }
+                    const contentDisposition = response.headers.get('content-disposition');
+                    let filename = "TEZERP.exe"; // Имя по умолчанию
+                    if (contentDisposition) {
+                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
+                        if (filenameMatch && filenameMatch.length === 2)
+                            filename = filenameMatch[1];
+                    }
+                    return response.blob().then(blob => ({ blob, filename }));
+                })
+                .then(({ blob, filename }) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+
+                    Swal.fire('Загрузка завершена', `Файл ${filename} скачан.`, 'success');
+                     button.innerHTML = '<i class="fas fa-check me-2"></i>Файл скачан';
+                })
+                .catch(error => {
+                    console.error('Ошибка при скачивании файла ERP:', error);
+                    Swal.fire('Ошибка загрузки', `Не удалось скачать файл: ${error.message}`, 'error');
+                    button.innerHTML = originalButtonText;
+                })
+                .finally(() => {
+                    // button.innerHTML = originalButtonText; // Не всегда нужно возвращать, если успешно
+                    button.disabled = false;
+                });
         });
-    });
-});
+    }
 
-document.addEventListener('DOMContentLoaded', function() {
-    const toggles = document.querySelectorAll('.permission-toggle');
+    // Логика для кнопки "Обновить дату VPN"
+    const updateVpnBtn = document.getElementById('update-vpn-date');
+    const vpnDisplayField = document.getElementById('account-vpn-display');
+    if (updateVpnBtn && vpnDisplayField) {
+        updateVpnBtn.addEventListener('click', function() {
+            const originalButtonText = updateVpnBtn.innerHTML;
+            updateVpnBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
+            updateVpnBtn.disabled = true;
 
-    toggles.forEach(toggle => {
+            fetch("{{ url_for('users.update_vpn_date') }}", {
+                method: 'POST',
+                 headers: { // CSRF может быть нужен и здесь, если сессия проверяется
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                Swal.fire(data.error ? 'Ошибка' : 'Результат', data.message, data.error ? 'error' : 'success');
+                if (!data.error) {
+                    if (data.vpn_end_date === null) {
+                        vpnDisplayField.value = 'Выключен';
+                         // Обновить стили бейджа ниже поля
+                    } else {
+                        vpnDisplayField.value = `Включен, заканчивается ${data.vpn_end_date}`;
+                         // Обновить стили бейджа ниже поля
+                    }
+                    // Динамическое обновление бейджа ниже поля (требует доработки HTML для target элемента)
+                    const vpnStatusBadgeContainer = document.getElementById('vpn-status-badge-container'); // Предполагаемый ID контейнера
+                    if(vpnStatusBadgeContainer) {
+                        if (data.vpn_end_date === null || data.vpn_status === 0) {
+                             vpnStatusBadgeContainer.innerHTML = '<span class="badge bg-danger-tinted text-danger-emphasis"><i class="fas fa-shield-alt me-1"></i>Выключен</span>';
+                        } else if (data.vpn_end_date === '<Дата не определена>') {
+                            vpnStatusBadgeContainer.innerHTML = '<span class="badge bg-warning-tinted text-warning-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span> <small class="text-muted d-inline-block ms-2">Срок действия не определен</small>';
+                        } else {
+                             vpnStatusBadgeContainer.innerHTML = `<span class="badge bg-success-tinted text-success-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span> <small class="text-muted d-inline-block ms-2">Срок до: ${data.vpn_end_date}</small>`;
+                        }
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении даты VPN:', error);
+                Swal.fire('Сетевая ошибка', 'Ошибка при обновлении даты VPN.', 'error');
+            })
+            .finally(() => {
+                updateVpnBtn.innerHTML = originalButtonText;
+                updateVpnBtn.disabled = false;
+            });
+        });
+    }
+
+    // Логика для переключателей прав в панели администратора
+    const permissionToggles = document.querySelectorAll('.permission-toggle');
+    permissionToggles.forEach(toggle => {
         toggle.addEventListener('change', function() {
             const userId = this.dataset.userId;
             const type = this.dataset.type;
             const value = this.checked;
 
-            fetch('/update_user_permissions', {
+            fetch("{{ url_for('users.update_user_permissions') }}", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': "{{ csrf_token() }}"
                 },
                 body: `user_id=${userId}&type=${type}&value=${value}`
             })
             .then(response => response.json())
             .then(data => {
-                if (data.error) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Ошибка',
-                        text: 'Ошибка при обновлении прав',
-                        toast: true,
-                        position: 'top-end',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                    this.checked = !value;
-                } else {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Успешно',
-                        text: data.message,
-                        toast: true,
-                        position: 'top-end',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка:', error);
                 Swal.fire({
-                    icon: 'error',
-                    title: 'Ошибка',
-                    text: 'Произошла ошибка при обновлении',
+                    icon: data.success ? 'success' : 'error',
+                    title: data.success ? 'Успешно' : 'Ошибка',
+                    text: data.message,
                     toast: true,
                     position: 'top-end',
                     timer: 3000,
                     showConfirmButton: false
                 });
-                this.checked = !value;
+                if (!data.success) {
+                    this.checked = !value; // Откатить изменение, если ошибка
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении прав:', error);
+                Swal.fire('Сетевая ошибка', 'Произошла ошибка при обновлении.', 'error');
+                this.checked = !value; // Откатить изменение
             });
         });
     });
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    const togglePassword = document.getElementById('togglePassword');
-    const password = document.getElementById('password');
-    const copyPassword = document.getElementById('copyPassword');
+    // Логика для "показать/скрыть пароль" и "копировать пароль"
+    const togglePasswordBtn = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('password-display');
+    const copyPasswordBtn = document.getElementById('copyPassword');
     const eyeIcon = document.getElementById('eyeIcon');
 
-    togglePassword.addEventListener('click', function() {
-        if (password.type === 'password') {
-            password.type = 'text';
-            eyeIcon.classList.remove('fa-eye');
-            eyeIcon.classList.add('fa-eye-slash');
-            copyPassword.disabled = false;
-        } else {
-            password.type = 'password';
-            eyeIcon.classList.remove('fa-eye-slash');
-            eyeIcon.classList.add('fa-eye');
-            copyPassword.disabled = true;
-        }
-    });
-
-    copyPassword.addEventListener('click', function() {
-        password.select();
-        document.execCommand('copy');
-
-        // Показываем уведомление об успешном копировании
-        Swal.fire({
-            icon: 'success',
-            title: 'Скопировано!',
-            text: 'Пароль скопирован в буфер обмена',
-            toast: true,
-            position: 'top-end',
-            showConfirmButton: false,
-            timer: 3000
-        });
-    });
-});
-
-$(document).ready(function() {
-    $('#vacuumImSwitch').change(function() {
-        var isChecked = $(this).prop('checked') ? 'checked' : 'unchecked';
-
-        $.ajax({
-            url: '/update_vacuum_im_notifications',
-            method: 'POST',
-            data: { vacuum_im_notifications_checked: isChecked },
-            success: function(response) {
-                if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'Успешно',
-                        text: 'Настройки уведомлений обновлены',
-                        toast: true,
-                        position: 'top-end',
-                        showConfirmButton: false,
-                        timer: 3000
-                    });
-                } else {
-                    throw new Error('Ошибка обновления настроек');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Ошибка',
-                    text: 'Не удалось обновить настройки уведомлений',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 3000
-                });
-                // Возвращаем переключатель в предыдущее состояние
-                $('#vacuumImSwitch').prop('checked', !$('#vacuumImSwitch').prop('checked'));
+    if (togglePasswordBtn && passwordField && copyPasswordBtn && eyeIcon) {
+        togglePasswordBtn.addEventListener('click', function() {
+            if (passwordField.type === 'password') {
+                passwordField.type = 'text';
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+                copyPasswordBtn.disabled = false;
+            } else {
+                passwordField.type = 'password';
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+                copyPasswordBtn.disabled = true;
             }
         });
-    });
+
+        copyPasswordBtn.addEventListener('click', function() {
+            // navigator.clipboard.writeText работает только в secure contexts (HTTPS) или localhost
+            // Для HTTP или file:// может не сработать без дополнительных разрешений
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(passwordField.value).then(function() {
+                    Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
+                }, function(err) {
+                    // Если navigator.clipboard.writeText не сработал, используем execCommand
+                    fallbackCopyTextToClipboard(passwordField);
+                });
+            } else {
+                // Фоллбэк для insecure contexts
+                fallbackCopyTextToClipboard(passwordField);
+            }
+        });
+    }
+    function fallbackCopyTextToClipboard(inputElement) {
+        const M_IOS =typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if(M_IOS) { // на IOS может не работать .select() для readonly полей.
+            let range = document.createRange();
+            range.selectNodeContents(inputElement);
+            let selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            inputElement.setSelectionRange(0, 999999); // для мобильных
+        } else {
+            inputElement.select(); // select() может не работать для display:none или readonly на некоторых браузерах
+        }
+        try {
+            var successful = document.execCommand('copy');
+            if (successful) {
+                Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена (fallback)', 'success');
+            } else {
+                 Swal.fire('Ошибка', 'Не удалось скопировать пароль (fallback)', 'error');
+            }
+        } catch (err) {
+             Swal.fire('Ошибка', 'Не удалось скопировать пароль (fallback exception)', 'error');
+        }
+        if (M_IOS) { // Убираем выделение после копирования на iOS
+            window.getSelection().removeAllRanges();
+        }
+    }
+
+    // Старый jQuery код для Vacuum-IM и XMPP теста оставляю закомментированным,
+    // так как он не является частью основного редизайна UI.
+    // Если он нужен, его нужно будет адаптировать под новый DOM или переписать на ванильный JS.
 });
-
 </script>
-
-<style>
-    .compact-card {
-        margin-top: 20px;
-        padding: 10px;
-    }
-    .compact-title {
-        font-size: 16px;
-    }
-    .compact-text {
-        font-size: 14px;
-    }
-    .btn-compact {
-        padding: 5px 10px;
-        font-size: 14px;
-    }
-</style>
-
-<div class="content-section">
-    <div class="row">
-        <div class="col-md-8">
-            <!-- Основная информация о пользователе -->
-            <div class="user-info">
-                <div class="media">
-                    <!-- Существующий код с информацией о пользователе -->
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-// ... существующий JavaScript код ...
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
-{% endblock content %}
+{% endblock scripts %}
