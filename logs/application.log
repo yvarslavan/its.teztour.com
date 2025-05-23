@@ -346,3 +346,20 @@
 (Background on this error at: https://sqlalche.me/e/20/4xp6)
 2025-04-18 09:57:42,442 - blog.main.routes - ERROR - Ошибка при получении списка новых обращений: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server on 'quality.teztour.com:3306' (10061)
 (Background on this error at: https://sqlalche.me/e/20/4xp6)
+2025-05-22 21:23:37,981 - blog.main.routes - ERROR - Ошибка при получении списка новых обращений: (mysql.connector.errors.OperationalError) MySQL Connection not available.
+[SQL: 
+                SELECT id, subject, description, created_on
+                FROM issues
+                WHERE project_id = 1
+                AND tracker_id = 1
+                AND status_id = 1
+                ORDER BY created_on DESC
+            ]
+[parameters: [{}]]
+(Background on this error at: https://sqlalche.me/e/20/e3q8)
+2025-05-22 21:23:38,078 - blog.main.routes - ERROR - Ошибка при получении уведомлений: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server on 'quality.teztour.com:3306' (10013)
+(Background on this error at: https://sqlalche.me/e/20/4xp6)
+2025-05-22 21:23:38,087 - blog.main.routes - ERROR - Ошибка при получении списка новых обращений: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server on 'quality.teztour.com:3306' (10013)
+(Background on this error at: https://sqlalche.me/e/20/4xp6)
+2025-05-22 21:23:38,129 - blog.main.routes - ERROR - Ошибка при получении уведомлений: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server on 'quality.teztour.com:3306' (10013)
+(Background on this error at: https://sqlalche.me/e/20/4xp6)

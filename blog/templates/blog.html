@@ -1,39 +1,175 @@
 {% extends 'layout.html' %}
 
-{% block content %}
+{% block styles %}
+<style>
+  body {
+    background-color: #f8f9fa; /* Светлый фон страницы */
+    font-family: 'Roboto', sans-serif;
+  }
 
-<div class="container">
-    <div class="row">
+  .blog-container {
+    margin-top: 30px; /* Отступ сверху от хедера */
+    padding-bottom: 40px;
+  }
+
+  .post-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* Адаптивная сетка */
+    gap: 25px;
+  }
+
+  .post-card {
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Чтобы скругление углов работало с внутренними элементами */
+  }
+
+  .post-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+  }
+
+  .post-card-header {
+    background-color: #28a745; /* Фирменный зеленый цвет */
+    color: #ffffff;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+  }
+
+  .post-card-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    margin-right: 15px;
+    border: 2px solid #ffffff;
+  }
+
+  .post-card-author-info .author-name {
+    font-weight: bold;
+    font-size: 0.95em;
+    margin: 0;
+  }
+
+  .post-card-author-info .post-date {
+    font-size: 0.8em;
+    opacity: 0.85;
+    margin: 0;
+  }
+
+  .post-card-body {
+    padding: 20px;
+    flex-grow: 1; /* Чтобы тело карточки занимало доступное пространство */
+  }
+
+  .post-card-title {
+    font-size: 1.25em;
+    font-weight: 600;
+    color: #343a40;
+    margin-bottom: 15px;
+  }
+
+  .post-card-title a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .post-card-title a:hover {
+    color: #1e7e34; /* Более темный зеленый при наведении */
+  }
+
+  .post-card-footer {
+      padding: 15px 20px;
+      border-top: 1px solid #e9ecef;
+      text-align: right;
+  }
+
+  .btn-details {
+      background-color: #007bff; /* Синий для акцента кнопки */
+      color: white;
+      padding: 8px 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      font-size: 0.9em;
+      transition: background-color 0.2s ease;
+  }
+
+  .btn-details:hover {
+      background-color: #0056b3;
+      color: white;
+  }
+
+  .pagination-wrapper {
+    margin-top: 30px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+  }
+
+  .pagination-wrapper .btn {
+    min-width: 120px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container blog-container">
+    <!-- Фильтры удалены -->
+
+    <!-- Сетка карточек -->
+    <div class="post-grid">
         {% for post in posts.items %}
-            <div class="col-md-4 mb-3">
-                <div class="card border-primary d-flex flex-column h-100">
-                    <!-- Шапка (bg-success - цвет фона, text-white - цвет текста) -->
-                    <div class="card-header bg-success text-white">
-                        <h6 class="card-subtitle mb-2 text-muted">
-                            <img src="{{ url_for('static', filename='profile_pics/' + post.author.username + '/' + 'account_img' + '/' + post.author.image_file) }}"
-                                alt="" class="rounded-circle" style="width:40px;">
-                            <!-- Изменен класс на text-white для изменения цвета текста -->
-                            <a class="mr-2 text-white" href="{{ url_for('users.user_posts', username=post.author.username) }}">{{ post.author.full_name }}</a><br>
-                            <small style="font-size: 1.35rem;">{{ post.date_posted.strftime('%d.%m.%Y-%H.%M') }}</small>
-                        </h6>
-                    </div>
-                    <!-- Текстовый контент -->
-                    <div class="card-body">
-                        <h5 class="card-title"><a href="{{ url_for('post.post', post_id=post.id) }}">{{ post.title }}</a></h5>
-                    </div>
+        <div class="post-card">
+            <div class="post-card-header">
+                <img src="{{ url_for('static', filename='profile_pics/' + post.author.username + '/account_img/' + post.author.image_file) }}"
+                     alt="Аватар {{ post.author.full_name }}" class="post-card-avatar">
+                <div class="post-card-author-info">
+                    <p class="author-name">{{ post.author.full_name }}</p>
+                    <p class="post-date">{{ post.date_posted.strftime('%d.%m.%Y в %H:%M') }}</p>
                 </div>
             </div>
+            <div class="post-card-body">
+                <h5 class="post-card-title">
+                    <a href="{{ url_for('post.post', post_id=post.id) }}">{{ post.title }}</a>
+                </h5>
+                {# Можно добавить краткое описание или теги, если есть в модели post #}
+                {# <p class="post-excerpt">Краткое описание...</p> #}
+            </div>
+            <div class="post-card-footer">
+                 <a href="{{ url_for('post.post', post_id=post.id) }}" class="btn-details">Подробнее <i class="fas fa-arrow-right"></i></a>
+            </div>
+        </div>
+        {% else %}
+            <p>Пока нет ни одной публикации.</p>
         {% endfor %}
     </div>
 
-    <div class="pagination">
+    <!-- Пагинация -->
+    {% if posts.pages > 1 %}
+    <div class="pagination-wrapper">
         {% if posts.has_prev %}
-            <a class="btn btn-primary mb-4" href="{{ url_for('main.blog', page=posts.prev_num) }}">Предыдущая</a>
+            <a class="btn btn-outline-primary" href="{{ url_for('main.blog', page=posts.prev_num) }}"><i class="fas fa-chevron-left"></i> Предыдущая</a>
         {% endif %}
+        {% for page_num in posts.iter_pages(left_edge=1, right_edge=1, left_current=1, right_current=2) %}
+            {% if page_num %}
+                {% if posts.page == page_num %}
+                <a class="btn btn-primary" href="{{ url_for('main.blog', page=page_num) }}">{{ page_num }}</a>
+                {% else %}
+                <a class="btn btn-outline-primary" href="{{ url_for('main.blog', page=page_num) }}">{{ page_num }}</a>
+                {% endif %}
+            {% else %}
+                <span class="btn btn-outline-primary disabled">...</span>
+            {% endif %}
+        {% endfor %}
         {% if posts.has_next %}
-            <a class="btn btn-primary mb-4" href="{{ url_for('main.blog', page=posts.next_num) }}">Следующая</a>
+            <a class="btn btn-outline-primary" href="{{ url_for('main.blog', page=posts.next_num) }}">Следующая <i class="fas fa-chevron-right"></i></a>
         {% endif %}
     </div>
+    {% endif %}
 </div>
-
 {% endblock %}

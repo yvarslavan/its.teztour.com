@@ -1,121 +1,304 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6">
-            <form action="" method="POST" class="border p-4 rounded register-container">
-                {{ form.hidden_tag() }}
-
-                <div class="text-center mb-4">
-                    <h1 class="fw-bold text-primary">Регистрация</h1>
-                </div>
-                <div class="mb-3">
-                    {{ form.username.label(class="form-label") }}
-                    {{ form.username(class="form-control", placeholder="Логин ERP") }}
-                    {% for error in form.username.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                    {% endfor %}
-                </div>
-
-                <div class="mb-3 position-relative">
-                    {{ form.password.label(class="form-label") }}
-                    <div class="input-group">
-                        {{ form.password(class="form-control", placeholder="Пароль ERP", type="password") }}
-                        <span class="input-group-text">
-                            <span class="fa fa-fw fa-eye field-icon toggle-password" style="cursor: pointer;"></span>
-                        </span>
+<div class="login-page-wrapper">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-5 col-md-7 col-sm-10 col-12">
+                <div class="login-form-container">
+                    <div class="text-center mb-4">
+                        <img src="{{ url_for('static', filename='img/tez-tour-mini-logo.png') }}" alt="TEZ TOUR Logo" class="login-logo mb-3">
+                        <h2 class="login-title">Создание аккаунта</h2>
+                        <p class="login-subtitle text-muted">Присоединяйтесь к HelpDesk</p>
                     </div>
-                    {% for error in form.password.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                    {% endfor %}
+
+                    <form method="POST" action="">
+                        {{ form.hidden_tag() }}
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+
+                        {% if form.username.errors %}
+                            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {% for error in form.username.errors %}
+                                    <span>{{ error }}</span><br>
+                                {% endfor %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                        <div class="mb-3">
+                            {{ form.username.label(class="form-label") }}
+                            {{ form.username(class="form-control form-control-lg", placeholder="Логин ERP") }}
+                        </div>
+
+                        {% if form.password.errors %}
+                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {% for error in form.password.errors %}
+                                    <span>{{ error }}</span><br>
+                                {% endfor %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                        <div class="mb-3 position-relative">
+                            {{ form.password.label(class="form-label") }}
+                            <div class="input-group input-group-lg">
+                                {{ form.password(class="form-control form-control-lg password-field", placeholder="Пароль ERP", type="password") }}
+                                <span class="input-group-text toggle-password-icon" style="cursor: pointer;">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        {% if form.confirm_password.errors %}
+                             <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                {% for error in form.confirm_password.errors %}
+                                    <span>{{ error }}</span><br>
+                                {% endfor %}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endif %}
+                        <div class="mb-4 position-relative">
+                            {{ form.confirm_password.label(class="form-label") }}
+                            <div class="input-group input-group-lg">
+                                {{ form.confirm_password(class="form-control form-control-lg password-field", placeholder="Подтвердите пароль ERP", type="password") }}
+                                <span class="input-group-text toggle-password-icon" style="cursor: pointer;">
+                                    <i class="fas fa-eye"></i>
+                                </span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center submit-btn">
+                            <span class="submit-btn-text">Зарегистрироваться</span>
+                            <span class="spinner-border spinner-border-sm ms-2 d-none" role="status" aria-hidden="true"></span>
+                        </button>
+
+                        <div class="mt-4 text-center">
+                            Уже есть аккаунт? <a href="{{ url_for('users.login') }}" class="auth-link fw-bold">Войти</a>
+                        </div>
+                    </form>
                 </div>
-
-                <div class="mb-3 position-relative">
-                    {{ form.confirm_password.label(class="form-label") }}
-                    <div class="input-group">
-                        {{ form.confirm_password(class="form-control", placeholder="Подтвердите пароль ERP", type="password") }}
-                        <span class="input-group-text">
-                            <span class="fa fa-fw fa-eye field-icon toggle-password" style="cursor: pointer;"></span>
-                        </span>
-                    </div>
-                    {% for error in form.confirm_password.errors %}
-                        <div class="invalid-feedback d-block">{{ error }}</div>
-                    {% endfor %}
-                </div>			
-
-                <button type="submit" class="btn btn-primary btn-block">Зарегистрироваться</button>
-
-                <div class="mt-3 text-center">
-                    Уже есть аккаунт? <a href="{{ url_for('users.login') }}">Войти</a>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
-</div>
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        var togglePassword = document.querySelectorAll('.toggle-password');
 
-        togglePassword.forEach(function (icon) {
-            icon.addEventListener('click', function () {
-                var input = icon.closest('.position-relative').querySelector('input');
-                if (input.type === 'password') {
-                    input.type = 'text';
-                } else {
-                    input.type = 'password';
-                }
+    <div class="login-form-footer text-center">
+        <img src="{{ url_for('static', filename='img/tez-tour-mini-logo.png') }}" alt="TEZ TOUR Logo" class="footer-logo mb-2">
+        <p class="footer-copyright-text mb-1">&copy; 2001–2025 TEZ TOUR</p>
+        <p class="footer-email-text mb-0"><a href="mailto:help@tez-tour.com">help@tez-tour.com</a></p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    var flashMessages = JSON.parse('{{ get_flashed_messages(with_categories=true) | tojson | safe }}');
+    if (flashMessages.length > 0) {
+        $('.alert[role="alert"]').remove();
+
+        flashMessages.forEach(function(flash) {
+            var category = flash[0];
+            var message = flash[1];
+            var title = category.charAt(0).toUpperCase() + category.slice(1);
+            var icon = 'info';
+
+            if (category === 'success') icon = 'success';
+            if (category === 'error' || category === 'danger') {
+                icon = 'error';
+                title = 'Ошибка';
+            }
+            if (category === 'warning') icon = 'warning';
+
+            Swal.fire({
+                icon: icon,
+                title: title,
+                html: message,
+                timer: 7000,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end',
+                timerProgressBar: true,
+                showCloseButton: true
             });
         });
-    });
-</script>
+    }
 
-{% endblock content %}
+    $(".toggle-password-icon").click(function() {
+        $(this).find('i').toggleClass("fa-eye fa-eye-slash");
+        var input = $(this).closest('.input-group').find('.password-field');
+        if (input.attr("type") == "password") {
+            input.attr("type", "text");
+        } else {
+            input.attr("type", "password");
+        }
+    });
+
+    $('form').submit(function() {
+        var btn = $(this).find('.submit-btn');
+        btn.find('.submit-btn-text').addClass('d-none');
+        btn.find('.spinner-border').removeClass('d-none');
+        btn.prop('disabled', true);
+    });
+});
+</script>
+{% endblock %}
+
 {% block styles %}
 <style>
-    /* Общие стили для страницы REGISTER/ */
-    .register-container {
-        background-color: #f8f9fa; /* Серый цвет фона */
-        padding: 20px; /* Поля вокруг контейнера */
-        border-radius: 10px; /* Закругленные углы */
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); /* Тень */
+    /* body, html { height: 100%; } /* Лучше контролировать глобально, если нужно */
+
+    .login-page-wrapper {
+        min-height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #005f73 0%, #0a9396 100%);
+        padding: 1rem;
+        box-sizing: border-box;
     }
 
-    /* Стили для заголовка */
-    .register-title {
-        margin-bottom: 20px; /* Отступ снизу */
-        font-size: 24px; /* Размер шрифта */
-        color: #333; /* Цвет текста */
-        text-align: center; /* Выравнивание по центру */
+    .login-form-container {
+        background-color: #ffffff;
+        padding: 2rem;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 500px;
+        margin: 0 auto;
+        max-height: 100%;
+        box-sizing: border-box;
+        overflow-y: auto;
+        position: relative;
     }
 
-    /* Стили для кнопки */
-    .register-button {
-        background-color: #007bff; /* Цвет фона кнопки */
-        border: none; /* Убираем границы */
-        border-radius: 5px; /* Закругленные углы */
-        padding: 10px 20px; /* Поля внутри кнопки */
-        color: #fff; /* Цвет текста */
-        font-weight: bold; /* Жирный текст */
-        text-transform: uppercase; /* Верхний регистр */
-        cursor: pointer; /* Изменяем указатель при наведении */
-        transition: background-color 0.3s; /* Плавное изменение цвета фона */
+    .login-logo {
+        max-width: 150px;
+        height: auto;
     }
 
-    .register-button:hover {
-        background-color: #0056b3; /* Новый цвет фона при наведении */
+    .login-title {
+        font-weight: 700;
+        font-size: 1.75rem;
+        color: #003440;
+        margin-bottom: 0.25rem;
     }
 
-    /* Стили для ссылки */
-    .register-link {
-        color: #007bff; /* Цвет текста */
-        text-decoration: none; /* Убираем подчеркивание */
-        transition: color 0.3s; /* Плавное изменение цвета текста */
+    .login-subtitle {
+        font-size: 0.95rem;
+        color: #555;
     }
 
-    .register-link:hover {
-        color: #0056b3; /* Новый цвет текста при наведении */
+    .form-label {
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-control-lg {
+        padding: 0.75rem 1.25rem;
+        font-size: 1rem;
+        border-radius: 8px;
+    }
+
+    .form-control-lg:focus {
+        border-color: #0a9396;
+        box-shadow: 0 0 0 0.25rem rgba(10, 147, 150, 0.25);
+    }
+
+    .input-group-lg > .form-control,
+    .input-group-lg > .input-group-text {
+        border-radius: 8px;
+    }
+
+    .toggle-password-icon {
+        cursor: pointer;
+        color: #6c757d;
+        border-left: none;
+        background-color: #fff;
+    }
+    .toggle-password-icon:hover i {
+        color: #005f73;
+    }
+
+    /* Применяем к полям пароля, чтобы убрать правую границу */
+    .input-group-lg .password-field.form-control-lg {
+        border-right: none;
+    }
+     .input-group-lg .password-field.form-control-lg:focus {
+        border-right: none;
+    }
+
+    .btn-primary {
+        background-color: #00798C;
+        border-color: #00798C;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+    }
+
+    .btn-primary:hover {
+        background-color: #005f73;
+        border-color: #005f73;
+    }
+
+    .btn-primary:focus {
+        box-shadow: 0 0 0 0.25rem rgba(0, 121, 140, 0.5);
+    }
+
+    .btn-primary:disabled {
+        background-color: #00798C;
+        border-color: #00798C;
+    }
+
+    .auth-link {
+        color: #00798C;
+        text-decoration: none;
+        transition: color 0.2s ease-in-out;
+    }
+
+    .auth-link:hover {
+        color: #005f73;
+        text-decoration: underline;
+    }
+
+    .form-check-input:checked {
+        background-color: #00798C;
+        border-color: #00798C;
+    }
+    .form-check-input:focus {
+        box-shadow: 0 0 0 0.25rem rgba(0, 121, 140, 0.25);
+    }
+
+    .swal2-container {
+        z-index: 2000;
+    }
+
+    .alert-danger {
+        font-size: 0.875em;
+    }
+
+    /* Стили для подвала формы (адаптированы для размещения внизу страницы) */
+    .login-form-footer {
+        width: 100%;
+        padding-top: 1rem;
+        padding-bottom: 1rem;
+    }
+    .footer-logo {
+        max-width: 70px;
+        height: auto;
+        opacity: 0.9;
+    }
+    .footer-copyright-text {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.75);
+    }
+    .footer-email-text {
+        font-size: 0.85rem;
+    }
+    .footer-email-text a {
+        color: rgba(255, 255, 255, 0.9);
+        text-decoration: none;
+    }
+    .footer-email-text a:hover {
+        color: #ffffff;
+        text-decoration: underline;
     }
 </style>
-{% endblock styles %}
+{% endblock styles%}
