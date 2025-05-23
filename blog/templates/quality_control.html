@@ -435,6 +435,9 @@
         align-items: center;
         gap: 20px;
         margin-bottom: 15px;
+        position: relative; /* z-index работает только для позиционированных элементов */
+        z-index: 9999 !important;
+        /* outline: 1px solid green !important; */ /* Отладочный стиль, можно будет убрать */
     }
 
     .header-section h4 {
@@ -521,6 +524,12 @@
         color: #0a58ca;
         text-decoration: underline;
     }
+
+    .issues-statistics {
+        /* ... existing styles ... */
+        position: relative; /* Если еще не позиционирован */
+        z-index: 10000 !important; /* Выше, чем у родителя */
+    }
 </style>
 {% endblock %}
 
@@ -530,7 +539,8 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="container-fluid" style="padding-top: 80px;">
+    <!-- <button id="requestNotificationPermissionButton" style="position: fixed; top: 100px; left: 20px; z-index: 9999; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer;">Запросить разрешение на уведомления (ТЕСТ)</button> --> <!-- COMMENT OUT THIS LINE -->
     <div class="header-section">
         <h4>
             <i class="fas fa-chart-line"></i>
@@ -560,6 +570,9 @@
                 </div>
             </div>
         </div>
+        <button id="enableNotificationsBtn" style="display:none; margin-left:auto; background:#ffc107; color:#222; border:none; border-radius:5px; padding:8px 16px; font-weight:500; cursor:pointer;">
+            <i class="fas fa-bell"></i> Включить уведомления
+        </button>
     </div>
     <div class="subtitle">
         Статистические отчеты отдела по контролю за качеством
@@ -949,7 +962,10 @@
 
 <script>
 // Глобальная переменная для отслеживания предыдущего количества комментариев
-let previousCommentCount = 0;
+// let previousCommentCount = 0; // Remove this line (around 1018)
+// Initialize previousCommentCount from localStorage or default to 0
+let previousCommentCount = parseInt(localStorage.getItem('qualityControl_previousNewCommentsCount')) || 0;
+console.log('[Init] previousCommentCount from localStorage:', previousCommentCount);
 
 // Переместите функцию updateCommentNotifications в глобальную область видимости
 function updateCommentNotifications() {
@@ -972,7 +988,10 @@ function updateCommentNotifications() {
             notifyNewComments(newCommentsCount);
         }
 
-        previousCommentCount = data.count;
+        // previousCommentCount = data.count; // Remove this line
+        localStorage.setItem('qualityControl_previousNewCommentsCount', data.count); // Save to localStorage
+        previousCommentCount = data.count; // Update after potential notification
+        console.log('[updateCommentNotifications] Updated previousCommentCount to:', previousCommentCount, 'and saved to localStorage.');
 
         if (container) {
             container.innerHTML = data.html || '<div class="no-notifications">Нет новых комментариев</div>';
@@ -3213,7 +3232,10 @@ document.getElementById('totalIssuesCounter').addEventListener('click', function
 });
 
 // Храним предыдущее значение счетчика
-let previousCount = 0;
+// let previousCount = 0; // Remove this line (around 1986)
+// Initialize previousCount from localStorage or default to 0
+let previousCount = parseInt(localStorage.getItem('qualityControl_previousNewIssuesCount')) || 0;
+console.log('[Init] previousCount from localStorage:', previousCount);
 
 // Функция для проверки новых обращений
 function checkNewIssues() {
@@ -3247,7 +3269,9 @@ function checkNewIssues() {
             }
 
             // Обновляем предыдущее значение
-            previousCount = currentCount;
+            localStorage.setItem('qualityControl_previousNewIssuesCount', currentCount); // Save to localStorage
+            previousCount = currentCount; // Update after potential notification
+            console.log('[checkNewIssues] Updated previousCount to:', previousCount, 'and saved to localStorage.');
         })
         .catch(error => {
             console.error('Error checking new issues:', error);
@@ -3256,31 +3280,31 @@ function checkNewIssues() {
 
 // Функция для отправки уведомлений
 async function notifyNewIssues(count) {
+    console.log(`[notifyNewIssues] CALLED. Count: ${count}, Permission: ${Notification.permission}, Visible: ${document.visibilityState}`); // ADD THIS LINE CAREFULLY
     // Проигрываем звуковое уведомление
     playNotificationSound();
 
-    // Проверяем поддержку и разрешение на уведомления
-    if ('Notification' in window) {
-        const permission = await Notification.requestPermission();
+    // Проверяем поддержку и РАЗРЕШЕНИЕ на уведомления
+    if ('Notification' in window && Notification.permission === 'granted') {
+        console.log('[notifyNewIssues] Permission granted. Attempting to create Notification object.'); // ADDED THIS LOG
+        const title = 'Новые обращения';
+        const options = {
+            body: `Поступило ${pluralize(count, 'новое обращение', 'новых обращения', 'новых обращений')}`,  // Исправлено дублирование
+            icon: '/static/img/notification_icon.png',
+            tag: 'new-issues',
+            renotify: true
+        };
 
-        if (permission === 'granted') {
-            const title = 'Новые обращения';
-            const options = {
-                body: `Поступило ${pluralize(count, 'новое обращение', 'новых обращения', 'новых обращений')}`,  // Исправлено дублирование
-                icon: '/static/img/notification_icon.png',
-                tag: 'new-issues',
-                renotify: true
-            };
+        const notification = new Notification(title, options);
 
-            const notification = new Notification(title, options);
-
-            notification.onclick = function() {
-                window.focus();
-                const redmineUrl = 'https://quality.teztour.com/projects/quality/issues?set_filter=1&f%5Bstatus_id%5D=%3D1';
-                window.open(redmineUrl, '_blank');
-                notification.close();
-            };
-        }
+        notification.onclick = function() {
+            window.focus();
+            const redmineUrl = 'https://quality.teztour.com/projects/quality/issues?set_filter=1&f%5Bstatus_id%5D=%3D1';
+            window.open(redmineUrl, '_blank');
+            notification.close();
+        };
+    } else if ('Notification' in window && Notification.permission !== 'denied') {
+        console.log('[notifyNewIssues] Уведомления не будут показаны, т.к. разрешение не предоставлено или не запрашивалось по действию пользователя.');
     }
 }
 
@@ -3306,10 +3330,11 @@ function pluralize(count, one, two, five) {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', function() {
+
     // Запрашиваем разрешение на уведомления при загрузке
-    if ('Notification' in window) {
-        Notification.requestPermission();
-    }
+    // if ('Notification' in window) { // This line and the next should be removed or commented out
+    //     Notification.requestPermission();
+    // }
 
     // Первоначальная проверка
     checkNewIssues();
@@ -3324,6 +3349,27 @@ document.addEventListener('DOMContentLoaded', function() {
             checkNewIssues();
         }
     });
+
+    /*
+    const permissionButton = document.getElementById('requestNotificationPermissionButton');
+    if (permissionButton) {
+        permissionButton.addEventListener('click', function() {
+            console.log('Кнопка запроса разрешений нажата.');
+            if ('Notification' in window) {
+                Notification.requestPermission().then(function(permission) {
+                    console.log('Статус разрешения после запроса: ', permission);
+                    alert('Статус разрешения после запроса: ' + permission);
+                    initializeNotifications(); // Повторно вызываем для обновления логов
+                }).catch(function(err) {
+                    console.error('Ошибка при запросе разрешений: ', err);
+                    alert('Ошибка при запросе разрешений: ' + err);
+                });
+            } else {
+                alert('Уведомления не поддерживаются этим браузером.');
+            }
+        });
+    }
+    */
 });
 
 // Добавьте эту функцию сразу после функции updateCommentNotifications
@@ -3354,7 +3400,7 @@ function setupMarkAsReadHandlers() {
                     }
 
                     // Обновляем счетчики
-                    previousCommentCount = Math.max(0, previousCommentCount - 1);
+
                     updateCommentNotifications();
                 }
             })
@@ -3365,63 +3411,90 @@ function setupMarkAsReadHandlers() {
 
 // Также нужно добавить функцию notifyNewComments, которая используется в updateCommentNotifications
 async function notifyNewComments(count) {
-    // Проверяем разрешения перед отправкой уведомления
-    const hasPermission = await checkNotificationPermission();
+    console.log(`[notifyNewComments] Called with count: ${count}. Notification.permission: ${Notification.permission}. Document visible: ${document.visibilityState}`);
 
-    if (!hasPermission) {
-        console.log('Нет разрешения на отправку уведомлений');
+    if (!('Notification' in window)) {
+        console.log('[notifyNewComments] Браузер не поддерживает уведомления.');
         return;
     }
 
-    try {
-        // Проигрываем звук только если вкладка не активна
-        if (document.visibilityState === 'hidden') {
-            const audio = new Audio('/static/sounds/notification.mp3');
-            audio.volume = 0.5;
-            await audio.play().catch(e => console.log('Воспроизведение звука недоступно:', e));
+    if (Notification.permission === 'granted') {
+        console.log('[notifyNewComments] Permission granted. Attempting to create Notification object.'); // ADDED THIS LOG
+        try {
+            // Проигрываем звук только если вкладка не активна и есть разрешение
+            if (document.visibilityState === 'hidden') {
+                const audio = new Audio('/static/sounds/notification.mp3');
+                audio.volume = 0.5;
+                // Не используем await для audio.play() чтобы не блокировать показ уведомления,
+                // если возникнет проблема со звуком. Ошибку обработаем в catch.
+                audio.play().catch(e => console.warn('[notifyNewComments] Воспроизведение звука уведомления о комментарии не удалось:', e));
+            }
+
+            const notification = new Notification('Новые комментарии', {
+                body: `Получено ${pluralize(count, 'новый комментарий', 'новых комментария', 'новых комментариев')}`,
+                icon: '/static/img/notification_icon.png', // Убедитесь, что этот путь правильный
+                tag: 'new-comments',
+                renotify: true
+            });
+
+            notification.onclick = function() {
+                window.focus();
+                // Показываем сайдбар с комментариями при клике
+                const commentSidebar = document.getElementById('comment-sidebar');
+                if (commentSidebar) {
+                    commentSidebar.classList.add('active');
+                }
+                updateCommentNotifications(); // Обновляем содержимое, если нужно
+                this.close();
+            };
+        } catch (error) {
+            console.error('[notifyNewComments] Ошибка при создании уведомления о комментарии:', error);
         }
-
-        const notification = new Notification('Новые комментарии', {
-            body: `Получено ${pluralize(count, 'новый комментарий', 'новых комментария', 'новых комментариев')}`,
-            icon: '/static/img/notification_icon.png',
-            tag: 'new-comments',
-            renotify: true
-        });
-
-        notification.onclick = function() {
-            window.focus();
-            document.getElementById('comment-sidebar').classList.add('active');
-            updateCommentNotifications();
-            this.close();
-        };
-    } catch (error) {
-        console.error('Ошибка при отправке уведомления:', error);
+    } else {
+        console.log('[notifyNewComments] Нет разрешения на отправку уведомлений о комментариях.');
+        if (Notification.permission === 'default') {
+            // Можно добавить здесь логику для отображения кнопки/сообщения
+            // с предложением включить уведомления, если это еще не сделано.
+            console.log('[notifyNewComments] Статус разрешения "default", можно предложить пользователю разрешить уведомления.');
+        }
     }
 }
 
 // И функция для проверки разрешений
+// Функция для проверки и обработки разрешений уведомлений
 async function checkNotificationPermission() {
     if (!('Notification' in window)) {
-        console.log('Браузер не поддерживает уведомления');
+        console.log('[checkNotificationPermission] Браузер не поддерживает уведомления');
         return false;
     }
 
+    // Если уведомления заблокированы, не пытаемся их запрашивать
     if (Notification.permission === 'denied') {
-        console.log('Уведомления заблокированы пользователем');
+        console.log('[checkNotificationPermission] Уведомления заблокированы пользователем');
         return false;
     }
 
+    // Запрашиваем разрешение только если оно не определено
+    // if (Notification.permission === 'default') { // Remove this block
+    //     try {
+    //         const permission = await Notification.requestPermission();
+    //         return permission === 'granted';
+    //     } catch (error) {
+    //         console.error('Ошибка при запросе разрешений:', error);
+    //         return false;
+    //     }
+    // }
+
+    // return Notification.permission === 'granted';
+
+    // Просто проверяем текущее разрешение
     if (Notification.permission === 'default') {
-        try {
-            const permission = await Notification.requestPermission();
-            return permission === 'granted';
-        } catch (error) {
-            console.error('Ошибка при запросе разрешений:', error);
-            return false;
-        }
+        console.log('[checkNotificationPermission] Разрешение на уведомления: default. Запрос не выполняется автоматически.');
+        // Можно предложить пользователю кнопку для активации уведомлений.
+        return false; // Разрешение еще не получено
     }
 
-    return Notification.permission === 'granted';
+    return Notification.permission === 'granted'; // Возвращает true, если разрешение уже есть
 }
 
 // Функция для склонения слов
@@ -3577,10 +3650,19 @@ async function initializeNotifications() {
     }
 
     try {
-        const permission = await Notification.requestPermission();
-        console.log('Статус разрешения уведомлений:', permission);
+        // Автоматический запрос разрешения удален/закомментирован, как и планировалось.
+        // const permission = await Notification.requestPermission();
+        // console.log('Статус разрешения уведомлений:', permission);
+        // Просто проверяем текущее состояние:
+        if (Notification.permission === 'default') {
+            console.log('[initializeNotifications] Разрешение на уведомления еще не запрашивалось или пользователь его сбросил.');
+            // Здесь можно, например, показать кнопку "Включить уведомления",
+            // которая по клику будет вызывать Notification.requestPermission()
+        } else {
+             console.log('[initializeNotifications] Текущий статус разрешения уведомлений:', Notification.permission);
+        }
     } catch (error) {
-        console.error('Ошибка при запросе разрешения на уведомления:', error);
+        console.error('Ошибка при инициализации уведомлений:', error);
     }
 }
 
@@ -3596,33 +3678,6 @@ function playCommentNotificationSound() {
 document.addEventListener('DOMContentLoaded', function() {
     initializeNotifications();
 });
-
-// Функция для проверки и обработки разрешений уведомлений
-async function checkNotificationPermission() {
-    if (!('Notification' in window)) {
-        console.log('Браузер не поддерживает уведомления');
-        return false;
-    }
-
-    // Если уведомления заблокированы, не пытаемся их запрашивать
-    if (Notification.permission === 'denied') {
-        console.log('Уведомления заблокированы пользователем');
-        return false;
-    }
-
-    // Запрашиваем разрешение только если оно не определено
-    if (Notification.permission === 'default') {
-        try {
-            const permission = await Notification.requestPermission();
-            return permission === 'granted';
-        } catch (error) {
-            console.error('Ошибка при запросе разрешений:', error);
-            return false;
-        }
-    }
-
-    return Notification.permission === 'granted';
-}
 
 // Добавляем обработчик для кнопки очистки всех комментариев
 document.getElementById('clearAllComments').addEventListener('click', function() {
@@ -3722,6 +3777,206 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // Периодическое обновление списка каждые 30 секунд
 setInterval(updateNewIssuesList, 30000);
+
+document.addEventListener('DOMContentLoaded', function() {
+    const issuesStatisticsDiv = document.querySelector('.issues-statistics');
+    const headerSectionDiv = document.querySelector('.header-section');
+
+    if (issuesStatisticsDiv && headerSectionDiv) {
+        const initialComputedStyle = window.getComputedStyle(issuesStatisticsDiv);
+        console.log('[Debug] Initial issues-statistics: display=', initialComputedStyle.display,
+                    'visibility=', initialComputedStyle.visibility,
+                    'opacity=', initialComputedStyle.opacity,
+                    'offsetHeight=', issuesStatisticsDiv.offsetHeight,
+                    'offsetWidth=', issuesStatisticsDiv.offsetWidth,
+                    'checkVisibility=', issuesStatisticsDiv.checkVisibility ? issuesStatisticsDiv.checkVisibility() : 'N/A');
+
+        let stylesAppliedByDebug = false; // Флаг, что наши стили были применены
+
+        const observer = new MutationObserver(function(mutationsList, observer) {
+            // ... (существующий код логирования мутаций)
+            console.log('[Debug] MutationObserver triggered. Mutations:', mutationsList.map(m => ({type: m.type, attributeName: m.attributeName, target: m.target.className || m.target.id || m.target.tagName }) ));
+            mutationsList.forEach(function(mutation) {
+                console.log('[Debug] Mutation detail: type=', mutation.type,
+                            'attribute=', mutation.attributeName,
+                            'on node=', mutation.target.className || mutation.target.id || mutation.target.tagName,
+                            'oldValue=', mutation.oldValue);
+                if (mutation.type === 'childList') {
+                    console.log('[Debug] ChildList changed: Added=', mutation.addedNodes.length, 'Removed=', mutation.removedNodes.length);
+                    mutation.addedNodes.forEach(n => console.log('[Debug] Added node:', n.className || n.id || n.nodeName));
+                    mutation.removedNodes.forEach(n => console.log('[Debug] Removed node:', n.className || n.id || n.nodeName));
+                }
+
+                // --- Новый блок для отслеживания перезаписи style ---
+                if (mutation.type === 'attributes' && mutation.attributeName === 'style' && mutation.target === issuesStatisticsDiv) {
+                    if (stylesAppliedByDebug) {
+                        const newStyleValue = issuesStatisticsDiv.getAttribute('style');
+                        console.warn('[DebugOverwrite] Атрибут style у .issues-statistics был изменен ПОСЛЕ применения отладочных стилей!');
+                        console.warn('[DebugOverwrite] Старое значение (от MutationRecord): ', mutation.oldValue);
+                        console.warn('[DebugOverwrite] Новое значение (текущее): ', newStyleValue);
+                        if (newStyleValue && (!newStyleValue.includes('magenta') || !newStyleValue.includes('rgba(255, 0, 255, 0.5)'))) {
+                            console.error('[DebugOverwrite] ОТЛАДОЧНЫЕ СТИЛИ БЫЛИ ПЕРЕЗАПИСАНЫ/УДАЛЕНЫ из .issues-statistics! Стек:', new Error().stack);
+                        }
+                    }
+                }
+                // --- Конец нового блока ---
+            });
+
+            const currentComputedStyle = window.getComputedStyle(issuesStatisticsDiv);
+            const isCurrentlyVisibleByCheck = issuesStatisticsDiv.checkVisibility ? issuesStatisticsDiv.checkVisibility() : 'N/A';
+            const isCurrentlyVisibleByStyle = issuesStatisticsDiv.offsetHeight > 0 &&
+                                            issuesStatisticsDiv.offsetWidth > 0 &&
+                                            currentComputedStyle.display !== 'none' &&
+                                            currentComputedStyle.visibility !== 'hidden' &&
+                                            parseFloat(currentComputedStyle.opacity) > 0;
+
+            console.log('[Debug] State after mutation for issues-statistics: display=', currentComputedStyle.display,
+                        'visibility=', currentComputedStyle.visibility,
+                        'opacity=', currentComputedStyle.opacity,
+                        'offsetHeight=', issuesStatisticsDiv.offsetHeight,
+                        'offsetWidth=', issuesStatisticsDiv.offsetWidth,
+                        'checkVisibility()=', isCurrentlyVisibleByCheck,
+                        'isVisibleByStyleLogic=', isCurrentlyVisibleByStyle);
+
+            // --- Начало нового блока для проверки дочерних элементов ---
+            const statItems = issuesStatisticsDiv.querySelectorAll('.stat-item');
+            if (statItems.length > 0) {
+                console.log('[Debug] Checking children (.stat-item) of issues-statistics:');
+                statItems.forEach((item, index) => {
+                    const itemStyle = window.getComputedStyle(item);
+                    const itemVisibleByLogic = item.offsetHeight > 0 && item.offsetWidth > 0 && itemStyle.display !== 'none' && itemStyle.visibility !== 'hidden' && parseFloat(itemStyle.opacity) > 0;
+                    const itemCheckVisibility = item.checkVisibility ? item.checkVisibility() : 'N/A';
+                    console.log(`[Debug]  - Child ${index} (.stat-item): display=${itemStyle.display}, visibility=${itemStyle.visibility}, opacity=${itemStyle.opacity}, color=${itemStyle.color}, offsetHeight=${item.offsetHeight}, offsetWidth=${item.offsetWidth}, checkVisibility()=${itemCheckVisibility}, isVisibleByLogic=${itemVisibleByLogic}`);
+                    if (!itemVisibleByLogic) {
+                        console.error(`[Debug]   Child .stat-item[${index}] became hidden (by style/size logic)! Stack:`, new Error().stack);
+                    } else if (itemCheckVisibility === false) {
+                         console.warn(`[Debug]   Child .stat-item[${index}] checkVisibility() returned false, but style/size logic says visible. Stack:`, new Error().stack);
+                    }
+                });
+            } else {
+                console.warn('[Debug] issues-statistics has NO .stat-item children after mutation! Stack:', new Error().stack);
+            }
+            // --- Конец нового блока для проверки дочерних элементов ---
+
+            if (!isCurrentlyVisibleByStyle) {
+                console.error('[Debug] issues-statistics стал скрытым (по логике стилей/размеров) после мутации!', new Error().stack);
+            } else if (isCurrentlyVisibleByCheck === false) {
+                 console.warn('[Debug] issues-statistics checkVisibility() вернул false после мутации, но стили/размеры вроде ок.', new Error().stack);
+            }
+        });
+
+        observer.observe(issuesStatisticsDiv, {
+            attributes: true,
+            childList: true, // Следим за добавлением/удалением детей самого issuesStatisticsDiv
+            subtree: true,   // Следим за изменениями во всем поддереве issuesStatisticsDiv
+            attributeOldValue: true,
+            characterData: true, // Если текст внутри меняется, что может повлиять на рендеринг
+            characterDataOldValue: true
+        });
+
+        observer.observe(headerSectionDiv, {
+            childList: true, // Только если сам issuesStatisticsDiv удален/добавлен в headerSectionDiv
+            subtree: false
+        });
+
+        console.log('[Debug] Более детальный MutationObserver для issues-statistics (и его поддерева) и header-section (прямые дети) активирован.');
+
+    } else {
+        if (!issuesStatisticsDiv) console.error('[Debug] Critical: Не удалось найти .issues-statistics');
+        if (!headerSectionDiv) console.error('[Debug] Critical: Не удалось найти .header-section');
+    }
+});
+
+// Новый скрипт для принудительного применения отладочных стилей
+document.addEventListener('DOMContentLoaded', function() {
+    function applyDebugStyles() {
+        const header = document.querySelector('.header-section');
+        const stats = document.querySelector('.issues-statistics');
+
+        if (header) {
+            header.style.outline = '3px dashed limegreen !important';
+            header.style.setProperty('outline-offset', '-3px', 'important');
+            console.log('[DebugStyles] Applied limegreen dashed outline to .header-section', header);
+        } else {
+            console.warn('[DebugStyles] .header-section not found yet for styling.');
+        }
+
+        if (stats) {
+            stats.style.backgroundColor = 'rgba(255, 0, 255, 0.5) !important'; // Ярко-пурпурный полупрозрачный
+            stats.style.outline = '3px dashed magenta !important';
+            stats.style.setProperty('outline-offset', '0px', 'important');
+            console.log('[DebugStyles] Applied magenta styles to .issues-statistics', stats);
+            stylesAppliedByDebug = true; // Устанавливаем флаг
+        } else {
+            console.warn('[DebugStyles] .issues-statistics not found yet for styling.');
+        }
+        return header && stats; // Возвращает true, если оба элемента найдены и стилизованы
+    }
+
+    let attempts = 0;
+    const maxAttempts = 10;
+    const intervalTime = 500; // мс
+
+    function attemptStyling() {
+        if (applyDebugStyles() || attempts >= maxAttempts) {
+            if (attempts >= maxAttempts && !(document.querySelector('.header-section') && document.querySelector('.issues-statistics'))) {
+                 console.error('[DebugStyles] Failed to find elements for styling after ' + maxAttempts + ' attempts.');
+            }
+            return; // Либо стили применены, либо попытки исчерпаны
+        }
+        attempts++;
+        console.log('[DebugStyles] Attempt ' + attempts + ' to apply styles...');
+        setTimeout(attemptStyling, intervalTime);
+    }
+    console.log('[DebugStyles] Initializing debug styling script...');
+    setTimeout(attemptStyling, 250); // Начать первую попытку немного позже
+});
+
+// Периодическое обновление списка каждые 30 секунд
+setInterval(updateNewIssuesList, 30000);
+
+// Больше здесь нет блока SimpleDebug
+
+// ... existing code ...
+document.addEventListener('DOMContentLoaded', function() {
+    // ... существующий код ...
+    // Логика для кнопки "Включить уведомления"
+    const enableBtn = document.getElementById('enableNotificationsBtn');
+    if (enableBtn && 'Notification' in window) {
+        function updateEnableBtnVisibility() {
+            if (Notification.permission === 'default') {
+                enableBtn.style.display = 'inline-block';
+            } else {
+                enableBtn.style.display = 'none';
+            }
+        }
+        updateEnableBtnVisibility();
+        enableBtn.addEventListener('click', function() {
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    enableBtn.style.display = 'none';
+                    // Можно сразу показать тестовое уведомление
+                    new Notification('Уведомления включены!', {
+                        body: 'Теперь вы будете получать уведомления о новых обращениях и комментариях.',
+                        icon: '/static/img/notification_icon.png',
+                        tag: 'enabled-info',
+                        renotify: false
+                    });
+                } else {
+                    enableBtn.style.display = 'none';
+                    alert('Вы отклонили разрешение на уведомления. Если передумаете — измените настройки браузера.');
+                }
+            });
+        });
+        // Следим за изменением разрешения (например, если пользователь изменил его вручную)
+        document.addEventListener('visibilitychange', updateEnableBtnVisibility);
+    } else if (enableBtn) {
+        enableBtn.style.display = 'none';
+        enableBtn.disabled = true;
+        enableBtn.textContent = 'Уведомления не поддерживаются';
+    }
+});
+// ... existing code ...
 
 </script>
 
