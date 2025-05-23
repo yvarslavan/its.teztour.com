@@ -2,6 +2,7 @@ import os
 from configparser import ConfigParser
 import logging
 from logging.handlers import RotatingFileHandler
+import sys
 from flask import (
     Blueprint,
     render_template,
@@ -15,7 +16,7 @@ from flask import (
     current_app,
 )
 from flask_login import login_required, current_user
-from sqlalchemy import or_, desc, func
+from sqlalchemy import or_, desc, func, text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from config import get
@@ -61,7 +62,6 @@ from erp_oracle import (
     db_password,
     get_user_erp_password,
 )
-from sqlalchemy import text
 from sqlalchemy.sql.functions import count
 
 main = Blueprint("main", __name__)
@@ -70,7 +70,7 @@ main = Blueprint("main", __name__)
 # Настройка логгера
 def setup_logger(name):
     logger = logging.getLogger(name)
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -83,7 +83,14 @@ def setup_logger(name):
         backupCount=3,
     )
     file_handler.setFormatter(formatter)
+    file_handler.setLevel(logging.ERROR)
     logger.addHandler(file_handler)
+
+    # Обработчик для вывода в консоль
+    console_handler = logging.StreamHandler(sys.stdout)
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(logging.DEBUG)
+    logger.addHandler(console_handler)
 
     return logger
 
@@ -1593,8 +1600,9 @@ def get_total_issues_count():
         if session is None:
             return jsonify({"error": "Database connection failed", "count": 0}), 500
 
+        # Оборачиваем SQL запрос в text()
         result = session.execute(
-            "SELECT COUNT(id) as count FROM issues WHERE project_id=1"
+            text("SELECT COUNT(id) as count FROM issues WHERE project_id=1")
         )
 
         count = result.scalar()
@@ -1602,7 +1610,8 @@ def get_total_issues_count():
         return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
-        print(f"Error in get_total_issues_count: {str(e)}")
+        # Используем logger для вывода ошибок
+        logger.error(f"Error in get_total_issues_count: {str(e)}")
         return jsonify({"error": str(e), "count": 0}), 500
     finally:
         if session:
@@ -1618,8 +1627,9 @@ def get_new_issues_count():
         if session is None:
             return jsonify({"error": "Database connection failed", "count": 0}), 500
 
+        # Оборачиваем SQL запрос в text()
         result = session.execute(
-            "SELECT COUNT(id) as count FROM issues WHERE project_id=1 AND status_id=1"
+            text("SELECT COUNT(id) as count FROM issues WHERE project_id=1 AND status_id=1")
         )
 
         count = result.scalar()
@@ -1627,7 +1637,8 @@ def get_new_issues_count():
         return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
-        print(f"Error in get_new_issues_count: {str(e)}")
+        # Используем logger для вывода ошибок
+        logger.error(f"Error in get_new_issues_count: {str(e)}")
         return jsonify({"error": str(e), "count": 0}), 500
     finally:
         if session:
@@ -1738,22 +1749,28 @@ def datetimeformat(value, format="%d.%m.%Y %H:%M"):
 @main.route("/get-countries")
 @login_required
 def get_countries():
+    session = None # Инициализируем session здесь
     try:
         session = get_quality_connection()
         if session is None:
             return jsonify({"error": "Ошибка подключения к базе данных"}), 500
 
+        # Оборачиваем SQL запрос в text()
         query = text(
             "SELECT DISTINCT value FROM custom_values WHERE custom_field_id = 24 ORDER BY value ASC"
         )
-        result = session.execute(query).fetchall()
-        session.close()
+        result = session.execute(query).mappings().all() # Используем .mappings().all() для словарей
+
 
         # Формируем список стран (если значение не пустое)
         countries = [row["value"] for row in result if row["value"] is not None]
         return jsonify(countries)
     except Exception as e:
+        logger.error(f"Error in get_countries: {str(e)}") # Используем logger
         return jsonify({"error": str(e)}), 500
+    finally:
+        if session: # Проверяем что session была присвоена перед закрытием
+            session.close()
 
 
 @main.route("/get-new-issues-list")
