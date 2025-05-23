@@ -37,7 +37,7 @@ body {
     /* Выравнивание содержимого по горизонтали */
     align-items: center;
     /* Выравнивание содержимого по вертикали */
-    z-index: 1000;
+    z-index: 10000 !important; /* Увеличил z-index для header */
     /* размещаем шапку над другими элементами */
 }
 
@@ -69,6 +69,8 @@ body {
     justify-content: flex-end;
     /* Выравниваем элементы вправо */
     font-family: 'Roboto', sans-serif;
+    position: relative; /* Добавил для правильного позиционирования dropdown */
+    z-index: 99997 !important; /* Высокий z-index для меню */
 }
 
 .main_menu li {
@@ -112,6 +114,7 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 100vh; /* Это ПРАВИЛЬНОЕ определение для wrapper */
+    overflow: visible !important; /* Предотвращаем обрезание dropdown */
 }
 
 /* Стили для основного контента, чтобы он занимал оставшееся место */
@@ -120,6 +123,7 @@ body {
     display: flex; /* Для корректного центрирования login-page-wrapper */
     flex-direction: column; /* Если внутри .content будут другие дочерние блоки */
     /* Возможно, потребуется overflow: auto; если контент страницы может быть больше, чем .content */
+    overflow: visible !important; /* Предотвращаем обрезание dropdown */
 }
 
 .cascade_block {
@@ -603,6 +607,26 @@ td {
 .dropdown-menu {
     background-color: #f8f9fa;
     /* Серый цвет фона */
+    z-index: 99999 !important; /* Еще выше z-index */
+    position: absolute !important; /* Гарантируем абсолютное позиционирование */
+}
+
+/* Обеспечиваем правильное позиционирование для dropdown контейнера */
+.dropdown {
+    position: relative !important;
+    z-index: 99998 !important;
+}
+
+.nav-item.dropdown {
+    position: relative !important;
+    z-index: 99998 !important;
+}
+
+/* Bootstrap dropdown стили с высоким приоритетом */
+.dropdown-menu.show {
+    z-index: 99999 !important;
+    position: absolute !important;
+    display: block !important;
 }
 
 /* Стили для видимости элементов списка */
@@ -1292,17 +1316,17 @@ td {
     /* Фон футера */
     color: #fff;
     /* Цвет текста футера */
-    padding: 10px;
+    padding: 0 2px 5px 2px; /* Убрал отступ сверху, добавил снизу */
     /* Внутренний отступ футера */
     font-family: 'Roboto', sans-serif;
     /* Применение шрифта Roboto */
     flex-shrink: 0;
     /* Предотвращает сжатие футера */
-
+    min-height: 60px; /* Устанавливаю минимальную высоту подвала */
 }
 
 .footer-logo {
-    width: 120px;
+    width: 80px; /* Уменьшил размер логотипа с 120px до 80px */
     /* Ширина логотипа */
     height: auto;
     /* Сохранение пропорций изображения */
@@ -1351,6 +1375,7 @@ td {
     top: 0;
     left: 100%;
     margin-top: -1px;
+    z-index: 99999 !important; /* Еще выше z-index для подменю */
 }
 
 .dropdown-submenu:hover > .dropdown-menu {
@@ -1509,7 +1534,7 @@ td {
     background: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     transition: right 0.3s ease;
-    z-index: 1000;
+    z-index: 10001 !important; /* Увеличил z-index выше header */
     display: flex;
     flex-direction: column;
 }
@@ -1754,7 +1779,7 @@ td {
     background: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.2);
     transition: right 0.3s ease;
-    z-index: 1000;
+    z-index: 10001 !important; /* Увеличил z-index выше header */
     overflow-y: auto;
 }
 
@@ -1911,11 +1936,19 @@ td {
     align-items: center;
     justify-content: center;
     width: 100%;
+    font-size: 13px; /* Уменьшил размер шрифта для текста */
 }
 
 .left-logo-side .footer-logo {
-    margin: 0 auto 10px auto;
+    margin: 28px auto 0 auto; /* Добавил отступ сверху 8px */
     display: block;
+}
+
+/* Уменьшаем отступы между строками в подвале */
+.left-logo-side br {
+    line-height: 0; /* Убираем межстрочный интервал совсем */
+    margin: 0;
+    padding: 0;
 }
 
 /* Стили для уменьшения высоты контейнера helpdesk-home-page */
