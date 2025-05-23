@@ -7,7 +7,7 @@
       <p>Загрузка...</p>
   </div>
 
-  <div class="issues-header">
+  <div class="issues-header" style="margin-top: 20px;">
     <div class="issues-header-title">
         <i class="fas fa-ticket-alt header-icon"></i>
         <h1>Мои заявки в ИТ-Департамент</h1>
@@ -70,7 +70,14 @@
   }
 
   .main-page-content-wrapper {
-    margin-top: -30px; /* Увеличиваем отрицательный отступ */
+    margin-top: -15px; /* Увеличиваем отрицательный отступ */
+    padding-left: 20px;
+    padding-right: 20px;
+    /* padding-bottom: 40px;  Похоже не работает, пробуем margin для #issue_wrapper */
+  }
+
+  #issue_wrapper {
+    margin-bottom: 40px; /* Добавляем отступ снизу для пагинации */
   }
 
   .issues-header {
@@ -81,7 +88,7 @@
     background-color: #ffffff; /* Белый фон для хедера */
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Легкая тень */
-    margin-top: 0 !important; /* Уменьшаем верхний отступ, добавляем !important для приоритета */
+    margin-top: 20px !important; /* Уменьшаем верхний отступ, добавляем !important для приоритета */
     margin-bottom: 20px;
   }
 
@@ -115,7 +122,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px;
+    padding: 5px; /* Уменьшил padding для уменьшения высоты */
     background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -139,7 +146,7 @@
   .stats-container {
     display: flex;
     justify-content: space-around; /* Равномерное распределение элементов */
-    padding: 15px;
+    padding: 3px; /* Уменьшил padding для уменьшения высоты */
     background-color: #ffffff;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);

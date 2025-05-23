@@ -23,7 +23,16 @@ from blog import db
 from blog.models import Post, User, Notifications, NotificationsAddNotes
 from blog.user.forms import AddCommentRedmine
 from blog.main.forms import IssueForm
-from mysql_db import Issue, Status, Session, get_issue_details, get_quality_connection, CustomValue, Tracker, QualitySession
+from mysql_db import (
+    Issue,
+    Status,
+    Session,
+    get_issue_details,
+    get_quality_connection,
+    CustomValue,
+    Tracker,
+    QualitySession,
+)
 from redmine import (
     RedmineConnector,
     get_connection,
@@ -57,25 +66,27 @@ from sqlalchemy.sql.functions import count
 
 main = Blueprint("main", __name__)
 
+
 # Настройка логгера
 def setup_logger(name):
     logger = logging.getLogger(name)
     logger.setLevel(logging.ERROR)
 
     formatter = logging.Formatter(
-        '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
 
     # Файловый обработчик с ротацией
     file_handler = RotatingFileHandler(
-        get('logging', 'path', 'app.log'),
-        maxBytes=1024*1024*5,  # 5 MB
-        backupCount=3
+        get("logging", "path", "app.log"),
+        maxBytes=1024 * 1024 * 5,  # 5 MB
+        backupCount=3,
     )
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
     return logger
+
 
 # Инициализация логгера
 logger = setup_logger(__name__)
@@ -93,6 +104,7 @@ DB_REDMINE_HOST = config.get("mysql", "host")
 DB_REDMINE_DB = config.get("mysql", "database")
 DB_REDMINE_USER = config.get("mysql", "user")
 DB_REDMINE_PASSWORD = config.get("mysql", "password")
+
 
 @main.before_request
 def set_current_user():
@@ -129,7 +141,7 @@ def get_notification_count():
 @main.route("/")
 @main.route("/home")
 def home():
-    return render_template('index.html', title='Главная')
+    return render_template("index.html", title="Главная")
 
 
 @main.route("/my-issues", methods=["GET"])
@@ -143,7 +155,7 @@ def my_issues():
     except Exception as e:
         current_app.logger.error(f"Error in my_issues: {str(e)}")
         flash("Произошла ошибка при загрузке заявок", "error")
-        return redirect(url_for('main.index'))
+        return redirect(url_for("main.index"))
 
 
 @main.route("/get-my-issues", methods=["GET"])
@@ -445,13 +457,15 @@ def clear_notifications():
     """Удаляем уведомления после нажатия кнопки 'Очистить уведомления'"""
     try:
         # Используем одну транзакцию для всех операций
-        notifications = db.session.query(Notifications).filter_by(
-            user_id=current_user.id
-        ).all()
+        notifications = (
+            db.session.query(Notifications).filter_by(user_id=current_user.id).all()
+        )
 
-        notifications_add_notes = db.session.query(NotificationsAddNotes).filter_by(
-            user_id=current_user.id
-        ).all()
+        notifications_add_notes = (
+            db.session.query(NotificationsAddNotes)
+            .filter_by(user_id=current_user.id)
+            .all()
+        )
 
         # Удаляем все уведомления
         for notification in notifications:
@@ -479,9 +493,11 @@ def delete_notification_status(notification_issue_id):
     """Удаление уведомления об измнении статуса после нажатия на иконку корзинки"""
     try:
         # Создаем новую сессию для этой операции
-        notification = db.session.query(Notifications).filter_by(
-            issue_id=notification_issue_id
-        ).first()
+        notification = (
+            db.session.query(Notifications)
+            .filter_by(issue_id=notification_issue_id)
+            .first()
+        )
 
         if notification:
             db.session.delete(notification)
@@ -508,9 +524,11 @@ def delete_notification_add_notes(notification_add_notes_issue_id):
     """Удаление уведомления о добавлении комментария после нажатия на иконку корзинки"""
     try:
         # Создаем новую сессию для этой операции
-        notification = db.session.query(NotificationsAddNotes).filter_by(
-            issue_id=notification_add_notes_issue_id
-        ).first()
+        notification = (
+            db.session.query(NotificationsAddNotes)
+            .filter_by(issue_id=notification_add_notes_issue_id)
+            .first()
+        )
 
         if notification:
             db.session.delete(notification)
@@ -756,7 +774,9 @@ def get_request_types():
             .all()
         )
 
-        request_types = [{"id": tracker.id, "name": tracker.name} for tracker in trackers]
+        request_types = [
+            {"id": tracker.id, "name": tracker.name} for tracker in trackers
+        ]
         logger.info(f"Successfully fetched {len(request_types)} request types")
 
         return jsonify({"values": request_types})
@@ -764,11 +784,11 @@ def get_request_types():
         logger.error(f"Error in get_request_types: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        if 'session' in locals():
+        if "session" in locals():
             session.close()
 
 
-@main.route('/get-tracker-ids')
+@main.route("/get-tracker-ids")
 def get_tracker_ids():
     session = get_quality_connection()
     try:
@@ -780,10 +800,14 @@ def get_tracker_ids():
         )
 
         tracker_map = {
-            'gratitude': next((str(t.id) for t in trackers if t.name == 'Благодарность'), ''),
-            'complaint': next((str(t.id) for t in trackers if t.name == 'Жалоба'), ''),
-            'question': next((str(t.id) for t in trackers if t.name == 'Вопрос'), ''),
-            'suggestion': next((str(t.id) for t in trackers if t.name == 'Предложение'), '')
+            "gratitude": next(
+                (str(t.id) for t in trackers if t.name == "Благодарность"), ""
+            ),
+            "complaint": next((str(t.id) for t in trackers if t.name == "Жалоба"), ""),
+            "question": next((str(t.id) for t in trackers if t.name == "Вопрос"), ""),
+            "suggestion": next(
+                (str(t.id) for t in trackers if t.name == "Предложение"), ""
+            ),
         }
 
         return jsonify(tracker_map)
@@ -791,7 +815,7 @@ def get_tracker_ids():
         session.close()
 
 
-@main.route("/get-classification-report", methods=['POST'])
+@main.route("/get-classification-report", methods=["POST"])
 @login_required
 def get_classification_report():
     session = None
@@ -1042,7 +1066,7 @@ def get_classification_report():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route("/get-resorts-report", methods=['POST'])
+@main.route("/get-resorts-report", methods=["POST"])
 @login_required
 def get_resorts_report():
     session = None
@@ -1064,18 +1088,18 @@ def get_resorts_report():
         # Используем курсор для вызова процедуры
         with connection.cursor(dictionary=True) as cursor:
             # Вызываем хранимую процедуру resorts с параметрами
-            cursor.callproc('resorts', (date_from, date_to))
+            cursor.callproc("resorts", (date_from, date_to))
 
             # Получаем результаты
             for result in cursor.stored_results():
                 resorts_data = []
                 for row in result.fetchall():
                     resort = {
-                        'name': row['ResortName'],
-                        'complaints': row['JalobaIssueResort_out'],
-                        'gratitude': row['GrateIssueResort_out'],
-                        'questions': row['QuestionIssueResort_out'],
-                        'suggestions': row['OfferIssueResort_out']
+                        "name": row["ResortName"],
+                        "complaints": row["JalobaIssueResort_out"],
+                        "gratitude": row["GrateIssueResort_out"],
+                        "questions": row["QuestionIssueResort_out"],
+                        "suggestions": row["OfferIssueResort_out"],
                     }
                     resorts_data.append(resort)
 
@@ -1083,7 +1107,7 @@ def get_resorts_report():
                     return jsonify({"error": "Нет данных за указанный период"}), 404
 
                 # Очищаем временную таблицу с помощью процедуры del_u_Resorts
-                cursor.callproc('del_u_Resorts')
+                cursor.callproc("del_u_Resorts")
                 connection.commit()
 
                 return jsonify(resorts_data)
@@ -1096,14 +1120,14 @@ def get_resorts_report():
             session.close()
 
 
-@main.route('/get-resort-types-data', methods=['POST'])
+@main.route("/get-resort-types-data", methods=["POST"])
 @login_required
 def get_resort_types_data():
     try:
         data = request.get_json()
-        date_from = data.get('dateFrom')
-        date_to = data.get('dateTo')
-        tracker_id = data.get('trackerId')
+        date_from = data.get("dateFrom")
+        date_to = data.get("dateTo")
+        tracker_id = data.get("trackerId")
 
         if not all([date_from, date_to, tracker_id]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1120,7 +1144,9 @@ def get_resort_types_data():
         try:
             connection = session.connection().connection
             with connection.cursor(dictionary=True) as cursor:
-                cursor.callproc('up_TypesRequests_ITS', (date_from, date_to, tracker_id))
+                cursor.callproc(
+                    "up_TypesRequests_ITS", (date_from, date_to, tracker_id)
+                )
 
                 results = []
                 for result in cursor.stored_results():
@@ -1132,16 +1158,22 @@ def get_resort_types_data():
                             processed_row = {}
                             for key, value in row.items():
                                 try:
-                                    if key == 'resort_name':
-                                        processed_row[key] = value if value else ''
+                                    if key == "resort_name":
+                                        processed_row[key] = value if value else ""
                                     else:
-                                        processed_row[key] = 0 if value is None else int(value)
+                                        processed_row[key] = (
+                                            0 if value is None else int(value)
+                                        )
                                 except ValueError as ve:
-                                    logger.error(f"Ошибка преобразования значения: key={key}, value={value}, error={str(ve)}")
+                                    logger.error(
+                                        f"Ошибка преобразования значения: key={key}, value={value}, error={str(ve)}"
+                                    )
                                     processed_row[key] = 0
                             results.append(processed_row)
                         except Exception as row_error:
-                            logger.error(f"Ошибка обработки строки: {str(row_error)}, row={row}")
+                            logger.error(
+                                f"Ошибка обработки строки: {str(row_error)}, row={row}"
+                            )
                             continue
 
                 if not results:
@@ -1159,15 +1191,15 @@ def get_resort_types_data():
         return jsonify({"error": f"Ошибка при получении данных: {str(e)}"}), 500
 
 
-@main.route('/get-issues', methods=['POST'])
+@main.route("/get-issues", methods=["POST"])
 @login_required
 def get_issues():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1198,8 +1230,8 @@ def get_issues():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1213,15 +1245,15 @@ def get_issues():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-type', methods=['POST'])
+@main.route("/get-issues-by-type", methods=["POST"])
 @login_required
 def get_issues_by_type():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1252,8 +1284,8 @@ def get_issues_by_type():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1267,15 +1299,15 @@ def get_issues_by_type():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-resort', methods=['POST'])
+@main.route("/get-issues-by-resort", methods=["POST"])
 @login_required
 def get_issues_by_resort():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1306,8 +1338,8 @@ def get_issues_by_resort():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1321,15 +1353,15 @@ def get_issues_by_resort():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-employee', methods=['POST'])
+@main.route("/get-issues-by-employee", methods=["POST"])
 @login_required
 def get_issues_by_employee():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1360,8 +1392,8 @@ def get_issues_by_employee():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1375,15 +1407,15 @@ def get_issues_by_employee():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-status', methods=['POST'])
+@main.route("/get-issues-by-status", methods=["POST"])
 @login_required
 def get_issues_by_status():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1414,8 +1446,8 @@ def get_issues_by_status():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1429,15 +1461,15 @@ def get_issues_by_status():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-priority', methods=['POST'])
+@main.route("/get-issues-by-priority", methods=["POST"])
 @login_required
 def get_issues_by_priority():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1468,8 +1500,8 @@ def get_issues_by_priority():
                     "date_from": date_from,
                     "date_to": date_to,
                     "assigned_to": assigned_to,
-                    "request_type": request_type
-                }
+                    "request_type": request_type,
+                },
             )
 
             issues = [{"id": row[0], "subject": row[1]} for row in result]
@@ -1483,17 +1515,16 @@ def get_issues_by_priority():
         return jsonify({"error": str(e)}), 500
 
 
-@main.route('/get-issues-by-category', methods=['POST'])
+@main.route("/get-issues-by-category", methods=["POST"])
 @login_required
 def get_issues_by_category():
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
-        assigned_to = data.get('assignedTo')
-        request_type = data.get('requestType')  # Теперь это ID трекера
-        country = data.get('country')
-
+        assigned_to = data.get("assignedTo")
+        request_type = data.get("requestType")  # Теперь это ID трекера
+        country = data.get("country")
 
         if not all([date_from, date_to, assigned_to, request_type]):
             return jsonify({"error": "Не все параметры переданы"}), 400
@@ -1524,7 +1555,7 @@ def get_issues_by_category():
                 "date_from": date_from,
                 "date_to": date_to,
                 "assigned_to": assigned_to,
-                "request_type": request_type
+                "request_type": request_type,
             }
 
             if country and country.strip():
@@ -1552,6 +1583,7 @@ def get_issues_by_category():
         print(f"General error: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
+
 @main.route("/get-total-issues-count")
 @login_required
 def get_total_issues_count():
@@ -1559,7 +1591,7 @@ def get_total_issues_count():
     try:
         session = get_quality_connection()
         if session is None:
-            return jsonify({'error': 'Database connection failed', 'count': 0}), 500
+            return jsonify({"error": "Database connection failed", "count": 0}), 500
 
         result = session.execute(
             "SELECT COUNT(id) as count FROM issues WHERE project_id=1"
@@ -1567,11 +1599,11 @@ def get_total_issues_count():
 
         count = result.scalar()
 
-        return jsonify({'success': True, 'count': count or 0})
+        return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
         print(f"Error in get_total_issues_count: {str(e)}")
-        return jsonify({'error': str(e), 'count': 0}), 500
+        return jsonify({"error": str(e), "count": 0}), 500
     finally:
         if session:
             session.close()
@@ -1584,7 +1616,7 @@ def get_new_issues_count():
     try:
         session = get_quality_connection()
         if session is None:
-            return jsonify({'error': 'Database connection failed', 'count': 0}), 500
+            return jsonify({"error": "Database connection failed", "count": 0}), 500
 
         result = session.execute(
             "SELECT COUNT(id) as count FROM issues WHERE project_id=1 AND status_id=1"
@@ -1592,11 +1624,11 @@ def get_new_issues_count():
 
         count = result.scalar()
 
-        return jsonify({'success': True, 'count': count or 0})
+        return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
         print(f"Error in get_new_issues_count: {str(e)}")
-        return jsonify({'error': str(e), 'count': 0}), 500
+        return jsonify({"error": str(e), "count": 0}), 500
     finally:
         if session:
             session.close()
@@ -1607,7 +1639,7 @@ def get_new_issues_count():
 def get_comment_notifications():
     try:
         if not current_user.is_authenticated:
-            return jsonify({'error': 'Пользователь не авторизован'}), 401
+            return jsonify({"error": "Пользователь не авторизован"}), 401
 
         with QualitySession() as session:
             query = """
@@ -1627,68 +1659,79 @@ def get_comment_notifications():
             result = session.execute(text(query))
             notifications = result.mappings().all()
 
-            notifications_data = [{
-                'id': row['id'],
-                'journalized_id': row['journalized_id'],
-                'notes': row['notes'] if row['notes'] else '',
-                'created_on': row['created_on'].strftime('%Y-%m-%d %H:%M:%S') if row['created_on'] else '',
-                'user_id': row['user_id'],
-                'subject': row['subject'] if row['subject'] else ''
-            } for row in notifications]
+            notifications_data = [
+                {
+                    "id": row["id"],
+                    "journalized_id": row["journalized_id"],
+                    "notes": row["notes"] if row["notes"] else "",
+                    "created_on": (
+                        row["created_on"].strftime("%Y-%m-%d %H:%M:%S")
+                        if row["created_on"]
+                        else ""
+                    ),
+                    "user_id": row["user_id"],
+                    "subject": row["subject"] if row["subject"] else "",
+                }
+                for row in notifications
+            ]
 
             logger.info(f"Получено {len(notifications_data)} уведомлений")
 
-            return jsonify({
-                'success': True,
-                'html': render_template('_comment_notifications.html',
-                                     notifications=notifications_data),
-                'count': len(notifications_data)
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "html": render_template(
+                        "_comment_notifications.html", notifications=notifications_data
+                    ),
+                    "count": len(notifications_data),
+                }
+            )
 
     except Exception as e:
         logger.error(f"Ошибка при получении уведомлений: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
-@main.route("/mark-comment-read/<int:journal_id>", methods=['POST'])
+@main.route("/mark-comment-read/<int:journal_id>", methods=["POST"])
 @login_required
 def mark_comment_read(journal_id):
     try:
         session = QualitySession()
         session.execute(
-            text("UPDATE journals SET is_read = 1 WHERE id = :id"),
-            {'id': journal_id}
+            text("UPDATE journals SET is_read = 1 WHERE id = :id"), {"id": journal_id}
         )
         session.commit()
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception as e:
         logger.error(f"Ошибка при отметке комментария как прочитанного: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         session.close()
 
 
-@main.route("/mark-all-comments-read", methods=['POST'])
+@main.route("/mark-all-comments-read", methods=["POST"])
 @login_required
 def mark_all_comments_read():
     try:
         session = QualitySession()
         session.execute(
-            text("UPDATE journals SET is_read = 1 WHERE journalized_type = 'Issue' AND is_read = 0")
+            text(
+                "UPDATE journals SET is_read = 1 WHERE journalized_type = 'Issue' AND is_read = 0"
+            )
         )
         session.commit()
-        return jsonify({'success': True})
+        return jsonify({"success": True})
     except Exception as e:
         logger.error(f"Ошибка при отметке всех комментариев как прочитанных: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
     finally:
         session.close()
 
 
-@main.app_template_filter('datetimeformat')
-def datetimeformat(value, format='%d.%m.%Y %H:%M'):
+@main.app_template_filter("datetimeformat")
+def datetimeformat(value, format="%d.%m.%Y %H:%M"):
     if value is None:
-        return ''
+        return ""
     return value.strftime(format)
 
 
@@ -1700,12 +1743,14 @@ def get_countries():
         if session is None:
             return jsonify({"error": "Ошибка подключения к базе данных"}), 500
 
-        query = text("SELECT DISTINCT value FROM custom_values WHERE custom_field_id = 24 ORDER BY value ASC")
+        query = text(
+            "SELECT DISTINCT value FROM custom_values WHERE custom_field_id = 24 ORDER BY value ASC"
+        )
         result = session.execute(query).fetchall()
         session.close()
 
         # Формируем список стран (если значение не пустое)
-        countries = [row['value'] for row in result if row['value'] is not None]
+        countries = [row["value"] for row in result if row["value"] is not None]
         return jsonify(countries)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -1728,25 +1773,28 @@ def get_new_issues_list():
             result = session.execute(text(query))
             issues = result.mappings().all()
 
-            issues_data = [{
-                'id': row['id'],
-                'subject': row['subject'],
-                'description': row['description'],
-                'created_on': row['created_on']
-            } for row in issues]
+            issues_data = [
+                {
+                    "id": row["id"],
+                    "subject": row["subject"],
+                    "description": row["description"],
+                    "created_on": row["created_on"],
+                }
+                for row in issues
+            ]
 
             # Рендерим только содержимое, без структуры сайдбара
-            html_content = render_template('_new_issues_content.html', issues=issues_data)
+            html_content = render_template(
+                "_new_issues_content.html", issues=issues_data
+            )
 
-            return jsonify({
-                'success': True,
-                'html': html_content,
-                'count': len(issues_data)
-            })
+            return jsonify(
+                {"success": True, "html": html_content, "count": len(issues_data)}
+            )
 
     except Exception as e:
         logger.error(f"Ошибка при получении списка новых обращений: {str(e)}")
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
 
 @main.route("/check-connection")

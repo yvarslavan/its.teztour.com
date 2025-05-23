@@ -1,131 +1,22 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<style>
-body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            background-color: #f7f7f7;
-        }
-.container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 80vh; /* Ограничиваем высоту контейнера */
-}
-
-/* Стили для линейки прокрутки */
-.container::-webkit-scrollbar {
-    width: 12px;
-}
-
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 3px solid #f1f1f1;
-}
-
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
-
-h1 {
-    text-align: center;
-    color: #333;
-}
-
-.image-wrapper {
-    text-align: center;
-    margin-bottom: 20px;
-}
-
-.image-wrapper img {
-    max-width: 100%;
-    height: auto;
-}
-
-p {
-    margin-bottom: 15px;
-}
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        .image-wrapper {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        p {
-            margin-bottom: 15px;
-        }
-</style>
 <head>
     <meta charset="UTF-8">
     <title>Как пользоваться Cisco AnyConnect</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            line-height: 1.6;
-            background-color: #f7f7f7;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #fff;
-            border-radius: 5px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        }
-
-        h1 {
-            text-align: center;
-            color: #333;
-        }
-
-        .image-wrapper {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .image-wrapper img {
-            max-width: 100%;
-            height: auto;
-        }
-
-        p {
-            margin-bottom: 15px;
-        }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <h1 style="font-weight: bold;">Ваше личное руководство!</h1>
-		<p style="font-size: 18px;">Сейчас все большие и больше людей начинают работать из дома на своих корпоративных или личных устройствах. И часто таким сотрудникам нужен доступ в корпоративную сеть. С помощью Cisco AnyConnect Secure Mobility можно предоставить необходимый удаленный доступ, при этом обеспечив необходимый уровень безопасности.</p>
+        <h1>Ваше личное руководство!</h1>
+		<p>Сейчас все большие и больше людей начинают работать из дома на своих корпоративных или личных устройствах. И часто таким сотрудникам нужен доступ в корпоративную сеть. С помощью Cisco AnyConnect Secure Mobility можно предоставить необходимый удаленный доступ, при этом обеспечив необходимый уровень безопасности.</p>
 		<div class="center">
-				<img src="/static/profile_pics/y.varslavan/post_images/cisco.png" alt="">
+				<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco.png') }}" alt="Cisco AnyConnect Logo">
 		</div>
 		<br>
         <div class="section">
-            <h4 style="font-size: 18px; font-weight: bold">📌 Обзор Cisco AnyConnect</h4>
-			<p style="font-size: 18px;">Cisco AnyConnect это VPN клиент (который является развитием Cisco VPN Client), позволяющий вам устанавливать защитное подключение к корпоративной сети. Cisco AnyConnect включает в себя такие функции, как удаленный доступ, контроль состояния, функции веб-безопасности и защита в роуминге.
+            <h3>📌 Обзор Cisco AnyConnect</h3>
+			<p>Cisco AnyConnect это VPN клиент (который является развитием Cisco VPN Client), позволяющий вам устанавливать защитное подключение к корпоративной сети. Cisco AnyConnect включает в себя такие функции, как удаленный доступ, контроль состояния, функции веб-безопасности и защита в роуминге.
 				<br>Клиент доступен на огромном количестве платформ:<br>
 				🔹Windows<br>
 				🔹macOS<br>
@@ -135,82 +26,84 @@ p {
 				🔹Windows Phone/Mobile<br>
 				🔹BlackBerry<br>
 				🔹ChromeOS</p>
-			<p style="font-size: 18px;">💡 Как же подключиться к рабочему компьютеру/серверу из дома или находясь в командировке?</p>
-			<p style="font-size: 18px;">Подключение состоит из следующих этапов:<br>
+			<p class="sub-heading icon-prefix">💡 Как же подключиться к рабочему компьютеру/серверу из дома или находясь в командировке?</p>
+			<p>Подключение состоит из следующих этапов:<br>
 				🔹 Установка Cisco AnyConnect<br>
 				🔹 Подключение к Cisco AnyConnect<br>
 				🔹 Подключение к удаленному рабочему столу</p><br>
 
-			<h4 style="font-size: 18px; font-weight: bold">📌Установка Cisco AnyConnect</h4>
-			<p style="font-size: 18px;">Перед подключением необходимо установить программу Cisco AnyConnect Secure Mobility Client
-				Вы можете скачать ее по этой <a href="https://vpn.teztour.com" style="color: blue; text-decoration: underline;">ссылке</a>.
+			<h3>📌Установка Cisco AnyConnect</h3>
+			<p>Перед подключением необходимо установить программу Cisco AnyConnect Secure Mobility Client.
+				Вы можете скачать ее по этой <a href="https://vpn.teztour.com">ссылке</a>.
 				В зависимости из какой операционной системы вы работаете, будет скачана соответствующая вашей операционной системе версия клиента Cisco AnyConnect. Чтобы скачать клиента, необходимо ввести ваш логин и пароль от TEZ ERP и нажать кнопу Login. 👇 Группу ANYCONNECT не меняем.</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_login.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_login.jpg') }}" alt="Cisco AnyConnect Login Screen">
 			</div>
 
-			<p style="font-size: 18px;">Откроется страница доступа к сервису VPN, откуда можно скачать клиента на компьютер пользователя.👇</p>
+			<p>Откроется страница доступа к сервису VPN, откуда можно скачать клиента на компьютер пользователя.👇</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_download.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_download.jpg') }}" alt="Cisco AnyConnect Download Page">
 			</div>
 			<br>
-			<p style="font-size: 18px;">После скачивания и установки запускаем приложение «Cisco AnyConnect», кликнув два раза по соответствующей иконке на рабочем столе.
+			<p>После скачивания и установки запускаем приложение «Cisco AnyConnect», кликнув два раза по соответствующей иконке на рабочем столе.
 			Откроется приложение. Заходим в настройки (в левом нижнем углу пиктограмма колесика шестеренки Настройка Cisco AnyConnect VPN) и снимаем галочку с пункта «Block connections to untrusted servers»👇</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_block_connections.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_block_connections.jpg') }}" alt="Cisco AnyConnect Settings - Untrusted Servers">
 			</div>
 			<br>
-			<p style="font-size: 18px;">В качестве адреса подключения в поле «Готово к подключению» вводим адрес: <span style="color: blue; text-decoration: underline;">vpn.teztour.com</span> и нажимаем на кнопку «Подключение» для соединения👇</p>
+			<p>В качестве адреса подключения в поле «Готово к подключению» вводим адрес: <code>vpn.teztour.com</code> и нажимаем на кнопку «Подключение» для соединения👇</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_connect.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect.jpg') }}" alt="Cisco AnyConnect Connection Address">
 			</div>
 			<br>
-			<p style="font-size: 18px;">При появлении предупреждения о недоверенном сертификате, нажимаем продолжить (connect anyway)👇</p>
+			<p>При появлении предупреждения о недоверенном сертификате, нажимаем продолжить (connect anyway)👇</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_connect_anyway.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect_anyway.jpg') }}" alt="Cisco AnyConnect Untrusted Certificate Warning">
 			</div>
 			<br>
-			<p style="font-size: 18px;">В следующем окне приложение запросит у Вас учетные данные для входа. Имена пользователей и пароли выдаются вам службой технической поддержки при активации услуги.
+			<p>В следующем окне приложение запросит у Вас учетные данные для входа. Имена пользователей и пароли выдаются вам службой технической поддержки при активации услуги.
 				Выбираем из выпадающего списка группу подключения ANYCONNECT и вводим свои учетные данные логин и пароль от TEZ ERP. Нажимаем на кнопку «ОК»👇.</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\cisco_connect_password.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect_password.jpg') }}" alt="Cisco AnyConnect Credentials Input">
 			</div>
 			<br>
-			<p style="font-size: 18px;">🔥Примечание:<br>
-			🔹 В целях безопасности приложение «Cisco AnyConnect» не сохраняет введенные пароли. Пароль необходимо вводить при каждом подключении<br>
-			🔹 Далее необходимо запустить подключение к удаленному рабочему столу.<br></p>
+			<div class="note-block">
+                <p><strong>🔥Примечание:</strong><br>
+			    🔹 В целях безопасности приложение «Cisco AnyConnect» не сохраняет введенные пароли. Пароль необходимо вводить при каждом подключении<br>
+			    🔹 Далее необходимо запустить подключение к удаленному рабочему столу.</p>
+            </div>
 
-			<h4 style="font-size: 18px; font-weight: bold">📌Подключение к удаленному рабочему столу</h4>
+			<h3>📌Подключение к удаленному рабочему столу</h3>
 			<br>
-			<p style="font-size: 18px;">
-				Нажимаем кнопку <strong>«Пуск»</strong>, далее выбираем <strong>«Стандартные - Windows»</strong>. Далее находим пункт <strong>«Подключение к удаленному рабочему столу»</strong>.
-				Жмем правой клавишей мыши на этот пункт и выбираем <strong>«Дополнительно»</strong>, далее <strong>«Закрепить на панели задач»</strong>.
+			<p>
+				Нажимаем кнопку <kbd>Пуск</kbd>, далее выбираем <kbd>Стандартные - Windows</kbd>. Далее находим пункт <kbd>Подключение к удаленному рабочему столу</kbd>.
+				Жмем правой клавишей мыши на этот пункт и выбираем <kbd>Дополнительно</kbd>, далее <kbd>Закрепить на панели задач</kbd>.
 				Тем самым мы создали постоянный ярлык на панели задач, через который мы и будем работать в дальнейшем.
 				Находим этот ярлык на панели задач внизу экрана и кликаем на него 1 (один) раз. Запустится окно:👇
 			</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\rdp_begin.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_begin.jpg') }}" alt="Remote Desktop Connection Window">
 			</div>
 
-			<p style="font-size: 18px;">
-				В поле <strong>«Компьютер»</strong> вводим или IP-адрес ресурса для подключения, полученный ранее от
+			<p>
+				В поле <kbd>Компьютер</kbd> вводим или IP-адрес ресурса для подключения, полученный ранее от
 				технической поддержки или указываем доменное имя компьютера к которому хотим подключиться.
-				IP-адрес представляет собой набор цифр, разделенных точками. Например: 62.67.52.250 или 10.10.10.84.
-				Доменное имя указывается в формате <strong>«Имя_компьютера.доменное_имя»</strong>,
-				например <strong>«DESCTOPCAL-010.moscow.teztour.com»</strong>.<br>
+				IP-адрес представляет собой набор цифр, разделенных точками. Например: <code>62.67.52.250</code> или <code>10.10.10.84</code>.
+				Доменное имя указывается в формате <kbd>Имя_компьютера.доменное_имя</kbd>,
+				например <code>DESCTOPCAL-010.moscow.teztour.com</code>.<br>
 				Где:<br>
-				🔹<strong>«DESKTOPCAL-010»</strong> это локальное имя компьютера в нашей сети<br>
-				🔹<strong>«moscow.teztour.com»</strong> Это доменное имя. Оно указывает на домен, к которому принадлежит компьютер.
+				🔹<code>DESKTOPCAL-010</code> это локальное имя компьютера в нашей сети<br>
+				🔹<code>moscow.teztour.com</code> Это доменное имя. Оно указывает на домен, к которому принадлежит компьютер.
 				«Moscow» здесь указывает на географическое расположение компьютера, а «teztour.com» - на домен нашей организации.
-				Далее вводим имя пользователя для подключения в формате <strong>«MOSCOW\v.tereshkova»</strong><br>
-				Опция <strong>«Разрешить мне сохранять свои учетные данные»</strong> при подключении к удаленному рабочему столу позволяет
+				Далее вводим имя пользователя для подключения в формате <code>MOSCOW\v.tereshkova</code><br>
+				Опция <kbd>Разрешить мне сохранять свои учетные данные</kbd> при подключении к удаленному рабочему столу позволяет
 				сохранять учетные данные (например, имя пользователя и пароль) для последующих подключений к удаленному рабочему столу
 				без необходимости вводить их каждый раз заново. Если эта опция включена (отмечена галочкой), операционная система сохранит
 				введенные учетные данные и будет автоматически использовать их при следующем подключении к тому же удаленному рабочему столу.
@@ -219,43 +112,45 @@ p {
 				поэтому следует быть осторожным при использовании этой опции на общедоступных или общих компьютерах.👇
 			</p>
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\rdp_connect.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_connect.jpg') }}" alt="Remote Desktop Connection Details">
 			</div>
 
-			<p style="font-size: 18px;">🔥Примечание:<br>
-			🔹 Если вы подключаетесь к терминальному серверу, то для завершения работы следует выполнить команду <strong>«Start/Log off (Пуск/Завершить сеанс)»</strong>,
-			а не нажимать на кнопку «крестик» в правом верхнем углу окна терминала.<br></p>
+			<div class="note-block">
+                <p><strong>🔥Примечание:</strong><br>
+			    🔹 Если вы подключаетесь к терминальному серверу, то для завершения работы следует выполнить команду <kbd>Start/Log off (Пуск/Завершить сеанс)</kbd>,
+			    а не нажимать на кнопку «крестик» в правом верхнем углу окна терминала.</p>
+            </div>
 
-			<h4 style="font-size: 18px; font-weight: bold">📌Как узнать имя своего компьютера</h4>
-			<p style="font-size: 18px;">Существует много способов посмотреть имя компьютера. Вот самые простые способы
+			<h3>📌Как узнать имя своего компьютера</h3>
+			<p>Существует много способов посмотреть имя компьютера. Вот самые простые способы
 			как это сделать.<br>
-			<strong>Способ №1.<br></strong>Узнаем имя компьютера через "Панель управления". Нажимаем по кнопке "Пуск" и пишем "Панель управления".👇</p>
+			<strong>Способ №1.</strong><br>Узнаем имя компьютера через "Панель управления". Нажимаем по кнопке <kbd>Пуск</kbd> и пишем <kbd>Панель управления</kbd>.👇</p>
 
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel.jpg') }}" alt="Control Panel Shortcut">
 			</div>
-			<p style="font-size: 18px;">Выбираем "Система".</p>
+			<p>Выбираем <kbd>Система</kbd>.</p>
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel_system.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_system.jpg') }}" alt="Control Panel - System">
 			</div>
-			<p style="font-size: 18px;">Далее мы увидим характеристики своего компьютера. Среди них находим пункт "Имя компьютера".
+			<p>Далее мы увидим характеристики своего компьютера. Среди них находим пункт <kbd>Имя компьютера</kbd>.
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel_computer_name.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name.jpg') }}" alt="Computer Name in System Properties">
 			</div>
-			<p style="font-size: 18px;"><strong>Способ №2.</strong><br>Определим имя компьютера с помощью ярлыка.<br>
-			Открываем проводник. Нажимаем на "Этот компьютер" правой кнопкой мыши и выбираем "Свойства".</p>
+			<p><strong>Способ №2.</strong><br>Определим имя компьютера с помощью ярлыка.<br>
+			Открываем проводник. Нажимаем на <kbd>Этот компьютер</kbd> правой кнопкой мыши и выбираем <kbd>Свойства</kbd>.</p>
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel_computer_name2.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2.jpg') }}" alt="This PC - Properties">
 			</div>
-			<p style="font-size: 18px;">Отобразится уже известное окно с нужной информацией.
+			<p>Отобразится уже известное окно с нужной информацией.
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel_computer_name2_1.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2_1.jpg') }}" alt="Computer Name via This PC Properties">
 			</div>
 
-			<p style="font-size: 18px;"><strong>Способ №3.</strong><br>Через командную строку.<br>
-			Запускаем командную строку, для этого в строке поиска или пуске пишем cmd и набираем команду hostname.</p>
+			<p><strong>Способ №3.</strong><br>Через командную строку.<br>
+			Запускаем командную строку, для этого в строке поиска или пуске пишем <kbd>cmd</kbd> и набираем команду <kbd>hostname</kbd>.</p>
 			<div class="center">
-					<img src="\static\profile_pics\y.varslavan\post_images\control_panel_computer_name_cmd.jpg" alt="">
+					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name_cmd.jpg') }}" alt="Hostname command in CMD">
 			</div>
 
 		</div>
@@ -266,65 +161,154 @@ p {
 
 {% block styles %}
 <style>
-  .container {
-        max-width: 1400px;
-        margin: 0 auto;
-    }
+body {
+    font-family: 'Open Sans', Arial, sans-serif;
+    line-height: 1.7;
+    background-color: #f0f2f5;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
 
-    .article {
-        font-family: Arial, sans-serif;
-        line-height: 1.6;
-        padding: 20px;
-        margin-bottom: 50px;
-        text-align: justify;
-    }
+.container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    max-height: 85vh;
+}
 
-    .section {
-        margin-bottom: 30px;
-        text-align: justify;
-    }
+.container::-webkit-scrollbar {
+    width: 10px;
+}
+.container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+.container::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 10px;
+    border: 2px solid #f1f1f1;
+}
+.container::-webkit-scrollbar-thumb:hover {
+    background-color: #555;
+}
 
-    .center {
-        text-align: center;
-    }
+h1 {
+    font-size: 2.2em;
+    font-weight: 700;
+    text-align: center;
+    color: #2c3e50;
+    margin-bottom: 30px;
+}
 
-    img {
-        max-width: 100%;
-        height: auto;
-    }
+h3 {
+    font-size: 1.6em;
+    font-weight: 700;
+    color: #34495e;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #e5e5e5;
+}
 
-    figcaption {
-        font-style: italic;
-        color: #666;
-        text-align: center;
-        margin-top: 10px;
-    }
+.sub-heading.icon-prefix {
+    font-size: 1.4em; /* Slightly smaller for these icon-prefixed ones */
+    font-weight: 700;
+    color: #34495e;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    /* No border for these, as they are more like lead-in questions */
+}
 
- 	.custom-p {
-        font-size: 16px;
-        border: 2px solid #2a83a0;
-        background-color: lightblue;
-        padding: 10px;
-        border-radius: 5px;
-        position: relative;
-        display: flex;
-        align-items: center;
-    }
+p {
+    font-size: 1.125em;
+    margin-bottom: 20px;
+    color: #555;
+    text-align: justify;
+}
 
-    .icon {
-        font-size: 24px;
-        color: #2a83a0;
-        margin-right: 10px;
-        flex-shrink: 0;
-        border: 2px solid #2a83a0;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: #5bc0de; /* Светло-голубой цвет */
-    	color: #fff; /* Белый цвет для контраста */
-    }
+p strong {
+    color: #333;
+    font-weight: 700;
+}
+
+a {
+    color: #3498db;
+    text-decoration: none;
+    font-weight: 600;
+}
+a:hover {
+    text-decoration: underline;
+    color: #2980b9;
+}
+
+kbd {
+    background-color: #e9ecef;
+    border: 1px solid #ced4da;
+    border-radius: 0.2rem;
+    padding: 0.2em 0.4em;
+    font-family: monospace;
+    font-size: 0.95em;
+    color: #495057;
+    margin: 0 0.1em;
+    white-space: nowrap;
+}
+
+code {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 0.2rem;
+    padding: 0.1em 0.3em;
+    font-family: monospace;
+    font-size: 0.95em;
+    color: #cb3837; /* Consistent code color */
+    white-space: nowrap;
+}
+
+.center {
+    text-align: center;
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+
+.center img {
+    max-width: 90%;
+    height: auto;
+    border-radius: 6px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.note-block {
+    background-color: #eef7ff; /* Lighter blue for notes */
+    border-left: 5px solid #3498db;
+    padding: 15px 20px;
+    margin: 25px 0;
+    border-radius: 4px;
+}
+.note-block p {
+    margin-bottom: 10px;
+    text-align: left;
+}
+.note-block p:last-child {
+    margin-bottom: 0;
+}
+.note-block strong { /* For "🔥Примечание" */
+    color: #e74c3c; /* More distinct red for note titles */
+    font-weight: 700;
+}
+
+/* Styles for list-like paragraphs */
+p br { /* Improve spacing for manual line breaks in lists */
+    content: "";
+    display: block;
+    margin-bottom: 0.3em;
+}
 </style>
 {% endblock styles %}
