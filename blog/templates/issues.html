@@ -1,311 +1,1104 @@
 {% extends 'layout.html' %}
 
 {% block main_page %}
-<div class="main-page-content-wrapper">
-  <div id="loading-spinner" style="display: none; text-align: center; padding: 20px;">
-      <i class="fas fa-spinner fa-spin fa-3x"></i>
-      <p>Загрузка...</p>
-  </div>
-
-  <div class="issues-header" style="margin-top: 20px;">
-    <div class="issues-header-title">
-        <i class="fas fa-ticket-alt header-icon"></i>
-        <h1>Мои заявки в ИТ-Департамент</h1>
-    </div>
-    <a href="https://helpdesk.teztour.com" target="_blank" class="header-link">
-        Перейти в Helpdesk <i class="fas fa-external-link-alt"></i>
-    </a>
-  </div>
-
-  <div class="controls-panel">
-    <div id="statusFilterContainer">
-        <!-- Фильтр статусов будет здесь -->
-    </div>
-    <div id="searchBoxContainer">
-        <!-- Поиск будет здесь -->
-    </div>
-    <a href="{{ url_for('main.new_issue') }}" id="createIssueBtn" class="btn btn-primary"> <i class="fas fa-plus-circle"></i> Создать заявку</a>
-  </div>
-
-  <div id="statsContainer" class="stats-container" style="margin-bottom: 20px;">
-    <div class="stat-item">
-        <span class="stat-label">Всего заявок:</span>
-        <span id="totalIssues" class="stat-value">-</span>
-    </div>
-    <div class="stat-item">
-        <span class="stat-label">Открытых:</span>
-        <span id="openIssues" class="stat-value">-</span>
-    </div>
-    <div class="stat-item">
-        <span class="stat-label">В работе:</span>
-        <span id="inProgressIssues" class="stat-value">-</span>
-    </div>
-    <div class="stat-item">
-        <span class="stat-label">Закрытых:</span>
-        <span id="closedIssues" class="stat-value">-</span>
+<div class="issues-page-container">
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-icon">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h3>Загрузка заявок...</h3>
+      <p>Подключение к системе HelpDesk</p>
     </div>
   </div>
 
-  <table id="issue" class="table table-striped" style="width:100%;">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Обновлено</th>
-            <th>Тема</th>
-            <th>Статус</th>
-        </tr>
-    </thead>
-    <tbody id="table-body">
-    </tbody>
-  </table>
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-ticket-alt"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
+          <p class="page-subtitle">Управление и отслеживание ваших обращений в техническую поддержку</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://helpdesk.teztour.com" target="_blank" class="action-button secondary">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Перейти в Helpdesk</span>
+        </a>
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-plus"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Statistics Dashboard -->
+  <section class="stats-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-icon">
+          <i class="fas fa-list-alt"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="totalIssues">-</span>
+          <span class="stat-label">Всего заявок</span>
+        </div>
+      </div>
+      <div class="stat-card open">
+        <div class="stat-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="openIssues">-</span>
+          <span class="stat-label">Открытых</span>
+        </div>
+      </div>
+      <div class="stat-card progress">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="inProgressIssues">-</span>
+          <span class="stat-label">В работе</span>
+        </div>
+      </div>
+      <div class="stat-card closed">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="closedIssues">-</span>
+          <span class="stat-label">Закрытых</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Panel -->
+  <section class="controls-panel">
+    <div class="controls-content">
+      <div class="filters-section">
+        <div class="filter-group">
+          <div class="filter-item">
+            <label class="filter-label">
+              <i class="fas fa-filter"></i>
+              Статус заявки
+            </label>
+            <div id="statusFilterContainer" class="filter-container">
+              <!-- Динамически заполняется JavaScript -->
+            </div>
+          </div>
+        </div>
+        <div class="search-section">
+          <label class="search-label">
+            <i class="fas fa-search"></i>
+            Быстрый поиск
+          </label>
+          <div id="searchBoxContainer" class="search-container">
+            <!-- Динамически заполняется JavaScript -->
+          </div>
+        </div>
+      </div>
+      <div class="display-options">
+        <div class="display-item">
+          <label class="display-label">Показать:</label>
+          <div id="lengthContainer" class="length-container">
+            <!-- Динамически заполняется JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Issues Table -->
+  <section class="issues-section">
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table id="issue" class="issues-table">
+          <thead>
+            <tr>
+              <th class="column-id">
+                <div class="column-header">
+                  <i class="fas fa-hashtag"></i>
+                  <span>ID</span>
+                </div>
+              </th>
+              <th class="column-date">
+                <div class="column-header">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>Обновлено</span>
+                </div>
+              </th>
+              <th class="column-subject">
+                <div class="column-header">
+                  <i class="fas fa-envelope"></i>
+                  <span>Тема заявки</span>
+                </div>
+              </th>
+              <th class="column-status">
+                <div class="column-header">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Статус</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Динамически заполняется JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table Footer with Info and Pagination -->
+    <div class="table-footer">
+      <div class="table-info">
+        <div id="infoContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+      <div class="table-pagination">
+        <div id="paginationContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock main_page %}
 
 {% block styles %}
 <style>
-  /* Общие стили страницы */
-  body {
-    font-family: 'Roboto', sans-serif; /* Пример фирменного шрифта */
-    background-color: #f4f7f6; /* Светлый фон */
+  /* Import Modern Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+
+  /* CSS Custom Properties */
+  :root {
+    /* Primary Color Palette */
+    --primary-50: #e3f2fd;
+    --primary-100: #bbdefb;
+    --primary-200: #90caf9;
+    --primary-300: #64b5f6;
+    --primary-400: #42a5f5;
+    --primary-500: #2196f3;
+    --primary-600: #1e88e5;
+    --primary-700: #1976d2;
+    --primary-800: #1565c0;
+    --primary-900: #0d47a1;
+
+    /* Secondary Color Palette */
+    --secondary-50: #e8f5e8;
+    --secondary-100: #c8e6c9;
+    --secondary-200: #a5d6a7;
+    --secondary-300: #81c784;
+    --secondary-400: #66bb6a;
+    --secondary-500: #4caf50;
+    --secondary-600: #43a047;
+    --secondary-700: #388e3c;
+    --secondary-800: #2e7d32;
+    --secondary-900: #1b5e20;
+
+    /* Status Colors */
+    --status-open: #2196f3;
+    --status-open-bg: #e3f2fd;
+    --status-progress: #ff9800;
+    --status-progress-bg: #fff3e0;
+    --status-closed: #4caf50;
+    --status-closed-bg: #e8f5e8;
+    --status-clarification: #9c27b0;
+    --status-clarification-bg: #f3e5f5;
+    --status-approval: #607d8b;
+    --status-approval-bg: #eceff1;
+    --status-rejected: #f44336;
+    --status-rejected-bg: #ffebee;
+
+    /* Surface Colors */
+    --surface-0: #ffffff;
+    --surface-1: #f8f9fa;
+    --surface-2: #e9ecef;
+    --surface-3: #dee2e6;
+    --surface-4: #ced4da;
+    --surface-5: #adb5bd;
+
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #868e96;
+    --text-disabled: #adb5bd;
+    --text-on-primary: #ffffff;
+    --text-on-surface: #212529;
+
+    /* Border & Divider */
+    --border-light: #e9ecef;
+    --border-medium: #dee2e6;
+    --border-dark: #adb5bd;
+    --divider: #e9ecef;
+
+    /* Shadows */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --shadow-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    --shadow-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+    /* Spacing System */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-xxl: 3rem;      /* 48px */
+    --spacing-xxxl: 4rem;     /* 64px */
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Typography */
+    --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-secondary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Container Widths */
+    --container-max-width: 1400px;
+    --container-padding: var(--spacing-lg);
   }
 
-  .main-page-content-wrapper {
-    margin-top: -15px; /* Увеличиваем отрицательный отступ */
-    padding-left: 20px;
-    padding-right: 20px;
-    /* padding-bottom: 40px;  Похоже не работает, пробуем margin для #issue_wrapper */
+  /* Base Styles */
+  .issues-page-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: var(--container-padding);
+    font-family: var(--font-family-primary);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
   }
 
-  #issue_wrapper {
-    margin-bottom: 40px; /* Добавляем отступ снизу для пагинации */
-  }
-
-  .issues-header {
-    display: flex;
-    justify-content: space-between;
+  /* Loading Overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 9999;
+    display: none;
     align-items: center;
-    padding: 20px;
-    background-color: #ffffff; /* Белый фон для хедера */
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Легкая тень */
-    margin-top: 20px !important; /* Уменьшаем верхний отступ, добавляем !important для приоритета */
-    margin-bottom: 20px;
+    justify-content: center;
   }
 
-  .issues-header-title {
-    display: flex;
-    align-items: center;
+  .loading-content {
+    text-align: center;
+    color: var(--text-primary);
   }
 
-  .header-icon {
-    font-size: 2em; /* Размер иконки */
-    color: #007bff; /* Фирменный цвет */
-    margin-right: 15px;
+  .spinner-icon {
+    font-size: 4rem;
+    color: var(--primary-600);
+    margin-bottom: var(--spacing-lg);
   }
 
-  .issues-header h1 {
-    font-size: 1.8em; /* Размер заголовка */
-    color: #333;
+  .loading-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+  }
+
+  .loading-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
     margin: 0;
   }
 
-  .header-link {
-    color: #007bff;
-    text-decoration: none;
-    font-size: 1em;
-  }
-  .header-link:hover {
-    text-decoration: underline;
+  /* Page Header */
+  .page-header {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+    position: relative;
   }
 
-  .controls-panel {
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-700), var(--secondary-500));
+  }
+
+  .header-content {
+    padding: var(--spacing-xl);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 5px; /* Уменьшил padding для уменьшения высоты */
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 20px;
+    gap: var(--spacing-lg);
   }
 
-  #statusFilterContainer, #searchBoxContainer {
-    margin-right: 10px; /* Отступ между элементами */
-  }
-
-  #createIssueBtn {
-    margin-left: auto; /* Кнопка "Создать заявку" будет справа */
-    display: flex; /* Для выравнивания иконки и текста */
-    align-items: center; /* Выравнивание по центру */
-  }
-
-  #createIssueBtn i {
-    margin-right: 8px; /* Отступ для иконки */
-  }
-
-  .stats-container {
+  .header-main {
     display: flex;
-    justify-content: space-around; /* Равномерное распределение элементов */
-    padding: 3px; /* Уменьшил padding для уменьшения высоты */
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex: 1;
   }
 
-  .stat-item {
-    text-align: center;
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+    color: var(--text-on-primary);
+    border-radius: var(--radius-xl);
+    font-size: 1.75rem;
+    box-shadow: var(--shadow-2);
   }
 
-  .stat-label {
-    display: block;
-    font-size: 0.9em;
-    color: #6c757d; /* Серый цвет для метки */
+  .header-text {
+    flex: 1;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-normal);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .action-button.primary {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-2);
+  }
+
+  .action-button.primary:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+    color: var(--text-on-primary);
+    text-decoration: none;
+  }
+
+  .action-button.secondary {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-medium);
+  }
+
+  .action-button.secondary:hover {
+    background: var(--surface-2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  /* Statistics Dashboard */
+  .stats-dashboard {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+    align-items: stretch;
+  }
+
+  .stat-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-2);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+    min-height: 100px;
+    height: 100%;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, currentColor 0%, transparent 70%);
+    opacity: 0.05;
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-3);
+  }
+
+  .stat-card.total {
+    border-left-color: var(--primary-500);
+    color: var(--primary-500);
+  }
+
+  .stat-card.open {
+    border-left-color: var(--status-open);
+    color: var(--status-open);
+  }
+
+  .stat-card.progress {
+    border-left-color: var(--status-progress);
+    color: var(--status-progress);
+  }
+
+  .stat-card.closed {
+    border-left-color: var(--status-closed);
+    color: var(--status-closed);
+  }
+
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: currentColor;
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    opacity: 0.9;
+    flex-shrink: 0;
+  }
+
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    flex: 1;
+    position: relative;
+    z-index: 1;
   }
 
   .stat-value {
-    display: block;
-    font-size: 1.5em;
-    font-weight: bold;
-    color: #007bff; /* Фирменный цвет для значения */
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
   }
 
-  /* Стили для иконок и ячеек статусов */
-  .status-cell {
-    font-weight: 500; /* Немного жирнее */
-    vertical-align: middle; /* Выравнивание по центру, если контент разной высоты */
-  }
-  .status-icon {
-    margin-right: 8px;
-    font-size: 1em; /* Размер иконки */
-    line-height: 1; /* Для лучшего выравнивания */
-  }
-  .action-icon {
-    margin-right: 5px;
-    color: #007bff; /* Цвет иконки "подробнее" */
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
   }
 
-  #issue tbody tr {
-    transition: background-color 0.3s ease; /* Плавный переход для фона */
+  /* Controls Panel */
+  .controls-panel {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
   }
 
-  /* Закрыта */
-  tr.status-closed { background-color: #e6ffed; }
-  tr.status-closed .status-cell { color: #107c41; font-weight: bold; }
-  tr.status-closed .status-cell .status-icon { color: #107c41; }
-
-  /* В работе */
-  tr.status-in-progress { background-color: #fff9e6; }
-  tr.status-in-progress .status-cell { color: #b38600; font-weight: bold; }
-  tr.status-in-progress .status-cell .status-icon { color: #b38600; }
-
-  /* Запрошено уточнение */
-  tr.status-clarification { background-color: #e6f7ff; }
-  tr.status-clarification .status-cell { color: #005c99; font-weight: bold; }
-  tr.status-clarification .status-cell .status-icon { color: #005c99; }
-
-  /* На согласовании */
-  tr.status-approval { background-color: #f0f0f0; }
-  tr.status-approval .status-cell { color: #505050; font-weight: bold; }
-  tr.status-approval .status-cell .status-icon { color: #505050; }
-
-  /* Отклонена */
-  tr.status-rejected { background-color: #ffeeee; }
-  tr.status-rejected .status-cell { color: #d92626; font-weight: bold; }
-  tr.status-rejected .status-cell .status-icon { color: #d92626; }
-
-  /* Открыта/Новая */
-  tr.status-open { background-color: #e7f5ff; }
-  tr.status-open .status-cell { color: #006fcc; font-weight: bold; }
-  tr.status-open .status-cell .status-icon { color: #006fcc; }
-
-  /* Сохраняем зебру для строк без специального статуса (если такие будут) */
-  #issue tbody tr:nth-child(even):not([class*="status-"]) { background-color: #f8f9fa; }
-  #issue tbody tr:nth-child(odd):not([class*="status-"]) { background-color: #ffffff; }
-
-  /* Улучшенный hover, чтобы был виден поверх цветных строк */
-  #issue tbody tr:hover {
-    background-color: #dce9f0 !important; /* Более заметный hover */
-    cursor: pointer; /* Указываем, что строка кликабельна (если ID - ссылка) */
+  .controls-content {
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
   }
 
-  /* Стили для DataTables */
-  #issue {
-    font-family: Arial, sans-serif;
+  .filters-section {
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: flex-end;
+    flex: 1;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: flex-end;
+  }
+
+  .filter-item,
+  .search-section,
+  .display-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .filter-label,
+  .search-label,
+  .display-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .filter-container select,
+  .search-container input,
+  .length-container select {
+    min-width: 200px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-container select:focus,
+  .search-container input:focus,
+  .length-container select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  .search-container input {
+    min-width: 300px;
+  }
+
+  .search-container input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .display-options {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .length-container select {
+    min-width: 120px;
+  }
+
+  /* Issues Section */
+  .issues-section {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  /* Table Container */
+  .table-container {
+    overflow: hidden;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    position: relative;
+  }
+
+  /* Issues Table */
+  .issues-table {
     width: 100%;
-    border-collapse: collapse;
-    /* Для работы position:sticky нужен контекст с overflow,
-       если таблица сама по себе не имеет прокрутки,
-       а прокручивается родительский элемент.
-       Обычно это тело страницы или специальный контейнер таблицы. */
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface-0);
+    font-size: 0.875rem;
   }
 
-  /* Убираем стили для sticky header */
-  /*
-  #issue thead {
+  .issues-table thead {
+    background: var(--surface-1);
     position: sticky;
-    top: 60px;
+    top: 0;
     z-index: 10;
   }
-  */
 
-  #issue thead th {
-    background-color: #e9ecef;
-    /* Другие стили для th, если они были переопределены, можно вернуть сюда */
-  }
-
-  #issue th,
-  #issue td {
-    border: 1px solid #e0e0e0; /* Более мягкая граница */
-    padding: 12px 15px; /* Увеличенные отступы */
+  .issues-table th {
+    padding: var(--spacing-lg);
     text-align: left;
-    font-size: 1em; /* Базовый размер шрифта */
+    border-bottom: 1px solid var(--border-light);
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    position: relative;
   }
 
-  #issue th {
-    background-color: #e9ecef; /* Светлый фон для заголовков таблицы */
-    color: #495057;
-    font-weight: bold;
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
   }
 
-  #issue tr:nth-child(even) {
-    background-color: #f8f9fa; /* Зебра-строки */
-  }
-  #issue tr:hover {
-    background-color: #e2e6ea; /* Подсветка строки при наведении */
+  .column-header i {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
   }
 
-  /* Стили для фильтрации и поиска DataTables по умолчанию */
-  .dataTables_wrapper .dataTables_filter,
-  .dataTables_wrapper .dataTables_length {
-    margin-bottom: 15px; /* Увеличенный отступ */
+  .issues-table td {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+    color: var(--text-primary);
   }
 
-  /* Стили для пагинации */
+  .issues-table tbody tr {
+    transition: all var(--transition-fast);
+    background: var(--surface-0);
+  }
+
+  .issues-table tbody tr:hover {
+    background: var(--surface-1);
+    transform: translateX(4px);
+    box-shadow: inset 4px 0 0 var(--primary-500);
+  }
+
+  /* Column Specific Styles */
+  .column-id {
+    width: 120px;
+  }
+
+  .column-date {
+    width: 140px;
+  }
+
+  .column-subject {
+    width: auto;
+    min-width: 300px;
+  }
+
+  .column-status {
+    width: 180px;
+  }
+
+  /* Issue ID Link */
+  .issue-id-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--primary-600);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+
+  .issue-id-link:hover {
+    color: var(--primary-700);
+    background: var(--primary-50);
+    text-decoration: none;
+    transform: translateX(2px);
+  }
+
+  .issue-id-link i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  /* Issue Subject */
+  .issue-subject {
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-primary);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Status Styles */
+  .status-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+
+  .status-icon {
+    font-size: 0.875rem;
+  }
+
+  /* Status Color Variants */
+  .status-open .status-badge {
+    background: var(--status-open-bg);
+    color: var(--status-open);
+    border-color: var(--status-open);
+  }
+
+  .status-progress .status-badge {
+    background: var(--status-progress-bg);
+    color: var(--status-progress);
+    border-color: var(--status-progress);
+  }
+
+  .status-closed .status-badge {
+    background: var(--status-closed-bg);
+    color: var(--status-closed);
+    border-color: var(--status-closed);
+  }
+
+  .status-clarification .status-badge {
+    background: var(--status-clarification-bg);
+    color: var(--status-clarification);
+    border-color: var(--status-clarification);
+  }
+
+  .status-approval .status-badge {
+    background: var(--status-approval-bg);
+    color: var(--status-approval);
+    border-color: var(--status-approval);
+  }
+
+  .status-rejected .status-badge {
+    background: var(--status-rejected-bg);
+    color: var(--status-rejected);
+    border-color: var(--status-rejected);
+  }
+
+  /* Row Status Colors */
+  .status-open {
+    border-left: 3px solid var(--status-open);
+  }
+
+  .status-progress {
+    border-left: 3px solid var(--status-progress);
+  }
+
+  .status-closed {
+    border-left: 3px solid var(--status-closed);
+  }
+
+  .status-clarification {
+    border-left: 3px solid var(--status-clarification);
+  }
+
+  .status-approval {
+    border-left: 3px solid var(--status-approval);
+  }
+
+  .status-rejected {
+    border-left: 3px solid var(--status-rejected);
+  }
+
+  /* Table Footer */
+  .table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-top: 1px solid var(--border-light);
+    gap: var(--spacing-lg);
+  }
+
+  .table-info {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .table-pagination {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  /* DataTables Custom Styles */
+  .dataTables_wrapper {
+    width: 100%;
+  }
+
   .dataTables_wrapper .dataTables_paginate .paginate_button {
-    padding: 0.6em 1.2em; /* Увеличенные кнопки пагинации */
-    margin-left: 3px;
-    border-radius: 4px; /* Скругление кнопок */
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    margin: 0 2px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all var(--transition-fast);
+    cursor: pointer;
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: #007bff;
-    color: white !important; /* Цвет текста при наведении */
-    border: 1px solid #007bff;
+    background: var(--primary-50);
+    border-color: var(--primary-500);
+    color: var(--primary-700);
+    transform: translateY(-1px);
   }
 
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
-    background: #0056b3; /* Темнее для текущей страницы */
-    color: white !important;
-    border: 1px solid #0056b3;
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+    color: var(--text-on-primary);
   }
 
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-xxxl);
+    color: var(--text-secondary);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+  }
+
+  .empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+  }
+
+  .empty-state p {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .issues-page-container {
+      padding: var(--spacing-md);
+    }
+
+    .header-content {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-xl);
+    }
+
+    .controls-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-lg);
+    }
+
+    .filters-section {
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+
+    .filter-group {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 1.5rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-md);
+    }
+
+    .stat-card {
+      padding: var(--spacing-md);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .action-button {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .table-footer {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-md);
+    }
+
+    /* Mobile Table Adjustments */
+    .column-subject {
+      max-width: 200px;
+    }
+
+    .issue-subject {
+      max-width: 180px;
+    }
+
+    .filter-container select,
+    .search-container input,
+    .length-container select {
+      min-width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 1.25rem;
+    }
+
+    .column-id,
+    .column-date {
+      width: auto;
+    }
+
+    .issues-table th,
+    .issues-table td {
+      padding: var(--spacing-md);
+      font-size: 0.8rem;
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .loading-overlay,
+    .header-actions,
+    .controls-panel,
+    .table-footer {
+      display: none !important;
+    }
+
+    .issues-page-container {
+      background: white !important;
+    }
+
+    .page-header,
+    .issues-section {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+    }
+  }
+
+  /* Accessibility Improvements */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus States */
+  .action-button:focus,
+  .filter-container select:focus,
+  .search-container input:focus,
+  .length-container select:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  .issue-id-link:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 1px;
+  }
+
+  /* High Contrast Mode */
+  @media (prefers-contrast: high) {
+    :root {
+      --border-light: #000000;
+      --border-medium: #000000;
+      --text-secondary: #000000;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block scripts %}
-
 <script>
 $(document).ready(function() {
     // Показываем спиннер перед отправкой запроса
@@ -314,42 +1107,57 @@ $(document).ready(function() {
     // Функция для определения стиля статуса
     function getStatusStyle(statusName) {
         let style = {
-            trClass: 'status-default', // Класс для всей строки <tr>
-            iconClass: 'fas fa-question-circle', // Иконка по умолчанию
-            tooltip: statusName, // Тултип по умолчанию
-            statusTextClass: '' // Дополнительный класс для текста статуса, если нужно
+            trClass: 'status-default',
+            iconClass: 'fas fa-question-circle',
+            tooltip: statusName,
+            statusTextClass: ''
         };
         const normalizedStatus = String(statusName).toLowerCase();
 
         if (normalizedStatus.includes('закрыта') || normalizedStatus.includes('closed') || normalizedStatus.includes('resolved')) {
             style.trClass = 'status-closed';
             style.iconClass = 'fas fa-check-circle';
-            style.tooltip = 'Заявка успешно выполнена и закрыта.';
+            style.tooltip = 'Заявка успешно выполнена и закрыта';
         } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
-            style.trClass = 'status-in-progress';
-            style.iconClass = 'fas fa-clock'; // или fas fa-sync-alt
-            style.tooltip = 'Заявка находится в процессе выполнения.';
+            style.trClass = 'status-progress';
+            style.iconClass = 'fas fa-clock';
+            style.tooltip = 'Заявка находится в процессе выполнения';
         } else if (normalizedStatus.includes('запрошено уточнение') || normalizedStatus.includes('clarification')) {
             style.trClass = 'status-clarification';
             style.iconClass = 'fas fa-exclamation-circle';
-            style.tooltip = 'Для продолжения работы по заявке требуется ваше уточнение.';
+            style.tooltip = 'Требуется ваше уточнение для продолжения работы';
         } else if (normalizedStatus.includes('на согласовании') || normalizedStatus.includes('approval')) {
             style.trClass = 'status-approval';
-            style.iconClass = 'fas fa-user-clock'; // или fas fa-gavel
-            style.tooltip = 'Заявка ожидает согласования.';
+            style.iconClass = 'fas fa-user-clock';
+            style.tooltip = 'Заявка ожидает согласования';
         } else if (normalizedStatus.includes('отклонена') || normalizedStatus.includes('rejected')) {
             style.trClass = 'status-rejected';
             style.iconClass = 'fas fa-times-circle';
-            style.tooltip = 'Заявка была отклонена.';
-        } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) { // Pending считаем как открытые для базовой статистики
-             style.trClass = 'status-clarification'; // Можно отнести к "Запрошено уточнение" или создать свой стиль
-             style.iconClass = 'fas fa-hourglass-half';
-             style.tooltip = 'Заявка в ожидании (например, ожидает ответа пользователя или внешних действий).';
+            style.tooltip = 'Заявка была отклонена';
+        } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
+            style.trClass = 'status-open';
+            style.iconClass = 'fas fa-folder-open';
+            style.tooltip = 'Заявка зарегистрирована и ожидает обработки';
         }
-        // Добавьте другие статусы по необходимости
         return style;
     }
 
+    // Функция форматирования даты
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return 'Нет даты';
+        }
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // AJAX запрос для получения данных
     $.ajax({
         url: '/get-my-issues',
         method: 'GET',
@@ -359,11 +1167,9 @@ $(document).ready(function() {
         },
         success: function(response) {
             // Создаем фильтр статусов
-            let statusFilter = '<label for="status-filter" style="margin-right: 5px;">Статус:</label>' +
-                             '<select id="status-filter" class="form-control" style="display: inline-block; width: auto;">' +
-                             '<option value="">Все</option>';
+            let statusFilter = '<select id="status-filter" class="form-control">' +
+                             '<option value="">Все статусы</option>';
 
-            // Добавляем все возможные статусы в фильтр
             response.statuses.forEach(function(status) {
                 statusFilter += `<option value="${status.name}">${status.name}</option>`;
             });
@@ -376,8 +1182,7 @@ $(document).ready(function() {
                 total: response.issues.length,
                 open: 0,
                 inProgress: 0,
-                closed: 0,
-                // Можно добавить другие счетчики если есть место в HTML
+                closed: 0
             };
 
             response.issues.forEach(function(issue) {
@@ -386,129 +1191,170 @@ $(document).ready(function() {
                     stats.closed++;
                 } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
                     stats.inProgress++;
-                } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) { // Pending считаем как открытые для базовой статистики
+                } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
                     stats.open++;
                 }
             });
 
-            $('#totalIssues').text(stats.total);
-            $('#openIssues').text(stats.open);
-            $('#inProgressIssues').text(stats.inProgress);
-            $('#closedIssues').text(stats.closed);
+            // Обновляем статистику с анимацией
+            animateNumber($('#totalIssues'), stats.total);
+            animateNumber($('#openIssues'), stats.open);
+            animateNumber($('#inProgressIssues'), stats.inProgress);
+            animateNumber($('#closedIssues'), stats.closed);
 
             // Заполняем таблицу данными
-            let tableBody = '';
-            response.issues.forEach(function(issue) {
-                let statusInfo = getStatusStyle(issue.status_name);
-                tableBody += `
-                    <tr class="${statusInfo.trClass}">
-                        <td><a href="/my-issues/${issue.id}"><i class="fas fa-search-plus action-icon"></i> #${issue.id}</a></td>
-                        <td data-sort="${issue.updated_on}">${formatDate(issue.updated_on)}</td>
-                        <td>${issue.subject}</td>
-                        <td class="status-cell" title="${statusInfo.tooltip}">
-                            <i class="${statusInfo.iconClass} status-icon"></i>
-                            <span>${issue.status_name}</span>
+            if (response.issues.length === 0) {
+                $('#table-body').html(`
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>Заявки не найдены</h3>
+                            <p>У вас пока нет заявок в системе</p>
+                            <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
+                                <i class="fas fa-plus"></i>
+                                <span>Создать первую заявку</span>
+                            </a>
                         </td>
                     </tr>
-                `;
-            });
-            $('#table-body').html(tableBody);
-
-            // Функция форматирования даты
-            function formatDate(dateString) {
-                const date = new Date(dateString);
-                if (isNaN(date.getTime())) {
-                    return 'Нет даты';
-                }
-                return date.toLocaleDateString('ru-RU', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric'
+                `);
+            } else {
+                let tableBody = '';
+                response.issues.forEach(function(issue) {
+                    let statusInfo = getStatusStyle(issue.status_name);
+                    tableBody += `
+                        <tr class="${statusInfo.trClass}">
+                            <td>
+                                <a href="/my-issues/${issue.id}" class="issue-id-link" title="Посмотреть детали заявки">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <span>#${issue.id}</span>
+                                </a>
+                            </td>
+                            <td data-sort="${issue.updated_on}">
+                                <span title="${new Date(issue.updated_on).toLocaleString('ru-RU')}">${formatDate(issue.updated_on)}</span>
+                            </td>
+                            <td>
+                                <div class="issue-subject" title="${issue.subject}">${issue.subject}</div>
+                            </td>
+                            <td>
+                                <div class="status-cell">
+                                    <div class="status-badge" title="${statusInfo.tooltip}">
+                                        <i class="${statusInfo.iconClass} status-icon"></i>
+                                        <span>${issue.status_name}</span>
+                                    </div>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
                 });
+                $('#table-body').html(tableBody);
             }
 
-            // Инициализируем DataTables с настройкой фильтрации
+            // Инициализируем DataTables
             let table = $('#issue').DataTable({
                 "language": {
                     "url": "/static/js/datatables/Russian.json"
                 },
                 "order": [[1, 'desc']],
+                "pageLength": 25,
+                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
                 "columnDefs": [{
                     "targets": 1,
                     "type": "date",
                     "render": function(data, type, row) {
-                        if (type === 'display' || type === 'filter') { // Добавлено 'filter' для корректной работы фильтрации по дате
+                        if (type === 'display' || type === 'filter') {
                             return formatDate(data);
                         }
-                        return data; // Для сортировки оставляем исходные данные
+                        return data;
                     }
                 }],
                 "dom": '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
-                // fixedHeader: true, // Убираем, так как используем CSS sticky
+                "drawCallback": function(settings) {
+                    // Добавляем анимацию появления строк
+                    $('#table-body tr').each(function(index) {
+                        $(this).css('animation-delay', (index * 50) + 'ms');
+                        $(this).addClass('fade-in');
+                    });
+                },
                 initComplete: function () {
-                    // Перемещаем стандартный поиск DataTables
+                    // Перемещаем элементы управления
                     $('.dataTables_filter').detach().appendTo('#searchBoxContainer');
                     $('#searchBoxContainer label').contents().filter(function(){
-                        return this.nodeType === 3; // Node.TEXT_NODE
+                        return this.nodeType === 3;
                     }).remove();
-                    $('#searchBoxContainer input[type="search"]').attr("placeholder", "Поиск по таблице...");
+                    $('#searchBoxContainer input[type="search"]').attr("placeholder", "Поиск по заявкам...");
 
-                    // Перемещаем выбор количества записей (если нужно)
-                    // $('.dataTables_length').detach().appendTo('#someOtherContainer');
+                    $('.dataTables_length').detach().appendTo('#lengthContainer');
+                    $('#lengthContainer label').contents().filter(function(){
+                        return this.nodeType === 3;
+                    }).remove();
+
+                    $('.dataTables_info').detach().appendTo('#infoContainer');
+                    $('.dataTables_paginate').detach().appendTo('#paginationContainer');
                 }
             });
 
             // Добавляем обработчик изменения фильтра статусов
             $('#status-filter').on('change', function() {
                 let selectedStatus = $(this).val();
-
-                // Применяем фильтр к колонке статуса (индекс 3)
                 table.column(3).search(selectedStatus).draw();
             });
 
-            // Обработчик для кнопки "Создать заявку"
-            $('#createIssueBtn').on('click', function() {
-                // e.preventDefault(); // Убрано, чтобы ссылка работала
-                // Теперь переход будет осуществляться через href атрибут кнопки
-                console.log('Нажата кнопка "Создать заявку", переход на: ' + $(this).attr('href'));
-                // alert('Функционал "Создать заявку" в разработке.'); // Убрано
-            });
         },
         error: function(xhr, status, error) {
             console.error('Error:', error);
-            $('#table-body').html('<tr><td colspan="4">Ошибка загрузки данных</td></tr>');
+            $('#table-body').html(`
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        <i class="fas fa-exclamation-triangle" style="color: var(--status-rejected);"></i>
+                        <h3>Ошибка загрузки данных</h3>
+                        <p>Не удалось подключиться к системе HelpDesk</p>
+                        <button onclick="location.reload()" class="action-button primary">
+                            <i class="fas fa-refresh"></i>
+                            <span>Попробовать снова</span>
+                        </button>
+                    </td>
+                </tr>
+            `);
         },
         complete: function() {
             // Скрываем спиннер после завершения запроса
             $('#loading-spinner').hide();
         }
     });
+
+    // Функция анимации чисел
+    function animateNumber(element, finalNumber) {
+        let currentNumber = 0;
+        const increment = finalNumber / 30; // 30 шагов анимации
+        const timer = setInterval(function() {
+            currentNumber += increment;
+            if (currentNumber >= finalNumber) {
+                currentNumber = finalNumber;
+                clearInterval(timer);
+            }
+            element.text(Math.floor(currentNumber));
+        }, 50);
+    }
 });
+
+// CSS анимации для появления строк
+const style = document.createElement('style');
+style.textContent = `
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+`;
+document.head.appendChild(style);
 </script>
-
-<style>
-.highlighted-row {
-    background-color: #f0f0f0; /* Немного изменил цвет для лучшего контраста */
-}
-
-/* Дополнительные стили для панели управления */
-#searchBoxContainer input[type="search"] {
-    margin-left: 10px; /* Отступ для строки поиска */
-    width: 250px; /* Фиксированная ширина или можно использовать % */
-    padding: 8px 12px; /* Внутренние отступы */
-    border-radius: 4px; /* Скругление углов */
-    border: 1px solid #ced4da; /* Граница */
-}
-
-#createIssueBtn {
-    margin-left: auto; /* Кнопка "Создать заявку" будет справа */
-}
-
-/* Стили для контейнера статистики (пока пустой) */
-#statsContainer {
-    /* Можно добавить стили позже, когда будет контент */
-}
-
-</style>
-
 {% endblock %}
