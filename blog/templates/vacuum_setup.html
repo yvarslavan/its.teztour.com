@@ -4,171 +4,508 @@
 <head>
     <meta charset="UTF-8">
     <title>Как настроить аккаунт Vacuum-IM?</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <h1>Настройка аккаунта Vacuum-IM</h1>
+            <p class="hero-subtitle">Пошаговое руководство по настройке мессенджера</p>
+        </div>
+    </div>
+
     <div class="container">
-        <h1>Как настроить аккаунт Vacuum-IM?</h1>
-        <p class="sub-heading icon-prefix">💡 <strong>Как добавить имеющийся или новый аккаунт?</strong></p>
-        <p>1. Зайдите в настройки клиента Vacuum-IM. Для этого
-             кликните правой клавишей мыши в области уведомлений в нижнем правом углу экрана по иконке приложения.
-            Откроется контекстное меню приложения.</p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/VacuumSettings.png" alt="Vacuum-IM Context Menu - Settings">
+        <div class="content-wrapper">
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h3>Открытие настроек</h3>
+                </div>
+                <div class="step-content">
+                    <p>Кликните правой клавишей мыши по иконке Vacuum-IM в области уведомлений (системный трей) в нижнем правом углу экрана. В появившемся контекстном меню выберите пункт "Настройки".</p>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/VacuumSettings.png" alt="Контекстное меню Vacuum-IM - Настройки">
+                        <div class="image-caption">Контекстное меню приложения</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h3>Добавление аккаунта</h3>
+                </div>
+                <div class="step-content">
+                    <p>В окне настроек перейдите на вкладку <span class="highlight">Аккаунты</span> и нажмите кнопку <span class="highlight">Добавить</span>. В появившемся диалоге введите имя для вашего аккаунта.</p>
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb"></i>
+                        <div>
+                            <strong>Совет:</strong> Используйте понятные названия, например "Основной", "Рабочий" или "Домашний"
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h3>Настройка параметров подключения</h3>
+                </div>
+                <div class="step-content">
+                    <p>В открывшемся окне заполните следующие поля:</p>
+                    <div class="form-fields">
+                        <div class="field-item">
+                            <strong>Имя:</strong> Ваш почтовый аккаунт (например: <code>v.tereshkova@tez-tour.com</code>)
+                        </div>
+                        <div class="field-item">
+                            <strong>Ресурс:</strong> Описание устройства (например: <code>Работа(Офис)</code> или <code>Дом</code>)
+                        </div>
+                        <div class="field-item">
+                            <strong>Пароль:</strong> Ваш пароль от системы ЕРП
+                        </div>
+                    </div>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/VacuumSetSettings.png" alt="Диалог настройки аккаунта Vacuum-IM">
+                        <div class="image-caption">Окно настройки параметров аккаунта</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <h3>Настройка прокси (опционально)</h3>
+                </div>
+                <div class="step-content">
+                    <p>Если в вашей сети используется прокси-сервер, укажите его тип и параметры подключения в группе настроек <span class="highlight">Прокси</span>.</p>
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Внимание:</strong> Обратитесь к системному администратору для получения параметров прокси-сервера
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <h3>Дополнительные настройки</h3>
+                </div>
+                <div class="step-content">
+                    <p>На вкладке <span class="highlight">Дополнительно</span> установите флажок <span class="highlight">Автоподключение при старте</span>, если хотите, чтобы аккаунт автоматически подключался при запуске приложения.</p>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <div class="download-header">
+                    <i class="fas fa-download"></i>
+                    <h3>Скачивание Vacuum-IM</h3>
+                </div>
+                <div class="download-content">
+                    <p>Последнюю версию Vacuum-IM можно скачать с официального репозитория на GitHub:</p>
+                    <div class="download-link">
+                        <a href="https://github.com/Vacuum-IM/vacuum-im/releases" target="_blank" class="btn-download">
+                            <i class="fab fa-github"></i>
+                            Скачать Vacuum-IM
+                        </a>
+                    </div>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/vacuum_download.jpg" alt="Страница загрузки Vacuum-IM на GitHub">
+                        <div class="image-caption">Страница релизов на GitHub</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <h3>Установка и запуск</h3>
+                </div>
+                <div class="step-content">
+                    <p>Скачайте и распакуйте <strong>zip-архив</strong> приложения. После распаковки запустите файл <code>vacuum.exe</code> для начала работы с мессенджером.</p>
+                    <div class="success-box">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Готово!</strong> Теперь вы можете использовать Vacuum-IM для корпоративного общения
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
-        <p>2. В окне настроек на вкладке <kbd>Аккаунты</kbd> нажмите кнопку <kbd>Добавить</kbd> и в появившемся окне введите имя аккаунта, например <kbd>Основной</kbd> или <kbd>Рабочий</kbd>.</p>
-        <p>3. В открывшемся окне введите <strong>Имя</strong> - это <strong>Ваш почтовый аккаунт</strong>, (например <code>v.tereshkova@tez-tour.com</code>), <strong>Ресурс</strong> (например <code>Работа(Офис)</code> или <code>Дом</code>) а также <strong>Ваш пароль от системы ЕРП</strong>.</p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/VacuumSetSettings.png" alt="Vacuum-IM Account Setup Dialog">
-        </div>
-        <p>4. Если вы используете прокси сервер, то укажите его тип и параметры подключения в группе <kbd>Прокси</kbd>.</p>
-        <p>5.  На вкладке <kbd>Дополнительно</kbd> установите галку в поле <kbd>Автоподключение при старте</kbd>, если хотите чтобы аккаунт автоматически подключался при запуске приложения.</p>
-        <div class="note-block">
-            <p><strong>🔥Примечание</strong><br>
-            Скачать последнюю версию Vaccum-IM можно <a href="https://github.com/Vacuum-IM/vacuum-im/releases">здесь</a></p>
-        </div>
-        <p>6. Перейдя по ссылке, скачайте и распакуйте <strong>zip-архив</strong> приложения.</p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/vacuum_download.jpg" alt="Vacuum-IM Download Page on GitHub">
-        </div>
-        <p>7. После распаковки просто запустите файл  <code>vacuum.exe</code>.</p>
     </div>
 </body>
 {% endblock content %}
 
 {% block styles %}
 <style>
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    line-height: 1.7;
-    background-color: #f0f2f5;
-    color: #333;
+* {
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #2d3748;
+    min-height: 100vh;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 80px 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="1" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    font-weight: 300;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
 }
 
 .container {
+    background: #f7fafc;
+    min-height: 100vh;
+    padding: 0;
+}
+
+.content-wrapper {
     max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 85vh;
+    margin: 0 auto;
+    padding: 60px 20px;
 }
 
-.container::-webkit-scrollbar {
-    width: 10px;
-}
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 2px solid #f1f1f1;
-}
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
-
-h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    text-align: center;
-    color: #2c3e50;
+.step-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
     margin-bottom: 30px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
-.sub-heading.icon-prefix {
-    font-size: 1.4em;
+.step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.step-header {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.step-number {
+    background: rgba(255,255,255,0.2);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
     font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
+    backdrop-filter: blur(10px);
 }
 
-p {
-    font-size: 1.125em;
-    margin-bottom: 20px;
-    color: #555;
-    text-align: justify;
-}
-
-p strong {
-    color: #333;
-    font-weight: 700;
-}
-
-a {
-    color: #3498db;
-    text-decoration: none;
+.step-header h3 {
+    font-size: 1.4rem;
     font-weight: 600;
-}
-a:hover {
-    text-decoration: underline;
-    color: #2980b9;
+    margin: 0;
 }
 
-kbd {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.2rem;
-    padding: 0.2em 0.4em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #495057;
-    margin: 0 0.1em;
-    white-space: nowrap;
+.step-content {
+    padding: 30px;
+}
+
+.step-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: #4a5568;
+}
+
+.highlight {
+    background: linear-gradient(120deg, #a2f2ff 0%, #a2f2ff 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 0.3em;
+    background-position: 0 88%;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.form-fields {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    border-left: 4px solid #4299e1;
+}
+
+.field-item {
+    margin-bottom: 15px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.field-item:last-child {
+    margin-bottom: 0;
+}
+
+.field-item strong {
+    color: #2d3748;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 80px;
 }
 
 code {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 0.2rem;
-    padding: 0.1em 0.3em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #cb3837;
-    white-space: nowrap;
-}
-
-.center {
-    text-align: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
-}
-
-.center img {
-    max-width: 90%;
-    height: auto;
+    background: #edf2f7;
+    color: #e53e3e;
+    padding: 4px 8px;
     border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.9em;
+    font-weight: 500;
 }
 
-.note-block {
-    background-color: #eef7ff;
-    border-left: 5px solid #3498db;
-    padding: 15px 20px;
-    margin: 25px 0;
-    border-radius: 4px;
-}
-.note-block p {
-    margin-bottom: 10px;
-    text-align: left;
-}
-.note-block p:last-child {
-    margin-bottom: 0;
-}
-.note-block strong {
-    color: #e74c3c;
-    font-weight: 700;
+.image-container {
+    text-align: center;
+    margin: 30px 0;
 }
 
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.image-container img:hover {
+    transform: scale(1.02);
+}
+
+.image-caption {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.tip-box, .warning-box, .success-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-size: 1rem;
+}
+
+.tip-box {
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    border-left: 4px solid #3182ce;
+}
+
+.warning-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+    border-left: 4px solid #f6ad55;
+}
+
+.success-box {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    border-left: 4px solid #48bb78;
+}
+
+.tip-box i {
+    color: #3182ce;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.warning-box i {
+    color: #f6ad55;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.success-box i {
+    color: #48bb78;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.download-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin: 40px 0;
+    overflow: hidden;
+}
+
+.download-header {
+    background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.download-header i {
+    font-size: 1.5rem;
+}
+
+.download-header h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.download-content {
+    padding: 30px;
+}
+
+.download-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    color: #4a5568;
+}
+
+.download-link {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.btn-download i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .content-wrapper {
+        padding: 40px 15px;
+    }
+
+    .step-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .step-content {
+        padding: 20px;
+    }
+
+    .form-fields {
+        padding: 20px;
+    }
+
+    .download-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .download-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .step-header h3 {
+        font-size: 1.2rem;
+    }
+}
 </style>
 {% endblock styles %}

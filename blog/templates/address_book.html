@@ -1,208 +1,1355 @@
 {% extends 'layout.html' %}
 
-{% block content %}
-<head>
-    <meta charset="UTF-8">
-    <title>Корпоративная адресная книга</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1>📖Корпоративная адресная книга</h1>
-        <p>Для подключения к общей адресной книге компании, берущей адреса электронной почты из ситемы ЕРП необходимо настроить ваш почтовый клиент.</p>
-
-        <p class="sub-heading icon-prefix">💡 <strong>Настройка Mozila Thrunderbird</strong></p>
-        <p>1. Откройте Mozilla Thunderbird.</p>
-        <p>2. В главном окне программы нажмите кнопку <kbd>Адресная книга</kbd> на панели инструментов.<br>Откроется окно «Адресная книга».</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_button.png') }}" alt="Thunderbird Address Book Button">
+{% block main_page %}
+<div class="address-book-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-address-book"></i>
         </div>
-        <p>3. В окне «Адресная книга» выберите меню <kbd>Файл</kbd> → <kbd>Создать</kbd> → <kbd>Каталог LDAP...</kbd></p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_create_ldap.png') }}" alt="Address Book - Create LDAP Directory">
+        <div class="header-text">
+          <h1 class="page-title">Корпоративная адресная книга</h1>
+          <p class="page-subtitle">Настройка подключения к общей адресной книге компании через LDAP-сервер для автоматического поиска контактов</p>
         </div>
-
-        <h3>📌Заполняем поля на вкладке «Основное»</h3>
-        <p>🔹 Название: Любое имя вашей новой адресной книги, используется только для отображения<br>
-        🔹 Имя сервера: <code>noodle.tez-tour.com</code><br>
-        🔹 Корневой элемент (Base DN): <code>dc=moscow,dc=teztour,dc=com</code><br>
-        🔹 Порт: <code>389</code><br>
-        🔹 Имя пользователя (Bind DN): <code>cn=ldap,ou=users,dc=moscow,dc=teztour,dc=com</code><br>
-        🔹 Пароль вам будет предоставлен IT-отделом.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_ldap_settings.png') }}" alt="LDAP Directory Server Properties">
-        </div>
-        <p>6. Нажмите кнопку <kbd>OK</kbd>.</p>
-        <p>7. Новая адресная книга TEZ TOUR появится в списке адресных книг.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_list.png') }}" alt="Address Book with TEZ TOUR Directory">
-        </div>
-
-        <h3>📌Открываем вкладку «Дополнительно»</h3>
-        <p>Заполняем поля:<br>
-            🔹 Не возвращать более чем: <code>1000</code> результатов<br>
-            🔹 Область поиска: <code>Поддерево</code><br>
-            🔹 Фильтр поиска: <code>(objectclass=*)</code><br>
-            🔹  Способ аутентификации: <code>Простой</code></p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_add_on.jpg" alt="Thunderbird LDAP Address Book - Advanced Tab Settings">
-        </div>
-        <p>📌Нажимаем кнопку <kbd>Ок</kbd><br>
-            📌Закрываем адресную книгу<br>
-        📌Открываем <kbd>Инструменты</kbd> -> <kbd>Настройки</kbd> -> <kbd>Составление</kbd> -> Вкладка <kbd>Адресация</kbd><br>
-         Пункт  <kbd>При вводе адреса искать подходящие почтовые адреса в:</kbd>. Отмечаем <kbd>Сервере каталогов</kbd> и указываем наш сервер.
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_setup.jpg" alt="Thunderbird Composition Settings - Addressing Tab">
-        </div>
-        <p>📌Перезапускаем Mozilla Thrunderbird.<br>
-        Теперь при составлении нового письма, начав вводить фамилию сотрудника будет выполнен поиск в ЕРП и если совпадения будут
-         найдены вы их увидите. Для того, чтобы увидеть адреса всех сотрудников, откройте адресную книгу Mozila Thrunderbird,
-          выберите общую книгу и в строке поиска введите символ <code>@</code> и мы получим полный список адресов сотрудников.</p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_search.jpg" alt="Searching LDAP Address Book in Thunderbird">
-        </div>
-        <p>Теперь когда пользователь в адресной строке Thrunderbird вводит первые буквы почтового адреса или имени пользователя,
-         и Thrunderbird, в случае наличия в ЕРП адреса(ов) подобных пользователей, автоматически предлагает подходящий почтовый адрес(а).</p>
-        <div class="center">
-            <img src="/static/profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_users.jpg" alt="Thunderbird Autocompleting Email Address from LDAP">
-        </div>
-
-        <h4>Настройка карточек контактов</h4>
-        <p>1. В окне «Адресная книга» выберите меню <kbd>Инструменты</kbd> → <kbd>Настройки</kbd> (или <kbd>Правка</kbd> → <kbd>Настройки</kbd> в зависимости от версии).</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_tools_settings.png') }}" alt="Address Book Tools Settings Menu">
-        </div>
-        <p>2. В открывшемся окне «Настройки» перейдите на вкладку <kbd>Адресация</kbd>.</p>
-        <p>3. В разделе «Автодополнение адресов» отметьте галочкой <kbd>Сервер каталогов</kbd> и выберите из выпадающего списка созданную ранее адресную книгу «TEZ TOUR».</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/address_book_addressing_settings.png') }}" alt="Address Book Addressing Settings">
-        </div>
-        <p>4. Нажмите <kbd>OK</kbd> для сохранения настроек.</p>
-
-        <h3>🚀 Использование адресной книги</h3>
+      </div>
+      <div class="header-actions">
+        <a href="https://www.mozilla.org/ru/thunderbird/" target="_blank" class="action-button primary">
+          <i class="fas fa-download"></i>
+          <span>Скачать Thunderbird</span>
+        </a>
+      </div>
     </div>
-</body>
-{% endblock content %}
+  </header>
 
-{% block styles %}
+  <!-- Introduction Section -->
+  <section class="intro-section">
+    <div class="intro-card">
+      <div class="intro-icon">
+        <i class="fas fa-users"></i>
+      </div>
+      <div class="intro-content">
+        <h2>О корпоративной адресной книге</h2>
+        <p><strong>Корпоративная адресная книга</strong> — это централизованная система контактов, которая автоматически синхронизируется с ERP-системой компании. Она позволяет быстро находить email-адреса сотрудников и автоматически дополнять адреса при написании писем.</p>
+
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-search"></i>
+            <span>Быстрый поиск контактов</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-sync-alt"></i>
+            <span>Автоматическая синхронизация</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-magic"></i>
+            <span>Автодополнение адресов</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-database"></i>
+            <span>Интеграция с ERP</span>
+          </div>
+        </div>
+
+        <div class="important-notice">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Важно знать:</strong>
+            <p>Для подключения к адресной книге потребуется пароль, который будет предоставлен IT-отделом. Убедитесь, что у вас есть доступ к корпоративной сети.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Thunderbird Setup Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon setup-color">
+        <i class="fas fa-cogs"></i>
+      </div>
+      <div class="method-info">
+        <h2>Настройка Mozilla Thunderbird</h2>
+        <p>Пошаговое руководство по подключению к LDAP-серверу адресной книги</p>
+      </div>
+    </div>
+
+    <!-- Opening Address Book -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-book-open"></i>
+        <h3>Открытие адресной книги</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Запуск Thunderbird</h4>
+            <p>Откройте Mozilla Thunderbird на вашем компьютере. Убедитесь, что программа полностью загружена и готова к работе.</p>
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Совет:</strong>
+                <p>Если Thunderbird не установлен, скачайте его с официального сайта Mozilla</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Переход к адресной книге</h4>
+            <p>В главном окне программы нажмите кнопку <kbd>Адресная книга</kbd> на панели инструментов. Откроется окно управления контактами.</p>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_address_book_add.jpg') }}" alt="Меню создания адресной книги в Thunderbird" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Меню "Новая адресная книга" → "Добавить адресную книгу LDAP" (нажмите для увеличения)</div>
+            </div>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Где найти:</strong>
+                <p>Кнопка "Новая адресная книга" находится в левой панели адресной книги Thunderbird</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Creating LDAP Directory -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-plus-circle"></i>
+        <h3>Создание LDAP-каталога</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Создание нового каталога</h4>
+            <p>В окне «Адресная книга» выберите меню <kbd>Новая адресная книга</kbd> → <kbd>Добавить адресную книгу LDAP</kbd> для добавления корпоративной адресной книги.</p>
+            <div class="navigation-path">
+              <div class="path-item">
+                <i class="fas fa-plus"></i>
+                <span>Новая адресная книга</span>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+              <div class="path-item">
+                <i class="fas fa-server"></i>
+                <span>Добавить адресную книгу LDAP</span>
+              </div>
+            </div>
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Альтернативный способ:</strong>
+                <p>Можно также щелкнуть правой кнопкой мыши в области списка адресных книг и выбрать "Новый каталог LDAP"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <i class="fas fa-lightbulb"></i>
+          <div>
+            <strong>Важно:</strong>
+            <p>Убедитесь, что все параметры заполнены точно как указано выше. Неправильные настройки могут привести к ошибкам подключения</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Сохранение настроек</h4>
+            <p>После заполнения всех полей нажмите кнопку <kbd>OK</kbd> для сохранения конфигурации.</p>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>Новая адресная книга TEZ TOUR появится в списке адресных книг</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <i class="fas fa-lightbulb"></i>
+          <div>
+            <strong>Проверка подключения:</strong>
+            <p>После сохранения настроек попробуйте выполнить поиск в адресной книге, чтобы убедиться в правильности конфигурации</p>
+          </div>
+        </div>
+
+        <div class="image-container">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_adress_book.jpg') }}" alt="Основные настройки LDAP сервера" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          <div class="image-caption">Основные настройки LDAP-сервера: название, сервер, корневой элемент (нажмите для увеличения)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Basic Settings -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-sliders-h"></i>
+        <h3>Основные настройки</h3>
+      </div>
+      <div class="card-content">
+        <div class="settings-explanation">
+          <p>Заполните поля на вкладке «Основное» следующими параметрами для подключения к корпоративному LDAP-серверу:</p>
+        </div>
+
+        <div class="server-config">
+          <div class="config-section">
+            <h4><i class="fas fa-server"></i> Параметры сервера</h4>
+            <div class="server-params">
+              <div class="param-row">
+                <span class="param-label">Название:</span>
+                <span class="param-value">Любое имя адресной книги (например, "TEZ TOUR")</span>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Имя сервера:</span>
+                <code>noodle.tez-tour.com</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Корневой элемент (Base DN):</span>
+                <code>dc=moscow,dc=teztour,dc=com</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Порт:</span>
+                <code>389</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Имя пользователя (Bind DN):</span>
+                <code>cn=ldap,ou=users,dc=moscow,dc=teztour,dc=com</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Пароль:</span>
+                <span class="param-value">Предоставляется IT-отделом</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Настройки по умолчанию:</strong>
+            <p>Указанные параметры являются оптимальными для большинства корпоративных LDAP-серверов</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Сохранение настроек</h4>
+            <p>После заполнения всех полей нажмите кнопку <kbd>OK</kbd> для сохранения конфигурации.</p>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>Новая адресная книга TEZ TOUR появится в списке адресных книг</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <i class="fas fa-lightbulb"></i>
+          <div>
+            <strong>Проверка настроек:</strong>
+            <p>После сохранения настроек новая адресная книга "TEZ TOUR" должна появиться в левой панели окна адресной книги</p>
+          </div>
+        </div>
+
+        <div class="image-container">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_search.jpg') }}" alt="Список адресных книг с TEZ TOUR" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          <div class="image-caption">Адресная книга TEZ TOUR в списке доступных каталогов с поиском по символу "@" (нажмите для увеличения)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Advanced Settings -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cog"></i>
+        <h3>Дополнительные настройки</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Переход к расширенным настройкам</h4>
+            <p>Откройте вкладку «Дополнительно» в окне настроек LDAP-каталога для конфигурации параметров поиска и аутентификации.</p>
+          </div>
+        </div>
+
+        <div class="advanced-config">
+          <div class="config-section">
+            <h4><i class="fas fa-search"></i> Параметры поиска</h4>
+            <div class="server-params">
+              <div class="param-row">
+                <span class="param-label">Не возвращать более чем:</span>
+                <code>1000</code>
+                <span class="param-description">результатов</span>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Область поиска:</span>
+                <code>Поддерево</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Фильтр поиска:</span>
+                <code>(objectclass=*)</code>
+              </div>
+              <div class="param-row">
+                <span class="param-label">Способ аутентификации:</span>
+                <code>Простой</code>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tip-box">
+          <i class="fas fa-lightbulb"></i>
+          <div>
+            <strong>Дополнительные настройки:</strong>
+            <p>На вкладке "Дополнительно" можно настроить параметры поиска и аутентификации для оптимальной работы с LDAP-сервером</p>
+          </div>
+        </div>
+
+        <div class="info-box">
+          <i class="fas fa-info-circle"></i>
+          <div>
+            <strong>Рекомендуемые настройки:</strong>
+            <p>Эти параметры обеспечивают оптимальную производительность и совместимость с большинством LDAP-серверов</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Применение настроек</h4>
+            <p>Нажмите кнопку <kbd>OK</kbd> для сохранения дополнительных параметров и закройте окно адресной книги.</p>
+          </div>
+        </div>
+
+        <div class="image-container">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_add_on.jpg') }}" alt="Дополнительные настройки LDAP" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          <div class="image-caption">Вкладка "Дополнительно" с параметрами поиска и аутентификации (нажмите для увеличения)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Composition Settings -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-edit"></i>
+        <h3>Настройка автодополнения</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Переход к настройкам составления</h4>
+            <p>Откройте <kbd>Инструменты</kbd> → <kbd>Настройки</kbd> → <kbd>Составление</kbd> → вкладка <kbd>Адресация</kbd> для настройки автоматического поиска контактов.</p>
+            <div class="navigation-path">
+              <div class="path-item">
+                <i class="fas fa-tools"></i>
+                <span>Инструменты</span>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+              <div class="path-item">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+              <div class="path-item">
+                <i class="fas fa-edit"></i>
+                <span>Составление</span>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+              <div class="path-item">
+                <i class="fas fa-at"></i>
+                <span>Адресация</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Включение поиска в каталоге</h4>
+            <p>В пункте <kbd>При вводе адреса искать подходящие почтовые адреса в:</kbd> отметьте <kbd>Сервере каталогов</kbd> и выберите созданный LDAP-сервер.</p>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>После включения этой опции Thunderbird будет автоматически искать контакты в корпоративной адресной книге</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Перезапуск программы</h4>
+            <p>Перезапустите Mozilla Thunderbird для применения всех настроек автодополнения адресов.</p>
+            <div class="warning-box">
+              <i class="fas fa-exclamation-triangle"></i>
+              <div>
+                <strong>Важно:</strong>
+                <p>Перезапуск необходим для корректной работы автодополнения из LDAP-каталога</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="image-container">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_setup.jpg') }}" alt="Настройки составления и адресации" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          <div class="image-caption">Настройки автодополнения адресов в разделе "Составление" → "Адресация" (нажмите для увеличения)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="image-container">
+      <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_new_adress_book_users.jpg') }}" alt="Автодополнение адресов в действии" class="instruction-image clickable-image" onclick="openImageModal(this)">
+      <div class="image-caption">Автоматическое дополнение email-адресов из LDAP-каталога при написании письма (нажмите для увеличения)</div>
+    </div>
+  </section>
+
+  <!-- Usage Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon usage-color">
+        <i class="fas fa-rocket"></i>
+      </div>
+      <div class="method-info">
+        <h2>Использование адресной книги</h2>
+        <p>Практические примеры работы с корпоративными контактами</p>
+      </div>
+    </div>
+
+    <!-- Search Functionality -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-search"></i>
+        <h3>Поиск контактов</h3>
+      </div>
+      <div class="card-content">
+        <div class="usage-explanation">
+          <p>После настройки вы сможете быстро находить контакты сотрудников и использовать автодополнение при написании писем.</p>
+        </div>
+
+        <div class="usage-features">
+          <div class="feature-item">
+            <i class="fas fa-keyboard"></i>
+            <div>
+              <strong>Автодополнение при вводе</strong>
+              <p>Начните вводить имя или email сотрудника в поле "Кому" при создании письма</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-list"></i>
+            <div>
+              <strong>Просмотр всех контактов</strong>
+              <p>Введите символ "@" в строке поиска адресной книги для отображения всех сотрудников</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-filter"></i>
+            <div>
+              <strong>Фильтрация по критериям</strong>
+              <p>Используйте различные поисковые запросы для нахождения нужных контактов</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Поиск всех сотрудников</h4>
+            <p>Для просмотра полного списка адресов откройте адресную книгу, выберите каталог TEZ TOUR и введите в строке поиска символ <code>@</code>.</p>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Как это работает:</strong>
+                <p>Символ "@" является универсальным поисковым запросом, который покажет все email-адреса в каталоге</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Автодополнение при написании</h4>
+            <p>При создании нового письма начните вводить фамилию сотрудника в поле адресата. Thunderbird автоматически предложит подходящие варианты из корпоративной адресной книги.</p>
+            <div class="success-message">
+              <i class="fas fa-magic"></i>
+              <span>Теперь поиск контактов стал быстрым и удобным!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Contact Cards Configuration -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-id-card"></i>
+        <h3>Настройка карточек контактов</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Доступ к настройкам</h4>
+            <p>В окне «Адресная книга» выберите меню <kbd>Инструменты</kbd> → <kbd>Настройки</kbd> (или <kbd>Правка</kbd> → <kbd>Настройки</kbd> в зависимости от версии).</p>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Расположение меню:</strong>
+                <p>В разных версиях Thunderbird меню настроек может находиться в разных местах. Ищите пункт "Настройки" или "Параметры"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Настройка автодополнения</h4>
+            <p>В открывшемся окне «Настройки» перейдите на вкладку <kbd>Адресация</kbd> и настройте параметры автоматического дополнения адресов.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Выбор источника контактов</h4>
+            <p>В разделе «Автодополнение адресов» отметьте галочкой <kbd>Сервер каталогов</kbd> и выберите из выпадающего списка созданную ранее адресную книгу «TEZ TOUR».</p>
+            <div class="warning-box">
+              <i class="fas fa-exclamation-triangle"></i>
+              <div>
+                <strong>Внимание:</strong>
+                <p>Обязательно выберите именно "TEZ TOUR" из списка, а не другую адресную книгу</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Сохранение настроек</h4>
+            <p>Нажмите <kbd>OK</kbd> для сохранения всех настроек автодополнения адресов.</p>
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Готово!</strong>
+                <p>Корпоративная адресная книга настроена и готова к использованию</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support Section -->
+  <section class="support-section">
+    <div class="support-card">
+      <div class="support-icon">
+        <i class="fas fa-headset"></i>
+      </div>
+      <div class="support-content">
+        <h3>Нужна помощь с настройкой?</h3>
+        <p>Если у вас возникли проблемы с подключением к корпоративной адресной книге, наша служба технической поддержки готова помочь!</p>
+      </div>
+      <div class="support-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <div class="image-modal-content">
+    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" class="modal-image" src="" alt="">
+    <div class="image-modal-caption" id="modalCaption"></div>
+  </div>
+</div>
+
 <style>
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    line-height: 1.7;
-    background-color: #f0f2f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
+/* Main Container */
+.address-book-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 85vh;
+/* Header Styles */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 3rem;
+  color: white;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
 }
 
-.container::-webkit-scrollbar {
-    width: 10px;
-}
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 2px solid #f1f1f1;
-}
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
 }
 
-h3 {
-    font-size: 1.6em;
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e5e5e5;
+.header-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.sub-heading.icon-prefix {
-    font-size: 1.4em;
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
+.header-icon i {
+  font-size: 2.5rem;
 }
 
-p {
-    font-size: 1.125em;
-    margin-bottom: 20px;
-    color: #555;
-    text-align: justify;
+.page-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-p strong {
-    color: #333;
-    font-weight: 700;
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.action-button.primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Introduction Section */
+.intro-section {
+  margin-bottom: 3rem;
+}
+
+.intro-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.intro-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.intro-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.intro-content p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.benefit-item i {
+  color: #667eea;
+  font-size: 1.2rem;
+}
+
+.benefit-item span {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Method Section */
+.method-section {
+  margin-bottom: 3rem;
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.method-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.setup-color { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.usage-color { background: linear-gradient(135deg, #059669, #10b981); }
+
+.method-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.method-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Instruction Cards */
+.instruction-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-header i {
+  color: #667eea;
+  font-size: 1.5rem;
+}
+
+.card-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.card-content {
+  padding: 2rem;
+}
+
+/* Step Containers */
+.step-container {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.step-content p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Navigation Path */
+.navigation-path {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0f9ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.path-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.navigation-path i.fa-chevron-right {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Server Configuration */
+.server-config,
+.advanced-config {
+  margin: 2rem 0;
+}
+
+.config-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem;
+  border-left: 4px solid #667eea;
+}
+
+.config-section h4 {
+  margin: 0 0 1.5rem 0;
+  color: #667eea;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.server-params {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.param-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  flex-wrap: wrap;
+}
+
+.param-label {
+  font-weight: 600;
+  color: #374151;
+  min-width: 200px;
+}
+
+.param-value {
+  color: #6b7280;
+  font-style: italic;
+}
+
+.param-description {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+/* Settings Explanation */
+.settings-explanation,
+.usage-explanation {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+/* Usage Features */
+.usage-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #f0fdf4;
+  border-radius: 12px;
+  border-left: 4px solid #059669;
+}
+
+.feature-item i {
+  color: #059669;
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+}
+
+.feature-item strong {
+  display: block;
+  font-weight: 600;
+  color: #065f46;
+  margin-bottom: 0.5rem;
+}
+
+.feature-item p {
+  color: #047857;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Image Styles */
+.image-container {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.instruction-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.image-caption {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Info Boxes */
+.info-box,
+.warning-box,
+.tip-box,
+.important-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+
+.info-box {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+}
+
+.tip-box {
+  background: linear-gradient(135deg, #fae8ff, #f3e8ff);
+  border-left: 4px solid #a855f7;
+}
+
+.important-notice {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+.info-box i { color: #3b82f6; }
+.warning-box i { color: #f59e0b; }
+.tip-box i { color: #a855f7; }
+.important-notice i { color: #3b82f6; }
+
+.info-box i,
+.warning-box i,
+.tip-box i,
+.important-notice i {
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+/* Success Message */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  margin: 1rem 0;
+}
+
+.success-message i {
+  font-size: 1.2rem;
+}
+
+/* Support Section */
+.support-section {
+  margin-top: 4rem;
+}
+
+.support-card {
+  background: linear-gradient(135deg, #1f2937, #374151);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.support-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.support-content {
+  flex: 1;
+}
+
+.support-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.support-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.support-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Image Modal */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.image-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-modal-caption {
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Code and Keyboard */
+code {
+  background: #f1f5f9;
+  color: #e11d48;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
 }
 
 kbd {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.2rem;
-    padding: 0.2em 0.4em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #495057;
-    margin: 0 0.1em;
-    white-space: nowrap;
+  background: linear-gradient(135deg, #475569, #64748b);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.85em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #334155;
+  font-weight: 600;
 }
 
-code {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 0.2rem;
-    padding: 0.1em 0.3em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #cb3837;
-    white-space: nowrap;
+/* Links */
+.external-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.center {
+.external-link:hover {
+  color: #4c51bf;
+  border-bottom-color: #4c51bf;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .address-book-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 2rem;
+  }
+
+  .header-content {
+    flex-direction: column;
     text-align: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+  }
+
+  .step-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .support-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .param-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .param-label {
+    min-width: auto;
+  }
+
+  .navigation-path {
+    justify-content: center;
+  }
+
+  .image-modal-content {
+    max-width: 95%;
+    max-height: 95%;
+  }
+
+  .modal-image {
+    max-height: 70vh;
+  }
 }
 
-.center img {
-    max-width: 90%;
-    height: auto;
-    border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 2rem;
+  }
 
-p br {
-    content: "";
-    display: block;
-    margin-bottom: 0.3em;
+  .intro-card,
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-features {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-{% endblock styles %}
+
+<script>
+// Image Modal Functions
+function openImageModal(img) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+
+  modal.style.display = 'flex';
+  modalImg.src = img.src;
+  caption.textContent = img.alt;
+
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// Smooth scroll for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+  const links = document.querySelectorAll('a[href^="#"]');
+
+  links.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
