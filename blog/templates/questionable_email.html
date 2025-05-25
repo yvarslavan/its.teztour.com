@@ -1,180 +1,1494 @@
 {% extends 'layout.html' %}
 
-{% block content %}
-<head>
-    <meta charset="UTF-8">
-    <title>Подозрительное письмо</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1>📧Получили подозрительное письмо?</h1>
-
-        <div class="image-wrapper">
-            <img src="\static\profile_pics\y.varslavan\post_images\Bug.png" alt="Bug">
+{% block main_page %}
+<div class="security-email-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-shield-alt"></i>
         </div>
-        <p>Мы составили инструкцию, как определить, что письмо является мошенническим, и как защититься в случае получения подозрительного сообщения?</p>
-        <p>Вы получили подозрительное письмо. К вам обращаются по имени, но формулировки,
-             требующие действовать немедленно, выглядят странно.За неделю подобное может произойти не один раз. Знаете ли вы, что нужно делать
-              с такими письмами? И чего делать точно не стоит?</p>
-        <h3>📌Признаки подозрительного письма</h3>
-        <p>Некоторые мошеннические письма могут быть очень убедительными, использовать официальный стиль и содержать фирменные логотипы.
-             Не забывайте сделать паузу каждый раз, когда видите письмо, которое требует немедленно совершить какое-либо действие,
-              способное раскрыть конфиденциальную информацию или установить что-либо на устройство.</p>
-        <p>Обратите внимание на признаки мошеннического письма<br>
-        🔹У отправителя странное имя, длинный или запутанный адрес электронной почты<br>
-        🔹Тема письма привлекает внимание или вызывает тревогу<br>
-        🔹Письмо побуждает немедленно совершить какое-либо действие<br>
-        🔹Обещается большая скидка<br>
-        🔹Присутствует попытка получить ваши персональные данные, например, данные для входа в учетную запись на каком-нибудь сайте<br>
-        🔹Письмо побуждает перейти по ссылке, не объясняя, куда она ведет<br>
-        🔹К письму от неизвестного отправителя прикреплен файл</p>
-        <h3>📌Что делать, если получил мошенническое письмо?</h3>
-        <p>🔹Не нажимайте на вложения — они могут содержать вредоносные программы<br>
-        🔹Не переходите по ссылкам, особенно если в тексте предлагается перейти на сайт и указать какую-либо информацию<br>
-        🔹Не отвечайте на подозрительные письма, не звоните по номерам телефонов, указанным в письме<br>
-        🔹Присмотритесь к почтовому адресу отправителя и ко всем веб-адресам, имеющимся в письме. Нет ли в них отличий от официального названия компании или имени отправителя?<br>
-        🔹Если вы пользуетесь корпоративной почтой, обратитесь к ИТ-специалистам. Они могут попросить вас переслать письмо им (сначала стоит спросить их об этом)<br>
-        🔹Если письмо пришло на личную почту и в нем говорится, что с вами пытается срочно связаться определенная компания, вы можете позвонить в эту компанию
-         или связаться с ней иным способом, воспользовавшись контактной информацией, которую можно найти в интернете.<br>
-        🔹 Не пользуйтесь контактными данными, указанными в подозрительном письме<br>
-        🔹Вы можете сообщить о фишинге с помощью специальной кнопки, расположенной в интерфейсе популярных почтовых сервисов<br>
-        🔹Обратите внимание на отправителя письма, не открывайте прикрепленные файлы и не нажимайте на ссылки, убедитесь сначала,
-         что письмо пришло от того, кому вы доверяете и ждёте от него файл<br>
-        🔹Если письмо пришло из налоговой, банка и др., посмотрите внимательно адрес почты отправителя, а именно то, что стоит после знака "@".
-        Если там стоит, например, "nalog.ru", зайдите на этот сайт и убедитесь, что это действительно налоговая служба
-         (банк, бюджетная организация и т.п.), туда можно позвонить и убедиться, что вам действительно пришло от них письмо и только тогда можете его открывать<br>
-        🔹Если письмо пришло от непонятного адресата, то лучше всего сразу удалите это письмо</p>
+        <div class="header-text">
+          <h1 class="page-title">Безопасность электронной почты</h1>
+          <p class="page-subtitle">Как распознать и защититься от мошеннических писем</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="tel:1400" class="action-button primary">
+          <i class="fas fa-phone"></i>
+          <span>Экстренная помощь: 1400</span>
+        </a>
+      </div>
+    </div>
+  </header>
 
-        <p>В связи с набирающей обороты эпидемией вирусов-шифровальщиков, настоятельно просим вас быть внимательными при работе с электронной почтой, вирус маскируется под файлы, которые могут быть вам направлены совершенно легально, например файл резюме, счёта или презентации. Если запустить такой файл, то вирус заблокирует загрузку операционной системы,
-             зашифрует все ваши файлы на компьютере и в сети и восстановить их будет невозможно.
-            Поэтому главная защита: <strong>не скачивать</strong> и <strong>не открывать</strong> подозрительные файлы и архивы. Даже если они присланы от учреждений и ведомств. Особо важные файлы нужно регулярно архивировать и сохранять на других носителях.
-            Будьте бдительными и внимательными. Письмо может прийти даже от известного Вам адресата.
-            Его компьютер мог быть заражен и вирус мог отправить свою копию всем его контактам в адресной книге. Если вы все-таки открыли файл с вирусом, немедленно выключите компьютер и сообщите нам по телефону 1400 или +7 (495) 775-10-09</p>
+  <!-- Alert Section -->
+  <section class="alert-section">
+    <div class="alert-card danger">
+      <div class="alert-icon">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="alert-content">
+        <h2>Внимание! Угроза безопасности</h2>
+        <p>Количество мошеннических писем растет каждый день. Киберпреступники используют все более изощренные методы, чтобы обмануть пользователей и получить доступ к конфиденциальной информации.</p>
+        <div class="stats-row">
+          <div class="stat-item">
+            <span class="stat-number">90%</span>
+            <span class="stat-label">кибератак начинаются с email</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-number">1 из 3</span>
+            <span class="stat-label">пользователей подвергается фишингу</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        <div class="center">
-                <img src="\static\profile_pics\y.varslavan\post_images\Sberbank_fake.jpg" alt="fake">
+  <!-- Illustration Section -->
+  <section class="illustration-section">
+    <div class="illustration-card">
+      <div class="image-container">
+        <img src="/static/profile_pics/y.varslavan/post_images/Bug.png" alt="Иллюстрация кибербезопасности" class="main-illustration">
+        <div class="image-caption">Защитите себя от цифровых угроз</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Warning Signs Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon warning">
+          <i class="fas fa-eye"></i>
+        </div>
+        <div class="section-info">
+          <h2>Признаки подозрительного письма</h2>
+          <p>Научитесь распознавать основные маркеры мошеннических сообщений</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="warning-grid">
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-user-secret"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Подозрительный отправитель</h4>
+              <p>Странное имя, длинный или запутанный email-адрес, несоответствие домена организации</p>
+            </div>
+          </div>
+
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-exclamation"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Тревожная тема</h4>
+              <p>Призывы к срочным действиям, угрозы блокировки аккаунта, сообщения о выигрыше</p>
+            </div>
+          </div>
+
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Требование немедленных действий</h4>
+              <p>Письма, требующие действовать прямо сейчас под угрозой негативных последствий</p>
+            </div>
+          </div>
+
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-credit-card"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Запрос личных данных</h4>
+              <p>Просьбы указать пароли, номера карт, документов или другую конфиденциальную информацию</p>
+            </div>
+          </div>
+
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-link"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Подозрительные ссылки</h4>
+              <p>Ссылки без объяснения назначения или ведущие на сомнительные домены</p>
+            </div>
+          </div>
+
+          <div class="warning-item">
+            <div class="warning-icon">
+              <i class="fas fa-paperclip"></i>
+            </div>
+            <div class="warning-text">
+              <h4>Неожиданные вложения</h4>
+              <p>Файлы от неизвестных отправителей, особенно исполняемые файлы (.exe, .scr)</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Action Steps Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon success">
+          <i class="fas fa-shield-check"></i>
+        </div>
+        <div class="section-info">
+          <h2>Что делать при получении подозрительного письма</h2>
+          <p>Пошаговая инструкция для обеспечения безопасности</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="steps-container">
+
+          <div class="step-group">
+            <h3 class="step-group-title">
+              <i class="fas fa-ban"></i>
+              Что НЕ делать
+            </h3>
+
+            <div class="step-item danger">
+              <div class="step-number">!</div>
+              <div class="step-content">
+                <h4>Не открывайте вложения</h4>
+                <p>Файлы могут содержать вирусы или программы-шифровальщики</p>
+              </div>
+            </div>
+
+            <div class="step-item danger">
+              <div class="step-number">!</div>
+              <div class="step-content">
+                <h4>Не переходите по ссылкам</h4>
+                <p>Ссылки могут вести на поддельные сайты для кражи данных</p>
+              </div>
+            </div>
+
+            <div class="step-item danger">
+              <div class="step-number">!</div>
+              <div class="step-content">
+                <h4>Не отвечайте на письмо</h4>
+                <p>Ответ подтвердит, что ваш email активен</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-group">
+            <h3 class="step-group-title">
+              <i class="fas fa-check-circle"></i>
+              Правильные действия
+            </h3>
+
+            <div class="step-item success">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h4>Внимательно изучите отправителя</h4>
+                <p>Проверьте email-адрес и домен. Сравните с официальными контактами организации</p>
+              </div>
+            </div>
+
+            <div class="step-item success">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h4>Проверьте информацию независимо</h4>
+                <p>Свяжитесь с организацией через официальные каналы связи</p>
+              </div>
+            </div>
+
+            <div class="step-item success">
+              <div class="step-number">3</div>
+              <div class="step-content">
+                <h4>Сообщите в ИТ-службу</h4>
+                <p>Переошлите письмо специалистам по информационной безопасности</p>
+              </div>
+            </div>
+
+            <div class="step-item success">
+              <div class="step-number">4</div>
+              <div class="step-content">
+                <h4>Удалите подозрительное письмо</h4>
+                <p>После консультации с ИТ-службой безопасно удалите сообщение</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Ransomware Warning Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon danger">
+          <i class="fas fa-virus"></i>
+        </div>
+        <div class="section-info">
+          <h2>Опасность вирусов-шифровальщиков</h2>
+          <p>Особая угроза для ваших данных и компьютера</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="ransomware-warning">
+          <div class="warning-box">
+            <div class="warning-header">
+              <i class="fas fa-skull-crossbones"></i>
+              <h4>Критическая угроза</h4>
+            </div>
+            <p>Вирусы-шифровальщики могут:</p>
+            <ul class="threat-list">
+              <li>Заблокировать загрузку операционной системы</li>
+              <li>Зашифровать все файлы на компьютере и в сети</li>
+              <li>Сделать восстановление данных невозможным</li>
+              <li>Потребовать выкуп за расшифровку</li>
+            </ul>
+          </div>
+
+          <div class="protection-box">
+            <div class="protection-header">
+              <i class="fas fa-shield-alt"></i>
+              <h4>Защитите себя</h4>
+            </div>
+            <div class="protection-grid">
+              <div class="protection-item">
+                <i class="fas fa-download"></i>
+                <div>
+                  <h5>Не скачивайте подозрительные файлы</h5>
+                  <p>Особенно исполняемые файлы и архивы</p>
+                </div>
+              </div>
+              <div class="protection-item">
+                <i class="fas fa-hdd"></i>
+                <div>
+                  <h5>Регулярно создавайте резервные копии</h5>
+                  <p>Храните важные данные на отдельных носителях</p>
+                </div>
+              </div>
+              <div class="protection-item">
+                <i class="fas fa-update"></i>
+                <div>
+                  <h5>Обновляйте антивирус</h5>
+                  <p>Поддерживайте защиту в актуальном состоянии</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Example Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon info">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="section-info">
+          <h2>Пример мошеннического письма</h2>
+          <p>Так выглядят поддельные сообщения от банков</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="example-container">
+          <img src="/static/profile_pics/y.varslavan/post_images/Sberbank_fake.jpg" alt="Пример поддельного письма от банка" class="example-image">
+          <div class="example-caption">
+            <p><strong>Обратите внимание:</strong> даже качественно выполненные подделки содержат характерные признаки мошенничества. Всегда проверяйте адрес отправителя и не переходите по ссылкам из подозрительных писем.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emergency Section -->
+  <section class="emergency-section">
+    <div class="emergency-card">
+      <div class="emergency-header">
+        <i class="fas fa-ambulance"></i>
+        <h2>Экстренная помощь</h2>
+      </div>
+      <div class="emergency-content">
+        <div class="emergency-text">
+          <h3>Если вы случайно открыли подозрительный файл:</h3>
+          <ol class="emergency-steps">
+            <li><strong>Немедленно выключите компьютер</strong></li>
+            <li><strong>Отключите его от сети</strong></li>
+            <li><strong>Свяжитесь с ИТ-службой</strong></li>
+          </ol>
+        </div>
+        <div class="emergency-contacts">
+          <div class="contact-item">
+            <i class="fas fa-phone"></i>
+            <div>
+              <h4>Внутренний номер</h4>
+              <a href="tel:1400" class="contact-link">1400</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-phone-alt"></i>
+            <div>
+              <h4>Городской номер</h4>
+              <a href="tel:+74957751009" class="contact-link">+7 (495) 775-10-09</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-ticket-alt"></i>
+            <div>
+              <h4>Создать заявку</h4>
+              <a href="{{ url_for('main.new_issue') }}" class="contact-link">Система поддержки</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tips Section -->
+  <section class="tips-section">
+    <div class="tips-card">
+      <div class="tips-header">
+        <i class="fas fa-lightbulb"></i>
+        <h2>Полезные советы</h2>
+      </div>
+      <div class="tips-content">
+        <div class="tips-grid">
+          <div class="tip-item">
+            <i class="fas fa-eye"></i>
+            <div>
+              <h4>Будьте внимательны</h4>
+              <p>Даже письма от знакомых могут быть заражены</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-question-circle"></i>
+            <div>
+              <h4>Сомневаетесь — спросите</h4>
+              <p>Лучше уточнить у ИТ-службы, чем рисковать</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-graduation-cap"></i>
+            <div>
+              <h4>Изучайте угрозы</h4>
+              <p>Знание — лучшая защита от мошенников</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-users"></i>
+            <div>
+              <h4>Делитесь знаниями</h4>
+              <p>Предупредите коллег об угрозах</p>
+            </div>
+          </div>
+        </div>
         </div>
     </div>
-</body>
-{% endblock content %}
+  </section>
+</div>
+{% endblock main_page %}
 
 {% block styles %}
 <style>
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    line-height: 1.7;
-    background-color: #f0f2f5;
-    color: #333;
+  /* Import Modern Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+  /* CSS Custom Properties */
+  :root {
+    /* Primary Color Palette */
+    --primary-50: #fef2f2;
+    --primary-100: #fee2e2;
+    --primary-200: #fecaca;
+    --primary-300: #fca5a5;
+    --primary-400: #f87171;
+    --primary-500: #ef4444;
+    --primary-600: #dc2626;
+    --primary-700: #b91c1c;
+    --primary-800: #991b1b;
+    --primary-900: #7f1d1d;
+
+    /* Security Color Palette */
+    --danger: #dc2626;
+    --danger-bg: #fef2f2;
+    --danger-light: #fee2e2;
+
+    --warning: #f59e0b;
+    --warning-bg: #fffbeb;
+    --warning-light: #fef3c7;
+
+    --success: #10b981;
+    --success-bg: #ecfdf5;
+    --success-light: #d1fae5;
+
+    --info: #3b82f6;
+    --info-bg: #eff6ff;
+    --info-light: #dbeafe;
+
+    /* Surface Colors */
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
+    --surface-3: #e2e8f0;
+    --surface-4: #cbd5e1;
+    --surface-5: #94a3b8;
+
+    /* Text Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+    --text-on-danger: #ffffff;
+    --text-on-warning: #92400e;
+    --text-on-success: #064e3b;
+    --text-on-info: #1e3a8a;
+
+    /* Border & Divider */
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-dark: #94a3b8;
+    --divider: #e2e8f0;
+
+    /* Shadows */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --shadow-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    --shadow-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+    /* Spacing System */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-xxl: 3rem;      /* 48px */
+    --spacing-xxxl: 4rem;     /* 64px */
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Typography */
+    --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+    /* Container Widths */
+    --container-max-width: 1200px;
+    --container-padding: var(--spacing-lg);
+  }
+
+  /* Base Styles */
+  .security-email-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: var(--container-padding);
+    font-family: var(--font-family-primary);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    min-height: 100vh;
+  }
+
+  /* Page Header */
+  .page-header {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--danger), var(--warning));
+  }
+
+  .header-content {
+    padding: var(--spacing-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex: 1;
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, var(--danger), var(--primary-700));
+    color: var(--text-on-primary);
+    border-radius: var(--radius-xl);
+    font-size: 2rem;
+    box-shadow: var(--shadow-2);
+  }
+
+  .header-text {
+    flex: 1;
+  }
+
+  .page-title {
+    font-size: 2.25rem;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
     margin: 0;
+    font-weight: 400;
+}
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: all var(--transition-normal);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  .action-button.primary {
+    background: linear-gradient(135deg, var(--danger), var(--primary-700));
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-2);
+}
+
+  .action-button.primary:hover {
+    background: linear-gradient(135deg, var(--primary-700), var(--primary-800));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+    color: var(--text-on-primary);
+    text-decoration: none;
+  }
+
+  /* Alert Section */
+  .alert-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .alert-card {
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: center;
+    padding: var(--spacing-xl);
+  }
+
+  .alert-card.danger {
+    background: linear-gradient(135deg, var(--danger-bg), var(--danger-light));
+    border-left: 6px solid var(--danger);
+}
+
+  .alert-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: var(--danger);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-xl);
+    font-size: 1.5rem;
+    flex-shrink: 0;
+}
+
+  .alert-content h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--danger);
+  }
+
+  .alert-content p {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-lg);
+    line-height: 1.7;
+  }
+
+  .stats-row {
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: center;
+  }
+
+  .stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--danger);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-top: var(--spacing-xs);
+  }
+
+  /* Illustration Section */
+  .illustration-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .illustration-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    padding: var(--spacing-xl);
+    text-align: center;
+  }
+
+  .image-container {
+    display: inline-block;
+  }
+
+  .main-illustration {
+    max-width: 300px;
+    height: auto;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    transition: all var(--transition-normal);
+  }
+
+  .main-illustration:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-3);
+  }
+
+  .image-caption {
+    margin-top: var(--spacing-md);
+    font-size: 1rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Content Sections */
+  .content-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .section-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .section-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-2px);
+  }
+
+  .section-header {
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+}
+
+  .section-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-xl);
+    font-size: 1.25rem;
+    color: var(--text-on-primary);
+  }
+
+  .section-icon.warning {
+    background: linear-gradient(135deg, var(--warning), #d97706);
+  }
+
+  .section-icon.success {
+    background: linear-gradient(135deg, var(--success), #059669);
+  }
+
+  .section-icon.danger {
+    background: linear-gradient(135deg, var(--danger), var(--primary-700));
+  }
+
+  .section-icon.info {
+    background: linear-gradient(135deg, var(--info), #2563eb);
+  }
+
+  .section-info h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .section-info p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .section-content {
+    padding: var(--spacing-xl);
+  }
+
+  /* Warning Grid */
+  .warning-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .warning-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--warning);
+    transition: all var(--transition-normal);
+  }
+
+  .warning-item:hover {
+    background: var(--warning-bg);
+    transform: translateX(4px);
+  }
+
+  .warning-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: var(--warning);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .warning-text h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .warning-text p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Steps Container */
+  .steps-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+}
+
+  .step-group {
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+  }
+
+  .step-group-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-lg) 0;
+    color: var(--text-primary);
+  }
+
+  .step-item {
+    display: flex;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-lg);
+    padding: var(--spacing-md);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+  }
+
+  .step-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .step-item.danger {
+    background: var(--danger-bg);
+    border-left: 4px solid var(--danger);
+  }
+
+  .step-item.success {
+    background: var(--success-bg);
+    border-left: 4px solid var(--success);
+  }
+
+  .step-number {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
+    flex-shrink: 0;
+}
+
+  .step-item.danger .step-number {
+    background: var(--danger);
+    color: var(--text-on-primary);
+  }
+
+  .step-item.success .step-number {
+    background: var(--success);
+    color: var(--text-on-primary);
+  }
+
+  .step-content h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .step-content p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Ransomware Warning */
+  .ransomware-warning {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+  }
+
+  .warning-box {
+    background: var(--danger-bg);
+    border: 2px solid var(--danger);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+  }
+
+  .warning-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .warning-header i {
+    color: var(--danger);
+    font-size: 1.25rem;
+  }
+
+  .warning-header h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--danger);
+  }
+
+  .threat-list {
+    list-style: none;
     padding: 0;
-}
+    margin: var(--spacing-md) 0 0 0;
+  }
 
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 85vh;
-}
+  .threat-list li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+  }
 
-.container::-webkit-scrollbar {
-    width: 10px;
-}
+  .threat-list li::before {
+    content: '⚠️';
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
 
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
+  .protection-box {
+    background: var(--success-bg);
+    border: 2px solid var(--success);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+  }
 
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 2px solid #f1f1f1;
-}
+  .protection-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+  }
 
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
-}
+  .protection-header i {
+    color: var(--success);
+    font-size: 1.25rem;
+  }
 
-h1 {
-    font-size: 2.2em; /* Немного уменьшил для баланса с иконкой */
-    font-weight: 700;
+  .protection-header h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--success);
+  }
+
+  .protection-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .protection-item {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: flex-start;
+  }
+
+  .protection-item i {
+    color: var(--success);
+    font-size: 1.125rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .protection-item h5 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .protection-item p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Example Section */
+  .example-container {
     text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
 }
 
-h3 {
-    font-size: 1.8em;
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 40px;
-    margin-bottom: 20px;
-    border-bottom: 2px solid #e0e0e0;
-    padding-bottom: 10px;
-}
-
-p {
-    font-size: 1.125em; /* 18px */
-    margin-bottom: 20px;
-    color: #555;
-    text-align: justify;
-}
-
-p strong { /* Стиль для выделенного текста внутри параграфов */
-    color: #d9534f; /* Красный цвет для акцента на важном */
-    font-weight: 700;
-}
-
-.image-wrapper { /* Используется для верхнего изображения "Bug" */
-    text-align: center;
-    margin-bottom: 25px;
-}
-
-.image-wrapper img,
-.center img { /* Общие стили для изображений в этих контейнерах */
+  .example-image {
     max-width: 100%;
     height: auto;
-    border-radius: 6px; /* Слегка скругленные углы */
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1); /* Легкая тень */
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    border: 2px solid var(--border-light);
+    transition: all var(--transition-normal);
 }
 
-.center { /* Для нижнего изображения "fake" */
-    text-align: center;
-    margin-top: 25px; /* Добавил отступ сверху */
-    margin-bottom: 20px;
+  .example-image:hover {
+    box-shadow: var(--shadow-3);
+    transform: scale(1.02);
+  }
+
+  .example-caption {
+    margin-top: var(--spacing-lg);
+    padding: var(--spacing-md);
+    background: var(--info-bg);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--info);
+  }
+
+  .example-caption p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Emergency Section */
+  .emergency-section {
+    margin-bottom: var(--spacing-xl);
 }
 
-/* Стиль для маркеров 🔹 */
-p {
-    /* Если маркеры остаются в тексте, можно добавить отступ слева для строк с ними,
-       но лучше бы их обернуть в <ul><li> */
-    /* Например, если бы это был список: */
-    /* list-style-type: none; padding-left: 0; */
-}
+  .emergency-card {
+    background: linear-gradient(135deg, var(--danger-bg), var(--danger-light));
+    border: 2px solid var(--danger);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+    overflow: hidden;
+  }
 
-/* Если бы маркеры были частью списка <li> */
-/*
-ul.custom-list {
+  .emergency-header {
+    background: var(--danger);
+    color: var(--text-on-primary);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .emergency-header i {
+    font-size: 1.5rem;
+  }
+
+  .emergency-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .emergency-content {
+    padding: var(--spacing-xl);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+    align-items: start;
+  }
+
+  .emergency-text h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--danger);
+  }
+
+  .emergency-steps {
     list-style: none;
-    padding-left: 0;
-}
-ul.custom-list li {
-    padding-left: 1.5em;
-    text-indent: -1.5em;
-    margin-bottom: 10px;
-}
-ul.custom-list li::before {
-    content: "🔹";
-    color: #3498db; // Цвет иконки
-    margin-right: 0.5em;
-    font-size: 1.2em; // Размер иконки
-}
-*/
+    padding: 0;
+    margin: 0;
+    counter-reset: emergency-counter;
+  }
 
+  .emergency-steps li {
+    counter-increment: emergency-counter;
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+
+  .emergency-steps li::before {
+    content: counter(emergency-counter);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    background: var(--danger);
+    color: var(--text-on-primary);
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.75rem;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .emergency-contacts {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .contact-item {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+    padding: var(--spacing-md);
+    background: var(--surface-0);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--danger);
+  }
+
+  .contact-item i {
+    color: var(--danger);
+    font-size: 1.125rem;
+  }
+
+  .contact-item h4 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .contact-link {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--danger);
+    text-decoration: none;
+    transition: all var(--transition-fast);
+  }
+
+  .contact-link:hover {
+    color: var(--primary-700);
+    text-decoration: underline;
+  }
+
+  /* Tips Section */
+  .tips-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+  .tips-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .tips-header {
+    background: linear-gradient(135deg, var(--info-bg), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .tips-header i {
+    color: var(--info);
+    font-size: 1.5rem;
+  }
+
+  .tips-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .tips-content {
+    padding: var(--spacing-xl);
+  }
+
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .tip-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--info);
+    transition: all var(--transition-normal);
+  }
+
+  .tip-item:hover {
+    background: var(--info-bg);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .tip-item i {
+    color: var(--info);
+    font-size: 1.25rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .tip-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .tip-item p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .security-email-container {
+      padding: var(--spacing-md);
+    }
+
+    .header-content {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-xl);
+    }
+
+    .alert-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .stats-row {
+      justify-content: center;
+    }
+
+    .warning-grid,
+    .steps-container,
+    .ransomware-warning,
+    .emergency-content,
+    .tips-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 1.75rem;
+    }
+
+    .header-actions {
+      width: 100%;
+    }
+
+    .action-button {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .section-header {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .emergency-content {
+      gap: var(--spacing-lg);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      font-size: 1.5rem;
+    }
+
+    .section-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 1rem;
+    }
+
+    .main-illustration {
+      max-width: 250px;
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .header-actions,
+    .action-button {
+      display: none !important;
+    }
+
+    .security-email-container {
+      background: white !important;
+    }
+
+    .page-header,
+    .section-card,
+    .emergency-card,
+    .tips-card {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+    }
+  }
+
+  /* Accessibility Improvements */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus States */
+  .action-button:focus,
+  .contact-link:focus {
+    outline: 2px solid var(--info);
+    outline-offset: 2px;
+  }
+
+  /* High Contrast Mode */
+  @media (prefers-contrast: high) {
+    :root {
+      --border-light: #000000;
+      --border-medium: #000000;
+      --text-secondary: #000000;
+    }
+  }
 </style>
-{% endblock styles %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Анимация появления элементов при скролле
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  // Подсчет статистики
+  function animateCounter(element, target) {
+    let current = 0;
+    const increment = target / 30;
+    const timer = setInterval(() => {
+      current += increment;
+      if (current >= target) {
+        current = target;
+        clearInterval(timer);
+      }
+      element.textContent = Math.floor(current) + (target === 90 ? '%' : '');
+    }, 50);
+  }
+
+  // Инициализация анимаций
+  document.addEventListener('DOMContentLoaded', function() {
+    // Добавляем анимацию для карточек
+    document.querySelectorAll('.section-card, .alert-card, .emergency-card, .tips-card, .illustration-card').forEach(card => {
+      card.style.opacity = '0';
+      card.style.transform = 'translateY(20px)';
+      card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+      observer.observe(card);
+    });
+
+    // Анимация статистики
+    const statNumbers = document.querySelectorAll('.stat-number');
+    statNumbers.forEach((stat, index) => {
+      const target = index === 0 ? 90 : 33; // 90% и 1 из 3
+      setTimeout(() => {
+        if (index === 0) {
+          animateCounter(stat, target);
+        } else {
+          stat.textContent = '1 из 3';
+        }
+      }, 1000);
+    });
+
+    // Эффект печатания для заголовков
+    function typeWriter(element, text, speed = 50) {
+      let i = 0;
+      element.innerHTML = '';
+      function type() {
+        if (i < text.length) {
+          element.innerHTML += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        }
+      }
+      type();
+    }
+
+    // Применяем эффект печатания к главному заголовку
+    const mainTitle = document.querySelector('.page-title');
+    if (mainTitle) {
+      const titleText = mainTitle.textContent;
+      setTimeout(() => {
+        typeWriter(mainTitle, titleText, 100);
+      }, 500);
+    }
+  });
+
+  // Hover эффекты для предупреждений
+  document.querySelectorAll('.warning-item').forEach(item => {
+    item.addEventListener('mouseenter', function() {
+      this.style.transform = 'translateX(8px) scale(1.02)';
+    });
+
+    item.addEventListener('mouseleave', function() {
+      this.style.transform = 'translateX(4px) scale(1)';
+    });
+  });
+
+  // Показ важности действий через изменение цвета
+  document.querySelectorAll('.step-item.danger').forEach(item => {
+    item.addEventListener('click', function() {
+      this.style.backgroundColor = 'var(--danger-light)';
+      setTimeout(() => {
+        this.style.backgroundColor = 'var(--danger-bg)';
+      }, 300);
+    });
+  });
+</script>
+{% endblock %}

@@ -1,101 +1,791 @@
 {% extends "layout.html" %}
 {% block content %}
-<style>
-.page-container {
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-    padding: 0;
-}
-
-.page-title {
-    text-align: center;
-    padding: 0;
-    margin-bottom: 0;
-}
-
-.content-container {
-    max-width: 1400px;
-    margin: 0 auto;
-    width: 100%;
-    padding-bottom: 40px;
-}
-
-.charts-container {
-    background-color: white;
-    border-radius: 8px;
-    padding: 20px;
-    margin: 0 auto;
-    width: 100%;
-    margin-bottom: 40px;
-}
-
-.card {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    margin: 10px;
-    height: 100%;
-}
-
-.card-body {
-    padding: 20px;
-    height: 600px;
-}
-
-.row {
-    margin: 0;
-    display: flex;
-    justify-content: space-between;
-}
-
-.col-md-6 {
-    flex: 0 0 48%;
-    max-width: 48%;
-    margin: 10px 0;
-}
-
-@media (max-width: 768px) {
-    .card-body {
-        height: 400px;
-    }
-
-    .col-md-6 {
-        flex: 0 0 100%;
-        max-width: 100%;
-    }
-}
-</style>
-
-<div class="page-container">
-    <div class="page-title">
-        <h2>Статистика заявок</h2>
+<div class="reports-page-wrapper">
+    <!-- Background Elements -->
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
     </div>
 
-    <div class="content-container">
-        <div class="charts-container">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
+    <div class="container reports-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-chart-line"></i>
+                        <div class="icon-glow"></div>
+                    </div>
+                    <div class="title-content">
+                        <h1 class="page-title">Статистика заявок</h1>
+                        <p class="page-subtitle">Аналитика и отчеты по системе HelpDesk</p>
+                    </div>
+                    <div class="stats-summary">
+                        <div class="summary-item">
+                            <div class="summary-icon">
+                                <i class="fas fa-ticket-alt"></i>
+                            </div>
+                            <div class="summary-content">
+                                <span class="summary-number">{{ data|sum }}</span>
+                                <span class="summary-label">Всего заявок</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="charts-grid">
+                <!-- Pie Chart Card -->
+                <div class="chart-card pie-chart-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="title-icon">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div class="title-text">
+                                <h3>Распределение заявок</h3>
+                                <p>По статусам в процентном соотношении</p>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" title="Обновить данные">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="action-btn" title="Экспорт">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
                             <canvas id="pieChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <div class="col-md-6">
-                    <div class="card">
-                        <div class="card-body">
+                <!-- Bar Chart Card -->
+                <div class="chart-card bar-chart-card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <div class="title-icon">
+                                <i class="fas fa-chart-bar"></i>
+                            </div>
+                            <div class="title-text">
+                                <h3>Количество заявок</h3>
+                                <p>По статусам в абсолютных значениях</p>
+                            </div>
+                        </div>
+                        <div class="card-actions">
+                            <button class="action-btn" title="Обновить данные">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button class="action-btn" title="Экспорт">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="chart-container">
                             <canvas id="barChart"></canvas>
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-cards">
+                <div class="stat-card active-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-play-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="activeCount">-</span>
+                        <span class="stat-label">Активные заявки</span>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card completed-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="completedCount">-</span>
+                        <span class="stat-label">Завершенные</span>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card pending-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="pendingCount">-</span>
+                        <span class="stat-label">Ожидающие</span>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-minus"></i>
+                    </div>
+                </div>
+
+                <div class="stat-card rejected-card">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="stat-number" id="rejectedCount">-</span>
+                        <span class="stat-label">Отклоненные</span>
+                    </div>
+                    <div class="stat-trend">
+                        <i class="fas fa-arrow-down"></i>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
+{% endblock %}
 
-<!-- JavaScript код остается без изменений -->
+{% block styles %}
+<style>
+    /* Import Modern Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+    /* CSS Custom Properties */
+    .reports-page-wrapper {
+        /* TEZ TOUR Brand Colors */
+        --primary-50: #e0f7fa;
+        --primary-100: #b2ebf2;
+        --primary-200: #80deea;
+        --primary-300: #4dd0e1;
+        --primary-400: #26c6da;
+        --primary-500: #00798C;
+        --primary-600: #00696a;
+        --primary-700: #005f73;
+        --primary-800: #003440;
+        --primary-900: #001f26;
+
+        /* Status Colors */
+        --success: #10b981;
+        --success-bg: #ecfdf5;
+        --error: #ef4444;
+        --error-bg: #fef2f2;
+        --warning: #f59e0b;
+        --warning-bg: #fef3c7;
+        --info: #3b82f6;
+        --info-bg: #eff6ff;
+        --purple: #8b5cf6;
+        --purple-bg: #f3e8ff;
+
+        /* Surface Colors */
+        --surface-0: #ffffff;
+        --surface-1: #f8fafc;
+        --surface-2: #f1f5f9;
+        --surface-3: #e2e8f0;
+        --surface-glass: rgba(255, 255, 255, 0.95);
+        --surface-card: rgba(255, 255, 255, 0.9);
+
+        /* Text Colors */
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --text-disabled: #94a3b8;
+        --text-on-primary: #ffffff;
+
+        /* Border & Effects */
+        --border-light: #e2e8f0;
+        --border-medium: #cbd5e1;
+        --border-focus: var(--primary-500);
+
+        /* Shadows */
+        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
+        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
+
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-xxl: 3rem;
+
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-xxl: 24px;
+
+        /* Transitions */
+        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Typography */
+        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
+
+        /* Base Styles */
+        font-family: var(--font-family-primary);
+        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+        min-height: 100vh;
+        padding: var(--spacing-xl) 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Background Shapes */
+    .reports-page-wrapper .background-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .reports-page-wrapper .shape {
+        position: absolute;
+        background: rgba(0, 121, 140, 0.05);
+        border-radius: 50%;
+        animation: float 15s ease-in-out infinite;
+    }
+
+    .reports-page-wrapper .shape-1 {
+        width: 400px;
+        height: 400px;
+        top: 10%;
+        left: -10%;
+        animation-delay: 0s;
+    }
+
+    .reports-page-wrapper .shape-2 {
+        width: 300px;
+        height: 300px;
+        top: 60%;
+        right: -5%;
+        animation-delay: 5s;
+    }
+
+    .reports-page-wrapper .shape-3 {
+        width: 250px;
+        height: 250px;
+        bottom: 10%;
+        left: 20%;
+        animation-delay: 10s;
+    }
+
+    .reports-page-wrapper .shape-4 {
+        width: 200px;
+        height: 200px;
+        top: 30%;
+        right: 15%;
+        animation-delay: 15s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(5deg); }
+        66% { transform: translateY(15px) rotate(-5deg); }
+    }
+
+    /* Container */
+    .reports-page-wrapper .reports-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        padding: 0 var(--spacing-lg);
+    }
+
+    /* Page Header */
+    .reports-page-wrapper .page-header {
+        background: var(--surface-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xxl);
+        box-shadow: var(--shadow-header);
+        padding: var(--spacing-xl) var(--spacing-xxl);
+        margin-bottom: var(--spacing-xxl);
+        animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .reports-page-wrapper .header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xl);
+        flex-wrap: wrap;
+    }
+
+    .reports-page-wrapper .title-section {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        flex: 1;
+    }
+
+    .reports-page-wrapper .icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border-radius: var(--radius-xl);
+        color: var(--text-on-primary);
+        font-size: 1.75rem;
+        box-shadow: var(--shadow-2);
+        z-index: 2;
+    }
+
+    .reports-page-wrapper .icon-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(circle, rgba(245, 158, 11, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse 3s ease-in-out infinite;
+        z-index: 1;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+
+    .reports-page-wrapper .title-content {
+        flex: 1;
+    }
+
+    .reports-page-wrapper .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+    }
+
+    .reports-page-wrapper .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .reports-page-wrapper .stats-summary {
+        display: flex;
+        align-items: center;
+    }
+
+    .reports-page-wrapper .summary-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border-radius: var(--radius-xl);
+        color: var(--text-on-primary);
+        box-shadow: var(--shadow-2);
+    }
+
+    .reports-page-wrapper .summary-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-lg);
+        font-size: 1.5rem;
+    }
+
+    .reports-page-wrapper .summary-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .reports-page-wrapper .summary-number {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .reports-page-wrapper .summary-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* Charts Section */
+    .reports-page-wrapper .charts-section {
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .reports-page-wrapper .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+        margin-bottom: var(--spacing-xxl);
+    }
+
+    /* Chart Cards */
+    .reports-page-wrapper .chart-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        transition: all var(--transition-normal);
+        animation: slideInCard 0.6s ease-out;
+    }
+
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .reports-page-wrapper .chart-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-3);
+    }
+
+    .reports-page-wrapper .pie-chart-card {
+        animation-delay: 0.1s;
+    }
+
+    .reports-page-wrapper .bar-chart-card {
+        animation-delay: 0.2s;
+    }
+
+    .reports-page-wrapper .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .reports-page-wrapper .card-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .reports-page-wrapper .title-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border-radius: var(--radius-lg);
+        color: var(--text-on-primary);
+        font-size: 1.25rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .reports-page-wrapper .title-text h3 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.3;
+    }
+
+    .reports-page-wrapper .title-text p {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    .reports-page-wrapper .card-actions {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .reports-page-wrapper .action-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: none;
+        border: none;
+        border-radius: var(--radius-lg);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+
+    .reports-page-wrapper .action-btn:hover {
+        background: var(--primary-50);
+        color: var(--primary-500);
+        transform: scale(1.1);
+    }
+
+    .reports-page-wrapper .card-body {
+        padding: var(--spacing-xl);
+        height: 500px;
+    }
+
+    .reports-page-wrapper .chart-container {
+        width: 100%;
+        height: 100%;
+        position: relative;
+    }
+
+    /* Statistics Cards */
+    .reports-page-wrapper .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .reports-page-wrapper .stat-card {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        transition: all var(--transition-normal);
+        animation: slideInStat 0.6s ease-out;
+        position: relative;
+        overflow: hidden;
+    }
+
+    @keyframes slideInStat {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .reports-page-wrapper .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }
+
+    .reports-page-wrapper .active-card {
+        animation-delay: 0.3s;
+        border-left: 4px solid var(--info);
+    }
+
+    .reports-page-wrapper .completed-card {
+        animation-delay: 0.4s;
+        border-left: 4px solid var(--success);
+    }
+
+    .reports-page-wrapper .pending-card {
+        animation-delay: 0.5s;
+        border-left: 4px solid var(--warning);
+    }
+
+    .reports-page-wrapper .rejected-card {
+        animation-delay: 0.6s;
+        border-left: 4px solid var(--error);
+    }
+
+    .reports-page-wrapper .stat-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: var(--radius-lg);
+        font-size: 1.5rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .reports-page-wrapper .active-card .stat-icon {
+        background: linear-gradient(135deg, var(--info-bg), var(--info));
+        color: var(--info);
+    }
+
+    .reports-page-wrapper .completed-card .stat-icon {
+        background: linear-gradient(135deg, var(--success-bg), var(--success));
+        color: var(--success);
+    }
+
+    .reports-page-wrapper .pending-card .stat-icon {
+        background: linear-gradient(135deg, var(--warning-bg), var(--warning));
+        color: var(--warning);
+    }
+
+    .reports-page-wrapper .rejected-card .stat-icon {
+        background: linear-gradient(135deg, var(--error-bg), var(--error));
+        color: var(--error);
+    }
+
+    .reports-page-wrapper .stat-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .reports-page-wrapper .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        line-height: 1;
+    }
+
+    .reports-page-wrapper .stat-label {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .reports-page-wrapper .stat-trend {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--surface-1);
+        border-radius: 50%;
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .reports-page-wrapper .charts-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .reports-page-wrapper .reports-container {
+            padding: 0 var(--spacing-md);
+        }
+
+        .reports-page-wrapper .page-header {
+            padding: var(--spacing-lg) var(--spacing-xl);
+        }
+
+        .reports-page-wrapper .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-lg);
+        }
+
+        .reports-page-wrapper .title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .reports-page-wrapper .page-title {
+            font-size: 2rem;
+        }
+
+        .reports-page-wrapper .card-body {
+            height: 400px;
+            padding: var(--spacing-lg);
+        }
+
+        .reports-page-wrapper .stats-cards {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .reports-page-wrapper .page-title {
+            font-size: 1.75rem;
+        }
+
+        .reports-page-wrapper .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .reports-page-wrapper .card-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+        }
+
+        .reports-page-wrapper .card-body {
+            height: 350px;
+            padding: var(--spacing-md);
+        }
+
+        .reports-page-wrapper .stat-card {
+            padding: var(--spacing-md) var(--spacing-lg);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -130,7 +820,10 @@ document.addEventListener('DOMContentLoaded', function() {
             labels: labels,
             datasets: [{
                 data: data,
-                backgroundColor: colorArray
+                backgroundColor: colorArray,
+                borderWidth: 2,
+                borderColor: '#ffffff',
+                hoverBorderWidth: 3
             }]
         },
         options: {
@@ -142,19 +835,40 @@ document.addEventListener('DOMContentLoaded', function() {
                     labels: {
                         padding: 20,
                         font: {
-                            size: 12
-                        }
+                            size: 12,
+                            family: 'Inter'
+                        },
+                        usePointStyle: true,
+                        pointStyle: 'circle'
                     }
                 },
-                title: {
-                    display: true,
-                    text: 'Распределение заявок по статусам'
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    cornerRadius: 8,
+                    displayColors: true,
+                    callbacks: {
+                        label: function(context) {
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = ((context.parsed / total) * 100).toFixed(1);
+                            return `${context.label}: ${context.parsed} (${percentage}%)`;
+                        }
+                    }
                 }
+            },
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1500,
+                easing: 'easeOutQuart'
             }
         }
     });
 
-    // Столбчаая диаграмма
+    // Столбчатая диаграмма
     new Chart(document.getElementById('barChart'), {
         type: 'bar',
         data: {
@@ -162,7 +876,11 @@ document.addEventListener('DOMContentLoaded', function() {
             datasets: [{
                 label: 'Количество заявок',
                 data: data,
-                backgroundColor: colorArray
+                backgroundColor: colorArray.map(color => color + '80'), // Добавляем прозрачность
+                borderColor: colorArray,
+                borderWidth: 2,
+                borderRadius: 8,
+                borderSkipped: false
             }]
         },
         options: {
@@ -172,34 +890,113 @@ document.addEventListener('DOMContentLoaded', function() {
                 legend: {
                     display: false
                 },
-                title: {
-                    display: true,
-                    text: 'Количество заявок по статусам'
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    titleColor: '#ffffff',
+                    bodyColor: '#ffffff',
+                    borderColor: '#ffffff',
+                    borderWidth: 1,
+                    cornerRadius: 8
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
                     ticks: {
-                        // Используем целые числа
                         stepSize: 5,
-                        precision: 0
+                        precision: 0,
+                        font: {
+                            family: 'Inter'
+                        }
                     },
-                    // Динамически устанавливаем максимальное значение
-                    suggestedMax: function(context) {
-                        const max = Math.max(...context.chart.data.datasets[0].data);
-                        return max + Math.ceil(max * 0.1); // Добавляем 10% сверху
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.1)',
+                        drawBorder: false
                     }
                 },
                 x: {
                     ticks: {
                         maxRotation: 45,
-                        minRotation: 45
+                        minRotation: 45,
+                        font: {
+                            family: 'Inter'
+                        }
+                    },
+                    grid: {
+                        display: false
                     }
                 }
+            },
+            animation: {
+                duration: 1500,
+                easing: 'easeOutQuart'
             }
         }
     });
+
+    // Обновляем статистические карточки
+    updateStatCards(labels, data);
+
+    // Добавляем обработчики для кнопок действий
+    document.querySelectorAll('.action-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Добавляем эффект нажатия
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = 'scale(1.1)';
+            }, 150);
+        });
+    });
+
+    // Анимация появления карточек статистики
+    const statCards = document.querySelectorAll('.stat-card');
+    statCards.forEach((card, index) => {
+        card.style.animationDelay = `${0.3 + index * 0.1}s`;
+    });
 });
+
+function updateStatCards(labels, data) {
+    // Подсчитываем статистику
+    let activeCount = 0;
+    let completedCount = 0;
+    let pendingCount = 0;
+    let rejectedCount = 0;
+
+    labels.forEach((label, index) => {
+        const count = data[index];
+
+        if (['В работе', 'Новая', 'Открыта'].includes(label)) {
+            activeCount += count;
+        } else if (['Закрыта', 'Выполнена', 'Протестирована'].includes(label)) {
+            completedCount += count;
+        } else if (['Запрошено уточнение', 'На согласовании', 'На тестировании', 'Приостановлена', 'Заморожена', 'Бэклог'].includes(label)) {
+            pendingCount += count;
+        } else if (['Отклонена'].includes(label)) {
+            rejectedCount += count;
+        }
+    });
+
+    // Обновляем значения с анимацией
+    animateNumber('activeCount', activeCount);
+    animateNumber('completedCount', completedCount);
+    animateNumber('pendingCount', pendingCount);
+    animateNumber('rejectedCount', rejectedCount);
+}
+
+function animateNumber(elementId, targetValue) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+
+    let currentValue = 0;
+    const increment = targetValue / 50; // 50 шагов анимации
+    const timer = setInterval(() => {
+        currentValue += increment;
+        if (currentValue >= targetValue) {
+            currentValue = targetValue;
+            clearInterval(timer);
+        }
+        element.textContent = Math.floor(currentValue);
+    }, 30);
+}
 </script>
 {% endblock %}

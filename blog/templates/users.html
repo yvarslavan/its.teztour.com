@@ -1,372 +1,1077 @@
 {% extends 'layout.html' %}
 {% block content %}
 
-<div class="users-page-container container mt-4 mb-5">
-    <div class="title-search-panel row align-items-center py-3 px-3 sticky-top">
-        <div class="col-md-8 col-lg-9 mb-3 mb-md-0">
-            <div class="d-flex align-items-center">
-                <h1 class="page-title mb-0 me-3"><i class="fas fa-users me-2"></i>Пользователи</h1>
-                <span class="user-count-badge">{{ users|length }}</span>
-            </div>
-        </div>
-        <div class="col-md-4 col-lg-3">
-            <div class="search-input-wrapper">
-                <input type="text" id="search-input" class="form-control search-input-field" placeholder="Найти (имя, ФИО, email)...">
-                <span id="clear-search-btn" class="clear-search-icon">&times;</span>
-            </div>
-        </div>
+<div class="users-page-wrapper">
+    <!-- Background Elements -->
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
     </div>
 
-    <div class="row align-items-stretch" id="user-cards-container">
-        {% if users %}
-            {% for user in users %}
-            <div class="col-md-6 col-lg-4 mb-4 user-card-wrapper">
-                <div class="card user-card shadow-sm h-100">
-                    <div class="card-body d-flex flex-column">
-                        <div class="d-flex align-items-center mb-3">
-                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="me-3 flex-shrink-0">
-                                <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-                                     alt="{{ user.username }}"
-                                     class="user-avatar rounded-circle"
-                                     title="Пользователь: {{ user.username }}
-Email: {{ user.email }}
-Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M:%S') if user.last_seen else 'N/A' }}">
-                            </a>
-                            <div class="flex-grow-1">
-                                <h5 class="card-title mb-0">
-                                    <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="text-decoration-none stretched-link user-name-link">{{ user.username }}</a>
-                                    {% if user.online %}
-                                        <span class="online-indicator" title="Online"></span>
-                                    {% endif %}
-                                </h5>
-                                <a href="mailto:{{ user.email }}" class="card-text text-muted small user-email" title="Написать письмо: {{ user.email }}">{{ user.email }}</a>
-                            </div>
-                        </div>
-
-                        <div class="user-details flex-grow-1">
-                            {% if user.full_name %}
-                                <p class="card-text mb-1 detail-item" data-search-fio="{{ user.full_name }}"><small><strong class="detail-label">ФИО:</strong> {{ user.full_name }}</small></p>
-                            {% endif %}
-
-                            <div class="job-details-group">
-                                {% if user.position %}
-                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Должность:</strong> <span title="Должность: {{ user.position }}">{{ user.position }}</span></small></p>
-                                {% endif %}
-                                {% if user.department %}
-                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Отдел:</strong> {{ user.department }}</small></p>
-                                {% endif %}
-                                 {% if user.office %}
-                                    <p class="card-text mb-1 detail-item"><small><strong class="detail-label">Офис:</strong> {{ user.office }}</small></p>
-                                {% endif %}
-                            </div>
-
-                            {% if user.phone %}
-                                <p class="card-text mb-1 detail-item mt-2"><small><strong class="detail-label">Тел.вн:</strong> {{ user.phone }}</small></p>
-                            {% endif %}
+    <div class="container users-container">
+        <!-- Header Section -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-users"></i>
+                        <div class="icon-glow"></div>
+                    </div>
+                    <div class="title-content">
+                        <h1 class="page-title">Пользователи системы</h1>
+                        <p class="page-subtitle">Управление учетными записями HelpDesk</p>
+                    </div>
+                    <div class="user-count-container">
+                        <div class="count-badge">
+                            <span class="count-number">{{ users|length }}</span>
+                            <span class="count-label">пользователей</span>
                         </div>
                     </div>
-                    <div class="card-footer bg-transparent border-top-0 pt-2 pb-3">
-                        <div class="d-grid">
-                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="btn btn-sm btn-primary view-profile-btn" title="Просмотр профиля">
-                                <i class="fas fa-eye me-1"></i> Просмотр
-                            </a>
+                </div>
+
+                <!-- Search Section -->
+                <div class="search-section">
+                    <div class="search-container">
+                        <div class="search-input-group">
+                            <i class="fas fa-search search-icon"></i>
+                            <input type="text"
+                                   id="search-input"
+                                   class="search-input"
+                                   placeholder="Поиск по имени, email, ФИО...">
+                            <button type="button" id="clear-search-btn" class="clear-search-btn">
+                                <i class="fas fa-times"></i>
+                            </button>
+                            <div class="search-focus-line"></div>
                         </div>
                     </div>
                 </div>
             </div>
-            {% endfor %}
-        {% else %}
-        <div class="col-12">
-            <p class="text-center text-muted mt-4">Пользователи не найдены.</p>
         </div>
-        {% endif %}
-    </div>
-    <div id="no-results-message-placeholder" class="text-center text-muted mt-4" style="display: none;">
-        По вашему запросу ничего не найдено.
+
+        <!-- Users Grid -->
+        <div class="users-grid" id="user-cards-container">
+            {% if users %}
+                {% for user in users %}
+                <div class="user-card-wrapper">
+                    <div class="user-card">
+                        <!-- Online Status Indicator -->
+                        {% if user.online %}
+                            <div class="online-status">
+                                <div class="online-dot"></div>
+                                <span class="online-text">Online</span>
+                            </div>
+                        {% endif %}
+
+                        <!-- User Avatar -->
+                        <div class="user-avatar-section">
+                            <div class="avatar-container">
+                                <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                                     alt="{{ user.username }}"
+                                     class="user-avatar"
+                                     loading="lazy">
+                                <div class="avatar-overlay">
+                                    <i class="fas fa-eye"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Info -->
+                        <div class="user-info">
+                            <div class="user-name-section">
+                                <h3 class="user-name">{{ user.username }}</h3>
+                                <a href="mailto:{{ user.email }}" class="user-email" title="Написать письмо">
+                                    <i class="fas fa-envelope"></i>
+                                    {{ user.email }}
+                                </a>
+                            </div>
+
+                            <div class="user-details">
+                                {% if user.full_name %}
+                                    <div class="detail-item" data-search-fio="{{ user.full_name }}">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">ФИО</span>
+                                            <span class="detail-value">{{ user.full_name }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if user.position %}
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-briefcase"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">Должность</span>
+                                            <span class="detail-value">{{ user.position }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if user.department %}
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">Отдел</span>
+                                            <span class="detail-value">{{ user.department }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if user.office %}
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-map-marker-alt"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">Офис</span>
+                                            <span class="detail-value">{{ user.office }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if user.phone %}
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-phone"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">Телефон</span>
+                                            <span class="detail-value">{{ user.phone }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+                                {% if user.last_seen %}
+                                    <div class="detail-item">
+                                        <div class="detail-icon">
+                                            <i class="fas fa-clock"></i>
+                                        </div>
+                                        <div class="detail-content">
+                                            <span class="detail-label">Последний вход</span>
+                                            <span class="detail-value">{{ user.last_seen.strftime('%d.%m.%Y %H:%M') }}</span>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <!-- Action Button -->
+                        <div class="user-actions">
+                            <a href="{{ url_for('users.user_profile', user_id=user.id) }}"
+                               class="profile-btn">
+                                <span class="btn-content">
+                                    <i class="fas fa-eye"></i>
+                                    <span>Просмотр профиля</span>
+                                </span>
+                                <div class="btn-ripple"></div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="no-users-message">
+                    <div class="no-users-icon">
+                        <i class="fas fa-users-slash"></i>
+                    </div>
+                    <h3>Пользователи не найдены</h3>
+                    <p>В системе пока нет зарегистрированных пользователей</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <!-- No Results Message -->
+        <div id="no-results-message" class="no-results-message" style="display: none;">
+            <div class="no-results-icon">
+                <i class="fas fa-search"></i>
+            </div>
+            <h3>Ничего не найдено</h3>
+            <p>По вашему запросу пользователи не найдены</p>
+            <button type="button" class="clear-filters-btn" onclick="clearSearch()">
+                <i class="fas fa-undo"></i>
+                Сбросить фильтры
+            </button>
+        </div>
     </div>
 </div>
 
+{% endblock %}
+
+{% block styles %}
 <style>
-body {
-    font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background-color: #f8f9fa; /* Consistent page background */
-    /* Add padding top to body to prevent content from being hidden by fixed navbar in layout.html */
-    /* padding-top: 70px; /* Adjust this value to match your navbar height */
-}
+    /* Import Modern Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
-#user-cards-container {
-    padding-top: 5rem; /* Added back to prevent title panel overlapping cards. Adjust as needed. */
-}
+    /* CSS Custom Properties - только для страницы users */
+    .users-page-wrapper {
+        /* TEZ TOUR Brand Colors */
+        --primary-50: #e0f7fa;
+        --primary-100: #b2ebf2;
+        --primary-200: #80deea;
+        --primary-300: #4dd0e1;
+        --primary-400: #26c6da;
+        --primary-500: #00798C;
+        --primary-600: #00696a;
+        --primary-700: #005f73;
+        --primary-800: #003440;
+        --primary-900: #001f26;
 
-.users-page-container {
-    max-width: 1300px;
-}
+        /* Status Colors */
+        --success: #10b981;
+        --success-bg: #ecfdf5;
+        --error: #ef4444;
+        --error-bg: #fef2f2;
+        --warning: #f59e0b;
+        --info: #3b82f6;
+        --online: #22c55e;
 
-.title-search-panel {
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-    z-index: 1000; /* Lowered z-index */
-    top: 60px; /* Increased slightly to avoid overlap with main navbar */
-    /* position: sticky; /* This is handled by Bootstrap's sticky-top class */
-}
+        /* Surface Colors */
+        --surface-0: #ffffff;
+        --surface-1: #f8fafc;
+        --surface-2: #f1f5f9;
+        --surface-3: #e2e8f0;
+        --surface-glass: rgba(255, 255, 255, 0.95);
+        --surface-card: rgba(255, 255, 255, 0.9);
 
-.page-title {
-    font-size: 2rem; /* Larger title */
-    font-weight: 700;
-    color: #2c3e50;
-}
+        /* Text Colors */
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --text-disabled: #94a3b8;
+        --text-on-primary: #ffffff;
 
-.user-count-badge {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 38px;
-    height: 38px;
-    padding: 0 10px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    color: white;
-    background-color: #3498db;
-    border-radius: 50%;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
-}
+        /* Border & Effects */
+        --border-light: #e2e8f0;
+        --border-medium: #cbd5e1;
+        --border-focus: var(--primary-500);
 
-.search-input-wrapper {
-    position: relative;
-}
+        /* Shadows */
+        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
+        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
 
-.search-input-field {
-    padding: 0.65rem 1rem;
-    padding-right: 2.5rem; /* Make space for the clear button */
-    border-radius: 25px;
-    border: 1px solid #dfe6e9;
-    transition: all 0.3s ease-in-out;
-    font-size: 0.9rem;
-}
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-xxl: 3rem;
 
-.search-input-field:focus {
-    border-color: #3498db;
-    box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.25);
-}
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-xxl: 24px;
 
-.clear-search-icon {
-    position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    cursor: pointer;
-    font-size: 1.5rem;
-    color: #adb5bd;
-    display: none; /* Hidden by default */
-    line-height: 1;
-}
-.clear-search-icon:hover {
-    color: #343a40;
-}
+        /* Transitions */
+        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
-.user-card {
-    border: 1px solid #e9ecef; /* Subtle border */
-    border-radius: 12px;
-    background: #ffffff; /* Solid white for a cleaner look */
-    /* Removed gradient for now, can be added back if preferred */
-    /* box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08); */ /* Replaced by shadow-sm and hover effect */
-    transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden; /* Crucial to prevent internal scrollbars if content ever overflows */
-}
+        /* Typography */
+        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
 
-.user-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1) !important; /* Stronger shadow on hover */
-}
-
-.user-avatar {
-    width: 60px; /* Slightly smaller for better balance */
-    height: 60px;
-    object-fit: cover;
-    border: 3px solid #f0f0f0;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    transition: transform 0.2s ease, border-color 0.2s ease;
-}
-.user-card:hover .user-avatar {
-    border-color: #3498db;
-    transform: scale(1.08);
-}
-
-.card-title {
-     line-height: 1.2;
-}
-
-.user-name-link {
-    color: #34495e;
-    font-weight: 600;
-    font-size: 1.1rem;
-    transition: color 0.2s ease;
-}
-.user-name-link:hover {
-    color: #3498db;
-}
-
-.user-email {
-    color: #7f8c8d !important;
-    font-size: 0.8rem;
-    transition: color 0.2s ease;
-    word-break: break-all; /* Prevent long emails from breaking layout */
-}
-.user-email:hover {
-    color: #3498db !important;
-}
-
-.online-indicator {
-    width: 10px;
-    height: 10px;
-    background-color: #2ecc71;
-    border-radius: 50%;
-    display: inline-block;
-    margin-left: 6px;
-    border: 1.5px solid #fff;
-    box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.3); /* Softer pulse */
-    animation: pulseOnline 2s infinite ease-in-out;
-}
-
-@keyframes pulseOnline {
-    0%, 100% {
-        transform: scale(0.95);
-        box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.4);
+        /* Base Styles */
+        font-family: var(--font-family-primary);
+        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+        min-height: 100vh;
+        padding: var(--spacing-xl) 0;
+        position: relative;
+        overflow: hidden;
     }
-    50% {
-        transform: scale(1.05);
-        box-shadow: 0 0 0 5px rgba(46, 204, 113, 0);
+
+    /* Background Shapes */
+    .users-page-wrapper .background-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
     }
-}
 
-.user-details {
-    margin-top: 0.75rem;
-}
-
-.user-details .detail-item {
-    font-size: 0.85rem;
-    color: #555e68;
-    margin-bottom: 3px;
-    line-height: 1.4;
-}
-
-.user-details .detail-label {
-    color: #86909c;
-    font-weight: 500;
-}
-
-.job-details-group {
-    margin-top: 0.5rem;
-    padding-top: 0.5rem;
-    border-top: 1px solid #f0f0f0; /* Lighter separator */
-}
-
-.card-footer {
-    margin-top: auto; /* Pushes footer to the bottom */
-}
-
-.view-profile-btn {
-    background-color: #3498db;
-    border-color: #3498db;
-    color: white;
-    font-weight: 500;
-    padding: 0.45rem 0.9rem;
-    font-size: 0.875rem;
-    transition: background-color 0.2s ease, border-color 0.2s ease, transform 0.15s ease;
-}
-.view-profile-btn:hover {
-    background-color: #2980b9;
-    border-color: #2980b9;
-    transform: translateY(-1px);
-}
-.view-profile-btn:active {
-    transform: translateY(0px);
-}
-
-/* Адаптивность */
-@media (max-width: 767.98px) {
-    .title-search-panel {
-        /* position: static; Remove sticky for small screens if it causes issues */
-        /* top: 0; */
-        border-radius: 0;
-        margin-left: -0.75rem; /* Override container padding */
-        margin-right: -0.75rem; /* Override container padding */
-        padding-left: 1rem;
-        padding-right: 1rem;
+    .users-page-wrapper .shape {
+        position: absolute;
+        background: rgba(0, 121, 140, 0.05);
+        border-radius: 50%;
+        animation: float 12s ease-in-out infinite;
     }
-    .page-title {
+
+    .users-page-wrapper .shape-1 {
+        width: 300px;
+        height: 300px;
+        top: 10%;
+        left: -5%;
+        animation-delay: 0s;
+    }
+
+    .users-page-wrapper .shape-2 {
+        width: 200px;
+        height: 200px;
+        top: 60%;
+        right: -3%;
+        animation-delay: 4s;
+    }
+
+    .users-page-wrapper .shape-3 {
+        width: 150px;
+        height: 150px;
+        bottom: 20%;
+        left: 15%;
+        animation-delay: 8s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(5deg); }
+        66% { transform: translateY(15px) rotate(-5deg); }
+    }
+
+    /* Container */
+    .users-page-wrapper .users-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        padding: 0 var(--spacing-lg);
+    }
+
+    /* Page Header */
+    .users-page-wrapper .page-header {
+        background: var(--surface-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xxl);
+        box-shadow: var(--shadow-header);
+        padding: var(--spacing-lg) var(--spacing-xl);
+        margin-bottom: var(--spacing-xl);
+        position: sticky;
+        top: 90px;
+        z-index: 100;
+        animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .users-page-wrapper .header-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    /* Title Section */
+    .users-page-wrapper .title-section {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .users-page-wrapper .icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border-radius: var(--radius-xl);
+        color: var(--text-on-primary);
+        font-size: 1.75rem;
+        box-shadow: var(--shadow-2);
+        z-index: 2;
+    }
+
+    .users-page-wrapper .icon-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(circle, rgba(0, 121, 140, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse 3s ease-in-out infinite;
+        z-index: 1;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+
+    .users-page-wrapper .title-content {
+        flex: 1;
+    }
+
+    .users-page-wrapper .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+    }
+
+    .users-page-wrapper .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .users-page-wrapper .user-count-container {
+        display: flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .users-page-wrapper .count-badge {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--success), #059669);
+        border-radius: var(--radius-lg);
+        color: var(--text-on-primary);
+        box-shadow: var(--shadow-1);
+        min-width: 80px;
+    }
+
+    .users-page-wrapper .count-number {
         font-size: 1.5rem;
+        font-weight: 800;
+        line-height: 1;
     }
-    .user-count-badge {
-        min-width: 32px;
-        height: 32px;
-        font-size: 0.9rem;
+
+    .users-page-wrapper .count-label {
+        font-size: 0.75rem;
+        font-weight: 500;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
-    .search-input-field {
-        margin-top: 0.5rem; /* Space between title and search on mobile */
+
+    /* Search Section */
+    .users-page-wrapper .search-section {
         width: 100%;
     }
-    .user-card-wrapper {
-        flex: 0 0 100%;
-        max-width: 100%;
+
+    .users-page-wrapper .search-container {
+        max-width: 600px;
+        margin: 0 auto;
     }
-     .card-body {
-        padding: 1rem; /* Slightly less padding on mobile */
+
+    .users-page-wrapper .search-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        background: var(--surface-0);
+        border: 2px solid var(--border-light);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-sm);
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-1);
     }
-    .user-avatar {
-        width: 50px;
-        height: 50px;
+
+    .users-page-wrapper .search-input-group:focus-within {
+        border-color: var(--primary-500);
+        box-shadow: 0 0 0 4px rgba(0, 121, 140, 0.1);
     }
-    .user-name-link {
+
+    .users-page-wrapper .search-icon {
+        color: var(--text-muted);
+        font-size: 1.125rem;
+        margin: 0 var(--spacing-md);
+        transition: color var(--transition-normal);
+    }
+
+    .users-page-wrapper .search-input-group:focus-within .search-icon {
+        color: var(--primary-500);
+    }
+
+    .users-page-wrapper .search-input {
+        flex: 1;
+        border: none;
+        outline: none;
+        background: transparent;
         font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        padding: var(--spacing-md) 0;
+        font-family: var(--font-family-primary);
     }
-}
 
+    .users-page-wrapper .search-input::placeholder {
+        color: var(--text-muted);
+        font-weight: 400;
+    }
+
+    .users-page-wrapper .clear-search-btn {
+        display: none;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background: var(--surface-2);
+        border: none;
+        border-radius: 50%;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        margin-right: var(--spacing-sm);
+    }
+
+    .users-page-wrapper .clear-search-btn:hover {
+        background: var(--error-bg);
+        color: var(--error);
+        transform: scale(1.1);
+    }
+
+    .users-page-wrapper .search-focus-line {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        width: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+        border-radius: 1px;
+        transition: all var(--transition-normal);
+        transform: translateX(-50%);
+    }
+
+    .users-page-wrapper .search-input-group:focus-within .search-focus-line {
+        width: 100%;
+    }
+
+    /* Users Grid */
+    .users-page-wrapper .users-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+        margin-top: var(--spacing-xl);
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* User Card Animations */
+    .users-page-wrapper .user-card-wrapper {
+        animation: slideInCard 0.6s ease-out both;
+    }
+
+    .users-page-wrapper .user-card-wrapper:nth-child(1) { animation-delay: 0.1s; }
+    .users-page-wrapper .user-card-wrapper:nth-child(2) { animation-delay: 0.2s; }
+    .users-page-wrapper .user-card-wrapper:nth-child(3) { animation-delay: 0.3s; }
+    .users-page-wrapper .user-card-wrapper:nth-child(4) { animation-delay: 0.4s; }
+    .users-page-wrapper .user-card-wrapper:nth-child(5) { animation-delay: 0.5s; }
+    .users-page-wrapper .user-card-wrapper:nth-child(6) { animation-delay: 0.6s; }
+
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateY(30px) scale(0.9);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    /* User Cards */
+    .users-page-wrapper .user-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-normal);
+        position: relative;
+        overflow: hidden;
+        min-height: 380px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .users-page-wrapper .user-card:hover {
+        transform: translateY(-8px);
+        box-shadow: var(--shadow-3);
+    }
+
+    .users-page-wrapper .user-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(0, 121, 140, 0.02), rgba(0, 121, 140, 0.05));
+        opacity: 0;
+        transition: opacity var(--transition-normal);
+        pointer-events: none;
+    }
+
+    .users-page-wrapper .user-card:hover::before {
+        opacity: 1;
+    }
+
+    /* Online Status */
+    .users-page-wrapper .online-status {
+        position: absolute;
+        top: var(--spacing-md);
+        right: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--success-bg);
+        border: 1px solid var(--success);
+        border-radius: var(--radius-xl);
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--success);
+        z-index: 10;
+    }
+
+    .users-page-wrapper .online-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--success);
+        border-radius: 50%;
+        animation: onlinePulse 2s infinite;
+    }
+
+    @keyframes onlinePulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
+    }
+
+    .users-page-wrapper .online-text {
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    /* User Avatar Section */
+    .users-page-wrapper .user-avatar-section {
+        display: flex;
+        justify-content: center;
+        margin-bottom: var(--spacing-lg);
+        position: relative;
+    }
+
+    .users-page-wrapper .avatar-container {
+        position: relative;
+        width: 80px;
+        height: 80px;
+    }
+
+    .users-page-wrapper .user-avatar {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid var(--border-light);
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-1);
+    }
+
+    .users-page-wrapper .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 121, 140, 0.8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        opacity: 0;
+        transition: all var(--transition-normal);
+        cursor: pointer;
+    }
+
+    .users-page-wrapper .user-card:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .users-page-wrapper .user-card:hover .user-avatar {
+        transform: scale(1.05);
+        border-color: var(--primary-300);
+    }
+
+    /* User Info */
+    .users-page-wrapper .user-info {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .users-page-wrapper .user-name-section {
+        text-align: center;
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-md);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .users-page-wrapper .user-name {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.3;
+    }
+
+    .users-page-wrapper .user-email {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--surface-1);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-normal);
+        word-break: break-all;
+    }
+
+    .users-page-wrapper .user-email:hover {
+        color: var(--primary-500);
+        background: var(--primary-50);
+        transform: translateY(-1px);
+    }
+
+    /* User Details */
+    .users-page-wrapper .user-details {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .users-page-wrapper .detail-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        background: var(--surface-1);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-normal);
+    }
+
+    .users-page-wrapper .detail-item:hover {
+        background: var(--surface-2);
+        transform: translateX(2px);
+    }
+
+    .users-page-wrapper .detail-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: var(--primary-50);
+        border: 1px solid var(--primary-200);
+        border-radius: var(--radius-sm);
+        color: var(--primary-600);
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    .users-page-wrapper .detail-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        min-width: 0;
+    }
+
+    .users-page-wrapper .detail-label {
+        font-size: 0.65rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .users-page-wrapper .detail-value {
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        line-height: 1.3;
+        word-break: break-word;
+    }
+
+    /* User Actions */
+    .users-page-wrapper .user-actions {
+        margin-top: var(--spacing-md);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .users-page-wrapper .profile-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border: none;
+        border-radius: var(--radius-md);
+        color: var(--text-on-primary);
+        text-decoration: none;
+        font-weight: 600;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        transition: all var(--transition-normal);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .users-page-wrapper .profile-btn:hover {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+        color: var(--text-on-primary);
+    }
+
+    .users-page-wrapper .btn-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        position: relative;
+        z-index: 2;
+    }
+
+    .users-page-wrapper .btn-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0);
+        pointer-events: none;
+    }
+
+    /* No Users/Results Messages */
+    .users-page-wrapper .no-users-message,
+    .users-page-wrapper .no-results-message {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        padding: var(--spacing-xxl);
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        margin: var(--spacing-xxl) auto;
+        max-width: 500px;
+    }
+
+    .users-page-wrapper .no-users-icon,
+    .users-page-wrapper .no-results-icon {
+        width: 80px;
+        height: 80px;
+        background: linear-gradient(135deg, var(--text-muted), var(--text-disabled));
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 2rem;
+        color: var(--text-on-primary);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .users-page-wrapper .no-users-message h3,
+    .users-page-wrapper .no-results-message h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .users-page-wrapper .no-users-message p,
+    .users-page-wrapper .no-results-message p {
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-lg);
+        line-height: 1.6;
+    }
+
+    .users-page-wrapper .clear-filters-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border: none;
+        border-radius: var(--radius-md);
+        color: var(--text-on-primary);
+        font-weight: 600;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+
+    .users-page-wrapper .clear-filters-btn:hover {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .users-page-wrapper .users-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+    }
+
+    @media (max-width: 768px) {
+        .users-page-wrapper .users-container {
+            padding: 0 var(--spacing-md);
+        }
+
+        .users-page-wrapper .page-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+            top: 70px;
+        }
+
+        .users-page-wrapper .title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .users-page-wrapper .page-title {
+            font-size: 2rem;
+        }
+
+        .users-page-wrapper .users-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .users-page-wrapper .user-card {
+            min-height: auto;
+        }
+
+        .users-page-wrapper .user-count-container {
+            margin-left: 0;
+            align-self: flex-start;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .users-page-wrapper .page-title {
+            font-size: 1.75rem;
+        }
+
+        .users-page-wrapper .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .users-page-wrapper .user-card {
+            padding: var(--spacing-md);
+        }
+
+        .users-page-wrapper .user-avatar {
+            width: 60px;
+            height: 60px;
+        }
+
+        .users-page-wrapper .avatar-container {
+            width: 60px;
+            height: 60px;
+        }
+    }
 </style>
+{% endblock %}
 
+{% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('search-input');
     const userCardsContainer = document.getElementById('user-cards-container');
-    const noResultsPlaceholder = document.getElementById('no-results-message-placeholder');
+    const noResultsMessage = document.getElementById('no-results-message');
     const clearSearchBtn = document.getElementById('clear-search-btn');
 
-    if (searchInput && userCardsContainer && noResultsPlaceholder && clearSearchBtn) {
+    // Search functionality
+    if (searchInput && userCardsContainer && noResultsMessage && clearSearchBtn) {
         searchInput.addEventListener('input', function() {
             const searchText = this.value.toLowerCase().trim();
             const cards = userCardsContainer.querySelectorAll('.user-card-wrapper');
             let foundCards = 0;
 
+            // Show/hide clear button
             if (searchText.length > 0) {
-                clearSearchBtn.style.display = 'inline';
+                clearSearchBtn.classList.add('visible');
             } else {
-                clearSearchBtn.style.display = 'none';
+                clearSearchBtn.classList.remove('visible');
             }
 
+            // Filter cards
             cards.forEach(cardWrapper => {
                 const card = cardWrapper.querySelector('.user-card');
                 if (!card) return;
 
-                const usernameElement = card.querySelector('.user-name-link');
-                const emailElement = card.querySelector('.user-email');
+                // Get search content
+                const userName = card.querySelector('.user-name')?.textContent.toLowerCase() || '';
+                const userEmail = card.querySelector('.user-email')?.textContent.toLowerCase() || '';
                 const fioElement = card.querySelector('[data-search-fio]');
-
-                const username = usernameElement ? usernameElement.textContent.toLowerCase() : '';
-                const email = emailElement ? emailElement.textContent.toLowerCase() : '';
                 const fio = fioElement ? fioElement.dataset.searchFio.toLowerCase() : '';
 
-                let otherDetailsText = '';
-                card.querySelectorAll('.user-details .detail-item').forEach(detail => {
-                    otherDetailsText += detail.textContent.toLowerCase() + ' ';
+                // Get all detail values
+                let detailsText = '';
+                card.querySelectorAll('.detail-value').forEach(detail => {
+                    detailsText += detail.textContent.toLowerCase() + ' ';
                 });
 
-                if (username.includes(searchText) ||
-                    email.includes(searchText) ||
-                    fio.includes(searchText) ||
-                    otherDetailsText.includes(searchText)) {
+                // Check if search text matches any content
+                const isMatch = userName.includes(searchText) ||
+                              userEmail.includes(searchText) ||
+                              fio.includes(searchText) ||
+                              detailsText.includes(searchText);
+
+                if (isMatch) {
                     cardWrapper.style.display = '';
                     foundCards++;
                 } else {
@@ -374,24 +1079,149 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
 
+            // Show/hide no results message
             if (foundCards === 0 && searchText !== '') {
-                noResultsPlaceholder.style.display = 'block';
+                noResultsMessage.style.display = 'flex';
+                userCardsContainer.style.display = 'none';
             } else {
-                noResultsPlaceholder.style.display = 'none';
+                noResultsMessage.style.display = 'none';
+                userCardsContainer.style.display = 'grid';
             }
         });
 
+        // Clear search
         clearSearchBtn.addEventListener('click', function() {
-            searchInput.value = '';
-            // Trigger the input event to re-filter (which will show all cards)
-            const event = new Event('input', { bubbles: true });
-            searchInput.dispatchEvent(event);
-            // searchInput.focus(); // Optional: focus back on the input
+            clearSearch();
         });
-
-    } else {
-        console.warn('Search input, user cards container, no-results placeholder, or clear button not found.');
     }
+
+    // Ripple effect for buttons
+    const profileBtns = document.querySelectorAll('.profile-btn');
+    profileBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            createRipple(e, this);
+        });
+    });
+
+    // Enhanced focus effects for search
+    searchInput.addEventListener('focus', function() {
+        this.parentElement.classList.add('focused');
+    });
+
+    searchInput.addEventListener('blur', function() {
+        this.parentElement.classList.remove('focused');
+    });
+
+    // Force apply padding styles to search input field
+    if (searchInput) {
+        searchInput.style.paddingLeft = window.innerWidth <= 480 ? '4.5rem' : '6rem';
+        searchInput.style.paddingRight = '3rem';
+        searchInput.style.paddingTop = '1.5rem';
+        searchInput.style.paddingBottom = '1.5rem';
+    }
+
+    // Force apply margin-top to users grid to prevent overlap with header
+    if (userCardsContainer) {
+        if (window.innerWidth <= 480) {
+            userCardsContainer.style.marginTop = '3rem';
+        } else if (window.innerWidth <= 768) {
+            userCardsContainer.style.marginTop = '4rem';
+        } else {
+            userCardsContainer.style.marginTop = '6rem';
+        }
+    }
+
+    // Re-apply on window resize
+    window.addEventListener('resize', function() {
+        if (searchInput) {
+            searchInput.style.paddingLeft = window.innerWidth <= 480 ? '4.5rem' : '6rem';
+        }
+
+        if (userCardsContainer) {
+            if (window.innerWidth <= 480) {
+                userCardsContainer.style.marginTop = '3rem';
+            } else if (window.innerWidth <= 768) {
+                userCardsContainer.style.marginTop = '4rem';
+            } else {
+                userCardsContainer.style.marginTop = '6rem';
+            }
+        }
+    });
+
+    // Staggered animation for cards
+    const cards = document.querySelectorAll('.user-card-wrapper');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.animationPlayState = 'running';
+            }
+        });
+    }, {
+        threshold: 0.1
+    });
+
+    cards.forEach(card => {
+        observer.observe(card);
+    });
 });
+
+// Global functions
+function clearSearch() {
+    const searchInput = document.getElementById('search-input');
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    const userCardsContainer = document.getElementById('user-cards-container');
+    const noResultsMessage = document.getElementById('no-results-message');
+
+    if (searchInput) {
+        searchInput.value = '';
+        searchInput.focus();
+    }
+
+    if (clearSearchBtn) {
+        clearSearchBtn.classList.remove('visible');
+    }
+
+    // Show all cards
+    const cards = document.querySelectorAll('.user-card-wrapper');
+    cards.forEach(card => {
+        card.style.display = '';
+    });
+
+    // Hide no results message
+    if (noResultsMessage) {
+        noResultsMessage.style.display = 'none';
+    }
+
+    if (userCardsContainer) {
+        userCardsContainer.style.display = 'grid';
+    }
+}
+
+function createRipple(event, element) {
+    const btn = element;
+    const ripple = btn.querySelector('.btn-ripple');
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.style.transform = 'scale(0)';
+    ripple.style.opacity = '1';
+
+    // Trigger animation
+    requestAnimationFrame(() => {
+        ripple.style.transform = 'scale(2)';
+        ripple.style.opacity = '0';
+    });
+
+    // Clean up
+    setTimeout(() => {
+        ripple.style.transform = 'scale(0)';
+        ripple.style.opacity = '0';
+    }, 600);
+}
 </script>
 {% endblock %}
