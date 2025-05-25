@@ -6,14 +6,37 @@ from flask import (
     flash,
     abort,
     request,
+    g,
 )
 from flask_login import current_user, login_required
 from blog import db
 from blog.models import Post
 from blog.post.forms import PostForm, PostUpdateForm
 from blog.user.utils import save_picture_post
+from redmine import get_count_notifications, get_count_notifications_add_notes
 
 posts = Blueprint('post', __name__, template_folder='templates')
+
+
+def get_total_notification_count(user):
+    """Подсчет общего количества уведомлений для пользователя"""
+    if user is None:
+        return 0
+    return get_count_notifications(user.id) + get_count_notifications_add_notes(user.id)
+
+
+# Контекстный процессор для передачи количества уведомлений в каждый шаблон
+@posts.context_processor
+def inject_notification_count():
+    count = get_total_notification_count(
+        g.current_user if hasattr(g, "current_user") else None
+    )
+    return dict(count_notifications=count)
+
+
+@posts.before_request
+def set_current_user():
+    g.current_user = current_user if current_user.is_authenticated else None
 
 
 @posts.route('/post/new', methods=['GET', 'POST'])
