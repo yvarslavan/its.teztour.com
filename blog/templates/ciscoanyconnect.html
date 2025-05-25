@@ -1,314 +1,1417 @@
 {% extends 'layout.html' %}
 
-{% block content %}
-<head>
-    <meta charset="UTF-8">
-    <title>Как пользоваться Cisco AnyConnect</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1>Ваше личное руководство!</h1>
-		<p>Сейчас все большие и больше людей начинают работать из дома на своих корпоративных или личных устройствах. И часто таким сотрудникам нужен доступ в корпоративную сеть. С помощью Cisco AnyConnect Secure Mobility можно предоставить необходимый удаленный доступ, при этом обеспечив необходимый уровень безопасности.</p>
-		<div class="center">
-				<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco.png') }}" alt="Cisco AnyConnect Logo">
-		</div>
-		<br>
-        <div class="section">
-            <h3>📌 Обзор Cisco AnyConnect</h3>
-			<p>Cisco AnyConnect это VPN клиент (который является развитием Cisco VPN Client), позволяющий вам устанавливать защитное подключение к корпоративной сети. Cisco AnyConnect включает в себя такие функции, как удаленный доступ, контроль состояния, функции веб-безопасности и защита в роуминге.
-				<br>Клиент доступен на огромном количестве платформ:<br>
-				🔹Windows<br>
-				🔹macOS<br>
-				🔹Linux<br>
-				🔹iOS<br>
-				🔹Android<br>
-				🔹Windows Phone/Mobile<br>
-				🔹BlackBerry<br>
-				🔹ChromeOS</p>
-			<p class="sub-heading icon-prefix">💡 Как же подключиться к рабочему компьютеру/серверу из дома или находясь в командировке?</p>
-			<p>Подключение состоит из следующих этапов:<br>
-				🔹 Установка Cisco AnyConnect<br>
-				🔹 Подключение к Cisco AnyConnect<br>
-				🔹 Подключение к удаленному рабочему столу</p><br>
-
-			<h3>📌Установка Cisco AnyConnect</h3>
-			<p>Перед подключением необходимо установить программу Cisco AnyConnect Secure Mobility Client.
-				Вы можете скачать ее по этой <a href="https://vpn.teztour.com">ссылке</a>.
-				В зависимости из какой операционной системы вы работаете, будет скачана соответствующая вашей операционной системе версия клиента Cisco AnyConnect. Чтобы скачать клиента, необходимо ввести ваш логин и пароль от TEZ ERP и нажать кнопу Login. 👇 Группу ANYCONNECT не меняем.</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_login.jpg') }}" alt="Cisco AnyConnect Login Screen">
-			</div>
-
-			<p>Откроется страница доступа к сервису VPN, откуда можно скачать клиента на компьютер пользователя.👇</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_download.jpg') }}" alt="Cisco AnyConnect Download Page">
-			</div>
-			<br>
-			<p>После скачивания и установки запускаем приложение «Cisco AnyConnect», кликнув два раза по соответствующей иконке на рабочем столе.
-			Откроется приложение. Заходим в настройки (в левом нижнем углу пиктограмма колесика шестеренки Настройка Cisco AnyConnect VPN) и снимаем галочку с пункта «Block connections to untrusted servers»👇</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_block_connections.jpg') }}" alt="Cisco AnyConnect Settings - Untrusted Servers">
-			</div>
-			<br>
-			<p>В качестве адреса подключения в поле «Готово к подключению» вводим адрес: <code>vpn.teztour.com</code> и нажимаем на кнопку «Подключение» для соединения👇</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect.jpg') }}" alt="Cisco AnyConnect Connection Address">
-			</div>
-			<br>
-			<p>При появлении предупреждения о недоверенном сертификате, нажимаем продолжить (connect anyway)👇</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect_anyway.jpg') }}" alt="Cisco AnyConnect Untrusted Certificate Warning">
-			</div>
-			<br>
-			<p>В следующем окне приложение запросит у Вас учетные данные для входа. Имена пользователей и пароли выдаются вам службой технической поддержки при активации услуги.
-				Выбираем из выпадающего списка группу подключения ANYCONNECT и вводим свои учетные данные логин и пароль от TEZ ERP. Нажимаем на кнопку «ОК»👇.</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco_connect_password.jpg') }}" alt="Cisco AnyConnect Credentials Input">
-			</div>
-			<br>
-			<div class="note-block">
-                <p><strong>🔥Примечание:</strong><br>
-			    🔹 В целях безопасности приложение «Cisco AnyConnect» не сохраняет введенные пароли. Пароль необходимо вводить при каждом подключении<br>
-			    🔹 Далее необходимо запустить подключение к удаленному рабочему столу.</p>
-            </div>
-
-			<h3>📌Подключение к удаленному рабочему столу</h3>
-			<br>
-			<p>
-				Нажимаем кнопку <kbd>Пуск</kbd>, далее выбираем <kbd>Стандартные - Windows</kbd>. Далее находим пункт <kbd>Подключение к удаленному рабочему столу</kbd>.
-				Жмем правой клавишей мыши на этот пункт и выбираем <kbd>Дополнительно</kbd>, далее <kbd>Закрепить на панели задач</kbd>.
-				Тем самым мы создали постоянный ярлык на панели задач, через который мы и будем работать в дальнейшем.
-				Находим этот ярлык на панели задач внизу экрана и кликаем на него 1 (один) раз. Запустится окно:👇
-			</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_begin.jpg') }}" alt="Remote Desktop Connection Window">
-			</div>
-
-			<p>
-				В поле <kbd>Компьютер</kbd> вводим или IP-адрес ресурса для подключения, полученный ранее от
-				технической поддержки или указываем доменное имя компьютера к которому хотим подключиться.
-				IP-адрес представляет собой набор цифр, разделенных точками. Например: <code>62.67.52.250</code> или <code>10.10.10.84</code>.
-				Доменное имя указывается в формате <kbd>Имя_компьютера.доменное_имя</kbd>,
-				например <code>DESCTOPCAL-010.moscow.teztour.com</code>.<br>
-				Где:<br>
-				🔹<code>DESKTOPCAL-010</code> это локальное имя компьютера в нашей сети<br>
-				🔹<code>moscow.teztour.com</code> Это доменное имя. Оно указывает на домен, к которому принадлежит компьютер.
-				«Moscow» здесь указывает на географическое расположение компьютера, а «teztour.com» - на домен нашей организации.
-				Далее вводим имя пользователя для подключения в формате <code>MOSCOW\v.tereshkova</code><br>
-				Опция <kbd>Разрешить мне сохранять свои учетные данные</kbd> при подключении к удаленному рабочему столу позволяет
-				сохранять учетные данные (например, имя пользователя и пароль) для последующих подключений к удаленному рабочему столу
-				без необходимости вводить их каждый раз заново. Если эта опция включена (отмечена галочкой), операционная система сохранит
-				введенные учетные данные и будет автоматически использовать их при следующем подключении к тому же удаленному рабочему столу.
-				Это удобно, если вы регулярно подключаетесь к одному и тому же удаленному рабочему столу и не хотите вводить учетные данные каждый раз.
-				Однако это также означает, что эти данные могут быть доступны другим пользователям вашего компьютера или сети,
-				поэтому следует быть осторожным при использовании этой опции на общедоступных или общих компьютерах.👇
-			</p>
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_connect.jpg') }}" alt="Remote Desktop Connection Details">
-			</div>
-
-			<div class="note-block">
-                <p><strong>🔥Примечание:</strong><br>
-			    🔹 Если вы подключаетесь к терминальному серверу, то для завершения работы следует выполнить команду <kbd>Start/Log off (Пуск/Завершить сеанс)</kbd>,
-			    а не нажимать на кнопку «крестик» в правом верхнем углу окна терминала.</p>
-            </div>
-
-			<h3>📌Как узнать имя своего компьютера</h3>
-			<p>Существует много способов посмотреть имя компьютера. Вот самые простые способы
-			как это сделать.<br>
-			<strong>Способ №1.</strong><br>Узнаем имя компьютера через "Панель управления". Нажимаем по кнопке <kbd>Пуск</kbd> и пишем <kbd>Панель управления</kbd>.👇</p>
-
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel.jpg') }}" alt="Control Panel Shortcut">
-			</div>
-			<p>Выбираем <kbd>Система</kbd>.</p>
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_system.jpg') }}" alt="Control Panel - System">
-			</div>
-			<p>Далее мы увидим характеристики своего компьютера. Среди них находим пункт <kbd>Имя компьютера</kbd>.
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name.jpg') }}" alt="Computer Name in System Properties">
-			</div>
-			<p><strong>Способ №2.</strong><br>Определим имя компьютера с помощью ярлыка.<br>
-			Открываем проводник. Нажимаем на <kbd>Этот компьютер</kbd> правой кнопкой мыши и выбираем <kbd>Свойства</kbd>.</p>
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2.jpg') }}" alt="This PC - Properties">
-			</div>
-			<p>Отобразится уже известное окно с нужной информацией.
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2_1.jpg') }}" alt="Computer Name via This PC Properties">
-			</div>
-
-			<p><strong>Способ №3.</strong><br>Через командную строку.<br>
-			Запускаем командную строку, для этого в строке поиска или пуске пишем <kbd>cmd</kbd> и набираем команду <kbd>hostname</kbd>.</p>
-			<div class="center">
-					<img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name_cmd.jpg') }}" alt="Hostname command in CMD">
-			</div>
-
-		</div>
+{% block main_page %}
+<div class="cisco-anyconnect-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco.png') }}" alt="Cisco" class="cisco-logo">
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Cisco AnyConnect</h1>
+          <p class="page-subtitle">Полное руководство по установке и настройке VPN-клиента для безопасного подключения</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://vpn.teztour.com" target="_blank" class="action-button primary">
+          <i class="fas fa-globe"></i>
+          <span>Веб-портал VPN</span>
+        </a>
+      </div>
     </div>
-</body>
+  </header>
 
-{% endblock content %}
+  <!-- Introduction Section -->
+  <section class="intro-section">
+    <div class="intro-card">
+      <div class="intro-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="intro-content">
+        <h2>Что такое Cisco AnyConnect?</h2>
+        <p><strong>Cisco AnyConnect Secure Mobility Client</strong> — это профессиональное VPN-решение корпоративного уровня, которое обеспечивает безопасное подключение к корпоративной сети компании из любой точки мира. Клиент автоматически устанавливает зашифрованное соединение и защищает ваши данные при работе через интернет.</p>
 
-{% block styles %}
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-lock"></i>
+            <span>Банковский уровень шифрования</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-globe-americas"></i>
+            <span>Доступ из любой точки мира</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-network-wired"></i>
+            <span>Доступ к корпоративным ресурсам</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-user-shield"></i>
+            <span>Защита конфиденциальности</span>
+          </div>
+        </div>
+
+        <div class="key-features">
+          <h3><i class="fas fa-star"></i> Ключевые возможности:</h3>
+          <ul class="features-list">
+            <li><i class="fas fa-check"></i> <strong>Автоматическое подключение:</strong> Клиент автоматически подключается при запуске системы</li>
+            <li><i class="fas fa-check"></i> <strong>Адаптивная безопасность:</strong> Автоматическая настройка уровня безопасности в зависимости от местоположения</li>
+            <li><i class="fas fa-check"></i> <strong>Бесшовная работа:</strong> Прозрачное переключение между сетями без потери соединения</li>
+            <li><i class="fas fa-check"></i> <strong>Централизованное управление:</strong> Все настройки управляются IT-отделом компании</li>
+            <li><i class="fas fa-check"></i> <strong>Поддержка всех платформ:</strong> Windows, macOS, iOS, Android, Linux</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon cisco-color">
+        <i class="fas fa-download"></i>
+      </div>
+      <div class="method-info">
+        <h2>Установка Cisco AnyConnect</h2>
+        <p>Пошаговое руководство по установке VPN-клиента</p>
+      </div>
+    </div>
+
+    <!-- Step 1: Download -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cloud-download-alt"></i>
+        <h3>Шаг 1: Скачивание клиента</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Перейдите на веб-портал</h4>
+            <p>Откройте браузер и перейдите по ссылке: <a href="https://vpn.teztour.com" target="_blank" class="external-link">vpn.teztour.com</a></p>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Важно:</strong>
+                <p>Система автоматически определит вашу операционную систему и предложит соответствующую версию клиента для загрузки.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Авторизация в системе</h4>
+            <p>Введите ваши учетные данные от TEZ ERP для доступа к загрузке:</p>
+            <div class="credentials-info">
+              <div class="credential-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <strong>Логин:</strong>
+                  <span>Ваш логин от TEZ ERP</span>
+                </div>
+              </div>
+              <div class="credential-item">
+                <i class="fas fa-key"></i>
+                <div>
+                  <strong>Пароль:</strong>
+                  <span>Ваш пароль от TEZ ERP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Загрузка клиента</h4>
+            <p>После успешной авторизации нажмите кнопку "Download for Windows" для загрузки установочного файла.</p>
+            <div class="download-highlight">
+              <i class="fas fa-download"></i>
+              <span>Файл будет сохранен в папку "Загрузки" вашего компьютера</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Installation -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cog"></i>
+        <h3>Шаг 2: Установка программы</h3>
+      </div>
+      <div class="card-content">
+        <div class="warning-box">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Требования к установке:</strong>
+            <p>Для установки Cisco AnyConnect могут потребоваться права администратора. Убедитесь, что вы вошли в систему под учетной записью администратора или имеете соответствующие права.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Запуск установки</h4>
+            <p>Найдите скачанный файл в папке "Загрузки" и запустите его двойным щелчком мыши.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Следуйте инструкциям мастера</h4>
+            <p>Следуйте инструкциям мастера установки, оставляя настройки по умолчанию. Процесс установки займет несколько минут.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Завершение установки</h4>
+            <p>После завершения установки Cisco AnyConnect автоматически запустится и появится в системном трее.</p>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>Установка Cisco AnyConnect завершена!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connection Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon connect-color">
+        <i class="fas fa-plug"></i>
+      </div>
+      <div class="method-info">
+        <h2>Подключение к VPN</h2>
+        <p>Настройка и использование VPN-соединения</p>
+      </div>
+    </div>
+
+    <!-- First Connection -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-play-circle"></i>
+        <h3>Первое подключение</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Запуск клиента</h4>
+            <p>Найдите иконку Cisco AnyConnect в системном трее (правый нижний угол экрана) и кликните по ней.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Ввод адреса сервера</h4>
+            <p>В поле "Connect to" введите адрес VPN-сервера: <code>vpn.teztour.com</code></p>
+            <div class="server-highlight">
+              <i class="fas fa-server"></i>
+              <code>vpn.teztour.com</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Авторизация</h4>
+            <p>Введите ваши учетные данные от TEZ ERP и нажмите "Connect".</p>
+            <div class="security-note">
+              <i class="fas fa-shield-alt"></i>
+              <div>
+                <strong>Безопасность:</strong>
+                <p>Cisco AnyConnect не сохраняет пароли. Вам потребуется вводить пароль при каждом подключении для обеспечения максимальной безопасности.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-signal"></i>
+        <h3>Статус подключения</h3>
+      </div>
+      <div class="card-content">
+        <div class="status-indicators">
+          <div class="status-item connected">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>Подключено</strong>
+              <p>VPN-соединение активно, трафик защищен</p>
+            </div>
+          </div>
+          <div class="status-item connecting">
+            <i class="fas fa-spinner"></i>
+            <div>
+              <strong>Подключение...</strong>
+              <p>Установка VPN-соединения</p>
+            </div>
+          </div>
+          <div class="status-item disconnected">
+            <i class="fas fa-times-circle"></i>
+            <div>
+              <strong>Отключено</strong>
+              <p>VPN-соединение неактивно</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Remote Desktop Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon rdp-color">
+        <i class="fas fa-desktop"></i>
+      </div>
+      <div class="method-info">
+        <h2>Подключение к удаленному рабочему столу</h2>
+        <p>Настройка Remote Desktop Connection для работы с удаленными компьютерами</p>
+      </div>
+    </div>
+
+    <!-- RDP Setup -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-play"></i>
+        <h3>Запуск приложения</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Найдите приложение</h4>
+            <p>Найдите и запустите "Подключение к удаленному рабочему столу":</p>
+            <div class="action-steps">
+              <div class="action-item">
+                <span class="action-number">1</span>
+                <p>Нажмите <kbd>Пуск</kbd></p>
+              </div>
+              <div class="action-item">
+                <span class="action-number">2</span>
+                <p>Выберите <kbd>Стандартные - Windows</kbd></p>
+              </div>
+              <div class="action-item">
+                <span class="action-number">3</span>
+                <p>Найдите <kbd>Подключение к удаленному рабочему столу</kbd></p>
+              </div>
+            </div>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_begin.jpg') }}" alt="Окно подключения к удаленному рабочему столу" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Главное окно Remote Desktop Connection (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RDP Configuration -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cogs"></i>
+        <h3>Настройка подключения</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Параметры подключения</h4>
+            <p>Заполните параметры подключения к удаленному компьютеру:</p>
+
+            <div class="connection-params">
+              <div class="param-group">
+                <h5><i class="fas fa-server"></i> Адрес компьютера</h5>
+                <div class="address-options">
+                  <div class="address-option">
+                    <strong>IP-адрес:</strong>
+                    <code>62.67.52.250</code> или <code>10.10.10.84</code>
+                  </div>
+                  <div class="address-option">
+                    <strong>Доменное имя:</strong>
+                    <code>DESKTOPCAL-010.moscow.teztour.com</code>
+                  </div>
+                </div>
+              </div>
+
+              <div class="param-group">
+                <h5><i class="fas fa-user"></i> Учетные данные</h5>
+                <div class="login-info">
+                  <strong>Формат логина:</strong> <code>MOSCOW\v.tereshkova</code>
+                  <p>где <code>MOSCOW</code> — домен, <code>v.tereshkova</code> — ваш логин</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_connect.jpg') }}" alt="Настройка параметров подключения" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Заполнение параметров подключения (нажмите для увеличения)</div>
+            </div>
+
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Полезный совет:</strong>
+                <p>Включите опцию "Разрешить мне сохранять свои учетные данные" для автоматического входа в будущем.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="important-notice">
+          <i class="fas fa-exclamation-circle"></i>
+          <div>
+            <strong>Правильное завершение работы:</strong>
+            <p>При работе с терминальным сервером всегда используйте <kbd>Пуск → Завершить сеанс</kbd>, а не кнопку закрытия окна. Это обеспечит корректное сохранение данных и освобождение ресурсов сервера.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Computer Name Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon info-color">
+        <i class="fas fa-computer"></i>
+      </div>
+      <div class="method-info">
+        <h2>Как узнать имя компьютера</h2>
+        <p>Три простых способа определить имя вашего компьютера в сети</p>
+      </div>
+    </div>
+
+    <div class="methods-grid">
+      <!-- Method 1 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-cog"></i>
+          <h3>Способ 1: Панель управления</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Нажмите <kbd>Пуск</kbd> и введите "Панель управления"</p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>Выберите раздел <kbd>Система</kbd></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Найдите пункт "Имя компьютера"</p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel.jpg') }}" alt="Поиск панели управления" class="instruction-image clickable-image" onclick="openImageModal(this)">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_system.jpg') }}" alt="Раздел Система" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Method 2 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-folder"></i>
+          <h3>Способ 2: Проводник</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Откройте проводник</p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>Нажмите правой кнопкой на <kbd>Этот компьютер</kbd></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Выберите <kbd>Свойства</kbd></p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2.jpg') }}" alt="Контекстное меню Этот компьютер" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Method 3 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-terminal"></i>
+          <h3>Способ 3: Командная строка</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Нажмите <kbd>Win + R</kbd> и введите <code>cmd</code></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>В командной строке введите <code>hostname</code></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Нажмите <kbd>Enter</kbd></p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name_cmd.jpg') }}" alt="Команда hostname в CMD" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support Section -->
+  <section class="support-section">
+    <div class="support-card">
+      <div class="support-icon">
+        <i class="fas fa-headset"></i>
+      </div>
+      <div class="support-content">
+        <h3>Нужна помощь?</h3>
+        <p>Если у вас возникли проблемы с настройкой или подключением, наша служба технической поддержки готова помочь!</p>
+      </div>
+      <div class="support-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <div class="image-modal-content">
+    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" class="modal-image" src="" alt="">
+    <div class="image-modal-caption" id="modalCaption"></div>
+  </div>
+</div>
+
 <style>
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    line-height: 1.7;
-    background-color: #f0f2f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
+/* Main Container */
+.cisco-anyconnect-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 85vh;
+/* Header Styles */
+.page-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 3rem;
+  color: white;
+  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
 }
 
-.container::-webkit-scrollbar {
-    width: 10px;
-}
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 2px solid #f1f1f1;
-}
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
 }
 
-h3 {
-    font-size: 1.6em;
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    padding-bottom: 8px;
-    border-bottom: 1px solid #e5e5e5;
+.header-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-.sub-heading.icon-prefix {
-    font-size: 1.4em; /* Slightly smaller for these icon-prefixed ones */
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    /* No border for these, as they are more like lead-in questions */
+.cisco-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
 }
 
-p {
-    font-size: 1.125em;
-    margin-bottom: 20px;
-    color: #555;
-    text-align: justify;
+.page-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-p strong {
-    color: #333;
-    font-weight: 700;
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.6;
 }
 
-a {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: 600;
+.header-actions {
+  display: flex;
+  gap: 1rem;
 }
-a:hover {
-    text-decoration: underline;
-    color: #2980b9;
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.action-button.primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Introduction Section */
+.intro-section {
+  margin-bottom: 3rem;
+}
+
+.intro-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.intro-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.intro-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.intro-content p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.benefit-item i {
+  color: #3b82f6;
+  font-size: 1.2rem;
+}
+
+.benefit-item span {
+  font-weight: 600;
+  color: #374151;
+}
+
+.key-features {
+  background: #f0f9ff;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 2px solid #bae6fd;
+}
+
+.key-features h3 {
+  color: #0c4a6e;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.features-list i {
+  color: #059669;
+  font-size: 1rem;
+  margin-top: 0.2rem;
+}
+
+/* Method Section */
+.method-section {
+  margin-bottom: 3rem;
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.method-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.cisco-color { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+.connect-color { background: linear-gradient(135deg, #059669, #10b981); }
+.rdp-color { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+.info-color { background: linear-gradient(135deg, #dc2626, #ef4444); }
+
+.method-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.method-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Instruction Cards */
+.instruction-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-header i {
+  color: #3b82f6;
+  font-size: 1.5rem;
+}
+
+.card-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.card-content {
+  padding: 2rem;
+}
+
+/* Step Containers */
+.step-container {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.step-content p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Action Steps */
+.action-steps {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.action-number {
+  width: 30px;
+  height: 30px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Connection Parameters */
+.connection-params {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.param-group {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 4px solid #059669;
+}
+
+.param-group h5 {
+  margin: 0 0 1rem 0;
+  color: #059669;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.address-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.address-option {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.address-option strong {
+  color: #374151;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.login-info {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.login-info strong {
+  color: #374151;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Status Indicators */
+.status-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid;
+}
+
+.status-item.connected {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.status-item.connecting {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.status-item.disconnected {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.status-item i {
+  font-size: 1.5rem;
+}
+
+/* Methods Grid */
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.method-steps {
+  margin-bottom: 1.5rem;
+}
+
+.method-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.method-step .step-number {
+  width: 25px;
+  height: 25px;
+  font-size: 0.9rem;
+}
+
+/* Image Styles */
+.image-container {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.instruction-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.image-caption {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.method-images {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.method-images .instruction-image {
+  width: 100%;
+}
+
+/* Info Boxes */
+.info-box,
+.warning-box,
+.security-note,
+.tip-box,
+.important-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+
+.info-box {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+}
+
+.security-note {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-left: 4px solid #10b981;
+}
+
+.tip-box {
+  background: linear-gradient(135deg, #fae8ff, #f3e8ff);
+  border-left: 4px solid #a855f7;
+}
+
+.important-notice {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border-left: 4px solid #ef4444;
+}
+
+.info-box i { color: #3b82f6; }
+.warning-box i { color: #f59e0b; }
+.security-note i { color: #10b981; }
+.tip-box i { color: #a855f7; }
+.important-notice i { color: #ef4444; }
+
+.info-box i,
+.warning-box i,
+.security-note i,
+.tip-box i,
+.important-notice i {
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+/* Highlights */
+.download-highlight,
+.server-highlight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0f9ff;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  margin: 1rem 0;
+}
+
+.download-highlight i,
+.server-highlight i {
+  color: #0284c7;
+  font-size: 1.2rem;
+}
+
+/* Credentials Info */
+.credentials-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.credential-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.credential-item i {
+  color: #3b82f6;
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+.credential-item strong {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.credential-item span {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Success Message */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  margin: 1rem 0;
+}
+
+.success-message i {
+  font-size: 1.2rem;
+}
+
+/* Support Section */
+.support-section {
+  margin-top: 4rem;
+}
+
+.support-card {
+  background: linear-gradient(135deg, #1f2937, #374151);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.support-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.support-content {
+  flex: 1;
+}
+
+.support-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.support-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.support-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Image Modal */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.image-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-modal-caption {
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Code and Keyboard */
+code {
+  background: #f1f5f9;
+  color: #e11d48;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
 }
 
 kbd {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.2rem;
-    padding: 0.2em 0.4em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #495057;
-    margin: 0 0.1em;
-    white-space: nowrap;
+  background: linear-gradient(135deg, #475569, #64748b);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.85em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #334155;
+  font-weight: 600;
 }
 
-code {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 0.2rem;
-    padding: 0.1em 0.3em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #cb3837; /* Consistent code color */
-    white-space: nowrap;
+/* Links */
+.external-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.center {
+.external-link:hover {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cisco-anyconnect-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 2rem;
+  }
+
+  .header-content {
+    flex-direction: column;
     text-align: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+  }
+
+  .methods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .support-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .connection-params {
+    gap: 1.5rem;
+  }
+
+  .image-modal-content {
+    max-width: 95%;
+    max-height: 95%;
+  }
+
+  .modal-image {
+    max-height: 70vh;
+  }
 }
 
-.center img {
-    max-width: 90%;
-    height: auto;
-    border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 2rem;
+  }
 
-.note-block {
-    background-color: #eef7ff; /* Lighter blue for notes */
-    border-left: 5px solid #3498db;
-    padding: 15px 20px;
-    margin: 25px 0;
-    border-radius: 4px;
-}
-.note-block p {
-    margin-bottom: 10px;
-    text-align: left;
-}
-.note-block p:last-child {
-    margin-bottom: 0;
-}
-.note-block strong { /* For "🔥Примечание" */
-    color: #e74c3c; /* More distinct red for note titles */
-    font-weight: 700;
-}
+  .intro-card,
+  .card-content {
+    padding: 1.5rem;
+  }
 
-/* Styles for list-like paragraphs */
-p br { /* Improve spacing for manual line breaks in lists */
-    content: "";
-    display: block;
-    margin-bottom: 0.3em;
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-{% endblock styles %}
+
+<script>
+// Image Modal Functions
+function openImageModal(img) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+
+  modal.style.display = 'flex';
+  modalImg.src = img.src;
+  caption.textContent = img.alt;
+
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// Smooth scroll for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+  const links = document.querySelectorAll('a[href^="#"]');
+
+  links.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

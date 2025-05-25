@@ -8,7 +8,17 @@ import os
 from contextlib import contextmanager
 from typing import Dict, Any, List, Optional, Literal, Union
 from sqlalchemy.sql import func
-from sqlalchemy import select, MetaData, Table, desc, case, text, Column, Integer, DateTime
+from sqlalchemy import (
+    select,
+    MetaData,
+    Table,
+    desc,
+    case,
+    text,
+    Column,
+    Integer,
+    DateTime,
+)
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
 from flask import (
@@ -35,7 +45,10 @@ import time
 from flask_session import Session
 import base64
 import threading
-from blog.migrations import engine_oracle_crm, engine_sales_schema  # Использовать готовые движки
+from blog.migrations import (
+    engine_oracle_crm,
+    engine_sales_schema,
+)  # Использовать готовые движки
 
 
 # Константы для работы с XML API
@@ -51,9 +64,9 @@ error_log_path = os.path.join(os.getcwd(), "app_err.log")
 # Настройка логирования ошибок
 logging.basicConfig(
     filename=error_log_path,
-    level=logging.DEBUG, # <<< Меняем уровень на DEBUG
+    level=logging.DEBUG,  # <<< Меняем уровень на DEBUG
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    force=True # Добавляем force=True для перенастройки, если basicConfig уже был вызван где-то еще
+    force=True,  # Добавляем force=True для перенастройки, если basicConfig уже был вызван где-то еще
 )
 logger = logging.getLogger(__name__)
 
@@ -64,7 +77,7 @@ CORS(
     resources={
         r"/contact-center/vilnius/tel/*": {
             "origins": ["*"],  # Разрешаем все источники
-            "supports_credentials": True, # Corrected from allow_credentials
+            "supports_credentials": True,  # Corrected from allow_credentials
             "methods": ["GET", "POST", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization", "Accept"],
             "expose_headers": ["Content-Type"],
@@ -72,8 +85,8 @@ CORS(
         r"/api/*": {
             "origins": ["https://its.tez-tour.com", "http://localhost:5000"],
             "methods": ["GET", "POST", "OPTIONS"],
-            "allow_headers": ["Content-Type", "Authorization"]
-        }
+            "allow_headers": ["Content-Type", "Authorization"],
+        },
     },
 )
 PHONE_PREFIX = "+"
@@ -88,20 +101,21 @@ try:
     call_info_table = Table(
         "T_CALL_INFO",
         metadata,
-        Column("call_info_id", Integer, primary_key=True), # Нужен для where
-        Column("time_end", DateTime), # Нужен для values
+        Column("call_info_id", Integer, primary_key=True),  # Нужен для where
+        Column("time_end", DateTime),  # Нужен для values
         # Добавьте другие колонки здесь, если они понадобятся
         # например, Column("some_other_column", String)
-        schema='SALES' # Указываем схему
+        schema="SALES",  # Указываем схему
     )
     print("DEBUG: Таблица T_CALL_INFO определена вручную.")
 except Exception as e:
-    call_info_table = None # Оставляем None в случае ошибки определения
+    call_info_table = None  # Оставляем None в случае ошибки определения
     detailed_error = traceback.format_exc()
     logging.error(
         "Ошибка при ручном определении таблицы T_CALL_INFO. "
         "Продолжаем запуск приложения. Ошибка: %s\nTraceback:\n%s",
-        e, detailed_error
+        e,
+        detailed_error,
     )
 # Настройка логгера
 logging.basicConfig(level=logging.INFO)
@@ -120,8 +134,9 @@ MYSQL_CONFIG = {
     "db": "tez_tour_cc",
     "port": 3306,
     "charset": "utf8mb4",
-    "cursorclass": pymysql.cursors.DictCursor  # Добавляем это
+    "cursorclass": pymysql.cursors.DictCursor,  # Добавляем это
 }
+
 
 def get_db_connection():
     """Создает и возвращает соединение с базой данных MySQL"""
@@ -157,7 +172,7 @@ def write_log(message):
         logger.error("Не удалось записать в файл лога stat.log: %s", {str(e)})
 
 
-def get_agency_id_by_ani(ani) -> Union[Any, Literal['0']]:
+def get_agency_id_by_ani(ani) -> Union[Any, Literal["0"]]:
     # Проверяем формат номера
     ani_str = str(ani) if ani is not None else ""
 
@@ -167,28 +182,30 @@ def get_agency_id_by_ani(ani) -> Union[Any, Literal['0']]:
     # Проверка на Unknown или пустые значения
     if not ani_str or ani_str.lower() == "unknown" or len(ani_str) < 5:
         logger.warning(f"Номер телефона пустой или некорректный: '{ani_str}'")
-        return '0'
+        return "0"
 
     # Добавляем префикс только если номер не начинается с +
-    if not ani_str.startswith('+'):
+    if not ani_str.startswith("+"):
         ani = PHONE_PREFIX + ani_str
     else:
         ani = ani_str  # оставляем как есть, если номер уже с +
 
     try:
         session_with_oracle_crm_schema = get_session_with_bind("oracle_crm")
-        agency_phone = session_with_oracle_crm_schema.query(AgencyPhone)\
-            .filter_by(agency_phone=ani)\
-            .order_by(AgencyPhone.agency_id.desc())\
+        agency_phone = (
+            session_with_oracle_crm_schema.query(AgencyPhone)
+            .filter_by(agency_phone=ani)
+            .order_by(AgencyPhone.agency_id.desc())
             .first()
+        )
 
         if agency_phone:
             return agency_phone.agency_id
 
-        return '0'
+        return "0"
     except Exception as e:
         logger.error(f"Ошибка в функции get_agency_id_by_ani: {str(e)}")
-        return '0'
+        return "0"
 
 
 def get_xml_agency_not_blacklist(agency_id):
@@ -350,7 +367,7 @@ def contact_center():
     # Проверяем, загрузилась ли таблица
     if call_info_table is None:
         error_message = "Ошибка: Не удалось загрузить информацию о звонках (T_CALL_INFO). Проверьте подключение к БД."
-        logger.error(error_message) # Логируем ошибку
+        logger.error(error_message)  # Логируем ошибку
     else:
         try:
             last_calls = get_last_calls_all()
@@ -369,7 +386,7 @@ def contact_center():
         "contact_center.html",
         call=last_call,
         calls=recent_calls,
-        error_message=error_message # Передаем сообщение об ошибке в шаблон
+        error_message=error_message,  # Передаем сообщение об ошибке в шаблон
     )
 
 
@@ -427,15 +444,19 @@ def get_last_calls(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
         # Используем прямой SQL запрос как резервный вариант
         try:
             with SessionSalesSchema() as session:
-                query = text("""
+                query = text(
+                    """
                 SELECT CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
                        CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME
                 FROM T_CALL_INFO
                 WHERE AGENCY_ID = :agency_id
                 ORDER BY CALL_INFO_ID DESC
                 FETCH FIRST :limit ROWS ONLY
-                """)
-                result = session.execute(query, {"agency_id": agency_id, "limit": limit}).fetchall()
+                """
+                )
+                result = session.execute(
+                    query, {"agency_id": agency_id, "limit": limit}
+                ).fetchall()
                 return [dict(row) for row in result]
         except Exception as e:
             logger.error(f"Резервный SQL запрос также не удался: {str(e)}")
@@ -446,14 +467,16 @@ def get_last_calls_all(limit: int = 5) -> List[Dict[str, Any]]:
     """Получение последних N звонков для всех агентств (не зависит от call_info_table)"""
     try:
         with SessionSalesSchema() as session:
-            query = text("""
+            query = text(
+                """
             SELECT
                 CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
                 CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME
             FROM T_CALL_INFO
             ORDER BY CALL_INFO_ID DESC
             FETCH FIRST :limit ROWS ONLY
-            """)
+            """
+            )
             result = session.execute(query, {"limit": limit}).fetchall()
             # Преобразуем строки в словари
             return [dict(row._mapping) for row in result]
@@ -723,21 +746,25 @@ def record_stat_to_db(
         time_now = datetime.datetime.now()
 
         # Создаем запись с явным указанием ID
-        insert_query = text("""
+        insert_query = text(
+            """
         INSERT INTO T_CALL_INFO
         (CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER, CURRATOR, THEME, AGENCY_ID, REGION)
         VALUES (:id, :time_begin, :time_end, :phone, :curator, :theme, :agency_id, :region)
-        """)
+        """
+        )
 
         params = {
-            'id': new_id,
-            'time_begin': time_now,
-            'time_end': time_now,
-            'phone': tel,
-            'curator': curator if curator else None,
-            'theme': theme if theme else None,
-            'agency_id': str(ag_id) if ag_id else None,  # Преобразуем в строку, т.к. колонка VARCHAR2
-            'region': region
+            "id": new_id,
+            "time_begin": time_now,
+            "time_end": time_now,
+            "phone": tel,
+            "curator": curator if curator else None,
+            "theme": theme if theme else None,
+            "agency_id": (
+                str(ag_id) if ag_id else None
+            ),  # Преобразуем в строку, т.к. колонка VARCHAR2
+            "region": region,
         }
 
         # Выполняем запрос
@@ -816,11 +843,13 @@ def write_agency_name(call_id, agency_name, engine):
     """Обновляет имя агентства для записи о звонке"""
     try:
         # Исправляем SQL-запрос, добавляя точное соответствие ID
-        update_query = text("""
+        update_query = text(
+            """
         UPDATE T_CALL_INFO
         SET AGENCY_NAME = :agency_name
         WHERE CALL_INFO_ID = :call_id
-        """)
+        """
+        )
 
         # Выполняем запрос с explicit commit
         with engine.begin() as conn:  # begin() автоматически делает commit при выходе
@@ -830,15 +859,21 @@ def write_agency_name(call_id, agency_name, engine):
 
         # Проверяем, действительно ли данные записались
         with engine.connect() as conn:
-            verify_query = text("""
+            verify_query = text(
+                """
             SELECT AGENCY_NAME FROM T_CALL_INFO
             WHERE CALL_INFO_ID = :call_id
-            """)
+            """
+            )
             result = conn.execute(verify_query, {"call_id": call_id}).fetchone()
             if result and result[0] == agency_name:
-                logger.info(f"✅ Проверка: имя агентства {agency_name} успешно записано в БД")
+                logger.info(
+                    f"✅ Проверка: имя агентства {agency_name} успешно записано в БД"
+                )
             else:
-                logger.warning(f"❌ Проверка: имя агентства НЕ было записано в БД (результат: {result[0] if result else 'None'})")
+                logger.warning(
+                    f"❌ Проверка: имя агентства НЕ было записано в БД (результат: {result[0] if result else 'None'})"
+                )
 
         return True
     except Exception as e:
@@ -851,15 +886,19 @@ def write_agency_manager(call_id, manager_name, engine):
     """Обновляет имя менеджера агентства для записи о звонке"""
     try:
         # Используем begin() вместо connect() для автоматического commit
-        update_query = text("""
+        update_query = text(
+            """
         UPDATE T_CALL_INFO
         SET AGENCY_MANAGER = :manager_name
         WHERE CALL_INFO_ID = :call_id
-        """)
+        """
+        )
 
         # Выполняем запрос с explicit commit
         with engine.begin() as conn:
-            conn.execute(update_query, {"manager_name": manager_name, "call_id": call_id})
+            conn.execute(
+                update_query, {"manager_name": manager_name, "call_id": call_id}
+            )
 
         logger.info(f"Обновлен менеджер агентства для звонка {call_id}: {manager_name}")
         return True
@@ -869,7 +908,7 @@ def write_agency_manager(call_id, manager_name, engine):
         return False
 
 
-@calls.route('/get_latest_calls')
+@calls.route("/get_latest_calls")
 def get_latest_calls():
     try:
         # Используем безопасную версию получения истории звонков
@@ -877,14 +916,16 @@ def get_latest_calls():
 
         # Безопасный запрос к базе данных
         with SessionSalesSchema() as session:
-            query = text("""
+            query = text(
+                """
             SELECT
                 CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
                 CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME
             FROM T_CALL_INFO
             ORDER BY CALL_INFO_ID DESC
             FETCH FIRST 5 ROWS ONLY
-            """)
+            """
+            )
 
             result = session.execute(query).fetchall()
 
@@ -897,15 +938,19 @@ def get_latest_calls():
                     call_dict[column_name.upper()] = getattr(row, column_name)
 
                 # Преобразуем datetime в строки для JSON
-                if 'TIME_BEGIN' in call_dict and call_dict['TIME_BEGIN']:
-                    call_dict['TIME_BEGIN'] = call_dict['TIME_BEGIN'].strftime('%d.%m.%Y %H:%M')
+                if "TIME_BEGIN" in call_dict and call_dict["TIME_BEGIN"]:
+                    call_dict["TIME_BEGIN"] = call_dict["TIME_BEGIN"].strftime(
+                        "%d.%m.%Y %H:%M"
+                    )
                 else:
-                    call_dict['TIME_BEGIN'] = 'N/A'
+                    call_dict["TIME_BEGIN"] = "N/A"
 
-                if 'TIME_END' in call_dict and call_dict['TIME_END']:
-                    call_dict['TIME_END'] = call_dict['TIME_END'].strftime('%d.%m.%Y %H:%M')
+                if "TIME_END" in call_dict and call_dict["TIME_END"]:
+                    call_dict["TIME_END"] = call_dict["TIME_END"].strftime(
+                        "%d.%m.%Y %H:%M"
+                    )
                 else:
-                    call_dict['TIME_END'] = 'N/A'
+                    call_dict["TIME_END"] = "N/A"
 
                 calls_data.append(call_dict)
 
@@ -979,9 +1024,11 @@ def contact_center_moscow(ani=None, agent_id=None):
                 for call in raw_calls:
                     # Определяем has_client_card на основе card_id И наличия записи в privat_processing И pp_id > 0
                     has_client_card = bool(
-                        call.get('card_id') and int(call['card_id']) > 0 and \
-                        call.get('privat_processing_id') and int(call['privat_processing_id']) > 0 and \
-                        call.get('processing_id') is not None
+                        call.get("card_id")
+                        and int(call["card_id"]) > 0
+                        and call.get("privat_processing_id")
+                        and int(call["privat_processing_id"]) > 0
+                        and call.get("processing_id") is not None
                     )
 
                     # Определяем, является ли номер неизвестным
@@ -996,21 +1043,37 @@ def contact_center_moscow(ani=None, agent_id=None):
                         formatted_time = str(timestamp) if timestamp else "Н/Д"
 
                     # Добавляем форматированные данные, включая результат
-                    moscow_calls.append({
-                        'phone_number': phone_number,
-                        'operator_name': call.get("agent_id", "Не указан"),
-                        'call_time': formatted_time,
-                        'has_client_card': has_client_card,
-                        'is_unknown': is_unknown,
-                        'id': call.get("id"),
-                        'pp_id': str(call.get("privat_processing_id")).split(':')[0] if call.get("privat_processing_id") else None,
-                        'result': call.get("result"), # Добавляем числовой результат
-                        'call_result_text': call.get("call_result_text"), # Добавляем текстовый результат
-                        'card_id': call.get("card_id"), # <<< Добавляем недостающий card_id
-                        'call_type_text': call.get("call_type_text") # <<< Добавляем тип звонка
-                    })
+                    moscow_calls.append(
+                        {
+                            "phone_number": phone_number,
+                            "operator_name": call.get("agent_id", "Не указан"),
+                            "call_time": formatted_time,
+                            "has_client_card": has_client_card,
+                            "is_unknown": is_unknown,
+                            "id": call.get("id"),
+                            "pp_id": (
+                                str(call.get("privat_processing_id")).split(":")[0]
+                                if call.get("privat_processing_id")
+                                else None
+                            ),
+                            "result": call.get(
+                                "result"
+                            ),  # Добавляем числовой результат
+                            "call_result_text": call.get(
+                                "call_result_text"
+                            ),  # Добавляем текстовый результат
+                            "card_id": call.get(
+                                "card_id"
+                            ),  # <<< Добавляем недостающий card_id
+                            "call_type_text": call.get(
+                                "call_type_text"
+                            ),  # <<< Добавляем тип звонка
+                        }
+                    )
 
-                logger.info(f"Получено {len(moscow_calls)} записей о звонках за текущие сутки")
+                logger.info(
+                    f"Получено {len(moscow_calls)} записей о звонках за текущие сутки"
+                )
         finally:
             connection.close()
     else:
@@ -1022,10 +1085,10 @@ def contact_center_moscow(ani=None, agent_id=None):
 
     # Рендерим шаблон, передавая количество звонков
     return render_template(
-        'contact_center_moscow.html',
+        "contact_center_moscow.html",
         calls=moscow_calls,
-        calls_count=calls_count, # Передаем количество
-        connection_error=connection_error
+        calls_count=calls_count,  # Передаем количество
+        connection_error=connection_error,
     )
 
 
@@ -1038,35 +1101,47 @@ def get_moscow_calls():
     # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     try:
         # Получаем дату из параметров запроса
-        selected_date_str = request.args.get('date')
+        selected_date_str = request.args.get("date")
         if selected_date_str:
             # Пытаемся преобразовать строку в дату
             try:
-                selected_date = datetime.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+                selected_date = datetime.datetime.strptime(
+                    selected_date_str, "%Y-%m-%d"
+                ).date()
                 date_filter = selected_date
-                date_filter_sql = "%s" # Используем плейсхолдер для даты
+                date_filter_sql = "%s"  # Используем плейсхолдер для даты
             except ValueError:
                 # Если формат даты неверный, используем текущую дату
-                logger.warning(f"Неверный формат даты: {selected_date_str}. Используется текущая дата.")
+                logger.warning(
+                    f"Неверный формат даты: {selected_date_str}. Используется текущая дата."
+                )
                 date_filter = datetime.date.today()
-                date_filter_sql = "CURDATE()" # Используем CURDATE() для текущей даты
+                date_filter_sql = "CURDATE()"  # Используем CURDATE() для текущей даты
         else:
             # Если дата не передана, используем текущую дату
             date_filter = datetime.date.today()
             date_filter_sql = "CURDATE()"
-            selected_date = date_filter # Устанавливаем selected_date для логгера
+            selected_date = date_filter  # Устанавливаем selected_date для логгера
 
         logger.info(f"Запрос звонков для даты: {selected_date}")
-
 
         connection = get_db_connection()
         if not connection:
             logger.error("Не удалось подключиться к базе данных")
-            return jsonify({"success": False, "error": "Ошибка подключения к базе данных", "calls": []}), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Ошибка подключения к базе данных",
+                        "calls": [],
+                    }
+                ),
+                500,
+            )
 
         try:
             with connection.cursor() as cursor:
-                 # Используем date_filter_sql в запросе
+                # Используем date_filter_sql в запросе
                 query = f"""
                 SELECT
                     cls.id,
@@ -1111,7 +1186,7 @@ def get_moscow_calls():
                 if date_filter_sql == "%s":
                     cursor.execute(query, (date_filter,))
                 else:
-                     cursor.execute(query) # Выполняем без параметра для CURDATE()
+                    cursor.execute(query)  # Выполняем без параметра для CURDATE()
 
                 calls = cursor.fetchall()
 
@@ -1120,25 +1195,37 @@ def get_moscow_calls():
                 for call in calls:
                     # Определяем has_client_card на основе card_id И наличия записи в privat_processing И pp_id > 0
                     has_client_card = bool(
-                        call.get('card_id') and int(call['card_id']) > 0 and \
-                        call.get('pp_id') and int(call['pp_id']) > 0 and \
-                        call.get('processing_id') is not None
+                        call.get("card_id")
+                        and int(call["card_id"]) > 0
+                        and call.get("pp_id")
+                        and int(call["pp_id"]) > 0
+                        and call.get("processing_id") is not None
                     )
 
                     # Логирование для отладки типа звонка
-                    logger.debug(f"Processing call ID {call.get('id')}: card_id={call.get('card_id')}, pp_id={call.get('pp_id')}, processing_id={call.get('processing_id')}, has_client_card={has_client_card}")
+                    logger.debug(
+                        f"Processing call ID {call.get('id')}: card_id={call.get('card_id')}, pp_id={call.get('pp_id')}, processing_id={call.get('processing_id')}, has_client_card={has_client_card}"
+                    )
 
                     formatted_call = {
-                        'id': call['id'],
-                        'phone_number': call['phone_number'],
-                        'operator': call['operator_name'],
-                        'time': call['timestamp'].strftime("%d.%m.%Y, %H:%M:%S") if call['timestamp'] else '',
-                        'card_id': call['card_id'],
-                        'pp_id': call['pp_id'],
-                        'has_client_card': has_client_card,
-                        'result': call['result'], # Возвращаем числовой результат
-                        'call_result_text': call['call_result_text'], # Возвращаем текстовый результат
-                        'call_type_text': call['call_type_text'] # <<< Добавляем тип звонка
+                        "id": call["id"],
+                        "phone_number": call["phone_number"],
+                        "operator": call["operator_name"],
+                        "time": (
+                            call["timestamp"].strftime("%d.%m.%Y, %H:%M:%S")
+                            if call["timestamp"]
+                            else ""
+                        ),
+                        "card_id": call["card_id"],
+                        "pp_id": call["pp_id"],
+                        "has_client_card": has_client_card,
+                        "result": call["result"],  # Возвращаем числовой результат
+                        "call_result_text": call[
+                            "call_result_text"
+                        ],  # Возвращаем текстовый результат
+                        "call_type_text": call[
+                            "call_type_text"
+                        ],  # <<< Добавляем тип звонка
                     }
                     formatted_calls.append(formatted_call)
 
@@ -1146,7 +1233,9 @@ def get_moscow_calls():
                 # if not selected_date_str:
                 #     update_calls_cache(formatted_calls)
 
-                logger.info(f"Получено {len(formatted_calls)} записей о звонках для API за {selected_date}")
+                logger.info(
+                    f"Получено {len(formatted_calls)} записей о звонках для API за {selected_date}"
+                )
                 return jsonify({"success": True, "calls": formatted_calls})
 
         finally:
@@ -1165,11 +1254,16 @@ def get_call_agency_data(pp_id):
         connection = get_db_connection()
         if not connection:
             logger.error("Не удалось установить соединение с базой данных")
-            return jsonify({
-                "success": False,
-                "error": "Не удалось подключиться к базе данных",
-                "agency_data": []
-            }), 500
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Не удалось подключиться к базе данных",
+                        "agency_data": [],
+                    }
+                ),
+                500,
+            )
 
         try:
             with connection.cursor(pymysql.cursors.DictCursor) as cursor:
@@ -1252,73 +1346,80 @@ def get_call_agency_data(pp_id):
 
                 logger.info(f"Выполнение запроса для pp_id: {pp_id}")
                 cursor.execute(agency_query, (pp_id,))
-                agency_data_list = cursor.fetchall() # Изменено имя на agency_data_list
+                agency_data_list = cursor.fetchall()  # Изменено имя на agency_data_list
 
                 # <<< НАЧАЛО ИЗМЕНЕНИЯ: Получение номеров телефонов >>>
                 # phone_numbers = [] # Старая переменная
-                if agency_data_list: # Используем новое имя
+                if agency_data_list:  # Используем новое имя
                     agency_record = agency_data_list[0]
-                    agency_record['telephones_detailed'] = [] # Инициализируем новый ключ
+                    agency_record["telephones_detailed"] = (
+                        []
+                    )  # Инициализируем новый ключ
 
                     phone_ids_to_fetch = []
                     for i in range(1, 8):
-                        tel_id_key = f'tel_{i}_id'
-                        if agency_record.get(tel_id_key) and agency_record[tel_id_key] > 0:
+                        tel_id_key = f"tel_{i}_id"
+                        if (
+                            agency_record.get(tel_id_key)
+                            and agency_record[tel_id_key] > 0
+                        ):
                             phone_ids_to_fetch.append(agency_record[tel_id_key])
 
                     if phone_ids_to_fetch:
-                        placeholders = ', '.join(['%s'] * len(phone_ids_to_fetch))
+                        placeholders = ", ".join(["%s"] * len(phone_ids_to_fetch))
                         phone_query_detailed = f"""
                         SELECT id, number, comment FROM telephone WHERE id IN ({placeholders})
                         """
                         try:
                             cursor.execute(phone_query_detailed, phone_ids_to_fetch)
                             phones_detailed_data = cursor.fetchall()
-                            agency_record['telephones_detailed'] = phones_detailed_data
-                            logger.info(f"Найдены детальные телефоны для агентства {agency_record.get('agency_name_ru')}: {len(phones_detailed_data)} шт.")
+                            agency_record["telephones_detailed"] = phones_detailed_data
+                            logger.info(
+                                f"Найдены детальные телефоны для агентства {agency_record.get('agency_name_ru')}: {len(phones_detailed_data)} шт."
+                            )
                         except Exception as phone_e:
-                            logger.error(f"Ошибка при получении детальных номеров телефонов: {str(phone_e)}")
+                            logger.error(
+                                f"Ошибка при получении детальных номеров телефонов: {str(phone_e)}"
+                            )
                     # Удаляем старые tel_x_id поля, если они больше не нужны напрямую в JS
                     # for i in range(1, 8):
                     #     agency_record.pop(f'tel_{i}_id', None)
 
                 # Преобразуем datetime объекты в строки
-                for record in agency_data_list: # Используем новое имя
-                    if record.get('datetime'):
+                for record in agency_data_list:  # Используем новое имя
+                    if record.get("datetime"):
                         try:
-                            record['datetime'] = record['datetime'].strftime('%d.%m.%Y %H:%M:%S')
+                            record["datetime"] = record["datetime"].strftime(
+                                "%d.%m.%Y %H:%M:%S"
+                            )
                         except Exception as e:
                             logger.error(f"Ошибка форматирования даты: {str(e)}")
-                            record['datetime'] = str(record['datetime'])
+                            record["datetime"] = str(record["datetime"])
 
-                logger.info(f"Получено записей: {len(agency_data_list)}") # Используем новое имя
-                if agency_data_list: # Используем новое имя
+                logger.info(
+                    f"Получено записей: {len(agency_data_list)}"
+                )  # Используем новое имя
+                if agency_data_list:  # Используем новое имя
                     logger.info(f"Первая запись: {agency_data_list[0]}")
 
-                return jsonify({
-                    "success": True,
-                    "agency_data": agency_data_list # Возвращаем список, как и раньше
-                })
+                return jsonify(
+                    {
+                        "success": True,
+                        "agency_data": agency_data_list,  # Возвращаем список, как и раньше
+                    }
+                )
 
         except Exception as e:
             logger.error(f"Ошибка при выполнении запроса: {str(e)}")
             logger.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({
-                "success": False,
-                "error": str(e),
-                "agency_data": []
-            }), 500
+            return jsonify({"success": False, "error": str(e), "agency_data": []}), 500
         finally:
             connection.close()
 
     except Exception as e:
         logger.error(f"Общая ошибка: {str(e)}")
         logger.error(f"Traceback: {traceback.format_exc()}")
-        return jsonify({
-            "success": False,
-            "error": str(e),
-            "agency_data": []
-        }), 500
+        return jsonify({"success": False, "error": str(e), "agency_data": []}), 500
 
 
 @calls.route("/api/client-card/call/<int:call_id>")
@@ -1329,7 +1430,9 @@ def get_client_card_by_call(call_id):
         connection = get_db_connection()
         if connection:
             try:
-                with connection.cursor(pymysql.cursors.DictCursor) as cursor: # Используем DictCursor для удобства
+                with connection.cursor(
+                    pymysql.cursors.DictCursor
+                ) as cursor:  # Используем DictCursor для удобства
                     # Запрос изменен для поиска по call_id
                     query = """
                     SELECT
@@ -1362,13 +1465,22 @@ def get_client_card_by_call(call_id):
                         f"Запрос карточки для call_id={call_id}, результат: {client}"
                     )
 
-                    if client and client.get('processing_id') is not None: # Доп. проверка на случай, если pp.id был NULL
+                    if (
+                        client and client.get("processing_id") is not None
+                    ):  # Доп. проверка на случай, если pp.id был NULL
                         # Успешно найдены данные для этого звонка
                         return jsonify({"success": True, "client_data": client})
                     else:
                         # Данные не найдены для этого конкретного звонка
-                        logger.warning(f"Информация о клиенте для call_id={call_id} не найдена или нет связи с privat_processing.")
-                        return jsonify({"success": False, "error": "Информация о клиенте не найдена"})
+                        logger.warning(
+                            f"Информация о клиенте для call_id={call_id} не найдена или нет связи с privat_processing."
+                        )
+                        return jsonify(
+                            {
+                                "success": False,
+                                "error": "Информация о клиенте не найдена",
+                            }
+                        )
             finally:
                 connection.close()
         else:
@@ -1629,13 +1741,13 @@ def finesse_login():
             # Получаем реальные данные пользователя из ответа API
             try:
                 data = xmltodict.parse(response.text)
-                user_data = data.get('User', {})
+                user_data = data.get("User", {})
 
                 user = {
                     "username": username,
                     "displayName": f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}".strip(),
-                    "extension": user_data.get('extension', ''),
-                    "role": user_data.get('roles', {}).get('role', 'Agent'),
+                    "extension": user_data.get("extension", ""),
+                    "role": user_data.get("roles", {}).get("role", "Agent"),
                 }
             except Exception as e:
                 logger.error(f"Ошибка при парсинге данных пользователя: {str(e)}")
@@ -1649,10 +1761,15 @@ def finesse_login():
             # Сохраняем данные сессии Flask
             flask_session["finesse_authenticated"] = True
             flask_session["finesse_user"] = user
-            flask_session["finesse_credentials"] = (username, password) # <<< СОХРАНЯЕМ учетные данные
+            flask_session["finesse_credentials"] = (
+                username,
+                password,
+            )  # <<< СОХРАНЯЕМ учетные данные
 
             # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем сессию ПОСЛЕ записи >>>
-            logger.info(f"[finesse_login] Session content after setting keys: {dict(flask_session)}")
+            logger.info(
+                f"[finesse_login] Session content after setting keys: {dict(flask_session)}"
+            )
             # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
             # Сохраняем токен в памяти сервера # <<< УДАЛЯЕМ блок active_sessions
@@ -1662,7 +1779,9 @@ def finesse_login():
             #     "credentials": (username, password),
             # }
 
-            return jsonify({"success": True, "user": user}) # <<< УДАЛЯЕМ token из ответа
+            return jsonify(
+                {"success": True, "user": user}
+            )  # <<< УДАЛЯЕМ token из ответа
         else:
             return jsonify({"success": False, "error": "Ошибка авторизации"}), 401
     except Exception as e:
@@ -1675,7 +1794,10 @@ def finesse_session():
     auth_header = request.headers.get("Authorization")
 
     if not auth_header or not auth_header.startswith("Basic "):
-        return jsonify({"authenticated": False, "error": "Отсутствует Basic авторизация"}), 401
+        return (
+            jsonify({"authenticated": False, "error": "Отсутствует Basic авторизация"}),
+            401,
+        )
 
     try:
         # Извлекаем учетные данные из заголовка
@@ -1689,17 +1811,18 @@ def finesse_session():
 
         # Проверяем соединение с Finesse API
         finesse_url = "http://uccx1.teztour.com:8082/finesse/api/User/" + username
-        response = requests.get(
-            finesse_url,
-            auth=(username, password),
-            timeout=10
-        )
+        response = requests.get(finesse_url, auth=(username, password), timeout=10)
 
         if response.status_code != 200:
-            return jsonify({
-                "authenticated": False,
-                "error": f"Ошибка авторизации в Finesse (код {response.status_code})"
-            }), 401
+            return (
+                jsonify(
+                    {
+                        "authenticated": False,
+                        "error": f"Ошибка авторизации в Finesse (код {response.status_code})",
+                    }
+                ),
+                401,
+            )
 
         # Парсим XML-ответ
         user_data = xmltodict.parse(response.text)
@@ -1713,29 +1836,33 @@ def finesse_session():
             "extension": user_info.get("extension"),
             "state": user_info.get("state"),
             "stateChangeTime": user_info.get("stateChangeTime"),
-            "team": user_info.get("team")
+            "team": user_info.get("team"),
         }
 
         # Сохраняем данные сессии
         active_sessions[session_token] = {
             "timestamp": time.time(),
             "credentials": (username, password),
-            "user": user
+            "user": user,
         }
 
         # <<< НАЧАЛО ИЗМЕНЕНИЯ: Сохраняем состояние Finesse в сессию Flask >>>
         flask_session["finesse_authenticated"] = True
         flask_session["finesse_user"] = user
         flask_session["finesse_credentials"] = (username, password)
-        logger.info(f"[finesse_session] Finesse authenticated state set in flask_session for user {username}")
+        logger.info(
+            f"[finesse_session] Finesse authenticated state set in flask_session for user {username}"
+        )
         # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
         # Возвращаем успешный ответ с токеном и данными пользователя
-        return jsonify({
-            "authenticated": True,
-            # "token": session_token, # Токен больше не нужен
-            "user": user
-        })
+        return jsonify(
+            {
+                "authenticated": True,
+                # "token": session_token, # Токен больше не нужен
+                "user": user,
+            }
+        )
 
     except Exception as e:
         logger.error(f"Ошибка при авторизации в Finesse: {str(e)}")
@@ -1746,44 +1873,68 @@ def finesse_session():
 def finesse_agent_state():
     """Получение или изменение статуса агента"""
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем содержимое сессии >>>
-    logger.debug(f"[finesse_agent_state] Current flask_session content: {dict(flask_session)}")
+    logger.debug(
+        f"[finesse_agent_state] Current flask_session content: {dict(flask_session)}"
+    )
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Проверяем сессию Flask и извлекаем учетные данные >>>
     if not flask_session.get("finesse_authenticated"):
-         logger.warning(f"[finesse_agent_state] Пользователь не аутентифицирован в Finesse.")
-         return jsonify({"success": False, "error": "Требуется авторизация Finesse"}), 401
+        logger.warning(
+            f"[finesse_agent_state] Пользователь не аутентифицирован в Finesse."
+        )
+        return (
+            jsonify({"success": False, "error": "Требуется авторизация Finesse"}),
+            401,
+        )
 
     credentials = flask_session.get("finesse_credentials")
     if not credentials:
-         # Используем безопасное извлечение имени пользователя для лога
-         user_info_from_session = flask_session.get('finesse_user', {})
-         username_for_log = user_info_from_session.get('loginId', '[unknown]')
-         logger.error(f"[finesse_agent_state] Учетные данные Finesse не найдены в сессии для пользователя {username_for_log}")
-         return jsonify({"success": False, "error": "Ошибка сессии: Учетные данные Finesse отсутствуют"}), 500
+        # Используем безопасное извлечение имени пользователя для лога
+        user_info_from_session = flask_session.get("finesse_user", {})
+        username_for_log = user_info_from_session.get("loginId", "[unknown]")
+        logger.error(
+            f"[finesse_agent_state] Учетные данные Finesse не найдены в сессии для пользователя {username_for_log}"
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Ошибка сессии: Учетные данные Finesse отсутствуют",
+                }
+            ),
+            500,
+        )
     username, password = credentials
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
-    logger.info(f"[finesse_agent_state] Используются учетные данные для пользователя: {username}")
+    logger.info(
+        f"[finesse_agent_state] Используются учетные данные для пользователя: {username}"
+    )
 
     # Для метода GET возвращаем текущий статус
     if request.method == "GET":
         try:
             # Запрос к API Finesse для получения текущего статуса
             finesse_url = f"http://uccx1.teztour.com:8082/finesse/api/User/{username}"
-            logger.info(f"[finesse_agent_state GET] Запрос к Finesse URL: {finesse_url}")
-            response = requests.get(
-                finesse_url,
-                auth=(username, password),
-                timeout=10
+            logger.info(
+                f"[finesse_agent_state GET] Запрос к Finesse URL: {finesse_url}"
             )
-            logger.info(f"[finesse_agent_state GET] Ответ от Finesse: Статус {response.status_code}")
+            response = requests.get(finesse_url, auth=(username, password), timeout=10)
+            logger.info(
+                f"[finesse_agent_state GET] Ответ от Finesse: Статус {response.status_code}"
+            )
 
             if response.status_code != 200:
-                return jsonify({
-                    "success": False,
-                    "error": f"Ошибка получения статуса (код {response.status_code})"
-                }), response.status_code
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f"Ошибка получения статуса (код {response.status_code})",
+                        }
+                    ),
+                    response.status_code,
+                )
 
             # Парсим XML-ответ
             user_data = xmltodict.parse(response.text)
@@ -1792,19 +1943,25 @@ def finesse_agent_state():
             # <<< НАЧАЛО ИЗМЕНЕНИЯ: Обновляем flask_session >>>
             current_finesse_user = flask_session.get("finesse_user")
             if current_finesse_user:
-                 current_finesse_user["state"] = user_info.get("state")
-                 current_finesse_user["stateChangeTime"] = user_info.get("stateChangeTime")
-                 # Помечаем сессию как измененную, чтобы Flask-Session ее сохранил
-                 flask_session.modified = True
+                current_finesse_user["state"] = user_info.get("state")
+                current_finesse_user["stateChangeTime"] = user_info.get(
+                    "stateChangeTime"
+                )
+                # Помечаем сессию как измененную, чтобы Flask-Session ее сохранил
+                flask_session.modified = True
             else:
-                 logger.warning("[finesse_agent_state GET] finesse_user не найден в сессии для обновления.")
+                logger.warning(
+                    "[finesse_agent_state GET] finesse_user не найден в сессии для обновления."
+                )
             # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
-            return jsonify({
-                "success": True,
-                "state": user_info.get("state"),
-                "stateChangeTime": user_info.get("stateChangeTime")
-            })
+            return jsonify(
+                {
+                    "success": True,
+                    "state": user_info.get("state"),
+                    "stateChangeTime": user_info.get("stateChangeTime"),
+                }
+            )
 
         except Exception as e:
             logger.error(f"Ошибка при получении статуса агента: {str(e)}")
@@ -1818,7 +1975,10 @@ def finesse_agent_state():
             new_state = data.get("state")
 
             if not new_state:
-                return jsonify({"success": False, "error": "Не указан новый статус"}), 400
+                return (
+                    jsonify({"success": False, "error": "Не указан новый статус"}),
+                    400,
+                )
 
             # Подготавливаем XML для запроса изменения статуса
             xml_data = f"""<?xml version="1.0" encoding="UTF-8"?>
@@ -1834,7 +1994,7 @@ def finesse_agent_state():
                 auth=(username, password),
                 data=xml_data,
                 headers={"Content-Type": "application/xml"},
-                timeout=10
+                timeout=10,
             )
 
             if response.status_code in [200, 202]:
@@ -1842,22 +2002,30 @@ def finesse_agent_state():
                 current_finesse_user = flask_session.get("finesse_user")
                 if current_finesse_user:
                     current_finesse_user["state"] = new_state
-                    current_finesse_user["stateChangeTime"] = datetime.datetime.now().isoformat()
+                    current_finesse_user["stateChangeTime"] = (
+                        datetime.datetime.now().isoformat()
+                    )
                     # Помечаем сессию как измененную
                     flask_session.modified = True
                 else:
-                    logger.warning("[finesse_agent_state POST] finesse_user не найден в сессии для обновления.")
+                    logger.warning(
+                        "[finesse_agent_state POST] finesse_user не найден в сессии для обновления."
+                    )
                 # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
-                return jsonify({
-                    "success": True,
-                    "message": f"Статус изменен на {new_state}"
-                })
+                return jsonify(
+                    {"success": True, "message": f"Статус изменен на {new_state}"}
+                )
             else:
-                return jsonify({
-                    "success": False,
-                    "error": f"API вернул ошибку: {response.status_code}"
-                }), response.status_code
+                return (
+                    jsonify(
+                        {
+                            "success": False,
+                            "error": f"API вернул ошибку: {response.status_code}",
+                        }
+                    ),
+                    response.status_code,
+                )
 
         except Exception as e:
             logger.error(f"Ошибка при изменении статуса агента: {str(e)}")
@@ -1868,25 +2036,44 @@ def finesse_agent_state():
 def finesse_agents_status():
     """Получение статусов всех операторов"""
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем содержимое сессии >>>
-    logger.debug(f"[finesse_agents_status] Current flask_session content: {dict(flask_session)}")
+    logger.debug(
+        f"[finesse_agents_status] Current flask_session content: {dict(flask_session)}"
+    )
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Проверяем сессию Flask >>>
     if not flask_session.get("finesse_authenticated"):
-         logger.warning(f"[finesse_agents_status] Пользователь не аутентифицирован в Finesse.")
-         return jsonify({"success": False, "error": "Требуется авторизация Finesse"}), 401
+        logger.warning(
+            f"[finesse_agents_status] Пользователь не аутентифицирован в Finesse."
+        )
+        return (
+            jsonify({"success": False, "error": "Требуется авторизация Finesse"}),
+            401,
+        )
 
     credentials = flask_session.get("finesse_credentials")
     if not credentials:
-         logger.error(f"[finesse_agents_status] Учетные данные Finesse не найдены в сессии для пользователя {flask_session.get('finesse_user', {}).get('username')}")
-         return jsonify({"success": False, "error": "Ошибка сессии: Учетные данные Finesse отсутствуют"}), 500
+        logger.error(
+            f"[finesse_agents_status] Учетные данные Finesse не найдены в сессии для пользователя {flask_session.get('finesse_user', {}).get('username')}"
+        )
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": "Ошибка сессии: Учетные данные Finesse отсутствуют",
+                }
+            ),
+            500,
+        )
     username, password = credentials
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
     # Получаем данные сессии # <<< УДАЛЯЕМ блок >>>
     # session_data = active_sessions[token]
     # username, password = session_data["credentials"]
-    logger.info(f"[finesse_agents_status] Используются учетные данные для пользователя: {username}") # Лог пользователя
+    logger.info(
+        f"[finesse_agents_status] Используются учетные данные для пользователя: {username}"
+    )  # Лог пользователя
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Добавляем логирование пароля и URL >>>
     # logger.info(f"[finesse_agents_status] Проверка учетных данных - Username: '{username}', Password: '{password}'")
 
@@ -1894,25 +2081,32 @@ def finesse_agents_status():
         # Запрос к API Finesse для получения списка всех операторов
         finesse_url = "http://uccx1.teztour.com:8082/finesse/api/Users"
         # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем URL и статус ответа >>>
-        logger.info(f"[finesse_agents_status] Запрос к Finesse URL: {finesse_url}") # Лог URL
+        logger.info(
+            f"[finesse_agents_status] Запрос к Finesse URL: {finesse_url}"
+        )  # Лог URL
         auth = (username, password)
-        response = requests.get(
-            finesse_url,
-            auth=auth,
-            timeout=15
-        )
-        logger.info(f"[finesse_agents_status] Ответ от Finesse: Статус {response.status_code}") # Лог ответа Finesse
+        response = requests.get(finesse_url, auth=auth, timeout=15)
+        logger.info(
+            f"[finesse_agents_status] Ответ от Finesse: Статус {response.status_code}"
+        )  # Лог ответа Finesse
         # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
         if response.status_code != 200:
             # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем тело ошибки, если есть >>>
-            error_body = response.text[:500] # Ограничим длину на всякий случай
-            logger.error(f"[finesse_agents_status] Ошибка от Finesse API ({response.status_code}): {error_body}")
+            error_body = response.text[:500]  # Ограничим длину на всякий случай
+            logger.error(
+                f"[finesse_agents_status] Ошибка от Finesse API ({response.status_code}): {error_body}"
+            )
             # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
-            return jsonify({
-                "success": False,
-                "error": f"Ошибка получения списка операторов (код {response.status_code})"
-            }), response.status_code
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": f"Ошибка получения списка операторов (код {response.status_code})",
+                    }
+                ),
+                response.status_code,
+            )
 
         # Парсим XML-ответ
         users_data = xmltodict.parse(response.text)
@@ -1929,16 +2123,18 @@ def finesse_agents_status():
             if not user.get("extension"):
                 continue
 
-            formatted_users.append({
-                "loginId": user.get("loginId"),
-                "firstName": user.get("firstName"),
-                "lastName": user.get("lastName"),
-                "displayName": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(),
-                "extension": user.get("extension"),
-                "status": user.get("state"),
-                "team": user.get("teamName"),
-                "lastStateChange": user.get("stateChangeTime")
-            })
+            formatted_users.append(
+                {
+                    "loginId": user.get("loginId"),
+                    "firstName": user.get("firstName"),
+                    "lastName": user.get("lastName"),
+                    "displayName": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(),
+                    "extension": user.get("extension"),
+                    "status": user.get("state"),
+                    "team": user.get("teamName"),
+                    "lastStateChange": user.get("stateChangeTime"),
+                }
+            )
 
         # Сортируем пользователей по имени
         formatted_users.sort(key=lambda x: x["displayName"])
@@ -1982,9 +2178,16 @@ def finesse_health_check():
         if response.status_code == 200:
             return jsonify({"status": "ok", "message": "API Finesse доступно"})
         else:
-            return jsonify({"status": "error", "message": f"API Finesse недоступно, код: {response.status_code}"})
+            return jsonify(
+                {
+                    "status": "error",
+                    "message": f"API Finesse недоступно, код: {response.status_code}",
+                }
+            )
     except Exception as e:
-        return jsonify({"status": "error", "message": f"Ошибка при проверке API: {str(e)}"})
+        return jsonify(
+            {"status": "error", "message": f"Ошибка при проверке API: {str(e)}"}
+        )
 
 
 @calls.route("/finesse/check-token", methods=["POST"])
@@ -2013,16 +2216,14 @@ def check_token_validity():
         session_data["timestamp"] = time.time()
 
         # Возвращаем данные пользователя
-        return jsonify({
-            "valid": True,
-            "user": session_data.get("user", {})
-        })
+        return jsonify({"valid": True, "user": session_data.get("user", {})})
 
     return jsonify({"valid": False, "error": "Недействительный токен"})
 
 
 def setup_session_cleaner():
     """Настройка автоматической очистки устаревших сессий"""
+
     def clean_old_sessions():
         now = time.time()
         expired_tokens = []
@@ -2038,7 +2239,9 @@ def setup_session_cleaner():
         #     del active_sessions[token]
 
         # Просто логируем, что планировщик жив (если нужно)
-        logger.debug("Планировщик очистки сессий активен (логика active_sessions удалена).")
+        logger.debug(
+            "Планировщик очистки сессий активен (логика active_sessions удалена)."
+        )
 
         # Планируем следующую очистку через час
         threading.Timer(3600, clean_old_sessions).start()
@@ -2048,38 +2251,58 @@ def setup_session_cleaner():
 
 
 # Новая функция для тестирования соединений
-@calls.route('/test-oracle-connections')
+@calls.route("/test-oracle-connections")
 def test_oracle_connections():
     results = {}
     try:
         with SessionOracleCRM() as session:
-            results['crm_test'] = str(session.execute(text("SELECT 1 FROM DUAL")).fetchone())
-            tables_result = session.execute(text("SELECT table_name FROM user_tables")).fetchall()
-            results['crm_tables'] = [t[0] for t in tables_result] if tables_result else []
+            results["crm_test"] = str(
+                session.execute(text("SELECT 1 FROM DUAL")).fetchone()
+            )
+            tables_result = session.execute(
+                text("SELECT table_name FROM user_tables")
+            ).fetchall()
+            results["crm_tables"] = (
+                [t[0] for t in tables_result] if tables_result else []
+            )
     except Exception as e:
-        results['crm_error'] = str(e)
+        results["crm_error"] = str(e)
 
     try:
         with SessionSalesSchema() as session:
-            results['sales_test'] = str(session.execute(text("SELECT 1 FROM DUAL")).fetchone())
-            tables_result = session.execute(text("SELECT table_name FROM user_tables")).fetchall()
-            results['sales_tables'] = [t[0] for t in tables_result] if tables_result else []
+            results["sales_test"] = str(
+                session.execute(text("SELECT 1 FROM DUAL")).fetchone()
+            )
+            tables_result = session.execute(
+                text("SELECT table_name FROM user_tables")
+            ).fetchall()
+            results["sales_tables"] = (
+                [t[0] for t in tables_result] if tables_result else []
+            )
 
             # Проверка существования и структуры таблицы T_CALL_INFO
             try:
-                column_result = session.execute(text("""
+                column_result = session.execute(
+                    text(
+                        """
                     SELECT column_name FROM all_tab_columns
                     WHERE table_name = 'T_CALL_INFO'
-                    """)).fetchall()
-                results['call_info_columns'] = [c[0] for c in column_result] if column_result else []
+                    """
+                    )
+                ).fetchall()
+                results["call_info_columns"] = (
+                    [c[0] for c in column_result] if column_result else []
+                )
 
                 # Проверка наличия данных
-                count_result = session.execute(text("SELECT COUNT(*) FROM T_CALL_INFO")).fetchone()
-                results['call_info_count'] = count_result[0] if count_result else 0
+                count_result = session.execute(
+                    text("SELECT COUNT(*) FROM T_CALL_INFO")
+                ).fetchone()
+                results["call_info_count"] = count_result[0] if count_result else 0
             except Exception as e:
-                results['call_info_error'] = str(e)
+                results["call_info_error"] = str(e)
     except Exception as e:
-        results['sales_error'] = str(e)
+        results["sales_error"] = str(e)
 
     return jsonify(results)
 
@@ -2119,7 +2342,9 @@ def contact_center_vilnius_tel():
 
     # Для новых звонков (type=newcall) или если тип не указан
     # Удаляем все пробелы и символы '+' из номера
-    clean_ani_input = ani.replace(" ", "").lstrip('+') # Используем новое имя для входного чистого ani
+    clean_ani_input = ani.replace(" ", "").lstrip(
+        "+"
+    )  # Используем новое имя для входного чистого ani
 
     logger.info(f"Поиск агентства по очищенному телефону: {clean_ani_input}")
 
@@ -2133,26 +2358,36 @@ def contact_center_vilnius_tel():
         # Получаем данные агентства
         with SessionOracleCRM() as session_crm:
             # Поиск агентства по телефону с улучшенным поиском
-            sql = text("""
+            sql = text(
+                """
             SELECT AGENCY_ID, AGENCY_PHONE
             FROM T_AGENCY_PHONE
             WHERE REPLACE(AGENCY_PHONE, ' ', '') LIKE :phone
-            """)
+            """
+            )
 
             # Для большей надежности ищем только по цифрам номера
-            clean_ani_digits = ''.join(c for c in clean_ani_input if c.isdigit()) # Используем чистое имя clean_ani_digits
+            clean_ani_digits = "".join(
+                c for c in clean_ani_input if c.isdigit()
+            )  # Используем чистое имя clean_ani_digits
 
             # <<< НАЧАЛО ИЗМЕНЕНИЯ: Проверка на пустые цифры >>>
             if not clean_ani_digits:
-                logger.warning(f"Не удалось извлечь цифры из номера: '{clean_ani_input}'. Поиск агентства невозможен.")
+                logger.warning(
+                    f"Не удалось извлечь цифры из номера: '{clean_ani_input}'. Поиск агентства невозможен."
+                )
                 return render_template("agency_not_found.html", ani=ani)
             # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
             logger.info(f"Поиск по чистым цифрам номера: {clean_ani_digits}")
-            agency = session_crm.execute(sql, {'phone': f'%{clean_ani_digits}%'}).fetchone()
+            agency = session_crm.execute(
+                sql, {"phone": f"%{clean_ani_digits}%"}
+            ).fetchone()
 
             if not agency:
-                logger.warning(f"Агентство с телефоном {ani} ({clean_ani_digits}) не найдено")
+                logger.warning(
+                    f"Агентство с телефоном {ani} ({clean_ani_digits}) не найдено"
+                )
                 return render_template("agency_not_found.html", ani=ani)
 
             # Здесь определяем agency_id
@@ -2185,7 +2420,7 @@ def contact_center_vilnius_tel():
 
                 # Выполняем запрос
                 call_history_result = session_sales.execute(
-                    call_history_sql, {'agency_id': str(agency_id)}
+                    call_history_sql, {"agency_id": str(agency_id)}
                 ).fetchall()
 
                 # Преобразуем результаты в список словарей
@@ -2211,7 +2446,9 @@ def contact_center_vilnius_tel():
         # Перед рендерингом шаблона добавим отладочный вывод:
         logger.info(f"Last call data: {last_call if last_call else 'None'}")
         if call_history:
-            logger.info(f"First call history record keys: {list(call_history[0].keys())}")
+            logger.info(
+                f"First call history record keys: {list(call_history[0].keys())}"
+            )
 
         try:
             # Получаем данные агентства из XML-шлюза
@@ -2230,39 +2467,57 @@ def contact_center_vilnius_tel():
             agency_data = {}
 
             # Базовые данные агентства
-            agency_data['agency_name'] = root.findtext(".//name", f"Имя агентства не получено (ID: {agency_id})")
-            agency_data['company_name_en'] = root.findtext(".//nameEng", "")
-            agency_data['agency_city'] = root.findtext(".//city", "")
-            agency_data['agency_percent'] = root.findtext(".//percent", "")
-            agency_data['agency_front_office'] = root.findtext(".//frontOffice", "")
-            agency_data['agency_contract'] = root.findtext(".//contract", "")
-            agency_data['agency_quantity_tourists'] = root.findtext(".//sentTourists", "0")
-            agency_data['agency_boss'] = root.findtext(".//boss", "")
-            agency_data['agency_curator_name'] = root.findtext(".//curator/fullName", "")
-            agency_data['agency_blacklist'] = "Yes" if root.findtext(".//blackList") == "true" else "No"
+            agency_data["agency_name"] = root.findtext(
+                ".//name", f"Имя агентства не получено (ID: {agency_id})"
+            )
+            agency_data["company_name_en"] = root.findtext(".//nameEng", "")
+            agency_data["agency_city"] = root.findtext(".//city", "")
+            agency_data["agency_percent"] = root.findtext(".//percent", "")
+            agency_data["agency_front_office"] = root.findtext(".//frontOffice", "")
+            agency_data["agency_contract"] = root.findtext(".//contract", "")
+            agency_data["agency_quantity_tourists"] = root.findtext(
+                ".//sentTourists", "0"
+            )
+            agency_data["agency_boss"] = root.findtext(".//boss", "")
+            agency_data["agency_curator_name"] = root.findtext(
+                ".//curator/fullName", ""
+            )
+            agency_data["agency_blacklist"] = (
+                "Yes" if root.findtext(".//blackList") == "true" else "No"
+            )
 
             # Получаем сотрудников агентства
             managers = root.findall(".//managers/manager")
-            agency_data['agency_employee'] = " / ".join([m.text for m in managers if m.text is not None])
+            agency_data["agency_employee"] = " / ".join(
+                [m.text for m in managers if m.text is not None]
+            )
 
             # Ищем контактную информацию, связанную с номером телефона
             clean_ani = ani.replace("+", "").replace(" ", "")
             contact_found = False
             for contact in root.findall(".//contacts/contact"):
                 contact_value = contact.findtext("value", "")
-                if contact_value and clean_ani in contact_value.replace("+", "").replace(" ", ""):
-                    agency_data['agency_contact_person'] = contact.findtext("person", "")
-                    agency_data['agency_contact_description'] = contact.findtext("description", "")
+                if contact_value and clean_ani in contact_value.replace(
+                    "+", ""
+                ).replace(" ", ""):
+                    agency_data["agency_contact_person"] = contact.findtext(
+                        "person", ""
+                    )
+                    agency_data["agency_contact_description"] = contact.findtext(
+                        "description", ""
+                    )
                     contact_found = True
                     logger.info(f"Найдена контактная информация для номера {ani}")
                     break
 
             if not contact_found:
-                agency_data['agency_contact_person'] = ""
-                agency_data['agency_contact_description'] = ""
+                agency_data["agency_contact_person"] = ""
+                agency_data["agency_contact_description"] = ""
                 logger.warning(f"Контактная информация для номера {ani} не найдена")
 
-            logger.info(f"Получены данные агентства из XML: {agency_data['agency_name']}")
+            logger.info(
+                f"Получены данные агентства из XML: {agency_data['agency_name']}"
+            )
 
             # Добавить после успешного получения данных агентства из XML
             # Примерно после строки: logger.info(f"Получены данные агентства из XML: {agency_data['agency_name']}")
@@ -2274,53 +2529,76 @@ def contact_center_vilnius_tel():
                 if not pk_record:
                     # Создаем новую запись звонка
                     with session_scope() as db_session:
-                        pk_record = record_stat_to_db(db_session,
-                                                     curator=request.args.get("curator_id", ""),
-                                                     ag_id=agency_id,
-                                                     tel=ani)
+                        pk_record = record_stat_to_db(
+                            db_session,
+                            curator=request.args.get("curator_id", ""),
+                            ag_id=agency_id,
+                            tel=ani,
+                        )
                         flask_session["pk_record"] = pk_record
                         logger.info(f"Создана новая запись о звонке с ID: {pk_record}")
 
                 # Обновляем имя агентства в записи звонка
-                if pk_record and agency_data.get('agency_name') and agency_id != '0' and 'name_updated' not in flask_session:
-                    write_agency_name(pk_record, agency_data['agency_name'], engine_sales_schema)
-                    flask_session['name_updated'] = True
-                    logger.info(f"Обновлено имя агентства для звонка {pk_record}: {agency_data['agency_name']}")
+                if (
+                    pk_record
+                    and agency_data.get("agency_name")
+                    and agency_id != "0"
+                    and "name_updated" not in flask_session
+                ):
+                    write_agency_name(
+                        pk_record, agency_data["agency_name"], engine_sales_schema
+                    )
+                    flask_session["name_updated"] = True
+                    logger.info(
+                        f"Обновлено имя агентства для звонка {pk_record}: {agency_data['agency_name']}"
+                    )
 
                 # Обновляем менеджера агентства в записи звонка
-                if pk_record and agency_data.get('agency_contact_person') and 'manager_updated' not in flask_session:
-                    write_agency_manager(pk_record, agency_data['agency_contact_person'], engine_sales_schema)
-                    flask_session['manager_updated'] = True
-                    logger.info(f"Обновлен менеджер агентства для звонка {pk_record}: {agency_data['agency_contact_person']}")
+                if (
+                    pk_record
+                    and agency_data.get("agency_contact_person")
+                    and "manager_updated" not in flask_session
+                ):
+                    write_agency_manager(
+                        pk_record,
+                        agency_data["agency_contact_person"],
+                        engine_sales_schema,
+                    )
+                    flask_session["manager_updated"] = True
+                    logger.info(
+                        f"Обновлен менеджер агентства для звонка {pk_record}: {agency_data['agency_contact_person']}"
+                    )
             except Exception as e:
-                logger.error(f"Ошибка при записи данных агентства в T_CALL_INFO: {str(e)}")
+                logger.error(
+                    f"Ошибка при записи данных агентства в T_CALL_INFO: {str(e)}"
+                )
                 traceback.print_exc()
         except Exception as e:
             logger.error(f"Ошибка при получении данных агентства: {str(e)}")
             traceback.print_exc()
             agency_data = {
-                'agency_name': f'Ошибка при получении данных (ID: {agency_id})',
-                'company_name_en': '',
-                'agency_city': '',
-                'agency_percent': '',
-                'agency_front_office': '',
-                'agency_contract': '',
-                'agency_quantity_tourists': '0',
-                'agency_boss': '',
-                'agency_curator_name': '',
-                'agency_blacklist': 'No',
-                'agency_contact_person': '',
-                'agency_contact_description': '',
-                'agency_employee': ''
+                "agency_name": f"Ошибка при получении данных (ID: {agency_id})",
+                "company_name_en": "",
+                "agency_city": "",
+                "agency_percent": "",
+                "agency_front_office": "",
+                "agency_contract": "",
+                "agency_quantity_tourists": "0",
+                "agency_boss": "",
+                "agency_curator_name": "",
+                "agency_blacklist": "No",
+                "agency_contact_person": "",
+                "agency_contact_description": "",
+                "agency_employee": "",
             }
     except Exception as e:
         logger.error(f"Ошибка при получении данных агентства: {str(e)}")
         traceback.print_exc()
         agency_data = {
-            'agency_name': f'Ошибка при получении данных (ID: {agency_id})',
-            'company_name_en': '',
-            'agency_city': '',
-            'agency_employee': ''
+            "agency_name": f"Ошибка при получении данных (ID: {agency_id})",
+            "company_name_en": "",
+            "agency_city": "",
+            "agency_employee": "",
         }
 
     # Если это новый звонок и указан curator_id
@@ -2335,10 +2613,12 @@ def contact_center_vilnius_tel():
             call=last_call,
             calls=call_history,
             phone_number=f"+{ani}",
-            agency_name=agency_data.get('agency_name', f'Имя агентства не получено (ID: {agency_id})'),
+            agency_name=agency_data.get(
+                "agency_name", f"Имя агентства не получено (ID: {agency_id})"
+            ),
             curator=request.args.get("curator_id", ""),
             ani=ani,
-            curator_id=request.args.get("curator_id")
+            curator_id=request.args.get("curator_id"),
         )
 
     # В других случаях - обычный шаблон contact_center
@@ -2346,7 +2626,7 @@ def contact_center_vilnius_tel():
         "contact_center.html",
         agency_id=agency_id,
         call_history=call_history,
-        last_call=last_call
+        last_call=last_call,
     )
 
 
@@ -2354,7 +2634,8 @@ def get_last_calls_safe(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
     """Безопасная версия функции get_last_calls, использующая прямые SQL запросы"""
     try:
         with SessionSalesSchema() as session:
-            query = text("""
+            query = text(
+                """
             SELECT
                 CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
                 CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME,
@@ -2373,8 +2654,11 @@ def get_last_calls_safe(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
             WHERE AGENCY_ID = :agency_id
             ORDER BY CALL_INFO_ID DESC
             FETCH FIRST :limit ROWS ONLY
-            """)
-            result = session.execute(query, {"agency_id": agency_id, "limit": limit}).fetchall()
+            """
+            )
+            result = session.execute(
+                query, {"agency_id": agency_id, "limit": limit}
+            ).fetchall()
             return [dict(row) for row in result]
     except Exception as e:
         logger.error(f"Ошибка при получении истории звонков: {str(e)}")
@@ -2401,9 +2685,11 @@ def get_calls():
     """Алиас для get_moscow_calls для совместимости с JS"""
     return get_moscow_calls()
 
+
 # Глобальная переменная для кэширования
 _calls_cache = None
 _cache_timestamp = None
+
 
 def get_cached_calls():
     """Возвращает кэшированные данные о звонках, если они актуальны"""
@@ -2417,6 +2703,7 @@ def get_cached_calls():
         return None
 
     return _calls_cache
+
 
 def update_calls_cache(calls):
     """Обновляет кэш звонков"""
@@ -2433,14 +2720,18 @@ def get_moscow_operator_stats():
 
     try:
         # Получаем дату из параметров запроса, по умолчанию - сегодня
-        selected_date_str = request.args.get('date')
+        selected_date_str = request.args.get("date")
         if selected_date_str:
             try:
-                selected_date = datetime.datetime.strptime(selected_date_str, '%Y-%m-%d').date()
+                selected_date = datetime.datetime.strptime(
+                    selected_date_str, "%Y-%m-%d"
+                ).date()
                 date_filter_sql = "%s"
                 query_params = (selected_date,)
             except ValueError:
-                logger.warning(f"Неверный формат даты для статистики: {selected_date_str}. Используется текущая дата.")
+                logger.warning(
+                    f"Неверный формат даты для статистики: {selected_date_str}. Используется текущая дата."
+                )
                 date_filter_sql = "CURDATE()"
                 query_params = ()
         else:
@@ -2452,8 +2743,19 @@ def get_moscow_operator_stats():
 
         connection = get_db_connection()
         if not connection:
-            logger.error("Не удалось подключиться к базе данных для статистики операторов")
-            return jsonify({"success": False, "error": "Ошибка подключения к базе данных", "stats": []}), 500
+            logger.error(
+                "Не удалось подключиться к базе данных для статистики операторов"
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Ошибка подключения к базе данных",
+                        "stats": [],
+                    }
+                ),
+                500,
+            )
 
         try:
             with connection.cursor(pymysql.cursors.DictCursor) as cursor:
@@ -2471,11 +2773,15 @@ def get_moscow_operator_stats():
                 cursor.execute(query, query_params)
                 stats = cursor.fetchall()
 
-                logger.info(f"Получено {len(stats)} записей статистики операторов за {selected_date}")
+                logger.info(
+                    f"Получено {len(stats)} записей статистики операторов за {selected_date}"
+                )
                 return jsonify({"success": True, "stats": stats})
 
         except Exception as e:
-            logger.error(f"Ошибка при выполнении запроса статистики операторов: {str(e)}")
+            logger.error(
+                f"Ошибка при выполнении запроса статистики операторов: {str(e)}"
+            )
             logger.error(traceback.format_exc())
             return jsonify({"success": False, "error": str(e), "stats": []}), 500
         finally:
@@ -2498,8 +2804,19 @@ def get_moscow_calls_monthly_stats():
     try:
         connection = get_db_connection()
         if not connection:
-            logger.error("Не удалось подключиться к базе данных для ежемесячной статистики")
-            return jsonify({"success": False, "error": "Ошибка подключения к базе данных", "stats": []}), 500
+            logger.error(
+                "Не удалось подключиться к базе данных для ежемесячной статистики"
+            )
+            return (
+                jsonify(
+                    {
+                        "success": False,
+                        "error": "Ошибка подключения к базе данных",
+                        "stats": [],
+                    }
+                ),
+                500,
+            )
 
         try:
             with connection.cursor(pymysql.cursors.DictCursor) as cursor:
@@ -2519,7 +2836,9 @@ def get_moscow_calls_monthly_stats():
                 return jsonify({"success": True, "stats": stats})
 
         except Exception as e:
-            logger.error(f"Ошибка при выполнении запроса ежемесячной статистики: {str(e)}")
+            logger.error(
+                f"Ошибка при выполнении запроса ежемесячной статистики: {str(e)}"
+            )
             logger.error(traceback.format_exc())
             return jsonify({"success": False, "error": str(e), "stats": []}), 500
         finally:
@@ -2535,7 +2854,7 @@ def get_moscow_calls_monthly_stats():
 @calls.route("/api/agencies")
 def get_agencies():
     logger = logging.getLogger(__name__)
-    search_term = request.args.get('search', '').strip()
+    search_term = request.args.get("search", "").strip()
     agencies_list = []
     connection_error = None
 
@@ -2543,7 +2862,10 @@ def get_agencies():
     if not connection:
         connection_error = "Не удалось установить соединение с базой данных для получения списка агентств"
         logger.error(connection_error)
-        return jsonify({"success": False, "error": connection_error, "agencies": []}), 500
+        return (
+            jsonify({"success": False, "error": connection_error, "agencies": []}),
+            500,
+        )
 
     try:
         with connection.cursor(pymysql.cursors.DictCursor) as cursor:
@@ -2587,15 +2909,21 @@ def get_agencies():
                     EXISTS (SELECT 1 FROM telephone t WHERE t.id = ag.tel_6_id AND t.number LIKE %s) OR
                     EXISTS (SELECT 1 FROM telephone t WHERE t.id = ag.tel_7_id AND t.number LIKE %s)
                 ) """
-                params.extend([search_like] * 13) # Было 6, стало 6 + 7 = 13
-                base_query += " ORDER BY ag.name LIMIT 200" # Ограничиваем вывод, если есть поисковый запрос
+                params.extend([search_like] * 13)  # Было 6, стало 6 + 7 = 13
+                base_query += " ORDER BY ag.name LIMIT 200"  # Ограничиваем вывод, если есть поисковый запрос
             else:
-                base_query += " ORDER BY ag.name" # Без LIMIT, если поискового запроса нет
+                base_query += (
+                    " ORDER BY ag.name"  # Без LIMIT, если поискового запроса нет
+                )
 
-            logger.debug(f"Executing agencies query: {cursor.mogrify(base_query, params) if params else base_query}")
+            logger.debug(
+                f"Executing agencies query: {cursor.mogrify(base_query, params) if params else base_query}"
+            )
             cursor.execute(base_query, params)
             agencies_raw = cursor.fetchall()
-            logger.info(f"Найдено {len(agencies_raw)} агентств по запросу: '{search_term}'")
+            logger.info(
+                f"Найдено {len(agencies_raw)} агентств по запросу: '{search_term}'"
+            )
 
             agencies_list = []
             for agency_data in agencies_raw:
@@ -2604,16 +2932,32 @@ def get_agencies():
                     phone_key = f"telephone_{i}_number"
                     if agency_data.get(phone_key):
                         all_phones_parts.append(agency_data[phone_key])
-                agency_data['ALL_TELEPHONES_CONCAT'] = " ".join(filter(None, all_phones_parts))
+                agency_data["ALL_TELEPHONES_CONCAT"] = " ".join(
+                    filter(None, all_phones_parts)
+                )
                 agencies_list.append(agency_data)
 
     except pymysql.MySQLError as e:
         logger.error(f"MySQL ошибка при получении списка агентств: {e}")
-        return jsonify({"success": False, "error": f"Ошибка базы данных: {e}", "agencies": []}), 500
+        return (
+            jsonify(
+                {"success": False, "error": f"Ошибка базы данных: {e}", "agencies": []}
+            ),
+            500,
+        )
     except Exception as e:
         logger.error(f"Непредвиденная ошибка при получении списка агентств: {e}")
         logger.error(traceback.format_exc())
-        return jsonify({"success": False, "error": f"Внутренняя ошибка сервера: {e}", "agencies": []}), 500
+        return (
+            jsonify(
+                {
+                    "success": False,
+                    "error": f"Внутренняя ошибка сервера: {e}",
+                    "agencies": [],
+                }
+            ),
+            500,
+        )
     finally:
         if connection:
             connection.close()
@@ -2651,32 +2995,50 @@ def get_agency_details(agency_id):
                 LEFT JOIN regions rg ON ag.region = rg.id
                 WHERE ag.id = %s AND (ag.hidden = 0 OR ag.hidden IS NULL)
             """
-            logger.debug(f"Executing agency details query: {cursor.mogrify(query, (agency_id,))}")
+            logger.debug(
+                f"Executing agency details query: {cursor.mogrify(query, (agency_id,))}"
+            )
             cursor.execute(query, (agency_id,))
             agency_details = cursor.fetchone()
 
             if agency_details:
                 logger.info(f"Найдены детали для агентства ID: {agency_id}")
                 # Получение всех телефонных номеров
-                phone_fields = ['tel_1_id', 'tel_2_id', 'tel_3_id', 'tel_4_id', 'tel_5_id', 'tel_6_id', 'tel_7_id']
-                phone_ids = [agency_details[pf] for pf in phone_fields if agency_details.get(pf) and agency_details[pf] > 0]
+                phone_fields = [
+                    "tel_1_id",
+                    "tel_2_id",
+                    "tel_3_id",
+                    "tel_4_id",
+                    "tel_5_id",
+                    "tel_6_id",
+                    "tel_7_id",
+                ]
+                phone_ids = [
+                    agency_details[pf]
+                    for pf in phone_fields
+                    if agency_details.get(pf) and agency_details[pf] > 0
+                ]
 
-                agency_details['telephones'] = []
+                agency_details["telephones"] = []
                 if phone_ids:
-                    phone_placeholders = ', '.join(['%s'] * len(phone_ids))
+                    phone_placeholders = ", ".join(["%s"] * len(phone_ids))
                     # Изменяем запрос, чтобы получать time_rezhim_id и comment из telephone
                     phone_query = f"""SELECT id, number, comment, time_rezhim_id
                                        FROM telephone
                                        WHERE id IN ({phone_placeholders})"""
 
-                    logger.debug(f"Executing telephones query: {cursor.mogrify(phone_query, phone_ids)}")
+                    logger.debug(
+                        f"Executing telephones query: {cursor.mogrify(phone_query, phone_ids)}"
+                    )
                     cursor.execute(phone_query, phone_ids)
                     phones_data = cursor.fetchall()
 
                     # Для каждого телефона получаем его режим работы, если он есть
                     for phone in phones_data:
-                        phone['work_schedule'] = None # Инициализируем поле для режима работы
-                        time_rezhim_id_for_phone = phone.get('time_rezhim_id')
+                        phone["work_schedule"] = (
+                            None  # Инициализируем поле для режима работы
+                        )
+                        time_rezhim_id_for_phone = phone.get("time_rezhim_id")
                         if time_rezhim_id_for_phone and time_rezhim_id_for_phone > 0:
                             schedule_query = "SELECT * FROM time_rezhim WHERE id = %s"
                             cursor.execute(schedule_query, (time_rezhim_id_for_phone,))
@@ -2684,30 +3046,51 @@ def get_agency_details(agency_id):
                             if schedule_data:
                                 # Форматируем данные о режиме работы для удобства
                                 formatted_schedule = {}
-                                days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+                                days = [
+                                    "monday",
+                                    "tuesday",
+                                    "wednesday",
+                                    "thursday",
+                                    "friday",
+                                    "saturday",
+                                    "sunday",
+                                ]
                                 for day in days:
-                                    from_time = schedule_data.get(f'{day}_from')
-                                    to_time = schedule_data.get(f'{day}_to')
+                                    from_time = schedule_data.get(f"{day}_from")
+                                    to_time = schedule_data.get(f"{day}_to")
                                     if from_time and to_time:
                                         # Преобразуем timedelta в строку HH:MM
-                                        formatted_schedule[day] = f"{str(from_time).split(':')[0]:0>2}:{str(from_time).split(':')[1]:0>2} - {str(to_time).split(':')[0]:0>2}:{str(to_time).split(':')[1]:0>2}"
+                                        formatted_schedule[day] = (
+                                            f"{str(from_time).split(':')[0]:0>2}:{str(from_time).split(':')[1]:0>2} - {str(to_time).split(':')[0]:0>2}:{str(to_time).split(':')[1]:0>2}"
+                                        )
                                     else:
                                         formatted_schedule[day] = "Выходной"
-                                phone['work_schedule'] = formatted_schedule
+                                phone["work_schedule"] = formatted_schedule
 
-                    agency_details['telephones'] = phones_data # Теперь это список телефонов с их режимами работы
-                    logger.info(f"Для агентства ID {agency_id} найдено {len(phones_data)} телефонов с информацией о режиме работы.")
+                    agency_details["telephones"] = (
+                        phones_data  # Теперь это список телефонов с их режимами работы
+                    )
+                    logger.info(
+                        f"Для агентства ID {agency_id} найдено {len(phones_data)} телефонов с информацией о режиме работы."
+                    )
             else:
                 logger.warning(f"Агентство с ID: {agency_id} не найдено или скрыто.")
                 return jsonify({"success": False, "error": "Агентство не найдено"}), 404
 
     except pymysql.MySQLError as e:
-        logger.error(f"MySQL ошибка при получении деталей агентства ID {agency_id}: {e}")
+        logger.error(
+            f"MySQL ошибка при получении деталей агентства ID {agency_id}: {e}"
+        )
         return jsonify({"success": False, "error": f"Ошибка базы данных: {e}"}), 500
     except Exception as e:
-        logger.error(f"Непредвиденная ошибка при получении деталей агентства ID {agency_id}: {e}")
+        logger.error(
+            f"Непредвиденная ошибка при получении деталей агентства ID {agency_id}: {e}"
+        )
         logger.error(traceback.format_exc())
-        return jsonify({"success": False, "error": f"Внутренняя ошибка сервера: {e}"}), 500
+        return (
+            jsonify({"success": False, "error": f"Внутренняя ошибка сервера: {e}"}),
+            500,
+        )
     finally:
         if connection:
             connection.close()

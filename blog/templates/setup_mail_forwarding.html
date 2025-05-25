@@ -1,224 +1,1395 @@
 {% extends 'layout.html' %}
 
-{% block content %}
-<head>
-    <meta charset="UTF-8">
-    <title>Настройка переадресации почты</title>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;700&display=swap" rel="stylesheet">
-</head>
-<body>
-    <div class="container">
-        <h1>Настройка переадресации почты</h1>
-
-        <p class="sub-heading icon-prefix">💡 <strong>Как зайти в почтовый веб-интерфейс?</strong></p>
-        <p>Откройте браузер и перейдите по <a href="https://mail.tez-tour.com/?Skin=hPronto-">данному адресу</a>.</p>
-        <p>Появится страница входа.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/ProntoLoginOpen.png') }}" alt="Pronto Mail Login Page">
+{% block main_page %}
+<div class="mail-forwarding-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-share"></i>
         </div>
-        <p>Введите ваш почтовый логин или имя вашего почтового ящика полностью,
-            в который требуется войти, и пароль от него. Нажмите на кнопку <kbd>Войти</kbd>.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/ProntoLogin.png') }}" alt="Pronto Mail Credentials Input">
+        <div class="header-text">
+          <h1 class="page-title">Настройка переадресации почты</h1>
+          <p class="page-subtitle">Полное руководство по настройке автоматической переадресации писем через веб-интерфейс почтового сервера</p>
         </div>
-        <p>Откроется web-интерфейс к Вашему почтовому ящику.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoMail.png') }}" alt="Pronto Mail Web Interface">
-        </div>
-
-        <p class="sub-heading icon-prefix">💡 <strong>Создание правил</strong></p>
-        <p>Вы можете создавать, редактировать и удалять правила, а так же устанавливать порядок их выполнения.
-            В т.ч. с помощью правила можно переадресовывать или перенаправлять сообщения электронной почты, соответствующие условиям.
-            Для настройки переадресации Вашей почты создайте соответствующее правило:</p>
-        <p>1. Выберите меню <kbd>Настройки</kbd> -> <kbd>Правила</kbd></p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoRulesMail.png') }}" alt="Pronto Mail Settings - Rules">
-        </div><br>
-        <div style="display: flex; align-items: center;">
-            <p>2.Чтобы создать новое правило, нажмите кнопку
-             <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png') }}" alt="Add Rule Button" style="vertical-align: middle; margin-left: 5px; height: 24px;"></p>
-        </div>
-        <p>Откроется форма создания правила.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoNameRule.png') }}" alt="Pronto Mail New Rule Form">
-        </div>
-        <p>3.Введите название правила.</p>
-        <p>4. Нажмите кнопку <kbd>Расширенный режим</kbd>.</p>
-        <p>Откроется форма создания характеристик правила.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoCreateRule.png') }}" alt="Pronto Mail Advanced Rule Creation Form">
-        </div>
-
-        <div style="display: flex; align-items: center;">
-            <p>В разделе <kbd>Применить к</kbd> выберите одну или несколько характеристик для входящих писем,
-             которые будут проверяться. Как только в письме встретится такая характеристика, начнет выполняться правило.
-              Добавьте нужные характеристики с помощью кнопки
-             <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png') }}" alt="Add Rule Button" style="vertical-align: middle; margin-left: 5px; height: 24px;"></p>
-        </div>
-        <div class="note-block">
-            <p><strong>🔥Внимание</strong></p>
-            <p><strong>Пожалуйста, обратите внимание, что все правила будут выполняться для всех входящих писем. Выполнение произойдет в указанном порядке</strong></p>
-        </div>
-        <p>Правило может относиться к элементам письма: <kbd>Тема</kbd>, <kbd>Отправитель</kbd>, <kbd>Получатель</kbd>, <kbd>Скрытая копия</kbd>, <kbd>Ответить</kbd>.
-             Например, для перенаправления почты необходимо выбрать в разделе <kbd>Применить к</kbd> характеристику <kbd>Отправитель</kbd>,
-              в поле справа ввести ваш почтовый адрес. Далее в разделе <kbd>Действие</kbd> выбрать характеристику <kbd>Перенаправить к</kbd>
-               и в поле справа ввести почтовый адрес получателя кому Вы хотите перенаправить письмо.</p>
-        <p>6.Чтобы редактировать существующее правило, выберите кнопку <kbd>Модифицировать</kbd> (или иконку с зубчатым колесом)</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoEditRule.png') }}" alt="Pronto Mail Modify Rule Button">
-        </div>
-        <p>Откроется форма создания\изменения характеристик правила.</p>
-        <div class="center">
-            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoCreateRule.png') }}" alt="Pronto Mail Advanced Rule Creation Form">
-        </div>
-        <p>Чтобы удалить правило, нажмите <kbd>Delete</kbd> (иконка с мусорной корзиной)</p>
-        <p>Чтобы установить порядок, в котором правила исполняются, нажмите на стрелку слева от имени правила и выберите нужный номер.</p>
-        <div class="note-block">
-            <p><strong>🔥Внимание</strong></p>
-            <p><strong>Всегда нажимайте <kbd>Записать</kbd>, после того, как завершили работу с настройками.</strong></p>
-        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" class="action-button primary">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Открыть веб-почту</span>
+        </a>
+      </div>
     </div>
-</body>
-{% endblock content %}
+  </header>
 
-{% block styles %}
+  <!-- Introduction Section -->
+  <section class="intro-section">
+    <div class="intro-card">
+      <div class="intro-icon">
+        <i class="fas fa-route"></i>
+      </div>
+      <div class="intro-content">
+        <h2>О переадресации почты</h2>
+        <p><strong>Переадресация почты</strong> — это автоматическое перенаправление входящих писем с одного почтового адреса на другой. Эта функция позволяет получать письма на несколько адресов одновременно или временно перенаправлять корреспонденцию на альтернативный ящик.</p>
+
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-clock"></i>
+            <span>Экономия времени на проверку почты</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-shield-alt"></i>
+            <span>Резервное копирование писем</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-users"></i>
+            <span>Совместная работа с почтой</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-mobile-alt"></i>
+            <span>Доступ с любого устройства</span>
+          </div>
+        </div>
+
+        <div class="important-notice">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Важно знать:</strong>
+            <p>Правила переадресации выполняются автоматически для всех входящих писем в указанном порядке. Убедитесь, что настройки соответствуют вашим потребностям.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Web Interface Access Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon access-color">
+        <i class="fas fa-sign-in-alt"></i>
+      </div>
+      <div class="method-info">
+        <h2>Доступ к веб-интерфейсу</h2>
+        <p>Пошаговое руководство по входу в почтовый веб-интерфейс</p>
+      </div>
+    </div>
+
+    <!-- Login Process -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-globe"></i>
+        <h3>Вход в систему</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Переход к веб-интерфейсу</h4>
+            <p>Откройте браузер и перейдите по <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" class="external-link">данному адресу</a>. Появится страница входа в почтовую систему.</p>
+            <div class="access-highlight">
+              <i class="fas fa-info-circle"></i>
+              <span>Рекомендуется использовать современный браузер для корректной работы интерфейса</span>
+            </div>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/ProntoLoginOpen.png') }}" alt="Страница входа в Pronto Mail" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Главная страница входа в почтовый веб-интерфейс (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Ввод учетных данных</h4>
+            <p>Введите ваш почтовый логин или полное имя почтового ящика и пароль от него. Нажмите кнопку <kbd>Войти</kbd> для авторизации.</p>
+            <div class="credentials-info">
+              <div class="credential-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <strong>Логин:</strong>
+                  <span>Имя пользователя или полный email-адрес</span>
+                </div>
+              </div>
+              <div class="credential-item">
+                <i class="fas fa-key"></i>
+                <div>
+                  <strong>Пароль:</strong>
+                  <span>Ваш пароль от почтового ящика</span>
+                </div>
+              </div>
+            </div>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/ProntoLogin.png') }}" alt="Форма ввода логина и пароля" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Форма авторизации в почтовой системе (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Успешный вход</h4>
+            <p>После успешной авторизации откроется веб-интерфейс вашего почтового ящика с полным доступом к настройкам и функциям.</p>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoMail.png') }}" alt="Главный интерфейс Pronto Mail" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Основной интерфейс почтового веб-клиента (нажмите для увеличения)</div>
+            </div>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>Отлично! Теперь у вас есть доступ к настройкам почты</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Rules Configuration Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon rules-color">
+        <i class="fas fa-cogs"></i>
+      </div>
+      <div class="method-info">
+        <h2>Создание правил переадресации</h2>
+        <p>Настройка автоматических правил для перенаправления писем</p>
+      </div>
+    </div>
+
+    <!-- Rules Overview -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-info-circle"></i>
+        <h3>О правилах переадресации</h3>
+      </div>
+      <div class="card-content">
+        <div class="rules-explanation">
+          <p>Правила позволяют автоматически обрабатывать входящие письма по заданным критериям. Вы можете создавать, редактировать и удалять правила, а также устанавливать порядок их выполнения. С помощью правил можно переадресовывать или перенаправлять сообщения, соответствующие определенным условиям.</p>
+        </div>
+
+        <div class="rules-features">
+          <div class="feature-item">
+            <i class="fas fa-filter"></i>
+            <div>
+              <strong>Фильтрация по критериям</strong>
+              <p>Настройка условий по отправителю, теме, получателю</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-share-alt"></i>
+            <div>
+              <strong>Автоматическая переадресация</strong>
+              <p>Мгновенное перенаправление на указанные адреса</p>
+            </div>
+          </div>
+          <div class="feature-item">
+            <i class="fas fa-sort-numeric-down"></i>
+            <div>
+              <strong>Приоритет выполнения</strong>
+              <p>Контроль порядка применения правил</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="warning-box">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Внимание:</strong>
+            <p>Все правила будут выполняться для всех входящих писем. Выполнение произойдет в указанном порядке. Тщательно проверьте настройки перед сохранением.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Accessing Rules -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-mouse-pointer"></i>
+        <h3>Доступ к настройкам правил</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Переход к настройкам</h4>
+            <p>В веб-интерфейсе выберите меню <kbd>Настройки</kbd> → <kbd>Правила</kbd> для доступа к управлению правилами переадресации.</p>
+            <div class="navigation-path">
+              <div class="path-item">
+                <i class="fas fa-cog"></i>
+                <span>Настройки</span>
+              </div>
+              <i class="fas fa-chevron-right"></i>
+              <div class="path-item">
+                <i class="fas fa-list"></i>
+                <span>Правила</span>
+              </div>
+            </div>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoRulesMail.png') }}" alt="Меню настроек правил" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Раздел настроек правил в веб-интерфейсе (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Creating New Rule -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-plus-circle"></i>
+        <h3>Создание нового правила</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Добавление правила</h4>
+            <p>Для создания нового правила нажмите кнопку добавления <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png') }}" alt="Кнопка добавления правила" class="inline-button"> в интерфейсе управления правилами.</p>
+            <div class="button-highlight">
+              <i class="fas fa-plus"></i>
+              <span>Кнопка находится в верхней части раздела правил</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Базовые настройки</h4>
+            <p>Откроется форма создания правила. Введите понятное название для вашего правила, которое поможет легко его идентифицировать в будущем.</p>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoNameRule.png') }}" alt="Форма создания правила" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Форма ввода названия нового правила (нажмите для увеличения)</div>
+            </div>
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Совет:</strong>
+                <p>Используйте описательные названия, например: "Переадресация с рабочей почты" или "Копии важных писем"</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Расширенный режим</h4>
+            <p>Нажмите кнопку <kbd>Расширенный режим</kbd> для доступа к детальным настройкам условий и действий правила.</p>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoCreateRule.png') }}" alt="Расширенная форма создания правила" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Расширенная форма настройки характеристик правила (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rule Configuration -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-sliders-h"></i>
+        <h3>Настройка условий и действий</h3>
+      </div>
+      <div class="card-content">
+        <div class="rule-config">
+          <div class="config-section">
+            <h4><i class="fas fa-filter"></i> Раздел "Применить к"</h4>
+            <p>Выберите характеристики входящих писем, которые будут проверяться. Добавьте нужные условия с помощью кнопки <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/50px-ProntoAddRule.png') }}" alt="Кнопка добавления" class="inline-button">.</p>
+
+            <div class="criteria-options">
+              <div class="criteria-item">
+                <i class="fas fa-envelope"></i>
+                <div>
+                  <strong>Тема</strong>
+                  <p>Фильтрация по содержимому темы письма</p>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <strong>Отправитель</strong>
+                  <p>Условие по адресу отправителя</p>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <i class="fas fa-at"></i>
+                <div>
+                  <strong>Получатель</strong>
+                  <p>Проверка адреса получателя</p>
+                </div>
+              </div>
+              <div class="criteria-item">
+                <i class="fas fa-eye-slash"></i>
+                <div>
+                  <strong>Скрытая копия</strong>
+                  <p>Условие по полю BCC</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="config-section">
+            <h4><i class="fas fa-play"></i> Раздел "Действие"</h4>
+            <p>Выберите действие, которое будет выполняться при соответствии письма заданным условиям.</p>
+
+            <div class="action-example">
+              <div class="example-card">
+                <h5>Пример настройки переадресации:</h5>
+                <div class="example-steps">
+                  <div class="example-step">
+                    <strong>1. Условие:</strong> В разделе "Применить к" выберите <kbd>Отправитель</kbd>
+                  </div>
+                  <div class="example-step">
+                    <strong>2. Значение:</strong> Введите ваш почтовый адрес в поле справа
+                  </div>
+                  <div class="example-step">
+                    <strong>3. Действие:</strong> В разделе "Действие" выберите <kbd>Перенаправить к</kbd>
+                  </div>
+                  <div class="example-step">
+                    <strong>4. Адрес:</strong> Введите email получателя в поле справа
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rule Management -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-edit"></i>
+        <h3>Управление правилами</h3>
+      </div>
+      <div class="card-content">
+        <div class="management-options">
+          <div class="management-item">
+            <div class="management-icon edit-color">
+              <i class="fas fa-cog"></i>
+            </div>
+            <div class="management-content">
+              <h4>Редактирование правила</h4>
+              <p>Для изменения существующего правила выберите кнопку <kbd>Модифицировать</kbd> (иконка с зубчатым колесом) рядом с нужным правилом.</p>
+              <div class="image-container">
+                <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/900px-ProntoEditRule.png') }}" alt="Кнопка модификации правила" class="instruction-image clickable-image" onclick="openImageModal(this)">
+                <div class="image-caption">Кнопка редактирования правила в списке (нажмите для увеличения)</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="management-item">
+            <div class="management-icon delete-color">
+              <i class="fas fa-trash"></i>
+            </div>
+            <div class="management-content">
+              <h4>Удаление правила</h4>
+              <p>Для удаления правила нажмите кнопку <kbd>Delete</kbd> (иконка с мусорной корзиной) рядом с ненужным правилом.</p>
+              <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <div>
+                  <strong>Осторожно:</strong>
+                  <p>Удаление правила необратимо. Убедитесь, что правило действительно не нужно.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="management-item">
+            <div class="management-icon priority-color">
+              <i class="fas fa-sort"></i>
+            </div>
+            <div class="management-content">
+              <h4>Установка приоритета</h4>
+              <p>Для изменения порядка выполнения правил нажмите на стрелку слева от имени правила и выберите нужный номер приоритета.</p>
+              <div class="info-box">
+                <i class="fas fa-info-circle"></i>
+                <div>
+                  <strong>Важно:</strong>
+                  <p>Правила выполняются по порядку номеров. Правило №1 выполняется первым, затем №2 и так далее.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="save-reminder">
+          <div class="reminder-card">
+            <i class="fas fa-save"></i>
+            <div>
+              <h4>Не забудьте сохранить!</h4>
+              <p>Всегда нажимайте кнопку <kbd>Записать</kbd> после завершения работы с настройками правил. Без сохранения изменения будут потеряны.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Support Section -->
+  <section class="support-section">
+    <div class="support-card">
+      <div class="support-icon">
+        <i class="fas fa-headset"></i>
+      </div>
+      <div class="support-content">
+        <h3>Нужна помощь с настройкой?</h3>
+        <p>Если у вас возникли проблемы с настройкой переадресации почты, наша служба технической поддержки готова помочь!</p>
+      </div>
+      <div class="support-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <div class="image-modal-content">
+    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" class="modal-image" src="" alt="">
+    <div class="image-modal-caption" id="modalCaption"></div>
+  </div>
+</div>
+
 <style>
-body {
-    font-family: 'Open Sans', Arial, sans-serif;
-    line-height: 1.7;
-    background-color: #f0f2f5;
-    color: #333;
-    margin: 0;
-    padding: 0;
+/* Main Container */
+.mail-forwarding-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
-.container {
-    max-width: 1000px;
-    margin: 40px auto;
-    padding: 30px;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    overflow-y: auto;
-    max-height: 85vh;
+/* Header Styles */
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 3rem;
+  color: white;
+  box-shadow: 0 10px 40px rgba(102, 126, 234, 0.3);
 }
 
-.container::-webkit-scrollbar {
-    width: 10px;
-}
-.container::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 10px;
-}
-.container::-webkit-scrollbar-thumb {
-    background-color: #888;
-    border-radius: 10px;
-    border: 2px solid #f1f1f1;
-}
-.container::-webkit-scrollbar-thumb:hover {
-    background-color: #555;
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
 }
 
-h1 {
-    font-size: 2.2em;
-    font-weight: 700;
-    text-align: center;
-    color: #2c3e50;
-    margin-bottom: 30px;
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
 }
 
-.sub-heading.icon-prefix {
-    font-size: 1.4em;
-    font-weight: 700;
-    color: #34495e;
-    margin-top: 30px;
-    margin-bottom: 15px;
+.header-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
 }
 
-p {
-    font-size: 1.125em;
-    margin-bottom: 20px;
-    color: #555;
-    text-align: justify;
+.header-icon i {
+  font-size: 2.5rem;
 }
 
-p strong {
-    color: #333;
-    font-weight: 700;
+.page-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
-a {
-    color: #3498db;
-    text-decoration: none;
-    font-weight: 600;
-}
-a:hover {
-    text-decoration: underline;
-    color: #2980b9;
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.6;
 }
 
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.action-button.primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Introduction Section */
+.intro-section {
+  margin-bottom: 3rem;
+}
+
+.intro-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.intro-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.intro-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.intro-content p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #667eea;
+}
+
+.benefit-item i {
+  color: #667eea;
+  font-size: 1.2rem;
+}
+
+.benefit-item span {
+  font-weight: 600;
+  color: #374151;
+}
+
+/* Method Section */
+.method-section {
+  margin-bottom: 3rem;
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.method-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.access-color { background: linear-gradient(135deg, #4facfe, #00f2fe); }
+.rules-color { background: linear-gradient(135deg, #fa709a, #fee140); }
+
+.method-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.method-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Instruction Cards */
+.instruction-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-header i {
+  color: #667eea;
+  font-size: 1.5rem;
+}
+
+.card-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.card-content {
+  padding: 2rem;
+}
+
+/* Step Containers */
+.step-container {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.step-content p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Navigation Path */
+.navigation-path {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0f9ff;
+  padding: 1rem;
+  border-radius: 8px;
+  margin: 1rem 0;
+}
+
+.path-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #0369a1;
+  font-weight: 600;
+}
+
+.navigation-path i.fa-chevron-right {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+/* Rules Features */
+.rules-explanation {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.rules-features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: #fef7ff;
+  border-radius: 12px;
+  border-left: 4px solid #a855f7;
+}
+
+.feature-item i {
+  color: #a855f7;
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+}
+
+.feature-item strong {
+  display: block;
+  font-weight: 600;
+  color: #7c2d12;
+  margin-bottom: 0.5rem;
+}
+
+.feature-item p {
+  color: #a855f7;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Rule Configuration */
+.rule-config {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.config-section {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 2rem;
+  border-left: 4px solid #667eea;
+}
+
+.config-section h4 {
+  margin: 0 0 1.5rem 0;
+  color: #667eea;
+  font-size: 1.3rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.criteria-options {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+
+.criteria-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.criteria-item i {
+  color: #667eea;
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+.criteria-item strong {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.criteria-item p {
+  color: #64748b;
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+/* Action Example */
+.action-example {
+  margin-top: 1.5rem;
+}
+
+.example-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 1.5rem;
+}
+
+.example-card h5 {
+  color: #15803d;
+  font-size: 1.1rem;
+  margin: 0 0 1rem 0;
+}
+
+.example-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.example-step {
+  color: #166534;
+  font-size: 0.95rem;
+}
+
+.example-step strong {
+  color: #14532d;
+}
+
+/* Management Options */
+.management-options {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.management-item {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.management-icon {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.edit-color { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.delete-color { background: linear-gradient(135deg, #ef4444, #dc2626); }
+.priority-color { background: linear-gradient(135deg, #f59e0b, #d97706); }
+
+.management-content {
+  flex: 1;
+}
+
+.management-content h4 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.management-content p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Save Reminder */
+.save-reminder {
+  margin-top: 2rem;
+}
+
+.reminder-card {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border: 1px solid #f59e0b;
+  border-radius: 12px;
+  padding: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.reminder-card i {
+  color: #d97706;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.reminder-card h4 {
+  color: #92400e;
+  font-size: 1.3rem;
+  margin: 0 0 0.5rem 0;
+}
+
+.reminder-card p {
+  color: #a16207;
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Credentials Info */
+.credentials-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.credential-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.credential-item i {
+  color: #667eea;
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+.credential-item strong {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.credential-item span {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Image Styles */
+.image-container {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.instruction-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.image-caption {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+/* Inline Elements */
+.inline-button {
+  height: 20px;
+  vertical-align: middle;
+  margin: 0 5px;
+  border-radius: 4px;
+}
+
+/* Info Boxes */
+.info-box,
+.warning-box,
+.tip-box,
+.important-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+
+.info-box {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+}
+
+.tip-box {
+  background: linear-gradient(135deg, #fae8ff, #f3e8ff);
+  border-left: 4px solid #a855f7;
+}
+
+.important-notice {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border-left: 4px solid #ef4444;
+}
+
+.info-box i { color: #3b82f6; }
+.warning-box i { color: #f59e0b; }
+.tip-box i { color: #a855f7; }
+.important-notice i { color: #ef4444; }
+
+.info-box i,
+.warning-box i,
+.tip-box i,
+.important-notice i {
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+/* Highlights */
+.access-highlight,
+.button-highlight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0f9ff;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  margin: 1rem 0;
+}
+
+.access-highlight i,
+.button-highlight i {
+  color: #0284c7;
+  font-size: 1.2rem;
+}
+
+/* Success Message */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  margin: 1rem 0;
+}
+
+.success-message i {
+  font-size: 1.2rem;
+}
+
+/* Support Section */
+.support-section {
+  margin-top: 4rem;
+}
+
+.support-card {
+  background: linear-gradient(135deg, #1f2937, #374151);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.support-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.support-content {
+  flex: 1;
+}
+
+.support-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.support-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.support-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Image Modal */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.image-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-modal-caption {
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Code and Keyboard */
 kbd {
-    background-color: #e9ecef;
-    border: 1px solid #ced4da;
-    border-radius: 0.2rem;
-    padding: 0.2em 0.4em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #495057;
-    margin: 0 0.1em;
-    white-space: nowrap;
+  background: linear-gradient(135deg, #475569, #64748b);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.85em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #334155;
+  font-weight: 600;
 }
 
-code {
-    background-color: #f8f9fa;
-    border: 1px solid #e9ecef;
-    border-radius: 0.2rem;
-    padding: 0.1em 0.3em;
-    font-family: monospace;
-    font-size: 0.95em;
-    color: #cb3837;
-    white-space: nowrap;
+/* Links */
+.external-link {
+  color: #667eea;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
 }
 
-.center {
+.external-link:hover {
+  color: #4c51bf;
+  border-bottom-color: #4c51bf;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mail-forwarding-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 2rem;
+  }
+
+  .header-content {
+    flex-direction: column;
     text-align: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+  }
+
+  .step-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .management-item {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .support-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .criteria-options {
+    grid-template-columns: 1fr;
+  }
+
+  .image-modal-content {
+    max-width: 95%;
+    max-height: 95%;
+  }
+
+  .modal-image {
+    max-height: 70vh;
+  }
 }
 
-.center img {
-    max-width: 90%;
-    height: auto;
-    border-radius: 6px;
-    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-}
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 2rem;
+  }
 
-.note-block {
-    background-color: #eef7ff;
-    border-left: 5px solid #3498db;
-    padding: 15px 20px;
-    margin: 25px 0;
-    border-radius: 4px;
-}
-.note-block p {
-    margin-bottom: 10px;
-    text-align: left;
-}
-.note-block p:last-child {
-    margin-bottom: 0;
-}
-.note-block strong {
-    color: #e74c3c;
-    font-weight: 700;
-}
+  .intro-card,
+  .card-content {
+    padding: 1.5rem;
+  }
 
-p br {
-    content: "";
-    display: block;
-    margin-bottom: 0.3em;
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rules-features {
+    grid-template-columns: 1fr;
+  }
 }
 </style>
-{% endblock styles %}
+
+<script>
+// Image Modal Functions
+function openImageModal(img) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+
+  modal.style.display = 'flex';
+  modalImg.src = img.src;
+  caption.textContent = img.alt;
+
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// Smooth scroll for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+  const links = document.querySelectorAll('a[href^="#"]');
+
+  links.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+});
+</script>
+{% endblock %}
