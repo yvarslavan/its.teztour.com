@@ -1,195 +1,375 @@
 {% extends 'layout.html' %}
 
 {% block content %}
-<div class="container-fluid account-page p-0">
-    <div class="container py-3">
-        <form method="POST" action="{{ url_for('users.account') }}" enctype="multipart/form-data">
-            {{ form.hidden_tag() }}
-            <div class="row gx-4 gy-3">
-                <!-- Левая колонка: Аватар, навигация и форма обновления аватара -->
-                <div class="col-lg-3">
-                    <div class="card profile-sidebar-card shadow-sm border-0 rounded-3 text-center p-3 position-sticky" style="top: 20px;">
-                        <div class="profile-avatar-container mx-auto mb-3">
-                            <img src="{{ image_file }}" alt="Аватар {{ user.full_name }}" class="profile-avatar img-fluid">
+<div class="account-page-wrapper">
+    <!-- Background Elements -->
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
                         </div>
 
-                        {# Форма обновления аватара из старого account.html, адаптированная #}
-                        <div class="mb-3 px-lg-2">
-                             <label for="pictureUpload" class="form-label visually-hidden">Выберите файл</label>
-                            <div class="input-group input-group-sm">
-                                {{ form.picture(class="form-control form-control-sm", id="pictureUpload") }}
-                                {# Кнопка submit для формы обновления аватара должна быть здесь или ниже, если форма оборачивает только это поле #}
-                                {# Если form action="" направлен на users.account, то эта кнопка будет основной для формы #}
+    <div class="container account-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-user-cog"></i>
+                        <div class="icon-glow"></div>
                             </div>
+                    <div class="title-content">
+                        <h1 class="page-title">Мой профиль</h1>
+                        <p class="page-subtitle">Управление учетной записью и настройки</p>
+                    </div>
+                    <div class="user-status-container">
+                        <div class="status-badge online">
+                            <div class="status-dot"></div>
+                            <span class="status-text">Online</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Account Content -->
+        <form method="POST" action="{{ url_for('users.account') }}" enctype="multipart/form-data" class="account-form">
+            {{ form.hidden_tag() }}
+
+            <div class="account-grid">
+                <!-- Profile Sidebar -->
+                <div class="profile-sidebar">
+                    <div class="profile-card">
+                        <!-- Avatar Section -->
+                        <div class="avatar-section">
+                            <div class="avatar-container">
+                                <img src="{{ image_file }}" alt="Аватар {{ user.full_name }}" class="profile-avatar">
+                                <div class="avatar-overlay">
+                                    <i class="fas fa-camera"></i>
+                                </div>
+                                <div class="avatar-glow"></div>
+                            </div>
+
+                            <!-- Avatar Upload -->
+                            <div class="avatar-upload">
+                                <label for="pictureUpload" class="upload-label">
+                                    <i class="fas fa-upload"></i>
+                                    <span>Загрузить фото</span>
+                                </label>
+                                {{ form.picture(class="upload-input", id="pictureUpload") }}
                             {% if form.picture.errors %}
+                                    <div class="upload-errors">
                                 {% for error in form.picture.errors %}
-                                    <div class="text-danger text-start mt-1"><small>{{ error }}</small></div>
+                                            <span class="error-message">{{ error }}</span>
                                 {% endfor %}
+                                    </div>
                             {% endif %}
                         </div>
-                        {# Основная кнопка submit формы, если она обновляет что-то еще, или специфичная кнопка для аватара #}
-                        <div class="d-grid mb-3">
-                             {{ form.submit(class='btn btn-primary btn-sm') }} {# Кнопка "Обновить" из UpdateAccountForm #}
+
+                            {{ form.submit(class='update-btn') }}
                         </div>
 
-
-                        <h5 class="profile-name fw-bold mb-1">
+                        <!-- User Info -->
+                        <div class="user-info">
+                            <h3 class="user-name">
                             {% set names = user.full_name.split() %}
                             {{ names[0] }} {{ names[1][:1] }}.{{ names[-1][:1] if names|length > 2 else '' }}.
-                        </h5>
-                        <p class="profile-position text-muted small mb-2">
-                            Последний вход:<br>
-                            {{ user.last_seen.strftime('%d.%m.%Y %H:%M') if user.last_seen else 'Неизвестно' }}
-                        </p>
-                        <hr class="my-2">
-                        <nav class="nav flex-column nav-pills text-start profile-nav">
-                            <a class="nav-link active" href="{{ url_for('users.account') }}"><i class="fas fa-user-circle me-2"></i>Данные профиля</a>
-                            <a class="nav-link" href="{{ url_for('users.user_posts', username=current_user.username) }}"><i class="fas fa-newspaper me-2"></i>Мои статьи</a>
-                            <a class="nav-link" href="/my-issues"> <i class="fas fa-ticket-alt me-2"></i>Мои заявки</a>
+                            </h3>
+                            <p class="user-role">{{ user.position or 'Пользователь' }}</p>
+                            <div class="last-seen">
+                                <i class="fas fa-clock"></i>
+                                <span>Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M') if user.last_seen else 'Неизвестно' }}</span>
+                            </div>
+                        </div>
+
+                        <!-- Navigation -->
+                        <nav class="profile-navigation">
+                            <a href="{{ url_for('users.account') }}" class="nav-item active">
+                                <i class="fas fa-user-circle"></i>
+                                <span>Данные профиля</span>
+                            </a>
+                            <a href="{{ url_for('users.user_posts', username=current_user.username) }}" class="nav-item">
+                                <i class="fas fa-newspaper"></i>
+                                <span>Мои статьи</span>
+                            </a>
+                            <a href="/my-issues" class="nav-item">
+                                <i class="fas fa-ticket-alt"></i>
+                                <span>Мои заявки</span>
+                            </a>
                         </nav>
                     </div>
                 </div>
 
-                <!-- Центральная колонка: Основные данные и действия -->
-                <div class="col-lg-6">
-                    <!-- Карточка Сотрудник -->
-                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
-                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
-                            <h5 class="card-title-custom mb-0"><i class="fas fa-user-tie me-2 text-primary"></i>Сотрудник</h5>
+                <!-- Main Content -->
+                <div class="main-content">
+                    <!-- Personal Information Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-id-card"></i>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-12">
-                                    <label class="info-label">Полное имя</label>
-                                    <p class="info-value">{{ user.full_name }}</p>
+                            <div class="header-content">
+                                <h3 class="card-title">Личная информация</h3>
+                                <p class="card-subtitle">Основные данные сотрудника</p>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">E-mail</label>
-                                    <p class="info-value"><i class="fas fa-envelope fa-xs me-2 text-muted"></i><a href="mailto:{{ user.email }}">{{ user.email }}</a></p>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">Имя пользователя (логин)</label>
-                                     {# Используем поле из формы, так как оно было readonly в оригинале #}
-                                    {{ form.username(class='form-control form-control-sm readonly-style', readonly=True) }}
+
+                        <div class="card-content">
+                            <div class="info-grid">
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-user"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">Телефон</label>
-                                    <p class="info-value"><i class="fas fa-phone fa-xs me-2 text-muted"></i>{{ user.phone|default('Не указан', true) }}</p>
+                                    <div class="info-content">
+                                        <span class="info-label">Полное имя</span>
+                                        <span class="info-value">{{ user.full_name }}</span>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">Локация (Офис)</label>
-                                    <p class="info-value"><i class="fas fa-map-marker-alt fa-xs me-2 text-muted"></i>{{ user.office|default('Не указан', true) }}</p>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">Подразделение</label>
-                                    <p class="info-value"><i class="fas fa-sitemap fa-xs me-2 text-muted"></i>{{ user.department|default('Не указан', true) }}</p>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-envelope"></i>
                                 </div>
-                                <div class="col-md-6">
-                                    <label class="info-label">Должность</label>
-                                    <p class="info-value"><i class="fas fa-briefcase fa-xs me-2 text-muted"></i>{{ user.position|default('Не указана', true) }}</p>
+                                    <div class="info-content">
+                                        <span class="info-label">E-mail</span>
+                                        <a href="mailto:{{ user.email }}" class="info-value email-link">{{ user.email }}</a>
+                                </div>
+                            </div>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-at"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Имя пользователя</span>
+                                        {{ form.username(class='info-input readonly-input', readonly=True) }}
+                        </div>
+                    </div>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-phone"></i>
+                        </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Телефон</span>
+                                        <span class="info-value">{{ user.phone or 'Не указан' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-map-marker-alt"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Офис</span>
+                                        <span class="info-value">{{ user.office or 'Не указан' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-building"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Подразделение</span>
+                                        <span class="info-value">{{ user.department or 'Не указан' }}</span>
+                                    </div>
+                                </div>
+
+                                <div class="info-item">
+                                    <div class="info-icon">
+                                        <i class="fas fa-briefcase"></i>
+                                    </div>
+                                    <div class="info-content">
+                                        <span class="info-label">Должность</span>
+                                        <span class="info-value">{{ user.position or 'Не указана' }}</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Карточка Настройки и Доступы (VPN, Пароль ERP, Подпись) -->
-                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
-                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
-                            <h5 class="card-title-custom mb-0"><i class="fas fa-cogs me-2 text-primary"></i>Настройки и доступы</h5>
+                    <!-- Settings & Access Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <div class="header-content">
+                                <h3 class="card-title">Настройки и доступы</h3>
+                                <p class="card-subtitle">VPN, пароли и подписи</p>
+                            </div>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="row g-3">
-                                <div class="col-md-12">
-                                    <label class="info-label">VPN Статус</label>
-                                    <div class="input-group input-group-sm mb-1 align-items-stretch fixed-height-input-group">
-                                        <input class="form-control form-control-sm readonly-style flex-grow-1 align-self-stretch" type="text" id="account-vpn-display"
+
+                        <div class="card-content">
+                            <!-- VPN Status -->
+                            <div class="settings-item">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i class="fas fa-network-wired"></i>
+                                    </div>
+                                    <div class="setting-content">
+                                        <span class="setting-label">VPN статус</span>
+                                        <div class="vpn-status-container">
+                                            <input type="text" id="account-vpn-display" class="vpn-input"
                                                value="{% if user.vpn_end_date %}Включен, заканчивается {{ user.vpn_end_date }}{% elif user.vpn == 1 and not user.vpn_end_date %}Включен, дата не определена{% else %}Выключен{% endif %}"
-                                               readonly style="height: 38px !important; border-radius: 0.3rem !important;">
-                                        <button class="btn btn-info btn-sm vpn-action-button align-self-stretch" id="update-vpn-date" type="button" style="margin-left: 10px !important; height: 38px !important; display: flex !important; align-items: center !important; justify-content: center !important; border-radius: 0.3rem !important;">Обновить дату VPN</button>
+                                                   readonly>
+                                            <button type="button" id="update-vpn-date" class="vpn-update-btn">
+                                                <i class="fas fa-sync-alt"></i>
+                                                <span>Обновить</span>
+                                            </button>
                                     </div>
-                                    <div id="vpn-status-badge-container"> {# Контейнер для бейджа #}
+                                        <div class="vpn-badge-container" id="vpn-status-badge-container">
                                         {% if user.vpn == 1 and user.vpn_end_date %}
-                                             <span class="badge bg-success-tinted text-success-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span>
-                                             <small class="text-muted d-inline-block ms-2">Срок до: {{ user.vpn_end_date }}</small>
+                                                <span class="status-badge active">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                    Включен
+                                                </span>
+                                                <span class="status-info">до {{ user.vpn_end_date }}</span>
                                         {% elif user.vpn == 1 and not user.vpn_end_date %}
-                                             <span class="badge bg-warning-tinted text-warning-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span>
-                                             <small class="text-muted d-inline-block ms-2">Срок действия не определен</small>
+                                                <span class="status-badge warning">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                    Включен
+                                                </span>
+                                                <span class="status-info">срок не определен</span>
                                         {% else %}
-                                             <span class="badge bg-danger-tinted text-danger-emphasis"><i class="fas fa-shield-alt me-1"></i>Выключен</span>
+                                                <span class="status-badge inactive">
+                                                    <i class="fas fa-shield-alt"></i>
+                                                    Выключен
+                                                </span>
                                         {% endif %}
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
 
-                                <div class="col-md-12">
-                                    <label class="info-label">Мой текущий пароль TEZ ERP</label>
-                                    <div class="input-group input-group-sm password-input-group align-items-stretch fixed-height-input-group">
-                                        <input class="form-control form-control-sm readonly-style flex-grow-1 align-self-stretch" type="password" id="password-display" value="{{ user_password_erp }}" readonly>
-                                        <button class="btn btn-outline-secondary btn-sm password-action-button icon-button align-self-stretch" type="button" id="togglePassword"><i id="eyeIcon" class="fas fa-eye"></i></button>
-                                        <button class="btn btn-outline-secondary btn-sm password-action-button text-button align-self-stretch" type="button" id="copyPassword" disabled><i class="fas fa-copy me-1"></i>Копировать</button>
+                            <!-- ERP Password -->
+                            <div class="settings-item">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i class="fas fa-key"></i>
+                                    </div>
+                                    <div class="setting-content">
+                                        <span class="setting-label">Пароль TEZ ERP</span>
+                                        <div class="password-container">
+                                            <input type="password" id="password-display" class="password-input"
+                                                   value="{{ user_password_erp }}" readonly>
+                                            <button type="button" id="togglePassword" class="password-toggle-btn">
+                                                <i id="eyeIcon" class="fas fa-eye"></i>
+                                            </button>
+                                            <button type="button" id="copyPassword" class="password-copy-btn" disabled>
+                                                <i class="fas fa-copy"></i>
+                                                <span>Копировать</span>
+                                            </button>
+                                        </div>
+                                    </div>
                                     </div>
                                 </div>
 
-                                <div class="col-md-12 text-start">
-                                    <label class="info-label">Автоматическая подпись</label>
-                                    <div class="email-signature-preview p-3 border rounded-2 bg-light mb-2">
+                            <!-- Email Signature -->
+                            <div class="settings-item">
+                                <div class="setting-header">
+                                    <div class="setting-icon">
+                                        <i class="fas fa-signature"></i>
+                                    </div>
+                                    <div class="setting-content">
+                                        <span class="setting-label">Email подпись</span>
+                                        <div class="signature-preview">
                                         {{ email_signature_html|safe if email_signature_html else "Подпись не сформирована." }}
                                     </div>
-                                    <button class="btn btn-primary-soft btn-sm py-2" type="button" id="copySignatureBtnAccount">
-                                        <i class="fas fa-copy me-2"></i>Копировать подпись
+                                        <button type="button" id="copySignatureBtnAccount" class="signature-copy-btn">
+                                            <i class="fas fa-copy"></i>
+                                            <span>Копировать подпись</span>
                                     </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
 
-                     <!-- Карточка Ключевые действия -->
-                    <div class="card data-card shadow-sm border-0 rounded-3 mb-4">
-                        <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
-                            <h5 class="card-title-custom mb-0"><i class="fas fa-bolt me-2 text-primary"></i>Ключевые действия</h5>
+                    <!-- Quick Actions Card -->
+                    <div class="content-card">
+                        <div class="card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-bolt"></i>
                         </div>
-                        <div class="card-body p-4">
-                            <div class="d-grid gap-2">
-                                <button id="downloadButton" type="button" class="btn btn-success btn-sm"><i class="fas fa-download me-2"></i>Скачать последнюю версию TEZ ERP</button>
-                                <button class="btn btn-warning btn-sm" type="button" id="sendPasswordButton"><i class="fas fa-key me-2"></i>Выслать мне мой почтовый пароль</button>
+                            <div class="header-content">
+                                <h3 class="card-title">Быстрые действия</h3>
+                                <p class="card-subtitle">Основные операции</p>
+                            </div>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="actions-grid">
+                                <button type="button" id="downloadButton" class="action-btn download-btn">
+                                    <div class="btn-icon">
+                                        <i class="fas fa-download"></i>
+                    </div>
+                                    <div class="btn-content">
+                                        <span class="btn-title">Скачать TEZ ERP</span>
+                                        <span class="btn-description">Последняя версия</span>
+                </div>
+                                    <div class="btn-ripple"></div>
+                                </button>
+
+                                <button type="button" id="sendPasswordButton" class="action-btn password-btn">
+                                    <div class="btn-icon">
+                                        <i class="fas fa-envelope-open-text"></i>
+                                    </div>
+                                    <div class="btn-content">
+                                        <span class="btn-title">Выслать пароль</span>
+                                        <span class="btn-description">Почтовый пароль</span>
+                                    </div>
+                                    <div class="btn-ripple"></div>
+                                </button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Правая колонка: Панель администратора -->
+                <!-- Admin Panel -->
                 {% if current_user.is_admin %}
-                <div class="col-lg-3">
-                    <div class="card data-card shadow-sm border-0 rounded-3">
-                         <div class="card-header bg-transparent border-bottom-0 pt-3 px-4">
-                            <h5 class="card-title-custom mb-0"><i class="fas fa-user-shield me-2 text-primary"></i>Панель администратора</h5>
+                <div class="admin-sidebar">
+                    <div class="admin-card">
+                        <div class="card-header">
+                            <div class="header-icon">
+                                <i class="fas fa-user-shield"></i>
                         </div>
-                        <div class="card-body p-3">
-                            <div class="table-responsive admin-table-scroll">
-                                <table class="table table-sm table-hover small">
-                                    <thead>
-                                        <tr>
-                                            <th>Пользователь</th>
-                                            <th class="text-center">Контроль качества</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {% for u_admin in all_users %} {# Изменено имя переменной цикла #}
-                                        <tr>
-                                            <td>{{ u_admin.username }}</td>
-                                            <td class="text-center">
-                                                <div class="form-check form-switch d-flex justify-content-center">
-                                                    <input class="form-check-input permission-toggle"
-                                                           type="checkbox"
-                                                           role="switch"
+                            <div class="header-content">
+                                <h3 class="card-title">Панель администратора</h3>
+                                <p class="card-subtitle">Управление правами</p>
+                            </div>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="admin-table-container">
+                                <div class="table-header">
+                                    <span>Контроль качества</span>
+                                </div>
+                                <div class="users-list">
+                                    {% for u_admin in all_users %}
+                                    <div class="user-item">
+                                        <div class="user-info">
+                                            <div class="user-avatar-small">
+                                                <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                                                     alt="{{ u_admin.username }}">
+                                            </div>
+                                            <span class="user-name">{{ u_admin.username }}</span>
+                                        </div>
+                                        <div class="user-toggle">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox"
+                                                       class="permission-toggle"
                                                            data-user-id="{{ u_admin.id }}"
                                                            data-type="quality_control"
                                                            {% if u_admin.can_access_quality_control %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
                                                 </div>
-                                            </td>
-                                        </tr>
+                                    </div>
                                         {% endfor %}
-                                    </tbody>
-                                </table>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -199,494 +379,1279 @@
         </form>
     </div>
 </div>
+{% endblock %}
 
-{# Стили из profile.html, адаптированные для account.html #}
+{% block styles %}
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+    /* Import Modern Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
-:root {
-    --bs-primary-rgb: 0, 123, 255; /* Яркий синий Tez Tour со скриншота */
-    --bs-secondary-rgb: 108, 117, 125;
-    --bs-success-rgb: 25, 135, 84; /* Зеленый со скриншота */
-    --bs-info-rgb: 13, 202, 240;
-    --bs-warning-rgb: 255, 193, 7; /* Желтый со скриншота */
-    --bs-danger-rgb: 220, 53, 69;
-    --bs-light-rgb: 248, 249, 250;
-    --bs-dark-rgb: 33, 37, 41;
+    /* CSS Custom Properties - только для account страницы */
+    .account-page-wrapper {
+        /* TEZ TOUR Brand Colors */
+        --primary-50: #e0f7fa;
+        --primary-100: #b2ebf2;
+        --primary-200: #80deea;
+        --primary-300: #4dd0e1;
+        --primary-400: #26c6da;
+        --primary-500: #00798C;
+        --primary-600: #00696a;
+        --primary-700: #005f73;
+        --primary-800: #003440;
+        --primary-900: #001f26;
 
-    --bs-primary-text-emphasis: #005cbf;
-    --bs-success-text-emphasis: #14754f;
-    --bs-info-text-emphasis: #0aa8c7;
-    --bs-danger-text-emphasis: #b02a37;
-    --bs-secondary-text-emphasis: #545b62;
-    --bs-warning-text-emphasis: #997404;
+        /* Status Colors */
+        --success: #10b981;
+        --success-bg: #ecfdf5;
+        --error: #ef4444;
+        --error-bg: #fef2f2;
+        --warning: #f59e0b;
+        --warning-bg: #fef3c7;
+        --info: #3b82f6;
+        --online: #22c55e;
 
+        /* Surface Colors */
+        --surface-0: #ffffff;
+        --surface-1: #f8fafc;
+        --surface-2: #f1f5f9;
+        --surface-3: #e2e8f0;
+        --surface-glass: rgba(255, 255, 255, 0.95);
+        --surface-card: rgba(255, 255, 255, 0.9);
 
-    --bs-body-font-family: 'Inter', sans-serif;
-    --bs-body-font-size: 0.9rem;
-    --bs-body-color: #343a40;
-    --bs-border-radius: .5rem;
-    --bs-card-border-width: 0;
-    --bs-card-cap-bg: transparent;
-    --bs-card-inner-border-radius: .5rem;
+        /* Text Colors */
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --text-disabled: #94a3b8;
+        --text-on-primary: #ffffff;
 
-    /* Добавляем цвета для soft кнопок, если их нет */
-    --bs-primary-soft-bg: rgba(var(--bs-primary-rgb), 0.1);
-    --bs-primary-soft-border: rgba(var(--bs-primary-rgb), 0.2);
-    --bs-primary-soft-hover-bg: rgba(var(--bs-primary-rgb), 0.15);
-    --bs-info-soft-bg: rgba(var(--bs-info-rgb), 0.1);
-    --bs-info-soft-border: rgba(var(--bs-info-rgb), 0.2);
-    --bs-info-soft-hover-bg: rgba(var(--bs-info-rgb), 0.15);
-}
+        /* Border & Effects */
+        --border-light: #e2e8f0;
+        --border-medium: #cbd5e1;
+        --border-focus: var(--primary-500);
 
-body {
-    background-color: #f4f7f9;
-    margin: 0;
-    padding: 0;
-    min-height: 100vh;
-    font-family: 'Inter', sans-serif;
-}
+        /* Shadows */
+        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
+        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
 
-.account-page {
-    color: var(--bs-body-color);
-    background-color: #f4f7f9;
-    padding: 0;
-    margin: 0;
-}
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-xxl: 3rem;
 
-.account-page .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding-top: 15px;
-    padding-bottom: 20px;
-}
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-xxl: 24px;
 
-.account-page .row {
-    margin-left: -0.5rem;
-    margin-right: -0.5rem;
-}
+        /* Transitions */
+        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
-.account-page .col-lg-3,
-.account-page .col-lg-6 {
-    padding-left: 1rem;
-    padding-right: 1rem;
-}
-
-.data-card, .profile-sidebar-card {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
-    border: none !important;
-    background-color: #fff;
-    border-radius: 0.5rem;
-}
-
-.card-body {
-    padding: 1.25rem !important;
-}
-
-/* Улучшенные отступы строк в карточках */
-.card-body .row {
-    margin-left: -0.75rem !important;
-    margin-right: -0.75rem !important;
-}
-
-.card-body .col-md-6,
-.card-body .col-md-12 {
-    padding-left: 0.75rem !important;
-    padding-right: 0.75rem !important;
-}
-
-.profile-nav .nav-link {
-    color: var(--bs-secondary-text-emphasis);
-    padding: 0.5rem 0.8rem;
-    font-size: 0.875rem;
-    border-radius: 0.3rem;
-}
-.profile-nav .nav-link:hover {
-    background-color: rgba(var(--bs-primary-rgb), 0.05);
-    color: var(--bs-primary-text-emphasis);
-}
-.profile-nav .nav-link.active {
-    background-color: rgba(var(--bs-primary-rgb), 0.1);
-    color: var(--bs-primary-text-emphasis);
-    font-weight: 500;
-}
-.profile-nav .nav-link i.fas {
-    width: 20px; /* Фиксированная ширина для иконок в меню */
-    text-align: center;
-}
-
-
-.profile-avatar-container {
-    width: 120px; /* Чуть меньше, чем на profile.html */
-    height: 120px;
-    border-radius: 50%;
-    padding: 4px;
-    background: linear-gradient(145deg, #ffffff, #e6e6e6);
-    box-shadow: 4px 4px 8px #d9d9d9, -4px -4px 8px #ffffff;
-    overflow: hidden;
-}
-
-.profile-avatar {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: 50%;
-}
-
-.profile-name {
-    color: #2c3e50;
-    font-size: 1.1rem; /* Чуть меньше для сайдбара */
-    font-weight: 600;
-}
-
-.profile-position { /* Это на самом деле last_seen */
-    font-size: 0.8rem;
-    margin-bottom: 0.5rem;
-}
-
-.card-title-custom {
-    color: var(--bs-primary-text-emphasis);
-    font-weight: 600;
-    font-size: 1.1rem;
-    display: flex;
-    align-items: center;
-}
-.card-title-custom .fas {
-    font-size: 1rem;
-}
-
-.info-group {
-    margin-bottom: 1rem;
-}
-
-.info-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #6c757d;
-    margin-bottom: 0.3rem;
-    display: block;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.info-value, .readonly-style.form-control {
-    font-size: 0.9rem;
-    color: var(--bs-body-color);
-    background-color: var(--bs-light-rgb);
-    padding: 0.5rem 0.85rem;
-    border-radius: 0.3rem;
-    border: 1px solid #e0e0e0;
-    margin-bottom: 0;
-    min-height: calc(1.5em + .75rem + 2px); /* Bootstrap sm input height */
-    display: flex;
-    align-items: center;
-    word-break: break-word;
-}
-.readonly-style.form-control {
-    background-color: var(--bs-light-rgb) !important;
-    border-color: #e0e0e0 !important;
-}
-
-
-.info-value i.fas {
-    opacity: 0.7;
-}
-
-.info-value a {
-    text-decoration: none;
-    color: var(--bs-primary-text-emphasis);
-    font-weight: 500;
-}
-.info-value a:hover {
-    text-decoration: underline;
-}
-
-.badge {
-    padding: 0.45em 0.8em;
-    font-weight: 500;
-    font-size: 0.75rem;
-}
-
-.badge.bg-success-tinted {
-    background-color: rgba(var(--bs-success-rgb), 0.1);
-    color: var(--bs-success-text-emphasis) !important;
-}
-.badge.bg-danger-tinted {
-    background-color: rgba(var(--bs-danger-rgb), 0.1);
-    color: var(--bs-danger-text-emphasis) !important;
-}
-.badge.bg-warning-tinted {
-    background-color: rgba(var(--bs-warning-rgb), 0.15);
-    color: var(--bs-warning-text-emphasis) !important;
-}
-.badge.bg-secondary-soft {
-    background-color: rgba(var(--bs-secondary-rgb), 0.1);
-    color: var(--bs-secondary-text-emphasis) !important;
-}
-
-.email-signature-preview {
-    font-size: 0.85rem;
-    max-height: 250px;
-    overflow-y: auto;
-}
-.email-signature-preview .email-signature-frame {
-    border: none !important;
-    float: none !important;
-    margin: 0;
-}
-.email-signature-preview p {
-    font-family: Tahoma, Verdana, Arial, sans-serif !important;
-    font-size: 12px !important;
-    color: #252525 !important;
-    margin-bottom: 8px;
-    line-height: 1.4;
-}
-.email-signature-preview p b {
-    font-weight: bold;
-}
-.email-signature-preview div[style*="border-top"] {
-    border-top: 1px solid #252525 !important;
-    margin-top: 8px;
-    margin-bottom: 8px;
-}
-.email-signature-preview a {
-    color: #0056b3;
-    text-decoration: none;
-}
-.email-signature-preview a:hover {
-    text-decoration: underline;
-}
-.email-signature-preview img {
-    max-width: 150px;
-    height: auto;
-    border: 0;
-}
-.admin-table-scroll {
-    max-height: 400px; /* Или другая подходящая высота */
-    overflow-y: auto;
-}
-
-.btn-info-soft {
-    background-color: var(--bs-info-soft-bg);
-    border-color: var(--bs-info-soft-border);
-    color: var(--bs-info-text-emphasis);
-}
-.btn-info-soft:hover {
-    background-color: var(--bs-info-soft-hover-bg);
-    color: var(--bs-info-text-emphasis);
-}
-
-/* Styles for input groups to ensure alignment and proper button sizing */
-.fixed-height-input-group.input-group-sm {
-    height: auto; /* Убираем фиксированную высоту */
-    display: flex;
-    align-items: stretch;
-    margin-bottom: 8px; /* Добавляем отступ снизу */
-}
-
-.fixed-height-input-group.input-group-sm > .form-control-sm,
-.fixed-height-input-group.input-group-sm > .btn-sm {
-    height: 38px; /* Устанавливаем одинаковую высоту для всех элементов */
-    box-sizing: border-box; /* Ensure padding and border are included in height */
-    border: 1px solid #e0e0e0;
-}
-
-.fixed-height-input-group.input-group-sm > .form-control-sm.readonly-style {
-    flex-grow: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right: none;
-}
-
-.fixed-height-input-group.input-group-sm > .btn-sm {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
-
-/* VPN Button specific */
-.vpn-action-button {
-    margin-left: 10px !important;
-    height: 38px !important;
-    line-height: 1 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 0.3rem !important;
-}
-
-/* Стиль для поля VPN статуса */
-#account-vpn-display {
-    height: 38px !important;
-    border-radius: 0.3rem !important;
-}
-
-/* Password Buttons specific */
-.password-input-group .password-action-button {
-    flex-shrink: 0;
-    margin-left: 5px; /* Добавляем отступ между кнопками */
-}
-
-.password-input-group .icon-button {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    border-radius: 0.3rem;
-}
-
-.password-input-group .text-button {
-    padding-left: 0.75rem;
-    padding-right: 0.75rem;
-    border-radius: 0.3rem;
-}
-
-
-/* Copy Signature button styling */
-#copySignatureBtnAccount.btn-primary-soft {
-    /* Re-using primary-soft, ensure it's defined or adjust */
-    background-color: var(--bs-primary-soft-bg, rgba(var(--bs-primary-rgb), 0.1));
-    border-color: var(--bs-primary-soft-border, rgba(var(--bs-primary-rgb), 0.2));
-    color: var(--bs-primary-text-emphasis, #005cbf);
-    display: inline-block;
-    width: auto;
-    margin-bottom: 10px;
-}
-#copySignatureBtnAccount.btn-primary-soft:hover {
-    background-color: var(--bs-primary-soft-hover-bg, rgba(var(--bs-primary-rgb), 0.15));
-    color: var(--bs-primary-text-emphasis, #005cbf);
-}
-
-/* Primary soft button for copy signature if needed */
-.btn-primary-soft {
-    background-color: var(--bs-primary-soft-bg, rgba(var(--bs-primary-rgb), 0.1));
-    border-color: var(--bs-primary-soft-border, rgba(var(--bs-primary-rgb), 0.2));
-    color: var(--bs-primary-text-emphasis, #005cbf);
-}
-.btn-primary-soft:hover {
-    background-color: var(--bs-primary-soft-hover-bg, rgba(var(--bs-primary-rgb), 0.15));
-    color: var(--bs-primary-text-emphasis, #005cbf);
-}
-
-/* Адаптивность */
-@media (max-width: 991.98px) { /* lg */
-    .profile-sidebar-card {
-        position: static !important;
+        /* Typography */
+        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
     }
-     .account-page .col-lg-3, .account-page .col-lg-6 {
-        margin-bottom: 1rem; /* Добавляем отступ снизу для колонок на планшетах */
+
+    /* Base Styles - только для account страницы */
+    .account-page-wrapper {
+        font-family: var(--font-family-primary);
+        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+        min-height: 100vh;
+        padding: var(--spacing-xl) 0;
+        position: relative;
+        overflow: hidden;
     }
-}
 
-/* Удаляем старые стили, чтобы избежать конфликтов */
-/* form > .container-centered, .author-card, .wizard, .user-data-section, .admin-panel старые стили... */
-/* ... и другие специфичные для account.html стили, которые теперь заменяются общими .card, .info-group и т.д. */
+    /* Background Shapes */
+    .account-page-wrapper .background-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
 
-/* Apply a fixed height to input-group and its direct children (input, button) */
-.fixed-height-input-group.input-group-sm {
-    height: auto; /* Убираем фиксированную высоту */
-    display: flex;
-    align-items: stretch;
-    margin-bottom: 8px; /* Добавляем отступ снизу */
-}
+    .account-page-wrapper .shape {
+        position: absolute;
+        background: rgba(0, 121, 140, 0.05);
+        border-radius: 50%;
+        animation: float 15s ease-in-out infinite;
+    }
 
-.fixed-height-input-group.input-group-sm > .form-control-sm,
-.fixed-height-input-group.input-group-sm > .btn-sm {
-    height: 38px; /* Устанавливаем одинаковую высоту для всех элементов */
-    box-sizing: border-box; /* Ensure padding and border are included in height */
-    border: 1px solid #e0e0e0;
-}
+    .account-page-wrapper .shape-1 {
+        width: 400px;
+        height: 400px;
+        top: 10%;
+        left: -10%;
+        animation-delay: 0s;
+    }
 
-.fixed-height-input-group.input-group-sm > .form-control-sm.readonly-style {
-    flex-grow: 1;
-    border-top-right-radius: 0;
-    border-bottom-right-radius: 0;
-    border-right: none;
-}
+    .account-page-wrapper .shape-2 {
+        width: 300px;
+        height: 300px;
+        top: 60%;
+        right: -5%;
+        animation-delay: 5s;
+    }
 
-.fixed-height-input-group.input-group-sm > .btn-sm {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    padding-top: 0;
-    padding-bottom: 0;
-    border-top-left-radius: 0;
-    border-bottom-left-radius: 0;
-}
+    .account-page-wrapper .shape-3 {
+        width: 250px;
+        height: 250px;
+        bottom: 10%;
+        left: 20%;
+        animation-delay: 10s;
+    }
 
-/* VPN Button specific */
-.vpn-action-button {
-    margin-left: 10px !important;
-    height: 38px !important;
-    line-height: 1 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    border-radius: 0.3rem !important;
-}
+    .account-page-wrapper .shape-4 {
+        width: 200px;
+        height: 200px;
+        top: 30%;
+        right: 15%;
+        animation-delay: 15s;
+    }
 
-/* Стиль для поля VPN статуса */
-#account-vpn-display {
-    height: 38px !important;
-    border-radius: 0.3rem !important;
-}
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(5deg); }
+        66% { transform: translateY(15px) rotate(-5deg); }
+    }
 
-/* Исправление для кнопки копирования подписи */
-#copySignatureBtnAccount {
-    padding: 8px 16px;
-    margin-bottom: 15px;
-    display: inline-block;
-    min-width: 180px;
-}
+    /* Container */
+    .account-page-wrapper .account-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        padding: 0 var(--spacing-lg);
+    }
 
-/* Убедимся, что у всех элементов с классом info-value отображается граница */
-.info-value {
-    border: 1px solid #e0e0e0 !important;
-    box-shadow: none !important;
-    margin-bottom: 0.5rem !important;
-}
+    /* Page Header */
+    .account-page-wrapper .page-header {
+        background: var(--surface-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xxl);
+        box-shadow: var(--shadow-header);
+        padding: var(--spacing-xl) var(--spacing-xxl);
+        margin-bottom: var(--spacing-xxl);
+        animation: slideDown 0.8s ease-out;
+    }
 
-/* Стили для карточки настроек и доступов */
-.card-body .row {
-    margin-bottom: 0.5rem;
-}
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
 
-.container-fluid.account-page {
-    padding-left: 0;
-    padding-right: 0;
-    margin-top: 0;
-    background-color: #f4f7f9;
-}
+    .account-page-wrapper .header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xl);
+        flex-wrap: wrap;
+    }
 
-/* Убираем отступы у первого ряда */
-.account-page .row.gx-4.gy-3 {
-    margin-top: 0;
-}
+    .account-page-wrapper .title-section {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        flex: 1;
+    }
 
-.navbar + .container-fluid.account-page {
-    margin-top: 0 !important;
-    padding-top: 0 !important;
-}
+    .account-page-wrapper .icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border-radius: var(--radius-xl);
+        color: var(--text-on-primary);
+        font-size: 1.75rem;
+        box-shadow: var(--shadow-2);
+        z-index: 2;
+    }
+
+    .account-page-wrapper .icon-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(circle, rgba(0, 121, 140, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse 3s ease-in-out infinite;
+        z-index: 1;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+
+    .account-page-wrapper .title-content {
+        flex: 1;
+    }
+
+    .account-page-wrapper .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+    }
+
+    .account-page-wrapper .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .account-page-wrapper .user-status-container {
+        display: flex;
+        align-items: center;
+    }
+
+    .account-page-wrapper .status-badge.online {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--success-bg);
+        border: 1px solid var(--online);
+        border-radius: var(--radius-lg);
+        color: var(--online);
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+
+    .account-page-wrapper .status-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--online);
+        border-radius: 50%;
+        animation: pulseOnline 2s ease-in-out infinite;
+    }
+
+    @keyframes pulseOnline {
+        0%, 100% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.2); opacity: 0.8; }
+    }
+
+    /* Account Grid */
+    .account-page-wrapper .account-grid {
+        display: grid;
+        grid-template-columns: 350px 1fr 300px;
+        gap: var(--spacing-xxl);
+        align-items: start;
+    }
+
+    /* Profile Sidebar */
+    .account-page-wrapper .profile-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        padding: var(--spacing-xxl);
+        box-shadow: var(--shadow-card);
+        position: sticky;
+        top: 120px;
+        text-align: center;
+        animation: fadeInLeft 0.8s ease-out;
+    }
+
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .account-page-wrapper .avatar-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .account-page-wrapper .avatar-container {
+        position: relative;
+        display: inline-block;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .profile-avatar {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 4px solid var(--surface-0);
+        box-shadow: var(--shadow-2);
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .avatar-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 121, 140, 0.8);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-on-primary);
+        font-size: 1.5rem;
+        opacity: 0;
+        transition: all var(--transition-normal);
+        cursor: pointer;
+    }
+
+    .account-page-wrapper .avatar-container:hover .avatar-overlay {
+        opacity: 1;
+    }
+
+    .account-page-wrapper .avatar-container:hover .profile-avatar {
+        transform: scale(1.05);
+    }
+
+    .account-page-wrapper .avatar-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 120%;
+        height: 120%;
+        background: radial-gradient(circle, rgba(0, 121, 140, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: avatarPulse 4s ease-in-out infinite;
+        z-index: -1;
+    }
+
+    @keyframes avatarPulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.15); opacity: 0.8; }
+    }
+
+    .account-page-wrapper .avatar-upload {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .upload-label {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        background: var(--surface-2);
+        color: var(--text-secondary);
+        border: 2px dashed var(--border-medium);
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+
+    .account-page-wrapper .upload-label:hover {
+        background: var(--primary-50);
+        color: var(--primary-700);
+        border-color: var(--primary-300);
+        transform: translateY(-2px);
+    }
+
+    .account-page-wrapper .upload-input {
+        display: none;
+    }
+
+    .account-page-wrapper .upload-errors {
+        margin-top: var(--spacing-sm);
+    }
+
+    .account-page-wrapper .error-message {
+        display: block;
+        font-size: 0.75rem;
+        color: var(--error);
+        font-weight: 500;
+    }
+
+    .account-page-wrapper .update-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border: none;
+        border-radius: var(--radius-lg);
+        color: var(--text-on-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .account-page-wrapper .update-btn:hover {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }
+
+    .account-page-wrapper .user-info {
+        margin-bottom: var(--spacing-xl);
+        padding-bottom: var(--spacing-lg);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .account-page-wrapper .user-name {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.3;
+    }
+
+    .account-page-wrapper .user-role {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin-bottom: var(--spacing-sm);
+        font-weight: 500;
+    }
+
+    .account-page-wrapper .last-seen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: var(--spacing-sm);
+        font-size: 0.8rem;
+        color: var(--text-muted);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--surface-1);
+        border-radius: var(--radius-md);
+    }
+
+    .account-page-wrapper .profile-navigation {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .account-page-wrapper .nav-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md) var(--spacing-lg);
+        text-decoration: none;
+        color: var(--text-secondary);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-normal);
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+
+    .account-page-wrapper .nav-item:hover {
+        background: var(--surface-2);
+        color: var(--text-primary);
+        transform: translateX(4px);
+    }
+
+    .account-page-wrapper .nav-item.active {
+        background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+        color: var(--primary-700);
+        font-weight: 600;
+    }
+
+    .account-page-wrapper .nav-item i {
+        width: 20px;
+        text-align: center;
+        opacity: 0.8;
+    }
+
+    /* Main Content */
+    .account-page-wrapper .main-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xl);
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .account-page-wrapper .content-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .content-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-3);
+    }
+
+    .account-page-wrapper .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-xl) var(--spacing-xxl);
+        background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .account-page-wrapper .header-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border-radius: var(--radius-lg);
+        color: var(--text-on-primary);
+        font-size: 1.25rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .account-page-wrapper .card-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        line-height: 1.3;
+    }
+
+    .account-page-wrapper .card-subtitle {
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin: 0;
+    }
+
+    .account-page-wrapper .card-content {
+        padding: var(--spacing-xxl);
+    }
+
+    /* Info Grid */
+    .account-page-wrapper .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .info-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-normal);
+        border: 1px solid transparent;
+    }
+
+    .account-page-wrapper .info-item:hover {
+        background: var(--surface-2);
+        border-color: var(--primary-200);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-1);
+    }
+
+    .account-page-wrapper .info-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--primary-50);
+        border: 1px solid var(--primary-200);
+        border-radius: var(--radius-lg);
+        color: var(--primary-600);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .account-page-wrapper .info-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+        min-width: 0;
+    }
+
+    .account-page-wrapper .info-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: var(--text-muted);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-page-wrapper .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        line-height: 1.4;
+        word-break: break-word;
+    }
+
+    .account-page-wrapper .email-link {
+        color: var(--primary-500);
+        text-decoration: none;
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .email-link:hover {
+        color: var(--primary-700);
+        text-decoration: underline;
+    }
+
+    .account-page-wrapper .info-input {
+        border: none;
+        background: none;
+        padding: 0;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--text-primary);
+        width: 100%;
+    }
+
+    .account-page-wrapper .readonly-input {
+        cursor: default;
+    }
+
+    /* Settings Items */
+    .account-page-wrapper .settings-item {
+        margin-bottom: var(--spacing-xxl);
+    }
+
+    .account-page-wrapper .settings-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .account-page-wrapper .setting-header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .setting-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        background: var(--primary-50);
+        border: 1px solid var(--primary-200);
+        border-radius: var(--radius-lg);
+        color: var(--primary-600);
+        font-size: 1.125rem;
+        flex-shrink: 0;
+        margin-top: var(--spacing-xs);
+    }
+
+    .account-page-wrapper .setting-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .setting-label {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    /* VPN Status */
+    .account-page-wrapper .vpn-status-container {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .account-page-wrapper .vpn-input {
+        flex: 1;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--surface-1);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        font-family: var(--font-family-mono);
+    }
+
+    .account-page-wrapper .vpn-update-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        border: none;
+        border-radius: var(--radius-lg);
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        white-space: nowrap;
+    }
+
+    .account-page-wrapper .vpn-update-btn:hover {
+        background: linear-gradient(135deg, #2563eb, #1d4ed8);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-1);
+    }
+
+    .account-page-wrapper .vpn-badge-container {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        flex-wrap: wrap;
+    }
+
+    .account-page-wrapper .status-badge.active {
+        background: var(--success-bg);
+        color: var(--success);
+        border: 1px solid var(--success);
+    }
+
+    .account-page-wrapper .status-badge.warning {
+        background: var(--warning-bg);
+        color: var(--warning);
+        border: 1px solid var(--warning);
+    }
+
+    .account-page-wrapper .status-badge.inactive {
+        background: var(--error-bg);
+        color: var(--error);
+        border: 1px solid var(--error);
+    }
+
+    .account-page-wrapper .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-lg);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-page-wrapper .status-info {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-weight: 500;
+    }
+
+    /* Password Container */
+    .account-page-wrapper .password-container {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .password-input {
+        flex: 1;
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--surface-1);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        font-size: 0.9rem;
+        color: var(--text-primary);
+        font-family: var(--font-family-mono);
+    }
+
+    .account-page-wrapper .password-toggle-btn,
+    .account-page-wrapper .password-copy-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: var(--surface-2);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        color: var(--text-secondary);
+        font-weight: 500;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        white-space: nowrap;
+    }
+
+    .account-page-wrapper .password-toggle-btn:hover,
+    .account-page-wrapper .password-copy-btn:hover:not(:disabled) {
+        background: var(--primary-50);
+        color: var(--primary-700);
+        border-color: var(--primary-200);
+        transform: translateY(-1px);
+    }
+
+    .account-page-wrapper .password-copy-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* Signature Preview */
+    .account-page-wrapper .signature-preview {
+        padding: var(--spacing-lg);
+        background: var(--surface-1);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-lg);
+        margin-bottom: var(--spacing-md);
+        max-height: 200px;
+        overflow-y: auto;
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+
+    .account-page-wrapper .signature-copy-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+        border: none;
+        border-radius: var(--radius-lg);
+        color: white;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .signature-copy-btn:hover {
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-1);
+    }
+
+    /* Actions Grid */
+    .account-page-wrapper .actions-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .action-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        padding: var(--spacing-xl);
+        background: var(--surface-card);
+        border: 1px solid var(--border-light);
+        border-radius: var(--radius-xl);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        position: relative;
+        overflow: hidden;
+        text-align: left;
+    }
+
+    .account-page-wrapper .action-btn:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-2);
+        border-color: var(--primary-200);
+    }
+
+    .account-page-wrapper .download-btn {
+        background: linear-gradient(135deg, var(--success-bg), var(--surface-card));
+        border-color: var(--success);
+    }
+
+    .account-page-wrapper .download-btn:hover {
+        background: linear-gradient(135deg, var(--success), #059669);
+        color: white;
+    }
+
+    .account-page-wrapper .password-btn {
+        background: linear-gradient(135deg, var(--warning-bg), var(--surface-card));
+        border-color: var(--warning);
+    }
+
+    .account-page-wrapper .password-btn:hover {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: white;
+    }
+
+    .account-page-wrapper .btn-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        border-radius: var(--radius-xl);
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .download-btn .btn-icon {
+        background: var(--success);
+        color: white;
+    }
+
+    .account-page-wrapper .password-btn .btn-icon {
+        background: var(--warning);
+        color: white;
+    }
+
+    .account-page-wrapper .btn-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .account-page-wrapper .btn-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .btn-description {
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .action-btn:hover .btn-title,
+    .account-page-wrapper .action-btn:hover .btn-description {
+        color: white;
+    }
+
+    .account-page-wrapper .btn-ripple {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.6);
+        transform: scale(0);
+        pointer-events: none;
+    }
+
+    /* Admin Panel */
+    .account-page-wrapper .admin-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        position: sticky;
+        top: 120px;
+        animation: fadeInRight 0.8s ease-out 0.4s both;
+    }
+
+    @keyframes fadeInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    .account-page-wrapper .admin-table-container {
+        max-height: 500px;
+        overflow-y: auto;
+    }
+
+    .account-page-wrapper .table-header {
+        padding: var(--spacing-md) 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .account-page-wrapper .users-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .account-page-wrapper .user-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-md);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .user-item:hover {
+        background: var(--surface-2);
+        transform: translateX(4px);
+    }
+
+    .account-page-wrapper .user-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .user-avatar-small {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        overflow: hidden;
+        border: 2px solid var(--border-light);
+    }
+
+    .account-page-wrapper .user-avatar-small img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .account-page-wrapper .user-name {
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--text-primary);
+    }
+
+    /* Toggle Switch */
+    .account-page-wrapper .toggle-switch {
+        position: relative;
+        display: inline-block;
+        width: 50px;
+        height: 24px;
+    }
+
+    .account-page-wrapper .toggle-switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .account-page-wrapper .toggle-slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--surface-3);
+        transition: var(--transition-normal);
+        border-radius: 24px;
+    }
+
+    .account-page-wrapper .toggle-slider:before {
+        position: absolute;
+        content: "";
+        height: 18px;
+        width: 18px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        transition: var(--transition-normal);
+        border-radius: 50%;
+        box-shadow: var(--shadow-1);
+    }
+
+    .account-page-wrapper input:checked + .toggle-slider {
+        background-color: var(--success);
+    }
+
+    .account-page-wrapper input:checked + .toggle-slider:before {
+        transform: translateX(26px);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1200px) {
+        .account-page-wrapper .account-grid {
+            grid-template-columns: 300px 1fr 280px;
+            gap: var(--spacing-xl);
+        }
+    }
+
+    @media (max-width: 968px) {
+        .account-page-wrapper .account-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-xl);
+        }
+
+        .account-page-wrapper .profile-card,
+        .account-page-wrapper .admin-card {
+            position: static;
+        }
+
+        .account-page-wrapper .account-container {
+            padding: 0 var(--spacing-md);
+        }
+
+        .account-page-wrapper .page-header {
+            padding: var(--spacing-lg) var(--spacing-xl);
+        }
+
+        .account-page-wrapper .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-lg);
+        }
+
+        .account-page-wrapper .info-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .account-page-wrapper .actions-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .account-page-wrapper .page-title {
+            font-size: 2rem;
+        }
+
+        .account-page-wrapper .card-content {
+            padding: var(--spacing-xl);
+        }
+
+        .account-page-wrapper .card-header {
+            padding: var(--spacing-lg) var(--spacing-xl);
+            flex-direction: column;
+            text-align: center;
+            gap: var(--spacing-md);
+        }
+
+        .account-page-wrapper .profile-avatar {
+            width: 120px;
+            height: 120px;
+        }
+
+        .account-page-wrapper .background-shapes {
+            display: none;
+        }
+
+        .account-page-wrapper .vpn-status-container,
+        .account-page-wrapper .password-container {
+            flex-direction: column;
+            align-items: stretch;
+            gap: var(--spacing-md);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .account-page-wrapper .page-header {
+            padding: var(--spacing-md);
+        }
+
+        .account-page-wrapper .page-title {
+            font-size: 1.75rem;
+        }
+
+        .account-page-wrapper .card-content {
+            padding: var(--spacing-lg);
+        }
+
+        .account-page-wrapper .card-header {
+            padding: var(--spacing-md);
+        }
+    }
+
+    /* High Contrast Mode */
+    @media (prefers-contrast: high) {
+        .account-page-wrapper {
+            --border-light: #000000;
+            --text-secondary: #000000;
+        }
+    }
+
+    /* Reduced Motion */
+    @media (prefers-reduced-motion: reduce) {
+        .account-page-wrapper * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .account-page-wrapper .background-shapes,
+        .account-page-wrapper .avatar-glow,
+        .account-page-wrapper .icon-glow {
+            display: none !important;
+        }
+
+        .account-page-wrapper .content-card,
+        .account-page-wrapper .profile-card,
+        .account-page-wrapper .admin-card {
+            box-shadow: none !important;
+            border: 1px solid #ddd;
+            page-break-inside: avoid;
+        }
+
+        .account-page-wrapper .action-btn {
+            display: none;
+        }
+    }
 </style>
-
-{% endblock content %}
+{% endblock %}
 
 {% block scripts %}
 {{ super() }}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script> {# Убедимся, что sweetalert подключен #}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    // Копирование подписи (новый ID для кнопки)
+    // Ripple effect for action buttons
+    const actionBtns = document.querySelectorAll('.action-btn');
+    actionBtns.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            createRipple(e, this);
+        });
+    });
+
+    // Copy signature functionality
     const copySignatureBtnAccount = document.getElementById('copySignatureBtnAccount');
     if (copySignatureBtnAccount) {
         copySignatureBtnAccount.addEventListener('click', function () {
-            const signaturePreview = document.querySelector('.email-signature-preview');
+            const signaturePreview = document.querySelector('.signature-preview');
             if (signaturePreview) {
                 const tempDiv = document.createElement('div');
                 tempDiv.innerHTML = signaturePreview.innerHTML;
@@ -700,12 +1665,8 @@ document.addEventListener('DOMContentLoaded', function () {
                 ]).then(function () {
                     const originalText = copySignatureBtnAccount.innerHTML;
                     copySignatureBtnAccount.innerHTML = '<i class="fas fa-check me-2"></i>Скопировано!';
-                    copySignatureBtnAccount.classList.add('btn-success-soft'); // Используем soft стиль
-                    copySignatureBtnAccount.classList.remove('btn-outline-secondary');
                     setTimeout(() => {
                         copySignatureBtnAccount.innerHTML = originalText;
-                        copySignatureBtnAccount.classList.remove('btn-success-soft');
-                        copySignatureBtnAccount.classList.add('btn-outline-secondary');
                     }, 2000);
                 }).catch(function (error) {
                     console.error('Ошибка копирования подписи: ', error);
@@ -715,12 +1676,12 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Логика для кнопки "Выслать почтовый пароль"
+    // Send password functionality
     const sendPasswordBtn = document.getElementById('sendPasswordButton');
     if (sendPasswordBtn) {
         sendPasswordBtn.addEventListener('click', function() {
-            const usernameField = document.querySelector('input.form-control[value="{{ user.username }}"]'); // Более надежный селектор для username
-            const username = usernameField ? usernameField.value : "{{ user.username }}"; // Фоллбэк на user.username
+            const usernameField = document.querySelector('input.info-input[readonly]');
+            const username = usernameField ? usernameField.value : "{{ user.username }}";
 
             if (!username) {
                  Swal.fire('Внимание', 'Имя пользователя не найдено для отправки пароля.', 'warning');
@@ -758,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Логика для кнопки "Скачать TEZ ERP"
+    // Download ERP functionality
     const downloadErpBtn = document.getElementById('downloadButton');
     if (downloadErpBtn) {
         downloadErpBtn.addEventListener('click', function() {
@@ -773,7 +1734,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         throw new Error(`Ошибка HTTP: ${response.status}`);
                     }
                     const contentDisposition = response.headers.get('content-disposition');
-                    let filename = "TEZERP.exe"; // Имя по умолчанию
+                    let filename = "TEZERP.exe";
                     if (contentDisposition) {
                         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
                         if (filenameMatch && filenameMatch.length === 2)
@@ -801,13 +1762,12 @@ document.addEventListener('DOMContentLoaded', function () {
                     button.innerHTML = originalButtonText;
                 })
                 .finally(() => {
-                    // button.innerHTML = originalButtonText; // Не всегда нужно возвращать, если успешно
                     button.disabled = false;
                 });
         });
     }
 
-    // Логика для кнопки "Обновить дату VPN"
+    // Update VPN date functionality
     const updateVpnBtn = document.getElementById('update-vpn-date');
     const vpnDisplayField = document.getElementById('account-vpn-display');
     if (updateVpnBtn && vpnDisplayField) {
@@ -818,7 +1778,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             fetch("{{ url_for('users.update_vpn_date') }}", {
                 method: 'POST',
-                 headers: { // CSRF может быть нужен и здесь, если сессия проверяется
+                 headers: {
                     'X-CSRFToken': "{{ csrf_token() }}"
                 }
             })
@@ -828,20 +1788,19 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (!data.error) {
                     if (data.vpn_end_date === null) {
                         vpnDisplayField.value = 'Выключен';
-                         // Обновить стили бейджа ниже поля
                     } else {
                         vpnDisplayField.value = `Включен, заканчивается ${data.vpn_end_date}`;
-                         // Обновить стили бейджа ниже поля
                     }
-                    // Динамическое обновление бейджа ниже поля (требует доработки HTML для target элемента)
-                    const vpnStatusBadgeContainer = document.getElementById('vpn-status-badge-container'); // Предполагаемый ID контейнера
+
+                    // Update badge
+                    const vpnStatusBadgeContainer = document.getElementById('vpn-status-badge-container');
                     if(vpnStatusBadgeContainer) {
                         if (data.vpn_end_date === null || data.vpn_status === 0) {
-                             vpnStatusBadgeContainer.innerHTML = '<span class="badge bg-danger-tinted text-danger-emphasis"><i class="fas fa-shield-alt me-1"></i>Выключен</span>';
+                             vpnStatusBadgeContainer.innerHTML = '<span class="status-badge inactive"><i class="fas fa-shield-alt"></i>Выключен</span>';
                         } else if (data.vpn_end_date === '<Дата не определена>') {
-                            vpnStatusBadgeContainer.innerHTML = '<span class="badge bg-warning-tinted text-warning-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span> <small class="text-muted d-inline-block ms-2">Срок действия не определен</small>';
+                            vpnStatusBadgeContainer.innerHTML = '<span class="status-badge warning"><i class="fas fa-shield-alt"></i>Включен</span> <span class="status-info">срок не определен</span>';
                         } else {
-                             vpnStatusBadgeContainer.innerHTML = `<span class="badge bg-success-tinted text-success-emphasis"><i class="fas fa-shield-alt me-1"></i>Включен</span> <small class="text-muted d-inline-block ms-2">Срок до: ${data.vpn_end_date}</small>`;
+                             vpnStatusBadgeContainer.innerHTML = `<span class="status-badge active"><i class="fas fa-shield-alt"></i>Включен</span> <span class="status-info">до ${data.vpn_end_date}</span>`;
                         }
                     }
                 }
@@ -857,7 +1816,7 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // Логика для переключателей прав в панели администратора
+    // Permission toggles functionality
     const permissionToggles = document.querySelectorAll('.permission-toggle');
     permissionToggles.forEach(toggle => {
         toggle.addEventListener('change', function() {
@@ -885,18 +1844,18 @@ document.addEventListener('DOMContentLoaded', function () {
                     showConfirmButton: false
                 });
                 if (!data.success) {
-                    this.checked = !value; // Откатить изменение, если ошибка
+                    this.checked = !value;
                 }
             })
             .catch(error => {
                 console.error('Ошибка при обновлении прав:', error);
                 Swal.fire('Сетевая ошибка', 'Произошла ошибка при обновлении.', 'error');
-                this.checked = !value; // Откатить изменение
+                this.checked = !value;
             });
         });
     });
 
-    // Логика для "показать/скрыть пароль" и "копировать пароль"
+    // Password visibility toggle
     const togglePasswordBtn = document.getElementById('togglePassword');
     const passwordField = document.getElementById('password-display');
     const copyPasswordBtn = document.getElementById('copyPassword');
@@ -918,51 +1877,73 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         copyPasswordBtn.addEventListener('click', function() {
-            // navigator.clipboard.writeText работает только в secure contexts (HTTPS) или localhost
-            // Для HTTP или file:// может не сработать без дополнительных разрешений
             if (navigator.clipboard && window.isSecureContext) {
                 navigator.clipboard.writeText(passwordField.value).then(function() {
                     Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
                 }, function(err) {
-                    // Если navigator.clipboard.writeText не сработал, используем execCommand
                     fallbackCopyTextToClipboard(passwordField);
                 });
             } else {
-                // Фоллбэк для insecure contexts
                 fallbackCopyTextToClipboard(passwordField);
             }
         });
     }
+
     function fallbackCopyTextToClipboard(inputElement) {
-        const M_IOS =typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if(M_IOS) { // на IOS может не работать .select() для readonly полей.
+        const M_IOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+        if(M_IOS) {
             let range = document.createRange();
             range.selectNodeContents(inputElement);
             let selection = window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
-            inputElement.setSelectionRange(0, 999999); // для мобильных
+            inputElement.setSelectionRange(0, 999999);
         } else {
-            inputElement.select(); // select() может не работать для display:none или readonly на некоторых браузерах
+            inputElement.select();
         }
         try {
             var successful = document.execCommand('copy');
             if (successful) {
-                Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена (fallback)', 'success');
+                Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
             } else {
-                 Swal.fire('Ошибка', 'Не удалось скопировать пароль (fallback)', 'error');
+                 Swal.fire('Ошибка', 'Не удалось скопировать пароль', 'error');
             }
         } catch (err) {
-             Swal.fire('Ошибка', 'Не удалось скопировать пароль (fallback exception)', 'error');
+             Swal.fire('Ошибка', 'Не удалось скопировать пароль', 'error');
         }
-        if (M_IOS) { // Убираем выделение после копирования на iOS
+        if (M_IOS) {
             window.getSelection().removeAllRanges();
         }
     }
-
-    // Старый jQuery код для Vacuum-IM и XMPP теста оставляю закомментированным,
-    // так как он не является частью основного редизайна UI.
-    // Если он нужен, его нужно будет адаптировать под новый DOM или переписать на ванильный JS.
 });
+
+// Ripple effect function
+function createRipple(event, element) {
+    const btn = element;
+    const ripple = btn.querySelector('.btn-ripple');
+
+    if (!ripple) return;
+
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.width = ripple.style.height = size + 'px';
+    ripple.style.left = x + 'px';
+    ripple.style.top = y + 'px';
+    ripple.style.transform = 'scale(0)';
+    ripple.style.opacity = '1';
+
+    requestAnimationFrame(() => {
+        ripple.style.transform = 'scale(2)';
+        ripple.style.opacity = '0';
+    });
+
+    setTimeout(() => {
+        ripple.style.transform = 'scale(0)';
+        ripple.style.opacity = '0';
+    }, 600);
+}
 </script>
-{% endblock scripts %}
+{% endblock %}

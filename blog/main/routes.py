@@ -462,34 +462,45 @@ def my_notifications():
 @login_required
 def clear_notifications():
     """Удаляем уведомления после нажатия кнопки 'Очистить уведомления'"""
+    print(f"[DEBUG] clear_notifications вызван для пользователя: {current_user.id}")
     try:
         # Используем одну транзакцию для всех операций
         notifications = (
             db.session.query(Notifications).filter_by(user_id=current_user.id).all()
         )
+        print(f"[DEBUG] Найдено уведомлений о статусе: {len(notifications)}")
 
         notifications_add_notes = (
             db.session.query(NotificationsAddNotes)
             .filter_by(user_id=current_user.id)
             .all()
         )
+        print(f"[DEBUG] Найдено уведомлений о комментариях: {len(notifications_add_notes)}")
 
         # Удаляем все уведомления
+        deleted_count = 0
         for notification in notifications:
             db.session.delete(notification)
+            deleted_count += 1
 
         for notification in notifications_add_notes:
             db.session.delete(notification)
+            deleted_count += 1
+
+        print(f"[DEBUG] Удаляем {deleted_count} уведомлений")
 
         # Коммитим все изменения разом
         db.session.commit()
+        print(f"[DEBUG] Изменения закоммичены успешно")
         flash("Уведомления успешно удалены", "success")
 
     except SQLAlchemyError as e:
         db.session.rollback()
+        print(f"[DEBUG] Ошибка при удалении: {str(e)}")
         flash(f"Ошибка при удалении уведомлений: {str(e)}", "error")
         logger.error(f"Ошибка при удалении всех уведомлений: {str(e)}")
 
+    print(f"[DEBUG] Перенаправляем на страницу уведомлений")
     return redirect(url_for("main.my_notifications"))
 
 

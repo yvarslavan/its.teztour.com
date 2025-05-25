@@ -19,7 +19,7 @@
       <div class="header-main">
         <div class="header-icon">
           <i class="fas fa-ticket-alt"></i>
-        </div>
+    </div>
         <div class="header-text">
           <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
           <p class="page-subtitle">Управление и отслеживание ваших обращений в техническую поддержку</p>
@@ -33,8 +33,8 @@
         <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
           <i class="fas fa-plus"></i>
           <span>Создать заявку</span>
-        </a>
-      </div>
+    </a>
+  </div>
     </div>
   </header>
 
@@ -44,12 +44,12 @@
       <div class="stat-card total">
         <div class="stat-icon">
           <i class="fas fa-list-alt"></i>
-        </div>
+    </div>
         <div class="stat-content">
           <span class="stat-value" id="totalIssues">-</span>
           <span class="stat-label">Всего заявок</span>
-        </div>
-      </div>
+    </div>
+  </div>
       <div class="stat-card open">
         <div class="stat-icon">
           <i class="fas fa-folder-open"></i>
@@ -92,9 +92,9 @@
             </label>
             <div id="statusFilterContainer" class="filter-container">
               <!-- Динамически заполняется JavaScript -->
-            </div>
-          </div>
-        </div>
+    </div>
+    </div>
+    </div>
         <div class="search-section">
           <label class="search-label">
             <i class="fas fa-search"></i>
@@ -102,8 +102,8 @@
           </label>
           <div id="searchBoxContainer" class="search-container">
             <!-- Динамически заполняется JavaScript -->
-          </div>
-        </div>
+    </div>
+  </div>
       </div>
       <div class="display-options">
         <div class="display-item">
@@ -121,8 +121,8 @@
     <div class="table-container">
       <div class="table-wrapper">
         <table id="issue" class="issues-table">
-          <thead>
-            <tr>
+    <thead>
+        <tr>
               <th class="column-id">
                 <div class="column-header">
                   <i class="fas fa-hashtag"></i>
@@ -147,12 +147,12 @@
                   <span>Статус</span>
                 </div>
               </th>
-            </tr>
-          </thead>
-          <tbody id="table-body">
+        </tr>
+    </thead>
+    <tbody id="table-body">
             <!-- Динамически заполняется JavaScript -->
-          </tbody>
-        </table>
+    </tbody>
+  </table>
       </div>
     </div>
 
@@ -1104,7 +1104,7 @@
       --border-light: #000000;
       --border-medium: #000000;
       --text-secondary: #000000;
-    }
+  }
   }
 </style>
 {% endblock %}
@@ -1229,11 +1229,11 @@ $(document).ready(function() {
                     </tr>
                 `);
             } else {
-                let tableBody = '';
-                response.issues.forEach(function(issue) {
-                    let statusInfo = getStatusStyle(issue.status_name);
-                    tableBody += `
-                        <tr class="${statusInfo.trClass}">
+            let tableBody = '';
+            response.issues.forEach(function(issue) {
+                let statusInfo = getStatusStyle(issue.status_name);
+                tableBody += `
+                    <tr class="${statusInfo.trClass}">
                             <td>
                                 <a href="/my-issues/${issue.id}" class="issue-id-link" title="Посмотреть детали заявки">
                                     <i class="fas fa-external-link-alt"></i>
@@ -1249,15 +1249,15 @@ $(document).ready(function() {
                             <td>
                                 <div class="status-cell">
                                     <div class="status-badge" title="${statusInfo.tooltip}">
-                                        <i class="${statusInfo.iconClass} status-icon"></i>
-                                        <span>${issue.status_name}</span>
+                            <i class="${statusInfo.iconClass} status-icon"></i>
+                            <span>${issue.status_name}</span>
                                     </div>
                                 </div>
-                            </td>
-                        </tr>
-                    `;
-                });
-                $('#table-body').html(tableBody);
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#table-body').html(tableBody);
             }
 
             // Инициализируем DataTables
