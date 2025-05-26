@@ -33,6 +33,9 @@ from mysql_db import (
     CustomValue,
     Tracker,
     QualitySession,
+    execute_quality_query_safe,
+    execute_main_query_safe,
+    db_manager,
 )
 from redmine import (
     RedmineConnector,
@@ -64,7 +67,8 @@ from erp_oracle import (
 )
 from sqlalchemy.sql.functions import count
 from blog.notification_service import notification_service, check_notifications_improved
-from datetime import datetime
+from datetime import datetime, timedelta
+from blog.utils.connection_monitor import check_database_connections, get_connection_health, log_connection_status
 
 main = Blueprint("main", __name__)
 
@@ -1563,65 +1567,65 @@ def get_issues_by_category():
 @main.route("/get-total-issues-count")
 @login_required
 def get_total_issues_count():
-    session = None
+    """Получение общего количества обращений с безопасной обработкой ошибок"""
     try:
-        session = get_quality_connection()
-        if session is None:
-            return jsonify({"error": "Database connection failed", "count": 0}), 500
+        def query_total_count(session):
+            result = session.execute(
+                text("SELECT COUNT(id) as count FROM issues WHERE project_id=1")
+            )
+            return result.scalar()
 
-        # Оборачиваем SQL запрос в text()
-        result = session.execute(
-            text("SELECT COUNT(id) as count FROM issues WHERE project_id=1")
+        count = execute_quality_query_safe(
+            query_total_count,
+            "получение общего количества обращений"
         )
 
-        count = result.scalar()
+        if count is None:
+            return jsonify({"success": True, "count": 0, "warning": "Временные проблемы с подключением"})
 
         return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
-        # Используем logger для вывода ошибок
-        logger.error(f"Error in get_total_issues_count: {str(e)}")
-        return jsonify({"error": str(e), "count": 0}), 500
-    finally:
-        if session:
-            session.close()
+        logger.error(f"Неожиданная ошибка при получении общего количества обращений: {str(e)}")
+        return jsonify({"success": False, "error": "Внутренняя ошибка сервера", "count": 0}), 500
 
 
 @main.route("/get-new-issues-count")
 @login_required
 def get_new_issues_count():
-    session = None
+    """Получение количества новых обращений с безопасной обработкой ошибок"""
     try:
-        session = get_quality_connection()
-        if session is None:
-            return jsonify({"error": "Database connection failed", "count": 0}), 500
+        def query_count(session):
+            result = session.execute(
+                text("SELECT COUNT(id) as count FROM issues WHERE project_id=1 AND status_id=1")
+            )
+            return result.scalar()
 
-        # Оборачиваем SQL запрос в text()
-        result = session.execute(
-            text("SELECT COUNT(id) as count FROM issues WHERE project_id=1 AND status_id=1")
+        count = execute_quality_query_safe(
+            query_count,
+            "получение количества новых обращений"
         )
 
-        count = result.scalar()
+        if count is None:
+            # Возвращаем последнее известное значение или 0
+            return jsonify({"success": True, "count": 0, "warning": "Временные проблемы с подключением"})
 
         return jsonify({"success": True, "count": count or 0})
 
     except Exception as e:
-        # Используем logger для вывода ошибок
-        logger.error(f"Error in get_new_issues_count: {str(e)}")
-        return jsonify({"error": str(e), "count": 0}), 500
-    finally:
-        if session:
-            session.close()
+        logger.error(f"Неожиданная ошибка при получении количества новых обращений: {str(e)}")
+        return jsonify({"success": False, "error": "Внутренняя ошибка сервера", "count": 0}), 500
 
 
 @main.route("/comment-notifications")
 @login_required
 def get_comment_notifications():
+    """Получение уведомлений о комментариях с безопасной обработкой ошибок"""
     try:
         if not current_user.is_authenticated:
             return jsonify({"error": "Пользователь не авторизован"}), 401
 
-        with QualitySession() as session:
+        def query_notifications(session):
             query = """
                 SELECT j.id, j.journalized_id, j.notes, j.created_on,
                        j.user_id, i.subject
@@ -1637,39 +1641,58 @@ def get_comment_notifications():
             """
 
             result = session.execute(text(query))
-            notifications = result.mappings().all()
+            return result.mappings().all()
 
-            notifications_data = [
-                {
-                    "id": row["id"],
-                    "journalized_id": row["journalized_id"],
-                    "notes": row["notes"] if row["notes"] else "",
-                    "created_on": (
-                        row["created_on"].strftime("%Y-%m-%d %H:%M:%S")
-                        if row["created_on"]
-                        else ""
-                    ),
-                    "user_id": row["user_id"],
-                    "subject": row["subject"] if row["subject"] else "",
-                }
-                for row in notifications
-            ]
+        notifications = execute_quality_query_safe(
+            query_notifications,
+            "получение уведомлений о комментариях"
+        )
 
-            logger.info(f"Получено {len(notifications_data)} уведомлений")
+        if notifications is None:
+            # Возвращаем пустой результат вместо ошибки
+            return jsonify({
+                "success": True,
+                "html": render_template("_comment_notifications.html", notifications=[]),
+                "count": 0,
+                "warning": "Временные проблемы с подключением к базе данных"
+            })
 
-            return jsonify(
-                {
-                    "success": True,
-                    "html": render_template(
-                        "_comment_notifications.html", notifications=notifications_data
-                    ),
-                    "count": len(notifications_data),
-                }
-            )
+        notifications_data = [
+            {
+                "id": row["id"],
+                "journalized_id": row["journalized_id"],
+                "notes": row["notes"] if row["notes"] else "",
+                "created_on": (
+                    row["created_on"].strftime("%Y-%m-%d %H:%M:%S")
+                    if row["created_on"]
+                    else ""
+                ),
+                "user_id": row["user_id"],
+                "subject": row["subject"] if row["subject"] else "",
+            }
+            for row in notifications
+        ]
+
+        logger.info(f"Получено {len(notifications_data)} уведомлений о комментариях")
+
+        return jsonify(
+            {
+                "success": True,
+                "html": render_template(
+                    "_comment_notifications.html", notifications=notifications_data
+                ),
+                "count": len(notifications_data),
+            }
+        )
 
     except Exception as e:
-        logger.error(f"Ошибка при получении уведомлений: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Неожиданная ошибка при получении уведомлений: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Внутренняя ошибка сервера",
+            "html": render_template("_comment_notifications.html", notifications=[]),
+            "count": 0
+        }), 500
 
 
 @main.route("/mark-comment-read/<int:journal_id>", methods=["POST"])
@@ -1745,8 +1768,9 @@ def get_countries():
 @main.route("/get-new-issues-list")
 @login_required
 def get_new_issues_list():
+    """Получение списка новых обращений с безопасной обработкой ошибок"""
     try:
-        with QualitySession() as session:
+        def query_new_issues(session):
             query = """
                 SELECT id, subject, description, created_on
                 FROM issues
@@ -1757,39 +1781,94 @@ def get_new_issues_list():
             """
 
             result = session.execute(text(query))
-            issues = result.mappings().all()
+            return result.mappings().all()
 
-            issues_data = [
-                {
-                    "id": row["id"],
-                    "subject": row["subject"],
-                    "description": row["description"],
-                    "created_on": row["created_on"],
-                }
-                for row in issues
-            ]
+        issues = execute_quality_query_safe(
+            query_new_issues,
+            "получение списка новых обращений"
+        )
 
-            # Рендерим только содержимое, без структуры сайдбара
-            html_content = render_template(
-                "_new_issues_content.html", issues=issues_data
-            )
+        if issues is None:
+            # Возвращаем пустой результат вместо ошибки
+            return jsonify({
+                "success": True,
+                "html": render_template("_new_issues_content.html", issues=[]),
+                "count": 0,
+                "warning": "Временные проблемы с подключением к базе данных"
+            })
 
-            return jsonify(
-                {"success": True, "html": html_content, "count": len(issues_data)}
-            )
+        issues_data = [
+            {
+                "id": row["id"],
+                "subject": row["subject"],
+                "description": row["description"],
+                "created_on": row["created_on"],
+            }
+            for row in issues
+        ]
+
+        # Рендерим только содержимое, без структуры сайдбара
+        html_content = render_template(
+            "_new_issues_content.html", issues=issues_data
+        )
+
+        logger.info(f"Получено {len(issues_data)} новых обращений")
+
+        return jsonify(
+            {"success": True, "html": html_content, "count": len(issues_data)}
+        )
 
     except Exception as e:
-        logger.error(f"Ошибка при получении списка новых обращений: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Неожиданная ошибка при получении списка новых обращений: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Внутренняя ошибка сервера",
+            "html": render_template("_new_issues_content.html", issues=[]),
+            "count": 0
+        }), 500
 
 
 @main.route("/check-connection")
 @login_required
 def check_connection():
-    from blog.utils.connection_monitor import check_database_connections
+    """Проверка состояния соединений с базами данных"""
+    try:
+        is_connected = check_database_connections()
+        health_report = get_connection_health()
 
-    is_connected = check_database_connections()
-    return jsonify({"connected": is_connected})
+        return jsonify({
+            "connected": is_connected,
+            "health": health_report,
+            "timestamp": datetime.now().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Ошибка при проверке соединений: {str(e)}")
+        return jsonify({
+            "connected": False,
+            "error": str(e),
+            "timestamp": datetime.now().isoformat()
+        }), 500
+
+@main.route("/admin/db-status")
+@login_required
+def database_status():
+    """Административная страница для мониторинга базы данных"""
+    try:
+        # Проверяем права доступа (можно добавить проверку на роль администратора)
+        if not current_user.is_authenticated:
+            abort(403)
+
+        health_report = get_connection_health()
+        connection_stats = db_manager.get_connection_status()
+
+        return render_template('admin/db_status.html',
+                             health=health_report,
+                             stats=connection_stats,
+                             title="Состояние базы данных")
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке страницы состояния БД: {str(e)}")
+        flash("Ошибка при загрузке состояния базы данных", "error")
+        return redirect(url_for("main.index"))
 
 
 @main.route("/api/push/subscribe", methods=["POST"])
@@ -1999,3 +2078,145 @@ def get_vapid_public_key():
 def notification_test():
     """Тестовая страница для диагностики уведомлений"""
     return render_template('notification_test.html')
+
+
+@main.route("/admin/cleanup-push-subscriptions", methods=["POST"])
+@login_required
+def cleanup_push_subscriptions():
+    """Административная очистка неактивных пуш-подписок"""
+    try:
+        # Проверяем права доступа (можно добавить проверку на роль администратора)
+        # if not current_user.is_authenticated:  # Эта проверка избыточна из-за @login_required
+        #     return jsonify({"error": "Доступ запрещен"}), 403
+
+        from datetime import timedelta
+
+        # Получаем параметры из запроса
+        data = request.get_json() or {}
+        days_threshold = data.get('days', 7)  # По умолчанию 7 дней
+
+        cutoff_date = datetime.utcnow() - timedelta(days=days_threshold)
+
+        # Находим неактивные подписки
+        inactive_subscriptions = PushSubscription.query.filter(
+            PushSubscription.is_active == False,
+            PushSubscription.last_used < cutoff_date  # Исправлено с updated_at на last_used
+        ).all()
+
+        # Находим подписки с ошибками
+        error_subscriptions = PushSubscription.query.filter(
+            or_(
+                PushSubscription.endpoint == None,
+                PushSubscription.endpoint == '',
+                PushSubscription.p256dh_key == None,
+                PushSubscription.auth_key == None
+            )
+        ).all()
+
+        # Подсчитываем статистику
+        total_before = PushSubscription.query.count()
+        to_delete = len(inactive_subscriptions) + len(error_subscriptions)
+
+        # Удаляем подписки
+        for subscription in inactive_subscriptions + error_subscriptions:
+            db.session.delete(subscription)
+
+        db.session.commit()
+
+        total_after = PushSubscription.query.count()
+
+        logger.info(f"Административная очистка: удалено {to_delete} подписок")
+
+        return jsonify({
+            "success": True,
+            "message": f"Очистка завершена успешно",
+            "statistics": {
+                "total_before": total_before,
+                "total_after": total_after,
+                "deleted": to_delete,
+                "inactive_deleted": len(inactive_subscriptions),
+                "error_deleted": len(error_subscriptions)
+            }
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Ошибка при административной очистке подписок: {str(e)}")
+        return jsonify({"error": f"Ошибка очистки: {str(e)}"}), 500
+
+
+@main.route("/admin/push-subscriptions-stats", methods=["GET"])
+@login_required
+def push_subscriptions_stats():
+    """Статистика пуш-подписок"""
+    try:
+        # if not current_user.is_authenticated: # Эта проверка избыточна из-за @login_required
+        #     return jsonify({"error": "Доступ запрещен"}), 403
+
+        # Общая статистика
+        total_subscriptions = PushSubscription.query.count()
+        active_subscriptions = PushSubscription.query.filter_by(is_active=True).count()
+        inactive_subscriptions = PushSubscription.query.filter_by(is_active=False).count()
+
+        # Статистика по типам endpoint
+        fcm_count = PushSubscription.query.filter(
+            PushSubscription.endpoint.like('%fcm.googleapis.com%')
+        ).count()
+
+        mozilla_count = PushSubscription.query.filter(
+            PushSubscription.endpoint.like('%mozilla.com%')
+        ).count()
+
+        # Подписки с ошибками
+        error_subscriptions = PushSubscription.query.filter(
+            or_(
+                PushSubscription.endpoint == None,
+                PushSubscription.endpoint == '',
+                PushSubscription.p256dh_key == None,
+                PushSubscription.auth_key == None
+            )
+        ).count()
+
+        # Старые подписки (более 30 дней без использования)
+        cutoff_date = datetime.utcnow() - timedelta(days=30)
+        old_subscriptions = PushSubscription.query.filter(
+            or_(
+                PushSubscription.last_used < cutoff_date,
+                PushSubscription.last_used == None
+            )
+        ).count()
+
+        return jsonify({
+            "total": total_subscriptions,
+            "active": active_subscriptions,
+            "inactive": inactive_subscriptions,
+            "by_type": {
+                "fcm": fcm_count,
+                "mozilla": mozilla_count,
+                "other": total_subscriptions - fcm_count - mozilla_count
+            },
+            "problematic": {
+                "with_errors": error_subscriptions,
+                "old_unused": old_subscriptions
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка при получении статистики подписок: {str(e)}")
+        return jsonify({"error": f"Ошибка получения статистики: {str(e)}"}), 500
+
+@main.route("/admin/push-subscriptions")
+@login_required
+def admin_push_subscriptions():
+    """Административная страница управления пуш-подписками"""
+    try:
+        # Проверяем права доступа (можно добавить проверку на роль администратора)
+        # if not current_user.is_authenticated: # Эта проверка избыточна из-за @login_required
+        #     abort(403)
+
+        return render_template('admin/push_subscriptions.html',
+                             title="Управление пуш-подписками")
+    except Exception as e:
+        logger.error(f"Ошибка при загрузке страницы управления пуш-подписками: {str(e)}")
+        flash("Ошибка при загрузке страницы управления", "error")
+        return redirect(url_for("main.index"))

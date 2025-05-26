@@ -12,6 +12,7 @@ import os
 import cx_Oracle
 from flask_cors import CORS
 from flask_session import Session
+import atexit
 
 from .db_config import db  # Импортируем db из нового файла
 from .settings import Config
@@ -24,6 +25,18 @@ login_manager.login_view = "users.login"
 login_manager.login_message_category = "info"
 login_manager.login_message = "Авторизуйтесь, чтобы попасть на эту страницу!"
 scheduler = BackgroundScheduler()
+
+# Функция для корректной остановки планировщика
+def shutdown_scheduler():
+    if scheduler.running:
+        try:
+            scheduler.shutdown()
+            print("Scheduler shutdown successfully.")
+        except Exception as e:
+            print(f"Error during scheduler shutdown: {e}")
+
+# Регистрируем функцию для выполнения при выходе из приложения
+atexit.register(shutdown_scheduler)
 
 csrf = CSRFProtect()
 
@@ -122,7 +135,12 @@ def create_app():
     app.register_blueprint(netmonitor)  # Используем Blueprint из routes.py
 
     with app.app_context():
-        scheduler.start()
+        if not scheduler.running:
+            try:
+                scheduler.start()
+                print("Scheduler started successfully.")
+            except Exception as e:
+                print(f"Error starting scheduler: {e}")
         try:
             # Создаем только локальные таблицы SQLite
             # Исключаем Oracle таблицы

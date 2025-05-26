@@ -28,7 +28,7 @@ import requests
 from flask_login import current_user, logout_user, login_required, login_user, AnonymousUserMixin
 from sqlalchemy.orm import sessionmaker
 from werkzeug.utils import redirect
-from blog import db
+from blog import db, scheduler
 from blog.models import User, Post
 from blog.user.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from blog.user.utils import save_picture, random_avatar, quality_control_required
@@ -67,20 +67,6 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 users = Blueprint("users", __name__)
-try:
-    # Используем pytz.UTC вместо строки "utc"
-    scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
-    print("Планировщик инициализирован с pytz.UTC")
-except Exception as e:
-    print(f"Ошибка инициализации с pytz.UTC: {e}")
-    try:
-        # Второй вариант - использовать системные настройки
-        scheduler_instance = BackgroundScheduler()
-        print("Планировщик инициализирован без указания временной зоны")
-    except Exception as e2:
-        print(f"Ошибка инициализации без временной зоны: {e2}")
-        scheduler_instance = None
-        print("ПРЕДУПРЕЖДЕНИЕ: Планировщик отключен из-за ошибок")
 USERS_ACCOUNT_URL = "users.account"
 config = ConfigParser()
 config_path = os.path.join(os.getcwd(), "config.ini")
@@ -379,19 +365,19 @@ def start_user_job(current_user_email, current_user_id, timeout):
     job_id = f"notification_job_{current_user_id}"
     print(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
     try:
-        global scheduler_instance
-        if scheduler_instance is None:
-            print("[DEBUG] scheduler_instance не инициализирован, создаю новый экземпляр")
-            import pytz
-            from apscheduler.schedulers.background import BackgroundScheduler
-            scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
+        # global scheduler_instance # Больше не нужна, используем импортированный scheduler
+        # if scheduler_instance is None: # Больше не нужно, scheduler должен быть всегда доступен
+        #     print("[DEBUG] scheduler_instance не инициализирован, создаю новый экземпляр")
+        #     import pytz
+        #     from apscheduler.schedulers.background import BackgroundScheduler
+        #     scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
 
         # Проверяем доступ к планировщику и модулю notification_service
         from blog.notification_service import check_notifications_improved
         print(f"[DEBUG] Модуль notification_service доступен, импортирован успешно")
         print(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
 
-        scheduler_instance.add_job(
+        scheduler.add_job( # <--- Используем импортированный scheduler
             check_notifications_improved,  # Используем улучшенную функцию
             "interval",
             args=[current_user_email, current_user_id],
@@ -406,9 +392,9 @@ def start_user_job(current_user_email, current_user_id, timeout):
         print(traceback.format_exc())
         logger.error(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}", exc_info=True)
 
-    if not scheduler_instance.running:
+    if not scheduler.running: # <--- Используем импортированный scheduler
         try:
-            scheduler_instance.start()
+            scheduler.start() # <--- Используем импортированный scheduler
             print("[SCHEDULER] Планировщик стартовал.")
         except Exception as e:
             print(f"[SCHEDULER] Ошибка при старте планировщика: {e}")
@@ -424,21 +410,18 @@ def stop_user_job(user_id):
         job_id = f"notification_job_{user_id}"
         print(f"[SCHEDULER] Попытка остановить задачу: {job_id}")
 
-        global scheduler_instance
-        if scheduler_instance is None:
+        # global scheduler_instance # Больше не нужна
+        if scheduler is None: # <--- Проверяем импортированный scheduler
             print(f"[SCHEDULER] Планировщик не инициализирован, задача {job_id} не может быть остановлена")
             return
 
         # Проверяем, существует ли задача
         try:
-            job = scheduler_instance.get_job(job_id)
+            job = scheduler.get_job(job_id) # <--- Используем импортированный scheduler
             if job:
-                scheduler_instance.remove_job(job_id)
+                scheduler.remove_job(job_id) # <--- Используем импортированный scheduler
                 print(f"[SCHEDULER] Задача {job_id} успешно остановлена")
                 logging.info(f"User-specific job {job_id} successfully stopped.")
-            else:
-                print(f"[SCHEDULER] Задача {job_id} не найдена в планировщике")
-                logging.warning(f"User-specific job {job_id} was not found when attempting to stop it.")
         except JobLookupError:
             print(f"[SCHEDULER] Задача {job_id} не найдена (JobLookupError)")
             logging.warning(f"User-specific job {job_id} was not found when attempting to stop it.")

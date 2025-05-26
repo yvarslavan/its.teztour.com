@@ -165,13 +165,13 @@ class NotificationService:
     def _process_status_notifications(self, connection, user_email: str, user_id: int) -> int:
         """Обработка уведомлений об изменении статуса"""
         try:
-            cursor = connection.cursor()
-            email_part = user_email.split("@")[0]
+            cursor = connection.cursor(dictionary=True)
+            email_part = user_email.lower().split("@")[0]
 
             query = """
-                SELECT IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated
+                SELECT ID, IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated
                 FROM u_its_update_status
-                WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
+                WHERE LOWER(SUBSTRING_INDEX(Author, '@', 1)) = LOWER(%s)
                 ORDER BY RowDateCreated DESC
                 LIMIT 50
             """
@@ -181,6 +181,7 @@ class NotificationService:
 
             processed_count = 0
             notifications_to_save = []
+            ids_to_delete_from_mysql = []
 
             for row in rows:
                 notification_data = NotificationData(
@@ -201,6 +202,7 @@ class NotificationService:
                 # Проверяем на дублирование
                 if not self.deduplicator.is_duplicate(notification_data):
                     notifications_to_save.append(notification_data)
+                    ids_to_delete_from_mysql.append(row['ID'])
                     processed_count += 1
 
             # Сохраняем уведомления в базу
@@ -211,8 +213,9 @@ class NotificationService:
                 for notification in notifications_to_save:
                     self.push_service.send_push_notification(notification)
 
-                # Удаляем обработанные записи из MySQL
-                self._delete_processed_status_notifications(connection, email_part)
+                # Удаляем успешно обработанные записи из MySQL по их ID
+                if ids_to_delete_from_mysql:
+                    self._delete_processed_status_notifications(connection, ids_to_delete_from_mysql)
 
             cursor.close()
             return processed_count
@@ -224,13 +227,13 @@ class NotificationService:
     def _process_comment_notifications(self, connection, user_email: str, user_id: int) -> int:
         """Обработка уведомлений о комментариях"""
         try:
-            cursor = connection.cursor()
-            email_part = user_email.split("@")[0]
+            cursor = connection.cursor(dictionary=True)
+            email_part = user_email.lower().split("@")[0]
 
             query = """
-                SELECT issue_id, Author, notes, date_created
+                SELECT ID, issue_id, Author, notes, date_created
                 FROM u_its_add_notes
-                WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
+                WHERE LOWER(SUBSTRING_INDEX(Author, '@', 1)) = LOWER(%s)
                 ORDER BY date_created DESC
                 LIMIT 50
             """
@@ -240,6 +243,7 @@ class NotificationService:
 
             processed_count = 0
             notifications_to_save = []
+            ids_to_delete_from_mysql = []
 
             for row in rows:
                 notification_data = NotificationData(
@@ -258,6 +262,7 @@ class NotificationService:
                 # Проверяем на дублирование
                 if not self.deduplicator.is_duplicate(notification_data):
                     notifications_to_save.append(notification_data)
+                    ids_to_delete_from_mysql.append(row['ID'])
                     processed_count += 1
 
             # Сохраняем уведомления в базу
@@ -268,8 +273,9 @@ class NotificationService:
                 for notification in notifications_to_save:
                     self.push_service.send_push_notification(notification)
 
-                # Удаляем обработанные записи из MySQL
-                self._delete_processed_comment_notifications(connection, email_part)
+                # Удаляем успешно обработанные записи из MySQL по их ID
+                if ids_to_delete_from_mysql:
+                    self._delete_processed_comment_notifications(connection, ids_to_delete_from_mysql)
 
             cursor.close()
             return processed_count
@@ -343,33 +349,44 @@ class NotificationService:
             logger.error(f"Ошибка при сохранении уведомлений о комментариях: {e}")
             raise
 
-    def _delete_processed_status_notifications(self, connection, email_part: str):
-        """Удаление обработанных уведомлений о статусах из MySQL"""
+    def _delete_processed_status_notifications(self, connection, ids_to_delete: List[int]):
+        """Удаление обработанных уведомлений о статусах из MySQL по списку ID"""
+        if not ids_to_delete:
+            return
         try:
             cursor = connection.cursor()
-            query = """
+            # Создаем плейсхолдеры %s для каждого ID
+            placeholders = ', '.join(['%s'] * len(ids_to_delete))
+            query = f"""
                 DELETE FROM u_its_update_status
-                WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
+                WHERE ID IN ({placeholders})
             """
-            cursor.execute(query, (email_part,))
+            cursor.execute(query, tuple(ids_to_delete))
             connection.commit()
+            logger.info(f"Удалено {cursor.rowcount} записей о статусах из MySQL (IDs: {ids_to_delete})")
             cursor.close()
         except Exception as e:
-            logger.error(f"Ошибка при удалении обработанных уведомлений о статусах: {e}")
+            logger.error(f"Ошибка при удалении обработанных уведомлений о статусах (IDs: {ids_to_delete}): {e}")
+            # Важно: не откатывать транзакцию здесь, если она управляется выше по стеку,
+            # но для DELETE это обычно атомарная операция для данного cursor.execute.
 
-    def _delete_processed_comment_notifications(self, connection, email_part: str):
-        """Удаление обработанных уведомлений о комментариях из MySQL"""
+    def _delete_processed_comment_notifications(self, connection, ids_to_delete: List[int]):
+        """Удаление обработанных уведомлений о комментариях из MySQL по списку ID"""
+        if not ids_to_delete:
+            return
         try:
             cursor = connection.cursor()
-            query = """
+            placeholders = ', '.join(['%s'] * len(ids_to_delete))
+            query = f"""
                 DELETE FROM u_its_add_notes
-                WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
+                WHERE ID IN ({placeholders})
             """
-            cursor.execute(query, (email_part,))
+            cursor.execute(query, tuple(ids_to_delete))
             connection.commit()
+            logger.info(f"Удалено {cursor.rowcount} записей о комментариях из MySQL (IDs: {ids_to_delete})")
             cursor.close()
         except Exception as e:
-            logger.error(f"Ошибка при удалении обработанных уведомлений о комментариях: {e}")
+            logger.error(f"Ошибка при удалении обработанных уведомлений о комментариях (IDs: {ids_to_delete}): {e}")
 
     def get_user_notifications(self, user_id: int) -> Dict:
         """Получение всех уведомлений пользователя"""
@@ -530,8 +547,9 @@ class BrowserPushService:
 
             successful_sends = 0
             failed_subscriptions = []
+            subscriptions_to_deactivate = []
 
-            for i, subscription_item in enumerate(subscriptions): # Переименовал, чтобы не конфликтовать с переменной модуля
+            for i, subscription_item in enumerate(subscriptions):
                 logger.debug(f"[PUSH_SERVICE] Отправка подписке {i+1}/{len(subscriptions)} (ID: {subscription_item.id})")
                 print(f"[DEBUGGING_SEND_PUSH] Отправка подписке ID: {subscription_item.id}", flush=True)
                 try:
@@ -543,25 +561,51 @@ class BrowserPushService:
                 except WebPushException as e_webpush:
                     logger.warning(f"[PUSH_SERVICE] WebPush ошибка для подписки {subscription_item.id}: {e_webpush}")
                     print(f"[DEBUGGING_SEND_PUSH] WebPushException для подписки ID {subscription_item.id}: {str(e_webpush)}", flush=True)
+
+                    # Обработка различных типов ошибок
+                    should_deactivate = False
                     if hasattr(e_webpush, 'response') and e_webpush.response:
-                        logger.warning(f"[PUSH_SERVICE] Статус ответа: {e_webpush.response.status_code}")
-                        logger.warning(f"[PUSH_SERVICE] Тело ответа: {e_webpush.response.text}")
-                        # Деактивируем подписку при определенных ошибках
-                        if e_webpush.response.status_code in [401, 403, 404, 410]: # Обновленный список ошибок, добавлен 401
-                            logger.info(f"[PUSH_SERVICE] Деактивация подписки {subscription_item.id} из-за ошибки {e_webpush.response.status_code}")
-                            subscription_item.is_active = False
-                    # Не делаем raise, чтобы обработать другие подписки
+                        status_code = e_webpush.response.status_code
+                        response_text = e_webpush.response.text
+
+                        logger.warning(f"[PUSH_SERVICE] Статус ответа: {status_code}")
+                        logger.warning(f"[PUSH_SERVICE] Тело ответа: {response_text}")
+
+                        # Деактивируем подписку при критических ошибках
+                        if status_code in [401, 403, 404, 410, 413]:
+                            should_deactivate = True
+                            logger.info(f"[PUSH_SERVICE] Планируем деактивацию подписки {subscription_item.id} из-за ошибки {status_code}")
+
+                        # Специальная обработка для FCM ошибок
+                        if status_code == 404 and "fcm.googleapis.com" in subscription_item.endpoint:
+                            if "valid push subscription endpoint should be specified" in response_text:
+                                should_deactivate = True
+                                logger.info(f"[PUSH_SERVICE] FCM подписка {subscription_item.id} недействительна, планируем деактивацию")
+
+                    if should_deactivate:
+                        subscriptions_to_deactivate.append(subscription_item)
+
                     failed_subscriptions.append(subscription_item)
-                except Exception as e_generic: # Изменил имя переменной исключения
+
+                except Exception as e_generic:
                     logger.error(f"[PUSH_SERVICE] Неожиданная ошибка при отправке подписке {subscription_item.id}: {e_generic}")
                     print(f"[DEBUGGING_SEND_PUSH] НЕОЖИДАННАЯ ОШИБКА для подписки ID: {subscription_item.id}: {e_generic}", flush=True)
                     failed_subscriptions.append(subscription_item)
 
-            if successful_sends > 0 or failed_subscriptions:
+            # Деактивируем проблемные подписки
+            if subscriptions_to_deactivate:
+                for sub in subscriptions_to_deactivate:
+                    sub.is_active = False
+                    logger.info(f"[PUSH_SERVICE] Деактивирована подписка {sub.id}")
+
+            # Сохраняем изменения в базе данных
+            if successful_sends > 0 or subscriptions_to_deactivate:
                 try:
                     db.session.commit()
                     logger.debug("[PUSH_SERVICE] Изменения подписок сохранены в БД")
-                except Exception as e_db_commit: # Изменил имя переменной исключения
+                    if subscriptions_to_deactivate:
+                        logger.info(f"[PUSH_SERVICE] Деактивировано {len(subscriptions_to_deactivate)} подписок")
+                except Exception as e_db_commit:
                     logger.error(f"[PUSH_SERVICE] Ошибка при сохранении изменений подписок: {e_db_commit}")
                     db.session.rollback()
 
@@ -570,12 +614,55 @@ class BrowserPushService:
                 logger.warning(f"[PUSH_SERVICE] Неудачных отправок: {len(failed_subscriptions)}")
             print(f"[DEBUGGING_SEND_PUSH] Отправлено {successful_sends}, неудачно {len(failed_subscriptions)}. ВЫХОД.", flush=True)
 
+            # Если слишком много неудачных подписок, запускаем очистку
+            if len(failed_subscriptions) > 10:
+                logger.info("[PUSH_SERVICE] Обнаружено много неудачных подписок, запускаем фоновую очистку")
+                self._schedule_cleanup()
+
         except Exception as e_outer:
             print(f"DEBUGGING_SEND_PUSH: ГЛОБАЛЬНАЯ ОШИБКА в send_push_notification: {str(e_outer)}", flush=True)
             import traceback
             print(f"DEBUGGING_SEND_PUSH: Traceback: {traceback.format_exc()}", flush=True)
             logger.error(f"[PUSH_SERVICE] Глобальная ошибка при отправке пуш-уведомления: {e_outer}")
             logger.error(f"[PUSH_SERVICE] Traceback: {traceback.format_exc()}")
+
+    def _schedule_cleanup(self):
+        """Планирование фоновой очистки неактивных подписок"""
+        try:
+            import threading
+            cleanup_thread = threading.Thread(target=self._cleanup_inactive_subscriptions)
+            cleanup_thread.daemon = True
+            cleanup_thread.start()
+            logger.info("[PUSH_SERVICE] Запущена фоновая очистка подписок")
+        except Exception as e:
+            logger.error(f"[PUSH_SERVICE] Ошибка запуска фоновой очистки: {e}")
+
+    def _cleanup_inactive_subscriptions(self):
+        """Фоновая очистка неактивных подписок"""
+        try:
+            from flask import current_app
+            with current_app.app_context():
+                # Удаляем подписки, которые неактивны более 7 дней
+                cutoff_date = datetime.utcnow() - timedelta(days=7)
+
+                inactive_subscriptions = db.session.query(PushSubscription).filter(
+                    PushSubscription.is_active == False,
+                    PushSubscription.last_used < cutoff_date
+                ).all()
+
+                if inactive_subscriptions:
+                    for sub in inactive_subscriptions:
+                        db.session.delete(sub)
+
+                    db.session.commit()
+                    logger.info(f"[PUSH_SERVICE] Удалено {len(inactive_subscriptions)} неактивных подписок")
+
+        except Exception as e:
+            logger.error(f"[PUSH_SERVICE] Ошибка при очистке неактивных подписок: {e}")
+            try:
+                db.session.rollback()
+            except:
+                pass
 
     def _get_user_subscriptions(self, user_id: int) -> List[PushSubscription]:
         """Получение активных подписок пользователя из базы данных"""
