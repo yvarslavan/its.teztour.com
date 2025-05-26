@@ -1,4 +1,6 @@
 import logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', force=True)
+# force=True перезапишет любую существующую конфигурацию корневого логгера, что полезно для отладки.
 from flask import Flask, request, session, Blueprint
 from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
@@ -32,8 +34,6 @@ db_path = Path(__file__).parent / "db" / "blog.db"
 if not db_path.parent.exists():
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-logging.basicConfig(level=logging.DEBUG)
-
 # Инициализация Oracle Client
 # Убираем путь по умолчанию, так как он задается в systemd или .env файлах
 oracle_client_path = os.environ.get('ORACLE_CLIENT_PATH', None)
@@ -65,7 +65,7 @@ def create_app():
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=False
+            WTF_CSRF_ENABLED=True  # Включаем CSRF защиту
         )
     else:
         # Для продакшена
@@ -76,7 +76,7 @@ def create_app():
             SESSION_COOKIE_SAMESITE='Lax',  # Более безопасная настройка
             SESSION_COOKIE_DOMAIN='.tez-tour.com',  # Домен для продакшена
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=False  # Можно включить после тестирования
+            WTF_CSRF_ENABLED=True  # Включаем CSRF защиту
         )
 
     # Проверка критичных значений
