@@ -59,6 +59,7 @@ from flask_wtf.csrf import generate_csrf
 from blog.call.routes import get_db_connection
 import pymysql
 from pymysql.cursors import DictCursor
+from blog.notification_service import check_notifications_improved
 
 
 # Настройка логгирования
@@ -318,12 +319,12 @@ def check_notifications_and_start_scheduler(email, user_id):
     print(f"[DEBUG] Запуск функции check_notifications_and_start_scheduler для пользователя ID: {user_id}, Email: {email}")
     # Добавляем подробное логирование перед вызовом функции check_notifications
     try:
-        print(f"[DEBUG] Попытка вызова check_notifications({email}, {user_id})")
-        import redmine
-        result = redmine.check_notifications(email, user_id)
-        print(f"[DEBUG] Результат вызова check_notifications: {result}")
+        print(f"[DEBUG] Попытка вызова check_notifications_improved({email}, {user_id})")
+        # Используем улучшенную функцию проверки уведомлений
+        result = check_notifications_improved(email, user_id)
+        print(f"[DEBUG] Результат вызова check_notifications_improved: {result}")
     except Exception as e:
-        print(f"[DEBUG] Ошибка при вызове check_notifications: {e}")
+        print(f"[DEBUG] Ошибка при вызове check_notifications_improved: {e}")
         import traceback
         print(traceback.format_exc())
 
@@ -385,13 +386,13 @@ def start_user_job(current_user_email, current_user_id, timeout):
             from apscheduler.schedulers.background import BackgroundScheduler
             scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
 
-        # Проверяем доступ к планировщику и модулю redmine
-        import redmine
-        print(f"[DEBUG] Модуль redmine доступен, импортирован успешно")
-        print(f"[DEBUG] Функция redmine.check_notifications доступна: {hasattr(redmine, 'check_notifications')}")
+        # Проверяем доступ к планировщику и модулю notification_service
+        from blog.notification_service import check_notifications_improved
+        print(f"[DEBUG] Модуль notification_service доступен, импортирован успешно")
+        print(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
 
         scheduler_instance.add_job(
-            redmine.check_notifications,
+            check_notifications_improved,  # Используем улучшенную функцию
             "interval",
             args=[current_user_email, current_user_id],
             seconds=timeout,
@@ -418,14 +419,36 @@ def start_user_job(current_user_email, current_user_id, timeout):
 
 
 def stop_user_job(user_id):
+    """Остановка задачи планировщика для конкретного пользователя"""
     try:
-        job_id = f"notification_job_{user_id}"  # Уникальный идентификатор задачи пользователя
-        scheduler_instance.remove_job(job_id)
-        logging.info("User-specific job successfully stopped.")
-    except JobLookupError:
-        logging.warning("User-specific job was not found when attempting to stop it.")
+        job_id = f"notification_job_{user_id}"
+        print(f"[SCHEDULER] Попытка остановить задачу: {job_id}")
+
+        global scheduler_instance
+        if scheduler_instance is None:
+            print(f"[SCHEDULER] Планировщик не инициализирован, задача {job_id} не может быть остановлена")
+            return
+
+        # Проверяем, существует ли задача
+        try:
+            job = scheduler_instance.get_job(job_id)
+            if job:
+                scheduler_instance.remove_job(job_id)
+                print(f"[SCHEDULER] Задача {job_id} успешно остановлена")
+                logging.info(f"User-specific job {job_id} successfully stopped.")
+            else:
+                print(f"[SCHEDULER] Задача {job_id} не найдена в планировщике")
+                logging.warning(f"User-specific job {job_id} was not found when attempting to stop it.")
+        except JobLookupError:
+            print(f"[SCHEDULER] Задача {job_id} не найдена (JobLookupError)")
+            logging.warning(f"User-specific job {job_id} was not found when attempting to stop it.")
+        except Exception as e:
+            print(f"[SCHEDULER] Ошибка при остановке задачи {job_id}: {e}")
+            logging.error(f"Error stopping user-specific job {job_id}: {e}")
+
     except Exception as e:
-        logging.error("Error stopping user-specific job: %s", {e})
+        print(f"[SCHEDULER] Общая ошибка при остановке задачи пользователя {user_id}: {e}")
+        logging.error(f"General error stopping user-specific job for user {user_id}: {e}")
 
 
 @users.route("/account", methods=["GET", "POST"])

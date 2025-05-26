@@ -21,7 +21,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import joinedload
 from config import get
 from blog import db
-from blog.models import Post, User, Notifications, NotificationsAddNotes
+from blog.models import Post, User, Notifications, NotificationsAddNotes, PushSubscription
 from blog.user.forms import AddCommentRedmine
 from blog.main.forms import IssueForm
 from mysql_db import (
@@ -63,6 +63,8 @@ from erp_oracle import (
     get_user_erp_password,
 )
 from sqlalchemy.sql.functions import count
+from blog.notification_service import notification_service, check_notifications_improved
+from datetime import datetime
 
 main = Blueprint("main", __name__)
 
@@ -439,23 +441,18 @@ def new_issue():
 @main.route("/notifications", methods=["GET"])
 @login_required
 def my_notifications():
-    notifications_data = get_notifications(current_user.id)
-    notifications_add_notes_data = get_notifications_add_notes(current_user.id)
-    combined_notifications = {}
+    # Используем улучшенный сервис уведомлений
+    notifications_data = notification_service.get_user_notifications(current_user.id)
 
-    if notifications_data is not None:
-        combined_notifications["notifications_data"] = notifications_data
-    if notifications_add_notes_data is not None:
-        combined_notifications["notifications_add_notes_data"] = (
-            notifications_add_notes_data
-        )
-    # Перед возвратом шаблона отправляем уведомление
-    # send_notification()
-    if combined_notifications:
+    if notifications_data['total_count'] > 0:
         return render_template(
-            "notifications.html", combined_notifications=combined_notifications
+            "notifications.html",
+            combined_notifications={
+                'notifications_data': notifications_data['status_notifications'],
+                'notifications_add_notes_data': notifications_data['comment_notifications']
+            }
         )
-    return abort(500, "Failed to fetch notifications data")
+    return render_template("notifications.html", combined_notifications={})
 
 
 @main.route("/clear-notifications", methods=["POST"])
@@ -464,38 +461,14 @@ def clear_notifications():
     """Удаляем уведомления после нажатия кнопки 'Очистить уведомления'"""
     print(f"[DEBUG] clear_notifications вызван для пользователя: {current_user.id}")
     try:
-        # Используем одну транзакцию для всех операций
-        notifications = (
-            db.session.query(Notifications).filter_by(user_id=current_user.id).all()
-        )
-        print(f"[DEBUG] Найдено уведомлений о статусе: {len(notifications)}")
+        success = notification_service.clear_user_notifications(current_user.id)
 
-        notifications_add_notes = (
-            db.session.query(NotificationsAddNotes)
-            .filter_by(user_id=current_user.id)
-            .all()
-        )
-        print(f"[DEBUG] Найдено уведомлений о комментариях: {len(notifications_add_notes)}")
+        if success:
+            flash("Уведомления успешно удалены", "success")
+        else:
+            flash("Ошибка при удалении уведомлений", "error")
 
-        # Удаляем все уведомления
-        deleted_count = 0
-        for notification in notifications:
-            db.session.delete(notification)
-            deleted_count += 1
-
-        for notification in notifications_add_notes:
-            db.session.delete(notification)
-            deleted_count += 1
-
-        print(f"[DEBUG] Удаляем {deleted_count} уведомлений")
-
-        # Коммитим все изменения разом
-        db.session.commit()
-        print(f"[DEBUG] Изменения закоммичены успешно")
-        flash("Уведомления успешно удалены", "success")
-
-    except SQLAlchemyError as e:
-        db.session.rollback()
+    except Exception as e:
         print(f"[DEBUG] Ошибка при удалении: {str(e)}")
         flash(f"Ошибка при удалении уведомлений: {str(e)}", "error")
         logger.error(f"Ошибка при удалении всех уведомлений: {str(e)}")
@@ -510,55 +483,40 @@ def clear_notifications():
 def delete_notification_status(notification_issue_id):
     """Удаление уведомления об измнении статуса после нажатия на иконку корзинки"""
     try:
-        # Создаем новую сессию для этой операции
-        notification = (
-            db.session.query(Notifications)
-            .filter_by(issue_id=notification_issue_id)
-            .first()
+        success = notification_service.delete_notification(
+            notification_issue_id, 'status', current_user.id
         )
 
-        if notification:
-            db.session.delete(notification)
-            db.session.commit()
+        if success:
             flash("Уведомление успешно удалено", "success")
         else:
             flash("Уведомление не найдено", "error")
 
         return redirect(url_for("main.my_notifications"))
 
-    except SQLAlchemyError as e:
-        db.session.rollback()
+    except Exception as e:
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
 
 # Маршрут для удаления уведомления о добавлении комментария
-@main.route(
-    "/delete_notification_add_notes/<int:notification_add_notes_issue_id>",
-    methods=["POST"],
-)
+@main.route("/delete_notification_add_notes/<int:notification_add_notes_issue_id>", methods=["POST"])
 @login_required
 def delete_notification_add_notes(notification_add_notes_issue_id):
     """Удаление уведомления о добавлении комментария после нажатия на иконку корзинки"""
     try:
-        # Создаем новую сессию для этой операции
-        notification = (
-            db.session.query(NotificationsAddNotes)
-            .filter_by(issue_id=notification_add_notes_issue_id)
-            .first()
+        success = notification_service.delete_notification(
+            notification_add_notes_issue_id, 'comment', current_user.id
         )
 
-        if notification:
-            db.session.delete(notification)
-            db.session.commit()
+        if success:
             flash("Уведомление успешно удалено", "success")
         else:
             flash("Уведомление не найдено", "error")
 
         return redirect(url_for("main.my_notifications"))
 
-    except SQLAlchemyError as e:
-        db.session.rollback()
+    except Exception as e:
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
@@ -1832,3 +1790,212 @@ def check_connection():
 
     is_connected = check_database_connections()
     return jsonify({"connected": is_connected})
+
+
+@main.route("/api/push/subscribe", methods=["POST"])
+@login_required
+def subscribe_push():
+    """Подписка на браузерные пуш-уведомления"""
+    try:
+        data = request.get_json()
+
+        if not data or 'subscription' not in data:
+            return jsonify({'error': 'Неверные данные подписки'}), 400
+
+        subscription_data = data['subscription']
+
+        # Извлекаем данные подписки
+        endpoint = subscription_data.get('endpoint')
+        keys = subscription_data.get('keys', {})
+        p256dh_key = keys.get('p256dh')
+        auth_key = keys.get('auth')
+
+        if not all([endpoint, p256dh_key, auth_key]):
+            return jsonify({'error': 'Неполные данные подписки'}), 400
+
+        # Получаем User-Agent
+        user_agent = request.headers.get('User-Agent', '')
+
+        # Проверяем, существует ли уже такая подписка
+        existing_subscription = PushSubscription.query.filter_by(
+            user_id=current_user.id,
+            endpoint=endpoint
+        ).first()
+
+        if existing_subscription:
+            # Обновляем существующую подписку
+            existing_subscription.p256dh_key = p256dh_key
+            existing_subscription.auth_key = auth_key
+            existing_subscription.user_agent = user_agent
+            existing_subscription.last_used = datetime.utcnow()
+            existing_subscription.is_active = True
+        else:
+            # Создаем новую подписку
+            new_subscription = PushSubscription(
+                user_id=current_user.id,
+                endpoint=endpoint,
+                p256dh_key=p256dh_key,
+                auth_key=auth_key,
+                user_agent=user_agent
+            )
+            db.session.add(new_subscription)
+
+        # Включаем браузерные уведомления для пользователя
+        current_user.browser_notifications_enabled = True
+
+        db.session.commit()
+
+        logger.info(f"Пользователь {current_user.id} подписался на пуш-уведомления")
+
+        return jsonify({
+            'success': True,
+            'message': 'Подписка на уведомления успешно оформлена'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Ошибка при подписке на пуш-уведомления: {e}")
+        return jsonify({'error': 'Ошибка сервера'}), 500
+
+
+@main.route("/api/push/unsubscribe", methods=["POST"])
+@login_required
+def unsubscribe_push():
+    """Отписка от браузерных пуш-уведомлений"""
+    try:
+        data = request.get_json()
+        endpoint = data.get('endpoint') if data else None
+
+        if endpoint:
+            # Удаляем конкретную подписку
+            subscription = PushSubscription.query.filter_by(
+                user_id=current_user.id,
+                endpoint=endpoint
+            ).first()
+
+            if subscription:
+                db.session.delete(subscription)
+        else:
+            # Удаляем все подписки пользователя
+            PushSubscription.query.filter_by(user_id=current_user.id).delete()
+
+        # Проверяем, остались ли активные подписки
+        remaining_subscriptions = PushSubscription.query.filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).count()
+
+        if remaining_subscriptions == 0:
+            current_user.browser_notifications_enabled = False
+
+        db.session.commit()
+
+        logger.info(f"Пользователь {current_user.id} отписался от пуш-уведомлений")
+
+        return jsonify({
+            'success': True,
+            'message': 'Отписка от уведомлений выполнена'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Ошибка при отписке от пуш-уведомлений: {e}")
+        return jsonify({'error': 'Ошибка сервера'}), 500
+
+
+@main.route("/api/push/status", methods=["GET"])
+@login_required
+def push_status():
+    """Получение статуса подписки на пуш-уведомления"""
+    try:
+        subscriptions_count = PushSubscription.query.filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).count()
+
+        return jsonify({
+            'enabled': current_user.browser_notifications_enabled,
+            'subscriptions_count': subscriptions_count,
+            'has_subscriptions': subscriptions_count > 0
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка при получении статуса пуш-уведомлений: {e}")
+        return jsonify({'error': 'Ошибка сервера'}), 500
+
+
+@main.route("/api/push/test", methods=["POST"])
+@login_required
+def test_push():
+    """Тестовое пуш-уведомление"""
+    try:
+        logger.info(f"[PUSH_TEST] Запрос тестового уведомления от пользователя {current_user.id}")
+
+        from blog.notification_service import NotificationData, NotificationType
+
+        # Создаем тестовое уведомление
+        test_notification = NotificationData(
+            user_id=current_user.id,
+            issue_id=0,
+            notification_type=NotificationType.STATUS_CHANGE,
+            title="Тестовое уведомление",
+            message="Это тестовое браузерное пуш-уведомление",
+            data={'test': True},
+            created_at=datetime.now()
+        )
+
+        logger.info(f"[PUSH_TEST] Создано тестовое уведомление: {test_notification}")
+
+        # Проверяем, есть ли активные подписки у пользователя
+        active_subscriptions = PushSubscription.query.filter_by(
+            user_id=current_user.id,
+            is_active=True
+        ).all()
+
+        logger.info(f"[PUSH_TEST] Найдено активных подписок: {len(active_subscriptions)}")
+
+        if not active_subscriptions:
+            logger.warning(f"[PUSH_TEST] У пользователя {current_user.id} нет активных подписок")
+            return jsonify({
+                'error': 'Нет активных подписок на уведомления'
+            }), 400
+        # Отправляем через сервис
+        logger.info(f"[PUSH_TEST] Тип notification_service: {type(notification_service)}")
+        logger.info(f"[PUSH_TEST] Тип notification_service.push_service: {type(notification_service.push_service)}")
+        logger.info(f"[PUSH_TEST] Попытка вызова send_push_notification...")
+        notification_service.push_service.send_push_notification(test_notification)
+        logger.info(f"[PUSH_TEST] Вызов send_push_notification ЗАВЕРШЕН.")
+
+        logger.info(f"[PUSH_TEST] Тестовое уведомление отправлено успешно")
+
+        return jsonify({
+            'success': True,
+            'message': 'Тестовое уведомление отправлено'
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка при отправке тестового уведомления: {e}")
+        return jsonify({'error': 'Ошибка сервера'}), 500
+
+
+@main.route("/api/vapid-public-key", methods=["GET"])
+def get_vapid_public_key():
+    """Получение публичного VAPID ключа"""
+    try:
+        # В реальном приложении ключ должен быть в конфигурации
+        vapid_public_key = current_app.config.get('VAPID_PUBLIC_KEY',
+            'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM9f8HnRG-ATXBdPdk-y1x-SoPGH6RpgAuSPiMtXVBNWBuUjb3C_XY')
+
+        return jsonify({
+            'publicKey': vapid_public_key
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка при получении VAPID ключа: {e}")
+        return jsonify({'error': 'Ошибка сервера'}), 500
+
+
+@main.route("/notification-test")
+def notification_test():
+    """Тестовая страница для диагностики уведомлений"""
+    return render_template('notification_test.html')

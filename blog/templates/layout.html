@@ -3,6 +3,7 @@
     <head>
             <meta charset="UTF-8">
             <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="csrf-token" content="{{ csrf_token() }}">
 
             <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
             <link rel="stylesheet" href="{{ url_for('static', filename='css/media_css.css') }}">
@@ -1194,6 +1195,34 @@
             {% endif %}
 
             <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+
+            <!-- Подключение модуля пуш-уведомлений -->
+            <script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+
+            <!-- Обработчик сообщений от Service Worker -->
+            <script>
+                // Обработчик сообщений от Service Worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                        console.log('[Main] Сообщение от Service Worker:', event.data);
+
+                        const data = event.data;
+
+                        if (data.type === 'PLAY_SOUND') {
+                            try {
+                                console.log('[Main] Воспроизведение звука:', data.soundUrl);
+                                const audio = new Audio(data.soundUrl);
+                                audio.volume = 0.7;
+                                audio.play().catch(error => {
+                                    console.warn('[Main] Не удалось воспроизвести звук:', error);
+                                });
+                            } catch (error) {
+                                console.error('[Main] Ошибка воспроизведения звука:', error);
+                            }
+                        }
+                    });
+                }
+            </script>
 
             {% include '_new_issues_sidebar.html' %}
             {% if current_user.is_authenticated and current_user.can_access_quality_control and request.endpoint == 'main.quality_control' %}

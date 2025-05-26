@@ -38,10 +38,12 @@ class User(db.Model, UserMixin):
     id_redmine_user = db.Column(db.Integer, default=4)
     is_admin = db.Column(db.Boolean, default=False)
     can_access_quality_control = db.Column(db.Boolean, default=False, nullable=False)
+    browser_notifications_enabled = db.Column(db.Boolean, default=False, nullable=False)
     posts = db.relationship("Post", backref="author", lazy=True)
+    push_subscriptions = db.relationship("PushSubscription", backref="user", lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"User({self.id}, {self.username}, {self.email},  {self.office}, {self.image_file}, {self.password}, {self.last_seen}, {self.full_name}, {self.department}, {self.position}, {self.vpn}, {self.vpn_end_date}, {self.vacuum_im_notifications}, {self.online}, {self.is_redmine_user}, {self.id_redmine_user}, can_access_quality_control={self.can_access_quality_control})"
+        return f"User({self.id}, {self.username}, {self.email},  {self.office}, {self.image_file}, {self.password}, {self.last_seen}, {self.full_name}, {self.department}, {self.position}, {self.vpn}, {self.vpn_end_date}, {self.vacuum_im_notifications}, {self.online}, {self.is_redmine_user}, {self.id_redmine_user}, can_access_quality_control={self.can_access_quality_control}, browser_notifications_enabled={self.browser_notifications_enabled})"
 
 class Post(db.Model):
     __tablename__ = "posts"
@@ -93,6 +95,46 @@ class NotificationsAddNotes(db.Model):
         self.author = author
         self.notes = notes
         self.date_created = date_created
+
+
+class PushSubscription(db.Model):
+    """Модель для хранения подписок на браузерные пуш-уведомления"""
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    endpoint = db.Column(db.Text, nullable=False)
+    p256dh_key = db.Column(db.Text, nullable=False)
+    auth_key = db.Column(db.Text, nullable=False)
+    user_agent = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    last_used = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    is_active = db.Column(db.Boolean, default=True, nullable=False)
+
+    # Уникальный индекс для предотвращения дублирования подписок
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'endpoint', name='unique_user_endpoint'),
+    )
+
+    def __init__(self, user_id, endpoint, p256dh_key, auth_key, user_agent=None):
+        self.user_id = user_id
+        self.endpoint = endpoint
+        self.p256dh_key = p256dh_key
+        self.auth_key = auth_key
+        self.user_agent = user_agent
+
+    def to_dict(self):
+        """Преобразование в словарь для использования с pywebpush"""
+        return {
+            'endpoint': self.endpoint,
+            'keys': {
+                'p256dh': self.p256dh_key,
+                'auth': self.auth_key
+            }
+        }
+
+    def __repr__(self):
+        return f"PushSubscription(user_id={self.user_id}, endpoint={self.endpoint[:50]}..., active={self.is_active})"
 
 
 class AgencyPhone(db.Model):
