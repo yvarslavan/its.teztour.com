@@ -390,3 +390,5 @@
 (Background on this error at: https://sqlalche.me/e/20/4xp6)
 2025-05-23 16:44:05,622 - blog.main.routes - ERROR - Ошибка при получении уведомлений: (mysql.connector.errors.DatabaseError) 2003 (HY000): Can't connect to MySQL server on 'quality.teztour.com:3306' (10061)
 (Background on this error at: https://sqlalche.me/e/20/4xp6)
+2025-05-26 17:42:55,776 - blog.main.routes - ERROR - Ошибка при административной очистке подписок: type object 'PushSubscription' has no attribute 'updated_at'
+2025-05-26 17:43:13,796 - blog.main.routes - ERROR - Ошибка при административной очистке подписок: type object 'PushSubscription' has no attribute 'updated_at'

@@ -1,9 +1,88 @@
+import time
+import logging
+from contextlib import contextmanager
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship, aliased, scoped_session
-from sqlalchemy.exc import OperationalError
+from sqlalchemy.exc import OperationalError, DatabaseError
 from config import get  # Исправленный импорт
+
+# Настройка логирования
+logger = logging.getLogger(__name__)
+
+class DatabaseConnectionManager:
+    """Менеджер подключений к базе данных с обработкой ошибок и повторными попытками"""
+
+    def __init__(self, max_retries=3, retry_delay=1.0, backoff_factor=2.0):
+        self.max_retries = max_retries
+        self.retry_delay = retry_delay
+        self.backoff_factor = backoff_factor
+        self._connection_errors = {}
+
+    def execute_with_retry(self, operation, session_factory, operation_name="database operation"):
+        """
+        Выполняет операцию с базой данных с повторными попытками
+
+        Args:
+            operation: Функция для выполнения (принимает session как аргумент)
+            session_factory: Фабрика сессий
+            operation_name: Название операции для логирования
+
+        Returns:
+            Результат операции или None в случае неудачи
+        """
+        last_exception = None
+        delay = self.retry_delay
+
+        for attempt in range(self.max_retries + 1):
+            try:
+                session = session_factory()
+                try:
+                    result = operation(session)
+                    # Сброс счетчика ошибок при успешном выполнении
+                    if operation_name in self._connection_errors:
+                        del self._connection_errors[operation_name]
+                    return result
+                finally:
+                    session.close()
+
+            except (OperationalError, DatabaseError) as e:
+                last_exception = e
+                error_code = getattr(e.orig, 'errno', None) if hasattr(e, 'orig') else None
+
+                # Увеличиваем счетчик ошибок
+                self._connection_errors[operation_name] = self._connection_errors.get(operation_name, 0) + 1
+
+                if attempt < self.max_retries:
+                    logger.warning(
+                        f"Попытка {attempt + 1}/{self.max_retries + 1} для {operation_name} неудачна. "
+                        f"Ошибка: {str(e)}. Повтор через {delay:.1f}с"
+                    )
+                    time.sleep(delay)
+                    delay *= self.backoff_factor
+                else:
+                    logger.error(
+                        f"Все попытки ({self.max_retries + 1}) для {operation_name} исчерпаны. "
+                        f"Последняя ошибка: {str(e)}"
+                    )
+
+            except Exception as e:
+                logger.error(f"Неожиданная ошибка при выполнении {operation_name}: {str(e)}")
+                last_exception = e
+                break
+
+        return None
+
+    def get_connection_status(self):
+        """Возвращает статус подключений"""
+        return {
+            'total_errors': sum(self._connection_errors.values()),
+            'error_details': dict(self._connection_errors)
+        }
+
+# Глобальный менеджер подключений
+db_manager = DatabaseConnectionManager()
 
 # Создаем отдельный базовый класс для качества
 QualityBase = declarative_base()
@@ -17,7 +96,13 @@ def setup_quality_engine():
             database=get('mysql_quality', 'database')
         ),
         pool_size=5,
-        max_overflow=10
+        max_overflow=10,
+        pool_pre_ping=True,  # Проверка соединений перед использованием
+        pool_recycle=3600,   # Переподключение каждый час
+        connect_args={
+            'connect_timeout': 10,
+            'autocommit': True
+        }
     )
 
 quality_engine = setup_quality_engine()
@@ -26,28 +111,98 @@ QualitySession = scoped_session(sessionmaker(bind=quality_engine))
 def init_quality_db():
     QualityBase.metadata.create_all(quality_engine)
 
+@contextmanager
+def get_quality_session_safe():
+    """Безопасное получение сессии качества с обработкой ошибок"""
+    session = None
+    try:
+        session = QualitySession()
+        yield session
+    except Exception as e:
+        logger.error(f"Ошибка при работе с сессией качества: {str(e)}")
+        if session:
+            session.rollback()
+        raise
+    finally:
+        if session:
+            session.close()
+
 Base = declarative_base()
 DATABASE_URL = (
     "mysql+mysqlconnector://easyredmine:QhAKtwCLGW@helpdesk.teztour.com/redmine"
 )
 
-engine = create_engine(DATABASE_URL, pool_size=10, max_overflow=20)
+engine = create_engine(
+    DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={
+        'connect_timeout': 10,
+        'autocommit': True
+    }
+)
 Session = sessionmaker(bind=engine)
 
 QUALITY_DATABASE_URL = (
     "mysql+mysqlconnector://easyredmine:QhAKtwCLGW@quality.teztour.com/redmine"
 )
-quality_engine = create_engine(QUALITY_DATABASE_URL, pool_size=10, max_overflow=20)
+quality_engine = create_engine(
+    QUALITY_DATABASE_URL,
+    pool_size=10,
+    max_overflow=20,
+    pool_pre_ping=True,
+    pool_recycle=3600,
+    connect_args={
+        'connect_timeout': 10,
+        'autocommit': True
+    }
+)
 QualitySession = sessionmaker(bind=quality_engine)
 
 def get_quality_connection():
+    """Устаревшая функция - используйте execute_quality_query_safe()"""
     try:
         session = QualitySession()
         return session
     except Exception as e:
-        print(f"Ошибка подключения к базе quality: {str(e)}")
+        logger.error(f"Ошибка подключения к базе quality: {str(e)}")
         return None
 
+def execute_quality_query_safe(query_func, operation_name="quality query"):
+    """
+    Безопасное выполнение запроса к базе качества
+
+    Args:
+        query_func: Функция, принимающая session и возвращающая результат
+        operation_name: Название операции для логирования
+
+    Returns:
+        Результат запроса или None в случае ошибки
+    """
+    return db_manager.execute_with_retry(
+        query_func,
+        QualitySession,
+        operation_name
+    )
+
+def execute_main_query_safe(query_func, operation_name="main query"):
+    """
+    Безопасное выполнение запроса к основной базе
+
+    Args:
+        query_func: Функция, принимающая session и возвращающая результат
+        operation_name: Название операции для логирования
+
+    Returns:
+        Результат запроса или None в случае ошибки
+    """
+    return db_manager.execute_with_retry(
+        query_func,
+        Session,
+        operation_name
+    )
 
 class Status(Base):
     __tablename__ = "u_statuses"  # Название таблицы
