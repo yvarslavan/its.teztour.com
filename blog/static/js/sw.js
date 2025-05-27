@@ -336,3 +336,12 @@ self.addEventListener('unhandledrejection', function(event) {
 });
 
 console.log('[SW] Service Worker загружен и готов к работе');
+
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', function(event) {
+        if (event.data && event.data.type === 'PLAY_SOUND') {
+            const audio = new Audio(event.data.soundUrl);
+            audio.play();
+        }
+    });
+}

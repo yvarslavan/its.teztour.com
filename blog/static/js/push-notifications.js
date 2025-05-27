@@ -100,27 +100,32 @@ class PushNotificationManager {
             const swPath = '/sw.js';
             console.log('[PushManager] Регистрация Service Worker по пути:', swPath);
 
-            this.registration = await navigator.serviceWorker.register(swPath, {
-                scope: '/',
-                updateViaCache: 'none' // Отключаем кеширование Service Worker
-            });
+            try {
+                console.log(`[PushManager] Попытка регистрации Service Worker с путем: ${swPath} и scope: '/'`);
+                this.registration = await navigator.serviceWorker.register(swPath, {
+                    scope: '/'
+                });
+                console.log('[PushManager] Service Worker зарегистрирован успешно:', this.registration);
 
-            console.log('[PushManager] Service Worker зарегистрирован:', this.registration);
+                // Проверяем состояние Service Worker
+                if (this.registration.installing) {
+                    console.log('[PushManager] Service Worker устанавливается...');
+                    await this.waitForServiceWorker(this.registration.installing);
+                } else if (this.registration.waiting) {
+                    console.log('[PushManager] Service Worker в ожидании, активируем...');
+                    this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
+                    await this.waitForServiceWorker(this.registration.waiting);
+                } else if (this.registration.active) {
+                    console.log('[PushManager] Service Worker уже активен');
+                }
 
-            // Проверяем состояние Service Worker
-            if (this.registration.installing) {
-                console.log('[PushManager] Service Worker устанавливается...');
-                await this.waitForServiceWorker(this.registration.installing);
-            } else if (this.registration.waiting) {
-                console.log('[PushManager] Service Worker в ожидании, активируем...');
-                this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
-                await this.waitForServiceWorker(this.registration.waiting);
-            } else if (this.registration.active) {
-                console.log('[PushManager] Service Worker уже активен');
+                // Обновляем Service Worker
+                await this.registration.update();
+
+            } catch (error) {
+                console.error('[PushManager] Ошибка регистрации Service Worker:', error);
+                throw error;
             }
-
-            // Обновляем Service Worker
-            await this.registration.update();
 
         } catch (error) {
             console.error('[PushManager] Ошибка регистрации Service Worker:', error);
