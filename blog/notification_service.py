@@ -14,7 +14,7 @@ import threading
 from contextlib import contextmanager
 from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
-from sqlalchemy import and_, or_
+from sqlalchemy import and_, or_, func
 
 from blog import db
 from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
@@ -288,18 +288,42 @@ class NotificationService:
     def _save_status_notifications(self, notifications: List[NotificationData]):
         """Сохранение уведомлений о статусах в базу данных"""
         try:
+            notifications_added_count = 0
             for notification in notifications:
-                # Проверяем, нет ли уже такого уведомления в базе
-                existing = db.session.query(Notifications).filter(
-                    and_(
+                # НОВАЯ ПРОВЕРКА на дублирование по user_id, issue_id и date_created (до секунды)
+                # Убедимся, что notification.created_at это datetime объект
+                if not isinstance(notification.created_at, datetime):
+                    logger.error(f"Некорректный тип date_created для status notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    try:
+                        # Попытка преобразовать, если это строка ISO
+                        parsed_date = datetime.fromisoformat(str(notification.created_at).replace('Z', '+00:00'))
+                        new_date_truncated_str = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        logger.error(f"Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
+                        # Если не можем спарсить, пропускаем эту конкретную проверку по времени,
+                        # полагаясь на старую проверку по контенту
+                        existing_by_time = None
+                else:
+                    new_date_truncated_str = notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    existing_by_time = db.session.query(Notifications.id).filter(
                         Notifications.user_id == notification.user_id,
                         Notifications.issue_id == notification.issue_id,
-                        Notifications.old_status == notification.data['old_status'],
-                        Notifications.new_status == notification.data['new_status']
-                    )
+                        func.strftime('%Y-%m-%d %H:%M:%S', Notifications.date_created) == new_date_truncated_str
+                    ).first()
+
+                if existing_by_time:
+                    logger.info(f"Пропуск дубликата (по времени) status notification для user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'")
+                    continue # Пропускаем, если дубликат по времени найден
+
+                # Старая проверка (оставляем на всякий случай, или если проверка по времени не удалась)
+                existing_by_content = db.session.query(Notifications.id).filter(
+                    Notifications.user_id == notification.user_id,
+                    Notifications.issue_id == notification.issue_id,
+                    Notifications.old_status == notification.data['old_status'],
+                    Notifications.new_status == notification.data['new_status']
                 ).first()
 
-                if not existing:
+                if not existing_by_content:
                     db_notification = Notifications(
                         user_id=notification.user_id,
                         issue_id=notification.issue_id,
@@ -309,9 +333,15 @@ class NotificationService:
                         date_created=notification.created_at
                     )
                     db.session.add(db_notification)
+                    notifications_added_count += 1
+                else:
+                    logger.info(f"Пропуск дубликата (по контенту) status notification для user_id={notification.user_id}, issue_id={notification.issue_id}")
 
-            db.session.commit()
-            logger.info(f"Сохранено {len(notifications)} уведомлений о статусах")
+            if notifications_added_count > 0:
+                db.session.commit()
+                logger.info(f"Сохранено {notifications_added_count} уведомлений о статусах")
+            else:
+                logger.info("Нет новых уведомлений о статусах для сохранения (все дубликаты или список пуст)")
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -321,18 +351,38 @@ class NotificationService:
     def _save_comment_notifications(self, notifications: List[NotificationData]):
         """Сохранение уведомлений о комментариях в базу данных"""
         try:
+            notifications_added_count = 0
             for notification in notifications:
-                # Проверяем, нет ли уже такого уведомления в базе
-                existing = db.session.query(NotificationsAddNotes).filter(
-                    and_(
+                # НОВАЯ ПРОВЕРКА на дублирование по user_id, issue_id и date_created (до секунды)
+                if not isinstance(notification.created_at, datetime):
+                    logger.error(f"Некорректный тип date_created для comment notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    try:
+                        parsed_date = datetime.fromisoformat(str(notification.created_at).replace('Z', '+00:00'))
+                        new_date_truncated_str = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
+                    except ValueError:
+                        logger.error(f"Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
+                        existing_by_time = None
+                else:
+                    new_date_truncated_str = notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    existing_by_time = db.session.query(NotificationsAddNotes.id).filter(
                         NotificationsAddNotes.user_id == notification.user_id,
                         NotificationsAddNotes.issue_id == notification.issue_id,
-                        NotificationsAddNotes.author == notification.data['author'],
-                        NotificationsAddNotes.notes == notification.data['notes']
-                    )
+                        func.strftime('%Y-%m-%d %H:%M:%S', NotificationsAddNotes.date_created) == new_date_truncated_str
+                    ).first()
+
+                if existing_by_time:
+                    logger.info(f"Пропуск дубликата (по времени) comment notification для user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'")
+                    continue
+
+                # Старая проверка
+                existing_by_content = db.session.query(NotificationsAddNotes.id).filter(
+                    NotificationsAddNotes.user_id == notification.user_id,
+                    NotificationsAddNotes.issue_id == notification.issue_id,
+                    NotificationsAddNotes.author == notification.data['author'],
+                    NotificationsAddNotes.notes == notification.data['notes']
                 ).first()
 
-                if not existing:
+                if not existing_by_content:
                     db_notification = NotificationsAddNotes(
                         user_id=notification.user_id,
                         issue_id=notification.issue_id,
@@ -341,9 +391,15 @@ class NotificationService:
                         date_created=notification.created_at
                     )
                     db.session.add(db_notification)
+                    notifications_added_count += 1
+                else:
+                    logger.info(f"Пропуск дубликата (по контенту) comment notification для user_id={notification.user_id}, issue_id={notification.issue_id}")
 
-            db.session.commit()
-            logger.info(f"Сохранено {len(notifications)} уведомлений о комментариях")
+            if notifications_added_count > 0:
+                db.session.commit()
+                logger.info(f"Сохранено {notifications_added_count} уведомлений о комментариях")
+            else:
+                logger.info("Нет новых уведомлений о комментариях для сохранения (все дубликаты или список пуст)")
 
         except SQLAlchemyError as e:
             db.session.rollback()

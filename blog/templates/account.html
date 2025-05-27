@@ -876,6 +876,10 @@
         margin-bottom: var(--spacing-xl);
         padding-bottom: var(--spacing-lg);
         border-bottom: 1px solid var(--border-light);
+        display: flex; /* Добавлено */
+        flex-direction: column; /* Добавлено */
+        align-items: center; /* Добавлено */
+        text-align: center; /* Добавлено для выравнивания текста в дочерних элементах */
     }
 
     .account-page-wrapper .user-name {
@@ -896,32 +900,32 @@
     .account-page-wrapper .last-seen {
         display: flex;
         align-items: center;
-        justify-content: center;
-        gap: var(--spacing-sm);
-        font-size: 0.8rem;
+        justify-content: center; /* Центрируем содержимое */
+        gap: var(--spacing-sm); /* Используем переменную для отступа */
+        font-size: 0.8rem; /* Уменьшим шрифт для компактности */
         color: var(--text-muted);
-        padding: var(--spacing-sm) var(--spacing-md);
-        background: var(--surface-1);
-        border-radius: var(--radius-md);
-        text-align: center;
-        width: 100%;
-        box-sizing: border-box;
-        margin: 0 auto;
-        max-width: 280px;
+        padding: var(--spacing-sm) var(--spacing-md); /* Отступы внутри блока */
+        background: var(--surface-1); /* Легкий фон */
+        border-radius: var(--radius-md); /* Скругление углов */
+        text-align: center; /* На всякий случай, если flex не сработает */
+        width: 100%; /* Растягиваем на всю ширину родителя */
+        box-sizing: border-box; /* Чтобы padding не влиял на общую ширину */
+        margin: 0 auto; /* Горизонтальное центрирование блока (если родитель позволяет) */
+        max-width: 280px; /* Ограничим максимальную ширину для лучшего вида */
     }
 
     .account-page-wrapper .last-seen i {
-        flex-shrink: 0;
-        width: 12px;
-        text-align: center;
+        flex-shrink: 0; /* Иконка не будет сжиматься */
+        width: 12px; /* Фиксированная ширина иконки */
+        text-align: center; /* Центрирование иконки */
     }
 
     .account-page-wrapper .last-seen span {
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1;
-        text-align: center;
+        white-space: nowrap; /* Текст не будет переноситься */
+        overflow: hidden; /* Скрываем текст, который не помещается */
+        text-overflow: ellipsis; /* Добавляем многоточие для длинного текста */
+        flex: 1; /* Текст занимает оставшееся пространство */
+        text-align: center; /* Центрируем текст внутри span */
     }
 
     .account-page-wrapper .profile-navigation {
