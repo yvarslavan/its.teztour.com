@@ -39,6 +39,7 @@ class NotificationType(Enum):
     COMMENT_ADDED = "comment_added"
     ISSUE_ASSIGNED = "issue_assigned"
     ISSUE_CREATED = "issue_created"
+    TEST = "test"  # Тип для тестовых уведомлений
 
 
 @dataclass

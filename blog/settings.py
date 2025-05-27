@@ -41,18 +41,20 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False)
 
     # VAPID ключи для браузерных пуш-уведомлений
-    VAPID_PUBLIC_KEY = os.environ.get(
-        "VAPID_PUBLIC_KEY",
-        "BNTSbYqtXosdptrmO9bfxysrYft2H-JsFWqHB8oA0Ex_X6jEDjfF0YndzMPAN9SJP8uhzmZn6g_xdDD17aZaxNc",
-    )
-
-    VAPID_PRIVATE_KEY = os.environ.get(
-        "VAPID_PRIVATE_KEY", "MxKfyWZ6RF1WOZ0dWE5h99Z0pY5G997MeG93PyOO2qA"
-    )
-
-    VAPID_CLAIMS = {
-        "sub": "mailto:y.varslavan@tez-tour.com"
-    }
+    try:
+        from blog.config.vapid_keys import VAPID_PRIVATE_KEY, VAPID_PUBLIC_KEY, VAPID_CLAIMS
+    except ImportError:
+        VAPID_PUBLIC_KEY = os.environ.get(
+            "VAPID_PUBLIC_KEY",
+            "BNTSbYqtXosdptrmO9bfxysrYft2H-JsFWqHB8oA0Ex_X6jEDjfF0YndzMPAN9SJP8uhzmZn6g_xdDD17aZaxNc"
+        )
+        VAPID_PRIVATE_KEY = os.environ.get(
+            "VAPID_PRIVATE_KEY",
+            "MxKfyWZ6RF1WOZ0dWE5h99Z0pY5G997MeG93PyOO2qA"
+        )
+        VAPID_CLAIMS = {
+            "sub": "mailto:y.varslavan@tez-tour.com"
+        }
 
     # SQLALCHEMY_BINDS = {
     #     "oracle_crm": SQLALCHEMY_DATABASE_URI_ORACLE_CRM,

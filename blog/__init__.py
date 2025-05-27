@@ -7,6 +7,7 @@ from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.triggers.interval import IntervalTrigger
 from pathlib import Path
 import os
 import cx_Oracle
@@ -17,6 +18,9 @@ import atexit
 from .db_config import db  # Импортируем db из нового файла
 from .settings import Config
 
+# Импортируем нашу новую задачу
+from blog.scheduler_tasks import scheduled_check_all_user_notifications
+
 bcrypt = Bcrypt()
 migrate = Migrate()
 
@@ -24,6 +28,7 @@ login_manager = LoginManager()
 login_manager.login_view = "users.login"
 login_manager.login_message_category = "info"
 login_manager.login_message = "Авторизуйтесь, чтобы попасть на эту страницу!"
+
 scheduler = BackgroundScheduler()
 
 # Функция для корректной остановки планировщика
@@ -107,6 +112,10 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
 
+    # Регистрируем user_loader здесь, после инициализации login_manager
+    from blog.models import load_user
+    login_manager.user_loader(load_user)
+
     # Инициализируем CSRF защиту
     csrf.init_app(app)
 
@@ -139,8 +148,24 @@ def create_app():
             try:
                 scheduler.start()
                 print("Scheduler started successfully.")
+
+                # Добавляем нашу задачу в планировщик
+                # Будет выполняться каждые 5 минут
+                # Убедимся, что задача не добавляется многократно при перезапусках (особенно в debug режиме)
+                if not scheduler.get_job('check_all_user_notifications_job'):
+                    scheduler.add_job(
+                        func=scheduled_check_all_user_notifications,
+                        trigger=IntervalTrigger(minutes=1),
+                        id='check_all_user_notifications_job',
+                        name='Check all user notifications every 5 minutes',
+                        replace_existing=True
+                    )
+                    print("Job 'check_all_user_notifications_job' added to scheduler.")
+                else:
+                    print("Job 'check_all_user_notifications_job' already exists in scheduler.")
+
             except Exception as e:
-                print(f"Error starting scheduler: {e}")
+                print(f"Error starting scheduler or adding job: {e}")
         try:
             # Создаем только локальные таблицы SQLite
             # Исключаем Oracle таблицы

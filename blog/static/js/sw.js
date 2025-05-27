@@ -11,43 +11,59 @@ const NOTIFICATION_SOUNDS = {
 
 // Установка Service Worker
 self.addEventListener('install', function(event) {
-    console.log('[SW] Установка Service Worker');
+    console.log('[SW] Установка Service Worker начата');
 
     event.waitUntil(
-        caches.open(CACHE_NAME).then(function(cache) {
-            console.log('[SW] Кеш открыт');
-            return cache.addAll([
-                '/static/sounds/notification.mp3',
-                '/static/img/notification_icon.png',
-                '/static/img/notification_badge.png',
-                '/static/img/view_icon.png'
-            ]);
+        Promise.all([
+            // Кешируем необходимые файлы
+            caches.open(CACHE_NAME).then(function(cache) {
+                console.log('[SW] Кеширование файлов...');
+                return cache.addAll([
+                    '/static/sounds/notification.mp3',
+                    '/static/img/notification_icon.png',
+                    '/static/img/notification_badge.png',
+                    '/static/img/view_icon.png'
+                ]).then(() => {
+                    console.log('[SW] Файлы успешно кешированы');
+                });
+            }),
+
+            // Принудительно активируем новый Service Worker
+            self.skipWaiting().then(() => {
+                console.log('[SW] skipWaiting выполнен успешно');
+            })
+        ]).then(() => {
+            console.log('[SW] Установка Service Worker завершена успешно');
         })
     );
-
-    // Принудительно активируем новый Service Worker
-    self.skipWaiting();
 });
 
 // Активация Service Worker
 self.addEventListener('activate', function(event) {
-    console.log('[SW] Активация Service Worker');
+    console.log('[SW] Активация Service Worker начата');
 
     event.waitUntil(
-        caches.keys().then(function(cacheNames) {
-            return Promise.all(
-                cacheNames.map(function(cacheName) {
-                    if (cacheName !== CACHE_NAME) {
-                        console.log('[SW] Удаление старого кеша:', cacheName);
-                        return caches.delete(cacheName);
-                    }
-                })
-            );
+        Promise.all([
+            // Очищаем старый кеш
+            caches.keys().then(function(cacheNames) {
+                return Promise.all(
+                    cacheNames.map(function(cacheName) {
+                        if (cacheName !== CACHE_NAME) {
+                            console.log('[SW] Удаление старого кеша:', cacheName);
+                            return caches.delete(cacheName);
+                        }
+                    })
+                );
+            }),
+
+            // Берем контроль над всеми клиентами
+            self.clients.claim().then(() => {
+                console.log('[SW] Контроль над клиентами получен');
+            })
+        ]).then(() => {
+            console.log('[SW] Активация Service Worker завершена успешно');
         })
     );
-
-    // Берем контроль над всеми клиентами
-    return self.clients.claim();
 });
 
 // Обработка пуш-уведомлений
@@ -62,7 +78,8 @@ self.addEventListener('push', function(event) {
         tag: 'default',
         data: {},
         actions: [],
-        requireInteraction: true
+        requireInteraction: true,
+        silent: false  // Всегда включаем звук по умолчанию
     };
 
     // Парсим данные если они есть
@@ -72,16 +89,33 @@ self.addEventListener('push', function(event) {
             console.log('[SW] Данные пуш-уведомления:', pushData);
 
             notificationData = {
+                ...notificationData,  // Сохраняем значения по умолчанию
                 title: pushData.title || notificationData.title,
                 body: pushData.body || notificationData.body,
                 icon: pushData.icon || notificationData.icon,
                 badge: pushData.badge || notificationData.badge,
-                tag: pushData.tag || notificationData.tag,
+                tag: pushData.tag || `notification_${Date.now()}`,
                 data: pushData.data || notificationData.data,
                 actions: pushData.actions || notificationData.actions,
-                requireInteraction: pushData.requireInteraction !== undefined ? pushData.requireInteraction : notificationData.requireInteraction,
-                vibrate: pushData.vibrate || [200, 100, 200]
+                requireInteraction: pushData.requireInteraction !== undefined ?
+                    pushData.requireInteraction : notificationData.requireInteraction,
+                vibrate: [200, 100, 200],  // Добавляем вибрацию
+                silent: false  // Всегда включаем звук
             };
+
+            // Для тестовых уведомлений добавляем специальные настройки
+            if (pushData.data && pushData.data.type === 'test') {
+                notificationData.actions = [
+                    {
+                        action: 'view',
+                        title: 'Открыть',
+                        icon: '/static/img/view_icon.png'
+                    }
+                ];
+                notificationData.requireInteraction = false;
+                notificationData.silent = false;  // Явно включаем звук для тестовых уведомлений
+                notificationData.vibrate = [200, 100, 200, 100, 200];  // Усиленная вибрация для теста
+            }
         } catch (error) {
             console.error('[SW] Ошибка парсинга данных пуш-уведомления:', error);
         }
@@ -89,30 +123,18 @@ self.addEventListener('push', function(event) {
 
     console.log('[SW] Отображение уведомления:', notificationData);
 
-    // Показываем уведомление
-    const notificationPromise = self.registration.showNotification(notificationData.title, {
-        body: notificationData.body,
-        icon: notificationData.icon,
-        badge: notificationData.badge,
-        tag: notificationData.tag,
-        data: notificationData.data,
-        actions: notificationData.actions,
-        requireInteraction: notificationData.requireInteraction,
-        vibrate: notificationData.vibrate
-    });
+    // Показываем уведомление и воспроизводим звук
+    const showNotification = self.registration.showNotification(
+        notificationData.title,
+        notificationData
+    );
 
-    // Отправляем сообщение клиенту для воспроизведения звука
-    const soundPromise = self.clients.matchAll().then(clients => {
+    // Отправляем сообщение для воспроизведения звука
+    const playSound = self.clients.matchAll().then(clients => {
         console.log('[SW] Найдено клиентов для отправки звука:', clients.length);
-
-        const soundUrl = notificationData.data.type === 'comment_added'
-            ? '/static/sounds/comment_added.mp3'
-            : notificationData.data.type === 'status_change'
-            ? '/static/sounds/status_change.mp3'
-            : '/static/sounds/default.mp3';
-
+        const soundUrl = '/static/sounds/notification.mp3';
         clients.forEach(client => {
-            console.log('[SW] Отправка сообщения клиенту для воспроизведения звука:', soundUrl);
+            console.log('[SW] Отправка сообщения клиенту для воспроизведения звука');
             client.postMessage({
                 type: 'PLAY_SOUND',
                 soundUrl: soundUrl
@@ -120,7 +142,8 @@ self.addEventListener('push', function(event) {
         });
     });
 
-    event.waitUntil(Promise.all([notificationPromise, soundPromise]));
+    // Ждем выполнения обоих промисов
+    event.waitUntil(Promise.all([showNotification, playSound]));
 });
 
 // Обработка кликов по уведомлениям
@@ -258,25 +281,49 @@ self.addEventListener('message', function(event) {
 
 // Обработка fetch запросов (для кеширования)
 self.addEventListener('fetch', function(event) {
-    // Кешируем только статические ресурсы уведомлений
-    if (event.request.url.includes('/static/sounds/') ||
-        event.request.url.includes('/static/img/notification') ||
-        event.request.url.includes('/static/img/view_icon')) {
+    // Проверяем, что запрос относится к нашему домену
+    if (!event.request.url.startsWith(self.location.origin)) {
+        return;
+    }
 
-        event.respondWith(
-            caches.match(event.request).then(function(response) {
-                // Возвращаем из кеша или загружаем из сети
-                return response || fetch(event.request).then(function(response) {
-                    // Кешируем ответ для будущих запросов
-                    const responseClone = response.clone();
-                    caches.open(CACHE_NAME).then(function(cache) {
-                        cache.put(event.request, responseClone);
-                    });
+    // Кешируем только GET запросы для статических ресурсов уведомлений
+    if (event.request.method !== 'GET' ||
+        !(event.request.url.includes('/static/sounds/') ||
+          event.request.url.includes('/static/img/notification') ||
+          event.request.url.includes('/static/img/view_icon'))) {
+        return;
+    }
+
+    event.respondWith(
+        caches.match(event.request)
+            .then(function(response) {
+                if (response) {
+                    console.log('[SW] Возвращаем ответ из кеша:', event.request.url);
                     return response;
+                }
+
+                console.log('[SW] Кеш не найден, загружаем из сети:', event.request.url);
+                return fetch(event.request).then(function(networkResponse) {
+                    if (!networkResponse || networkResponse.status !== 200) {
+                        console.warn('[SW] Получен некорректный ответ от сети:', networkResponse?.status);
+                        return networkResponse;
+                    }
+
+                    // Кешируем успешный ответ
+                    return caches.open(CACHE_NAME).then(function(cache) {
+                        console.log('[SW] Кеширование ответа для:', event.request.url);
+                        cache.put(event.request, networkResponse.clone());
+                        return networkResponse;
+                    }).catch(function(error) {
+                        console.error('[SW] Ошибка кеширования:', error);
+                        return networkResponse;
+                    });
+                }).catch(function(error) {
+                    console.error('[SW] Ошибка загрузки из сети:', error);
+                    throw error;
                 });
             })
-        );
-    }
+    );
 });
 
 // Обработка ошибок

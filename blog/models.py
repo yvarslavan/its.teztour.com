@@ -4,12 +4,10 @@ from flask_login import UserMixin
 from sqlalchemy import text
 from mysql_db import QualityBase
 from blog.db_config import db # Импортируем db из нового файла
-from blog import login_manager
 
 # Создаем алиас внутри модуля
 db_call = db
 
-@login_manager.user_loader
 def load_user(user_id):
     with current_app.app_context():
         return User.query.get(int(user_id))
