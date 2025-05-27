@@ -475,33 +475,25 @@ def account():
 
         return render_template(
             "account.html",
-            title=user_obj.username,
-            user_password_erp=user_password_erp,
-            image_file=image_file,
+            title="Профиль",
             form=form,
-            user=user_obj,
+            image_file=image_file,
+            user_obj=user_obj,  # user_obj используется в шаблоне для подписи
+            current_user=current_user,  # Оставляем для обратной совместимости, если где-то используется
+            user=current_user,  # Добавляем current_user как 'user'
+            default_office=user_password_erp[3] if user_password_erp else "",
+            default_email=user_password_erp[2] if user_password_erp else "",
+            default_department=user_obj.department if user_obj else "",
+            default_position=user_obj.position if user_obj else "",
+            default_phone=user_obj.phone if user_obj else "",
+            default_vpn_end_date=user_obj.vpn_end_date if user_obj else "",
             all_users=all_users,
-            vacuum_im_notifications_checked='checked' if user_obj.vacuum_im_notifications else '',
             email_signature_html=email_signature_html
         )
     except Exception as e:
         db.session.rollback()  # Откатываем сессию в случае ошибки
         print(f"Error in account route: {str(e)}")
         return f"Error: {str(e)}", 500
-
-
-@users.route("/update_vacuum_im_notifications", methods=["POST"])
-@login_required
-def update_vacuum_im_notifications():
-    # Этот роут будет удален или закомментирован
-    pass
-
-
-@users.route("/check_vacuum_im_settings", methods=["GET"])
-@login_required
-def check_vacuum_im_settings():
-    # Этот роут будет удален или закомментирован
-    pass
 
 
 @users.route("/users")

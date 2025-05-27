@@ -14,6 +14,7 @@ from flask import (
     g,
     abort,
     current_app,
+    send_from_directory
 )
 from flask_login import login_required, current_user
 from sqlalchemy import or_, desc, func, text
@@ -24,6 +25,12 @@ from blog import db
 from blog.models import Post, User, Notifications, NotificationsAddNotes, PushSubscription
 from blog.user.forms import AddCommentRedmine
 from blog.main.forms import IssueForm
+from blog.notification_service import (
+    notification_service,
+    NotificationData,
+    NotificationType,
+    check_notifications_improved
+)
 from mysql_db import (
     Issue,
     Status,
@@ -66,9 +73,8 @@ from erp_oracle import (
     get_user_erp_password,
 )
 from sqlalchemy.sql.functions import count
-from blog.notification_service import notification_service, check_notifications_improved
-from datetime import datetime, timedelta
 from blog.utils.connection_monitor import check_database_connections, get_connection_health, log_connection_status
+from datetime import datetime, timedelta
 
 main = Blueprint("main", __name__)
 
@@ -163,7 +169,8 @@ def my_issues():
     try:
         # Проверяем уведомления только если пользователь аутентифицирован
         if current_user.is_authenticated:
-            check_notifications(g.current_user.email, g.current_user.id)
+            # check_notifications(g.current_user.email, g.current_user.id) # ЗАКОММЕНТИРОВАНО
+            logger.info(f"Вызов check_notifications ЗАКОММЕНТИРОВАН для пользователя {g.current_user.id} в /my-issues")
         return render_template("issues.html", title="Мои заявки")
     except Exception as e:
         current_app.logger.error(f"Error in my_issues: {str(e)}")
@@ -482,16 +489,19 @@ def clear_notifications():
 
 
 # Маршрут для удаления уведомления об измнении статуса
-@main.route("/delete_notification_status/<int:notification_issue_id>", methods=["POST"])
+@main.route("/delete_notification_status/<int:notification_id>", methods=["POST"])
 @login_required
-def delete_notification_status(notification_issue_id):
+def delete_notification_status(notification_id):
     """Удаление уведомления об измнении статуса после нажатия на иконку корзинки"""
     try:
-        success = notification_service.delete_notification(
-            notification_issue_id, 'status', current_user.id
-        )
+        notification = Notifications.query.filter_by(
+            id=notification_id,
+            user_id=current_user.id
+        ).first()
 
-        if success:
+        if notification:
+            db.session.delete(notification)
+            db.session.commit()
             flash("Уведомление успешно удалено", "success")
         else:
             flash("Уведомление не найдено", "error")
@@ -499,21 +509,25 @@ def delete_notification_status(notification_issue_id):
         return redirect(url_for("main.my_notifications"))
 
     except Exception as e:
+        db.session.rollback()
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
 
 # Маршрут для удаления уведомления о добавлении комментария
-@main.route("/delete_notification_add_notes/<int:notification_add_notes_issue_id>", methods=["POST"])
+@main.route("/delete_notification_add_notes/<int:notification_id>", methods=["POST"])
 @login_required
-def delete_notification_add_notes(notification_add_notes_issue_id):
+def delete_notification_add_notes(notification_id):
     """Удаление уведомления о добавлении комментария после нажатия на иконку корзинки"""
     try:
-        success = notification_service.delete_notification(
-            notification_add_notes_issue_id, 'comment', current_user.id
-        )
+        notification = NotificationsAddNotes.query.filter_by(
+            id=notification_id,
+            user_id=current_user.id
+        ).first()
 
-        if success:
+        if notification:
+            db.session.delete(notification)
+            db.session.commit()
             flash("Уведомление успешно удалено", "success")
         else:
             flash("Уведомление не найдено", "error")
@@ -521,6 +535,7 @@ def delete_notification_add_notes(notification_add_notes_issue_id):
         return redirect(url_for("main.my_notifications"))
 
     except Exception as e:
+        db.session.rollback()
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
@@ -2005,73 +2020,74 @@ def push_status():
 
 @main.route("/api/push/test", methods=["POST"])
 @login_required
-def test_push():
-    """Тестовое пуш-уведомление"""
+def test_push_notification():
+    """Отправка тестового пуш-уведомления"""
     try:
         logger.info(f"[PUSH_TEST] Запрос тестового уведомления от пользователя {current_user.id}")
 
-        from blog.notification_service import NotificationData, NotificationType
-
         # Создаем тестовое уведомление
-        test_notification = NotificationData(
+        notification = NotificationData(
             user_id=current_user.id,
-            issue_id=0,
-            notification_type=NotificationType.STATUS_CHANGE,
+            issue_id=None,
+            notification_type=NotificationType.TEST,
             title="Тестовое уведомление",
-            message="Это тестовое браузерное пуш-уведомление",
-            data={'test': True},
-            created_at=datetime.now()
+            message="Это тестовое уведомление для проверки работы пуш-уведомлений",
+            data={
+                'type': 'test',
+                'timestamp': datetime.now().isoformat()
+            },
+            created_at=datetime.now()  # Добавляем обязательный параметр
         )
 
-        logger.info(f"[PUSH_TEST] Создано тестовое уведомление: {test_notification}")
+        logger.info(f"[PUSH_TEST] Создано тестовое уведомление: {notification}")
 
-        # Проверяем, есть ли активные подписки у пользователя
-        active_subscriptions = PushSubscription.query.filter_by(
-            user_id=current_user.id,
-            is_active=True
-        ).all()
+        # Получаем сервис уведомлений
+        push_service = notification_service.push_service
 
-        logger.info(f"[PUSH_TEST] Найдено активных подписок: {len(active_subscriptions)}")
+        # Проверяем подписки пользователя
+        subscriptions = push_service._get_user_subscriptions(current_user.id)
+        logger.info(f"[PUSH_TEST] Найдено активных подписок: {len(subscriptions)}")
 
-        if not active_subscriptions:
+        if not subscriptions:
             logger.warning(f"[PUSH_TEST] У пользователя {current_user.id} нет активных подписок")
             return jsonify({
-                'error': 'Нет активных подписок на уведомления'
+                'error': 'У вас нет активных подписок на уведомления. Пожалуйста, включите уведомления.'
             }), 400
-        # Отправляем через сервис
-        logger.info(f"[PUSH_TEST] Тип notification_service: {type(notification_service)}")
-        logger.info(f"[PUSH_TEST] Тип notification_service.push_service: {type(notification_service.push_service)}")
-        logger.info(f"[PUSH_TEST] Попытка вызова send_push_notification...")
-        notification_service.push_service.send_push_notification(test_notification)
-        logger.info(f"[PUSH_TEST] Вызов send_push_notification ЗАВЕРШЕН.")
 
-        logger.info(f"[PUSH_TEST] Тестовое уведомление отправлено успешно")
+        # Отправляем уведомление
+        logger.info("[PUSH_TEST] Отправка через notification_service...")
+        push_service.send_push_notification(notification)
 
+        logger.info("[PUSH_TEST] Тестовое уведомление отправлено успешно")
         return jsonify({
             'success': True,
             'message': 'Тестовое уведомление отправлено'
         })
 
     except Exception as e:
-        logger.error(f"Ошибка при отправке тестового уведомления: {e}")
-        return jsonify({'error': 'Ошибка сервера'}), 500
+        logger.error(f"[PUSH_TEST] Ошибка при отправке тестового уведомления: {e}")
+        return jsonify({
+            'error': 'Произошла ошибка при отправке тестового уведомления'
+        }), 500
 
 
 @main.route("/api/vapid-public-key", methods=["GET"])
 def get_vapid_public_key():
     """Получение публичного VAPID ключа"""
     try:
-        # В реальном приложении ключ должен быть в конфигурации
-        vapid_public_key = current_app.config.get('VAPID_PUBLIC_KEY',
-            'BEl62iUYgUivxIkv69yViEuiBIa40HI80NM9f8HnRG-ATXBdPdk-y1x-SoPGH6RpgAuSPiMtXVBNWBuUjb3C_XY')
+        logger.info("[VAPID] Запрос публичного ключа")
+        vapid_public_key = current_app.config.get('VAPID_PUBLIC_KEY')
 
-        return jsonify({
-            'publicKey': vapid_public_key
-        })
+        if not vapid_public_key:
+            logger.error("[VAPID] Публичный ключ не найден в конфигурации")
+            return jsonify({'error': 'VAPID ключ не настроен'}), 500
+
+        logger.info(f"[VAPID] Возвращаем публичный ключ: {vapid_public_key[:20]}...")
+        return jsonify({'publicKey': vapid_public_key})
 
     except Exception as e:
-        logger.error(f"Ошибка при получении VAPID ключа: {e}")
-        return jsonify({'error': 'Ошибка сервера'}), 500
+        logger.error(f"[VAPID] Ошибка при получении публичного ключа: {e}")
+        return jsonify({'error': 'Внутренняя ошибка сервера'}), 500
 
 
 @main.route("/notification-test")
@@ -2220,3 +2236,31 @@ def admin_push_subscriptions():
         logger.error(f"Ошибка при загрузке страницы управления пуш-подписками: {str(e)}")
         flash("Ошибка при загрузке страницы управления", "error")
         return redirect(url_for("main.index"))
+
+@main.route('/sw.js')
+def service_worker():
+    # Убедимся, что current_app доступен. Если этот код выполняется до инициализации app, могут быть проблемы.
+    # Обычно current_app доступен внутри запроса.
+    # Путь к static может зависеть от структуры вашего приложения.
+    # Если static находится в корне приложения:
+    static_folder_js_path = os.path.join(current_app.root_path, 'static', 'js')
+    # Если папка static привязана к блюпринту 'main':
+    # static_folder_js_path = os.path.join(main.static_folder, 'js')
+    # Предполагаем, что static в корне приложения для send_from_directory
+
+    # Проверяем, что файл существует, чтобы избежать ошибок, если путь неверный
+    sw_file_path = os.path.join(static_folder_js_path, 'sw.js')
+    if not os.path.exists(sw_file_path):
+        # Можно вернуть 404 или логировать ошибку
+        logger.error(f"Service Worker file not found at: {sw_file_path}")
+        return "Service Worker not found", 404
+
+    try:
+        response = send_from_directory(static_folder_js_path, 'sw.js')
+        response.headers['Service-Worker-Allowed'] = '/'
+        response.headers['Content-Type'] = 'application/javascript'
+        return response
+    except Exception as e:
+        logger.error(f"Error sending service worker: {e}", exc_info=True)
+        # Возвращаем ошибку сервера, если что-то пошло не так
+        return "Error processing Service Worker", 500

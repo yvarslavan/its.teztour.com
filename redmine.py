@@ -1,6 +1,6 @@
 import os
 import tempfile
-from datetime import timedelta
+from datetime import timedelta, datetime
 from configparser import ConfigParser
 import re
 import logging
@@ -16,6 +16,7 @@ from redminelib.exceptions import (
     ResourceNotFoundError,
     AuthError,
     ForbiddenError,
+    ImpersonateError,
 )
 import pymysql
 import pymysql.cursors
@@ -49,6 +50,12 @@ db_relative_path = config.get("database", "db_path")
 # Формируем абсолютный путь к базе данных
 db_absolute_path = os.path.join(current_dir, db_relative_path)
 ERROR_MESSAGE = "An error occurred:"
+
+# Глобальные переменные для URL и API ключа администратора Redmine
+REDMINE_URL = config.get("redmine", "url")
+REDMINE_ADMIN_API_KEY = config.get("redmine", "api_key")
+# ANONYMOUS_USER_ID также уже определен глобально в routes.py, но может понадобиться здесь
+ANONYMOUS_USER_ID_CONFIG = int(config.get("redmine", "anonymous_user_id", fallback="0"))
 
 def get_connection(host, user_name, password, name, max_attempts=3):
     attempts = 0
@@ -505,93 +512,84 @@ def get_count_notifications_add_notes(user_id):
     return notifications_add_notes_count
 
 
-def check_notifications(easy_email_to, current_user_id):
-    print(f"[DEBUG] Вызвана функция check_notifications для user_id: {current_user_id}, email: {easy_email_to}")
-
-    # Устанавливаем соединение с MySQL
-    connection = get_connection(
-        db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
-    )
-    if not connection:
-        print(f"[DEBUG] Не удалось установить соединение с MySQL для user_id: {current_user_id}")
-        return False
-
-    cursor = get_database_cursor(connection)
-    if not cursor:
-        print(f"[DEBUG] Не удалось получить курсор MySQL для user_id: {current_user_id}")
-        return False
-
-    # Установка соединения с базой данных SQLite для проверки настроек пользователя
-    print(f"[DEBUG] Попытка соединения с SQLite БД: {db_absolute_path}")
-    connection_db = connect_to_database(db_absolute_path)
-
-    # Проверяем настройки уведомлений Vacuum-IM для пользователя
-    vacuum_im_enabled = 0
-    if connection_db:
-        try:
-            print(f"[DEBUG] Получение настройки vacuum_im_notifications для user_id: {current_user_id}")
-            vacuum_im_enabled = get_count_vacuum_im_notifications(connection_db, current_user_id)
-            print(f"[DEBUG] Получено значение vacuum_im_notifications: {vacuum_im_enabled}")
-        except Exception as e:
-            print(f"[DEBUG] Ошибка при получении настроек vacuum_im_notifications: {e}")
-    else:
-        print(f"[DEBUG] Не удалось подключиться к SQLite БД для user_id: {current_user_id}")
+def check_notifications(user_email, current_user_id):
+    """
+    Проверка и загрузка новых уведомлений из Redmine DB (u_its_update_status, u_its_add_notes)
+    и сохранение их в локальную SQLite DB (notifications, notifications_add_notes).
+    Возвращает количество вновь обработанных уведомлений.
+    """
+    logger.info(f"[CHECK_NOTIFICATIONS] Начало проверки уведомлений для user_id: {current_user_id}, email: {user_email}")
+    connection_db = None
+    cursor = None
+    newly_processed_count = 0
 
     try:
-        email_part = easy_email_to.split("@")[0]
-        print(f"[DEBUG] Email_part: {email_part}")
+        # 1. Получаем соединение с базой данных Redmine
+        logger.debug(f"[CHECK_NOTIFICATIONS] Попытка подключения к Redmine DB: host={db_redmine_host}, db={db_redmine_name}")
+        connection_db = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        if connection_db is None:
+            logger.error(f"[CHECK_NOTIFICATIONS] Не удалось подключиться к Redmine DB для user_id: {current_user_id}")
+            return 0 # Возвращаем 0, так как False может интерпретироваться как ошибка глубже
 
-        # Обработка уведомлений об изменении статуса
-        print(f"[DEBUG] Обработка уведомлений об изменении статуса для user_id: {current_user_id}")
-        status_change_count = process_status_changes(
-            connection,
-            cursor,
-            email_part,
-            current_user_id,
-            vacuum_im_enabled,  # Передаем статус настройки Vacuum-IM
-            easy_email_to,
+        logger.info(f"[CHECK_NOTIFICATIONS] Успешное подключение к Redmine DB для user_id: {current_user_id}")
+
+        # 2. Получаем курсор
+        cursor = get_database_cursor(connection_db)
+        if cursor is None:
+            logger.error(f"[CHECK_NOTIFICATIONS] Не удалось получить курсор для Redmine DB для user_id: {current_user_id}")
+            return 0
+
+        # 3. Подготовка параметров
+        email_part = user_email.split('@')[0] if '@' in user_email else user_email
+        easy_email_to = user_email # Используется для удаления
+        # count_vacuum_im_notifications сейчас не используется, передаем 0
+        # (старая логика для XMPP закомментирована в process_*)
+
+        # 4. Обработка изменений статусов
+        logger.debug(f"[CHECK_NOTIFICATIONS] Вызов process_status_changes для user_id: {current_user_id}, email_part: {email_part}")
+        processed_status_count = process_status_changes(
+            connection_db, cursor, email_part, current_user_id, 0, easy_email_to
         )
-        if status_change_count > 0:
-            print(f"[DEBUG] Удаление уведомлений о статусах для: {easy_email_to}, обработано: {status_change_count}")
-            delete_notifications(connection, easy_email_to)
-        else:
-            print(f"[DEBUG] Нет новых уведомлений о статусах для: {easy_email_to}")
+        if processed_status_count > 0:
+            logger.info(f"[CHECK_NOTIFICATIONS] Обработано {processed_status_count} уведомлений об изменении статуса для user_id: {current_user_id}")
+            newly_processed_count += processed_status_count
+            # Удаляем обработанные уведомления о статусах из Redmine DB
+            logger.debug(f"[CHECK_NOTIFICATIONS] Попытка удаления обработанных status_changes из Redmine DB для easy_email_to: {easy_email_to}")
+            delete_notifications(connection_db, easy_email_to)
+            logger.info(f"[CHECK_NOTIFICATIONS] Удалены обработанные status_changes из Redmine DB для easy_email_to: {easy_email_to}")
 
-        # Обработка уведомлений о новых комментариях
-        print(f"[DEBUG] Обработка уведомлений о новых комментариях для user_id: {current_user_id}")
-        added_notes_count = process_added_notes(
-            connection,
-            cursor,
-            email_part,
-            current_user_id,
-            vacuum_im_enabled,  # Передаем статус настройки Vacuum-IM
-            easy_email_to,
+        # 5. Обработка добавленных комментариев
+        logger.debug(f"[CHECK_NOTIFICATIONS] Вызов process_added_notes для user_id: {current_user_id}, email_part: {email_part}")
+        processed_notes_count = process_added_notes(
+            connection_db, cursor, email_part, current_user_id, 0, easy_email_to
         )
-        if added_notes_count > 0:
-            print(f"[DEBUG] Удаление уведомлений о комментариях для: {easy_email_to}, обработано: {added_notes_count}")
-            delete_notifications_notes(connection, easy_email_to)
-        else:
-            print(f"[DEBUG] Нет новых уведомлений о комментариях для: {easy_email_to}")
+        if processed_notes_count > 0:
+            logger.info(f"[CHECK_NOTIFICATIONS] Обработано {processed_notes_count} уведомлений о новых комментариях для user_id: {current_user_id}")
+            newly_processed_count += processed_notes_count
+            # Удаляем обработанные уведомления о комментариях из Redmine DB
+            logger.debug(f"[CHECK_NOTIFICATIONS] Попытка удаления обработанных added_notes из Redmine DB для easy_email_to: {easy_email_to}")
+            delete_notifications_notes(connection_db, easy_email_to)
+            logger.info(f"[CHECK_NOTIFICATIONS] Удалены обработанные added_notes из Redmine DB для easy_email_to: {easy_email_to}")
 
-        # Возвращаем общее количество обработанных уведомлений
-        total_notifications = status_change_count + added_notes_count
-        print(f"[DEBUG] Всего обработано уведомлений для {easy_email_to}: {total_notifications}")
-        return total_notifications
+        logger.info(f"[CHECK_NOTIFICATIONS] Завершение проверки. Всего обработано новых уведомлений: {newly_processed_count} для user_id: {current_user_id}")
+        return newly_processed_count
 
     except Exception as e:
-        print(f"[DEBUG] Ошибка в check_notifications: {e}")
-        import traceback
-        print(traceback.format_exc())
-        logging.error("An error occurred:", exc_info=True)
-        return False
-
+        logger.error(f"[CHECK_NOTIFICATIONS] Глобальная ошибка при проверке уведомлений для user_id: {current_user_id}, email: {user_email}. Ошибка: {e}", exc_info=True)
+        return 0 # Возвращаем 0 в случае ошибки
     finally:
         if cursor:
-            cursor.close()
-        if connection:
-            connection.close()
+            try:
+                cursor.close()
+                logger.debug(f"[CHECK_NOTIFICATIONS] Курсор Redmine DB закрыт для user_id: {current_user_id}")
+            except Exception as e_cursor:
+                logger.error(f"[CHECK_NOTIFICATIONS] Ошибка при закрытии курсора Redmine DB для user_id: {current_user_id}: {e_cursor}", exc_info=True)
         if connection_db:
-            connection_db.close()
+            try:
+                connection_db.close()
+                logger.debug(f"[CHECK_NOTIFICATIONS] Соединение Redmine DB закрыто для user_id: {current_user_id}")
+            except Exception as e_conn:
+                logger.error(f"[CHECK_NOTIFICATIONS] Ошибка при закрытии соединения Redmine DB для user_id: {current_user_id}: {e_conn}", exc_info=True)
 
 
 def get_database_cursor(connection):
@@ -711,40 +709,6 @@ def connect_to_database(database_file):
     except sqlite3.Error as e:
         print("Ошибка при соединении с базой данных:", e)
         return None
-
-
-def get_count_vacuum_im_notifications(connection, current_user_id):
-    print(f"[VACUUM_IM] Вызвана функция get_count_vacuum_im_notifications для user_id: {current_user_id}")
-    if not connection:
-        print("[VACUUM_IM] Соединение с БД отсутствует, возвращаю 0")
-        return 0
-
-    try:
-        # Исправляем запрос для получения числа напрямую
-        cursor = connection.cursor()
-        vacuum_im_notifications_query = """SELECT vacuum_im_notifications FROM users WHERE id = ?"""
-        print(f"[VACUUM_IM] Выполняю запрос: {vacuum_im_notifications_query} с параметром: {current_user_id}")
-        cursor.execute(vacuum_im_notifications_query, (current_user_id,))
-        result = cursor.fetchone()
-
-        if result and result[0]:
-            value = int(result[0])
-            print(f"[VACUUM_IM] Получено значение: {value}")
-            return value
-        else:
-            print("[VACUUM_IM] Пользователь не найден или vacuum_im_notifications = 0")
-            return 0
-    except sqlite3.Error as e:
-        print(f"[VACUUM_IM] Ошибка SQLite при получении настроек уведомлений: {e}")
-        return 0
-    except Exception as e:
-        print(f"[VACUUM_IM] Неожиданная ошибка: {e}")
-        import traceback
-        print(traceback.format_exc())
-        return 0
-    finally:
-        if cursor:
-            cursor.close()
 
 
 def execute_sql_query(connection, query, params=None, row_factory=None):
@@ -905,3 +869,132 @@ def generate_email_signature(user):
     </div>
     """
     return email_signature
+
+
+def get_redmine_admin_instance():
+    """
+    Создает и возвращает экземпляр Redmine API клиента,
+    аутентифицированный с использованием административного API ключа.
+    """
+    try:
+        return Redmine(REDMINE_URL, key=REDMINE_ADMIN_API_KEY)
+    except Exception as e:
+        logger.error(f"Ошибка при создании экземпляра Redmine API: {e}")
+        return None
+
+def fetch_redmine_raw_updates(redmine_instance, last_run_timestamp: datetime):
+    """
+    Получает "сырые" обновления из Redmine API с момента last_run_timestamp.
+
+    Запрашивает задачи, обновленные с last_run_timestamp, и для каждой из них
+    запрашивает записи журнала, созданные после last_run_timestamp.
+
+    Args:
+        redmine_instance: Активный экземпляр Redmine API клиента.
+        last_run_timestamp: datetime объект, указывающий время последнего успешного запуска.
+
+    Returns:
+        Список словарей, где каждый словарь представляет "сырое событие"
+        (например, новый комментарий или изменение статуса).
+        Структура событий:
+        {
+            'type': 'comment' | 'status_change' | ...,
+            'issue_id': int,
+            'journal_id': int, (ID записи журнала)
+            'user_id': int, (ID пользователя Redmine, совершившего действие)
+            'created_on': datetime, (время создания записи журнала)
+            'notes': str, (текст комментария, если есть)
+            'details': list (детали изменений атрибутов)
+            'issue_author_id': int,
+            'issue_assigned_to_id': int (может отсутствовать)
+        }
+        Возвращает пустой список в случае ошибки или отсутствия обновлений.
+    """
+    if not redmine_instance:
+        logger.error("Экземпляр Redmine не предоставлен для fetch_redmine_raw_updates.")
+        return []
+
+    raw_events = []
+    try:
+        # Форматируем временную метку для API Redmine (ISO 8601)
+        # Redmine ожидает UTC, убедимся, что last_run_timestamp в UTC или конвертируем
+        if last_run_timestamp.tzinfo is None:
+            # Если таймзона не указана, предполагаем, что это UTC, но лучше явно указывать
+            # import pytz # Потребуется pytz
+            # last_run_timestamp = pytz.utc.localize(last_run_timestamp)
+            # Для простоты пока оставим как есть, но это ВАЖНЫЙ момент для корректной работы с разными часовыми поясами
+            # redminelib обычно ожидает строки в формате ISO
+            logger.warning("last_run_timestamp не имеет информации о часовом поясе. Предполагается UTC.")
+
+
+        # Redmine API ожидает время в UTC. Если last_run_timestamp локальное, его нужно конвертировать в UTC.
+        # Для простоты примера, предположим, что last_run_timestamp уже в UTC или redminelib корректно его обработает.
+        # Убедимся, что передаем строку в ISO формате, redminelib >= 2.3.0 должен принимать datetime объекты напрямую.
+        # Если версия старее, может потребоваться last_run_timestamp.isoformat()
+
+        logger.info(f"Запрос задач, обновленных после: {last_run_timestamp.isoformat()}")
+
+        # Используем f-строку для корректной передачи datetime в redminelib,
+        # если он не справляется с datetime объектом напрямую для фильтрации.
+        # 일반적으로 redminelib 은 datetime 객체를 올바르게 처리해야 합니다.
+        updated_issues = redmine_instance.issue.filter(
+            updated_on=f">{last_run_timestamp.isoformat()}", # Передача строки может быть надежнее
+            status_id='*', # все статусы
+            sort='updated_on:asc'
+        )
+
+        processed_journal_ids = set()
+
+        for issue in updated_issues:
+            logger.debug(f"Обработка обновленной задачи ID: {issue.id}, обновлена: {issue.updated_on}")
+            try:
+                # issue.journals загружает все журналы. Мы должны фильтровать их по дате.
+                for journal_entry in issue.journals: # Переименовал journal в journal_entry во избежание конфликта имен, если есть модуль journal
+                    journal_created_on = journal_entry.created_on
+
+                    if journal_entry.id in processed_journal_ids:
+                        continue
+
+                    # Сравнение дат: journal_created_on (от redminelib, обычно UTC) и last_run_timestamp (предполагаем UTC)
+                    if journal_created_on > last_run_timestamp:
+                        processed_journal_ids.add(journal_entry.id)
+                        event_data = {
+                            'issue_id': issue.id,
+                            'journal_id': journal_entry.id,
+                            'user_id': journal_entry.user.id if hasattr(journal_entry, 'user') and journal_entry.user else ANONYMOUS_USER_ID_CONFIG,
+                            'created_on': journal_created_on,
+                            'notes': getattr(journal_entry, 'notes', ''),
+                            'details': getattr(journal_entry, 'details', []),
+                            'issue_author_id': issue.author.id if hasattr(issue, 'author') and issue.author else ANONYMOUS_USER_ID_CONFIG,
+                            'issue_assigned_to_id': issue.assigned_to.id if hasattr(issue, 'assigned_to') and issue.assigned_to else None,
+                            'project_id': issue.project.id if hasattr(issue, 'project') and issue.project else None,
+                            'tracker_id': issue.tracker.id if hasattr(issue, 'tracker') and issue.tracker else None,
+                            'status_id': issue.status.id if hasattr(issue, 'status') and issue.status else None,
+                            'subject': getattr(issue, 'subject', '')
+                        }
+                        raw_events.append(event_data)
+                        logger.debug(f"  Добавлено событие из журнала ID: {journal_entry.id} для задачи {issue.id}")
+
+            except ResourceNotFoundError:
+                logger.warning(f"Задача {issue.id} не найдена при попытке получить журналы (возможно, удалена). Пропускаем.")
+                continue
+            except Exception as e_journal:
+                logger.error(f"Ошибка при обработке журналов для задачи {issue.id}: {e_journal}")
+                continue
+
+        logger.info(f"Найдено {len(raw_events)} сырых событий Redmine.")
+        return raw_events
+
+    except AuthError:
+        logger.error("Ошибка аутентификации при запросе к Redmine API.")
+        return []
+    except ForbiddenError:
+        logger.error("Доступ запрещен при запросе к Redmine API (проверьте права API ключа).")
+        return []
+    # Убрал ConnectionError, так как BaseRedmineError должен его покрывать или redminelib кидает свои типы
+    except BaseRedmineError as e_base:
+        logger.error(f"Общая ошибка Redmine API (redminelib): {e_base}")
+        return []
+    except Exception as e:
+        logger.error(f"Неожиданная ошибка в fetch_redmine_raw_updates: {e}", exc_info=True)
+        return []

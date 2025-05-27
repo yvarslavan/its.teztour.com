@@ -88,58 +88,43 @@ class PushNotificationManager {
     async registerServiceWorker() {
         try {
             console.log('[PushManager] Запуск регистрации Service Worker...');
-            this.registration = await navigator.serviceWorker.register('/static/js/sw.js');
-            console.log('[PushManager] Service Worker зарегистрирован:', this.registration);
 
-            // Ждем, пока Service Worker станет активным
-            console.log('[PushManager] Ожидание активации Service Worker...');
-
-            if (this.registration.active) {
-                console.log('[PushManager] Service Worker уже активен');
-                return; // Service Worker уже активен, можно продолжать
+            // Проверяем наличие существующей регистрации
+            const existingRegistration = await navigator.serviceWorker.getRegistration();
+            if (existingRegistration) {
+                console.log('[PushManager] Найдена существующая регистрация, отменяем...');
+                await existingRegistration.unregister();
             }
 
+            // Регистрируем Service Worker с правильным путем
+            const swPath = '/sw.js';
+            console.log('[PushManager] Регистрация Service Worker по пути:', swPath);
+
+            this.registration = await navigator.serviceWorker.register(swPath, {
+                scope: '/',
+                updateViaCache: 'none' // Отключаем кеширование Service Worker
+            });
+
+            console.log('[PushManager] Service Worker зарегистрирован:', this.registration);
+
+            // Проверяем состояние Service Worker
             if (this.registration.installing) {
-                console.log('[PushManager] Service Worker устанавливается, ожидаем...');
+                console.log('[PushManager] Service Worker устанавливается...');
                 await this.waitForServiceWorker(this.registration.installing);
             } else if (this.registration.waiting) {
                 console.log('[PushManager] Service Worker в ожидании, активируем...');
-                // Принудительно активируем ожидающий Service Worker
                 this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
                 await this.waitForServiceWorker(this.registration.waiting);
+            } else if (this.registration.active) {
+                console.log('[PushManager] Service Worker уже активен');
             }
 
-            console.log('[PushManager] Service Worker успешно активирован');
+            // Обновляем Service Worker
+            await this.registration.update();
 
         } catch (error) {
             console.error('[PushManager] Ошибка регистрации Service Worker:', error);
-
-            // Если Service Worker стал redundant, пробуем переустановить
-            if (error.message.includes('избыточным')) {
-                console.log('[PushManager] Попытка переустановки Service Worker...');
-
-                // Отменяем регистрацию всех Service Worker
-                const registrations = await navigator.serviceWorker.getRegistrations();
-                for (let registration of registrations) {
-                    if (registration.scope.includes('/static/js/')) {
-                        await registration.unregister();
-                        console.log('[PushManager] Service Worker отменен:', registration.scope);
-                    }
-                }
-
-                // Ждем немного и регистрируем заново
-                await new Promise(resolve => setTimeout(resolve, 1000));
-
-                this.registration = await navigator.serviceWorker.register('/static/js/sw.js');
-                console.log('[PushManager] Service Worker переустановлен:', this.registration);
-
-                // Ждем активации нового Service Worker
-                if (this.registration.installing) {
-                    await this.waitForServiceWorker(this.registration.installing);
-                }
-            } else {
-                throw error;
-            }
+            throw error;
         }
     }
 

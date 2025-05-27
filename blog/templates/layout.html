@@ -1210,14 +1210,39 @@
 
                         if (data.type === 'PLAY_SOUND') {
                             try {
-                                console.log('[Main] Воспроизведение звука:', data.soundUrl);
+                                console.log('[Main] Попытка воспроизведения звука:', data.soundUrl);
+
+                                // Создаем новый элемент Audio
                                 const audio = new Audio(data.soundUrl);
+
+                                // Настраиваем параметры
                                 audio.volume = 0.7;
+                                audio.preload = 'auto';
+
+                                // Добавляем обработчики событий
+                                audio.addEventListener('play', () => {
+                                    console.log('[Main] Звук начал воспроизводиться');
+                                });
+
+                                audio.addEventListener('ended', () => {
+                                    console.log('[Main] Звук закончил воспроизводиться');
+                                });
+
+                                audio.addEventListener('error', (error) => {
+                                    console.error('[Main] Ошибка воспроизведения звука:', error);
+                                });
+
+                                // Воспроизводим звук
                                 audio.play().catch(error => {
                                     console.warn('[Main] Не удалось воспроизвести звук:', error);
+                                    // Пробуем воспроизвести звук после взаимодействия пользователя
+                                    document.addEventListener('click', function playOnClick() {
+                                        audio.play().catch(console.error);
+                                        document.removeEventListener('click', playOnClick);
+                                    }, { once: true });
                                 });
                             } catch (error) {
-                                console.error('[Main] Ошибка воспроизведения звука:', error);
+                                console.error('[Main] Ошибка создания аудио элемента:', error);
                             }
                         }
                     });

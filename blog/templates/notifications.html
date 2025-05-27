@@ -59,7 +59,7 @@
                                     <time class="notification-time">{{ notification.date_created }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_status', notification_issue_id=notification.issue_id) }}" method="POST" class="delete-form">
+                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -101,7 +101,7 @@
                                     <time class="notification-time">{{ notification.date_created }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_add_notes', notification_add_notes_issue_id=notification.issue_id) }}" method="POST" class="delete-form">
+                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
