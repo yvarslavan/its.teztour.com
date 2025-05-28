@@ -12,9 +12,9 @@ class PushNotificationManager {
         this.isInitialized = false;
         this.isInitializing = false;
 
-        // Элементы интерфейса
-        this.pushButton = null;
-        this.statusIndicator = null;
+        // Элементы интерфейса - БОЛЬШЕ НЕ ИСПОЛЬЗУЮТСЯ ЗДЕСЬ
+        // this.pushButton = null;
+        // this.statusIndicator = null;
 
         // Звуки уведомлений
         this.notificationSounds = {
@@ -67,9 +67,9 @@ class PushNotificationManager {
             await this.checkSubscriptionStatus();
             console.log('[PushManager] Статус подписки проверен');
 
-            // Инициализируем UI
-            console.log('[PushManager] Инициализация UI...');
-            this.initializeUI();
+            // Инициализируем UI - БОЛЬШЕ НЕ ВЫЗЫВАЕТСЯ ОТСЮДА
+            // console.log('[PushManager] Инициализация UI...');
+            // this.initializeUI();
 
             this.isInitialized = true;
             console.log('[PushManager] Инициализация завершена успешно');
@@ -87,48 +87,64 @@ class PushNotificationManager {
 
     async registerServiceWorker() {
         try {
-            console.log('[PushManager] Запуск регистрации Service Worker...');
+            console.log('[PushManager] Начало registerServiceWorker()');
+            const swScope = '/';
 
             // Проверяем наличие существующей регистрации
-            const existingRegistration = await navigator.serviceWorker.getRegistration();
+            console.log(`[PushManager] Попытка получить существующую регистрацию SW для scope: ${swScope}`);
+            const existingRegistration = await navigator.serviceWorker.getRegistration(swScope);
             if (existingRegistration) {
-                console.log('[PushManager] Найдена существующая регистрация, отменяем...');
-                await existingRegistration.unregister();
+                console.log('[PushManager] Найдена существующая регистрация SW, scope:', existingRegistration.scope, 'Попытка отмены регистрации...');
+                const unregisterResult = await existingRegistration.unregister();
+                console.log('[PushManager] Результат отмены регистрации:', unregisterResult ? 'Успешно' : 'Неуспешно или нет активного SW для отмены');
+                if (!unregisterResult) {
+                    console.warn('[PushManager] Не удалось отменить регистрацию существующего Service Worker. Это может помешать регистрации нового.');
+                }
+            } else {
+                console.log('[PushManager] Существующая регистрация SW не найдена для scope:', swScope);
             }
 
-            // Регистрируем Service Worker с правильным путем
             const swPath = '/sw.js';
-            console.log('[PushManager] Регистрация Service Worker по пути:', swPath);
+            console.log(`[PushManager] Попытка регистрации НОВОГО Service Worker. Путь: ${swPath}, Scope: ${swScope}`);
 
             try {
-                console.log(`[PushManager] Попытка регистрации Service Worker с путем: ${swPath} и scope: '/'`);
+                // Прямой try...catch вокруг register
+                console.log('[PushManager] Перед вызовом navigator.serviceWorker.register...');
                 this.registration = await navigator.serviceWorker.register(swPath, {
-                    scope: '/'
+                    scope: swScope
                 });
-                console.log('[PushManager] Service Worker зарегистрирован успешно:', this.registration);
-
-                // Проверяем состояние Service Worker
-                if (this.registration.installing) {
-                    console.log('[PushManager] Service Worker устанавливается...');
-                    await this.waitForServiceWorker(this.registration.installing);
-                } else if (this.registration.waiting) {
-                    console.log('[PushManager] Service Worker в ожидании, активируем...');
-                    this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
-                    await this.waitForServiceWorker(this.registration.waiting);
-                } else if (this.registration.active) {
-                    console.log('[PushManager] Service Worker уже активен');
-                }
-
-                // Обновляем Service Worker
-                await this.registration.update();
-
-            } catch (error) {
-                console.error('[PushManager] Ошибка регистрации Service Worker:', error);
-                throw error;
+                console.log('[PushManager] navigator.serviceWorker.register ВЫПОЛНЕН. Регистрация:', this.registration);
+            } catch (registerError) {
+                console.error('[PushManager] КРИТИЧЕСКАЯ ОШИБКА непосредственно при вызове navigator.serviceWorker.register:', registerError);
+                this.registration = null; // Убедимся, что registration сброшен
+                throw registerError; // Перебрасываем ошибку, чтобы ее было видно выше
             }
 
+            if (!this.registration) {
+                console.error('[PushManager] Регистрация Service Worker не удалась, this.registration остался null ПОСЛЕ вызова register.');
+                throw new Error('Service Worker registration failed, this.registration is null');
+            }
+
+            console.log('[PushManager] Проверка состояния Service Worker (this.registration):', this.registration);
+            if (this.registration.installing) {
+                console.log('[PushManager] Service Worker в состоянии installing. Ожидание активации...');
+                await this.waitForServiceWorker(this.registration.installing);
+            } else if (this.registration.waiting) {
+                console.log('[PushManager] Service Worker в состоянии waiting. Попытка активации через postMessage SKIP_WAITING...');
+                this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
+                await this.waitForServiceWorker(this.registration.waiting);
+            } else if (this.registration.active) {
+                console.log('[PushManager] Service Worker уже в состоянии active.');
+            }
+
+            console.log('[PushManager] Попытка выполнить registration.update()...');
+            await this.registration.update();
+            console.log('[PushManager] registration.update() выполнен.');
+            console.log('[PushManager] Service Worker успешно зарегистрирован и обновлен.');
+
         } catch (error) {
-            console.error('[PushManager] Ошибка регистрации Service Worker:', error);
+            console.error('[PushManager] ОБЩАЯ ОШИБКА в registerServiceWorker (возможно, после успешной регистрации, но до ее полной активации):', error);
+            this.registration = null; // Важно сбросить, если что-то пошло не так
             throw error;
         }
     }
@@ -220,91 +236,11 @@ class PushNotificationManager {
         }
     }
 
-    initializeUI() {
-        // Создаем кнопку управления уведомлениями
-        this.createPushButton();
-
-        // Создаем индикатор статуса
-        this.createStatusIndicator();
-
-        // Обновляем UI
-        this.updateUI();
-    }
-
-    createPushButton() {
-        // Ищем существующую кнопку или создаем новую
-        this.pushButton = document.getElementById('push-notification-btn');
-
-        if (!this.pushButton) {
-            this.pushButton = document.createElement('button');
-            this.pushButton.id = 'push-notification-btn';
-            this.pushButton.className = 'btn btn-outline-primary push-notification-btn';
-
-            // Добавляем кнопку в навигацию
-            const navbar = document.querySelector('.navbar-nav');
-            if (navbar) {
-                const li = document.createElement('li');
-                li.className = 'nav-item';
-                li.appendChild(this.pushButton);
-                navbar.appendChild(li);
-            }
-        }
-
-        // Добавляем обработчик клика
-        this.pushButton.addEventListener('click', () => this.toggleSubscription());
-    }
-
-    createStatusIndicator() {
-        this.statusIndicator = document.getElementById('push-status-indicator');
-
-        if (!this.statusIndicator) {
-            this.statusIndicator = document.createElement('span');
-            this.statusIndicator.id = 'push-status-indicator';
-            this.statusIndicator.className = 'push-status-indicator';
-
-            // Добавляем рядом с кнопкой
-            if (this.pushButton && this.pushButton.parentNode) {
-                this.pushButton.parentNode.appendChild(this.statusIndicator);
-            }
-        }
-    }
-
-    updateUI() {
-        if (!this.pushButton) return;
-
-        if (!this.isSupported) {
-            this.pushButton.textContent = 'Уведомления не поддерживаются';
-            this.pushButton.disabled = true;
-            this.pushButton.className = 'btn btn-secondary push-notification-btn';
-            return;
-        }
-
-        if (this.isSubscribed) {
-            this.pushButton.innerHTML = '<i class="fas fa-bell-slash"></i> Отключить уведомления';
-            this.pushButton.className = 'btn btn-outline-danger push-notification-btn';
-            this.pushButton.title = 'Отключить браузерные уведомления';
-
-            if (this.statusIndicator) {
-                this.statusIndicator.innerHTML = '<i class="fas fa-bell text-success"></i>';
-                this.statusIndicator.title = 'Уведомления включены';
-            }
-        } else {
-            this.pushButton.innerHTML = '<i class="fas fa-bell"></i> Включить уведомления';
-            this.pushButton.className = 'btn btn-outline-primary push-notification-btn';
-            this.pushButton.title = 'Включить браузерные уведомления';
-
-            if (this.statusIndicator) {
-                this.statusIndicator.innerHTML = '<i class="fas fa-bell-slash text-muted"></i>';
-                this.statusIndicator.title = 'Уведомления отключены';
-            }
-        }
-
-        this.pushButton.disabled = false;
-    }
-
-    async toggleSubscription() {
+    async toggleSubscription() { // ЭТОТ МЕТОД БОЛЬШЕ НЕ ИСПОЛЬЗУЕТСЯ И МОЖЕТ БЫТЬ УДАЛЕН,
+                               // НО ДЛЯ БЕЗОПАСНОСТИ ОСТАВИМ ПОКА ЗАКОММЕНТИРОВАННЫМ ИЛИ УДАЛИМ ПОЗЖЕ
+        /*
         try {
-            this.pushButton.disabled = true;
+            // this.pushButton.disabled = true; // this.pushButton здесь больше нет
 
             if (this.isSubscribed) {
                 await this.unsubscribe();
@@ -316,8 +252,10 @@ class PushNotificationManager {
             console.error('[PushManager] Ошибка переключения подписки:', error);
             this.showError('Ошибка при изменении настроек уведомлений');
         } finally {
-            this.pushButton.disabled = false;
+            // this.pushButton.disabled = false; // this.pushButton здесь больше нет
         }
+        */
+        console.warn("[PushManager] toggleSubscription больше не должен вызываться напрямую из этого класса.");
     }
 
     async subscribe() {
@@ -329,42 +267,17 @@ class PushNotificationManager {
                 throw new Error('VAPID ключ не получен. Попробуйте обновить страницу.');
             }
 
-            // Запрашиваем разрешение с таймаутом
-            console.log('[PushManager] Запрос разрешения с таймаутом...');
-
+            // УПРОЩЕННЫЙ ЗАПРОС РАЗРЕШЕНИЯ (без кастомного таймаута)
+            console.log('[PushManager] Вызов Notification.requestPermission(). Ожидание ответа от пользователя...');
             let permission;
             try {
-                // Создаем промис с таймаутом для requestPermission
-                const permissionPromise = new Promise((resolve, reject) => {
-                    // Таймаут 10 секунд
-                    const timeout = setTimeout(() => {
-                        reject(new Error('Таймаут запроса разрешения на уведомления'));
-                    }, 10000);
-
-                    // Запрашиваем разрешение
-                    const result = Notification.requestPermission();
-
-                    // Обрабатываем как промис (современные браузеры) или callback (старые)
-                    if (result && typeof result.then === 'function') {
-                        result.then(perm => {
-                            clearTimeout(timeout);
-                            resolve(perm);
-                        }).catch(err => {
-                            clearTimeout(timeout);
-                            reject(err);
-                        });
-                    } else {
-                        // Для старых браузеров, где requestPermission возвращает значение сразу
-                        clearTimeout(timeout);
-                        resolve(result || Notification.permission);
-                    }
-                });
-
-                permission = await permissionPromise;
-            } catch (permError) {
-                console.error('[PushManager] Ошибка запроса разрешения:', permError);
-                throw new Error('Не удалось получить разрешение на уведомления: ' + permError.message);
+                permission = await Notification.requestPermission();
+                console.log('[PushManager] Notification.requestPermission() завершен. Результат:', permission);
+            } catch (rpError) {
+                console.error('[PushManager] Ошибка при вызове Notification.requestPermission():', rpError);
+                throw new Error('Ошибка при запросе разрешения на уведомления: ' + rpError.message);
             }
+            // КОНЕЦ УПРОЩЕННОГО ЗАПРОСА
 
             console.log('[PushManager] Получено разрешение:', permission);
 
@@ -388,7 +301,7 @@ class PushNotificationManager {
 
             this.subscription = subscription;
             this.isSubscribed = true;
-            this.updateUI();
+            // this.updateUI(); // УДАЛЕНО - account.html обновит UI
 
             this.showSuccess('Браузерные уведомления включены!');
 
@@ -414,7 +327,7 @@ class PushNotificationManager {
 
             this.subscription = null;
             this.isSubscribed = false;
-            this.updateUI();
+            // this.updateUI(); // УДАЛЕНО - account.html обновит UI
 
             this.showSuccess('Браузерные уведомления отключены');
 
@@ -541,12 +454,25 @@ class PushNotificationManager {
             const finalSoundUrl = soundUrlToPlay || this.notificationSounds.default;
             console.log(`[PushManager] Попытка воспроизведения звука: ${finalSoundUrl}`);
             const audio = new Audio(finalSoundUrl);
-            audio.volume = 0.5;
-            audio.play().catch(error => {
-                console.warn(`[PushManager] Не удалось воспроизвести звук: ${finalSoundUrl}`, error);
-            });
+            audio.volume = 0.5; // Можно поставить 1.0 для теста
+            console.log('[PushManager] Audio объект создан:', audio);
+            const playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.then(_ => {
+                    console.log(`[PushManager] Воспроизведение звука ${finalSoundUrl} началось.`);
+                }).catch(error => {
+                    console.warn(`[PushManager] Не удалось воспроизвести звук ${finalSoundUrl}:`, error);
+                    // Здесь можно добавить более явное уведомление пользователю или UI фидбек
+                    // Например, если это из-за отсутствия взаимодействия пользователя:
+                    if (error.name === 'NotAllowedError') {
+                        console.warn('[PushManager] Воспроизведение звука заблокировано браузером. Требуется взаимодействие пользователя со страницей.');
+                        // Можно показать маленький UI элемент, предлагающий кликнуть для включения звука
+                    }
+                });
+            }
         } catch (error) {
-            console.warn('[PushManager] Ошибка воспроизведения звука:', error);
+            console.warn('[PushManager] Ошибка при попытке воспроизведения звука:', error);
         }
     }
 
@@ -629,10 +555,11 @@ class PushNotificationManager {
             navigator.serviceWorker.onmessage = (event) => {
                 console.log('[PushManager] Получено сообщение от SW:', event.data);
                 if (event.data && event.data.type === 'PLAY_SOUND') {
+                    console.log('[PushManager] Сообщение PLAY_SOUND получено. URL:', event.data.soundUrl);
                     if (event.data.soundUrl) {
                         this.playNotificationSound(event.data.soundUrl);
                     } else {
-                        // Если URL не указан, используем звук по умолчанию
+                        console.log('[PushManager] URL звука не указан, используем звук по умолчанию.');
                         this.playNotificationSound();
                     }
                 }
