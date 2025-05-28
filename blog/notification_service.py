@@ -5,7 +5,7 @@
 import logging
 import sqlite3
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Optional, Tuple
 from dataclasses import dataclass
 from enum import Enum
@@ -15,6 +15,8 @@ from contextlib import contextmanager
 from flask import current_app, request
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy import and_, or_, func
+import uuid
+from urllib.parse import urlparse
 
 from blog import db
 from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
@@ -79,8 +81,11 @@ class NotificationDeduplicator:
         self._cache = {}
         self._lock = threading.Lock()
 
-    def is_duplicate(self, notification: NotificationData) -> bool:
+    def is_duplicate(self, notification: NotificationData, request_id: Optional[uuid.UUID] = None) -> bool:
         """Проверка на дублирование"""
+        # Используем request_id в логах, если он передан
+        log_prefix = f"[REQ_ID:{request_id}][DEDUPLICATOR]" if request_id else "[DEDUPLICATOR]"
+
         with self._lock:
             hash_key = notification.get_hash()
             now = datetime.now()
@@ -90,10 +95,12 @@ class NotificationDeduplicator:
 
             # Проверяем наличие дубликата
             if hash_key in self._cache:
+                logger.info(f"{log_prefix} Проверка хеша: {hash_key}. Результат: ДУБЛИКАТ (Найден в кеше). Время в кеше: {self._cache[hash_key]}")
                 return True
 
             # Добавляем новую запись
             self._cache[hash_key] = now
+            logger.info(f"{log_prefix} Проверка хеша: {hash_key}. Результат: НОВЫЙ. Добавлен в кеш с временем {now}")
             return False
 
     def _cleanup_expired(self, now: datetime):
@@ -123,9 +130,10 @@ class NotificationService:
         Returns:
             int: Количество обработанных уведомлений
         """
-        try:
-            logger.info(f"Начало обработки уведомлений для пользователя {user_id}")
+        request_id = uuid.uuid4()
+        logger.info(f"[REQ_ID:{request_id}] Начало обработки уведомлений для пользователя {user_id}, email: {user_email}")
 
+        try:
             # Получаем подключение к MySQL
             connection = redmine.get_connection(
                 redmine.db_redmine_host,
@@ -135,36 +143,40 @@ class NotificationService:
             )
 
             if not connection:
-                logger.error(f"Не удалось подключиться к MySQL для пользователя {user_id}")
+                logger.error(f"[REQ_ID:{request_id}] Не удалось подключиться к MySQL для пользователя {user_id}")
                 return 0
+
+            logger.info(f"[REQ_ID:{request_id}] Успешно подключились к MySQL для пользователя {user_id}")
 
             total_processed = 0
 
             try:
                 # Обрабатываем уведомления о статусах
                 status_count = self._process_status_notifications(
-                    connection, user_email, user_id
+                    connection, user_email, user_id, request_id
                 )
                 total_processed += status_count
 
                 # Обрабатываем уведомления о комментариях
                 comment_count = self._process_comment_notifications(
-                    connection, user_email, user_id
+                    connection, user_email, user_id, request_id
                 )
                 total_processed += comment_count
 
-                logger.info(f"Обработано {total_processed} уведомлений для пользователя {user_id}")
+                logger.info(f"[REQ_ID:{request_id}] Обработано {total_processed} уведомлений для пользователя {user_id}")
                 return total_processed
 
             finally:
                 connection.close()
+                logger.info(f"[REQ_ID:{request_id}] Соединение с MySQL закрыто для пользователя {user_id}")
 
         except Exception as e:
-            logger.error(f"Ошибка при обработке уведомлений для пользователя {user_id}: {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка при обработке уведомлений для пользователя {user_id}: {e}", exc_info=True)
             return 0
 
-    def _process_status_notifications(self, connection, user_email: str, user_id: int) -> int:
+    def _process_status_notifications(self, connection, user_email: str, user_id: int, request_id: uuid.UUID) -> int:
         """Обработка уведомлений об изменении статуса"""
+        logger.info(f"[REQ_ID:{request_id}] _process_status_notifications для user_id={user_id}")
         try:
             cursor = connection.cursor(dictionary=True)
             email_part = user_email.lower().split("@")[0]
@@ -177,8 +189,10 @@ class NotificationService:
                 LIMIT 50
             """
 
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (status): {query} с email_part: {email_part}")
             cursor.execute(query, (email_part,))
             rows = cursor.fetchall()
+            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_update_status. IDs: {[row.get('ID', 'N/A') for row in rows] if rows else '[]'}")
 
             processed_count = 0
             notifications_to_save = []
@@ -201,32 +215,40 @@ class NotificationService:
                 )
 
                 # Проверяем на дублирование
-                if not self.deduplicator.is_duplicate(notification_data):
+                if not self.deduplicator.is_duplicate(notification_data, request_id):
+                    logger.info(f"[REQ_ID:{request_id}] Статус-уведомление (MySQL ID: {row['ID']}) не дубликат, добавляем к сохранению.")
                     notifications_to_save.append(notification_data)
                     ids_to_delete_from_mysql.append(row['ID'])
                     processed_count += 1
+                else:
+                    logger.info(f"[REQ_ID:{request_id}] Статус-уведомление (MySQL ID: {row['ID']}) определено как дубликат Deduplicator-ом.")
 
             # Сохраняем уведомления в базу
             if notifications_to_save:
-                self._save_status_notifications(notifications_to_save)
+                logger.info(f"[REQ_ID:{request_id}] Планируется сохранить {len(notifications_to_save)} статус-уведомлений. IDs из MySQL для удаления: {ids_to_delete_from_mysql}")
+                self._save_status_notifications(notifications_to_save, request_id)
 
                 # Отправляем браузерные пуш-уведомления
                 for notification in notifications_to_save:
+                    logger.info(f"[REQ_ID:{request_id}] Отправка PUSH для статус-уведомления issue_id: {notification.issue_id}")
                     self.push_service.send_push_notification(notification)
 
                 # Удаляем успешно обработанные записи из MySQL по их ID
                 if ids_to_delete_from_mysql:
-                    self._delete_processed_status_notifications(connection, ids_to_delete_from_mysql)
+                    self._delete_processed_status_notifications(connection, ids_to_delete_from_mysql, request_id)
+            else:
+                logger.info(f"[REQ_ID:{request_id}] Нет новых статус-уведомлений для сохранения.")
 
             cursor.close()
             return processed_count
 
         except Exception as e:
-            logger.error(f"Ошибка при обработке уведомлений о статусах: {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка при обработке уведомлений о статусах: {e}", exc_info=True)
             return 0
 
-    def _process_comment_notifications(self, connection, user_email: str, user_id: int) -> int:
+    def _process_comment_notifications(self, connection, user_email: str, user_id: int, request_id: uuid.UUID) -> int:
         """Обработка уведомлений о комментариях"""
+        logger.info(f"[REQ_ID:{request_id}] _process_comment_notifications для user_id={user_id}")
         try:
             cursor = connection.cursor(dictionary=True)
             email_part = user_email.lower().split("@")[0]
@@ -239,8 +261,10 @@ class NotificationService:
                 LIMIT 50
             """
 
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (comment): {query} с email_part: {email_part}")
             cursor.execute(query, (email_part,))
             rows = cursor.fetchall()
+            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_add_notes. IDs: {[row.get('ID', 'N/A') for row in rows] if rows else '[]'}")
 
             processed_count = 0
             notifications_to_save = []
@@ -261,50 +285,60 @@ class NotificationService:
                 )
 
                 # Проверяем на дублирование
-                if not self.deduplicator.is_duplicate(notification_data):
+                if not self.deduplicator.is_duplicate(notification_data, request_id):
+                    logger.info(f"[REQ_ID:{request_id}] Коммент-уведомление (MySQL ID: {row['ID']}) не дубликат, добавляем к сохранению.")
                     notifications_to_save.append(notification_data)
                     ids_to_delete_from_mysql.append(row['ID'])
                     processed_count += 1
+                else:
+                    logger.info(f"[REQ_ID:{request_id}] Коммент-уведомление (MySQL ID: {row['ID']}) определено как дубликат Deduplicator-ом.")
 
             # Сохраняем уведомления в базу
             if notifications_to_save:
-                self._save_comment_notifications(notifications_to_save)
+                logger.info(f"[REQ_ID:{request_id}] Планируется сохранить {len(notifications_to_save)} коммент-уведомлений. IDs из MySQL для удаления: {ids_to_delete_from_mysql}")
+                self._save_comment_notifications(notifications_to_save, request_id)
 
                 # Отправляем браузерные пуш-уведомления
                 for notification in notifications_to_save:
+                    logger.info(f"[REQ_ID:{request_id}] Отправка PUSH для коммент-уведомления issue_id: {notification.issue_id}")
                     self.push_service.send_push_notification(notification)
 
                 # Удаляем успешно обработанные записи из MySQL по их ID
                 if ids_to_delete_from_mysql:
-                    self._delete_processed_comment_notifications(connection, ids_to_delete_from_mysql)
+                    self._delete_processed_comment_notifications(connection, ids_to_delete_from_mysql, request_id)
+            else:
+                logger.info(f"[REQ_ID:{request_id}] Нет новых коммент-уведомлений для сохранения.")
 
             cursor.close()
             return processed_count
 
         except Exception as e:
-            logger.error(f"Ошибка при обработке уведомлений о комментариях: {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка при обработке уведомлений о комментариях: {e}", exc_info=True)
             return 0
 
-    def _save_status_notifications(self, notifications: List[NotificationData]):
+    def _save_status_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
         """Сохранение уведомлений о статусах в базу данных"""
+        logger.info(f"[REQ_ID:{request_id}] _save_status_notifications: {len(notifications)} уведомлений")
         try:
             notifications_added_count = 0
             for notification in notifications:
+                logger.info(f"[REQ_ID:{request_id}] Попытка сохранения статус-уведомления для user_id={notification.user_id}, issue_id={notification.issue_id}, created_at={notification.created_at}")
                 # НОВАЯ ПРОВЕРКА на дублирование по user_id, issue_id и date_created (до секунды)
                 # Убедимся, что notification.created_at это datetime объект
                 if not isinstance(notification.created_at, datetime):
-                    logger.error(f"Некорректный тип date_created для status notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    logger.error(f"[REQ_ID:{request_id}] Некорректный тип date_created для status notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
                     try:
                         # Попытка преобразовать, если это строка ISO
                         parsed_date = datetime.fromisoformat(str(notification.created_at).replace('Z', '+00:00'))
                         new_date_truncated_str = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
                     except ValueError:
-                        logger.error(f"Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
+                        logger.error(f"[REQ_ID:{request_id}] Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
                         # Если не можем спарсить, пропускаем эту конкретную проверку по времени,
                         # полагаясь на старую проверку по контенту
                         existing_by_time = None
                 else:
                     new_date_truncated_str = notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    logger.info(f"[REQ_ID:{request_id}] Проверка дубликата по времени: user_id={notification.user_id}, issue_id={notification.issue_id}, date_created_str='{new_date_truncated_str}'")
                     existing_by_time = db.session.query(Notifications.id).filter(
                         Notifications.user_id == notification.user_id,
                         Notifications.issue_id == notification.issue_id,
@@ -312,10 +346,11 @@ class NotificationService:
                     ).first()
 
                 if existing_by_time:
-                    logger.info(f"Пропуск дубликата (по времени) status notification для user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'")
+                    logger.warning(f"[REQ_ID:{request_id}] ДУБЛИКАТ ПО ВРЕМЕНИ (status): user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'. ID существующего: {existing_by_time.id}. ПРОПУСК.")
                     continue # Пропускаем, если дубликат по времени найден
 
                 # Старая проверка (оставляем на всякий случай, или если проверка по времени не удалась)
+                logger.info(f"[REQ_ID:{request_id}] Проверка дубликата по контенту (status): user_id={notification.user_id}, issue_id={notification.issue_id}")
                 existing_by_content = db.session.query(Notifications.id).filter(
                     Notifications.user_id == notification.user_id,
                     Notifications.issue_id == notification.issue_id,
@@ -324,6 +359,7 @@ class NotificationService:
                 ).first()
 
                 if not existing_by_content:
+                    logger.info(f"[REQ_ID:{request_id}] Дубликата по контенту нет. Добавление статус-уведомления: user_id={notification.user_id}, issue_id={notification.issue_id}")
                     db_notification = Notifications(
                         user_id=notification.user_id,
                         issue_id=notification.issue_id,
@@ -335,35 +371,42 @@ class NotificationService:
                     db.session.add(db_notification)
                     notifications_added_count += 1
                 else:
-                    logger.info(f"Пропуск дубликата (по контенту) status notification для user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    logger.warning(f"[REQ_ID:{request_id}] ДУБЛИКАТ ПО КОНТЕНТУ (status): user_id={notification.user_id}, issue_id={notification.issue_id}. ID существующего: {existing_by_content.id}. ПРОПУСК.")
 
             if notifications_added_count > 0:
+                logger.info(f"[REQ_ID:{request_id}] Коммит {notifications_added_count} статус-уведомлений.")
                 db.session.commit()
-                logger.info(f"Сохранено {notifications_added_count} уведомлений о статусах")
+                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {notifications_added_count} уведомлений о статусах")
             else:
-                logger.info("Нет новых уведомлений о статусах для сохранения (все дубликаты или список пуст)")
+                logger.info(f"[REQ_ID:{request_id}] Нет новых уведомлений о статусах для сохранения (все дубликаты или список пуст)")
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            logger.error(f"Ошибка при сохранении уведомлений о статусах: {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении уведомлений о статусах: {e}", exc_info=True)
             raise
+        except Exception as e:
+            logger.error(f"[REQ_ID:{request_id}] НЕПРЕДВИДЕННАЯ Ошибка при сохранении уведомлений о статусах: {e}", exc_info=True)
+            raise # Перебрасываем исключение, чтобы не потерять информацию
 
-    def _save_comment_notifications(self, notifications: List[NotificationData]):
+    def _save_comment_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
         """Сохранение уведомлений о комментариях в базу данных"""
+        logger.info(f"[REQ_ID:{request_id}] _save_comment_notifications: {len(notifications)} уведомлений")
         try:
             notifications_added_count = 0
             for notification in notifications:
+                logger.info(f"[REQ_ID:{request_id}] Попытка сохранения коммент-уведомления для user_id={notification.user_id}, issue_id={notification.issue_id}, created_at={notification.created_at}")
                 # НОВАЯ ПРОВЕРКА на дублирование по user_id, issue_id и date_created (до секунды)
                 if not isinstance(notification.created_at, datetime):
-                    logger.error(f"Некорректный тип date_created для comment notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    logger.error(f"[REQ_ID:{request_id}] Некорректный тип date_created для comment notification: {type(notification.created_at)}, user_id={notification.user_id}, issue_id={notification.issue_id}")
                     try:
                         parsed_date = datetime.fromisoformat(str(notification.created_at).replace('Z', '+00:00'))
                         new_date_truncated_str = parsed_date.strftime('%Y-%m-%d %H:%M:%S')
                     except ValueError:
-                        logger.error(f"Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
+                        logger.error(f"[REQ_ID:{request_id}] Не удалось спарсить date_created: {notification.created_at}. Пропускаем проверку по времени.")
                         existing_by_time = None
                 else:
                     new_date_truncated_str = notification.created_at.strftime('%Y-%m-%d %H:%M:%S')
+                    logger.info(f"[REQ_ID:{request_id}] Проверка дубликата по времени: user_id={notification.user_id}, issue_id={notification.issue_id}, date_created_str='{new_date_truncated_str}'")
                     existing_by_time = db.session.query(NotificationsAddNotes.id).filter(
                         NotificationsAddNotes.user_id == notification.user_id,
                         NotificationsAddNotes.issue_id == notification.issue_id,
@@ -371,10 +414,11 @@ class NotificationService:
                     ).first()
 
                 if existing_by_time:
-                    logger.info(f"Пропуск дубликата (по времени) comment notification для user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'")
+                    logger.warning(f"[REQ_ID:{request_id}] ДУБЛИКАТ ПО ВРЕМЕНИ (comment): user_id={notification.user_id}, issue_id={notification.issue_id}, date_created='{new_date_truncated_str}'. ID существующего: {existing_by_time.id}. ПРОПУСК.")
                     continue
 
                 # Старая проверка
+                logger.info(f"[REQ_ID:{request_id}] Проверка дубликата по контенту (comment): user_id={notification.user_id}, issue_id={notification.issue_id}")
                 existing_by_content = db.session.query(NotificationsAddNotes.id).filter(
                     NotificationsAddNotes.user_id == notification.user_id,
                     NotificationsAddNotes.issue_id == notification.issue_id,
@@ -383,6 +427,7 @@ class NotificationService:
                 ).first()
 
                 if not existing_by_content:
+                    logger.info(f"[REQ_ID:{request_id}] Дубликата по контенту нет. Добавление коммент-уведомления: user_id={notification.user_id}, issue_id={notification.issue_id}")
                     db_notification = NotificationsAddNotes(
                         user_id=notification.user_id,
                         issue_id=notification.issue_id,
@@ -393,21 +438,26 @@ class NotificationService:
                     db.session.add(db_notification)
                     notifications_added_count += 1
                 else:
-                    logger.info(f"Пропуск дубликата (по контенту) comment notification для user_id={notification.user_id}, issue_id={notification.issue_id}")
+                    logger.warning(f"[REQ_ID:{request_id}] ДУБЛИКАТ ПО КОНТЕНТУ (comment): user_id={notification.user_id}, issue_id={notification.issue_id}. ID существующего: {existing_by_content.id}. ПРОПУСК.")
 
             if notifications_added_count > 0:
+                logger.info(f"[REQ_ID:{request_id}] Коммит {notifications_added_count} коммент-уведомлений.")
                 db.session.commit()
-                logger.info(f"Сохранено {notifications_added_count} уведомлений о комментариях")
+                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {notifications_added_count} уведомлений о комментариях")
             else:
-                logger.info("Нет новых уведомлений о комментариях для сохранения (все дубликаты или список пуст)")
+                logger.info(f"[REQ_ID:{request_id}] Нет новых уведомлений о комментариях для сохранения (все дубликаты или список пуст)")
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            logger.error(f"Ошибка при сохранении уведомлений о комментариях: {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении уведомлений о комментариях: {e}", exc_info=True)
             raise
+        except Exception as e:
+            logger.error(f"[REQ_ID:{request_id}] НЕПРЕДВИДЕННАЯ Ошибка при сохранении уведомлений о комментариях: {e}", exc_info=True)
+            raise # Перебрасываем исключение
 
-    def _delete_processed_status_notifications(self, connection, ids_to_delete: List[int]):
+    def _delete_processed_status_notifications(self, connection, ids_to_delete: List[int], request_id: uuid.UUID):
         """Удаление обработанных уведомлений о статусах из MySQL по списку ID"""
+        logger.info(f"[REQ_ID:{request_id}] _delete_processed_status_notifications: IDs {ids_to_delete}")
         if not ids_to_delete:
             return
         try:
@@ -420,15 +470,16 @@ class NotificationService:
             """
             cursor.execute(query, tuple(ids_to_delete))
             connection.commit()
-            logger.info(f"Удалено {cursor.rowcount} записей о статусах из MySQL (IDs: {ids_to_delete})")
+            logger.info(f"[REQ_ID:{request_id}] Удалено {cursor.rowcount} записей о статусах из MySQL (IDs: {ids_to_delete})")
             cursor.close()
         except Exception as e:
-            logger.error(f"Ошибка при удалении обработанных уведомлений о статусах (IDs: {ids_to_delete}): {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка при удалении обработанных уведомлений о статусах (IDs: {ids_to_delete}): {e}", exc_info=True)
             # Важно: не откатывать транзакцию здесь, если она управляется выше по стеку,
             # но для DELETE это обычно атомарная операция для данного cursor.execute.
 
-    def _delete_processed_comment_notifications(self, connection, ids_to_delete: List[int]):
+    def _delete_processed_comment_notifications(self, connection, ids_to_delete: List[int], request_id: uuid.UUID):
         """Удаление обработанных уведомлений о комментариях из MySQL по списку ID"""
+        logger.info(f"[REQ_ID:{request_id}] _delete_processed_comment_notifications: IDs {ids_to_delete}")
         if not ids_to_delete:
             return
         try:
@@ -440,10 +491,10 @@ class NotificationService:
             """
             cursor.execute(query, tuple(ids_to_delete))
             connection.commit()
-            logger.info(f"Удалено {cursor.rowcount} записей о комментариях из MySQL (IDs: {ids_to_delete})")
+            logger.info(f"[REQ_ID:{request_id}] Удалено {cursor.rowcount} записей о комментариях из MySQL (IDs: {ids_to_delete})")
             cursor.close()
         except Exception as e:
-            logger.error(f"Ошибка при удалении обработанных уведомлений о комментариях (IDs: {ids_to_delete}): {e}")
+            logger.error(f"[REQ_ID:{request_id}] Ошибка при удалении обработанных уведомлений о комментариях (IDs: {ids_to_delete}): {e}", exc_info=True)
 
     def get_user_notifications(self, user_id: int) -> Dict:
         """Получение всех уведомлений пользователя"""
@@ -735,48 +786,113 @@ class BrowserPushService:
             logger.error(f"Ошибка при получении подписок пользователя {user_id}: {e}")
             return []
 
-    def _send_to_subscription(self, subscription: PushSubscription, data: Dict):
+    def _send_to_subscription(self, subscription: PushSubscription, push_data: Dict):
         """Отправка уведомления конкретной подписке"""
-        logger.debug(f"[PUSH_SEND] Начало отправки подписке {subscription.id}")
+        logger.debug(f"[PUSH_SERVICE_SEND] Начало отправки подписке {subscription.id}")
 
         if not WEBPUSH_AVAILABLE:
-            logger.error("[PUSH_SEND] pywebpush не установлен")
+            logger.error("[PUSH_SERVICE_SEND] pywebpush не установлен")
             raise Exception("pywebpush не установлен")
 
-        # Проверяем наличие VAPID ключей
-        if not self.vapid_private_key:
-            logger.warning("[PUSH_SEND] VAPID ключи не настроены, пропускаем отправку пуш-уведомления")
-            return
+        # Убедимся, что VAPID ключи настроены
+        if not self._ensure_vapid_config():
+            # _ensure_vapid_config уже логирует ошибку
+            return False # Возвращаем False, если конфигурация не удалась
+
+        logger.info(f"[PUSH_SERVICE_SEND] Попытка отправки push на endpoint: {subscription.endpoint[:70]}... для пользователя ID: {subscription.user_id}")
+        logger.debug(f"[PUSH_SERVICE_SEND] subscription.id: {subscription.id}")
+        logger.debug(f"[PUSH_SERVICE_SEND] subscription.is_active: {subscription.is_active}")
+
+        # Логируем информацию о подписке, которая будет передана в webpush
+        sub_info_for_webpush = subscription.subscription_info
+        if not isinstance(sub_info_for_webpush, dict):
+            logger.error(f"[PUSH_SERVICE_SEND] КРИТИЧЕСКАЯ ОШИБКА: subscription.subscription_info НЕ является словарем для sub ID {subscription.id}. Тип: {type(sub_info_for_webpush)}. Значение: {sub_info_for_webpush}")
+            # Попытка восстановить, если это строка JSON (маловероятно, но как крайняя мера)
+            if isinstance(sub_info_for_webpush, str):
+                try:
+                    sub_info_for_webpush = json.loads(sub_info_for_webpush)
+                    logger.warning(f"[PUSH_SERVICE_SEND] subscription_info была строкой и была успешно преобразована в JSON.")
+                except json.JSONDecodeError as jsde:
+                    logger.error(f"[PUSH_SERVICE_SEND] Не удалось преобразовать строку subscription_info в JSON: {jsde}")
+                    return False # Не можем продолжить без корректного словаря subscription_info
+            else:
+                return False # Не можем продолжить
+
+        logger.debug(f"[PUSH_SERVICE_SEND] subscription_info (для webpush): Endpoint='{sub_info_for_webpush.get('endpoint', 'MISSING')}', Keys exist: p256dh={'p256dh' in sub_info_for_webpush.get('keys', {})}, auth={'auth' in sub_info_for_webpush.get('keys', {})}")
+
+        # Логируем VAPID детали
+        logger.debug(f"[PUSH_SERVICE_SEND] VAPID Private Key (первые 10 символов): {self.vapid_private_key[:10] if self.vapid_private_key else 'NOT SET'}")
+        logger.debug(f"[PUSH_SERVICE_SEND] VAPID Claims: {self.vapid_claims}")
+
+        # Преобразуем входной словарь push_data в JSON-строку
+        try:
+            payload_json_string = json.dumps(push_data)
+            logger.debug(f"[PUSH_SERVICE_SEND] Отправляемый payload (JSON-строка): {payload_json_string}")
+        except Exception as dump_err:
+            logger.error(f"[PUSH_SERVICE_SEND] Не удалось преобразовать входной словарь push_data в JSON-строку: {dump_err}")
+            return False
+
+        if not subscription.is_active:
+            logger.warning(f"[PUSH_SERVICE_SEND] Попытка отправки на НЕАКТИВНУЮ подписку ID {subscription.id}. Пропуск.")
+            return False # Не отправляем на неактивные
 
         try:
-            # Подготавливаем данные подписки для pywebpush
-            logger.debug(f"[PUSH_SEND] Подготовка данных подписки {subscription.id}")
-            subscription_info = subscription.to_dict()
-            logger.debug(f"[PUSH_SEND] Данные подписки: endpoint={subscription_info.get('endpoint', 'N/A')[:50]}...")
-
-            # Отправляем уведомление
-            logger.debug(f"[PUSH_SEND] Отправка через webpush для подписки {subscription.id}")
-            response = webpush(
-                subscription_info=subscription_info,
-                data=json.dumps(data),
+            webpush(
+                subscription_info=sub_info_for_webpush, # Должен быть словарь
+                data=payload_json_string,               # Должен быть JSON-строкой
                 vapid_private_key=self.vapid_private_key,
-                vapid_claims=self.vapid_claims
+                vapid_claims=self.vapid_claims.copy()   # Копируем, чтобы избежать модификации оригинальных VAPID_CLAIMS
             )
+            logger.info(f"[PUSH_SERVICE_SEND] Push-уведомление УСПЕШНО отправлено на endpoint: {subscription.endpoint[:70]}")
 
-            logger.info(f"[PUSH_SEND] Пуш-уведомление отправлено: {data['title']}, статус: {response.status_code}")
+            # Обновляем время последнего использования, если отправка успешна
+            try:
+                subscription.last_used = datetime.now(timezone.utc)
+                db.session.commit()
+                logger.debug(f"[PUSH_SERVICE_SEND] Обновлено last_used для подписки ID {subscription.id}")
+            except SQLAlchemyError as db_err:
+                db.session.rollback()
+                logger.error(f"[PUSH_SERVICE_SEND] Ошибка SQLAlchemy при обновлении last_used для подписки ID {subscription.id}: {db_err}", exc_info=True)
+
+            return True
 
         except WebPushException as e:
-            logger.warning(f"[PUSH_SEND] WebPush ошибка для подписки {subscription.id}: {e}")
-            if hasattr(e, 'response') and e.response:
-                logger.warning(f"[PUSH_SEND] Статус ответа: {e.response.status_code}")
-                logger.warning(f"[PUSH_SEND] Тело ответа: {e.response.text}")
-            raise
+            logger.error(f"[PUSH_SERVICE_SEND] Ошибка WebPushException при отправке на {subscription.endpoint[:70]}: {e}", exc_info=True)
+            logger.error(f"[PUSH_SERVICE_SEND]   Статус код ответа: {e.response.status_code if e.response else 'N/A'}")
+            logger.error(f"[PUSH_SERVICE_SEND]   Заголовки ответа: {e.response.headers if e.response else 'N/A'}")
+            logger.error(f"[PUSH_SERVICE_SEND]   Тело ответа: {e.response.text if e.response else 'N/A'}")
 
+            if e.response and e.response.status_code in [404, 410]:
+                logger.warning(f"[PUSH_SERVICE_SEND] Подписка {subscription.id} ({subscription.endpoint[:70]}) больше не действительна (статус {e.response.status_code}). Деактивация.")
+                self._deactivate_subscription(subscription.id)
+            return False # Ошибка отправки
+
+        except TypeError as te:
+             logger.error(f"[PUSH_SERVICE_SEND] Ошибка TypeError при вызове webpush() для {subscription.endpoint[:70]}: {te}", exc_info=True)
+             logger.error(f"[PUSH_SERVICE_SEND]   Тип subscription_info: {type(sub_info_for_webpush)}")
+             logger.error(f"[PUSH_SERVICE_SEND]   Тип data (переданный в webpush): {type(payload_json_string)}")
+             logger.error(f"[PUSH_SERVICE_SEND]   Тип vapid_private_key: {type(self.vapid_private_key)}")
+             logger.error(f"[PUSH_SERVICE_SEND]   Тип vapid_claims: {type(self.vapid_claims)}")
+             return False
+
+        except Exception as e_general:
+            logger.error(f"[PUSH_SERVICE_SEND] НЕПРЕДВИДЕННАЯ ОБЩАЯ ОШИБКА при отправке push на {subscription.endpoint[:70]}: {e_general}", exc_info=True)
+            return False # Общая ошибка
+
+    def _deactivate_subscription(self, subscription_id: int):
+        """Помечает подписку как неактивную в базе данных."""
+        # ... (реализация деактивации подписки, если еще нет)
+        try:
+            sub_to_deactivate = PushSubscription.query.get(subscription_id)
+            if sub_to_deactivate:
+                sub_to_deactivate.is_active = False
+                db.session.commit()
+                logger.info(f"[DB_UPDATE] Подписка ID {subscription_id} помечена как неактивная.")
+            else:
+                logger.warning(f"[DB_UPDATE] Попытка деактивировать несуществующую подписку ID {subscription_id}.")
         except Exception as e:
-            logger.error(f"[PUSH_SEND] Ошибка при отправке пуш-уведомления подписке {subscription.id}: {e}")
-            import traceback
-            logger.error(f"[PUSH_SEND] Traceback: {traceback.format_exc()}")
-            raise
+            logger.error(f"[DB_UPDATE] Ошибка при деактивации подписки ID {subscription_id}: {e}", exc_info=True)
+            db.session.rollback()
 
 
 # Глобальный экземпляр сервиса (ленивая инициализация)

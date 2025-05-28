@@ -326,11 +326,11 @@
                                         <div class="notification-info">
                                             <div class="info-item">
                                                 <i class="fas fa-info-circle"></i>
-                                                <span>Получайте мгновенные уведомления о новых заявках и комментариях прямо в браузере</span>
+                                                <span>Получайте мгновенные уведомления об изменениях статуса и новых комментариях ваших заявок прямо в браузере</span>
                                             </div>
                                             <div class="info-item">
                                                 <i class="fas fa-volume-up"></i>
-                                                <span>Звуковые сигналы помогут не пропустить важные обновления</span>
+                                                <span>Звуковые сигналы помогут не пропустить важные уведомления</span>
                                             </div>
                                         </div>
                                     </div>
@@ -2410,10 +2410,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 const result = await Promise.race([subscribePromise, timeoutPromise]);
 
-                if (result.success) {
+                if (result && result.success) { // result может быть undefined, если subscribe не возвращает объект
                     updatePushNotificationUI();
-                } else {
-                    console.error('[Account] Ошибка включения уведомлений:', result.error);
+                } else if (result && result.error) {
+                    console.error('[Account] Ошибка включения уведомлений (из PushManager):', result.error);
+                     alert('Ошибка включения уведомлений: ' + result.error);
+                } else if (!result) {
+                    // Этого не должно быть, если PushManager.subscribe всегда возвращает объект
+                    console.error('[Account] window.PushNotificationManager.subscribe() не вернул результат.');
+                     alert('Произошла неожиданная ошибка при попытке включить уведомления.');
                 }
             } catch (error) {
                 console.error('[Account] Ошибка при включении уведомлений:', error);
