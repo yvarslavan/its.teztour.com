@@ -30,7 +30,8 @@ from blog.main.forms import IssueForm
 from blog.notification_service import (
     notification_service,
     NotificationData,
-    NotificationType
+    NotificationType,
+    WebPushException
 )
 from mysql_db import (
     Issue,
@@ -72,40 +73,49 @@ from erp_oracle import (
 )
 
 import json
+from blog.notification_service import notification_service as global_notification_service
+import uuid
 
 main = Blueprint("main", __name__)
 
 
 # Настройка логгера
-def setup_logger(name):
-    logger = logging.getLogger(name)
-    logger.setLevel(logging.DEBUG)
+def configure_blog_logger():
+    """Конфигурирует логгер для всего пакета 'blog'."""
+    blog_package_logger = logging.getLogger('blog')
+    blog_package_logger.setLevel(logging.DEBUG)
 
-    formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    )
+    # Предотвращаем повторное добавление обработчиков, если они уже есть
+    if not blog_package_logger.handlers:
+        formatter = logging.Formatter(
+            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        )
 
-    # Файловый обработчик с ротацией
-    file_handler = RotatingFileHandler(
-        get("logging", "path", "app.log"),
-        maxBytes=1024 * 1024 * 5,  # 5 MB
-        backupCount=3,
-    )
-    file_handler.setFormatter(formatter)
-    file_handler.setLevel(logging.INFO)
-    logger.addHandler(file_handler)
+        # Файловый обработчик с ротацией
+        try:
+            log_file_path = get("logging", "path", "app.log")
+            file_handler = RotatingFileHandler(
+                log_file_path,
+                maxBytes=1024 * 1024 * 5,  # 5 MB
+                backupCount=3,
+                encoding='utf-8'
+            )
+            file_handler.setFormatter(formatter)
+            file_handler.setLevel(logging.INFO)
+            blog_package_logger.addHandler(file_handler)
+        except Exception as e:
+            print(f"CRITICAL: Failed to configure file logger: {e}", file=sys.stderr)
 
-    # Обработчик для вывода в консоль
-    console_handler = logging.StreamHandler(sys.stdout)
-    console_handler.setFormatter(formatter)
-    console_handler.setLevel(logging.DEBUG)
-    logger.addHandler(console_handler)
-
-    return logger
-
+        # Обработчик для вывода в консоль
+        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler.setFormatter(formatter)
+        console_handler.setLevel(logging.DEBUG)
+        blog_package_logger.addHandler(console_handler)
 
 # Инициализация логгера
-logger = setup_logger(__name__)
+configure_blog_logger() # Вызываем функцию для конфигурации логгера пакета 'blog'
+logger = logging.getLogger(__name__) # Локальный логгер для текущего модуля
+
 
 config = ConfigParser()
 config_path = os.path.join(os.getcwd(), "config.ini")
@@ -1885,12 +1895,25 @@ def database_status():
 
 @main.route("/api/push/subscribe", methods=["POST"])
 @login_required
-def subscribe_push():
-    """Подписка на браузерные пуш-уведомления"""
+def push_subscribe():
+    logger.info("[API] /api/push/subscribe вызван")
+    logger.info(f"[API] Headers: {dict(request.headers)}")
+    logger.info(f"[API] Content-Type: {request.content_type}")
+    logger.info(f"[API] Is JSON: {request.is_json}")
+
     try:
         data = request.get_json()
+        logger.info(f"[API] Received data: {data}")
+    except Exception as e:
+        logger.error(f"[API] Error parsing JSON: {e}")
+        return jsonify({"success": False, "error": "Invalid JSON"}), 400
 
-        if not data or 'subscription' not in data:
+    if not data:
+        logger.error("[API] No JSON data received")
+        return jsonify({"success": False, "error": "No subscription data provided"}), 400
+
+    try:
+        if 'subscription' not in data:
             return jsonify({'error': 'Неверные данные подписки'}), 400
 
         subscription_data = data['subscription']
@@ -2020,137 +2043,123 @@ def push_status():
 def test_push_notification():
     """Отправка тестового пуш-уведомления"""
     try:
-        logger.info(f"[PUSH_TEST] Запрос тестового уведомления от пользователя {current_user.id} ({current_user.email})")
+        logger.info(f"[PUSH_TEST] Запрос тестового уведомления от пользователя {current_user.id}")
+        active_subscriptions = PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).all()
 
-        # Логирование конфигурации VAPID ключей сервера
-        vapid_public_key_server = current_app.config.get('VAPID_PUBLIC_KEY')
-        vapid_private_key_server_exists = bool(current_app.config.get('VAPID_PRIVATE_KEY'))
-        vapid_claims_email_server = current_app.config.get('VAPID_CLAIMS', {}).get('sub')
+        if not active_subscriptions:
+            logger.warning(f"[PUSH_TEST] У пользователя {current_user.id} нет активных подписок.")
+            return jsonify({"error": "Нет активных подписок для тестового уведомления", "successful_sends": 0, "total_attempts": 0}), 404
 
-        logger.info(f"[PUSH_TEST][VAPID_CONFIG] Используемый публичный VAPID ключ (ожидается клиентом): {vapid_public_key_server}")
-        if not vapid_public_key_server:
-            logger.error("[PUSH_TEST][VAPID_CONFIG] ОШИБКА: VAPID_PUBLIC_KEY не сконфигурирован на сервере.")
-        if not vapid_private_key_server_exists:
-            logger.warning("[PUSH_TEST][VAPID_CONFIG] ПРЕДУПРЕЖДЕНИЕ: VAPID_PRIVATE_KEY не сконфигурирован на сервере. Отправка будет невозможна.")
-        if not vapid_claims_email_server:
-            logger.warning("[PUSH_TEST][VAPID_CONFIG] ПРЕДУПРЕЖДЕНИЕ: VAPID_CLAIMS.sub (email) не сконфигурирован на сервере.")
-        else:
-            logger.info(f"[PUSH_TEST][VAPID_CONFIG] VAPID_CLAIMS.sub (email): {vapid_claims_email_server}")
+        logger.info(f"[PUSH_TEST] Найдено {len(active_subscriptions)} активных подписок для пользователя {current_user.id}")
 
-        # Проверка, что все необходимые VAPID ключи сконфигурированы
-        if not vapid_public_key_server or not vapid_private_key_server_exists or not vapid_claims_email_server:
-            logger.error("[PUSH_TEST][VAPID_CONFIG] КРИТИЧЕСКАЯ ОШИБКА: Один или несколько VAPID ключей не сконфигурированы. Отправка невозможна.")
-            return jsonify({"error": "Ошибка конфигурации VAPID на сервере. Push-уведомление не может быть отправлено."}), 500
+        # Формируем данные для тестового уведомления
+        current_time_str = datetime.now().strftime("%H:%M:%S")
+        test_title = "Тестовое уведомление (маршрут)"
+        test_message = f"Это тестовое push-уведомление от HelpDesk для пользователя {current_user.username}. Время: {current_time_str}"
 
-        subscriptions = PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).all()
-        if not subscriptions:
-            logger.warning(f"[PUSH_TEST] У пользователя {current_user.id} нет активных подписок для тестового уведомления.")
-            return jsonify({"error": "Нет активных подписок для отправки тестового уведомления"}), 404
+        base_url = request.url_root.rstrip('/')
+        default_icon = f"{base_url}{url_for('static', filename='img/push-icon.png')}"
 
-        logger.info(f"[PUSH_TEST] Найдено {len(subscriptions)} активных подписок для пользователя {current_user.id}.")
-
-        # Создаем объект NotificationData для тестового уведомления
-        # Убедимся, что NotificationData и NotificationType импортированы из notification_service
-        test_notification_payload = {
-            "title": "Тестовое уведомление 🛠️",
-            "message": f"Это тестовое push-уведомление для {current_user.email} от HelpDesk.",
-            "data": { # Дополнительные данные, если ваш SW их ожидает
-                "url": url_for("main.home", _external=True),
-                "custom_key": "test_value",
-                "icon": url_for('static', filename='img/push-icon.png', _external=True)
-            }
-            # "icon": url_for('static', filename='img/push-icon.png', _external=True) # Пример URL для иконки
+        test_data_payload = {
+            'url': f"{base_url}{url_for('main.push_test')}", # Ссылка на страницу тестирования
+            'icon': default_icon,
+            'source': 'test_route'
         }
+        logger.info(f"[PUSH_TEST] Сформированы данные для тестового уведомления: {test_title}")
 
-        notification_data_obj = NotificationData(
+        test_notification_data = NotificationData(
             user_id=current_user.id,
-            issue_id=0, # Тестовое уведомление не привязано к конкретной заявке
-            notification_type=NotificationType.TEST, # Используем новый или существующий тип TEST
-            title=test_notification_payload["title"],
-            message=test_notification_payload["message"],
-            data=test_notification_payload["data"],
+            issue_id=0, # Тестовые уведомления не привязаны к заявке
+            notification_type=NotificationType.TEST,
+            title=test_title,
+            message=test_message,
+            data=test_data_payload,
             created_at=datetime.now(timezone.utc)
         )
 
-        # Удаляем старый лог, который ссылался на payload_json
-        logger.info(f"[PUSH_TEST] Создан объект NotificationData: {notification_data_obj.to_dict()}")
+        push_service_instance = notification_service.push_service # Получаем экземпляр сервиса
+        send_result = push_service_instance.send_push_notification(test_notification_data)
+        logger.info(f"[PUSH_TEST] Результат от push_service.send_push_notification: {send_result}")
 
-        success_count = 0
-        failure_count = 0
+        successful_sends = 0
+        total_attempts = 0
 
-        # Передаем объект NotificationData в push_service.send_push_notification
-        # Этот метод сам итерирует по подпискам пользователя
-        try:
-            # Важно: push_service.send_push_notification должен сам найти подписки пользователя
-            # и отправить уведомление. Передавать 'sub' здесь не нужно, если send_push_notification
-            # спроектирован для работы с NotificationData, который содержит user_id.
+        if send_result and isinstance(send_result.get('results'), list):
+            successful_sends = sum(1 for r in send_result.get('results', []) if r.get('status') == 'success')
+            total_attempts = len(send_result.get('results', []))
+        elif send_result and send_result.get('status') == 'success' and not send_result.get('results'):
+            # Случай, когда send_push_notification мог вернуть успех, но без списка results (например, если логика изменится)
+            # Попробуем оценить успех по общему статусу, если results пусто, но статус success.
+            # Это маловероятно с текущей логикой send_push_notification, но для подстраховки.
+            if total_attempts == 0 and len(active_subscriptions) > 0: # Если были активные подписки
+                total_attempts = len(active_subscriptions) # Предполагаем, что попытки были для всех
+                successful_sends = total_attempts # Раз статус success
 
-            # Вызываем метод сервиса, который отвечает за отправку
-            # notification_service - это экземпляр LazyNotificationService
-            # он делегирует вызов экземпляру NotificationService, у которого есть push_service
+        if successful_sends > 0:
+            final_message = f"Тестовое уведомление обработано. Отправлено: {successful_sends}/{total_attempts}."
+            if successful_sends == total_attempts:
+                status_code = 200
+                final_message += " Все успешно."
+            else:
+                status_code = 207 # Multi-Status for partial success
+                final_message += f" Некоторые ({total_attempts - successful_sends}) не удалось отправить."
 
-            # NotificationService.push_service.send_push_notification ожидает NotificationData
-            notification_service.push_service.send_push_notification(notification_data_obj)
+            logger.info(f"[PUSH_TEST] {final_message} для пользователя {current_user.id}.")
+            return jsonify({
+                "message": final_message,
+                "successful_sends": successful_sends,
+                "total_attempts": total_attempts,
+                "details": send_result
+            }), status_code
+        else:
+            # Все попытки не удались, или не было попыток (например, из-за ошибки конфигурации VAPID)
+            error_message = "Не удалось отправить тестовое уведомление."
+            if send_result and send_result.get('message'):
+                # Используем сообщение из send_result, если оно есть и информативно
+                 error_message = send_result.get('message')
+            elif not active_subscriptions: # Этот случай должен быть обработан ранее
+                 error_message = "Нет активных подписок для тестового уведомления."
 
-            # Логика подсчета успешных/неуспешных отправок должна быть внутри send_push_notification
-            # или send_push_notification должен возвращать результат.
-            # Пока предполагаем, что если исключения не было, то все хорошо для всех подписок.
-            # Это упрощение, в идеале send_push_notification должен возвращать статус.
+            logger.error(f"[PUSH_TEST] {error_message} для пользователя {current_user.id}. Details: {send_result}")
+            return jsonify({
+                "error": error_message,
+                "successful_sends": 0,
+                "total_attempts": total_attempts, # total_attempts может быть > 0, если все они не удались
+                "details": send_result
+            }), 500
 
-            logger.info(f"[PUSH_TEST] Вызов send_push_notification для пользователя {current_user.id} завершен.")
-            # Поскольку мы не знаем точное количество успехов/неудач измененным вызовом,
-            # вернем общее сообщение об успехе, если нет исключений.
-            # Фактическое количество успешных отправок будет залогировано внутри push_service.
-
-            # Проверяем, есть ли активные подписки, чтобы избежать деления на ноль или неверной логики
-            if len(subscriptions) > 0:
-                 # Этот блок теперь не совсем корректен, так как send_push_notification обрабатывает цикл
-                 # Для простоты, если нет исключений, считаем что все прошло для всех (хотя это не так)
-                 success_count = len(subscriptions) # Предположение!
-
-        except Exception as e_send_service:
-            logger.error(f"[PUSH_TEST] Ошибка при вызове notification_service.push_service.send_push_notification: {str(e_send_service)}", exc_info=True)
-            failure_count = len(subscriptions) # Предположение!
-
-        # Логика ответа клиенту
-        if failure_count == 0 and success_count > 0:
-            logger.info(f"[PUSH_TEST] Тестовые уведомления (предположительно) успешно отправлены для пользователя {current_user.id}.")
-            return jsonify({"success": True, "message": f"Тестовое уведомление успешно инициировано для {success_count} устройств."}) # Изменено сообщение
-        elif success_count > 0 and failure_count > 0: # Эта ветка маловероятна с текущей структурой
-            logger.warning(f"[PUSH_TEST] Тестовые уведомления частично отправлены для пользователя {current_user.id}")
-            return jsonify({"success": True, "message": f"Тестовое уведомление инициировано. Успешно для {success_count}, ошибок: {failure_count}."}), 207
-        elif failure_count > 0 and success_count == 0:
-            logger.error(f"[PUSH_TEST] Не удалось инициировать отправку тестовых уведомлений для пользователя {current_user.id}.")
-            return jsonify({"error": f"Не удалось инициировать отправку. Ошибок: {failure_count}."}), 500
-        elif success_count == 0 and failure_count == 0 and len(subscriptions) > 0: # Если не было ни успеха ни ошибки, но подписки есть - странно
-            logger.warning(f"[PUSH_TEST] Вызов send_push_notification не привел к ошибкам, но success_count=0. Проверьте логи push_service.")
-            return jsonify({"success": True, "message": "Запрос на тестовое уведомление обработан. Проверьте уведомления."})
-        else: # len(subscriptions) == 0 handled earlier
-             logger.error(f"[PUSH_TEST] Неожиданный результат: success_count={success_count}, failure_count={failure_count} при наличии {len(subscriptions)} подписок.")
-             return jsonify({"error": "Неожиданная ошибка при отправке тестовых уведомлений."}), 500
-
-    except Exception as e_main:
-        logger.critical(f"[PUSH_TEST] КРИТИЧЕСКАЯ ОБЩАЯ ОШИБКА в /api/push/test для пользователя {current_user.id}: {str(e_main)}", exc_info=True)
-        return jsonify({"error": "Внутренняя ошибка сервера при обработке запроса на тестовое уведомление."}), 500
-
+    except Exception as e:
+        logger.error(f"[PUSH_TEST] КРИТИЧЕСКАЯ ОШИБКА в test_push_notification: {e}", exc_info=True)
+        return jsonify({"error": f"Внутренняя ошибка сервера при отправке тестового уведомления: {str(e)}", "successful_sends": 0}), 500
 
 @main.route("/api/vapid-public-key", methods=["GET"])
 def get_vapid_public_key():
-    """Получение публичного VAPID ключа"""
+    """Получение публичного VAPID ключа через BrowserPushService"""
     try:
-        logger.info("[VAPID] Запрос публичного ключа")
-        vapid_public_key = current_app.config.get('VAPID_PUBLIC_KEY')
+        logger.info("[VAPID] Запрос публичного ключа через BrowserPushService")
+        # Доступ к push_service вызовет _ensure_vapid_config, если ключи еще не инициализированы
+        push_service = global_notification_service.push_service
+
+        # Явно вызываем _ensure_vapid_config, чтобы гарантировать инициализацию
+        # и получить результат проверки конфигурации.
+        if not push_service._ensure_vapid_config():
+            logger.error("[VAPID] VAPID конфигурация неполная после вызова _ensure_vapid_config.")
+            return jsonify({'error': 'VAPID ключ не может быть получен или сгенерирован'}), 500
+
+        vapid_public_key = push_service.vapid_public_key
 
         if not vapid_public_key:
-            logger.error("[VAPID] Публичный ключ не найден в конфигурации")
-            return jsonify({'error': 'VAPID ключ не настроен'}), 500
+            logger.error("[VAPID] Публичный ключ не найден даже после инициализации BrowserPushService")
+            # Эта ситуация не должна возникать, если _ensure_vapid_config отработал корректно
+            # и вернул True. Но лучше перестраховаться.
+            return jsonify({'error': 'VAPID ключ не настроен в сервисе'}), 500
 
-        logger.info(f"[VAPID] Возвращаем публичный ключ: {vapid_public_key[:20]}...")
+        logger.info(f"[VAPID] Возвращаем публичный ключ (из push_service): {vapid_public_key[:20]}...")
         return jsonify({'publicKey': vapid_public_key})
 
     except Exception as e:
-        logger.error(f"[VAPID] Ошибка при получении публичного ключа: {e}")
-        return jsonify({'error': 'Внутренняя ошибка сервера'}), 500
+        logger.error(f"[VAPID] Ошибка при получении публичного ключа: {e}", exc_info=True)
+        return jsonify({'error': 'Внутренняя ошибка сервера при получении VAPID ключа'}), 500
 
 
 @main.route("/notification-test")
@@ -2300,30 +2309,107 @@ def admin_push_subscriptions():
         flash("Ошибка при загрузке страницы управления", "error")
         return redirect(url_for("main.index"))
 
+@main.route("/push-test")
+@login_required
+def push_test():
+    """Страница для тестирования push-уведомлений"""
+    return render_template('push_test.html')
+
 @main.route('/sw.js')
 def service_worker():
-    # Убедимся, что current_app доступен. Если этот код выполняется до инициализации app, могут быть проблемы.
-    # Обычно current_app доступен внутри запроса.
-    # Путь к static может зависеть от структуры вашего приложения.
-    # Если static находится в корне приложения:
-    static_folder_js_path = os.path.join(current_app.root_path, 'static', 'js')
-    # Если папка static привязана к блюпринту 'main':
-    # static_folder_js_path = os.path.join(main.static_folder, 'js')
-    # Предполагаем, что static в корне приложения для send_from_directory
+    """Отдаем service worker скрипт с правильными заголовками"""
+    # Путь к sw.js файлу
+    sw_path = current_app.static_folder + '/js/sw.js'
 
-    # Проверяем, что файл существует, чтобы избежать ошибок, если путь неверный
-    sw_file_path = os.path.join(static_folder_js_path, 'sw.js')
-    if not os.path.exists(sw_file_path):
-        # Можно вернуть 404 или логировать ошибку
-        logger.error(f"Service Worker file not found at: {sw_file_path}")
+    # Проверяем, что файл существует
+    if not os.path.exists(sw_path):
+        logger.error(f"Service Worker файл не найден по пути: {sw_path}")
         return "Service Worker not found", 404
 
+    # Читаем содержимое файла
     try:
-        response = send_from_directory(static_folder_js_path, 'sw.js')
-        response.headers['Service-Worker-Allowed'] = '/'
-        response.headers['Content-Type'] = 'application/javascript'
-        return response
+        with open(sw_path, 'r') as f:
+            content = f.read()
+        logger.debug("Service Worker файл успешно прочитан")
     except Exception as e:
-        logger.error(f"Error sending service worker: {e}", exc_info=True)
-        # Возвращаем ошибку сервера, если что-то пошло не так
-        return "Error processing Service Worker", 500
+        logger.error(f"Ошибка при чтении Service Worker файла: {e}")
+        return "Error reading Service Worker", 500
+
+    # Отдаем с правильными заголовками для кэширования и типа содержимого
+    response = current_app.response_class(content, mimetype='application/javascript')
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    response.headers['Service-Worker-Allowed'] = '/'
+
+    logger.info("Service Worker отдан клиенту с правильными заголовками")
+    return response
+
+@main.route("/push-debug")
+@login_required
+def push_debug():
+    """Диагностическая страница для проверки конфигурации push-уведомлений"""
+    try:
+        # Собираем информацию о конфигурации
+        config_info = {
+            "vapid_public_key_exists": bool(current_app.config.get('VAPID_PUBLIC_KEY')),
+            "vapid_private_key_exists": bool(current_app.config.get('VAPID_PRIVATE_KEY')),
+            "vapid_claims": current_app.config.get('VAPID_CLAIMS', {"sub": "mailto:admin@tez-tour.com"}),
+            "active_subscriptions_count": PushSubscription.query.filter_by(
+                user_id=current_user.id,
+                is_active=True
+            ).count(),
+            "pywebpush_available": False
+        }
+
+        # Проверяем наличие библиотеки pywebpush
+        try:
+            from pywebpush import webpush, WebPushException
+            config_info["pywebpush_available"] = True
+            config_info["pywebpush_version"] = getattr(webpush, "__version__", "unknown")
+        except ImportError:
+            pass
+
+        # Получаем ключи для отображения (только первые и последние символы)
+        public_key = current_app.config.get('VAPID_PUBLIC_KEY', '')
+        private_key = current_app.config.get('VAPID_PRIVATE_KEY', '')
+
+        if public_key and len(public_key) > 10:
+            config_info["vapid_public_key_preview"] = f"{public_key[:5]}...{public_key[-5:]}"
+        else:
+            config_info["vapid_public_key_preview"] = "Не задан"
+
+        if private_key and len(private_key) > 10:
+            config_info["vapid_private_key_preview"] = f"{private_key[:5]}...{private_key[-5:]}"
+        else:
+            config_info["vapid_private_key_preview"] = "Не задан"
+
+        # Получаем информацию о подписках пользователя
+        subscriptions = []
+        user_subs = PushSubscription.query.filter_by(
+            user_id=current_user.id
+        ).order_by(PushSubscription.created_at.desc()).limit(5).all()
+
+        for sub in user_subs:
+            subscriptions.append({
+                "id": sub.id,
+                "is_active": sub.is_active,
+                "created_at": sub.created_at,
+                "last_used": sub.last_used,
+                "endpoint_preview": sub.endpoint[:30] + "..." if sub.endpoint else "Не задан",
+                "p256dh_key_exists": bool(sub.p256dh_key),
+                "auth_key_exists": bool(sub.auth_key)
+            })
+
+        return jsonify({
+            "success": True,
+            "config": config_info,
+            "subscriptions": subscriptions
+        })
+
+    except Exception as e:
+        logger.error(f"[PUSH_DEBUG] Ошибка при сборе диагностической информации: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Ошибка: {str(e)}"
+        }), 500
