@@ -55,17 +55,3 @@ class Config:
         VAPID_CLAIMS = {
             "sub": "mailto:y.varslavan@tez-tour.com"
         }
-
-    # SQLALCHEMY_BINDS = {
-    #     "oracle_crm": SQLALCHEMY_DATABASE_URI_ORACLE_CRM,
-    #     "sales_schema": SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES,
-    # }
-    # SQLALCHEMY_ENGINE_OPTIONS = {
-    #     "connect_args": {},
-    #     "oracle_crm": {
-    #         "connect_args": {}
-    #     },
-    #     "sales_schema": {
-    #         "connect_args": {}
-    #     }
-    # }
