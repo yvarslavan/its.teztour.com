@@ -365,12 +365,6 @@ def start_user_job(current_user_email, current_user_id, timeout):
     job_id = f"notification_job_{current_user_id}"
     print(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
     try:
-        # global scheduler_instance # Больше не нужна, используем импортированный scheduler
-        # if scheduler_instance is None: # Больше не нужно, scheduler должен быть всегда доступен
-        #     print("[DEBUG] scheduler_instance не инициализирован, создаю новый экземпляр")
-        #     import pytz
-        #     from apscheduler.schedulers.background import BackgroundScheduler
-        #     scheduler_instance = BackgroundScheduler(timezone=pytz.UTC)
 
         # Проверяем доступ к планировщику и модулю notification_service
         from blog.notification_service import check_notifications_improved
