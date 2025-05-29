@@ -1055,6 +1055,46 @@ document.addEventListener('DOMContentLoaded', function() {
     cards.forEach((card, index) => {
         card.style.animationDelay = `${index * 0.1}s`;
     });
+
+    // Service Worker Message Listener for real-time updates
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.onmessage = function(event) {
+            console.log("[NotificationsPage] Message from SW:", event.data);
+            if (event.data && event.data.type === 'PUSH_RECEIVED') {
+                console.log("[NotificationsPage] PUSH_RECEIVED from SW:", event.data);
+                // Здесь можно добавить более сложную логику обновления DOM,
+                // но для начала просто перезагрузим страницу, чтобы показать новые уведомления.
+                // Это самый простой способ обеспечить актуальность.
+
+                // Показываем toast-уведомление о новом событии
+                if (window.showToast) {
+                    let toastMessage = event.data.title || 'Новое уведомление!';
+                    if (event.data.options && event.data.options.body) {
+                        toastMessage += `\n${event.data.options.body.substring(0, 50)}...`;
+                    }
+                    window.showToast(toastMessage, 'info', {
+                        // Можно добавить действие для перехода по URL из уведомления
+                        // action: { text: 'Посмотреть', url: event.data.url }
+                    });
+                }
+
+                // Воспроизводим звук, если он есть в данных
+                if (event.data.options && event.data.options.data && event.data.options.data.soundUrl) {
+                    const audio = new Audio(event.data.options.data.soundUrl);
+                    audio.play().catch(e => console.warn("[NotificationsPage] Error playing sound:", e));
+                }
+
+                // Просто перезагружаем страницу для обновления списка
+                // В более сложном варианте можно было бы сделать AJAX-запрос
+                // и динамически добавить карточку уведомления.
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000); // Небольшая задержка, чтобы пользователь мог увидеть toast
+            }
+        };
+    } else {
+        console.warn("[NotificationsPage] Service Worker не активен или не поддерживается, real-time обновления PUSH_RECEIVED не будут работать.");
+    }
 });
 </script>
 {% endblock %}

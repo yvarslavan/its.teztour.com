@@ -20,6 +20,8 @@ from .settings import Config
 
 # Импортируем нашу новую задачу
 from blog.scheduler_tasks import scheduled_check_all_user_notifications
+# Импортируем BrowserPushService
+from blog.notification_service import BrowserPushService
 
 bcrypt = Bcrypt()
 migrate = Migrate()
@@ -143,6 +145,16 @@ def create_app():
     app.register_blueprint(finesse, url_prefix="/finesse")
     app.register_blueprint(netmonitor)  # Используем Blueprint из routes.py
 
+    # Исключаем API эндпоинты push-уведомлений из CSRF защиты
+    with app.app_context():
+        from blog.main.routes import push_subscribe, unsubscribe_push, test_push_notification, get_vapid_public_key, push_debug
+        csrf.exempt(push_subscribe)
+        csrf.exempt(unsubscribe_push)
+        csrf.exempt(test_push_notification)
+        csrf.exempt(get_vapid_public_key)
+        csrf.exempt(push_debug)
+        print("[INIT] CSRF исключения настроены для push API", flush=True)
+
     with app.app_context():
         if not scheduler.running:
             try:
@@ -185,5 +197,18 @@ def create_app():
     def after_request(response):
         app.logger.debug(f"Session after request: {dict(session)}")
         return response
+
+    # Инициализация BrowserPushService
+    # Это должно быть сделано до того, как какой-либо код попытается получить доступ к app.browser_push_service
+    # Обычно это делается после всех основных инициализаций Flask, но до возврата app
+    try:
+        app.browser_push_service = BrowserPushService()
+        app.logger.info("[INIT] BrowserPushService инициализирован и добавлен в app.")
+    except Exception as e:
+        app.logger.error(f"[INIT] Ошибка при инициализации BrowserPushService: {e}", exc_info=True)
+        # Решаем, что делать в случае ошибки:
+        # 1. Позволить приложению упасть (если сервис критичен)
+        # 2. Установить в None и логировать (если сервис не критичен для старта)
+        app.browser_push_service = None # Пример: установить в None
 
     return app

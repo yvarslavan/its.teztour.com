@@ -21,9 +21,10 @@ from redminelib.exceptions import (
 import pymysql
 import pymysql.cursors
 from flask_login import current_user
-from flask import flash
+from flask import flash, current_app
 import xmpp
 from blog.models import Notifications, NotificationsAddNotes
+from blog import db
 
 
 # Настройка базовой конфигурации логирования
@@ -623,39 +624,61 @@ def process_status_changes(
     count_vacuum_im_notifications,
     easy_email_to,
 ):
-    query_status_change = """SELECT IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated
-                             FROM u_its_update_status
-                             WHERE SUBSTRING_INDEX(Author, '@', 1) = %s ORDER BY RowDateCreated DESC LIMIT 50"""
-    print(f"[PROCESS_STATUS] Запрос для получения статусов: {query_status_change % email_part}")
-    rows_status_change = execute_query(cursor, query_status_change, email_part)
+    """Обработка изменений статуса заявок."""
+    query_status_change = """
+        SELECT ID, uifID, StatusIdNew, StatusIdOld, DataUpdate, Autor
+        FROM u_its_update_status
+        WHERE LOWER(Autor) = LOWER(%s)
+        ORDER BY DataUpdate DESC LIMIT 50
+    """
+    rows_status_change = execute_query(cursor, query_status_change, (email_part,))
+    logger.info(f"[PROCESS_STATUS_CHANGES] Found {len(rows_status_change)} status changes for {email_part}")
+
+    processed_in_this_run = 0
     if rows_status_change:
-        print(f"[PROCESS_STATUS] Получено {len(rows_status_change)} строк статусов. Первая строка (частично): IssueID={rows_status_change[0]['IssueID']}, OldSubj='{rows_status_change[0]['OldSubj'][:100] if rows_status_change[0]['OldSubj'] else ''}'...")
-    else:
-        print(f"[PROCESS_STATUS] Получено 0 строк статусов.")
+        with db.session.begin_nested(): # Используем вложенную транзакцию для этой группы операций
+            for row_data in rows_status_change:
+                issue_id = row_data["uifID"]
 
-    if rows_status_change is not None and len(rows_status_change) > 0:
-        print(f"[PROCESS_STATUS] Найдено {len(rows_status_change)} новых статусов для обработки.")
-        for i, row in enumerate(rows_status_change):
-            print(f"[PROCESS_STATUS] Обработка статуса {i+1}/{len(rows_status_change)}: IssueID={row['IssueID']}, OldStatus='{row['OldStatus']}', NewStatus='{row['NewStatus']}'")
-            notification_data_to_add = {
-                "user_id": current_user_id,
-                "issue_id": row["IssueID"],
-                "old_status": row["OldStatus"],
-                "new_status": row["NewStatus"],
-                "old_subj": row["OldSubj"],
-                "date_created": row["RowDateCreated"],
-            }
-            add_notification_to_database(notification_data_to_add)
+                existing_notification = Notifications.query.filter_by(
+                    user_id=current_user_id,
+                    issue_id=issue_id,
+                    old_status=row_data["StatusIdOld"],
+                    new_status=row_data["StatusIdNew"],
+                    date_created=row_data["DataUpdate"]
+                ).first()
 
-            # Добавляем эту строку для отправки уведомления в Vacuum-IM
-            # send_vacuum_im_notification(
-            #     count_vacuum_im_notifications,
-            #     row["IssueID"],
-            #     row["OldStatus"],
-            #     row["NewStatus"],
-            #     easy_email_to,
-            # )
-    return len(rows_status_change) if rows_status_change else 0
+                if not existing_notification:
+                    new_notification_status = Notifications(
+                        user_id=current_user_id,
+                        issue_id=issue_id,
+                        old_status=row_data["StatusIdOld"],
+                        new_status=row_data["StatusIdNew"],
+                        old_subj=None,
+                        date_created=row_data["DataUpdate"]
+                    )
+                    db.session.add(new_notification_status)
+                    processed_in_this_run += 1
+                    logger.info(f"[PROCESS_STATUS_CHANGES] Added status notification for issue {issue_id} for user {current_user_id}")
+
+                    # Сохраняем изменения в БД перед отправкой push
+                    try:
+                        db.session.flush() # Гарантируем, что ID будет присвоен
+                        logger.info(f"[REDMINE_PUSH_STATUS_PRE_SEND] Attempting to send PUSH for status update. Notification SQLite ID: {new_notification_status.id}, Issue ID: {new_notification_status.issue_id}")
+                        notification_service = current_app.notification_service
+                        notification_service.push_service.send_push_notification(new_notification_status)
+                        logger.info(f"[REDMINE_PUSH_STATUS_POST_SEND_SUCCESS] PUSH for status update (SQLite ID: {new_notification_status.id}) call succeeded.")
+                    except Exception as e_push:
+                        logger.error(f"[REDMINE_PUSH_STATUS_POST_SEND_ERROR] Failed to send PUSH for status update (SQLite ID: {new_notification_status.id if new_notification_status and hasattr(new_notification_status, 'id') else 'N/A'}). Error: {e_push}", exc_info=True)
+
+        if processed_in_this_run > 0:
+            try:
+                db.session.commit()
+                logger.info(f"[PROCESS_STATUS_CHANGES] Committed {processed_in_this_run} new status notifications to SQLite for user {current_user_id}.")
+            except Exception as e_commit:
+                logger.error(f"[PROCESS_STATUS_CHANGES] Error committing status notifications for user {current_user_id}: {e_commit}", exc_info=True)
+                db.session.rollback()
+    return processed_in_this_run
 
 
 def process_added_notes(
@@ -666,38 +689,60 @@ def process_added_notes(
     count_vacuum_im_notifications,
     easy_email_to,
 ):
-    query_add_notes = """SELECT issue_id, Author, notes, date_created
-                         FROM u_its_add_notes
-                         WHERE SUBSTRING_INDEX(Author, '@', 1) = %s
-                         ORDER BY date_created DESC LIMIT 50"""
-    print(f"[PROCESS_NOTES] Запрос для получения комментариев: {query_add_notes % email_part}")
-    rows_add_notes = execute_query(cursor, query_add_notes, email_part)
-    if rows_add_notes:
-        print(f"[PROCESS_NOTES] Получено {len(rows_add_notes)} строк комментариев. Первая строка (частично): IssueID={rows_add_notes[0]['issue_id']}, Author='{rows_add_notes[0]['Author']}', Notes='{rows_add_notes[0]['notes'][:100] if rows_add_notes[0]['notes'] else ''}'...")
-    else:
-        print(f"[PROCESS_NOTES] Получено 0 строк комментариев.")
+    """Обработка добавленных комментариев."""
+    query_added_notes = """
+        SELECT ID, uifID, DataCreate, Notes, Autor, JournalID
+        FROM u_its_add_notes
+        WHERE LOWER(Autor) = LOWER(%s)
+        ORDER BY DataCreate DESC LIMIT 50
+    """
+    rows_added_notes = execute_query(cursor, query_added_notes, (email_part,))
+    logger.info(f"[PROCESS_ADDED_NOTES] Found {len(rows_added_notes)} added notes for {email_part}")
 
-    if rows_add_notes:
-        print(f"[PROCESS_NOTES] Найдено {len(rows_add_notes)} новых комментариев для обработки.")
-        for i, row in enumerate(rows_add_notes):
-            print(f"[PROCESS_NOTES] Обработка комментария {i+1}/{len(rows_add_notes)}: IssueID={row['issue_id']}, Author='{row['Author']}'")
-            notification_data_to_add = {
-                "user_id": current_user_id,
-                "issue_id": row["issue_id"],
-                "Author": row["Author"],
-                "notes": row["notes"],
-                "date_created": row["date_created"],
-            }
-            print(f"[PROCESS_NOTES] Данные для добавления в SQLite: {notification_data_to_add}")
-            add_notification_notes_to_database(notification_data_to_add)
-            # Удаляем вызов, связанный с Vacuum-IM
-            # send_vacuum_im_notification_add_note(
-            #     count_vacuum_im_notifications,
-            #     row["issue_id"],
-            #     easy_email_to,
-            #     row["notes"],
-            # )
-    return len(rows_add_notes) if rows_add_notes else 0
+    processed_in_this_run = 0
+    if rows_added_notes:
+        with db.session.begin_nested(): # Используем вложенную транзакцию
+            for row_data in rows_added_notes:
+                issue_id = row_data["uifID"]
+
+                existing_note = NotificationsAddNotes.query.filter_by(
+                    user_id=current_user_id,
+                    issue_id=issue_id,
+                    author=row_data["Autor"],
+                    notes=row_data["Notes"],
+                    date_created=row_data["DataCreate"]
+                ).first()
+
+                if not existing_note:
+                    new_notification_note = NotificationsAddNotes(
+                        user_id=current_user_id,
+                        issue_id=issue_id,
+                        author=row_data["Autor"],
+                        notes=row_data["Notes"],
+                        date_created=row_data["DataCreate"]
+                    )
+                    db.session.add(new_notification_note)
+                    processed_in_this_run += 1
+                    logger.info(f"[PROCESS_ADDED_NOTES] Added note notification for issue {issue_id} for user {current_user_id}")
+
+                    # Сохраняем изменения в БД перед отправкой push
+                    try:
+                        db.session.flush() # Гарантируем, что ID будет присвоен
+                        logger.info(f"[REDMINE_PUSH_COMMENT_PRE_SEND] Attempting to send PUSH for new comment. Notification SQLite ID: {new_notification_note.id}, Issue ID: {new_notification_note.issue_id}")
+                        notification_service = current_app.notification_service
+                        notification_service.push_service.send_push_notification(new_notification_note)
+                        logger.info(f"[REDMINE_PUSH_COMMENT_POST_SEND_SUCCESS] PUSH for new comment (SQLite ID: {new_notification_note.id}) call succeeded.")
+                    except Exception as e_push:
+                        logger.error(f"[REDMINE_PUSH_COMMENT_POST_SEND_ERROR] Failed to send PUSH for new comment (SQLite ID: {new_notification_note.id if new_notification_note and hasattr(new_notification_note, 'id') else 'N/A'}). Error: {e_push}", exc_info=True)
+
+        if processed_in_this_run > 0:
+            try:
+                db.session.commit()
+                logger.info(f"[PROCESS_ADDED_NOTES] Committed {processed_in_this_run} new note notifications to SQLite for user {current_user_id}.")
+            except Exception as e_commit:
+                logger.error(f"[PROCESS_ADDED_NOTES] Error committing note notifications for user {current_user_id}: {e_commit}", exc_info=True)
+                db.session.rollback()
+    return processed_in_this_run
 
 
 def connect_to_database(database_file):

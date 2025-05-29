@@ -4,6 +4,7 @@
 
 class PushNotificationManager {
     constructor() {
+        console.log('[PushManager] constructor CALLED.');
         this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window;
         this.registration = null;
         this.vapidPublicKey = null;
@@ -26,6 +27,7 @@ class PushNotificationManager {
     }
 
     async init() {
+        console.log('[PushManager] init() CALLED. Starting full initialization...');
         // Предотвращаем множественную инициализацию
         if (this.isInitialized) {
             console.log('[PushManager] Уже инициализирован, пропускаем');
@@ -212,22 +214,37 @@ class PushNotificationManager {
             this.isSubscribed = this.subscription !== null;
 
             // Проверяем статус на сервере
-            const response = await fetch('/api/push/status');
-            const serverStatus = await response.json();
+            try {
+                console.log('[PushManager] Запрос статуса подписки с сервера');
+                const response = await fetch('/api/push/status');
 
-            console.log('[PushManager] Статус подписки:', {
-                localSubscription: this.isSubscribed,
-                serverEnabled: serverStatus.enabled,
-                serverSubscriptions: serverStatus.subscriptions_count
-            });
+                if (!response.ok) {
+                    const text = await response.text();
+                    console.error('[PushManager] Ошибка получения статуса:', response.status, text);
+                    return; // Используем только локальный статус
+                }
 
-            // Синхронизируем состояние
-            if (this.isSubscribed && !serverStatus.enabled) {
-                // Локально подписаны, но сервер не знает - отправляем подписку
-                await this.sendSubscriptionToServer();
-            } else if (!this.isSubscribed && serverStatus.enabled) {
-                // Сервер думает, что подписаны, но локально нет - очищаем сервер
-                await this.unsubscribeFromServer();
+                const serverStatus = await response.json();
+
+                console.log('[PushManager] Статус подписки:', {
+                    localSubscription: this.isSubscribed,
+                    serverEnabled: serverStatus.enabled,
+                    serverSubscriptions: serverStatus.subscriptions_count
+                });
+
+                // Синхронизируем состояние
+                if (this.isSubscribed && !serverStatus.enabled) {
+                    // Локально подписаны, но сервер не знает - отправляем подписку
+                    console.log('[PushManager] Синхронизация: локально подписаны, но сервер не знает');
+                    await this.sendSubscriptionToServer();
+                } else if (!this.isSubscribed && serverStatus.enabled) {
+                    // Сервер думает, что подписаны, но локально нет - очищаем сервер
+                    console.log('[PushManager] Синхронизация: сервер думает, что подписаны, но локально нет');
+                    await this.unsubscribeFromServer();
+                }
+            } catch (serverError) {
+                console.error('[PushManager] Ошибка при проверке статуса на сервере:', serverError);
+                // Продолжаем использовать локальный статус
             }
 
         } catch (error) {
@@ -260,9 +277,20 @@ class PushNotificationManager {
 
     async subscribe() {
         try {
+            console.log('[PushManager] Начало метода subscribe().');
+
+            // Повторно получаем VAPID ключ ПРЯМО ПЕРЕД ПОПЫТКОЙ ПОДПИСКИ
+            console.log('[PushManager] Повторное получение VAPID ключа перед subscribe()...');
+            await this.getVapidPublicKey();
+            if (!this.vapidPublicKey) {
+                console.error('[PushManager] КРИТИЧЕСКАЯ ОШИБКА: VAPID ключ не был получен даже после повторного вызова getVapidPublicKey() в subscribe().');
+                throw new Error('VAPID ключ не получен (повторная попытка). Попробуйте обновить страницу.');
+            }
+            console.log('[PushManager] VAPID ключ для подписки (после повторного получения):', this.vapidPublicKey.substring(0, 20) + '...');
+
             console.log('[PushManager] Запрос разрешения на уведомления...');
 
-            // Проверяем, что VAPID ключ получен
+            // Проверяем, что VAPID ключ получен (эта проверка уже была, но оставляем на всякий случай)
             if (!this.vapidPublicKey) {
                 throw new Error('VAPID ключ не получен. Попробуйте обновить страницу.');
             }
@@ -344,28 +372,32 @@ class PushNotificationManager {
                 throw new Error('Нет активной подписки');
             }
 
-            // Получаем CSRF токен
-            const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+            console.log('[PushManager] Отправка подписки на сервер. Endpoint:', sub.endpoint);
 
             const response = await fetch('/api/push/subscribe', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     subscription: sub.toJSON()
                 })
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.error || 'Ошибка сервера');
+                const text = await response.text();
+                console.error('[PushManager] Сервер вернул ошибку:', response.status, text);
+                try {
+                    const data = JSON.parse(text);
+                    throw new Error(data.error || `Ошибка сервера (${response.status})`);
+                } catch (jsonError) {
+                    throw new Error(`Ошибка сервера (${response.status}): ${text.substring(0, 100)}`);
+                }
             }
 
+            const data = await response.json();
             console.log('[PushManager] Подписка отправлена на сервер:', data.message);
-
+            return data;
         } catch (error) {
             console.error('[PushManager] Ошибка отправки подписки:', error);
             throw error;
@@ -374,57 +406,75 @@ class PushNotificationManager {
 
     async unsubscribeFromServer() {
         try {
-            // Получаем CSRF токен
-            const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
+            console.log('[PushManager] Отправка запроса на отписку на сервер');
 
             const response = await fetch('/api/push/unsubscribe', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     endpoint: this.subscription ? this.subscription.endpoint : null
                 })
             });
 
-            const data = await response.json();
-
             if (!response.ok) {
-                throw new Error(data.error || 'Ошибка сервера');
+                const text = await response.text();
+                console.error('[PushManager] Сервер вернул ошибку при отписке:', response.status, text);
+                try {
+                    const data = JSON.parse(text);
+                    throw new Error(data.error || `Ошибка отписки (${response.status})`);
+                } catch (jsonError) {
+                    throw new Error(`Ошибка отписки (${response.status}): ${text.substring(0, 100)}`);
+                }
             }
 
-            console.log('[PushManager] Отписка отправлена на сервер:', data.message);
-
+            const data = await response.json();
+            console.log('[PushManager] Отписка успешно отправлена на сервер:', data.message);
+            return data;
         } catch (error) {
             console.error('[PushManager] Ошибка отправки отписки:', error);
-            throw error;
+            throw new Error('Ошибка отписки на сервере');
         }
     }
 
     async sendTestNotification() {
+        this.logInfo('Отправка запроса на тестовое уведомление...');
         try {
-            // Получаем CSRF токен
-            const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
-
             const response = await fetch('/api/push/test', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRFToken': csrfToken
+                    'X-CSRFToken': this.csrfToken
                 }
             });
 
-            const data = await response.json();
+            const responseData = await response.json(); // Сначала получаем JSON
+            this.logInfo(`[PushManager-Test] Raw response status: ${response.status}`);
+            this.logInfo(`[PushManager-Test] Raw response data: ${JSON.stringify(responseData)}`); // Логируем весь ответ
 
-            if (response.ok) {
-                console.log('[PushManager] Тестовое уведомление отправлено');
+            if (response.ok || response.status === 207) { // 200 OK или 207 Multi-Status
+                let message = responseData.message || 'Тестовое уведомление обработано.';
+                if (responseData.hasOwnProperty('successful_sends') && responseData.hasOwnProperty('total_attempts')) {
+                    message += ` Успешно: ${responseData.successful_sends}/${responseData.total_attempts}.`;
+                }
+                this.showSuccess(message);
+                this.logSuccess(`[PushManager-Test] ${message} Детали: ${JSON.stringify(responseData.details)}`);
             } else {
-                console.warn('[PushManager] Ошибка отправки тестового уведомления:', data.error);
+                // Обрабатываем ошибки, используя поле error из JSON, если оно есть
+                let errorMessage = responseData.error || `Ошибка ${response.status}`;
+                if (responseData.details && responseData.details.message) {
+                    errorMessage = responseData.details.message; // Более конкретное сообщение об ошибке от сервера
+                } else if (typeof responseData.details === 'string') {
+                     errorMessage += `: ${responseData.details}`;
+                }
+                this.showError(`Ошибка отправки тестового уведомления: ${errorMessage}`);
+                this.logError(`[PushManager-Test] Ошибка отправки: ${errorMessage}. Status: ${response.status}. Details: ${JSON.stringify(responseData.details)}`);
             }
-
         } catch (error) {
-            console.error('[PushManager] Ошибка отправки тестового уведомления:', error);
+            this.showError('Ошибка отправки тестового уведомления: Ошибка сети или ответа сервера.');
+            this.logError('[PushManager-Test] Исключение при отправке тестового уведомления: ' + error.toString());
+            console.error("[PushManager-Test] Send test notification error:", error);
         }
     }
 
