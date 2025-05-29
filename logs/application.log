@@ -8839,3 +8839,989 @@ with app.app_context(). See the documentation for more information.
 2025-05-29 23:18:55,302 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=85c07559-ed18-4821-89f0-a4febb03a1ca: Завершение плановой проверки уведомлений для всех пользователей.
 2025-05-29 23:19:04,166 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
 2025-05-29 23:19:04,168 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:19:53,183 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:19:53,214 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:19:53,215 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:19:53,216 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:19:53,217 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:19:53,387 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:19:53,387 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:19:53,578 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:19:53,578 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:19:53,751 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:19:53,752 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:19:53,924 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:19:53,925 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:19:54,098 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:19:54,099 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:19:54,270 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:19:54,271 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:19:54,441 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:19:54,442 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:19:54,615 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:19:54,615 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:19:54,788 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:19:54,789 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:19:54,959 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:19:54,960 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:19:55,131 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:19:55,132 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:19:55,305 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:19:55,306 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=f6c20312-ab5a-4398-8994-07d7671994cd: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:20:04,116 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:20:04,148 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:20:04,149 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:20:04,151 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:20:04,151 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:20:04,362 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:20:04,363 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:20:04,537 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:20:04,538 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:20:04,713 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:20:04,714 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:20:04,886 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:20:04,886 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:20:05,058 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:20:05,059 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:20:05,235 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:20:05,235 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:20:05,408 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:20:05,409 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:20:05,584 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:20:05,585 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:20:05,760 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:20:05,761 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:20:05,933 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:20:05,934 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:20:06,106 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:20:06,107 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:20:06,279 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:20:06,280 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=ae6743aa-a587-4a3a-838c-c30784a43a7d: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:20:53,189 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:20:53,219 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:20:53,220 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:20:53,222 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:20:53,223 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:20:53,392 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:20:53,393 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:20:53,565 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:20:53,566 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:20:53,747 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:20:53,748 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:20:53,920 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:20:53,921 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:20:54,095 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:20:54,096 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:20:54,266 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:20:54,267 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:20:54,439 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:20:54,440 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:20:54,612 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:20:54,613 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:20:54,787 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:20:54,788 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:20:54,972 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:20:54,972 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:20:55,144 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:20:55,145 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:20:55,316 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:20:55,317 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c6d77436-f708-4375-a9c9-354135439397: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:21:04,109 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:21:04,141 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:21:04,142 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:21:04,144 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:21:04,146 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:21:04,315 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:21:04,316 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:21:04,488 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:21:04,488 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:21:04,758 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:21:04,759 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:21:04,932 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:21:04,932 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:21:05,106 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:21:05,107 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:21:05,279 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:21:05,280 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:21:05,452 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:21:05,453 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:21:05,720 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:21:05,720 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:21:05,891 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:21:05,892 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:21:06,062 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:21:06,063 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:21:06,231 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:21:06,231 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:21:06,416 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:21:06,417 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=eccf1705-872a-4198-8bfb-104124c994b6: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:21:53,184 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:21:53,216 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:21:53,216 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:21:53,218 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:21:53,219 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:21:53,391 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:21:53,391 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:21:53,564 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:21:53,565 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:21:53,742 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:21:53,742 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:21:53,914 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:21:53,914 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:21:54,089 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:21:54,090 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:21:54,261 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:21:54,262 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:21:54,431 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:21:54,432 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:21:54,675 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:21:54,676 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:21:55,041 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:21:55,042 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:21:55,433 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:21:55,434 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:21:55,677 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:21:55,677 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:21:56,119 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:21:56,119 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=3cc9f715-c91b-43e4-bd7a-066e78f39a9e: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:22:04,115 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:22:04,146 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:22:04,147 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:22:04,149 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:22:04,149 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:22:04,319 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:22:04,320 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:22:04,493 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:22:04,494 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:22:04,666 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:22:04,667 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:22:04,844 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:22:04,844 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:22:05,017 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:22:05,018 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:22:05,193 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:22:05,194 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:22:05,366 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:22:05,368 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:22:05,543 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:22:05,544 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:22:05,714 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:22:05,715 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:22:05,890 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:22:05,891 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:22:06,064 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:22:06,065 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:22:06,239 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:22:06,241 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=5d654081-1938-4460-ab71-6caf050b291b: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:22:53,178 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:22:53,210 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:22:53,210 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:22:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:22:53,213 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:22:53,398 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:22:53,398 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:22:53,598 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:22:53,599 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:22:53,771 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:22:53,771 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:22:53,948 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:22:53,949 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:22:54,124 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:22:54,125 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:22:54,297 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:22:54,298 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:22:54,499 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:22:54,500 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:22:54,692 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:22:54,693 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:22:54,864 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:22:54,865 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:22:55,037 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:22:55,037 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:22:55,209 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:22:55,210 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:22:55,386 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:22:55,387 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=a2f48270-5b36-40ca-9072-f8449446547b: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:23:04,108 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:23:04,130 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:23:04,130 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:23:04,141 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:23:04,142 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:23:04,322 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:23:04,323 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:23:04,499 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:23:04,500 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:23:04,676 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:23:04,677 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:23:04,856 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:23:04,856 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:23:05,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:23:05,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:23:05,200 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:23:05,201 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:23:05,373 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:23:05,374 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:23:05,547 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:23:05,547 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:23:05,720 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:23:05,721 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:23:05,892 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:23:05,893 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:23:06,065 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:23:06,065 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:23:06,237 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:23:06,238 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=b56016f7-7e5f-408a-b9ff-0320aa303fcf: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:23:53,188 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:23:53,211 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:23:53,211 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:23:53,222 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:23:53,222 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:23:53,395 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:23:53,395 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:23:53,577 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:23:53,577 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:23:53,748 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:23:53,749 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:23:53,922 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:23:53,922 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:23:54,093 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:23:54,093 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:23:54,264 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:23:54,265 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:23:54,436 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:23:54,436 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:23:54,610 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:23:54,610 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:23:54,782 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:23:54,783 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:23:54,955 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:23:54,956 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:23:55,126 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:23:55,127 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:23:55,299 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:23:55,300 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=c9ab5f34-081b-449d-a70b-96f0f6691beb: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:24:04,116 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:24:04,148 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:24:04,149 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:24:04,151 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:24:04,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:24:04,325 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:24:04,325 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:24:04,498 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:24:04,499 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:24:04,671 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:24:04,672 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:24:04,846 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:24:04,847 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:24:05,018 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:24:05,019 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:24:05,192 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:24:05,192 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:24:05,366 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:24:05,367 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:24:05,538 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:24:05,539 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:24:05,713 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:24:05,714 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:24:05,887 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:24:05,888 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:24:06,059 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:24:06,060 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:24:06,231 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:24:06,231 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a9bc75bb-6841-4b25-b1c8-85faea22eca0: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:24:53,182 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:24:53,213 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:24:53,213 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:24:53,215 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:24:53,217 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:24:53,387 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:24:53,388 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:24:53,560 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:24:53,561 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:24:53,732 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:24:53,733 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:24:53,904 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:24:53,905 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:24:54,077 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:24:54,077 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:24:54,251 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:24:54,252 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:24:54,430 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:24:54,431 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:24:54,606 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:24:54,606 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:24:54,779 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:24:54,780 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:24:54,951 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:24:54,952 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:24:55,144 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:24:55,144 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:24:55,320 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:24:55,321 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=aa83a8ca-ca5f-4fd4-b669-1104d025aa0e: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:25:04,122 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:25:04,152 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:25:04,152 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:25:04,155 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:25:04,155 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:25:04,327 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:25:04,328 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:25:04,500 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:25:04,501 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:25:04,675 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:25:04,676 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:25:04,854 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:25:04,855 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:25:05,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:25:05,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:25:05,201 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:25:05,202 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:25:05,375 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:25:05,376 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:25:05,550 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:25:05,551 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:25:05,730 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:25:05,731 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:25:05,903 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:25:05,903 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:25:06,076 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:25:06,083 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:25:06,263 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:25:06,264 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=bc08204d-d1ed-4b63-a8cb-0b8186a58489: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:25:53,186 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:25:53,215 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:25:53,216 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:25:53,219 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:25:53,220 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:25:53,390 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:25:53,391 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:25:53,563 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:25:53,564 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:25:53,754 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:25:53,755 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:25:53,926 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:25:53,927 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:25:54,099 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:25:54,100 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:25:54,270 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:25:54,271 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:25:54,445 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:25:54,446 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:25:54,618 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:25:54,619 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:25:54,792 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:25:54,793 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:25:54,967 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:25:54,967 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:25:55,142 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:25:55,142 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:25:55,315 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:25:55,315 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d801958e-e4f5-4825-a0c1-923c421d8e20: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:26:04,109 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:26:04,132 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:26:04,132 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:26:04,132 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:26:04,146 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:26:04,315 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:26:04,316 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:26:04,486 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:26:04,487 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:26:04,660 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:26:04,661 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:26:04,836 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:26:04,837 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:26:05,013 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:26:05,016 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:26:05,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:26:05,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:26:05,402 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:26:05,403 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:26:05,605 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:26:05,606 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:26:05,810 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:26:05,810 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:26:06,021 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:26:06,022 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:26:06,249 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:26:06,250 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:26:06,425 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:26:06,426 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0b37df36-0574-46c2-a5f1-022b51f240ef: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:26:53,185 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:26:53,215 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:26:53,216 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:26:53,217 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:26:53,218 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:26:53,388 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:26:53,388 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:26:53,559 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:26:53,560 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:26:53,765 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:26:53,766 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:26:53,939 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:26:53,940 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:26:54,113 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:26:54,114 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:26:54,296 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:26:54,296 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:26:54,472 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:26:54,473 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:26:54,643 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:26:54,644 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:26:54,817 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:26:54,818 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:26:54,993 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:26:54,994 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:26:55,166 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:26:55,167 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:26:55,338 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:26:55,339 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=ecdab76a-da8d-4261-85c7-06645595fe6e: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:27:04,111 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:27:04,143 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:27:04,144 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:27:04,147 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:27:04,147 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:27:04,321 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:27:04,322 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:27:04,498 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:27:04,499 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:27:04,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:27:04,671 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:27:04,858 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:27:04,859 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:27:05,031 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:27:05,031 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:27:05,204 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:27:05,205 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:27:05,377 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:27:05,378 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:27:05,549 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:27:05,550 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:27:05,725 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:27:05,726 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:27:05,898 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:27:05,898 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:27:06,071 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:27:06,071 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:27:06,242 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:27:06,243 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=75f42fcc-bc42-4d45-aa14-ea2f6f2140ba: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:27:53,179 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:27:53,211 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:27:53,212 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:27:53,213 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:27:53,214 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:27:53,385 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:27:53,386 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:27:53,588 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:27:53,589 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:27:53,760 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:27:53,761 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:27:53,933 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:27:53,933 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:27:54,106 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:27:54,107 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:27:54,289 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:27:54,290 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:27:54,488 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:27:54,489 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:27:54,662 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:27:54,663 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:27:54,841 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:27:54,841 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:27:55,024 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:27:55,024 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:27:55,240 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:27:55,241 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:27:55,418 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:27:55,419 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=865bd509-e698-4cb5-8478-0e69f68f3d61: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:28:04,111 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:28:04,141 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:28:04,141 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:28:04,143 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:28:04,145 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:28:04,316 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:28:04,317 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:28:04,491 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:28:04,492 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:28:04,664 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:28:04,665 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:28:04,841 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:28:04,842 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:28:05,012 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:28:05,012 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:28:05,183 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:28:05,184 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:28:05,356 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:28:05,357 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:28:05,528 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:28:05,529 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:28:05,702 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:28:05,703 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:28:05,874 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:28:05,875 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:28:06,103 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:28:06,104 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:28:06,275 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:28:06,276 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f70b9694-066b-4e86-be16-4105342c9bfe: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:28:53,191 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:28:53,221 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:28:53,221 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:28:53,223 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:28:53,224 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:28:53,399 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:28:53,400 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:28:53,685 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:28:53,685 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:28:53,864 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:28:53,865 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:28:54,041 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:28:54,042 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:28:54,268 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:28:54,268 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:28:54,472 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:28:54,473 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:28:54,674 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:28:54,675 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:28:54,855 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:28:54,855 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:28:55,031 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:28:55,032 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:28:55,211 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:28:55,211 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:28:55,385 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:28:55,387 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:28:55,561 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:28:55,562 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1262c655-9ea3-4aa1-8608-89af90675665: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:29:04,123 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:29:04,158 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:29:04,158 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:29:04,160 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:29:04,161 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:29:04,333 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:29:04,333 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:29:04,548 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:29:04,549 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:29:04,740 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:29:04,741 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:29:04,915 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:29:04,916 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:29:05,085 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:29:05,086 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:29:05,258 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:29:05,258 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:29:05,432 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:29:05,433 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:29:05,684 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:29:05,684 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:29:05,864 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:29:05,865 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:29:06,042 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:29:06,043 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:29:06,215 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:29:06,216 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:29:06,392 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:29:06,393 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=0089138e-69fd-40cf-8221-45d3fd697652: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:29:53,183 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:29:53,276 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:29:53,276 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:29:53,276 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:29:53,276 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:29:53,456 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:29:53,456 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:29:53,635 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:29:53,635 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:29:53,806 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:29:53,807 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:29:53,979 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:29:53,980 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:29:54,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:29:54,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:29:54,334 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:29:54,335 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:29:54,511 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:29:54,512 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:29:54,684 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:29:54,685 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:29:54,866 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:29:54,867 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:29:55,056 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:29:55,057 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:29:55,230 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:29:55,230 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:29:55,401 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:29:55,402 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=1b2e45f7-0956-4ba2-82c0-15af4e2d4c52: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:30:04,113 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:30:04,158 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:30:04,159 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:30:04,162 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:30:04,163 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:30:04,370 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:30:04,371 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:30:04,574 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:30:04,575 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:30:04,754 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:30:04,754 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:30:04,930 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:30:04,931 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:30:05,105 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:30:05,106 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:30:05,279 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:30:05,279 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:30:05,451 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:30:05,452 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:30:05,622 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:30:05,623 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:30:05,797 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:30:05,798 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:30:05,969 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:30:05,969 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:30:06,145 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:30:06,145 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:30:06,331 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:30:06,332 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=2b13f82c-182e-4e4a-a526-975919d95bd5: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:30:53,180 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:30:53,209 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:30:53,210 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:30:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:30:53,213 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:30:53,385 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:30:53,386 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:30:53,559 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:30:53,560 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:30:53,737 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:30:53,737 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:30:53,913 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:30:53,914 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:30:54,089 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:30:54,089 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:30:54,263 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:30:54,263 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:30:54,435 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:30:54,436 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:30:54,609 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:30:54,609 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:30:54,782 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:30:54,783 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:30:54,958 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:30:54,958 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:30:55,132 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:30:55,133 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:30:55,310 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:30:55,310 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=45bc491f-ba1d-4b34-a623-4e6cf1702dcf: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:31:04,116 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:31:04,149 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:31:04,149 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:31:04,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:31:04,153 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:31:04,324 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:31:04,325 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:31:04,496 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:31:04,496 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:31:04,669 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:31:04,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:31:04,841 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:31:04,841 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:31:05,013 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:31:05,014 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:31:05,222 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:31:05,223 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:31:05,420 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:31:05,421 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:31:05,595 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:31:05,596 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:31:05,783 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:31:05,784 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:31:05,959 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:31:05,960 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:31:06,134 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:31:06,135 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:31:06,312 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:31:06,312 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=a1157b05-5e7e-40f5-b8f6-94b14f0d8224: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:31:53,190 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:31:53,218 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:31:53,219 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:31:53,221 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:31:53,222 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:31:53,392 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:31:53,393 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:31:53,564 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:31:53,565 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:31:53,737 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:31:53,738 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:31:53,910 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:31:53,911 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:31:54,081 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:31:54,082 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:31:54,253 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:31:54,254 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:31:54,428 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:31:54,429 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:31:54,603 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:31:54,604 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:31:54,775 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:31:54,775 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:31:54,947 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:31:54,948 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:31:55,121 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:31:55,122 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:31:55,294 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:31:55,295 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=992c8e8c-314e-43bc-91f6-95ba659f75f9: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:32:04,110 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:32:04,141 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:32:04,142 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:32:04,145 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:32:04,146 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:32:04,318 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:32:04,319 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:32:04,490 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:32:04,491 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:32:04,663 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:32:04,663 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:32:04,836 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:32:04,836 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:32:05,009 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:32:05,010 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:32:05,181 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:32:05,182 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:32:05,380 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:32:05,381 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:32:05,561 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:32:05,562 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:32:05,734 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:32:05,735 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:32:05,944 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:32:05,945 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:32:06,125 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:32:06,125 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:32:06,297 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:32:06,298 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f2ab5272-bc68-431d-ab6e-810f6c762f3a: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:32:53,176 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:32:53,205 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:32:53,205 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:32:53,207 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:32:53,209 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:32:53,379 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:32:53,381 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:32:53,580 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:32:53,581 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:32:53,752 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:32:53,753 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:32:53,925 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:32:53,926 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:32:54,098 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:32:54,099 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:32:54,269 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:32:54,270 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:32:54,440 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:32:54,441 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:32:54,612 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:32:54,613 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:32:54,786 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:32:54,787 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:32:54,958 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:32:54,959 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:32:55,129 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:32:55,130 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:32:55,307 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:32:55,307 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=d3317976-4292-4ac3-b4f6-f75e7c4b8581: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:33:04,118 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:33:04,149 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:33:04,150 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:33:04,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:33:04,152 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:33:04,426 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:33:04,426 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:33:04,883 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:33:04,883 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:33:05,238 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:33:05,238 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:33:05,494 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:33:05,495 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:33:05,735 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:33:05,735 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:33:06,036 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:33:06,036 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:33:06,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:33:06,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:33:07,692 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:33:07,693 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:33:08,576 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:33:08,576 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:33:09,927 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:33:09,927 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:33:10,202 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:33:10,203 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:33:10,376 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:33:10,376 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=f65b8c8b-3923-4fe2-8c4c-83dd46fa4c43: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:33:53,178 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:33:53,204 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:33:53,204 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:33:53,211 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:33:53,211 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:33:53,382 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:33:53,383 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:33:53,555 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:33:53,555 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:33:53,738 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:33:53,739 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:33:53,911 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:33:53,912 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:33:54,087 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:33:54,088 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:33:54,261 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:33:54,261 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:33:54,434 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:33:54,434 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:33:54,606 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:33:54,607 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:33:54,780 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:33:54,781 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:33:54,955 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:33:54,956 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:33:55,126 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:33:55,127 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:33:55,300 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:33:55,301 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=bd7efc6b-5bc7-4e14-bd0b-d867f4f2944a: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:34:04,120 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:34:04,151 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:34:04,151 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:34:04,154 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:34:04,154 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:34:04,325 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:34:04,325 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:34:04,496 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:34:04,498 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:34:04,669 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:34:04,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:34:04,843 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:34:04,844 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:34:05,017 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:34:05,018 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:34:05,189 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:34:05,190 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:34:05,362 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:34:05,363 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:34:05,537 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:34:05,537 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:34:05,708 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:34:05,709 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:34:05,881 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:34:05,882 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:34:06,053 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:34:06,054 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:34:06,234 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:34:06,235 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=af2b1361-16c8-4740-acb0-12a87772b90d: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:34:53,179 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:34:53,209 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:34:53,210 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:34:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:34:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:34:53,383 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:34:53,384 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:34:53,555 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:34:53,556 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:34:53,727 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:34:53,728 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:34:53,902 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:34:53,903 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:34:54,074 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:34:54,074 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:34:54,246 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:34:54,247 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:34:54,419 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:34:54,420 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:34:54,592 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:34:54,593 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:34:54,766 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:34:54,767 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:34:54,940 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:34:54,940 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:34:55,113 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:34:55,114 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:34:55,311 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:34:55,312 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=5491b472-6f56-45b9-b1ed-5fb71571df1d: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:35:04,109 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:35:04,183 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:35:04,183 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:35:04,183 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:35:04,183 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:35:04,357 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:35:04,358 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:35:04,530 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:35:04,530 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:35:04,704 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:35:04,705 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:35:04,877 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:35:04,878 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:35:05,057 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:35:05,058 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:35:05,233 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:35:05,233 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:35:05,406 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:35:05,407 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:35:05,579 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:35:05,580 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:35:05,754 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:35:05,755 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:35:05,958 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:35:05,958 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:35:06,131 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:35:06,132 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:35:06,304 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:35:06,304 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=00aab4ad-10f9-40ad-9c93-0f2584ab7f08: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:35:53,180 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:35:53,197 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:35:53,212 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:35:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:35:53,212 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:35:53,400 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:35:53,400 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:35:53,589 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:35:53,589 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:35:53,777 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:35:53,778 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:35:53,951 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:35:53,951 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:35:54,126 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:35:54,126 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:35:54,300 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:35:54,301 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:35:54,555 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:35:54,556 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:35:54,901 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:35:54,901 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:35:55,261 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:35:55,261 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:35:55,670 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:35:55,671 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:35:55,839 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:35:55,840 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:35:56,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:35:56,029 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=14276, RunID=6f9e3d06-279f-4a5d-b8b7-8a382c5b3107: Завершение плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:36:04,122 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Начало плановой проверки уведомлений для всех пользователей.
+2025-05-29 23:36:04,153 - blog.notification_service - INFO - [BrowserPushService] CONSTRUCTOR CALLED
+2025-05-29 23:36:04,154 - blog - INFO - [INIT] BrowserPushService инициализирован и добавлен в app.
+2025-05-29 23:36:04,155 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Найдено 12 активных пользователей для проверки.
+2025-05-29 23:36:04,156 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 1, Email: y.varslavan@tez-tour.com
+2025-05-29 23:36:04,329 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 1.
+2025-05-29 23:36:04,329 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 5, Email: p.evich@tez-tour.com
+2025-05-29 23:36:04,501 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 5.
+2025-05-29 23:36:04,502 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 10, Email: egor@teztour.com.md
+2025-05-29 23:36:04,674 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 10.
+2025-05-29 23:36:04,675 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 17, Email: a.tskhai@nsk.tez-tour.com
+2025-05-29 23:36:04,847 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 17.
+2025-05-29 23:36:04,848 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 24, Email: dmitri@teztour.ee
+2025-05-29 23:36:05,023 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 24.
+2025-05-29 23:36:05,024 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 29, Email: anar@tez-tour.ro
+2025-05-29 23:36:05,195 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 29.
+2025-05-29 23:36:05,196 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 48, Email: v.sedova@spb.tez-tour.com
+2025-05-29 23:36:05,370 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 48.
+2025-05-29 23:36:05,371 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 51, Email: k.buzina@ufa.tez-tour.com
+2025-05-29 23:36:05,542 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 51.
+2025-05-29 23:36:05,543 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 53, Email: i.kuran@tez-tour.com
+2025-05-29 23:36:05,719 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 53.
+2025-05-29 23:36:05,719 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 55, Email: lepert@teztour.com.ua
+2025-05-29 23:36:05,891 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 55.
+2025-05-29 23:36:05,891 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 56, Email: a.arutiuniants@teztour.com.md
+2025-05-29 23:36:06,066 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 56.
+2025-05-29 23:36:06,067 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Проверка уведомлений для пользователя ID: 58, Email: ekaterina@tez-tour.com
+2025-05-29 23:36:06,238 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Обработано 0 уведомлений для пользователя ID: 58.
+2025-05-29 23:36:06,239 - blog.scheduler_tasks - INFO - SCHEDULER_RUN: PID=5332, RunID=720e3fbe-98f3-40fe-ada8-d90e31ead88b: Завершение плановой проверки уведомлений для всех пользователей.
