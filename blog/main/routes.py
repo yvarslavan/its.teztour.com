@@ -2384,7 +2384,7 @@ def push_debug():
         else:
             config_info["vapid_private_key_preview"] = "Не задан"
 
-        # Получаем информацию о подписках пользователя
+        # Получаем информацию о подписках пользователя!
         subscriptions = []
         user_subs = PushSubscription.query.filter_by(
             user_id=current_user.id
