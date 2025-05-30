@@ -91,26 +91,11 @@ class PushNotificationManager {
         try {
             console.log('[PushManager] Начало registerServiceWorker()');
             const swScope = '/';
-
-            // Проверяем наличие существующей регистрации
-            console.log(`[PushManager] Попытка получить существующую регистрацию SW для scope: ${swScope}`);
-            const existingRegistration = await navigator.serviceWorker.getRegistration(swScope);
-            if (existingRegistration) {
-                console.log('[PushManager] Найдена существующая регистрация SW, scope:', existingRegistration.scope, 'Попытка отмены регистрации...');
-                const unregisterResult = await existingRegistration.unregister();
-                console.log('[PushManager] Результат отмены регистрации:', unregisterResult ? 'Успешно' : 'Неуспешно или нет активного SW для отмены');
-                if (!unregisterResult) {
-                    console.warn('[PushManager] Не удалось отменить регистрацию существующего Service Worker. Это может помешать регистрации нового.');
-                }
-            } else {
-                console.log('[PushManager] Существующая регистрация SW не найдена для scope:', swScope);
-            }
-
             const swPath = '/sw.js';
-            console.log(`[PushManager] Попытка регистрации НОВОГО Service Worker. Путь: ${swPath}, Scope: ${swScope}`);
+
+            console.log(`[PushManager] Попытка регистрации/обновления Service Worker. Путь: ${swPath}, Scope: ${swScope}`);
 
             try {
-                // Прямой try...catch вокруг register
                 console.log('[PushManager] Перед вызовом navigator.serviceWorker.register...');
                 this.registration = await navigator.serviceWorker.register(swPath, {
                     scope: swScope
@@ -133,14 +118,18 @@ class PushNotificationManager {
                 await this.waitForServiceWorker(this.registration.installing);
             } else if (this.registration.waiting) {
                 console.log('[PushManager] Service Worker в состоянии waiting. Попытка активации через postMessage SKIP_WAITING...');
-                this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
+                if (this.registration.waiting && typeof this.registration.waiting.postMessage === 'function') {
+                    this.registration.waiting.postMessage({type: 'SKIP_WAITING'});
+                } else {
+                     console.warn('[PushManager] this.registration.waiting is null or postMessage is not available. Cannot send SKIP_WAITING.');
+                }
                 await this.waitForServiceWorker(this.registration.waiting);
             } else if (this.registration.active) {
                 console.log('[PushManager] Service Worker уже в состоянии active.');
             }
 
             console.log('[PushManager] Попытка выполнить registration.update()...');
-            await this.registration.update();
+            await this.registration.update(); // Гарантирует, что SW актуален
             console.log('[PushManager] registration.update() выполнен.');
             console.log('[PushManager] Service Worker успешно зарегистрирован и обновлен.');
 
@@ -154,25 +143,54 @@ class PushNotificationManager {
     // Вспомогательный метод для ожидания готовности Service Worker
     async waitForServiceWorker(serviceWorker) {
         return new Promise((resolve, reject) => {
-            const stateChange = () => {
-                console.log('[PushManager] Service Worker state changed to:', serviceWorker.state);
+            if (!serviceWorker) {
+                console.log('[PushManager] waitForServiceWorker: serviceWorker argument is null. Resolving as potentially already active or no longer relevant.');
+                resolve();
+                return;
+            }
 
+            if (serviceWorker.state === 'activated') {
+                console.log('[PushManager] waitForServiceWorker: Service Worker is already activated.');
+                resolve();
+                return;
+            }
+            if (serviceWorker.state === 'redundant') {
+                console.warn('[PushManager] waitForServiceWorker: Service Worker is already redundant.');
+                reject(new Error('Service Worker стал избыточным (начальное состояние)'));
+                return;
+            }
+
+            console.log(`[PushManager] waitForServiceWorker: Waiting for SW in state '${serviceWorker.state}' to activate.`);
+            const timeoutDuration = 30000; // 30 секунд
+            let timeoutId;
+
+            const stateChangeHandler = () => {
+                // console.log('[PushManager] Service Worker state changed to:', serviceWorker.state); // Может быть слишком много логов
                 if (serviceWorker.state === 'activated') {
-                    serviceWorker.removeEventListener('statechange', stateChange);
+                    clearTimeout(timeoutId);
+                    serviceWorker.removeEventListener('statechange', stateChangeHandler);
+                    console.log('[PushManager] waitForServiceWorker: Service Worker activated.');
                     resolve();
                 } else if (serviceWorker.state === 'redundant') {
-                    serviceWorker.removeEventListener('statechange', stateChange);
-                    reject(new Error('Service Worker стал избыточным'));
+                    clearTimeout(timeoutId);
+                    serviceWorker.removeEventListener('statechange', stateChangeHandler);
+                    console.warn('[PushManager] waitForServiceWorker: Service Worker became redundant while waiting.');
+                    reject(new Error('Service Worker стал избыточным во время ожидания'));
                 }
             };
 
-            serviceWorker.addEventListener('statechange', stateChange);
+            serviceWorker.addEventListener('statechange', stateChangeHandler);
 
-            // Timeout для предотвращения бесконечного ожидания
-            setTimeout(() => {
-                serviceWorker.removeEventListener('statechange', stateChange);
-                reject(new Error('Timeout ожидания активации Service Worker'));
-            }, 30000); // 30 секунд
+            timeoutId = setTimeout(() => {
+                serviceWorker.removeEventListener('statechange', stateChangeHandler);
+                if (serviceWorker.state === 'activated') {
+                    console.log('[PushManager] waitForServiceWorker: Activated just before timeout.');
+                    resolve();
+                } else {
+                    console.warn(`[PushManager] waitForServiceWorker: Timeout (${timeoutDuration/1000}s) waiting for Service Worker activation. Current state: ${serviceWorker.state}`);
+                    reject(new Error(`Timeout ожидания активации Service Worker. Last state: ${serviceWorker.state}`));
+                }
+            }, timeoutDuration);
         });
     }
 
