@@ -29,7 +29,7 @@ from flask_login import current_user, logout_user, login_required, login_user, A
 from sqlalchemy.orm import sessionmaker
 from werkzeug.utils import redirect
 from blog import db, scheduler
-from blog.models import User, Post
+from blog.models import User, Post, PushSubscription
 from blog.user.forms import RegistrationForm, LoginForm, UpdateAccountForm
 from blog.user.utils import save_picture, random_avatar, quality_control_required
 from erp_oracle import (
@@ -472,6 +472,9 @@ def account():
         if current_user.is_admin:
             all_users = db.session.query(User).all()
 
+        # Проверяем наличие активной push-подписки
+        push_subscription_active = PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).first() is not None
+
         return render_template(
             "account.html",
             title="Профиль",
@@ -487,7 +490,8 @@ def account():
             default_phone=user_obj.phone if user_obj else "",
             default_vpn_end_date=user_obj.vpn_end_date if user_obj else "",
             all_users=all_users,
-            email_signature_html=email_signature_html
+            email_signature_html=email_signature_html,
+            push_subscription_active=push_subscription_active  # Передаем статус подписки в шаблон
         )
     except Exception as e:
         db.session.rollback()  # Откатываем сессию в случае ошибки

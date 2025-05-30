@@ -725,6 +725,26 @@ window.PushNotificationManager = {
     }
 };
 
-// Инициализация только по запросу, без автоматической инициализации
-// Это позволяет избежать конфликтов при множественных вызовах
-console.log('[PushManager] Модуль загружен, инициализация по требованию');
+// Добавляем создание и экспорт глобального экземпляра, если его еще нет
+// Убедимся, что этот код выполняется ПОСЛЕ определения класса PushNotificationManager
+
+// Проверяем, был ли класс PushNotificationManager определен ранее в этом файле
+if (typeof PushNotificationManager !== 'undefined') {
+    if (typeof window.PushNotificationManagerInstance === 'undefined') {
+        window.PushNotificationManagerInstance = new PushNotificationManager();
+        console.log('[PushManager] Глобальный экземпляр window.PushNotificationManagerInstance СОЗДАН.');
+    } else {
+        console.log('[PushManager] Глобальный экземпляр window.PushNotificationManagerInstance уже существует.');
+    }
+    // Сообщение о готовности модуля для инициализации извне
+    // Это сообщение может быть полезно для отладки последовательности загрузки
+    console.log('[PushManager] Модуль push-notifications.js (файл) полностью загружен. Экземпляр доступен как window.PushNotificationManagerInstance.');
+} else {
+    console.error('[PushManager] Класс PushNotificationManager не определен к моменту попытки создания экземпляра. Проверьте порядок кода в push-notifications.js.');
+}
+
+// Пример того, как класс мог бы быть экспортирован, если бы это был чистый ES6 модуль без присвоения window
+// export default PushNotificationManager; // Это для импорта в других ES6 модулях, не для прямого доступа из <script> без type="module" на window
+
+// Если используется console.log('[PushManager] Модуль загружен, инициализация по требованию'); где-то в коде,
+// убедитесь, что он не конфликтует с этой логикой или что эта логика выполняется после.
