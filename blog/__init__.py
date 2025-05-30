@@ -1,4 +1,5 @@
 import logging
+import os
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', force=True)
 # force=True перезапишет любую существующую конфигурацию корневого логгера, что полезно для отладки.
 from flask import Flask, request, session, Blueprint
@@ -6,10 +7,9 @@ from flask_login import LoginManager
 from flask_bcrypt import Bcrypt
 from flask_migrate import Migrate
 from flask_wtf.csrf import CSRFProtect
-from apscheduler.schedulers.background import BackgroundScheduler
+from flask_apscheduler import APScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from pathlib import Path
-import os
 import cx_Oracle
 from flask_cors import CORS
 from flask_session import Session
@@ -22,6 +22,8 @@ from .settings import Config
 from blog.scheduler_tasks import scheduled_check_all_user_notifications
 # Импортируем BrowserPushService
 from blog.notification_service import BrowserPushService
+# Импортируем функцию конфигурации логгера
+from blog.main.routes import configure_blog_logger
 
 bcrypt = Bcrypt()
 migrate = Migrate()
@@ -31,7 +33,7 @@ login_manager.login_view = "users.login"
 login_manager.login_message_category = "info"
 login_manager.login_message = "Авторизуйтесь, чтобы попасть на эту страницу!"
 
-scheduler = BackgroundScheduler()
+scheduler = APScheduler()
 
 # Функция для корректной остановки планировщика
 def shutdown_scheduler():
@@ -114,6 +116,9 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
 
+    # Конфигурация логгера до первого использования app.logger
+    configure_blog_logger()
+
     # Регистрируем user_loader здесь, после инициализации login_manager
     from blog.models import load_user
     login_manager.user_loader(load_user)
@@ -155,35 +160,33 @@ def create_app():
         csrf.exempt(push_debug)
         print("[INIT] CSRF исключения настроены для push API", flush=True)
 
-    with app.app_context():
+    # Инициализация и запуск планировщика только в основном процессе Werkzeug
+    # Это предотвратит запуск нескольких экземпляров планировщика в режиме отладки с автоперезагрузкой
+    if os.environ.get("WERKZEUG_RUN_MAIN") == "true" or not app.debug:
         if not scheduler.running:
             try:
+                scheduler.init_app(app) # Инициализируем планировщик с приложением
                 scheduler.start()
-                print("Scheduler started successfully.")
+                app.logger.info("Scheduler initialized and started successfully ONLY in main process or production.")
 
-                # Добавляем нашу задачу в планировщик
-                # Будет выполняться каждые 5 минут
-                # Убедимся, что задача не добавляется многократно при перезапусках (особенно в debug режиме)
-                if not scheduler.get_job('check_all_user_notifications_job'):
+                job_id = 'check_all_user_notifications_job'
+                if not scheduler.get_job(job_id):
                     scheduler.add_job(
                         func=scheduled_check_all_user_notifications,
-                        trigger=IntervalTrigger(minutes=1),
-                        id='check_all_user_notifications_job',
-                        name='Check all user notifications every 5 minutes',
+                        trigger=IntervalTrigger(minutes=1), # или app.config.get('SCHEDULER_INTERVAL_MINUTES', 1)
+                        id=job_id,
+                        name='Check all user notifications every 1 minute',
                         replace_existing=True
                     )
-                    print("Job 'check_all_user_notifications_job' added to scheduler.")
+                    app.logger.info(f"Job '{job_id}' added to scheduler.")
                 else:
-                    print("Job 'check_all_user_notifications_job' already exists in scheduler.")
+                    app.logger.info(f"Job '{job_id}' already exists in scheduler.")
+            except Exception as e_scheduler_init:
+                app.logger.error(f"Error initializing or starting scheduler: {e_scheduler_init}", exc_info=True)
+    else:
+        if app.debug: # Только в режиме отладки, для дочернего процесса
+            app.logger.info("Scheduler NOT started in Werkzeug reloader child process.")
 
-            except Exception as e:
-                print(f"Error starting scheduler or adding job: {e}")
-        try:
-            # Создаем только локальные таблицы SQLite
-            # Исключаем Oracle таблицы
-            db.create_all()  # Создадим только таблицы из default bind
-        except Exception as e:
-            print(f"Ошибка при создании таблиц: {e}")
 
     # <<< НАЧАЛО ИЗМЕНЕНИЯ: Явная инициализация Flask-Session >>>
     # Убедимся, что SESSION_TYPE установлен (например, из Config)

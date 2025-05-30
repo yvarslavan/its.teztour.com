@@ -62,6 +62,7 @@ class NotificationData:
     message: str
     data: Dict
     created_at: datetime
+    source_id: Optional[int] = None
 
     def to_dict(self) -> Dict:
         """Преобразование в словарь для JSON"""
@@ -72,7 +73,8 @@ class NotificationData:
             'title': self.title,
             'message': self.message,
             'data': self.data,
-            'created_at': self.created_at.isoformat()
+            'created_at': self.created_at.isoformat(),
+            'source_id': self.source_id
         }
 
     def get_hash(self) -> str:
@@ -184,29 +186,23 @@ class NotificationService:
 
     def _process_status_notifications(self, connection, user_email: str, user_id: int, request_id: uuid.UUID) -> int:
         """Обработка уведомлений об изменении статуса"""
-        logger.info(f"[REQ_ID:{request_id}] _process_status_notifications для user_id={user_id}")
+        logger.info(f"[REQ_ID:{request_id}] _process_status_notifications для user_id={user_id}, user_email={user_email}")
         try:
             cursor = connection.cursor(pymysql.cursors.DictCursor)
-            email_part = user_email.lower().split("@")[0]
 
             query = """
-                SELECT ID, IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated
+                SELECT ID, IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated, Author
                 FROM u_its_update_status
-                WHERE LOWER(SUBSTRING_INDEX(Author, '@', 1)) = LOWER(%s)
+                WHERE LOWER(Author) = LOWER(%s)
                 ORDER BY RowDateCreated DESC
                 LIMIT 50
             """
 
-            logger.info(f"[REQ_ID:{request_id}] MySQL Query (status): {query} с email_part: {email_part}")
-            cursor.execute(query, (email_part,))
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (status): {query} с user_email: {user_email}")
+            cursor.execute(query, (user_email,))
             rows = cursor.fetchall()
-            if not rows:
-                logger.info(f"[REQ_ID:{request_id}][MYSQL_FETCH_DEBUG] _process_status_notifications: Для {email_part} из u_its_update_status НЕ НАЙДЕНО НИ ОДНОЙ ЗАПИСИ.")
-            else:
-                logger.info(f"[REQ_ID:{request_id}][MYSQL_FETCH_DEBUG] _process_status_notifications: Для {email_part} из u_its_update_status НАЙДЕНО {len(rows)} строк.")
-                for i, row_data in enumerate(rows):
-                    logger.info(f"[REQ_ID:{request_id}][MYSQL_FETCH_DEBUG] _process_status_notifications: Строка {i+1}: {row_data}")
-            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_update_status. IDs: {[row.get('ID', 'N/A') for row in rows] if rows else '[]'}")
+            source_ids = [row['ID'] for row in rows]
+            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_update_status. IDs: {source_ids}")
 
             processed_count = 0
             notifications_to_save = []
@@ -266,23 +262,23 @@ class NotificationService:
 
     def _process_comment_notifications(self, connection, user_email: str, user_id: int, request_id: uuid.UUID) -> int:
         """Обработка уведомлений о комментариях"""
-        logger.info(f"[REQ_ID:{request_id}] _process_comment_notifications для user_id={user_id}")
+        logger.info(f"[REQ_ID:{request_id}] _process_comment_notifications для user_id={user_id}, user_email={user_email}")
         try:
             cursor = connection.cursor(pymysql.cursors.DictCursor)
-            email_part = user_email.lower().split("@")[0]
 
             query = """
-                SELECT ID, issue_id, Author, notes, date_created
+                SELECT ID, issue_id, Author, notes, date_created, RowDateCreated
                 FROM u_its_add_notes
-                WHERE LOWER(SUBSTRING_INDEX(Author, '@', 1)) = LOWER(%s)
-                ORDER BY date_created DESC
+                WHERE LOWER(Author) = LOWER(%s)
+                ORDER BY RowDateCreated DESC
                 LIMIT 50
             """
 
-            logger.info(f"[REQ_ID:{request_id}] MySQL Query (comment): {query} с email_part: {email_part}")
-            cursor.execute(query, (email_part,))
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (comment): {query} с user_email: {user_email}")
+            cursor.execute(query, (user_email,))
             rows = cursor.fetchall()
-            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_add_notes. IDs: {[row.get('ID', 'N/A') for row in rows] if rows else '[]'}")
+            source_ids = [row['ID'] for row in rows]
+            logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_add_notes. IDs: {source_ids}")
 
             processed_count = 0
             notifications_to_save = []
@@ -299,7 +295,8 @@ class NotificationService:
                         'author': row['Author'],
                         'notes': row['notes'][:200] + '...' if len(row['notes']) > 200 else row['notes']
                     },
-                    created_at=row['date_created']
+                    created_at=row['date_created'],
+                    source_id=row['ID']
                 )
 
                 # Проверяем на дублирование
@@ -339,142 +336,145 @@ class NotificationService:
             return 0
 
     def _save_status_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
-        """
-        Сохраняет список уведомлений об изменении статуса в базу данных
-        и отправляет push-уведомления.
-        """
+        """Сохранение уведомлений об изменении статуса в базу данных"""
         logger.info(f"[REQ_ID:{request_id}] _save_status_notifications: {len(notifications)} уведомлений")
+        saved_count = 0
+        newly_created_notifications_for_push = []
+
         if not notifications:
             logger.info(f"[REQ_ID:{request_id}] Нет статус-уведомлений для сохранения.")
             return
 
-        # Контекст приложения УЖЕ должен быть установлен выше по стеку вызовов,
-        # когда этот метод вызывается из планировщика (через scheduled_check_all_user_notifications).
-        # Повторная попытка получить его через current_app здесь может вызывать проблемы,
-        # если current_app не ссылается на правильный инстанс в этом потоке.
+        try:
+            for notification_data in notifications:
+                try:
+                    existing_notification = Notifications.query.filter_by(
+                        user_id=notification_data.user_id,
+                        issue_id=notification_data.issue_id,
+                        old_status=notification_data.data.get('old_status'),
+                        new_status=notification_data.data.get('new_status'),
+                        old_subj=notification_data.data.get('subject'),
+                        date_created=notification_data.created_at
+                    ).first()
 
-        # Удаляем: with current_app.app_context():
-        new_db_notifications = []
-        notifications_to_send_push = []
+                    if existing_notification:
+                        logger.info(f"[REQ_ID:{request_id}] Статус-уведомление уже существует (ID: {existing_notification.id}). Пропуск.")
+                        continue
 
-        for notification_data in notifications:
-            try:
-                # Проверка, существует ли уже такое уведомление для данного пользователя и задачи
-                existing_notification = Notifications.query.filter_by(
-                    user_id=notification_data.user_id,
-                    issue_id=notification_data.issue_id,
-                    old_status=notification_data.data.get("old_status"),
-                    new_status=notification_data.data.get("new_status"),
-                    old_subj=notification_data.title # Предполагаем, что title из NotificationData соответствует old_subj
-                ).first()
+                    new_notification_db = Notifications(
+                        user_id=notification_data.user_id,
+                        issue_id=notification_data.issue_id,
+                        old_status=notification_data.data.get('old_status'),
+                        new_status=notification_data.data.get('new_status'),
+                        old_subj=notification_data.data.get('subject'),
+                        date_created=notification_data.created_at
+                    )
+                    db.session.add(new_notification_db)
+                    db.session.flush() # Для получения ID до коммита, если нужно
+                    logger.info(f"[REQ_ID:{request_id}] Подготовлено к сохранению новое статус-уведомление (DB ID: {new_notification_db.id})")
+                    newly_created_notifications_for_push.append(notification_data)
+                    saved_count += 1
 
-                if existing_notification:
-                    logger.info(f"[REQ_ID:{request_id}] Уведомление для задачи {notification_data.issue_id} (статус) уже существует, пропускаем.")
+                except SQLAlchemyError as e:
+                    db.session.rollback()
+                    logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении статус-уведомления: {e}", exc_info=True)
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"[REQ_ID:{request_id}] Непредвиденная ошибка при подготовке статус-уведомления: {e}", exc_info=True)
                     continue
 
-                # Аргументы должны соответствовать конструктору Notifications
-                db_notification = Notifications(
-                    user_id=notification_data.user_id,
-                    issue_id=notification_data.issue_id,
-                    old_status=notification_data.data.get("old_status"),
-                    new_status=notification_data.data.get("new_status"),
-                    old_subj=notification_data.title, # title из NotificationData как old_subj
-                    date_created=notification_data.created_at
-                    # Поля is_read, is_new, author, body, type - отсутствуют в конструкторе Notifications
-                    # и должны управляться либо значениями по умолчанию в модели (если есть),
-                    # либо устанавливаться отдельно после создания объекта, если это необходимо.
-                    # В данном случае, модель Notifications не имеет этих полей, кроме тех, что в конструкторе.
-                )
-                new_db_notifications.append(db_notification)
-                notifications_to_send_push.append(notification_data)
-                logger.debug(f"[REQ_ID:{request_id}] Подготовлено к сохранению Notification: {db_notification!r}")
-
-            except Exception as e:
-                logger.error(f"[REQ_ID:{request_id}] Ошибка при подготовке уведомления о статусе для сохранения: {e}", exc_info=True)
-
-        if new_db_notifications:
-            try:
-                db.session.add_all(new_db_notifications)
+            if saved_count > 0:
                 db.session.commit()
-                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {len(new_db_notifications)} новых статус-уведомлений в БД.")
+                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {saved_count} новых статус-уведомлений.")
+            else:
+                logger.info(f"[REQ_ID:{request_id}] Нет новых уникальных статус-уведомлений для сохранения.")
 
-                # Отправляем push-уведомления только для успешно сохраненных
-                for nd_data in notifications_to_send_push:
-                    logger.info(f"[REQ_ID:{request_id}] Инициируем отправку push-уведомления для статус-изменения задачи {nd_data.issue_id}")
-                    self.push_service.send_push_notification(nd_data)
+        except RuntimeError as e:
+            if "Working outside of application context" in str(e):
+                logger.error(f"[REQ_ID:{request_id}] КРИТИЧЕСКАЯ ОШИБКА КОНТЕКСТА в _save_status_notifications: {e}", exc_info=True)
+            else:
+                logger.error(f"[REQ_ID:{request_id}] Непредвиденная RuntimeError в _save_status_notifications: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"[REQ_ID:{request_id}] Общая ошибка в _save_status_notifications: {e}", exc_info=True)
+            try: db.session.rollback()
+            except: pass
 
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении статус-уведомлений: {e}", exc_info=True)
-            except Exception as e:
-                logger.error(f"[REQ_ID:{request_id}] Непредвиденная ошибка при сохранении статус-уведомлений или отправке push: {e}", exc_info=True)
+        if newly_created_notifications_for_push:
+            logger.info(f"[REQ_ID:{request_id}] Отправка {len(newly_created_notifications_for_push)} PUSH о статусах.")
+            for notification_data_to_push in newly_created_notifications_for_push:
+                self.push_service.send_push_notification(notification_data_to_push)
         else:
-            logger.info(f"[REQ_ID:{request_id}] Нет новых уникальных статус-уведомлений для сохранения в БД.")
+            logger.info(f"[REQ_ID:{request_id}] Нет статус-уведомлений для PUSH.")
 
     def _save_comment_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
-        """
-        Сохраняет список уведомлений о новых комментариях в базу данных
-        и отправляет push-уведомления.
-        """
+        """Сохранение уведомлений о комментариях в базу данных"""
         logger.info(f"[REQ_ID:{request_id}] _save_comment_notifications: {len(notifications)} уведомлений")
+        saved_count = 0
+        newly_created_notifications_for_push = []
+
         if not notifications:
             logger.info(f"[REQ_ID:{request_id}] Нет коммент-уведомлений для сохранения.")
             return
 
-        # Контекст приложения УЖЕ должен быть установлен выше по стеку вызовов.
-        # Удаляем: with current_app.app_context():
-        new_db_notifications = []
-        notifications_to_send_push = []
+        try:
+            for notification_data in notifications:
+                try:
+                    existing_notification = NotificationsAddNotes.query.filter_by(
+                        user_id=notification_data.user_id,
+                        issue_id=notification_data.issue_id,
+                        notes=notification_data.message,
+                        author=notification_data.data.get('author'),
+                        date_created=notification_data.created_at
+                    ).first()
 
-        for notification_data in notifications:
-            try:
-                # Проверка, существует ли уже такое уведомление
-                existing_notification = NotificationsAddNotes.query.filter_by(
-                    user_id=notification_data.user_id,
-                    issue_id=notification_data.issue_id,
-                    notes=notification_data.message, # message из NotificationData - это сам комментарий
-                    author=notification_data.data.get("author")
-                ).first()
+                    if existing_notification:
+                        logger.info(f"[REQ_ID:{request_id}] Коммент-уведомление уже существует (ID: {existing_notification.id}). Пропуск.")
+                        continue
 
-                if existing_notification:
-                    logger.info(f"[REQ_ID:{request_id}] Уведомление для задачи {notification_data.issue_id} (комментарий) уже существует, пропускаем.")
+                    new_notification_db = NotificationsAddNotes(
+                        user_id=notification_data.user_id,
+                        issue_id=notification_data.issue_id,
+                        author=notification_data.data.get('author'),
+                        notes=notification_data.message,
+                        date_created=notification_data.created_at,
+                        source_id=notification_data.source_id
+                    )
+                    db.session.add(new_notification_db)
+                    db.session.flush() # Для получения ID до коммита
+                    logger.info(f"[REQ_ID:{request_id}] Подготовлено к сохранению новое коммент-уведомление (DB ID: {new_notification_db.id})")
+                    newly_created_notifications_for_push.append(notification_data)
+                    saved_count += 1
+
+                except SQLAlchemyError as e:
+                    db.session.rollback()
+                    logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении коммент-уведомления: {e}", exc_info=True)
+                except Exception as e:
+                    db.session.rollback()
+                    logger.error(f"[REQ_ID:{request_id}] Непредвиденная ошибка при подготовке коммент-уведомления: {e}", exc_info=True)
                     continue
 
-                # Аргументы должны соответствовать конструктору NotificationsAddNotes
-                db_notification = NotificationsAddNotes(
-                    user_id=notification_data.user_id,
-                    issue_id=notification_data.issue_id,
-                    author=notification_data.data.get("author"),
-                    notes=notification_data.message, # message из NotificationData
-                    date_created=notification_data.created_at
-                    # Поля is_read, is_new, type, subj - отсутствуют в конструкторе NotificationsAddNotes
-                    # и должны управляться либо значениями по умолчанию в модели (если есть),
-                    # либо устанавливаться отдельно после создания объекта, если это необходимо.
-                )
-                new_db_notifications.append(db_notification)
-                notifications_to_send_push.append(notification_data)
-                logger.debug(f"[REQ_ID:{request_id}] Подготовлено к сохранению NotificationAddNotes: {db_notification!r}")
-
-            except Exception as e:
-                logger.error(f"[REQ_ID:{request_id}] Ошибка при подготовке уведомления о комментарии для сохранения: {e}", exc_info=True)
-
-        if new_db_notifications:
-            try:
-                db.session.add_all(new_db_notifications)
+            if saved_count > 0:
                 db.session.commit()
-                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {len(new_db_notifications)} новых коммент-уведомлений в БД.")
+                logger.info(f"[REQ_ID:{request_id}] Успешно сохранено {saved_count} новых коммент-уведомлений.")
+            else:
+                logger.info(f"[REQ_ID:{request_id}] Нет новых уникальных коммент-уведомлений для сохранения.")
 
-                for nd_data in notifications_to_send_push:
-                    logger.info(f"[REQ_ID:{request_id}] Инициируем отправку push-уведомления для нового комментария к задаче {nd_data.issue_id}")
-                    self.push_service.send_push_notification(nd_data)
+        except RuntimeError as e:
+            if "Working outside of application context" in str(e):
+                logger.error(f"[REQ_ID:{request_id}] КРИТИЧЕСКАЯ ОШИБКА КОНТЕКСТА в _save_comment_notifications: {e}", exc_info=True)
+            else:
+                logger.error(f"[REQ_ID:{request_id}] Непредвиденная RuntimeError в _save_comment_notifications: {e}", exc_info=True)
+        except Exception as e:
+            logger.error(f"[REQ_ID:{request_id}] Общая ошибка в _save_comment_notifications: {e}", exc_info=True)
+            try: db.session.rollback()
+            except: pass
 
-            except SQLAlchemyError as e:
-                db.session.rollback()
-                logger.error(f"[REQ_ID:{request_id}] Ошибка SQLAlchemy при сохранении коммент-уведомлений: {e}", exc_info=True)
-            except Exception as e:
-                logger.error(f"[REQ_ID:{request_id}] Непредвиденная ошибка при сохранении коммент-уведомлений или отправке push: {e}", exc_info=True)
+        if newly_created_notifications_for_push:
+            logger.info(f"[REQ_ID:{request_id}] Отправка {len(newly_created_notifications_for_push)} PUSH о комментариях.")
+            for notification_data_to_push in newly_created_notifications_for_push:
+                self.push_service.send_push_notification(notification_data_to_push)
         else:
-            logger.info(f"[REQ_ID:{request_id}] Нет новых уникальных коммент-уведомлений для сохранения в БД.")
+            logger.info(f"[REQ_ID:{request_id}] Нет коммент-уведомлений для PUSH.")
 
     def _delete_processed_status_notifications(self, connection, ids_to_delete: List[int], request_id: uuid.UUID):
         """Удаление обработанных уведомлений о статусах из MySQL по списку ID"""
@@ -597,94 +597,80 @@ class BrowserPushService:
         self.vapid_claims = None
 
     def _ensure_vapid_config(self):
-        """Ленивая инициализация VAPID конфигурации"""
-        logger.info("[VAPID_CONFIG_ENSURE] Вызов _ensure_vapid_config")
-        if self.vapid_private_key is None or self.vapid_public_key is None:
-            logger.info("[VAPID_CONFIG_ENSURE] Один из ключей (или оба) is None. Попытка инициализации.")
-            try:
-                from flask import current_app
-                logger.info("[VAPID_CONFIG_ENSURE] Контекст приложения доступен.")
+        """
+        Гарантирует, что VAPID ключи загружены из конфигурации или сгенерированы.
+        Возвращает True, если конфигурация VAPID в порядке, иначе False.
+        """
+        log_prefix = "[VAPID_CONFIG_ENSURE]"
+        logger.info(f"{log_prefix} Вызов _ensure_vapid_config")
 
-                # Получаем ключи из конфигурации
-                config_private_key = current_app.config.get('VAPID_PRIVATE_KEY')
-                config_public_key = current_app.config.get('VAPID_PUBLIC_KEY')
-                self.vapid_claims = current_app.config.get('VAPID_CLAIMS', {
-                    "sub": "mailto:admin@tez-tour.com" # Дефолтное значение, если не найдено в конфиге
-                })
+        if self.vapid_public_key and self.vapid_private_key:
+            logger.info(f"{log_prefix} VAPID ключи уже инициализированы в экземпляре.")
+            return True
 
-                logger.info(f"[VAPID_CONFIG_ENSURE] Извлечено из current_app.config: "
-                            f"Private Key Exists: {bool(config_private_key)} (первые 5 символов: {config_private_key[:5] if config_private_key else 'N/A'}), "
-                            f"Public Key Exists: {bool(config_public_key)} (первые 5 символов: {config_public_key[:5] if config_public_key else 'N/A'})")
-                logger.info(f"[VAPID_CONFIG_ENSURE] Claims из current_app.config: {self.vapid_claims}")
+        try:
+            # Контекст приложения теперь предоставляется из вызывающей функции (start_user_job)
+            # logger.info(f"[REQ_ID:{request_id}] Контекст приложения активен для _ensure_vapid_config.")
+            config_public_key = current_app.config.get('VAPID_PUBLIC_KEY')
+            config_private_key = current_app.config.get('VAPID_PRIVATE_KEY')
+            # vapid_claims должен быть здесь, внутри with current_app.app_context()
+            if not hasattr(self, 'vapid_claims') or not self.vapid_claims:
+                self.vapid_claims = current_app.config.get(
+                    'VAPID_CLAIMS',
+                    {"sub": "mailto:admin@example.com"}
+                )
+                logger.info(f"{log_prefix} VAPID_CLAIMS установлен: {self.vapid_claims}")
 
-
-                if config_private_key and config_public_key:
-                    logger.info("[VAPID_CONFIG_ENSURE] Ключи найдены в current_app.config. Используем их.")
-                    self.vapid_private_key = config_private_key
-                    self.vapid_public_key = config_public_key
-                else:
-                    logger.warning("[VAPID_CONFIG_ENSURE] Один или оба ключа отсутствуют в current_app.config. Попытка генерации НОВЫХ КЛЮЧЕЙ.")
+            if config_public_key and config_private_key:
+                logger.info(f"{log_prefix} VAPID ключи получены из конфигурации Flask.")
+                self.vapid_public_key = config_public_key
+                self.vapid_private_key = config_private_key
+                # Убедимся что vapid_claims установлен, если ключи из конфига
+                if not self.vapid_claims:
+                    self.vapid_claims = current_app.config.get(
+                        'VAPID_CLAIMS',
+                        {"sub": "mailto:admin@example.com"}
+                    )
+                    logger.info(f"{log_prefix} VAPID_CLAIMS (повторно для случая ключей из конфига): {self.vapid_claims}")
+                return True
+            else:
+                logger.warning(f"{log_prefix} VAPID ключи НЕ НАЙДЕНЫ в конфигурации Flask. Попытка генерации.")
+                if WEBPUSH_AVAILABLE:
                     try:
-                        from py_vapid import Vapid
-                        logger.info("[VAPID_CONFIG_ENSURE] py_vapid импортирован для генерации ключей.")
-
-                        vapid = Vapid()
-                        vapid.generate_keys()
-
-                        private_key_gen = vapid.private_key.encode().decode('utf-8')
-                        public_key_gen = vapid.public_key.encode().decode('utf-8')
-
-                        logger.info(f"[VAPID_CONFIG_ENSURE] СГЕНЕРИРОВАНЫ новые VAPID ключи. "
-                                    f"Private Key (первые 5): {private_key_gen[:5]}, Public Key (первые 5): {public_key_gen[:5]}")
-
-                        self.vapid_private_key = private_key_gen
-                        self.vapid_public_key = public_key_gen
-                        # Claims остаются те, что были получены из config.get или дефолтные
-
-                        # ВАЖНО: НЕ сохраняем сгенерированные ключи обратно в current_app.config здесь,
-                        # так как это может привести к неожиданному поведению, если они должны были быть статичными.
-                        # Если ключи генерируются, это признак проблемы с конфигурацией.
-                        logger.warning("[VAPID_CONFIG_ENSURE] НОВЫЕ КЛЮЧИ БЫЛИ СГЕНЕРИРОВАНЫ И ИСПОЛЬЗУЮТСЯ В ЭТОМ ЭКЗЕМПЛЯРЕ СЕРВИСА. "
-                                       "Это может привести к ошибкам 'MismatchSenderId', если подписки были созданы с другими ключами.")
-
-                    except ImportError:
-                        logger.error("[VAPID_CONFIG_ENSURE] Ошибка: py_vapid не найден, невозможно сгенерировать ключи.")
-                        return False # Невозможно продолжить без ключей
-                    except Exception as e_gen:
-                        logger.error(f"[VAPID_CONFIG_ENSURE] Ошибка при генерации VAPID ключей: {e_gen}", exc_info=True)
-                        return False # Невозможно продолжить при ошибке генерации
-
-                # Логирование итоговых значений ключей (частично)
-                logger.info(f"[VAPID_CONFIG_ENSURE] ПОСЛЕ ИНИЦИАЛИЗАЦИИ/ГЕНЕРАЦИИ: "
-                            f"Private Key (первые 5): {self.vapid_private_key[:5] if self.vapid_private_key else 'None'}, "
-                            f"Public Key (первые 5): {self.vapid_public_key[:5] if self.vapid_public_key else 'None'}")
-                logger.info(f"[VAPID_CONFIG_ENSURE] Итоговые Claims: {self.vapid_claims}")
-
-                # Возвращаем True, если все ключи успешно получены/сгенерированы
-                result = bool(self.vapid_private_key and self.vapid_public_key and self.vapid_claims)
-                logger.info(f"[VAPID_CONFIG_ENSURE] Итоговый результат проверки наличия ключей: {result}")
-                return result
-
-            except RuntimeError as e_runtime:
-                logger.critical(f"[VAPID_CONFIG_ENSURE] КРИТИЧЕСКАЯ ОШИБКА: Нет контекста приложения Flask ('RuntimeError: Working outside of application context.') "
-                                f"для получения VAPID конфигурации: {e_runtime}. Это основная причина проблем с ключами!", exc_info=True)
-                # Вне контекста приложения мы не можем ни получить, ни сохранить ключи.
-                # Это может быть проблемой для фоновых задач, если они не создают контекст.
-                # В этом случае, ключи должны быть заданы через переменные окружения и загружены при старте.
-                return False
-            except Exception as e_unexpected:
-                logger.error(f"[VAPID_CONFIG_ENSURE] Неожиданная ошибка при получении/генерации VAPID конфигурации: {e_unexpected}", exc_info=True)
-                return False
-        else:
-            logger.info("[VAPID_CONFIG_ENSURE] VAPID ключи уже были инициализированы ранее в этом экземпляре BrowserPushService.")
-            # Если ключи уже инициализированы, просто проверяем их наличие и логируем
-            logger.info(f"[VAPID_CONFIG_ENSURE] Ранее инициализированные ключи: "
-                        f"Private Key (первые 5): {self.vapid_private_key[:5] if self.vapid_private_key else 'None'}, "
-                        f"Public Key (первые 5): {self.vapid_public_key[:5] if self.vapid_public_key else 'None'}")
-            logger.info(f"[VAPID_CONFIG_ENSURE] Ранее инициализированные Claims: {self.vapid_claims}")
-            result = bool(self.vapid_private_key and self.vapid_public_key and self.vapid_claims)
-            logger.info(f"[VAPID_CONFIG_ENSURE] Повторная проверка ранее инициализированных ключей: {result}")
-            return result
+                        vapid_key_pair = webpush.generate_vapid_key_pair()
+                        self.vapid_private_key = vapid_key_pair.private_key
+                        self.vapid_public_key = vapid_key_pair.public_key
+                        # vapid_claims также должен быть установлен при генерации
+                        if not self.vapid_claims:
+                            self.vapid_claims = current_app.config.get(
+                                'VAPID_CLAIMS',
+                                {"sub": "mailto:admin@example.com"}
+                            )
+                        logger.info(f"{log_prefix} Новая пара VAPID ключей сгенерирована. Claims: {self.vapid_claims}")
+                        logger.warning(f"{log_prefix} Сгенерированный VAPID Private Key: {self.vapid_private_key}")
+                        logger.warning(f"{log_prefix} Сгенерированный VAPID Public Key: {self.vapid_public_key}")
+                        logger.warning(
+                            f"{log_prefix} ВАЖНО: Сохраните эти ключи в конфигурации приложения."
+                        )
+                        return True
+                    except Exception as e:
+                        logger.error(f"{log_prefix} Ошибка при генерации VAPID ключей: {e}", exc_info=True)
+                        return False
+                else:
+                    logger.error(f"{log_prefix} pywebpush недоступен, не удается сгенерировать VAPID ключи.")
+                    return False
+        except RuntimeError as e:
+            if "Working outside of application context" in str(e):
+                logger.critical(
+                    f"{log_prefix} КРИТИЧЕСКАЯ ОШИБКА: Нет контекста приложения Flask ('{e}') для VAPID.",
+                    exc_info=True
+                )
+            else:
+                logger.error(f"{log_prefix} Непредвиденная RuntimeError для VAPID: {e}", exc_info=True)
+            return False
+        except Exception as e:
+            logger.error(f"{log_prefix} Общая ошибка VAPID: {e}", exc_info=True)
+            return False
 
     def send_push_notification(self, notification: NotificationData):
         """Отправка push-уведомления на все активные подписки пользователя"""
@@ -843,6 +829,7 @@ class BrowserPushService:
     def _get_user_subscriptions(self, user_id: int) -> List[PushSubscription]:
         """Получение активных подписок пользователя из базы данных"""
         try:
+            # Контекст приложения теперь предоставляется из вызывающей функции (start_user_job)
             subscriptions = db.session.query(PushSubscription).filter_by(
                 user_id=user_id,
                 is_active=True
@@ -854,59 +841,48 @@ class BrowserPushService:
             logger.error(f"Ошибка при получении подписок пользователя {user_id}: {e}")
             return []
 
-    def _send_to_subscription(self, subscription: PushSubscription, payload_json_string: str):
-        """Отправка уведомления конкретной подписке"""
-        logger.critical(f"[!!!DEBUG_SEND_SUB_ENTRY!!!] Вызван _send_to_subscription для подписки ID {subscription.id}") # Очень заметный лог
+    def _send_to_subscription(self, subscription: PushSubscription, payload_json_string: str) -> Dict:
+        request_id = uuid.uuid4() # Для трассировки этого конкретного вызова
+        logger.critical(f"[!!!DEBUG_SEND_SUB_ENTRY!!!] REQ_ID: {{request_id}} Вызван _send_to_subscription для подписки ID {{subscription.id}}")
+
+        if not self._ensure_vapid_config():
+            logger.error(f"[REQ_ID:{{request_id}}] [PUSH_SEND_SUB] VAPID ключи не настроены. Отправка на подписку ID {{subscription.id}} отменена.")
+            return {"status": "error", "message": "VAPID keys not configured", "subscription_id": subscription.id}
+
+        # Умная адаптация endpoint
+        endpoint_to_use = subscription.endpoint
+        if endpoint_to_use and "fcm.googleapis.com/fcm/send/" in endpoint_to_use:
+            original_endpoint_for_log = endpoint_to_use[:70] # Для лога, если он длинный
+            endpoint_to_use = endpoint_to_use.replace("fcm.googleapis.com/fcm/send/", "fcm.googleapis.com/wp/")
+            logger.info(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Адаптирован FCM endpoint ID {{subscription.id}}: '{{original_endpoint_for_log}}...' -> '{{endpoint_to_use[:70]}}...'")
+        elif endpoint_to_use:
+            logger.info(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Endpoint ID {{subscription.id}} не требует адаптации (уже /wp/ или не FCM): '{{endpoint_to_use[:70]}}...'")
+        else:
+            logger.error(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Пустой endpoint для подписки ID {{subscription.id}}. Отправка невозможна.")
+            raise WebPushException(f"Пустой endpoint для подписки ID {{subscription.id}}")
+
+        logger.info(f"[REQ_ID:{{request_id}}] Используется endpoint из подписки ID {{subscription.id}}: {{endpoint_to_use[:50]}}...")
 
         try:
-            # Проверка критических условий
-            if not WEBPUSH_AVAILABLE:
-                logger.error("pywebpush не доступен")
-                raise WebPushException("pywebpush не доступен")
-
-            if not subscription or not subscription.endpoint or not subscription.p256dh_key or not subscription.auth_key:
-                logger.error(f"Некорректная подписка ID {subscription.id if subscription else 'None'}")
-                raise WebPushException(f"Некорректная подписка ID {subscription.id if subscription else 'None'}")
-
-            # Получаем необходимые VAPID данные
-            if not self._ensure_vapid_config():
-                logger.error("Не удалось получить VAPID конфигурацию")
-                raise WebPushException("Не удалось получить VAPID конфигурацию")
-
-            # Адаптация endpoint для FCM, если необходимо
-            endpoint_to_use = subscription.endpoint
-            if endpoint_to_use.startswith("https://fcm.googleapis.com/fcm/send/"):
-                new_endpoint = endpoint_to_use.replace("https://fcm.googleapis.com/fcm/send/", "https://fcm.googleapis.com/wp/")
-                logger.info(f"[PUSH_ADAPT] Адаптирован FCM endpoint для подписки ID {subscription.id}: с {endpoint_to_use} на {new_endpoint}")
-                endpoint_to_use = new_endpoint
-            else:
-                logger.info(f"[PUSH_ADAPT] Endpoint для подписки ID {subscription.id} не требует адаптации: {endpoint_to_use}")
-
-            # Формируем данные подписки
-            subscription_info = {
-                "endpoint": endpoint_to_use,
-                "keys": {
-                    "p256dh": subscription.p256dh_key,
-                    "auth": subscription.auth_key
-                }
-            }
-
-            # Отправляем уведомление напрямую
-            logger.info(f"Отправка push-уведомления на endpoint: {endpoint_to_use[:50]}...")
-            logger.info(f"[DEBUG_SEND_SUB] Подписка ID {subscription.id}: Endpoint для webpush: {subscription_info.get('endpoint')}")
-            logger.info(f"[DEBUG_SEND_SUB] Подписка ID {subscription.id}: VAPID Private Key (начало): {self.vapid_private_key[:20] if self.vapid_private_key else 'None'}")
-            logger.info(f"[DEBUG_SEND_SUB] Подписка ID {subscription.id}: VAPID Claims: {self.vapid_claims}")
-            logger.debug(f"[DEBUG_SEND_SUB] Подписка ID {subscription.id}: Payload JSON: {payload_json_string[:250]}...")
+            # Логирование деталей перед отправкой
+            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: Endpoint для webpush: {{endpoint_to_use}}")
+            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: VAPID Private Key (начало): {{self.vapid_private_key[:20] if self.vapid_private_key else 'NOT SET'}}")
+            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: VAPID Claims: {{self.vapid_claims}}")
 
             webpush(
-                subscription_info=subscription_info,
+                subscription_info={
+                    "endpoint": endpoint_to_use,
+                    "keys": {
+                        "p256dh": subscription.p256dh_key,
+                        "auth": subscription.auth_key
+                    }
+                },
                 data=payload_json_string,
                 vapid_private_key=self.vapid_private_key,
-                vapid_claims=self.vapid_claims,
-                headers={"TTL": "60"}
+                vapid_claims=self.vapid_claims.copy() # Передаем копию, чтобы избежать модификации оригинала
             )
-            logger.critical(f"[!!!DEBUG_SEND_SUB_EXIT_SUCCESS!!!] webpush вызван УСПЕШНО для подписки ID {subscription.id}")
-
+            logger.critical(f"[!!!DEBUG_SEND_SUB_EXIT_SUCCESS!!!] REQ_ID: {{request_id}} webpush вызван УСПЕШНО для подписки ID {{subscription.id}}")
+            return {"status": "success", "subscription_id": subscription.id}
         except WebPushException as e:
             logger.error(f"WebPushException при отправке на подписку {subscription.id} (endpoint: {subscription.endpoint[:50]}...): {str(e)}", exc_info=True)
             response_status = None

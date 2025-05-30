@@ -1897,15 +1897,15 @@ def database_status():
 @login_required
 def push_subscribe():
     logger.info("[API] /api/push/subscribe вызван")
-    logger.info(f"[API] Headers: {dict(request.headers)}")
-    logger.info(f"[API] Content-Type: {request.content_type}")
-    logger.info(f"[API] Is JSON: {request.is_json}")
+    logger.info(f"[API] Headers: {{dict(request.headers)}}")
+    logger.info(f"[API] Content-Type: {{request.content_type}}")
+    logger.info(f"[API] Is JSON: {{request.is_json}}")
 
     try:
         data = request.get_json()
-        logger.info(f"[API] Received data: {data}")
+        logger.info(f"[API] Received data: {{data}}")
     except Exception as e:
-        logger.error(f"[API] Error parsing JSON: {e}")
+        logger.error(f"[API] Error parsing JSON: {{e}}")
         return jsonify({"success": False, "error": "Invalid JSON"}), 400
 
     if not data:
@@ -1914,62 +1914,81 @@ def push_subscribe():
 
     try:
         if 'subscription' not in data:
-            return jsonify({'error': 'Неверные данные подписки'}), 400
+            logger.error("[API] 'subscription' not in data")
+            return jsonify({'error': 'Неверные данные подписки (отсутствует ключ subscription)'}), 400
 
         subscription_data = data['subscription']
+        if not isinstance(subscription_data, dict):
+            logger.error(f"[API] 'subscription' is not a dictionary: {{type(subscription_data)}}")
+            return jsonify({'error': 'Неверные данные подписки (subscription не словарь)'}), 400
 
-        # Извлекаем данные подписки
         endpoint = subscription_data.get('endpoint')
         keys = subscription_data.get('keys', {})
+        if not isinstance(keys, dict):
+            logger.error(f"[API] 'keys' is not a dictionary: {{type(keys)}}")
+            return jsonify({'error': 'Неверные данные подписки (keys не словарь)'}), 400
+
         p256dh_key = keys.get('p256dh')
         auth_key = keys.get('auth')
 
         if not all([endpoint, p256dh_key, auth_key]):
-            return jsonify({'error': 'Неполные данные подписки'}), 400
+            logger.error(f"[API] Incomplete subscription data: endpoint={{bool(endpoint)}}, p256dh={{bool(p256dh_key)}}, auth={{bool(auth_key)}}")
+            return jsonify({'error': 'Неполные данные подписки (отсутствует endpoint, p256dh или auth)'}), 400
 
-        # Получаем User-Agent
+        logger.info(f"[API_SUB_RAW] User {{current_user.id}}: Raw Endpoint: {{endpoint}}")
+
+        # Адаптируем FCM endpoint перед сохранением
+        adapted_endpoint = endpoint
+        if "fcm.googleapis.com/fcm/send/" in endpoint:
+            adapted_endpoint = endpoint.replace("fcm.googleapis.com/fcm/send/", "fcm.googleapis.com/wp/")
+            logger.info(f"[API_SUB_ADAPT] User {{current_user.id}}: Adapted FCM Endpoint: {{adapted_endpoint}}")
+        else:
+            logger.info(f"[API_SUB_ADAPT] User {{current_user.id}}: Endpoint not FCM, no adaptation: {{adapted_endpoint}}")
+
+
         user_agent = request.headers.get('User-Agent', '')
 
-        # Проверяем, существует ли уже такая подписка
+        # Деактивируем все существующие активные подписки пользователя перед добавлением/обновлением новой
+        logger.info(f"[API_SUB_DEACTIVATE_OLD] User {{current_user.id}}: Деактивация старых активных подписок...")
+        PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).update({"is_active": False})
+        # Коммит здесь не нужен, он будет ниже
+
         existing_subscription = PushSubscription.query.filter_by(
             user_id=current_user.id,
-            endpoint=endpoint
+            endpoint=adapted_endpoint
         ).first()
 
         if existing_subscription:
-            # Обновляем существующую подписку
+            logger.info(f"[API_SUB_UPDATE] User {{current_user.id}}: Updating existing subscription ID {{existing_subscription.id}} for endpoint {{adapted_endpoint}}")
             existing_subscription.p256dh_key = p256dh_key
             existing_subscription.auth_key = auth_key
             existing_subscription.user_agent = user_agent
             existing_subscription.last_used = datetime.now(timezone.utc)
             existing_subscription.is_active = True
         else:
-            # Создаем новую подписку
+            logger.info(f"[API_SUB_NEW] User {{current_user.id}}: Creating new subscription for endpoint {{adapted_endpoint}}")
             new_subscription = PushSubscription(
                 user_id=current_user.id,
-                endpoint=endpoint,
+                endpoint=adapted_endpoint, # Сохраняем адаптированный эндпоинт
                 p256dh_key=p256dh_key,
                 auth_key=auth_key,
                 user_agent=user_agent
             )
             db.session.add(new_subscription)
 
-        # Включаем браузерные уведомления для пользователя
         current_user.browser_notifications_enabled = True
-
         db.session.commit()
 
-        logger.info(f"Пользователь {current_user.id} подписался на пуш-уведомления")
-
+        logger.info(f"Пользователь {{current_user.id}} успешно подписался/обновил подписку на пуш-уведомления (Endpoint: {{adapted_endpoint}})")
         return jsonify({
             'success': True,
-            'message': 'Подписка на уведомления успешно оформлена'
+            'message': 'Подписка на уведомления успешно оформлена/обновлена'
         })
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Ошибка при подписке на пуш-уведомления: {e}")
-        return jsonify({'error': 'Ошибка сервера'}), 500
+        logger.error(f"Ошибка при подписке на пуш-уведомления для пользователя {{current_user.id if current_user and current_user.is_authenticated else 'Unknown'}}: {{e}}", exc_info=True)
+        return jsonify({'error': 'Ошибка сервера при обработке подписки'}), 500
 
 
 @main.route("/api/push/unsubscribe", methods=["POST"])
