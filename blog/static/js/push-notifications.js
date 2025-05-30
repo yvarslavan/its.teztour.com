@@ -364,25 +364,31 @@ class PushNotificationManager {
     }
 
     async unsubscribe() {
+        console.log('[PushManager] Отписка от уведомлений...');
         try {
-            console.log('[PushManager] Отписка от уведомлений...');
-
             if (this.subscription) {
                 await this.subscription.unsubscribe();
+                console.log('[PushManager] Локальная подписка отменена.');
             }
 
             // Уведомляем сервер
-            await this.unsubscribeFromServer();
+            await this.unsubscribeFromServer(); // Этот метод должен выбрасывать ошибку при неудаче
+            console.log('[PushManager] Сервер уведомлен об отписке.');
 
             this.subscription = null;
             this.isSubscribed = false;
-            // this.updateUI(); // УДАЛЕНО - account.html обновит UI
+            // this.updateUI(); // УДАЛЕНО - account.html обновит UI на основе результата
 
             this.showSuccess('Браузерные уведомления отключены');
-
+            // Нет необходимости в явном `return true;` здесь, если ошибки пробрасываются.
+            // Успешное завершение этого метода будет означать успех для вызывающей обертки.
+            return { success: true }; // Возвращаем объект в случае успеха
         } catch (error) {
-            console.error('[PushManager] Ошибка отписки:', error);
-            this.showError('Не удалось отключить уведомления: ' + error.message);
+            console.error('[PushManager] Ошибка отписки (детально):', error);
+            // Используем error.message, если error является экземпляром Error, иначе преобразуем в строку
+            const errorMessage = (error instanceof Error) ? error.message : String(error);
+            this.showError('Не удалось отключить уведомления: ' + errorMessage);
+            throw error; // Важно: пробрасываем ошибку дальше
         }
     }
 
@@ -460,7 +466,7 @@ class PushNotificationManager {
     }
 
     async sendTestNotification() {
-        this.logInfo('Отправка запроса на тестовое уведомление...');
+        console.info('[PushManager-Test] Отправка запроса на тестовое уведомление...');
         try {
             const response = await fetch('/api/push/test', {
                 method: 'POST',
@@ -471,8 +477,8 @@ class PushNotificationManager {
             });
 
             const responseData = await response.json(); // Сначала получаем JSON
-            this.logInfo(`[PushManager-Test] Raw response status: ${response.status}`);
-            this.logInfo(`[PushManager-Test] Raw response data: ${JSON.stringify(responseData)}`); // Логируем весь ответ
+            console.info(`[PushManager-Test] Raw response status: ${response.status}`);
+            console.info(`[PushManager-Test] Raw response data: ${JSON.stringify(responseData)}`);
 
             if (response.ok || response.status === 207) { // 200 OK или 207 Multi-Status
                 let message = responseData.message || 'Тестовое уведомление обработано.';
@@ -480,7 +486,7 @@ class PushNotificationManager {
                     message += ` Успешно: ${responseData.successful_sends}/${responseData.total_attempts}.`;
                 }
                 this.showSuccess(message);
-                this.logSuccess(`[PushManager-Test] ${message} Детали: ${JSON.stringify(responseData.details)}`);
+                console.info(`[PushManager-Test] ${message} Детали: ${JSON.stringify(responseData.details)}`);
             } else {
                 // Обрабатываем ошибки, используя поле error из JSON, если оно есть
                 let errorMessage = responseData.error || `Ошибка ${response.status}`;
@@ -490,11 +496,11 @@ class PushNotificationManager {
                      errorMessage += `: ${responseData.details}`;
                 }
                 this.showError(`Ошибка отправки тестового уведомления: ${errorMessage}`);
-                this.logError(`[PushManager-Test] Ошибка отправки: ${errorMessage}. Status: ${response.status}. Details: ${JSON.stringify(responseData.details)}`);
+                console.error(`[PushManager-Test] Ошибка отправки: ${errorMessage}. Status: ${response.status}. Details: ${JSON.stringify(responseData.details)}`);
             }
         } catch (error) {
             this.showError('Ошибка отправки тестового уведомления: Ошибка сети или ответа сервера.');
-            this.logError('[PushManager-Test] Исключение при отправке тестового уведомления: ' + error.toString());
+            console.error('[PushManager-Test] Исключение при отправке тестового уведомления: ' + error.toString());
             console.error("[PushManager-Test] Send test notification error:", error);
         }
     }
@@ -735,13 +741,42 @@ window.PushNotificationManager = {
 
     async unsubscribe() {
         if (!this.instance || !this.instance.isInitialized) {
+            console.log('[PushManager Global Unsubscribe] Экземпляр не инициализирован, вызываю init...');
             await this.init();
         }
         try {
-            await this.instance.unsubscribe();
-            return { success: true };
+            console.log('[PushManager Global Unsubscribe] Вызов this.instance.unsubscribe()...');
+            const result = await this.instance.unsubscribe(); // Получаем результат
+            // Проверяем, что результат действительно успешный, если this.instance.unsubscribe() что-то вернул
+            if (result && result.success) {
+                console.log('[PushManager Global Unsubscribe] this.instance.unsubscribe() успешно выполнен. Возвращаю { success: true }');
+                return { success: true };
+            } else {
+                // Если this.instance.unsubscribe() не вернул { success: true } (например, вернул true или undefined из-за старой логики)
+                // или вернул { success: false, ... } (хотя должен был кинуть ошибку)
+                // мы должны это обработать как неожиданное поведение или ошибку.
+                // Однако, с текущей логикой this.instance.unsubscribe он либо вернет {success: true} либо кинет ошибку.
+                // Этот else блок больше для подстраховки от будущих изменений или недопонимания.
+                console.warn('[PushManager Global Unsubscribe] this.instance.unsubscribe() не вернул ожидаемый объект { success: true }, но и не выбросил ошибку. Результат:', result);
+                // По умолчанию считаем, что если ошибки не было, то все хорошо, но это странно.
+                // Для большей строгости можно здесь возвращать ошибку.
+                // Пока оставим так, так как this.instance.unsubscribe должен кидать ошибку.
+                // Если мы сюда попали, значит this.instance.unsubscribe() вернул что-то кроме {success: true} без ошибки.
+                // Это означает, что логика отписки в экземпляре могла завершиться, но не так, как ожидалось.
+                // Лучше вернуть успех, т.к. экземпляр не кинул ошибку.
+                 return { success: true };
+            }
         } catch (error) {
-            return { success: false, error: error.message };
+            console.error('[PushManager Global Unsubscribe] Ошибка при вызове this.instance.unsubscribe():', error);
+            // Улучшенная обработка для получения сообщения об ошибке
+            let errorMessage = 'Неизвестная ошибка при отписке';
+            if (error instanceof Error && error.message) {
+                errorMessage = error.message;
+            } else if (error) {
+                errorMessage = String(error);
+            }
+            console.log(`[PushManager Global Unsubscribe] Возвращаю { success: false, error: "${errorMessage}" }`);
+            return { success: false, error: errorMessage };
         }
     }
 };
