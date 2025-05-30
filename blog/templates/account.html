@@ -1925,6 +1925,12 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+    const PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER = {{ push_subscription_active|tojson }};
+    console.log('[Account] Initial subscription state from server:', PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER);
+
+    // Сразу устанавливаем начальное состояние UI на основе данных с сервера
+    setInitialPushUIStateFromServer(PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER);
+
     console.log('[Account] DOM загружен, начинаю инициализацию');
 
     // Сразу проверяем наличие элементов браузерных уведомлений
@@ -2224,74 +2230,98 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Инициализация браузерных уведомлений
-    if (typeof window.PushNotificationManager !== 'undefined') {
-        console.log('[Account] Инициализация PushNotificationManager');
+    // Удаляем предыдущий блок инициализации PushNotificationManager (и немедленный, и тот что в setTimeout)
+    // Вместо него будет новый блок ниже:
 
-        // Инициализируем менеджер уведомлений
-        window.PushNotificationManager.init().then(() => {
-            console.log('[Account] PushNotificationManager инициализирован успешно');
+    // Инициализация браузерных уведомлений с задержкой для гарантированной загрузки модуля
+    setTimeout(() => {
+        if (typeof window.PushNotificationManagerInstance !== 'undefined' && typeof window.PushNotificationManagerInstance.init === 'function') {
+            console.log('[Account] window.PushNotificationManagerInstance object and init method found, proceeding with init.');
+            window.PushNotificationManagerInstance.init()
+                .then(() => {
+                    console.log('[Account] PushNotificationManagerInstance.init() completed successfully.');
+                    updatePushNotificationUI();
+                    setupPushNotificationHandlers();
+                })
+                .catch(error => {
+                    console.error('[Account] Error initializing PushNotificationManagerInstance:', error);
+                    displayPushErrorState(`Ошибка инициализации push-уведомлений: ${error.message}`);
+                });
+        } else {
+            console.warn('[Account] window.PushNotificationManagerInstance or its init method is not available after timeout.');
+            displayPushErrorState('Модуль управления push-уведомлениями не загрузился или неисправен (экземпляр или метод init не найден). Пожалуйста, обновите страницу или попробуйте позже.');
+        }
+    }, 750);
 
-            // Обновляем UI элементы
-            updatePushNotificationUI();
+    function setInitialPushUIStateFromServer(isSubscribed) {
+        console.log('[Account] Setting initial UI state based on server data:', isSubscribed);
+        const enableBtn = document.getElementById('enablePushNotifications');
+        const disableBtn = document.getElementById('disablePushNotifications');
+        const testBtn = document.getElementById('testPushNotification');
+        const statusText = document.getElementById('pushNotificationStatus');
+        const statusIcon = document.getElementById('pushNotificationIcon');
+        const statusDescription = document.getElementById('push-status-description');
 
-            // Добавляем обработчики событий
-            setupPushNotificationHandlers();
+        if (!enableBtn || !disableBtn || !testBtn || !statusText || !statusIcon || !statusDescription) {
+            console.warn('[Account] UI elements for initial push state not fully found. Skipping initial UI setup based on server data.');
+            return;
+        }
 
-        }).catch(error => {
-            console.error('[Account] Ошибка инициализации PushNotificationManager:', error);
-            updatePushNotificationUI(false, 'Ошибка инициализации');
-        });
-    } else {
-        console.warn('[Account] PushNotificationManager не найден');
-        updatePushNotificationUI(false, 'Модуль уведомлений недоступен');
+        // Проверка поддержки Push API в браузере (синхронно)
+        if (!('serviceWorker' in navigator && 'PushManager' in window)) {
+            statusText.textContent = 'Не поддерживается';
+            statusIcon.className = 'fas fa-ban text-danger'; // Иконка запрета
+            statusDescription.textContent = 'Ваш браузер не поддерживает push-уведомления.';
+            enableBtn.style.display = 'none';
+            disableBtn.style.display = 'none';
+            testBtn.style.display = 'none';
+            return;
+        }
+
+        // Отображаем состояние, известное серверу, с пометкой о последующей проверке
+        if (isSubscribed) {
+            statusText.textContent = 'Включены (сервер)';
+            statusIcon.className = 'fas fa-check-circle text-success'; // Зеленая галочка
+            statusDescription.textContent = 'По данным сервера, подписка активна. Проверяем актуальный статус в браузере...';
+            enableBtn.style.display = 'none';
+            disableBtn.style.display = 'inline-block';
+            testBtn.style.display = 'inline-block';
+        } else {
+            statusText.textContent = 'Отключены (сервер)';
+            statusIcon.className = 'fas fa-times-circle text-danger'; // Красный крестик
+            statusDescription.textContent = 'По данным сервера, подписка неактивна. Проверяем актуальный статус в браузере...';
+            enableBtn.style.display = 'inline-block';
+            disableBtn.style.display = 'none';
+            testBtn.style.display = 'none';
+        }
     }
 
-    // Инициализация браузерных уведомлений с задержкой
-    setTimeout(() => {
-        if (typeof window.PushNotificationManager !== 'undefined') {
-            console.log('[Account] Инициализация PushNotificationManager');
+    function displayPushErrorState(message) {
+        console.log(`[Account] Displaying push error state: ${message}`);
+        const statusText = document.getElementById('pushNotificationStatus');
+        const statusIcon = document.getElementById('pushNotificationIcon');
+        const statusDescription = document.getElementById('push-status-description');
+        const enableBtn = document.getElementById('enablePushNotifications');
+        const disableBtn = document.getElementById('disablePushNotifications');
+        const testBtn = document.getElementById('testPushNotification');
 
-            // Инициализируем менеджер уведомлений
-            window.PushNotificationManager.init().then(() => {
-                console.log('[Account] PushNotificationManager инициализирован успешно');
-
-                // Обновляем UI элементы
-                updatePushNotificationUI();
-
-                // Добавляем обработчики событий
-                setupPushNotificationHandlers();
-
-            }).catch(error => {
-                console.error('[Account] Ошибка инициализации PushNotificationManager:', error);
-                updatePushNotificationUI(false, 'Ошибка инициализации');
-            });
-        } else {
-            console.warn('[Account] PushNotificationManager не найден, повторная попытка...');
-
-            // Еще одна попытка через 2 секунды
-            setTimeout(() => {
-                if (typeof window.PushNotificationManager !== 'undefined') {
-                    console.log('[Account] Повторная инициализация PushNotificationManager');
-                    window.PushNotificationManager.init().then(() => {
-                        updatePushNotificationUI();
-                        setupPushNotificationHandlers();
-                    }).catch(error => {
-                        console.error('[Account] Повторная ошибка инициализации:', error);
-                        updatePushNotificationUI(false, 'Модуль уведомлений недоступен');
-                    });
-                } else {
-                    console.error('[Account] PushNotificationManager так и не загрузился');
-                    updatePushNotificationUI(false, 'Модуль уведомлений недоступен');
-                }
-            }, 2000);
+        if (!statusText || !statusIcon || !statusDescription || !enableBtn || !disableBtn || !testBtn) {
+            console.error("[Account] Critical UI elements for push notifications missing for error display.");
+            return;
         }
-    }, 500); // Задержка 500мс
+
+        statusText.textContent = 'Ошибка';
+        statusIcon.className = 'fas fa-exclamation-triangle text-danger';
+        statusDescription.textContent = message;
+
+        // Скрываем кнопки действий при ошибке, чтобы пользователь не пытался с ними взаимодействовать
+        enableBtn.style.display = 'none';
+        disableBtn.style.display = 'none';
+        testBtn.style.display = 'none';
+    }
 
     function updatePushNotificationUI() {
-        console.log('[Account] Обновление UI браузерных уведомлений');
-
-        // Получаем элементы UI с детальным логированием
+        console.log('[Account] Обновление UI браузерных уведомлений (финальное, после init)');
         let enableBtn = document.getElementById('enablePushNotifications');
         let disableBtn = document.getElementById('disablePushNotifications');
         let testBtn = document.getElementById('testPushNotification');
@@ -2305,7 +2335,7 @@ document.addEventListener('DOMContentLoaded', function () {
         console.log('  statusText:', statusText);
         console.log('  statusIcon:', statusIcon);
 
-        // Если элементы statusText и statusIcon не найдены, создаем их
+        // Если элементы statusText и statusIcon не найдены, создаем их (этот блок можно оставить для надежности, если есть сомнения в HTML)
         if (!statusText || !statusIcon) {
             const statusIndicator = document.getElementById('push-status-indicator');
             console.log('[Account] statusIndicator найден:', statusIndicator);
@@ -2342,12 +2372,14 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         // Проверяем статус через глобальный экземпляр
-        if (window.PushNotificationManager && window.PushNotificationManager.instance) {
-            const manager = window.PushNotificationManager.instance;
+        if (window.PushNotificationManagerInstance && typeof window.PushNotificationManagerInstance.isSupported !== 'undefined') { // Проверяем свойство isSupported для уверенности, что это наш объект
+            const manager = window.PushNotificationManagerInstance;
+            const statusDescription = document.getElementById('push-status-description');
 
             if (!manager.isSupported) {
                 statusText.textContent = 'Не поддерживается';
-                statusIcon.className = 'fas fa-times-circle text-danger';
+                statusIcon.className = 'fas fa-ban text-danger';
+                if(statusDescription) statusDescription.textContent = 'Ваш браузер не поддерживает push-уведомления.';
                 enableBtn.style.display = 'none';
                 disableBtn.style.display = 'none';
                 testBtn.style.display = 'none';
@@ -2357,20 +2389,25 @@ document.addEventListener('DOMContentLoaded', function () {
             if (manager.isSubscribed) {
                 statusText.textContent = 'Включены';
                 statusIcon.className = 'fas fa-check-circle text-success';
+                if(statusDescription) statusDescription.textContent = 'Вы подписаны на push-уведомления.';
                 enableBtn.style.display = 'none';
                 disableBtn.style.display = 'inline-block';
                 testBtn.style.display = 'inline-block';
             } else {
                 statusText.textContent = 'Отключены';
                 statusIcon.className = 'fas fa-times-circle text-danger';
+                if(statusDescription) statusDescription.textContent = 'Вы не подписаны на push-уведомления. Нажмите "Включить", чтобы получать их.';
                 enableBtn.style.display = 'inline-block';
                 disableBtn.style.display = 'none';
                 testBtn.style.display = 'none';
             }
         } else {
-            // Если менеджер еще не инициализирован
+            // Эта ветка не должна активно использоваться, если displayPushErrorState обрабатывает отсутствие менеджера
+            // Но оставим как фоллбэк для "Проверка..."
+            const statusDescription = document.getElementById('push-status-description');
             statusText.textContent = 'Проверка...';
             statusIcon.className = 'fas fa-spinner fa-spin text-info';
+            if(statusDescription) statusDescription.textContent = 'Идет проверка статуса подписки на уведомления...';
             enableBtn.style.display = 'none';
             disableBtn.style.display = 'none';
             testBtn.style.display = 'none';
@@ -2385,7 +2422,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const testBtn = document.getElementById('testPushNotification');
 
         if (!enableBtn || !disableBtn || !testBtn) {
-            console.log('[Account] Элементы управления уведомлениями не найдены');
+            console.log('[Account] Элементы управления уведомлениями не найдены для обработчиков');
             return;
         }
 
@@ -2393,8 +2430,9 @@ document.addEventListener('DOMContentLoaded', function () {
         enableBtn.addEventListener('click', async function() {
             console.log('[Account] Нажата кнопка включения уведомлений');
 
-            if (!window.PushNotificationManager || !window.PushNotificationManager.instance) {
-                console.error('[Account] PushNotificationManager не инициализирован');
+            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.subscribe !== 'function') {
+                console.error('[Account] PushNotificationManagerInstance или его метод subscribe не инициализирован');
+                alert('Ошибка: Менеджер уведомлений не готов.');
                 return;
             }
 
@@ -2403,7 +2441,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 enableBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Включение...';
 
                 // Добавляем таймаут для всей операции
-                const subscribePromise = window.PushNotificationManager.subscribe();
+                const subscribePromise = window.PushNotificationManagerInstance.subscribe();
                 const timeoutPromise = new Promise((_, reject) => {
                     setTimeout(() => reject(new Error('Таймаут операции подписки')), 15000);
                 });
@@ -2417,7 +2455,7 @@ document.addEventListener('DOMContentLoaded', function () {
                      alert('Ошибка включения уведомлений: ' + result.error);
                 } else if (!result) {
                     // Этого не должно быть, если PushManager.subscribe всегда возвращает объект
-                    console.error('[Account] window.PushNotificationManager.subscribe() не вернул результат.');
+                    console.error('[Account] window.PushNotificationManagerInstance.subscribe() не вернул результат.');
                      alert('Произошла неожиданная ошибка при попытке включить уведомления.');
                 }
             } catch (error) {
@@ -2444,8 +2482,9 @@ document.addEventListener('DOMContentLoaded', function () {
         disableBtn.addEventListener('click', async function() {
             console.log('[Account] Нажата кнопка отключения уведомлений');
 
-            if (!window.PushNotificationManager || !window.PushNotificationManager.instance) {
-                console.error('[Account] PushNotificationManager не инициализирован');
+            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.unsubscribe !== 'function') {
+                console.error('[Account] PushNotificationManagerInstance или его метод unsubscribe не инициализирован');
+                alert('Ошибка: Менеджер уведомлений не готов.');
                 return;
             }
 
@@ -2453,7 +2492,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 disableBtn.disabled = true;
                 disableBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отключение...';
 
-                const result = await window.PushNotificationManager.unsubscribe();
+                const result = await window.PushNotificationManagerInstance.unsubscribe();
 
                 if (result.success) {
                     updatePushNotificationUI();
@@ -2472,8 +2511,13 @@ document.addEventListener('DOMContentLoaded', function () {
         testBtn.addEventListener('click', async function() {
             console.log('[Account] Нажата кнопка тестового уведомления');
 
-            if (!window.PushNotificationManager || !window.PushNotificationManager.instance) {
-                console.error('[Account] PushNotificationManager не инициализирован');
+            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.sendTestNotification !== 'function') {
+                console.error('[Account] PushNotificationManagerInstance или его метод sendTestNotification не инициализирован для теста');
+                // Для sendTestNotification в PushNotificationManager он был внутренним,
+                // но если он вызывается извне, он должен быть частью публичного API класса
+                // или тестовый запрос должен идти на сервер, как это было в предыдущей версии.
+                // Текущий PushNotificationManager.sendTestNotification() делает запрос на /api/push/test, что правильно.
+                alert('Ошибка: Менеджер уведомлений не готов для теста.');
                 return;
             }
 

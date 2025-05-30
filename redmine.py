@@ -26,6 +26,7 @@ import xmpp
 from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
 from blog import db
 import uuid
+from blog.notification_service import notification_service, NotificationData, NotificationType, WebPushException
 
 
 # Настройка базовой конфигурации логирования
@@ -146,6 +147,7 @@ def get_project_name_from_id(connection, project_id):
 def get_status_name_from_id(connection, status_id):
     sql = "SELECT IFNULL(name,'') as name FROM u_statuses WHERE id=%s"
     cursor = None
+    status_name = None  # Инициализация по умолчанию
     try:
         cursor = connection.cursor()
         cursor.execute(sql, (status_id,))
@@ -163,6 +165,7 @@ def get_status_name_from_id(connection, status_id):
 def get_priority_name_from_id(connection, priority_id):
     sql = "SELECT IFNULL(name,'') as name FROM u_Priority WHERE id=%s"
     cursor = None
+    priority_name = None  # Инициализация по умолчанию
     try:
         cursor = connection.cursor()
         cursor.execute(sql, (priority_id,))
@@ -732,11 +735,68 @@ def process_status_changes(connection, cursor, email_part, current_user_id, easy
                             date_created=date_created_dt # Используем преобразованную дату
                         )
                         db.session.add(new_notification_status)
-                        db.session.flush()
+                        db.session.flush() # Flush чтобы получить new_notification_status.id для логов и потенциального использования
 
                         log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ДОБАВЛЕНО уведомление о статусе. SourceID={source_id}, SQLiteID={new_notification_status.id}, IssueID={issue_id}.")
                         processed_in_this_run += 1
                         processed_ids_in_this_run.append(source_id)
+
+                        # ОТПРАВКА PUSH-УВЕДОМЛЕНИЯ
+                        if user: # Убедимся что пользователь есть (загружен ранее в функции)
+                            try:
+                                # Используем данные из new_notification_status (SQLite)
+                                current_issue_id = new_notification_status.issue_id
+                                new_status_id = new_notification_status.new_status
+                                old_status_id = new_notification_status.old_status # на случай если понадобится
+
+                                # Получаем имена статусов из Redmine DB, используя ID из SQLite
+                                status_name_to = get_status_name_from_id(connection, new_status_id)
+                                status_name_from = get_status_name_from_id(connection, old_status_id)
+
+                                # Тему задачи берем из row_data (из Redmine u_its_update_status), т.к. ее нет в Notifications
+                                subject = row_data.get("OldSubj", "Без темы")
+
+                                title = f"Изменен статус задачи #{current_issue_id}"
+                                # Формируем сообщение согласно требованию: "статус заявки номер X изменен на Y"
+                                # Добавляем тему задачи для контекста, если это полезно
+                                message = f"Статус задачи #{current_issue_id} ({subject}) изменен на '{status_name_to or new_status_id}'."
+
+                                # Если нужно строго следовать "статус заявки номер X изменен на Y" без темы:
+                                # message = f"Статус задачи #{current_issue_id} изменен на '{status_name_to or new_status_id}'."
+
+                                notification_payload_for_push = NotificationData(
+                                    user_id=current_user_id,
+                                    issue_id=current_issue_id, # Используем current_issue_id
+                                    notification_type=NotificationType.STATUS_CHANGE,
+                                    title=title,
+                                    message=message,
+                                    data={
+                                        'issue_id': current_issue_id,
+                                        'old_status_id': old_status_id,
+                                        'new_status_id': new_status_id,
+                                        'old_status_name': status_name_from,
+                                        'new_status_name': status_name_to,
+                                        'subject': subject,
+                                        'url': f"/my-issues/{current_issue_id}" # ИЗМЕНЕНО ЗДЕСЬ
+                                    },
+                                    created_at=new_notification_status.date_created
+                                )
+                                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Попытка PUSH для SQLiteID={new_notification_status.id}, IssueID={current_issue_id}. Payload: {notification_payload_for_push.to_dict()}")
+                                push_service_instance = notification_service.push_service
+                                push_service_instance.send_push_notification(notification_payload_for_push)
+                                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: PUSH для SQLiteID={new_notification_status.id} ВЫЗВАН.")
+
+                            except AttributeError as e_attr:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Ошибка атрибута при доступе к push_service для SQLiteID={new_notification_status.id}. {e_attr}", exc_info=True)
+                                errors_in_this_run.append(f"Push service attribute error for SourceID={source_id}: {str(e_attr)}")
+                            except WebPushException as e_wp:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА WebPushException для SQLiteID={new_notification_status.id}. {e_wp}", exc_info=True)
+                                errors_in_this_run.append(f"WebPushException for SourceID={source_id}: {str(e_wp)}")
+                            except Exception as e_push:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА PUSH для SQLiteID={new_notification_status.id}. {e_push}", exc_info=True)
+                                errors_in_this_run.append(f"Push failed for SourceID={source_id}: {str(e_push)}")
+                        else:
+                            log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Пользователь не найден, PUSH не отправлен для SQLiteID={new_notification_status.id}.")
 
             except Exception as e_row:
                 log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА обработки MySQL SourceID={source_id}, IssueID={issue_id}. {e_row}", exc_info=True)
@@ -787,37 +847,37 @@ def process_added_notes(connection, cursor, email_part, current_user_id, easy_em
 
     processed_in_this_run = 0
     processed_ids_in_this_run = []
-    errors_in_this_run = []
+    errors_in_this_run_notes = []
 
     user = User.query.get(current_user_id)
     if not user:
         log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Пользователь не найден в SQLite, PUSH (комментарии) не будут отправляться.")
 
     if rows_added_notes:
-        for row_data in rows_added_notes:
-            source_id = row_data["id"]
-            issue_id = row_data["issue_id"]
+        for row_add_notes in rows_added_notes:
+            source_id_notes = row_add_notes["id"]
+            issue_id_notes = row_add_notes["issue_id"]
             loop_start_time = time.time()
             log_row_data = {
-                'Author': row_data.get('Author'),
-                'RowDateCreated': row_data.get('RowDateCreated'),
-                'Notes_len': len(row_data.get('Notes','')),
+                'Author': row_add_notes.get('Author'),
+                'RowDateCreated': row_add_notes.get('RowDateCreated'),
+                'Notes_len': len(row_add_notes.get('Notes','')),
             }
-            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Обработка MySQL SourceID={source_id}, IssueID={issue_id}, Data: {log_row_data}")
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Обработка MySQL SourceID={source_id_notes}, IssueID={issue_id_notes}, Data: {log_row_data}")
 
             try:
                 with db.session.begin_nested():
                     existing_note = NotificationsAddNotes.query.filter_by(
                         user_id=current_user_id,
-                        issue_id=issue_id,
-                        author=row_data["Author"],
-                        notes=row_data["Notes"],
-                        date_created=row_data["date_created"]
+                        issue_id=issue_id_notes,
+                        author=row_add_notes["Author"],
+                        notes=row_add_notes["Notes"],
+                        date_created=row_add_notes["date_created"]
                     ).first()
 
                     if not existing_note:
                         # Преобразование date_created из строки u_its_add_notes в datetime
-                        date_created_str = row_data["date_created"]
+                        date_created_str = row_add_notes["date_created"]
                         date_created_dt = None
                         if date_created_str:
                             if isinstance(date_created_str, datetime): # Если уже datetime (маловероятно из DictCursor, но проверим)
@@ -832,41 +892,84 @@ def process_added_notes(connection, cursor, email_part, current_user_id, easy_em
                                     try:
                                         date_created_dt = datetime.fromisoformat(date_created_str)
                                     except ValueError:
-                                        log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Не удалось преобразовать date_created='{date_created_str}' в datetime для SourceID={source_id}")
+                                        log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Не удалось преобразовать date_created='{date_created_str}' в datetime для SourceID={source_id_notes}")
                                         # Можно установить текущее время или пропустить запись, в зависимости от бизнес-логики
                                         # В данном случае, если дата невалидна, лучше пропустить или залогировать и обработать ошибку
                                         # пока оставляем None, что может привести к ошибке БД если поле NOT NULL без default
                                         # Модель NotificationsAddNotes.date_created = db.Column(db.DateTime), так что None может быть проблемой
                                         # Если поле date_created обязательно, то здесь нужно либо кидать ошибку, либо использовать фоллбэк
-                                        # errors_in_this_run.append(f"Invalid date_format for comment SourceID={source_id}")
+                                        # errors_in_this_run_notes.append(f"Invalid date_format for comment SourceID={source_id_notes}")
                                         # continue # Пропустить эту запись
                                         date_created_dt = datetime.now() # Временный фоллбек, чтобы избежать None для DateTime поля
                         else:
-                            log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: date_created is None for SourceID={source_id}. Используем текущее время.")
+                            log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: date_created is None for SourceID={source_id_notes}. Используем текущее время.")
                             date_created_dt = datetime.now() # Фоллбэк, если дата отсутствует
 
 
-                        new_notification_note = NotificationsAddNotes(
+                        new_notification_add_notes = NotificationsAddNotes(
                             user_id=current_user_id,
-                            issue_id=issue_id,
-                            author=row_data["Author"],
-                            notes=row_data["Notes"],
+                            issue_id=issue_id_notes,
+                            author=row_add_notes["Author"],
+                            notes=row_add_notes["Notes"],
                             date_created=date_created_dt, # Используем преобразованную или текущую дату
-                            source_id=source_id
+                            source_id=source_id_notes
                         )
-                        db.session.add(new_notification_note)
+                        db.session.add(new_notification_add_notes)
                         db.session.flush() # Чтобы получить ID до коммита, если нужно
 
-                        log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ДОБАВЛЕНО уведомление о комментарии. SourceID={source_id}, SQLiteID={new_notification_note.id}, IssueID={issue_id}.")
+                        log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ДОБАВЛЕНО уведомление о комментарии. SourceID={source_id_notes}, SQLiteID={new_notification_add_notes.id}, IssueID={issue_id_notes}.")
                         processed_in_this_run += 1
-                        processed_ids_in_this_run.append(source_id)
+                        processed_ids_in_this_run.append(source_id_notes)
 
-            except Exception as e_row:
-                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА обработки MySQL SourceID={source_id}, IssueID={issue_id} (комментарий). {e_row}", exc_info=True)
-                errors_in_this_run.append(f"Processing MySQL comment row SourceID={source_id} failed: {str(e_row)}")
+                        # ОТПРАВКА PUSH-УВЕДОМЛЕНИЯ О НОВОМ КОММЕНТАРИИ
+                        if user: # Убедимся что пользователь есть (загружен ранее в функции)
+                            try:
+                                title = f"Новый комментарий к задаче #{issue_id_notes}"
+                                comment_preview = row_add_notes["Notes"]
+                                if len(comment_preview) > 100:
+                                    comment_preview = comment_preview[:97] + "..."
+
+                                message = f'К задаче #{issue_id_notes} добавлен новый комментарий: "{comment_preview}".'
+
+                                notification_payload_for_push = NotificationData(
+                                    user_id=current_user_id,
+                                    issue_id=issue_id_notes,
+                                    notification_type=NotificationType.COMMENT_ADDED,
+                                    title=title,
+                                    message=message,
+                                    data={
+                                        'issue_id': issue_id_notes,
+                                        'comment_body_preview': comment_preview,
+                                        'author_comment': row_add_notes["Author"],
+                                        'url': f"/my-issues/{issue_id_notes}",
+                                        'comment_added_at': date_created_dt.isoformat()
+                                    },
+                                    created_at=new_notification_add_notes.date_created
+                                )
+                                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Попытка PUSH для SQLiteID={new_notification_add_notes.id} (комментарий). Payload: {notification_payload_for_push.to_dict()}")
+                                push_service_instance = notification_service.push_service
+                                push_service_instance.send_push_notification(notification_payload_for_push)
+                                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: PUSH для SQLiteID={new_notification_add_notes.id} (комментарий) ВЫЗВАН.")
+
+                            except AttributeError as e_attr:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Ошибка атрибута при доступе к push_service для SQLiteID={new_notification_add_notes.id} (комментарий). {e_attr}", exc_info=True)
+                                errors_in_this_run_notes.append(f"Push service attribute error for SourceID={source_id_notes} (comment): {str(e_attr)}")
+                            except WebPushException as e_wp:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА WebPushException для SQLiteID={new_notification_add_notes.id} (комментарий). {e_wp}", exc_info=True)
+                                errors_in_this_run_notes.append(f"WebPushException for SourceID={source_id_notes} (comment): {str(e_wp)}")
+                            except Exception as e_push:
+                                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА PUSH для SQLiteID={new_notification_add_notes.id} (комментарий). {e_push}", exc_info=True)
+                                errors_in_this_run_notes.append(f"Push failed for SourceID={source_id_notes} (comment): {str(e_push)}")
+                        else:
+                            log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Пользователь не найден, PUSH не отправлен для SQLiteID={new_notification_add_notes.id} (комментарий).")
+
+
+            except Exception as e_row_notes:
+                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА обработки MySQL SourceID={source_id_notes}, IssueID={issue_id_notes} (комментарий). {e_row_notes}", exc_info=True)
+                errors_in_this_run_notes.append(f"Processing MySQL comment row SourceID={source_id_notes} failed: {str(e_row_notes)}")
 
             loop_end_time = time.time()
-            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Завершение обработки MySQL SourceID={source_id} (комментарий). Время: {loop_end_time - loop_start_time:.2f} сек.")
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Завершение обработки MySQL SourceID={source_id_notes} (комментарий). Время: {loop_end_time - loop_start_time:.2f} сек.")
 
         if processed_in_this_run > 0:
             try:
@@ -874,12 +977,12 @@ def process_added_notes(connection, cursor, email_part, current_user_id, easy_em
                 log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: Финальный коммит {processed_in_this_run} новых уведомлений о комментариях.")
             except Exception as e_final_commit:
                 log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ОШИБКА финального коммита (комментарии). {e_final_commit}", exc_info=True)
-                errors_in_this_run.append(f"Final commit for added notes failed: {str(e_final_commit)}")
+                errors_in_this_run_notes.append(f"Final commit for added notes failed: {str(e_final_commit)}")
                 db.session.rollback()
 
     end_time_func = time.time()
-    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: ЗАВЕРШЕНИЕ обработки (комментарии). Обработано: {processed_in_this_run}. ID для MySQL удаления: {processed_ids_in_this_run}. Ошибки: {len(errors_in_this_run)}. Время: {end_time_func - start_time_func:.2f} сек.")
-    return processed_in_this_run, processed_ids_in_this_run, errors_in_this_run
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: ЗАВЕРШЕНИЕ обработки (комментарии). Обработано: {processed_in_this_run}. ID для MySQL удаления: {processed_ids_in_this_run}. Ошибки: {len(errors_in_this_run_notes)}. Время: {end_time_func - start_time_func:.2f} сек.")
+    return processed_in_this_run, processed_ids_in_this_run, errors_in_this_run_notes
 
 def delete_notifications(connection, ids_to_delete):
     try:
