@@ -86,13 +86,15 @@ class NotificationsAddNotes(db.Model):
     author = db.Column(db.Text)
     notes = db.Column(db.Text)
     date_created = db.Column(db.DateTime)
+    source_id = db.Column(db.Integer)
 
-    def __init__(self, user_id, issue_id, author, notes, date_created):
+    def __init__(self, user_id, issue_id, author, notes, date_created, source_id):
         self.user_id = user_id
         self.issue_id = issue_id
         self.author = author
         self.notes = notes
         self.date_created = date_created
+        self.source_id = source_id
 
 
 class PushSubscription(db.Model):

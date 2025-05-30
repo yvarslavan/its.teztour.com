@@ -371,10 +371,15 @@ def start_user_job(current_user_email, current_user_id, timeout):
         print(f"[DEBUG] Модуль notification_service доступен, импортирован успешно")
         print(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
 
+        # Создаем обертку, которая будет выполняться в контексте приложения
+        def job_function():
+            with current_app.app_context():
+                check_notifications_improved(current_user_email, current_user_id)
+
         scheduler.add_job( # <--- Используем импортированный scheduler
-            check_notifications_improved,  # Используем улучшенную функцию
-            "interval",
-            args=[current_user_email, current_user_id],
+            func=job_function,  # Используем обернутую функцию
+            trigger="interval",
+            # args теперь не нужны, так как они передаются через замыкание в job_function
             seconds=timeout,
             id=job_id,  # Уникальный идентификатор для задачи этого пользователя
             replace_existing=True,  # Заменяем предыдущую задачу, если она существовала

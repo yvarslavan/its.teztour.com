@@ -23,8 +23,9 @@ import pymysql.cursors
 from flask_login import current_user
 from flask import flash, current_app
 import xmpp
-from blog.models import Notifications, NotificationsAddNotes
+from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
 from blog import db
+import uuid
 
 
 # Настройка базовой конфигурации логирования
@@ -514,363 +515,446 @@ def get_count_notifications_add_notes(user_id):
 
 
 def check_notifications(user_email, current_user_id):
-    """
-    Проверка и загрузка новых уведомлений из Redmine DB (u_its_update_status, u_its_add_notes)
-    и сохранение их в локальную SQLite DB (notifications, notifications_add_notes).
-    Возвращает количество вновь обработанных уведомлений.
-    """
-    logger.info(f"[CHECK_NOTIFICATIONS] Начало проверки уведомлений для user_id: {current_user_id}, email: {user_email}")
+    logger_main = current_app.logger
+    run_id = uuid.uuid4()
+    start_time_check = time.time()
+    logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: НАЧАЛО проверки уведомлений.")
+
     connection_db = None
     cursor = None
     newly_processed_count = 0
+    # Возвращаем словарь с деталями, включая ошибки
+    processed_details = {"status_changes": 0, "added_notes": 0, "total_processed": 0, "errors": []}
 
     try:
-        # 1. Получаем соединение с базой данных Redmine
-        logger.debug(f"[CHECK_NOTIFICATIONS] Попытка подключения к Redmine DB: host={db_redmine_host}, db={db_redmine_name}")
+        logger_main.debug(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Попытка подключения к Redmine DB: host={db_redmine_host}, db={db_redmine_name}")
+        connect_start_time = time.time()
         connection_db = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        connect_end_time = time.time()
         if connection_db is None:
-            logger.error(f"[CHECK_NOTIFICATIONS] Не удалось подключиться к Redmine DB для user_id: {current_user_id}")
-            return 0 # Возвращаем 0, так как False может интерпретироваться как ошибка глубже
+            logger_main.error(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: НЕ УДАЛОСЬ подключиться к Redmine DB. Время: {connect_end_time - connect_start_time:.2f} сек.")
+            processed_details["errors"].append("Redmine DB connection failed")
+            # Не возвращаем 0, а обновляем детали и позволяем finally блоку отработать
+            # return processed_details # Это прервет выполнение, лучше дать finally отработать
+        else:
+            logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Успешное подключение к Redmine DB. Время: {connect_end_time - connect_start_time:.2f} сек.")
 
-        logger.info(f"[CHECK_NOTIFICATIONS] Успешное подключение к Redmine DB для user_id: {current_user_id}")
+            cursor_start_time = time.time()
+            cursor = get_database_cursor(connection_db) # get_database_cursor должен использовать current_app.logger или глобальный logger
+            cursor_end_time = time.time()
+            if cursor is None:
+                logger_main.error(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: НЕ УДАЛОСЬ получить курсор для Redmine DB. Время: {cursor_end_time - cursor_start_time:.2f} сек.")
+                processed_details["errors"].append("Redmine DB cursor failed")
+            else:
+                logger_main.debug(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Курсор Redmine DB получен. Время: {cursor_end_time - cursor_start_time:.2f} сек.")
 
-        # 2. Получаем курсор
-        cursor = get_database_cursor(connection_db)
-        if cursor is None:
-            logger.error(f"[CHECK_NOTIFICATIONS] Не удалось получить курсор для Redmine DB для user_id: {current_user_id}")
-            return 0
+                email_part = user_email.split('@')[0] if '@' in user_email else user_email
 
-        # 3. Подготовка параметров
-        email_part = user_email.split('@')[0] if '@' in user_email else user_email
-        easy_email_to = user_email # Используется для удаления
-        # count_vacuum_im_notifications сейчас не используется, передаем 0
-        # (старая логика для XMPP закомментирована в process_*)
+                logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Начало обработки status_changes.")
+                process_status_start_time = time.time()
+                # Передаем user_email как easy_email_to
+                s_count, s_ids, s_errors = process_status_changes(
+                    connection_db, cursor, email_part, current_user_id, user_email
+                )
+                process_status_end_time = time.time()
+                logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Завершена обработка status_changes. Найдено: {s_count}. Время: {process_status_end_time - process_status_start_time:.2f} сек.")
+                processed_details["status_changes"] = s_count
+                if s_errors: processed_details["errors"].extend(s_errors)
 
-        # 4. Обработка изменений статусов
-        logger.debug(f"[CHECK_NOTIFICATIONS] Вызов process_status_changes для user_id: {current_user_id}, email_part: {email_part}")
-        processed_status_count = process_status_changes(
-            connection_db, cursor, email_part, current_user_id, 0, easy_email_to
-        )
-        if processed_status_count > 0:
-            logger.info(f"[CHECK_NOTIFICATIONS] Обработано {processed_status_count} уведомлений об изменении статуса для user_id: {current_user_id}")
-            newly_processed_count += processed_status_count
-            # Удаляем обработанные уведомления о статусах из Redmine DB
-            logger.debug(f"[CHECK_NOTIFICATIONS] Попытка удаления обработанных status_changes из Redmine DB для easy_email_to: {easy_email_to}")
-            delete_notifications(connection_db, easy_email_to)
-            logger.info(f"[CHECK_NOTIFICATIONS] Удалены обработанные status_changes из Redmine DB для easy_email_to: {easy_email_to}")
+                if s_count > 0:
+                    newly_processed_count += s_count
+                    logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Попытка удаления {len(s_ids)} обработанных status_changes из Redmine DB ID: {s_ids}")
+                    delete_start_time = time.time()
+                    delete_notifications(connection_db, s_ids)
+                    delete_end_time = time.time()
+                    logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Завершено удаление status_changes. Время: {delete_end_time - delete_start_time:.2f} сек.")
 
-        # 5. Обработка добавленных комментариев
-        logger.debug(f"[CHECK_NOTIFICATIONS] Вызов process_added_notes для user_id: {current_user_id}, email_part: {email_part}")
-        processed_notes_count = process_added_notes(
-            connection_db, cursor, email_part, current_user_id, 0, easy_email_to
-        )
-        if processed_notes_count > 0:
-            logger.info(f"[CHECK_NOTIFICATIONS] Обработано {processed_notes_count} уведомлений о новых комментариях для user_id: {current_user_id}")
-            newly_processed_count += processed_notes_count
-            # Удаляем обработанные уведомления о комментариях из Redmine DB
-            logger.debug(f"[CHECK_NOTIFICATIONS] Попытка удаления обработанных added_notes из Redmine DB для easy_email_to: {easy_email_to}")
-            delete_notifications_notes(connection_db, easy_email_to)
-            logger.info(f"[CHECK_NOTIFICATIONS] Удалены обработанные added_notes из Redmine DB для easy_email_to: {easy_email_to}")
+                logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Начало обработки added_notes.")
+                process_notes_start_time = time.time()
+                n_count, n_ids, n_errors = process_added_notes(
+                    connection_db, cursor, email_part, current_user_id, user_email
+                )
+                process_notes_end_time = time.time()
+                logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Завершена обработка added_notes. Найдено: {n_count}. Время: {process_notes_end_time - process_notes_start_time:.2f} сек.")
+                processed_details["added_notes"] = n_count
+                if n_errors: processed_details["errors"].extend(n_errors)
 
-        logger.info(f"[CHECK_NOTIFICATIONS] Завершение проверки. Всего обработано новых уведомлений: {newly_processed_count} для user_id: {current_user_id}")
-        return newly_processed_count
+                if n_count > 0:
+                    newly_processed_count += n_count
+                    logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Попытка удаления {len(n_ids)} обработанных added_notes из Redmine DB ID: {n_ids}")
+                    delete_start_time = time.time()
+                    delete_notifications_notes(connection_db, n_ids)
+                    delete_end_time = time.time()
+                    logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Завершено удаление added_notes. Время: {delete_end_time - delete_start_time:.2f} сек.")
+
+        processed_details["total_processed"] = newly_processed_count
 
     except Exception as e:
-        logger.error(f"[CHECK_NOTIFICATIONS] Глобальная ошибка при проверке уведомлений для user_id: {current_user_id}, email: {user_email}. Ошибка: {e}", exc_info=True)
-        return 0 # Возвращаем 0 в случае ошибки
+        logger_main.error(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: ГЛОБАЛЬНАЯ ОШИБКА. {e}", exc_info=True)
+        processed_details["errors"].append(f"Global error in check_notifications: {str(e)}")
     finally:
         if cursor:
             try:
                 cursor.close()
-                logger.debug(f"[CHECK_NOTIFICATIONS] Курсор Redmine DB закрыт для user_id: {current_user_id}")
+                logger_main.debug(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Курсор Redmine DB закрыт.")
             except Exception as e_cursor:
-                logger.error(f"[CHECK_NOTIFICATIONS] Ошибка при закрытии курсора Redmine DB для user_id: {current_user_id}: {e_cursor}", exc_info=True)
+                logger_main.error(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Ошибка при закрытии курсора Redmine DB: {e_cursor}", exc_info=True)
         if connection_db:
             try:
                 connection_db.close()
-                logger.debug(f"[CHECK_NOTIFICATIONS] Соединение Redmine DB закрыто для user_id: {current_user_id}")
+                logger_main.debug(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Соединение Redmine DB закрыто.")
             except Exception as e_conn:
-                logger.error(f"[CHECK_NOTIFICATIONS] Ошибка при закрытии соединения Redmine DB для user_id: {current_user_id}: {e_conn}", exc_info=True)
+                logger_main.error(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}: Ошибка при закрытии соединения Redmine DB: {e_conn}", exc_info=True)
+
+        end_time_check = time.time()
+        logger_main.info(f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: ЗАВЕРШЕНИЕ проверки уведомлений. Всего обработано: {newly_processed_count}. Детали: {processed_details}. Время: {end_time_check - start_time_check:.2f} сек.")
+        return processed_details
 
 
 def get_database_cursor(connection):
     try:
+        log = current_app.logger
+    except RuntimeError:
+        log = logger
+    try:
         return connection.cursor()
-    except pymysql.Error:
-        logging.exception(
-            "Error getting database cursor"
-        )  # Это автоматически логирует информацию об исключении
-        return None
-
-
-def execute_query(cursor, query, param):
-    print(f"[DB_QUERY] Выполнение запроса: {query} с параметром: {param}")
-    try:
-        cursor.execute(query, param)
-        results = cursor.fetchall()
-        print(f"[DB_QUERY] Запрос выполнен успешно, получено строк: {len(results) if results else 0}")
-        return results
     except pymysql.Error as e:
-        print(f"[DB_QUERY] Ошибка выполнения запроса: {e}")
-        logger.error("[DB_QUERY] Error executing query:", exc_info=True)
+        log.error("MYSQL_CURSOR: Ошибка получения курсора: %s", e, exc_info=True)
+        return None
+    except Exception as e_gen: # Общее исключение
+        log.error("MYSQL_CURSOR: Непредвиденная ошибка получения курсора: %s", e_gen, exc_info=True)
         return None
 
 
-def process_status_changes(
-    connection,
-    cursor,
-    email_part,
-    current_user_id,
-    count_vacuum_im_notifications,
-    easy_email_to,
-):
-    """Обработка изменений статуса заявок."""
-    query_status_change = """
-        SELECT ID, uifID, StatusIdNew, StatusIdOld, DataUpdate, Autor
-        FROM u_its_update_status
-        WHERE LOWER(Autor) = LOWER(%s)
-        ORDER BY DataUpdate DESC LIMIT 50
-    """
-    rows_status_change = execute_query(cursor, query_status_change, (email_part,))
-    logger.info(f"[PROCESS_STATUS_CHANGES] Found {len(rows_status_change)} status changes for {email_part}")
-
-    processed_in_this_run = 0
-    if rows_status_change:
-        with db.session.begin_nested(): # Используем вложенную транзакцию для этой группы операций
-            for row_data in rows_status_change:
-                issue_id = row_data["uifID"]
-
-                existing_notification = Notifications.query.filter_by(
-                    user_id=current_user_id,
-                    issue_id=issue_id,
-                    old_status=row_data["StatusIdOld"],
-                    new_status=row_data["StatusIdNew"],
-                    date_created=row_data["DataUpdate"]
-                ).first()
-
-                if not existing_notification:
-                    new_notification_status = Notifications(
-                        user_id=current_user_id,
-                        issue_id=issue_id,
-                        old_status=row_data["StatusIdOld"],
-                        new_status=row_data["StatusIdNew"],
-                        old_subj=None,
-                        date_created=row_data["DataUpdate"]
-                    )
-                    db.session.add(new_notification_status)
-                    processed_in_this_run += 1
-                    logger.info(f"[PROCESS_STATUS_CHANGES] Added status notification for issue {issue_id} for user {current_user_id}")
-
-                    # Сохраняем изменения в БД перед отправкой push
-                    try:
-                        db.session.flush() # Гарантируем, что ID будет присвоен
-                        logger.info(f"[REDMINE_PUSH_STATUS_PRE_SEND] Attempting to send PUSH for status update. Notification SQLite ID: {new_notification_status.id}, Issue ID: {new_notification_status.issue_id}")
-                        notification_service = current_app.notification_service
-                        notification_service.push_service.send_push_notification(new_notification_status)
-                        logger.info(f"[REDMINE_PUSH_STATUS_POST_SEND_SUCCESS] PUSH for status update (SQLite ID: {new_notification_status.id}) call succeeded.")
-                    except Exception as e_push:
-                        logger.error(f"[REDMINE_PUSH_STATUS_POST_SEND_ERROR] Failed to send PUSH for status update (SQLite ID: {new_notification_status.id if new_notification_status and hasattr(new_notification_status, 'id') else 'N/A'}). Error: {e_push}", exc_info=True)
-
-        if processed_in_this_run > 0:
-            try:
-                db.session.commit()
-                logger.info(f"[PROCESS_STATUS_CHANGES] Committed {processed_in_this_run} new status notifications to SQLite for user {current_user_id}.")
-            except Exception as e_commit:
-                logger.error(f"[PROCESS_STATUS_CHANGES] Error committing status notifications for user {current_user_id}: {e_commit}", exc_info=True)
-                db.session.rollback()
-    return processed_in_this_run
-
-
-def process_added_notes(
-    connection,
-    cursor,
-    email_part,
-    current_user_id,
-    count_vacuum_im_notifications,
-    easy_email_to,
-):
-    """Обработка добавленных комментариев."""
-    query_added_notes = """
-        SELECT ID, uifID, DataCreate, Notes, Autor, JournalID
-        FROM u_its_add_notes
-        WHERE LOWER(Autor) = LOWER(%s)
-        ORDER BY DataCreate DESC LIMIT 50
-    """
-    rows_added_notes = execute_query(cursor, query_added_notes, (email_part,))
-    logger.info(f"[PROCESS_ADDED_NOTES] Found {len(rows_added_notes)} added notes for {email_part}")
-
-    processed_in_this_run = 0
-    if rows_added_notes:
-        with db.session.begin_nested(): # Используем вложенную транзакцию
-            for row_data in rows_added_notes:
-                issue_id = row_data["uifID"]
-
-                existing_note = NotificationsAddNotes.query.filter_by(
-                    user_id=current_user_id,
-                    issue_id=issue_id,
-                    author=row_data["Autor"],
-                    notes=row_data["Notes"],
-                    date_created=row_data["DataCreate"]
-                ).first()
-
-                if not existing_note:
-                    new_notification_note = NotificationsAddNotes(
-                        user_id=current_user_id,
-                        issue_id=issue_id,
-                        author=row_data["Autor"],
-                        notes=row_data["Notes"],
-                        date_created=row_data["DataCreate"]
-                    )
-                    db.session.add(new_notification_note)
-                    processed_in_this_run += 1
-                    logger.info(f"[PROCESS_ADDED_NOTES] Added note notification for issue {issue_id} for user {current_user_id}")
-
-                    # Сохраняем изменения в БД перед отправкой push
-                    try:
-                        db.session.flush() # Гарантируем, что ID будет присвоен
-                        logger.info(f"[REDMINE_PUSH_COMMENT_PRE_SEND] Attempting to send PUSH for new comment. Notification SQLite ID: {new_notification_note.id}, Issue ID: {new_notification_note.issue_id}")
-                        notification_service = current_app.notification_service
-                        notification_service.push_service.send_push_notification(new_notification_note)
-                        logger.info(f"[REDMINE_PUSH_COMMENT_POST_SEND_SUCCESS] PUSH for new comment (SQLite ID: {new_notification_note.id}) call succeeded.")
-                    except Exception as e_push:
-                        logger.error(f"[REDMINE_PUSH_COMMENT_POST_SEND_ERROR] Failed to send PUSH for new comment (SQLite ID: {new_notification_note.id if new_notification_note and hasattr(new_notification_note, 'id') else 'N/A'}). Error: {e_push}", exc_info=True)
-
-        if processed_in_this_run > 0:
-            try:
-                db.session.commit()
-                logger.info(f"[PROCESS_ADDED_NOTES] Committed {processed_in_this_run} new note notifications to SQLite for user {current_user_id}.")
-            except Exception as e_commit:
-                logger.error(f"[PROCESS_ADDED_NOTES] Error committing note notifications for user {current_user_id}: {e_commit}", exc_info=True)
-                db.session.rollback()
-    return processed_in_this_run
-
-
-def connect_to_database(database_file):
-    """Соединение с базой данных SQLite."""
+def execute_query(cursor, query, params=None):
     try:
-        connection = sqlite3.connect(database_file)
-        print("Соединение с базой данных успешно установлено.")
-        return connection
-    except sqlite3.Error as e:
-        print("Ошибка при соединении с базой данных:", e)
-        return None
+        log = current_app.logger
+    except RuntimeError:
+        log = logger
 
+    run_id = uuid.uuid4()
+    func_name = "EXECUTE_QUERY"
 
-def execute_sql_query(connection, query, params=None, row_factory=None):
-    """Выполнение SQL-запроса к базе данных."""
+    query_to_log = query.strip()[:250].replace('\\n', ' ') + ("..." if len(query.strip()) > 250 else "")
+    log.debug(f"{func_name}_RUN_ID={run_id}: SQL='{query_to_log}', PARAMS={params}")
+
+    start_time = time.time()
     try:
-        cursor = connection.cursor()
-        if row_factory:
-            cursor.row_factory = row_factory
         if params:
             cursor.execute(query, params)
         else:
             cursor.execute(query)
-        rows = cursor.fetchall()
-        return rows
-    except sqlite3.Error as e:
-        print("Ошибка при выполнении SQL-запроса:", e)
+        results = cursor.fetchall()
+        end_time = time.time()
+        log.info(f"{func_name}_RUN_ID={run_id}: Успешно. Найдено строк: {len(results) if results is not None else 'N/A'}. Время: {end_time - start_time:.3f} сек.")
+        return results
+    except pymysql.Error as e:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: ОШИБКА pymysql. {e}. SQL='{query_to_log}', PARAMS={params}. Время: {end_time - start_time:.3f} сек.", exc_info=True)
+        return None
+    except Exception as e_generic:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: НЕПРЕДВИДЕННАЯ ОШИБКА. {e_generic}. SQL='{query_to_log}', PARAMS={params}. Время: {end_time - start_time:.3f} сек.", exc_info=True)
         return None
 
 
-def notification_count(database_path, user_id):
+def process_status_changes(connection, cursor, email_part, current_user_id, easy_email_to):
+    log = current_app.logger # Переименовал logger на log для избежания конфликта с модулем logging
+    run_id = uuid.uuid4()
+    func_name = "PROCESS_STATUS_CHANGES"
+    start_time_func = time.time()
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: НАЧАЛО обработки.")
+
+    query_status_change = """
+        SELECT id, IssueID, NewStatus, OldStatus, DateCreated, Author, OldSubj, Body, RowDateCreated
+        FROM u_its_update_status
+        WHERE LOWER(Author) = LOWER(%s) # Возвращаем easy_email_to (полный email)
+        ORDER BY RowDateCreated DESC LIMIT 50
+    """
+    log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQL Query to Redmine u_its_update_status for Author='{easy_email_to}'")
+
+    query_start_time = time.time()
+    rows_status_change = execute_query(cursor, query_status_change, (easy_email_to,)) # Возвращаем easy_email_to
+    query_end_time = time.time()
+
+    if rows_status_change is None:
+        log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Ошибка SQL-запроса к u_its_update_status. Время: {query_end_time - query_start_time:.2f} сек.")
+        return 0, [], [f"SQL query failed for u_its_update_status (Author: {easy_email_to})"]
+
+    found_count = len(rows_status_change)
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Найдено {found_count} записей в u_its_update_status. Время запроса: {query_end_time - query_start_time:.2f} сек.")
+
+    processed_in_this_run = 0
+    processed_ids_in_this_run = []
+    errors_in_this_run = []
+
+    user = User.query.get(current_user_id)
+    if not user:
+        log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Пользователь не найден в SQLite, PUSH не будут отправляться.")
+
+    if rows_status_change:
+        for row_data in rows_status_change:
+            source_id = row_data["id"]
+            issue_id = row_data["IssueID"]
+            loop_start_time = time.time()
+            log_row_data = {k: (str(v)[:50] + '...' if isinstance(v, str) and len(v) > 50 else v) for k, v in row_data.items()}
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Обработка MySQL SourceID={source_id}, IssueID={issue_id}, Data: {log_row_data}")
+
+            try:
+                with db.session.begin_nested():
+                    existing_notification = Notifications.query.filter_by(
+                        user_id=current_user_id,
+                        issue_id=issue_id,
+                        old_status=row_data["OldStatus"],
+                        new_status=row_data["NewStatus"],
+                        date_created=row_data["RowDateCreated"]
+                    ).first()
+
+                    if not existing_notification:
+                        # Преобразование RowDateCreated в datetime, если это строка
+                        date_created_dt = row_data["RowDateCreated"]
+                        if isinstance(date_created_dt, str):
+                            try:
+                                date_created_dt = datetime.strptime(date_created_dt, '%Y-%m-%d %H:%M:%S') # Формат MySQL
+                            except ValueError:
+                                try:
+                                    date_created_dt = datetime.fromisoformat(date_created_dt)
+                                except ValueError:
+                                    log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Не удалось преобразовать RowDateCreated='{row_data['RowDateCreated']}' в datetime для SourceID={source_id}")
+                                    date_created_dt = datetime.now() # Фоллбэк или пропуск
+
+                        new_notification_status = Notifications(
+                            user_id=current_user_id,
+                            issue_id=issue_id,
+                            old_status=row_data["OldStatus"],
+                            new_status=row_data["NewStatus"],
+                            old_subj=row_data.get("OldSubj"),
+                            date_created=date_created_dt # Используем преобразованную дату
+                        )
+                        db.session.add(new_notification_status)
+                        db.session.flush()
+
+                        log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ДОБАВЛЕНО уведомление о статусе. SourceID={source_id}, SQLiteID={new_notification_status.id}, IssueID={issue_id}.")
+                        processed_in_this_run += 1
+                        processed_ids_in_this_run.append(source_id)
+
+            except Exception as e_row:
+                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА обработки MySQL SourceID={source_id}, IssueID={issue_id}. {e_row}", exc_info=True)
+                errors_in_this_run.append(f"Processing MySQL status row SourceID={source_id} failed: {str(e_row)}")
+
+            loop_end_time = time.time()
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Завершение обработки MySQL SourceID={source_id}. Время: {loop_end_time - loop_start_time:.2f} сек.")
+
+        if processed_in_this_run > 0:
+            try:
+                db.session.commit()
+                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: Финальный коммит {processed_in_this_run} новых уведомлений о статусах.")
+            except Exception as e_final_commit:
+                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ОШИБКА финального коммита. {e_final_commit}", exc_info=True)
+                errors_in_this_run.append(f"Final commit for status changes failed: {str(e_final_commit)}")
+                db.session.rollback()
+
+    end_time_func = time.time()
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: ЗАВЕРШЕНИЕ обработки. Обработано: {processed_in_this_run}. ID для MySQL удаления: {processed_ids_in_this_run}. Ошибки: {len(errors_in_this_run)}. Время: {end_time_func - start_time_func:.2f} сек.")
+    return processed_in_this_run, processed_ids_in_this_run, errors_in_this_run
+
+
+def process_added_notes(connection, cursor, email_part, current_user_id, easy_email_to):
+    log = current_app.logger
+    run_id = uuid.uuid4()
+    func_name = "PROCESS_ADDED_NOTES"
+    start_time_func = time.time()
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: НАЧАЛО обработки.")
+
+    query_added_notes = """
+        SELECT id, issue_id, date_created, Notes, Author, RowDateCreated
+        FROM u_its_add_notes
+        WHERE LOWER(Author) = LOWER(%s) # Возвращаем easy_email_to (полный email)
+        ORDER BY RowDateCreated DESC LIMIT 50
+    """
+    log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQL Query to Redmine u_its_add_notes for Author='{easy_email_to}'")
+
+    query_start_time = time.time()
+    rows_added_notes = execute_query(cursor, query_added_notes, (easy_email_to,)) # Возвращаем easy_email_to
+    query_end_time = time.time()
+
+    if rows_added_notes is None:
+        log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Ошибка SQL-запроса к u_its_add_notes. Время: {query_end_time - query_start_time:.2f} сек.")
+        return 0, [], [f"SQL query failed for u_its_add_notes (Author: {easy_email_to})"]
+
+    found_count = len(rows_added_notes)
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Найдено {found_count} записей в u_its_add_notes. Время запроса: {query_end_time - query_start_time:.2f} сек.")
+
+    processed_in_this_run = 0
+    processed_ids_in_this_run = []
+    errors_in_this_run = []
+
+    user = User.query.get(current_user_id)
+    if not user:
+        log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Пользователь не найден в SQLite, PUSH (комментарии) не будут отправляться.")
+
+    if rows_added_notes:
+        for row_data in rows_added_notes:
+            source_id = row_data["id"]
+            issue_id = row_data["issue_id"]
+            loop_start_time = time.time()
+            log_row_data = {
+                'Author': row_data.get('Author'),
+                'RowDateCreated': row_data.get('RowDateCreated'),
+                'Notes_len': len(row_data.get('Notes','')),
+            }
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Обработка MySQL SourceID={source_id}, IssueID={issue_id}, Data: {log_row_data}")
+
+            try:
+                with db.session.begin_nested():
+                    existing_note = NotificationsAddNotes.query.filter_by(
+                        user_id=current_user_id,
+                        issue_id=issue_id,
+                        author=row_data["Author"],
+                        notes=row_data["Notes"],
+                        date_created=row_data["date_created"]
+                    ).first()
+
+                    if not existing_note:
+                        # Преобразование date_created из строки u_its_add_notes в datetime
+                        date_created_str = row_data["date_created"]
+                        date_created_dt = None
+                        if date_created_str:
+                            if isinstance(date_created_str, datetime): # Если уже datetime (маловероятно из DictCursor, но проверим)
+                                date_created_dt = date_created_str
+                            else:
+                                try:
+                                    # MySQL обычно возвращает datetime, но если это строка, парсим
+                                    # Попробуем несколько распространенных форматов или ISO
+                                    # Логи показывают 'YYYY-MM-DD HH:MM:SS'
+                                    date_created_dt = datetime.strptime(date_created_str, '%Y-%m-%d %H:%M:%S')
+                                except ValueError:
+                                    try:
+                                        date_created_dt = datetime.fromisoformat(date_created_str)
+                                    except ValueError:
+                                        log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Не удалось преобразовать date_created='{date_created_str}' в datetime для SourceID={source_id}")
+                                        # Можно установить текущее время или пропустить запись, в зависимости от бизнес-логики
+                                        # В данном случае, если дата невалидна, лучше пропустить или залогировать и обработать ошибку
+                                        # пока оставляем None, что может привести к ошибке БД если поле NOT NULL без default
+                                        # Модель NotificationsAddNotes.date_created = db.Column(db.DateTime), так что None может быть проблемой
+                                        # Если поле date_created обязательно, то здесь нужно либо кидать ошибку, либо использовать фоллбэк
+                                        # errors_in_this_run.append(f"Invalid date_format for comment SourceID={source_id}")
+                                        # continue # Пропустить эту запись
+                                        date_created_dt = datetime.now() # Временный фоллбек, чтобы избежать None для DateTime поля
+                        else:
+                            log.warning(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: date_created is None for SourceID={source_id}. Используем текущее время.")
+                            date_created_dt = datetime.now() # Фоллбэк, если дата отсутствует
+
+
+                        new_notification_note = NotificationsAddNotes(
+                            user_id=current_user_id,
+                            issue_id=issue_id,
+                            author=row_data["Author"],
+                            notes=row_data["Notes"],
+                            date_created=date_created_dt, # Используем преобразованную или текущую дату
+                            source_id=source_id
+                        )
+                        db.session.add(new_notification_note)
+                        db.session.flush() # Чтобы получить ID до коммита, если нужно
+
+                        log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ДОБАВЛЕНО уведомление о комментарии. SourceID={source_id}, SQLiteID={new_notification_note.id}, IssueID={issue_id}.")
+                        processed_in_this_run += 1
+                        processed_ids_in_this_run.append(source_id)
+
+            except Exception as e_row:
+                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: ОШИБКА обработки MySQL SourceID={source_id}, IssueID={issue_id} (комментарий). {e_row}", exc_info=True)
+                errors_in_this_run.append(f"Processing MySQL comment row SourceID={source_id} failed: {str(e_row)}")
+
+            loop_end_time = time.time()
+            log.debug(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Завершение обработки MySQL SourceID={source_id} (комментарий). Время: {loop_end_time - loop_start_time:.2f} сек.")
+
+        if processed_in_this_run > 0:
+            try:
+                db.session.commit()
+                log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: Финальный коммит {processed_in_this_run} новых уведомлений о комментариях.")
+            except Exception as e_final_commit:
+                log.error(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: SQLite: ОШИБКА финального коммита (комментарии). {e_final_commit}", exc_info=True)
+                errors_in_this_run.append(f"Final commit for added notes failed: {str(e_final_commit)}")
+                db.session.rollback()
+
+    end_time_func = time.time()
+    log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}, EmailPart={email_part}, EasyEmailTo={easy_email_to}: ЗАВЕРШЕНИЕ обработки (комментарии). Обработано: {processed_in_this_run}. ID для MySQL удаления: {processed_ids_in_this_run}. Ошибки: {len(errors_in_this_run)}. Время: {end_time_func - start_time_func:.2f} сек.")
+    return processed_in_this_run, processed_ids_in_this_run, errors_in_this_run
+
+def delete_notifications(connection, ids_to_delete):
     try:
-        connection = sqlite3.connect(database_path)
-        cursor = connection.cursor()
-        # SQL-запрос для подсчета количества уведомлений с использованием параметризации
-        sql_query = "SELECT COUNT(*) FROM notifications WHERE user_id = ?"
-        cursor.execute(sql_query, (user_id,))
-        count = cursor.fetchone()[0]  # Получаем результат запроса
-        connection.close()
-        return count  # Возвращаем количество уведомлений
-    except sqlite3.Error as e:
-        print(f"{ERROR_MESSAGE} {e}")
-        return None
+        log = current_app.logger
+    except RuntimeError:
+        log = logger
+    run_id = uuid.uuid4()
+    func_name = "DELETE_NOTIFICATIONS_STATUS"
+    start_time = time.time()
 
+    if not ids_to_delete:
+        log.info(f"{func_name}_RUN_ID={run_id}: Список ID для удаления пуст.")
+        return
 
-def add_notification_notes_to_database(notification_notes_data):
+    log.info(f"{func_name}_RUN_ID={run_id}: НАЧАЛО удаления {len(ids_to_delete)} записей из u_its_update_status. IDs: {ids_to_delete}")
+    cursor = None
     try:
-        user_id = notification_notes_data.get("user_id")
-        issue_id = notification_notes_data.get("issue_id")
-        author = notification_notes_data.get("Author")
-        notes = notification_notes_data.get("notes")
-        date_created = notification_notes_data.get("date_created")
-        print(f"[ADD_NOTE_DB] Попытка добавления уведомления в SQLite: user_id={user_id}, issue_id={issue_id}, author={author}, notes_len={len(notes) if notes else 0}, date_created={date_created}")
-
-        # Подключаемся к базе данных SQLite
-        connection = sqlite3.connect(db_absolute_path)
         cursor = connection.cursor()
-        # SQL-запрос для добавления записи в таблицу Notifications
-        sql_query = """INSERT INTO notifications_add_notes (user_id, issue_id, author, notes, date_created)
-                       VALUES (?, ?, ?, ?, ?)"""
-        cursor.execute(
-            sql_query,
-            (user_id, issue_id, author, notes, date_created),
-        )
+        placeholders = ', '.join(['%s'] * len(ids_to_delete))
+        query = f"DELETE FROM u_its_update_status WHERE id IN ({placeholders})"
+        log.debug(f"{func_name}_RUN_ID={run_id}: SQL='{query}', IDs={tuple(ids_to_delete)}")
+
+        cursor.execute(query, tuple(ids_to_delete))
         connection.commit()
-        print(f"[ADD_NOTE_DB] Уведомление успешно добавлено и закоммичено в SQLite.")
-        connection.close()
-        logger.info("Notification added to the database successfully.")
-    except sqlite3.Error as e:
-        print(f"[ADD_NOTE_DB] Ошибка sqlite3 при добавлении уведомления: {e}")
-        logger.error("[ADD_NOTE_DB] %s %s", ERROR_MESSAGE, e, exc_info=True)
-    except Exception as e:
-        print(f"[ADD_NOTE_DB] НЕПРЕДВИДЕННАЯ Ошибка при добавлении уведомления: {e}")
-        logger.error("[ADD_NOTE_DB] Непредвиденная ошибка: %s", e, exc_info=True)
+        deleted_count = cursor.rowcount
+        end_time = time.time()
+        log.info(f"{func_name}_RUN_ID={run_id}: Успешно удалено {deleted_count} записей. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.")
+    except pymysql.Error as e:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: ОШИБКА pymysql. {e}. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.", exc_info=True)
+        if connection: connection.rollback()
+    except Exception as e_generic:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: НЕПРЕДВИДЕННАЯ ОШИБКА. {e_generic}. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.", exc_info=True)
+        if connection: connection.rollback()
+    finally:
+        if cursor: cursor.close()
 
 
-def add_notification_to_database(notification_data):
+def delete_notifications_notes(connection, ids_to_delete):
     try:
-        user_id = notification_data.get("user_id")
-        issue_id = notification_data.get("issue_id")
-        old_status = notification_data.get("old_status")
-        new_status = notification_data.get("new_status")
-        old_subj = notification_data.get("old_subj")
-        date_created = notification_data.get("date_created")
+        log = current_app.logger
+    except RuntimeError:
+        log = logger
+    run_id = uuid.uuid4()
+    func_name = "DELETE_NOTIFICATIONS_NOTES"
+    start_time = time.time()
 
-        # Подключаемся к базе данных SQLite
-        connection = sqlite3.connect(db_absolute_path)
+    if not ids_to_delete:
+        log.info(f"{func_name}_RUN_ID={run_id}: Список ID для удаления пуст.")
+        return
+
+    log.info(f"{func_name}_RUN_ID={run_id}: НАЧАЛО удаления {len(ids_to_delete)} записей из u_its_add_notes. IDs: {ids_to_delete}")
+    cursor = None
+    try:
         cursor = connection.cursor()
-        # SQL-запрос для добавления записи в таблицу Notifications
-        sql_query = """INSERT INTO notifications (user_id, issue_id, old_status, new_status, old_subj, date_created)
-                       VALUES (?, ?, ?, ?, ?, ?)"""
-        cursor.execute(
-            sql_query,
-            (user_id, issue_id, old_status, new_status, old_subj, date_created),
-        )
+        placeholders = ', '.join(['%s'] * len(ids_to_delete))
+        query = f"DELETE FROM u_its_add_notes WHERE id IN ({placeholders})"
+        log.debug(f"{func_name}_RUN_ID={run_id}: SQL='{query}', IDs={tuple(ids_to_delete)}")
+
+        cursor.execute(query, tuple(ids_to_delete))
         connection.commit()
-        connection.close()
-        logger.info("Notification added to the database successfully.")
-    except sqlite3.Error as e:
-        logger.error("%s %s", ERROR_MESSAGE, e)
-
-
-def delete_notifications_notes(connection, easy_email_to):
-    """Удаляем уведомления о добавлении комментариев после их обработки"""
-    split_easy_email_to = easy_email_to.split("@")[0]
-    cursor = connection.cursor()
-    query = """DELETE FROM u_its_add_notes WHERE SUBSTRING_INDEX(Author, '@', 1) = %s"""
-    cursor.execute(
-        query,
-        split_easy_email_to,
-    )
-    connection.commit()
-    cursor.close()
-
-
-def delete_notifications(connection, easy_email_to):
-    """Удаляем уведомления о изменении статуса после их обработки"""
-    split_easy_email_to = easy_email_to.split("@")[0]
-    cursor = connection.cursor()
-    query = (
-        """DELETE FROM u_its_update_status WHERE SUBSTRING_INDEX(Author, '@', 1) = %s"""
-    )
-    cursor.execute(
-        query,
-        split_easy_email_to,
-    )
-    connection.commit()
-    cursor.close()
+        deleted_count = cursor.rowcount
+        end_time = time.time()
+        log.info(f"{func_name}_RUN_ID={run_id}: Успешно удалено {deleted_count} записей. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.")
+    except pymysql.Error as e:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: ОШИБКА pymysql. {e}. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.", exc_info=True)
+        if connection: connection.rollback()
+    except Exception as e_generic:
+        end_time = time.time()
+        log.error(f"{func_name}_RUN_ID={run_id}: НЕПРЕДВИДЕННАЯ ОШИБКА. {e_generic}. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек.", exc_info=True)
+        if connection: connection.rollback()
+    finally:
+        if cursor: cursor.close()
 
 
 def save_and_get_filepath(upload_files_data):
