@@ -336,9 +336,12 @@ class PushNotificationManager {
             // Отправляем тестовое уведомление
             setTimeout(() => this.sendTestNotification(), 1000);
 
+            return { success: true };
+
         } catch (error) {
             console.error('[PushManager] Ошибка подписки:', error);
             this.showError('Не удалось включить уведомления: ' + error.message);
+            return { error: error.message };
         }
     }
 
