@@ -7,9 +7,10 @@
             <div class="col-lg-5 col-md-7 col-sm-10 col-12">
                 <div class="login-form-container">
                     <div class="text-center mb-4">
-                        <img src="{{ url_for('static', filename='img/tez-tour-mini-logo.png') }}" alt="TEZ TOUR Logo" class="login-logo mb-3">
+                        <img src="{{ url_for('static', filename='img/tez-tour-mini-logo1.png') }}" alt="TEZ TOUR Logo" class="login-logo mb-1">
+                        <h2 class="login-brand-title">TEZ Navigator</h2>
                         <h2 class="login-title">Создание аккаунта</h2>
-                        <p class="login-subtitle text-muted">Присоединяйтесь к HelpDesk</p>
+                        <p class="login-subtitle">Тур по задачам? Мы уже всё забронировали!</p>
                     </div>
 
                     <form method="POST" action="">
@@ -78,12 +79,6 @@
             </div>
         </div>
     </div>
-
-    <div class="login-form-footer text-center">
-        <img src="{{ url_for('static', filename='img/tez-tour-mini-logo.png') }}" alt="TEZ TOUR Logo" class="footer-logo mb-2">
-        <p class="footer-copyright-text mb-1">&copy; 2001–2025 TEZ TOUR</p>
-        <p class="footer-email-text mb-0"><a href="mailto:help@tez-tour.com">help@tez-tour.com</a></p>
-    </div>
 </div>
 {% endblock %}
 
@@ -143,13 +138,14 @@ $(document).ready(function() {
 
 {% block styles %}
 <style>
-    /* body, html { height: 100%; } /* Лучше контролировать глобально, если нужно */
+    html, body { height: 100%; margin: 0; }
 
     .login-page-wrapper {
-        min-height: 100%;
+        min-height: calc(100vh - 70px);
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: center;
+        align-items: center;
         background: linear-gradient(135deg, #005f73 0%, #0a9396 100%);
         padding: 1rem;
         box-sizing: border-box;
@@ -174,16 +170,33 @@ $(document).ready(function() {
         height: auto;
     }
 
-    .login-title {
+    .login-brand-title {
+        font-family: 'Inter', sans-serif;
+        font-size: 2.2rem;
         font-weight: 700;
-        font-size: 1.75rem;
         color: #003440;
         margin-bottom: 0.25rem;
     }
 
+    .login-title {
+        font-weight: 600;
+        font-size: 1.5rem;
+        color: #003440;
+        margin-bottom: 0.5rem;
+    }
+
     .login-subtitle {
-        font-size: 0.95rem;
-        color: #555;
+        font-family: 'Inter', sans-serif;
+        font-size: 0.9rem;
+        color: #475569;
+        font-weight: 400;
+        margin-top: 0.25rem;
+        line-height: 1.4;
+        margin-bottom: 1.5rem;
+    }
+
+    .login-subtitle .subtitle-brand {
+        font-weight: 700;
     }
 
     .form-label {
