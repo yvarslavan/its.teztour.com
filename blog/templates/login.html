@@ -10,17 +10,17 @@
     </div>
 
     <div class="container">
-        <div class="row justify-content-center">
+        <div class="row justify-content-center align-items-start gx-0">
             <div class="col-lg-5 col-md-7 col-sm-10 col-12">
                 <div class="login-form-container">
                     <!-- Header Section -->
                     <div class="login-header">
                         <div class="logo-container">
-                            <img src="{{ url_for('static', filename='img/tez-tour-mini-logo.png') }}" alt="TEZ TOUR Logo" class="login-logo">
+                            <img src="{{ url_for('static', filename='img/tez-tour-mini-logo1.png') }}" alt="TEZ TOUR Logo" class="login-logo">
                             <div class="logo-glow"></div>
                         </div>
-                        <h2 class="login-title">Добро пожаловать!</h2>
-                        <p class="login-subtitle">Войдите в систему для доступа к HelpDesk</p>
+                        <h2 class="login-title">TEZ Navigator</h2>
+                        <p class="login-subtitle">навигатор по заявкам и задачам</p>
                         <div class="header-divider"></div>
                     </div>
 
@@ -87,7 +87,7 @@
                                 </label>
                             </div>
                             <div class="forgot-password">
-                                <a href="#" class="forgot-link">Забыли пароль?</a>
+                                <a href="mailto:help@tez-tour.com?subject=%D0%97%D0%B0%D0%BF%D1%80%D0%BE%D1%81%20%D0%BD%D0%B0%20%D0%B2%D0%BE%D1%81%D1%81%D1%82%D0%B0%D0%BD%D0%BE%D0%B2%D0%BB%D0%B5%D0%BD%D0%B8%D0%B5%20%D0%BF%D0%B0%D1%80%D0%BE%D0%BB%D1%8F%20%D0%B4%D0%BB%D1%8F%20TEZ%20ERP" class="forgot-link">Забыли пароль?</a>
                             </div>
                         </div>
 
@@ -252,8 +252,8 @@ $(document).ready(function() {
     $('#username, #passwordField').css({
         'padding-left': window.innerWidth <= 480 ? '3rem' : '3.5rem',
         'padding-right': '1rem',
-        'padding-top': '1.5rem',
-        'padding-bottom': '1.5rem'
+        'padding-top': '1rem',
+        'padding-bottom': '1rem'
     });
 
     // Re-apply on window resize
@@ -268,6 +268,10 @@ $(document).ready(function() {
 
 {% block styles %}
 <style>
+    *, *::before, *::after {
+        box-sizing: border-box;
+    }
+
     /* Import Modern Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
@@ -353,10 +357,13 @@ $(document).ready(function() {
     .login-page-wrapper {
         min-height: 100vh;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
         justify-content: center;
         background: linear-gradient(135deg, var(--primary-700) 0%, var(--primary-500) 50%, var(--primary-400) 100%);
-        padding: var(--spacing-xl) var(--spacing-md);
+        padding-top: var(--spacing-xl);
+        padding-right: var(--spacing-md);
+        padding-bottom: var(--spacing-xl);
+        padding-left: var(--spacing-md);
         position: relative;
         overflow: hidden;
     }
@@ -417,7 +424,7 @@ $(document).ready(function() {
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: var(--radius-xxl);
         box-shadow: var(--shadow-form);
-        padding: var(--spacing-xxl);
+        padding: var(--spacing-md) 2.5rem;
         width: 100%;
         position: relative;
         z-index: 2;
@@ -438,13 +445,13 @@ $(document).ready(function() {
     /* Header Section */
     .login-header {
         text-align: center;
-        margin-bottom: var(--spacing-xxl);
+        margin-bottom: var(--spacing-xl);
     }
 
     .logo-container {
         position: relative;
         display: inline-block;
-        margin-bottom: var(--spacing-lg);
+        margin-bottom: var(--spacing-sm);
     }
 
     .login-logo {
@@ -475,17 +482,17 @@ $(document).ready(function() {
     }
 
     .login-title {
-        font-size: 2rem;
+        font-size: 1.75rem;
         font-weight: 700;
         color: var(--text-primary);
-        margin-bottom: var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
         letter-spacing: -0.025em;
     }
 
     .login-subtitle {
         font-size: 1rem;
         color: var(--text-secondary);
-        margin-bottom: var(--spacing-lg);
+        margin-bottom: var(--spacing-sm);
         font-weight: 400;
     }
 
@@ -499,11 +506,11 @@ $(document).ready(function() {
 
     /* Form Styles */
     .login-form {
-        margin-bottom: var(--spacing-xl);
+        margin-bottom: var(--spacing-md);
     }
 
     .form-group {
-        margin-bottom: var(--spacing-xl);
+        margin-bottom: var(--spacing-sm);
     }
 
     .form-field {
@@ -537,7 +544,7 @@ $(document).ready(function() {
 
     .form-control {
         width: 100%;
-        padding: var(--spacing-lg) var(--spacing-md) var(--spacing-lg) 5rem !important;
+        padding: var(--spacing-md) var(--spacing-md) var(--spacing-md) 5rem !important;
         border: 2px solid var(--border-light);
         border-radius: var(--radius-lg);
         font-size: 1rem;
@@ -708,7 +715,7 @@ $(document).ready(function() {
     /* Login Button */
     .login-page-wrapper .login-btn {
         width: 100% !important;
-        padding: var(--spacing-lg) var(--spacing-xl) !important;
+        padding: var(--spacing-md) var(--spacing-xl) !important;
         background: linear-gradient(135deg, var(--primary-500), var(--primary-400)) !important;
         border: none !important;
         border-radius: var(--radius-lg) !important;
@@ -828,9 +835,9 @@ $(document).ready(function() {
     /* Footer Section */
     .login-footer {
         text-align: center;
-        padding-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
         border-top: 1px solid var(--border-light);
-        margin-top: var(--spacing-lg);
+        margin-top: var(--spacing-md);
     }
 
     .security-info {

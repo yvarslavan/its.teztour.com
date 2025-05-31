@@ -453,7 +453,7 @@ def new_issue():
                 # Удаляем этот временный сохраненный файл
                 os.remove(temp_file_path)
 
-    return render_template("create_issue.html", form=form)
+    return render_template("create_issue.html", title="Новая заявка", form=form)
 
 
 @main.route("/notifications", methods=["GET"])
@@ -465,12 +465,13 @@ def my_notifications():
     if notifications_data['total_count'] > 0:
         return render_template(
             "notifications.html",
+            title="Уведомления",  # Добавляем title
             combined_notifications={
                 'notifications_data': notifications_data['status_notifications'],
                 'notifications_add_notes_data': notifications_data['comment_notifications']
             }
         )
-    return render_template("notifications.html", combined_notifications={})
+    return render_template("notifications.html", title="Уведомления", combined_notifications={}) # Добавляем title
 
 
 @main.route("/clear-notifications", methods=["POST"])
@@ -696,7 +697,7 @@ def reports():
         labels = [stat.status_name for stat in issues_stats]
         data = [stat.count for stat in issues_stats]
 
-        return render_template("reports.html", labels=labels, data=data)
+        return render_template("reports.html", title="Статистика заявок", labels=labels, data=data) # Добавляем title
 
     except Exception as e:
         print("Ошибка в reports:", str(e))
