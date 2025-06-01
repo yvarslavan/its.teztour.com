@@ -422,6 +422,36 @@
                                         {% endfor %}
                                 </div>
                             </div>
+
+                            <!-- Новый блок для Контакт-центр Москва -->
+                            <div class="admin-table-container" style="margin-top: 20px;">
+                                <div class="table-header">
+                                    <span>Контакт-центр Москва</span>
+                                </div>
+                                <div class="users-list">
+                                    {% for u_admin in all_users %}
+                                    <div class="user-item">
+                                        <div class="user-info">
+                                            <div class="user-avatar-small">
+                                                <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                                                     alt="{{ u_admin.username }}">
+                                            </div>
+                                            <span class="user-name">{{ u_admin.username }}</span>
+                                        </div>
+                                        <div class="user-toggle">
+                                            <label class="toggle-switch">
+                                                <input type="checkbox"
+                                                       class="permission-toggle"
+                                                           data-user-id="{{ u_admin.id }}"
+                                                           data-type="contact_center_moscow"
+                                                           {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}>
+                                                <span class="toggle-slider"></span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -2144,7 +2174,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'Content-Type': 'application/x-www-form-urlencoded',
                     'X-CSRFToken': "{{ csrf_token() }}"
                 },
-                body: `user_id=${userId}&type=${type}&value=${value}`
+                body: `userId=${userId}&permissionType=${type}&value=${value}`
             })
             .then(response => response.json())
             .then(data => {

@@ -483,8 +483,8 @@ def account():
             user_obj=user_obj,  # user_obj используется в шаблоне для подписи
             current_user=current_user,  # Оставляем для обратной совместимости, если где-то используется
             user=current_user,  # Добавляем current_user как 'user'
-            default_office=user_password_erp[3] if user_password_erp else "",
-            default_email=user_password_erp[2] if user_password_erp else "",
+            default_office=user_obj.office if user_obj else "",
+            default_email=user_obj.email if user_obj else "",
             default_department=user_obj.department if user_obj else "",
             default_position=user_obj.position if user_obj else "",
             default_phone=user_obj.phone if user_obj else "",
@@ -495,8 +495,8 @@ def account():
         )
     except Exception as e:
         db.session.rollback()  # Откатываем сессию в случае ошибки
-        print(f"Error in account route: {str(e)}")
-        return f"Error: {str(e)}", 500
+        current_app.logger.error(f"Error in account route for user {current_user.username}:", exc_info=True)
+        return f"Произошла ошибка при загрузке профиля. Пожалуйста, попробуйте позже или обратитесь в поддержку. Ошибка: {str(e)}", 500
 
 
 @users.route("/users")
@@ -828,43 +828,47 @@ def update_vpn_date():
 @login_required
 def update_user_permissions():
     if not current_user.is_admin:
-        return jsonify({"error": "Недостаточно прав"}), 403
+        return jsonify({"success": False, "message": "Доступ запрещен"}), 403
+
+    # Изменяем способ получения данных с request.get_json() на request.form
+    user_id = request.form.get("userId")
+    permission_type = request.form.get("permissionType")
+    # Преобразуем строковое значение 'true'/'false' в булево
+    value_str = request.form.get("value")
+    value = value_str.lower() == 'true' if isinstance(value_str, str) else None
+
+
+    if user_id is None or permission_type is None or value is None:
+        return jsonify({"success": False, "message": "Отсутствуют необходимые параметры: userId, permissionType или value"}), 400
 
     try:
-        user_id = request.form.get("user_id")
-        permission_type = request.form.get("type")
-        value = request.form.get("value") == "true"
+        user_id = int(user_id)
+    except ValueError:
+        return jsonify({"success": False, "message": "userId должен быть числом"}), 400
 
-        # Получаем пользователя в текущей сессии
-        user = db.session.query(User).get(user_id)
-        if not user:
-            return jsonify({"error": "Пользователь не найден"}), 404
 
-        print(f"Updating permissions for user {user.username}")
-        print(f"Before update: can_access_quality_control = {user.can_access_quality_control}")
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"success": False, "message": "Пользователь не найден"}), 404
 
-        if permission_type == "quality_control":
-            user.can_access_quality_control = value
-            message = f"Доступ к контролю качества {'включен' if value else 'выключен'} для пользователя {user.username}"
-            print(f"After update: can_access_quality_control = {user.can_access_quality_control}")
+    if permission_type == "admin":
+        user.is_admin = value
+    elif permission_type == "redmine_user":
+        user.is_redmine_user = value
+    elif permission_type == "quality_control":
+        user.can_access_quality_control = value
+    elif permission_type == "contact_center_moscow": # Новое разрешение
+        user.can_access_contact_center_moscow = value
+    else:
+        return jsonify({"success": False, "message": "Неизвестный тип разрешения"}), 400
 
-        # Явно добавляем изменения в сессию
-        db.session.add(user)
+    try:
         db.session.commit()
-        print("Database commit successful")
-
-        return jsonify({
-            "success": True,
-            "message": message
-        })
-    except SQLAlchemyError as e:
-        db.session.rollback()
-        print(f"Database error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"success": True, "message": "Разрешения обновлены"})
     except Exception as e:
         db.session.rollback()
-        print(f"General error: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.error(f"Ошибка обновления разрешений: {e}")
+        return jsonify({"success": False, "message": "Ошибка при обновлении разрешений"}), 500
 
 
 @users.route("/quality-control")
