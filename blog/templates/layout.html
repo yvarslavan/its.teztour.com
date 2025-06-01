@@ -303,7 +303,394 @@
                         vertical-align: middle !important;
                     }
 
-                </style>
+                    .nav-icon-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        position: relative;
+                        z-index: 2;
+                    }
+
+                    /* Style for SVG icons in nav */
+                    .nav-icon-wrapper svg {
+                        width: 20px; /* Adjust as needed */
+                        height: 20px; /* Adjust as needed */
+                        vertical-align: middle;
+                        flex-shrink: 0; /* Prevent shrinking if text is long */
+                    }
+
+                    /* Icon Colors for Font Awesome (will be gradually replaced) */
+                    .wiki-icon { color: #10b981; }
+                    .tasks-icon { color: #3b82f6; } /* This is for Заявки */
+                    .issues-icon { color: #8b5cf6; } /* Example: Violet for Задачи */
+                    .other-icon { color: #f59e0b; }
+                    .notification-icon { color: #fbbf24; }
+
+                    /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
+                    .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
+                        width: 20px;  /* Default width */
+                        height: 20px; /* Default height */
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                        display: inline-block; /* Ensure it behaves like an icon */
+                    }
+
+                    /* Ensure Font Awesome icons still have their space if not replaced yet */
+                    .nav-icon-wrapper .nav-icon {
+                         width: 20px; /* Consistent width with SVG */
+                         text-align: center; /* Center icon if it's narrower */
+                    }
+
+                    /* Notification Badge - полностью новый стиль */
+                    .notification-badge {
+                        background: #ef4444;
+                        color: white;
+                        font-size: 0.75rem;
+                        font-weight: 700;
+                        padding: 0.2rem 0.5rem;
+                        border-radius: 12px;
+                        min-width: 20px;
+                        height: 20px;
+                        display: inline-flex;
+                        align-items: center;
+                        justify-content: center;
+                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+                        margin-left: 0.5rem;
+                        flex-shrink: 0;
+                        animation: notificationPulse 2s infinite;
+                        border: 2px solid white;
+                    }
+
+                    @keyframes notificationPulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+                        }
+                        50% {
+                            transform: scale(1.05);
+                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+                        }
+                    }
+
+                    /* Modern Dropdown Styles */
+                    .modern-dropdown {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: var(--header-radius);
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                        padding: 0.5rem 0;
+                        margin-top: 0.5rem;
+                        min-width: 250px;
+                        animation: dropdownSlideIn 0.3s ease-out;
+                    }
+
+                    @keyframes dropdownSlideIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(-10px) scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+
+                    .dropdown-header {
+                        padding: 0.75rem 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        margin: -0.5rem -0rem 0.5rem 0;
+                        border-radius: var(--header-radius) var(--header-radius) 0 0;
+                    }
+
+                    .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: var(--header-text);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.875rem;
+                        transition: var(--header-transition);
+                        border: none;
+                        background: none;
+                        width: 100%;
+                    }
+
+                    .dropdown-item:hover {
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        transform: translateX(4px);
+                    }
+
+                    .dropdown-item i {
+                        width: 16px;
+                        text-align: center;
+                        opacity: 0.8;
+                    }
+
+                    .dropdown-item .nav-icon-svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    .dropdown-divider {
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, rgba(0, 121, 140, 0.2), transparent);
+                        margin: 0.5rem 1rem;
+                        border: none;
+                    }
+
+                    /* User Profile Dropdown */
+                    .modern-header .user-profile {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.25rem;
+                    }
+
+                    .modern-header .user-avatar {
+                        position: relative;
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+
+                    .modern-header .avatar-img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        border-radius: 50% !important;
+                        object-fit: cover !important;
+                        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+                        transition: var(--header-transition) !important;
+                    }
+
+                    .modern-header .user-link:hover .avatar-img {
+                        border-color: white !important;
+                        transform: scale(1.05) !important;
+                    }
+
+                    .modern-header .online-indicator {
+                        position: absolute;
+                        bottom: 2px;
+                        right: 2px;
+                        width: 12px;
+                        height: 12px;
+                        background: var(--header-success);
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        animation: pulseOnline 2s infinite;
+                    }
+
+                    @keyframes pulseOnline {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.2); }
+                    }
+
+                    .modern-header .user-info {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        line-height: 1.2;
+                    }
+
+                    .modern-header .user-name {
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-role {
+                        font-size: 0.75rem;
+                        color: rgba(255, 255, 255, 0.7);
+                        font-weight: 400;
+                    }
+
+                    /* User Dropdown Menu */
+                    .modern-header .user-dropdown-menu {
+                        min-width: 300px;
+                        right: 0;
+                        left: auto;
+                    }
+
+                    .modern-header .user-header {
+                        padding: 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        margin: -0.5rem 0 0.5rem 0;
+                    }
+
+                    .modern-header .user-avatar-large {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        border: 3px solid rgba(255, 255, 255, 0.3);
+                    }
+
+                    .modern-header .user-avatar-large img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .modern-header .user-details {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                    }
+
+                    .modern-header .user-full-name {
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-email {
+                        font-size: 0.8rem;
+                        color: rgba(255, 255, 255, 0.8);
+                        opacity: 0.9;
+                    }
+
+                    /* Special Button Styles */
+                    .nav-link.login-btn {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.login-btn:hover {
+                        background: linear-gradient(135deg, #059669, #047857);
+                        transform: translateY(-2px);
+                    }
+
+                    .nav-link.register-btn {
+                        background: linear-gradient(135deg, var(--header-accent), #ea580c);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.register-btn:hover {
+                        background: linear-gradient(135deg, #ea580c, #dc2626);
+                        transform: translateY(-2px);
+                    }
+
+                    .new-task {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        color: white !important;
+                        margin: 0.25rem 0.5rem;
+                        border-radius: 8px;
+                    }
+
+                    .logout-item {
+                        color: var(--header-error) !important;
+                    }
+
+                    .logout-item:hover {
+                        background: linear-gradient(135deg, var(--header-error), #dc2626) !important;
+                        color: white !important;
+                    }
+
+                    /* Mobile Menu Toggle */
+                    .mobile-menu-toggle {
+                        display: none;
+                        flex-direction: column;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        gap: 0.25rem;
+                        z-index: 10;
+                    }
+
+                    .hamburger-line {
+                        width: 25px;
+                        height: 3px;
+                        background: white;
+                        border-radius: 2px;
+                        transition: var(--header-transition);
+                    }
+
+                    /* Responsive Design */
+                    @media (max-width: 1200px) {
+                        .header-container {
+                            padding: 0 1.5rem;
+                        }
+
+                        .nav-text {
+                            display: none;
+                        }
+
+                        .nav-icon-wrapper {
+                            gap: 0;
+                        }
+
+                        .user-info {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 968px) {
+                        .main-navigation {
+                            display: none;
+                        }
+
+                        .mobile-menu-toggle {
+                            display: flex;
+                        }
+
+                        .header-container {
+                            padding: 0 1rem;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        .logo-wrapper {
+                            gap: 0.5rem;
+                        }
+
+                        .logo-icon {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 1.2rem;
+                            border-radius: 10px;
+                        }
+
+                        .logo-text {
+                            display: none;
+                        }
+
+                        .header-container {
+                            padding: 0 0.75rem;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        .logo-icon {
+                            width: 36px;
+                            height: 36px;
+                            font-size: 1rem;
+                            border-radius: 8px;
+                        }
+                    }
+
+                    /* Content Offset */
+                    .content {
+                        padding-top: 70px;
+                    }
+
+                    /* Remove old styles */
+                    .header {
+                        display: none;
+                        }
+                    </style>
 
     </head>
         <body class="{% if current_user.is_authenticated %}logged-in{% endif %}">
@@ -400,6 +787,54 @@
                                 </ul>
                             </li>
 
+                        {% if current_user.is_authenticated and current_user.is_redmine_user %}
+                            <!-- New Tasks (Задачи) Dropdown -->
+                            <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="issuesDropdownMenu" role="button" data-bs-toggle="dropdown">
+                                            <div class="nav-icon-wrapper">
+                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+                                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V17C5 18.1046 5.89543 19 7 19H17C18.1046 19 19 18.1046 19 17V12" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M9 5V7C9 8.10457 8.10457 9 7 9H5" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M14 14L16 16L20 12" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <rect x="7" y="11" width="4" height="2" rx="1" fill="#26C6DA"/>
+                                                    <rect x="7" y="14" width="4" height="2" rx="1" fill="#26C6DA"/>
+                                                </svg>
+                                                <span class="nav-text">Задачи</span>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown" aria-labelledby="issuesDropdownMenu">
+                                            <li class="dropdown-header">
+                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; margin-right: 0.5rem;">
+                                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V17C5 18.1046 5.89543 19 7 19H17C18.1046 19 19 18.1046 19 17V12" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M9 5V7C9 8.10457 8.10457 9 7 9H5" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <path d="M14 14L16 16L20 12" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                    <rect x="7" y="11" width="4" height="2" rx="1" fill="#26C6DA"/>
+                                                    <rect x="7" y="14" width="4" height="2" rx="1" fill="#26C6DA"/>
+                                                </svg>
+                                                <span>Управление задачами</span>
+                                            </li>
+                                    <li><a class="dropdown-item" href="#"> {# ЗАМЕНИТЬ # на актуальный url_for для "Мои задачи" #}
+                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M8 6H20M8 12H20M8 18H20" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                  <path d="M4 6H4.01M4 12H4.01M4 18H4.01" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                <span>Мои задачи</span>
+                                    </a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item new-issue" href="#"> {# ЗАМЕНИТЬ # на актуальный url_for для "Новая задача" #}
+                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                  <path d="M14 2V8H20" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                  <path d="M12 11V17" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                  <path d="M9 14H15" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                                </svg>
+                                                <span>Новая задача</span>
+                                    </a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
                                     <!-- Other Dropdown -->
                             <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="otherDropdown" role="button" data-bs-toggle="dropdown">
@@ -418,10 +853,12 @@
                                                 <i class="fas fa-users"></i>
                                                 <span>Контакты</span>
                                             </a></li>
+                                            {% if current_user.can_access_contact_center_moscow %}
                                             <li><a class="dropdown-item" href="{{ url_for('calls.contact_center_moscow') }}">
                                                 <i class="fas fa-phone-alt"></i>
                                                 <span>Контакт-центр Москва</span>
                                             </a></li>
+                                            {% endif %}
                                             <li class="dropdown-submenu">
                                                 <a class="dropdown-item submenu-toggle" href="#" id="reportsDropdown">
                                                     <i class="fas fa-chart-line"></i>
@@ -775,44 +1212,35 @@
                         z-index: 2;
                     }
 
-                    /* Специальное выравнивание для уведомлений */
-                    .notification-link .nav-icon-wrapper {
-                        display: flex;
-                        align-items: center;
-                        gap: 0.5rem;
-                        flex-wrap: nowrap;
-                        justify-content: flex-start;
+                    /* Style for SVG icons in nav */
+                    .nav-icon-wrapper svg {
+                        width: 20px; /* Adjust as needed */
+                        height: 20px; /* Adjust as needed */
+                        vertical-align: middle;
+                        flex-shrink: 0; /* Prevent shrinking if text is long */
                     }
 
-                    .nav-icon {
-                        font-size: 1rem;
-                        transition: var(--header-transition);
-                        flex-shrink: 0;
-                    }
-
-                    .nav-text {
-                        font-family: 'Inter', sans-serif;
-                        font-weight: 500;
-                        white-space: nowrap;
-                        flex-shrink: 0;
-                    }
-
-                    .dropdown-arrow {
-                        font-size: 0.75rem;
-                        transition: var(--header-transition);
-                        margin-left: 0.25rem;
-                        flex-shrink: 0;
-                    }
-
-                    .nav-link:hover .dropdown-arrow {
-                        transform: translateY(-1px);
-                    }
-
-                    /* Icon Colors */
+                    /* Icon Colors for Font Awesome (will be gradually replaced) */
                     .wiki-icon { color: #10b981; }
-                    .tasks-icon { color: #3b82f6; }
+                    .tasks-icon { color: #3b82f6; } /* This is for Заявки */
+                    .issues-icon { color: #8b5cf6; } /* Example: Violet for Задачи */
                     .other-icon { color: #f59e0b; }
-                    .notification-icon { color: #fbbf24; } /* Желтый цвет для уведомлений */
+                    .notification-icon { color: #fbbf24; }
+
+                    /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
+                    .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
+                        width: 20px;  /* Default width */
+                        height: 20px; /* Default height */
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                        display: inline-block; /* Ensure it behaves like an icon */
+                    }
+
+                    /* Ensure Font Awesome icons still have their space if not replaced yet */
+                    .nav-icon-wrapper .nav-icon {
+                         width: 20px; /* Consistent width with SVG */
+                         text-align: center; /* Center icon if it's narrower */
+                    }
 
                     /* Notification Badge - полностью новый стиль */
                     .notification-badge {
@@ -908,6 +1336,11 @@
                         width: 16px;
                         text-align: center;
                         opacity: 0.8;
+                    }
+
+                    .dropdown-item .nav-icon-svg {
+                        width: 16px;
+                        height: 16px;
                     }
 
                     .dropdown-divider {

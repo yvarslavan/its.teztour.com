@@ -32,16 +32,27 @@ class User(db.Model, UserMixin):
     )
     vacuum_im_notifications = db.Column(db.Integer, default=0)
     online = db.Column(db.Boolean, default=False)
-    is_redmine_user = db.Column(db.Boolean, default=False)
+    is_redmine_user = db.Column(db.Boolean, default=False, nullable=False)
     id_redmine_user = db.Column(db.Integer, default=4)
-    is_admin = db.Column(db.Boolean, default=False)
     can_access_quality_control = db.Column(db.Boolean, default=False, nullable=False)
-    browser_notifications_enabled = db.Column(db.Boolean, default=False, nullable=False)
+    can_access_contact_center_moscow = db.Column(db.Boolean, default=False, nullable=False)
+    is_admin = db.Column(db.Boolean, default=False, nullable=False)
+    browser_notifications_enabled = db.Column(db.Boolean, default=False)
+    last_notification_check = db.Column(db.DateTime, nullable=True)
     posts = db.relationship("Post", backref="author", lazy=True)
     push_subscriptions = db.relationship("PushSubscription", backref="user", lazy=True, cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"User({self.id}, {self.username}, {self.email},  {self.office}, {self.image_file}, {self.password}, {self.last_seen}, {self.full_name}, {self.department}, {self.position}, {self.vpn}, {self.vpn_end_date}, {self.vacuum_im_notifications}, {self.online}, {self.is_redmine_user}, {self.id_redmine_user}, can_access_quality_control={self.can_access_quality_control}, browser_notifications_enabled={self.browser_notifications_enabled})"
+        return (f"User({self.id}, {self.username}, {self.email}, {self.image_file}, {self.last_seen}, "
+                f"is_admin={self.is_admin}, full_name={self.full_name}, department={self.department}, "
+                f"position={self.position}, internal_phone={self.internal_phone}, mobile_phone={self.mobile_phone}, "
+                f"is_redmine_user={self.is_redmine_user}, id_redmine_user={self.id_redmine_user}, "
+                f"can_access_quality_control={self.can_access_quality_control}, "
+                f"can_access_contact_center_moscow={self.can_access_contact_center_moscow}, "
+                f"browser_notifications_enabled={self.browser_notifications_enabled})")
+
+    def get_active_tasks(self):
+        pass
 
 class Post(db.Model):
     __tablename__ = "posts"
