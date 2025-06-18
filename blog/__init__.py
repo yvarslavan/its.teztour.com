@@ -87,8 +87,12 @@ def create_app():
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=True  # Включаем CSRF защиту
+            WTF_CSRF_ENABLED=True,  # Включаем CSRF защиту
+            # Отключаем кэширование для разработки
+            SEND_FILE_MAX_AGE_DEFAULT=0,
+            TEMPLATES_AUTO_RELOAD=True
         )
+        print("🔧 [INIT] Режим отладки активен - настройки разработки применены")
     else:
         # Для продакшена
         app.config.update(
@@ -109,6 +113,20 @@ def create_app():
 
     # НОВОЕ: Минимальный набор настроек для SQLAlchemy
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # ДОПОЛНИТЕЛЬНОЕ ИСПРАВЛЕНИЕ: Принудительно устанавливаем настройки шаблонов
+    # независимо от режима debug (для гарантии)
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+    # Настройка Jinja окружения для отключения кэширования
+    app.jinja_env.auto_reload = True
+    app.jinja_env.cache = {}  # Очищаем кэш шаблонов
+
+    print(f"🔧 [INIT] Принудительные настройки шаблонов:")
+    print(f"🔧 [INIT] TEMPLATES_AUTO_RELOAD: {app.config.get('TEMPLATES_AUTO_RELOAD')}")
+    print(f"🔧 [INIT] jinja_env.auto_reload: {app.jinja_env.auto_reload}")
+    print(f"🔧 [INIT] DEBUG: {app.debug}")
 
     # Инициализация компонентов
     db.init_app(app)
@@ -142,23 +160,54 @@ def create_app():
     from blog.call.routes import calls
     from blog.finesse.routes import finesse
     from blog.netmonitor.routes import netmonitor  # Импортируем маршруты
+    from blog.tasks.routes import tasks_bp  # Импортируем блюпринт задач
 
     app.register_blueprint(main)
     app.register_blueprint(users)
     app.register_blueprint(posts)
     app.register_blueprint(calls)
     app.register_blueprint(finesse, url_prefix="/finesse")
-    app.register_blueprint(netmonitor)  # Используем Blueprint из routes.py
+    app.register_blueprint(netmonitor)
+    app.register_blueprint(tasks_bp, url_prefix="/tasks")  # Регистрируем блюпринт задач с префиксом
 
-    # Исключаем API эндпоинты push-уведомлений из CSRF защиты
+    # Дополнительная инициализация в контексте приложения
     with app.app_context():
-        from blog.main.routes import push_subscribe, unsubscribe_push, test_push_notification, get_vapid_public_key, push_debug
-        csrf.exempt(push_subscribe)
-        csrf.exempt(unsubscribe_push)
-        csrf.exempt(test_push_notification)
-        csrf.exempt(get_vapid_public_key)
-        csrf.exempt(push_debug)
-        print("[INIT] CSRF исключения настроены для push API", flush=True)
+        # ВРЕМЕННО ОТКЛЮЧЕНА - Простая миграция базы данных для добавления недостающих полей
+        # try:
+        #     import sqlite3
+        #     # Правильный путь к базе данных
+        #     db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+        #     if db_uri.startswith('sqlite:///'):
+        #         db_path = db_uri.replace('sqlite:///', '')
+        #         if os.path.exists(db_path):
+        #             conn = sqlite3.connect(db_path)
+        #             cursor = conn.cursor()
+        #
+        #             # Проверяем, есть ли поле notifications_widget_enabled
+        #             cursor.execute("PRAGMA table_info(users)")
+        #             columns = [col[1] for col in cursor.fetchall()]
+        #
+        #             if 'notifications_widget_enabled' not in columns:
+        #                 cursor.execute("ALTER TABLE users ADD COLUMN notifications_widget_enabled BOOLEAN DEFAULT 1 NOT NULL")
+        #                 cursor.execute("UPDATE users SET notifications_widget_enabled = 1")
+        #                 conn.commit()
+        #                 print("[INIT] Добавлено поле notifications_widget_enabled в таблицу users", flush=True)
+        #             else:
+        #                 print("[INIT] Поле notifications_widget_enabled уже существует", flush=True)
+        #
+        #             conn.close()
+        #         else:
+        #             print(f"[INIT] База данных не найдена: {db_path}", flush=True)
+        #     else:
+        #         print("[INIT] Миграция работает только с SQLite", flush=True)
+        # except Exception as e:
+        #     print(f"[INIT] Ошибка при миграции БД: {e}", flush=True)
+        #     # НЕ прерываем инициализацию приложения из-за ошибки миграции
+
+        print("[INIT] Миграция БД временно отключена для отладки", flush=True)
+
+        # Push-уведомления больше не используются, CSRF исключения удалены
+        print("[INIT] Инициализация завершена без push API.", flush=True)
 
     # Инициализация и запуск планировщика только в основном процессе Werkzeug
     # Это предотвратит запуск нескольких экземпляров планировщика в режиме отладки с автоперезагрузкой
@@ -199,6 +248,17 @@ def create_app():
     @app.after_request
     def after_request(response):
         app.logger.debug(f"Session after request: {dict(session)}")
+
+        # Добавляем заголовки для отключения кэша в режиме отладки
+        if app.debug:
+            response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+            response.headers['Pragma'] = 'no-cache'
+            response.headers['Expires'] = '0'
+
+            # Специально для статических файлов CSS
+            if response.content_type and 'text/css' in response.content_type:
+                response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, max-age=0'
+
         return response
 
     # Инициализация BrowserPushService

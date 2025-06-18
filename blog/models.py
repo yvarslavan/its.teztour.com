@@ -38,6 +38,7 @@ class User(db.Model, UserMixin):
     can_access_contact_center_moscow = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     browser_notifications_enabled = db.Column(db.Boolean, default=False)
+    # notifications_widget_enabled = db.Column(db.Boolean, default=True, nullable=False)  # ВРЕМЕННО ОТКЛЮЧЕНО
     last_notification_check = db.Column(db.DateTime, nullable=True)
     posts = db.relationship("Post", backref="author", lazy=True)
     push_subscriptions = db.relationship("PushSubscription", backref="user", lazy=True, cascade="all, delete-orphan")

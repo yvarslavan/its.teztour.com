@@ -1,0 +1,1139 @@
+/* ===================================================
+   СОВРЕМЕННЫЕ КОМПАКТНЫЕ СТАТИСТИЧЕСКИЕ КАРТОЧКИ
+   =================================================== */
+
+/* CSS ПЕРЕМЕННЫЕ ДЛЯ ЕДИНОГО ДИЗАЙНА */
+:root {
+  --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --success-gradient: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+  --warning-gradient: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+  --info-gradient: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+  --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+
+  --card-bg: rgba(255, 255, 255, 0.95);
+  --card-border: rgba(255, 255, 255, 0.18);
+  --card-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+  --card-backdrop: blur(8px);
+
+  --text-primary: #2d3748;
+  --text-secondary: #4a5568;
+  --text-muted: #718096;
+
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  --compact-height: 85px;
+  --expanded-height: auto;
+  --details-max-height: 180px;
+}
+
+/* ===================================================
+   ОСНОВНАЯ ПАНЕЛЬ СТАТИСТИКИ
+   =================================================== */
+
+.stats-dashboard {
+  margin: 20px 0;
+  padding: 0;
+}
+
+.stats-grid {
+  display: none !important;
+}
+
+.no-data {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted);
+  font-style: italic;
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 2px dashed #e2e8f0;
+  backdrop-filter: var(--card-backdrop);
+}
+
+/* ===================================================
+   DASHBOARD HEADER
+   =================================================== */
+
+.status-breakdown-dashboard {
+  margin: 2rem 0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+  backdrop-filter: var(--card-backdrop);
+}
+
+.breakdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(247,250,252,0.9) 100%);
+  border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+}
+
+.breakdown-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.breakdown-title i {
+  font-size: 1.5rem;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.breakdown-title h2 {
+  margin: 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+
+.breakdown-summary {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.summary-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--primary-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-weight: 600;
+}
+
+/* ===================================================
+   ГЛОБАЛЬНАЯ КНОПКА УПРАВЛЕНИЯ
+   =================================================== */
+
+.global-toggle-btn {
+  background: var(--primary-gradient);
+  border: none;
+  color: white;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.global-toggle-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.global-toggle-btn:hover::before {
+  left: 100%;
+}
+
+.global-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.global-toggle-btn.expanded-state {
+  background: var(--danger-gradient);
+  box-shadow: 0 4px 16px rgba(255, 107, 107, 0.3);
+}
+
+.global-toggle-btn.collapsed-state {
+  background: var(--success-gradient);
+  box-shadow: 0 4px 16px rgba(17, 153, 142, 0.3);
+}
+
+.global-toggle-btn i {
+  transition: var(--transition-smooth);
+}
+
+.global-toggle-btn:hover i {
+  transform: scale(1.1) rotate(5deg);
+}
+
+/* ===================================================
+   СЕТКА КАРТОЧЕК
+   =================================================== */
+
+.status-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+  padding: 2rem 2.5rem;
+  background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+}
+
+/* ===================================================
+   КОМПАКТНЫЕ СТАТИСТИЧЕСКИЕ КАРТОЧКИ
+   =================================================== */
+
+.status-breakdown-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  border: 1px solid var(--card-border);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: var(--card-backdrop);
+  transition: var(--transition-smooth);
+  overflow: hidden;
+  position: relative;
+  min-height: var(--compact-height);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Цветные акценты для разных типов карточек */
+.status-breakdown-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: var(--card-accent, var(--primary-gradient));
+  transition: var(--transition-smooth);
+}
+
+.total-card {
+  --card-accent: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.open-card {
+  --card-accent: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+.closed-db-card {
+  --card-accent: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.paused-card {
+  --card-accent: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+}
+
+/* Hover эффекты */
+.status-breakdown-card:hover {
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(31, 38, 135, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-breakdown-card:hover::before {
+  height: 8px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%, #ff9a9e 100%);
+}
+
+/* ===================================================
+   HEADER КАРТОЧКИ
+   =================================================== */
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem 0.5rem;
+  position: relative;
+}
+
+.card-icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-accent);
+  color: white;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.card-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-left: 1rem;
+  flex: 1;
+}
+
+/* Кнопка переключения */
+.card-toggle-btn {
+  width: 2.25rem;
+  height: 2.25rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(226, 232, 240, 0.5);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  backdrop-filter: var(--card-backdrop);
+  color: var(--text-secondary);
+}
+
+.card-toggle-btn:hover {
+  background: var(--card-accent);
+  color: white;
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.card-toggle-btn i {
+  transition: var(--transition-bounce);
+}
+
+.card-toggle-btn.expanded i {
+  transform: rotate(180deg);
+}
+
+/* ===================================================
+   СОДЕРЖИМОЕ КАРТОЧКИ
+   =================================================== */
+
+.card-content {
+  padding: 0.5rem 1.25rem 1.25rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  background: var(--card-accent);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.5rem;
+  transition: var(--transition-smooth);
+}
+
+.card-description {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+/* ===================================================
+   ДЕТАЛИЗАЦИЯ КАРТОЧКИ (РАЗВОРАЧИВАЕМАЯ ОБЛАСТЬ)
+   =================================================== */
+
+.card-breakdown {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-10px);
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.card-breakdown.expanded {
+  max-height: 200px;
+  opacity: 1;
+  transform: translateY(0);
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid rgba(100, 116, 139, 0.1);
+  overflow-y: auto;
+  pointer-events: auto;
+  visibility: visible;
+}
+
+/* Стилизация скроллбара для детализации */
+.card-breakdown.expanded::-webkit-scrollbar {
+  width: 4px;
+}
+
+.card-breakdown.expanded::-webkit-scrollbar-track {
+  background: rgba(226, 232, 240, 0.3);
+  border-radius: 2px;
+}
+
+.card-breakdown.expanded::-webkit-scrollbar-thumb {
+  background: var(--card-accent);
+  border-radius: 2px;
+}
+
+/* Элементы разбивки */
+.breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.375rem 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  transition: var(--transition-smooth);
+  border-radius: 6px;
+  margin: 0.125rem 0;
+}
+
+.breakdown-item:hover {
+  background: rgba(102, 126, 234, 0.08);
+  color: var(--text-primary);
+  padding-left: 0.5rem;
+}
+
+.breakdown-status-name {
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.breakdown-status-count {
+  background: var(--card-accent);
+  color: white;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.6rem;
+  min-width: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: var(--transition-smooth);
+}
+
+.breakdown-item:hover .breakdown-status-count {
+  transform: scale(1.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* ===================================================
+   АНИМАЦИИ И ЗАГРУЗКА
+   =================================================== */
+
+/* Анимация загрузки */
+.card-breakdown.loading {
+  position: relative;
+  min-height: 40px;
+  background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+  background-size: 200% 100%;
+  animation: loading 1.5s infinite;
+}
+
+@keyframes loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Анимация появления чисел */
+.card-value.animate-count,
+.summary-value.animate-count,
+.breakdown-status-count.animate-count {
+  animation: countUp 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes countUp {
+  0% {
+    transform: scale(0.5) rotate(-5deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Эффект пульсации при обновлении */
+.card-value.pulse {
+  animation: pulse 0.6s ease-in-out;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+  }
+}
+
+/* ===================================================
+   ДЕТАЛЬНАЯ РАЗБИВКА ПО СТАТУСАМ
+   =================================================== */
+
+.detailed-status-breakdown {
+  border-top: 1px solid rgba(226, 232, 240, 0.5);
+  background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(247,250,252,0.9) 100%);
+}
+
+.breakdown-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 2rem 2.5rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.3);
+}
+
+.breakdown-section-header h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.expand-breakdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--info-gradient);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.25rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  box-shadow: 0 4px 16px rgba(168, 237, 234, 0.3);
+  position: relative;
+  overflow: hidden;
+}
+
+.expand-breakdown-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+  transition: left 0.5s;
+}
+
+.expand-breakdown-btn:hover::before {
+  left: 100%;
+}
+
+.expand-breakdown-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(168, 237, 234, 0.4);
+}
+
+.expand-breakdown-btn i {
+  transition: var(--transition-bounce);
+}
+
+.expand-breakdown-btn.expanded i {
+  transform: rotate(180deg);
+}
+
+.detailed-breakdown-content {
+  height: 0;
+  overflow: hidden;
+  transition: height 0.3s ease-in-out;
+  padding: 0;
+  margin: 0;
+}
+
+.detailed-breakdown-content.expanded {
+  height: auto;
+  min-height: 200px;
+  max-height: 500px;
+  overflow-y: auto;
+  padding: 15px;
+  margin-top: 10px;
+  border-top: 1px solid rgba(100, 116, 139, 0.1);
+}
+
+.status-items-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.status-item {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: var(--transition-smooth);
+  position: relative;
+  backdrop-filter: var(--card-backdrop);
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.1);
+}
+
+.status-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: var(--status-color, var(--primary-gradient));
+  border-radius: 12px 0 0 12px;
+  transition: var(--transition-smooth);
+}
+
+.status-item:hover {
+  transform: translateX(8px) translateY(-2px);
+  box-shadow: 0 8px 25px rgba(31, 38, 135, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.status-item:hover::before {
+  width: 8px;
+}
+
+.status-name {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+}
+
+.status-count {
+  background: var(--status-color, var(--primary-gradient));
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.875rem;
+  min-width: 2.5rem;
+  text-align: center;
+  transition: var(--transition-smooth);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.status-item:hover .status-count {
+  transform: scale(1.1);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Цветовые схемы для статусов */
+.status-item.status-new {
+  --status-color: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+}
+
+.status-item.status-progress {
+  --status-color: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.status-item.status-closed {
+  --status-color: linear-gradient(135deg, #a8a8a8 0%, #7d7d7d 100%);
+}
+
+.status-item.status-paused {
+  --status-color: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+}
+
+/* ===================================================
+   CONTROL PANEL STYLES
+   =================================================== */
+
+.controls-panel {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.controls-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.left-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.right-controls {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filters-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.filter-container {
+  position: relative;
+}
+
+.filter-container select {
+  appearance: none;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 2.5rem 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  min-width: 150px;
+}
+
+.filter-container select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.search-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.search-container {
+  position: relative;
+}
+
+#searchBoxContainer .dataTables_filter input {
+  appearance: none;
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: var(--transition-smooth);
+  min-width: 200px;
+}
+
+#searchBoxContainer .dataTables_filter input:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.display-options {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.display-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.display-label {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.pagination-type-selector {
+  display: flex;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-type-btn {
+  background: white;
+  border: 1px solid #e2e8f0;
+  color: var(--text-secondary);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.pagination-type-btn:hover {
+  background: #f7fafc;
+  color: var(--text-primary);
+}
+
+.pagination-type-btn.active {
+  background: var(--primary-gradient);
+  color: white;
+  border-color: #667eea;
+}
+
+/* ===================================================
+   АДАПТИВНЫЙ ДИЗАЙН
+   =================================================== */
+
+@media (max-width: 768px) {
+  :root {
+    --compact-height: 75px;
+    --details-max-height: 150px;
+  }
+
+  .breakdown-header {
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+    padding: 1.5rem;
+  }
+
+  .breakdown-summary {
+    justify-content: center;
+    text-align: center;
+  }
+
+  .status-breakdown-grid {
+    grid-template-columns: 1fr;
+    padding: 1.5rem;
+    gap: 1rem;
+  }
+
+  .breakdown-section-header {
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+  }
+
+  .detailed-breakdown-content.expanded {
+    padding: 1.5rem !important;
+  }
+
+  .status-items-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card-header {
+    padding: 0.75rem 1rem 0.5rem;
+  }
+
+  .card-content {
+    padding: 0.5rem 1rem 1rem;
+  }
+
+  .card-value {
+    font-size: 2rem;
+  }
+
+  .breakdown-title h2 {
+    font-size: 1.5rem;
+  }
+
+  .summary-value {
+    font-size: 2rem;
+  }
+
+  .controls-content {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .left-controls,
+  .right-controls {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --compact-height: 70px;
+    --details-max-height: 120px;
+  }
+
+  .status-breakdown-grid {
+    padding: 1rem;
+  }
+
+  .breakdown-header {
+    padding: 1rem;
+  }
+
+  .breakdown-section-header {
+    padding: 1rem;
+  }
+
+  .detailed-breakdown-content.expanded {
+    padding: 1rem !important;
+  }
+
+  .card-value {
+    font-size: 1.75rem;
+  }
+
+  .breakdown-title h2 {
+    font-size: 1.25rem;
+  }
+
+  .summary-value {
+    font-size: 1.75rem;
+  }
+}
+
+/* ===================================================
+   ЭФФЕКТЫ ПОЯВЛЕНИЯ
+   =================================================== */
+
+.status-breakdown-card {
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.status-breakdown-card:nth-child(1) { animation-delay: 0.1s; }
+.status-breakdown-card:nth-child(2) { animation-delay: 0.2s; }
+.status-breakdown-card:nth-child(3) { animation-delay: 0.3s; }
+.status-breakdown-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Эффект появления при раскрытии деталей */
+.breakdown-item {
+  animation: fadeInItem 0.4s ease-out both;
+}
+
+.breakdown-item:nth-child(1) { animation-delay: 0.05s; }
+.breakdown-item:nth-child(2) { animation-delay: 0.1s; }
+.breakdown-item:nth-child(3) { animation-delay: 0.15s; }
+.breakdown-item:nth-child(4) { animation-delay: 0.2s; }
+.breakdown-item:nth-child(5) { animation-delay: 0.25s; }
+
+@keyframes fadeInItem {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ===================================================
+   ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ
+   =================================================== */
+
+/* Эффект свечения при наведении на карточку */
+.status-breakdown-card:hover .card-icon {
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.6);
+  transform: scale(1.05) rotate(5deg);
+}
+
+/* Мягкое свечение для активного состояния */
+.card-toggle-btn.expanded {
+  box-shadow: 0 0 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Эффект параллакса для заголовка */
+.breakdown-title {
+  transition: var(--transition-smooth);
+}
+
+.breakdown-header:hover .breakdown-title {
+  transform: translateY(-2px);
+}
+
+/* Тонкие анимации для иконок */
+.card-icon i {
+  transition: var(--transition-smooth);
+}
+
+.status-breakdown-card:hover .card-icon i {
+  transform: scale(1.1);
+}
+
+/* ===================================================
+   СОВМЕСТИМОСТЬ СО СТАРЫМИ СТИЛЯМИ
+   =================================================== */
+
+/* Основные классы для обратной совместимости */
+.hidden {
+  display: none !important;
+}
+
+.visible {
+  display: block !important;
+}
+
+.task-id-link {
+  color: #007bff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.task-id-link:hover {
+  color: #0056b3;
+  text-decoration: underline;
+}
+
+/* ===================================================
+   ФИНАЛЬНЫЕ ИСПРАВЛЕНИЯ
+   =================================================== */
+
+/* Исправление для фильтров */
+.filter-clear-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: var(--transition-smooth);
+  display: none;
+}
+
+.filter-clear-btn.show {
+  display: inline-block;
+}
+
+.filter-clear-btn:hover {
+  background: #c82333;
+}
+
+/* Стили для кнопок переключения */
+.card-toggle-btn,
+.expand-breakdown-btn,
+.global-toggle-btn {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.card-toggle-btn i,
+.expand-breakdown-btn i,
+.global-toggle-btn i {
+  transition: transform 0.3s ease;
+  display: inline-block;
+}
+
+.card-toggle-btn.expanded i,
+.expand-breakdown-btn.expanded i,
+.global-toggle-btn.expanded-state i {
+  transform: rotate(180deg);
+}
+
+/* Стили для списка статусов внутри карточек */
+.status-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 5px;
+}
+
+.status-breakdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 4px 8px;
+  background-color: rgba(241, 245, 249, 0.5);
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.status-breakdown-item:hover {
+  background-color: rgba(241, 245, 249, 0.8);
+}
+
+.status-name {
+  font-weight: 500;
+  color: #334155;
+}
+
+.status-count {
+  font-weight: 600;
+  background-color: rgba(203, 213, 225, 0.5);
+  border-radius: 4px;
+  padding: 2px 6px;
+  color: #334155;
+}
+
+/* Сообщение о отсутствии данных */
+.no-data-message {
+  padding: 10px;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+  background-color: rgba(241, 245, 249, 0.3);
+  border-radius: 4px;
+}

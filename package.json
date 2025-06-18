@@ -1,0 +1,18 @@
+{
+  "name": "flask-helpdesk-frontend",
+  "version": "1.0.0",
+  "description": "Frontend build tools for Flask Helpdesk application",
+  "scripts": {
+    "scss:compile": "sass blog/static/scss:blog/static/css --style=compressed --source-map",
+    "scss:watch": "sass blog/static/scss:blog/static/css --style=expanded --source-map --watch",
+    "scss:dev": "sass blog/static/scss:blog/static/css --style=expanded --source-map",
+    "build": "npm run scss:compile",
+    "dev": "npm run scss:watch"
+  },
+  "devDependencies": {
+    "sass": "^1.69.0"
+  },
+  "keywords": ["flask", "scss", "frontend"],
+  "author": "Development Team",
+  "license": "MIT"
+}

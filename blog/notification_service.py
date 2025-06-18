@@ -528,14 +528,40 @@ class NotificationService:
                 user_id=user_id
             ).order_by(NotificationsAddNotes.date_created.desc()).all()
 
+            # Преобразуем SQLAlchemy объекты в словари для JSON сериализации
+            status_data = []
+            for notification in status_notifications:
+                status_data.append({
+                    'id': notification.id,
+                    'issue_id': notification.issue_id,
+                    'old_status': notification.old_status,
+                    'new_status': notification.new_status,
+                    'date_created': notification.date_created.isoformat() if notification.date_created else None,
+                    'user_id': notification.user_id
+                })
+
+            comment_data = []
+            for notification in comment_notifications:
+                comment_data.append({
+                    'id': notification.id,
+                    'issue_id': notification.issue_id,
+                    'author': notification.author,
+                    'notes': notification.notes,
+                    'date_created': notification.date_created.isoformat() if notification.date_created else None,
+                    'user_id': notification.user_id
+                })
+
             return {
-                'status_notifications': status_notifications,
-                'comment_notifications': comment_notifications,
-                'total_count': len(status_notifications) + len(comment_notifications)
+                'status_notifications': status_data,
+                'comment_notifications': comment_data,
+                'total_count': len(status_data) + len(comment_data)
             }
 
         except SQLAlchemyError as e:
             logger.error(f"Ошибка при получении уведомлений пользователя {user_id}: {e}")
+            return {'status_notifications': [], 'comment_notifications': [], 'total_count': 0}
+        except Exception as e:
+            logger.error(f"Общая ошибка при получении уведомлений пользователя {user_id}: {e}")
             return {'status_notifications': [], 'comment_notifications': [], 'total_count': 0}
 
     def clear_user_notifications(self, user_id: int) -> bool:
@@ -591,10 +617,25 @@ class BrowserPushService:
 
     def __init__(self):
         logger.info("[BrowserPushService] CONSTRUCTOR CALLED")
-        # Не инициализируем VAPID ключи в конструкторе
+        # Инициализируем VAPID ключи сразу в конструкторе
         self.vapid_private_key = None
         self.vapid_public_key = None
         self.vapid_claims = None
+
+        # Попытаемся загрузить VAPID ключи сразу при инициализации
+        try:
+            # Проверяем наличие контекста приложения более безопасным способом
+            from flask import has_app_context
+            if has_app_context():
+                self._ensure_vapid_config()
+                logger.info("[BrowserPushService] VAPID ключи загружены при инициализации")
+            else:
+                logger.info("[BrowserPushService] Контекст приложения недоступен при инициализации")
+        except RuntimeError as e:
+            # Контекст приложения может быть недоступен при инициализации
+            logger.info(f"[BrowserPushService] VAPID ключи будут загружены позже: {e}")
+        except Exception as e:
+            logger.warning(f"[BrowserPushService] Не удалось загрузить VAPID ключи при инициализации: {e}")
 
     def _ensure_vapid_config(self):
         """
@@ -609,8 +650,29 @@ class BrowserPushService:
             return True
 
         try:
-            # Контекст приложения теперь предоставляется из вызывающей функции (start_user_job)
-            # logger.info(f"[REQ_ID:{request_id}] Контекст приложения активен для _ensure_vapid_config.")
+            # Сначала пытаемся загрузить ключи напрямую из файла vapid_keys.py
+            try:
+                from blog.config.vapid_keys import VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_CLAIMS
+
+                if VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY:
+                    logger.info(f"{log_prefix} VAPID ключи успешно загружены из blog.config.vapid_keys")
+                    self.vapid_public_key = VAPID_PUBLIC_KEY
+                    self.vapid_private_key = VAPID_PRIVATE_KEY
+                    self.vapid_claims = VAPID_CLAIMS or {"sub": "mailto:admin@example.com"}
+
+                    # Обновляем конфигурацию Flask для совместимости
+                    current_app.config['VAPID_PUBLIC_KEY'] = VAPID_PUBLIC_KEY
+                    current_app.config['VAPID_PRIVATE_KEY'] = VAPID_PRIVATE_KEY
+                    current_app.config['VAPID_CLAIMS'] = self.vapid_claims
+
+                    logger.info(f"{log_prefix} Firebase VAPID ключи установлены из файла")
+                    return True
+                else:
+                    logger.warning(f"{log_prefix} VAPID ключи пусты в blog.config.vapid_keys")
+            except ImportError as e:
+                logger.warning(f"{log_prefix} Не удалось импортировать blog.config.vapid_keys: {e}")
+
+            # Если не удалось загрузить из файла, пробуем из конфигурации Flask
             config_public_key = current_app.config.get('VAPID_PUBLIC_KEY')
             config_private_key = current_app.config.get('VAPID_PRIVATE_KEY')
             # vapid_claims должен быть здесь, внутри with current_app.app_context()
@@ -634,31 +696,14 @@ class BrowserPushService:
                     logger.info(f"{log_prefix} VAPID_CLAIMS (повторно для случая ключей из конфига): {self.vapid_claims}")
                 return True
             else:
-                logger.warning(f"{log_prefix} VAPID ключи НЕ НАЙДЕНЫ в конфигурации Flask. Попытка генерации.")
-                if WEBPUSH_AVAILABLE:
-                    try:
-                        vapid_key_pair = webpush.generate_vapid_key_pair()
-                        self.vapid_private_key = vapid_key_pair.private_key
-                        self.vapid_public_key = vapid_key_pair.public_key
-                        # vapid_claims также должен быть установлен при генерации
-                        if not self.vapid_claims:
-                            self.vapid_claims = current_app.config.get(
-                                'VAPID_CLAIMS',
-                                {"sub": "mailto:admin@example.com"}
-                            )
-                        logger.info(f"{log_prefix} Новая пара VAPID ключей сгенерирована. Claims: {self.vapid_claims}")
-                        logger.warning(f"{log_prefix} Сгенерированный VAPID Private Key: {self.vapid_private_key}")
-                        logger.warning(f"{log_prefix} Сгенерированный VAPID Public Key: {self.vapid_public_key}")
-                        logger.warning(
-                            f"{log_prefix} ВАЖНО: Сохраните эти ключи в конфигурации приложения."
-                        )
-                        return True
-                    except Exception as e:
-                        logger.error(f"{log_prefix} Ошибка при генерации VAPID ключей: {e}", exc_info=True)
-                        return False
-                else:
-                    logger.error(f"{log_prefix} pywebpush недоступен, не удается сгенерировать VAPID ключи.")
-                    return False
+                logger.error(f"{log_prefix} VAPID ключи НЕ НАЙДЕНЫ в конфигурации Flask!")
+                logger.error(f"{log_prefix} КРИТИЧЕСКАЯ ОШИБКА: Необходимо настроить Firebase VAPID ключи!")
+                logger.error(f"{log_prefix} Инструкция:")
+                logger.error(f"{log_prefix} 1. Перейдите в Firebase Console -> Project Settings -> Cloud Messaging")
+                logger.error(f"{log_prefix} 2. Создайте новую пару Web Push certificates")
+                logger.error(f"{log_prefix} 3. Обновите blog/config/vapid_keys.py обоими ключами")
+                logger.error(f"{log_prefix} 4. Перезапустите Flask приложение")
+                return False
         except RuntimeError as e:
             if "Working outside of application context" in str(e):
                 logger.critical(
@@ -672,7 +717,15 @@ class BrowserPushService:
             logger.error(f"{log_prefix} Общая ошибка VAPID: {e}", exc_info=True)
             return False
 
-    def send_push_notification(self, notification: NotificationData):
+    def force_reload_vapid_config(self):
+        """Принудительная перезагрузка VAPID ключей"""
+        logger.info("[FORCE_RELOAD_VAPID] Принудительная перезагрузка VAPID ключей")
+        self.vapid_private_key = None
+        self.vapid_public_key = None
+        self.vapid_claims = None
+        return self._ensure_vapid_config()
+
+    def send_push_notification(self, notification: NotificationData, claims: Optional[Dict] = None):
         """Отправка push-уведомления на все активные подписки пользователя"""
         # Немедленно вызовем ошибку, чтобы проверить, выполняется ли этот код
         # raise ValueError("[!!!SURELY_EXECUTED!!!] Тестовая ошибка из send_push_notification для проверки обновления кода.")
@@ -770,7 +823,7 @@ class BrowserPushService:
         for i, subscription in enumerate(user_subscriptions):
             logger.info(f"[PUSH_SERVICE] Итерация {i+1}/{total_subscriptions}. Попытка отправки на подписку ID {subscription.id} (Endpoint: {subscription.endpoint[:50]}...)")
             try:
-                self._send_to_subscription(subscription, payload_json_string)
+                self._send_to_subscription(subscription, payload_json_string, claims=claims)
                 logger.info(f"[PUSH_SEND] Уведомление (предположительно) успешно отправлено на endpoint ID {subscription.id} для пользователя {notification.user_id}")
                 results.append({'subscription_id': subscription.id, 'status': 'success'})
                 success_count += 1
@@ -827,62 +880,112 @@ class BrowserPushService:
             return {'status': 'unknown_error', 'message': 'Неизвестное состояние после отправки', 'results': results}
 
     def _get_user_subscriptions(self, user_id: int) -> List[PushSubscription]:
-        """Получение активных подписок пользователя из базы данных"""
+        """Получение активных подписок пользователя из БД"""
         try:
-            # Контекст приложения теперь предоставляется из вызывающей функции (start_user_job)
-            subscriptions = db.session.query(PushSubscription).filter_by(
-                user_id=user_id,
-                is_active=True
-            ).all()
-
-            return subscriptions
-
-        except Exception as e:
-            logger.error(f"Ошибка при получении подписок пользователя {user_id}: {e}")
+            return PushSubscription.query.filter_by(user_id=user_id, is_active=True).all()
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка БД при получении подписок для пользователя {user_id}: {e}", exc_info=True)
             return []
 
-    def _send_to_subscription(self, subscription: PushSubscription, payload_json_string: str) -> Dict:
+    def _send_to_subscription(self, subscription: PushSubscription, payload_json_string: str, claims: Optional[Dict] = None):
         request_id = uuid.uuid4() # Для трассировки этого конкретного вызова
-        logger.critical(f"[!!!DEBUG_SEND_SUB_ENTRY!!!] REQ_ID: {{request_id}} Вызван _send_to_subscription для подписки ID {{subscription.id}}")
+        logger.critical(f"[!!!DEBUG_SEND_SUB_ENTRY!!!] REQ_ID: {request_id} Вызван _send_to_subscription для подписки ID {subscription.id}")
 
         if not self._ensure_vapid_config():
-            logger.error(f"[REQ_ID:{{request_id}}] [PUSH_SEND_SUB] VAPID ключи не настроены. Отправка на подписку ID {{subscription.id}} отменена.")
-            return {"status": "error", "message": "VAPID keys not configured", "subscription_id": subscription.id}
+            logger.error(f"[REQ_ID:{request_id}] [PUSH_SEND_SUB] VAPID ключи не настроены. Отправка на подписку ID {subscription.id} отменена.")
+            # Вместо возврата словаря, который будет проигнорирован, вызываем исключение
+            raise WebPushException(f"VAPID keys not configured for subscription ID {subscription.id}")
 
         # Умная адаптация endpoint
-        endpoint_to_use = subscription.endpoint
-        if endpoint_to_use and "fcm.googleapis.com/fcm/send/" in endpoint_to_use:
-            original_endpoint_for_log = endpoint_to_use[:70] # Для лога, если он длинный
-            endpoint_to_use = endpoint_to_use.replace("fcm.googleapis.com/fcm/send/", "fcm.googleapis.com/wp/")
-            logger.info(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Адаптирован FCM endpoint ID {{subscription.id}}: '{{original_endpoint_for_log}}...' -> '{{endpoint_to_use[:70]}}...'")
-        elif endpoint_to_use:
-            logger.info(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Endpoint ID {{subscription.id}} не требует адаптации (уже /wp/ или не FCM): '{{endpoint_to_use[:70]}}...'")
-        else:
-            logger.error(f"[REQ_ID:{{request_id}}] [ADAPT_ENDPOINT_SEND_SUB] Пустой endpoint для подписки ID {{subscription.id}}. Отправка невозможна.")
-            raise WebPushException(f"Пустой endpoint для подписки ID {{subscription.id}}")
+        original_endpoint = subscription.endpoint
 
-        logger.info(f"[REQ_ID:{{request_id}}] Используется endpoint из подписки ID {{subscription.id}}: {{endpoint_to_use[:50]}}...")
+        if not original_endpoint:
+            logger.error(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Пустой endpoint для подписки ID {subscription.id}. Отправка невозможна.")
+            raise WebPushException(f"Пустой endpoint для подписки ID {subscription.id}")
+
+        # Логируем исходный endpoint
+        logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Исходный endpoint для подписки ID {subscription.id}: '{original_endpoint[:70]}...'")
+
+        # Начинаем адаптацию endpoint
+        endpoint_to_use = original_endpoint
+
+        # 1. Проверяем наличие https:// и добавляем, если отсутствует
+        if "fcm.googleapis.com" in endpoint_to_use and not endpoint_to_use.startswith("https://"):
+            endpoint_to_use = f"https://{endpoint_to_use}"
+            logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Добавлен протокол https://: '{endpoint_to_use[:70]}...'")
+
+        # 2. Адаптируем старый формат FCM URL
+        if "fcm.googleapis.com/fcm/send/" in endpoint_to_use:
+            token = endpoint_to_use.split("/fcm/send/")[1]
+            endpoint_to_use = f"https://fcm.googleapis.com/wp/{token}"
+            logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Старый формат преобразован в новый: '{endpoint_to_use[:70]}...'")
+
+        # 3. Проверяем наличие /wp/ для FCM и добавляем, если отсутствует
+        if "fcm.googleapis.com" in endpoint_to_use and "/wp/" not in endpoint_to_use:
+            # Делим URL на части и берем последнюю часть как токен
+            parts = endpoint_to_use.split("/")
+            if len(parts) > 0:
+                token = parts[-1]
+                # Если токен не пустой, формируем новый URL
+                if token:
+                    endpoint_to_use = f"https://fcm.googleapis.com/wp/{token}"
+                    logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Добавлен префикс /wp/: '{endpoint_to_use[:70]}...'")
+
+        # Если endpoint был изменен, логируем это
+        if endpoint_to_use != original_endpoint:
+            logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Endpoint адаптирован с '{original_endpoint[:50]}...' на '{endpoint_to_use[:50]}...'")
+
+            # Проверяем наличие токена после /wp/ для FCM
+            if "fcm.googleapis.com/wp/" in endpoint_to_use:
+                token_parts = endpoint_to_use.split("/wp/")
+                if len(token_parts) > 1 and not token_parts[1]:
+                    logger.error(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Отсутствует токен после /wp/ в адаптированном URL: '{endpoint_to_use}'")
+                    raise WebPushException(f"Некорректный FCM endpoint: отсутствует токен после /wp/")
+        else:
+            logger.info(f"[REQ_ID:{request_id}] [ADAPT_ENDPOINT_SEND_SUB] Endpoint не требует адаптации: '{endpoint_to_use[:70]}...'")
+
+        # Определяем, какие VAPID claims использовать
+        if claims:
+            claims_to_use = claims
+            logger.info(f"[REQ_ID:{request_id}] [DEBUG_SEND_SUB] Используются VAPID claims, переданные в функцию: {claims_to_use}")
+        else:
+            claims_to_use = self.vapid_claims
+            logger.info(f"[REQ_ID:{request_id}] [DEBUG_SEND_SUB] Используются VAPID claims из экземпляра сервиса: {claims_to_use}")
+
+        sub_info = {
+            "endpoint": endpoint_to_use,
+            "keys": {
+                "p256dh": subscription.p256dh_key,
+                "auth": subscription.auth_key,
+            },
+        }
+
+        # Отладочный лог перед самой отправкой
+        logger.info(f"[REQ_ID:{request_id}] [DEBUG_SEND_SUB] Подписка ID {subscription.id}: Endpoint для webpush: {endpoint_to_use}")
+        logger.info(f"[REQ_ID:{request_id}] [DEBUG_SEND_SUB] Подписка ID {subscription.id}: VAPID Private Key (начало): {self.vapid_private_key[:20] if self.vapid_private_key else 'NOT SET'}")
+        logger.info(f"[REQ_ID:{request_id}] [DEBUG_SEND_SUB] Подписка ID {subscription.id}: VAPID Claims для отправки: {claims_to_use}")
 
         try:
-            # Логирование деталей перед отправкой
-            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: Endpoint для webpush: {{endpoint_to_use}}")
-            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: VAPID Private Key (начало): {{self.vapid_private_key[:20] if self.vapid_private_key else 'NOT SET'}}")
-            logger.info(f"[REQ_ID:{{request_id}}] [DEBUG_SEND_SUB] Подписка ID {{subscription.id}}: VAPID Claims: {{self.vapid_claims}}")
-
             webpush(
-                subscription_info={
-                    "endpoint": endpoint_to_use,
-                    "keys": {
-                        "p256dh": subscription.p256dh_key,
-                        "auth": subscription.auth_key
-                    }
-                },
+                subscription_info=sub_info,
                 data=payload_json_string,
                 vapid_private_key=self.vapid_private_key,
-                vapid_claims=self.vapid_claims.copy() # Передаем копию, чтобы избежать модификации оригинала
+                vapid_claims=claims_to_use.copy() # Используем claims_to_use
             )
-            logger.critical(f"[!!!DEBUG_SEND_SUB_EXIT_SUCCESS!!!] REQ_ID: {{request_id}} webpush вызван УСПЕШНО для подписки ID {{subscription.id}}")
-            return {"status": "success", "subscription_id": subscription.id}
+            logger.info(f"[REQ_ID:{request_id}] [SEND_SUCCESS] webpush() вызов успешен для подписки ID {subscription.id}")
+
+            # Если endpoint был адаптирован успешно, обновляем его в базе данных
+            if endpoint_to_use != original_endpoint:
+                try:
+                    subscription_db = PushSubscription.query.get(subscription.id)
+                    if subscription_db:
+                        logger.info(f"[REQ_ID:{request_id}] [ENDPOINT_UPDATE] Обновляем endpoint в БД для подписки ID {subscription.id}")
+                        subscription_db.endpoint = endpoint_to_use
+                        db.session.commit()
+                        logger.info(f"[REQ_ID:{request_id}] [ENDPOINT_UPDATE] Успешно обновлен endpoint в БД")
+                except Exception as db_err:
+                    logger.error(f"[REQ_ID:{request_id}] [ENDPOINT_UPDATE] Ошибка обновления endpoint в БД: {db_err}", exc_info=True)
+
         except WebPushException as e:
             logger.error(f"WebPushException при отправке на подписку {subscription.id} (endpoint: {subscription.endpoint[:50]}...): {str(e)}", exc_info=True)
             response_status = None
@@ -918,6 +1021,119 @@ class BrowserPushService:
         except Exception as e:
             logger.error(f"[DB_UPDATE] Ошибка при деактивации подписки ID {subscription_id}: {e}", exc_info=True)
             db.session.rollback()
+
+    def send_test_push(self, notification: NotificationData, claims: Dict):
+        """Специализированная функция для отправки тестового уведомления с явными claims."""
+        logger.info(f"[PUSH_SERVICE_TEST] Вызвана send_test_push для пользователя {notification.user_id} с claims: {claims}")
+
+        if not WEBPUSH_AVAILABLE:
+            logger.warning(f"[PUSH_SERVICE_TEST] pywebpush недоступна, отправка невозможна.")
+            return {'status': 'service_unavailable', 'message': 'pywebpush не доступна'}
+
+        if not self._ensure_vapid_config():
+            logger.error("[PUSH_SERVICE_TEST] VAPID конфигурация неполная.")
+            return {'status': 'config_error', 'message': 'VAPID конфигурация неполная'}
+
+        user_subscriptions = self._get_user_subscriptions(notification.user_id)
+        if not user_subscriptions:
+            logger.info(f"[PUSH_SERVICE_TEST] Для пользователя {notification.user_id} не найдено активных подписок.")
+            return {'status': 'no_subscriptions', 'message': 'Нет активных подписок'}
+
+        # Детальное логирование подписок для отладки
+        logger.info(f"[PUSH_SERVICE_TEST] Найдено {len(user_subscriptions)} активных подписок для пользователя {notification.user_id}")
+        for i, sub in enumerate(user_subscriptions):
+            logger.info(f"[PUSH_SERVICE_TEST] Подписка {i+1}/{len(user_subscriptions)} - ID: {sub.id}, Endpoint: {sub.endpoint}")
+
+            # Анализ формата endpoint
+            if "fcm.googleapis.com" in sub.endpoint:
+                if "/fcm/send/" in sub.endpoint:
+                    logger.warning(f"[PUSH_SERVICE_TEST] Подписка {sub.id} содержит старый формат FCM URL (/fcm/send/)")
+                elif "/wp/" in sub.endpoint:
+                    logger.info(f"[PUSH_SERVICE_TEST] Подписка {sub.id} содержит правильный формат FCM URL (/wp/)")
+                else:
+                    logger.warning(f"[PUSH_SERVICE_TEST] Подписка {sub.id} содержит неизвестный формат FCM URL")
+            else:
+                logger.info(f"[PUSH_SERVICE_TEST] Подписка {sub.id} не использует FCM")
+
+        # Используем ту же логику формирования payload, что и в основной функции
+        icon_url = notification.data.get('icon', url_for('static', filename='img/push-icon.png', _external=True))
+        action_url = notification.data.get('url', url_for('main.home', _external=True))
+
+        payload = {
+            'title': notification.title,
+            'message': notification.message,
+            'icon': icon_url,
+            'data': {'url': action_url}
+        }
+        payload_json_string = json.dumps(payload, ensure_ascii=False)
+
+        # Отправляем только на первую активную подписку для теста
+        subscription_to_test = user_subscriptions[0]
+        logger.info(f"[PUSH_SERVICE_TEST] Попытка отправки на подписку ID {subscription_to_test.id}, Endpoint: {subscription_to_test.endpoint}")
+
+        # Адаптируем endpoint для теста, если нужно
+        original_endpoint = subscription_to_test.endpoint
+
+        # Проверяем формат и исправляем его, если необходимо
+        adapted_endpoint = original_endpoint
+
+        # Для FCM проверяем необходимость адаптации
+        if "fcm.googleapis.com" in original_endpoint:
+            # Если старый формат - адаптируем
+            if "/fcm/send/" in original_endpoint:
+                token = original_endpoint.split("/fcm/send/")[1]
+                adapted_endpoint = f"https://fcm.googleapis.com/wp/{token}"
+                logger.info(f"[PUSH_SERVICE_TEST] Адаптирован endpoint старого формата: {adapted_endpoint}")
+            # Если отсутствует wp/ - исправляем
+            elif "/wp/" not in original_endpoint:
+                # Получаем токен (последняя часть URL)
+                token = original_endpoint.split("/")[-1]
+                adapted_endpoint = f"https://fcm.googleapis.com/wp/{token}"
+                logger.info(f"[PUSH_SERVICE_TEST] Добавлен префикс /wp/: {adapted_endpoint}")
+            # Если нет https:// - добавляем
+            if not adapted_endpoint.startswith("https://"):
+                adapted_endpoint = f"https://{adapted_endpoint}"
+                logger.info(f"[PUSH_SERVICE_TEST] Добавлен протокол https://: {adapted_endpoint}")
+
+        # Временно изменяем endpoint в объекте подписки для тестовой отправки
+        original_endpoint = subscription_to_test.endpoint
+        subscription_to_test.endpoint = adapted_endpoint
+
+        try:
+            # Отправляем уведомление с адаптированным endpoint
+            self._send_to_subscription(subscription_to_test, payload_json_string, claims=claims)
+            logger.info(f"[PUSH_SERVICE_TEST] Тестовое уведомление успешно отправлено на подписку ID {subscription_to_test.id}")
+
+            # Если отправка прошла успешно и endpoint был изменен, обновляем его в базе данных
+            if original_endpoint != adapted_endpoint:
+                logger.info(f"[PUSH_SERVICE_TEST] Обновляем endpoint в БД с '{original_endpoint}' на '{adapted_endpoint}'")
+                try:
+                    subscription_db = PushSubscription.query.get(subscription_to_test.id)
+                    if subscription_db:
+                        subscription_db.endpoint = adapted_endpoint
+                        db.session.commit()
+                        logger.info(f"[PUSH_SERVICE_TEST] Endpoint успешно обновлен в БД")
+                except Exception as db_error:
+                    logger.error(f"[PUSH_SERVICE_TEST] Ошибка обновления endpoint в БД: {db_error}", exc_info=True)
+
+            return {'status': 'success', 'message': 'Тестовое уведомление успешно отправлено.'}
+        except Exception as e:
+            logger.error(f"[PUSH_SERVICE_TEST] Ошибка при отправке тестового уведомления: {e}", exc_info=True)
+
+            # Восстанавливаем оригинальный endpoint в объекте
+            subscription_to_test.endpoint = original_endpoint
+
+            return {
+                'status': 'send_error',
+                'message': str(e),
+                'details': {
+                    'original_endpoint': original_endpoint,
+                    'adapted_endpoint': adapted_endpoint
+                }
+            }
+        finally:
+            # В любом случае восстанавливаем оригинальный endpoint в объекте
+            subscription_to_test.endpoint = original_endpoint
 
 
 # Глобальный экземпляр сервиса (ленивая инициализация)

@@ -12,6 +12,7 @@ class PushNotificationManager {
         this.subscription = null;
         this.isInitialized = false;
         this.isInitializing = false;
+        this.csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
         // Элементы интерфейса - БОЛЬШЕ НЕ ИСПОЛЬЗУЮТСЯ ЗДЕСЬ
         // this.pushButton = null;
@@ -404,7 +405,8 @@ class PushNotificationManager {
             const response = await fetch('/api/push/subscribe', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrfToken
                 },
                 body: JSON.stringify({
                     subscription: sub.toJSON()
@@ -438,7 +440,8 @@ class PushNotificationManager {
             const response = await fetch('/api/push/unsubscribe', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': this.csrfToken
                 },
                 body: JSON.stringify({
                     endpoint: this.subscription ? this.subscription.endpoint : null

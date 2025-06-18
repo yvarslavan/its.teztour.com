@@ -36,6 +36,16 @@ print(f"SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES: {os.environ.get('SQLALCHEMY_SA
 # Создаем приложение
 app = create_app()
 
+# КРИТИЧЕСКОЕ ИСПРАВЛЕНИЕ: Принудительно включаем режим отладки для разработки
+if ENV == 'development' or os.name == 'nt':  # Windows = разработка
+    app.debug = True
+    app.config['DEBUG'] = True
+    app.config['TEMPLATES_AUTO_RELOAD'] = True
+    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    print("🔧 ПРИНУДИТЕЛЬНО включен режим отладки для разработки")
+    print(f"🔧 DEBUG: {app.debug}")
+    print(f"🔧 TEMPLATES_AUTO_RELOAD: {app.config.get('TEMPLATES_AUTO_RELOAD')}")
+
 # Настройки сессий и безопасности
 app.config.update(
     SESSION_COOKIE_SECURE=True,

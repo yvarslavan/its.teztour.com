@@ -903,10 +903,6 @@
     background: var(--surface-0);
     color: var(--text-primary);
     text-decoration: none;
-    font-size: 0.875rem;
-    font-weight: 500;
-    transition: all var(--transition-fast);
-    cursor: pointer;
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
@@ -1106,6 +1102,91 @@
       --text-secondary: #000000;
   }
   }
+
+  /* Стили для пагинации DataTables */
+  .dataTables_paginate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .dataTables_paginate .paginate_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-light, #e2e8f0);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+  }
+
+  .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+    background: var(--surface-2, #f1f5f9);
+    border-color: var(--primary-300, #64b5f6);
+  }
+
+  .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500, #2196f3);
+    color: white;
+    border-color: var(--primary-500, #2196f3);
+  }
+
+  .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .dataTables_paginate .ellipsis {
+    padding: 0 8px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+  }
+
+  /* Дополнительные стили для пагинации */
+  .dataTables_wrapper .dataTables_paginate {
+    float: none !important;
+    text-align: center;
+    margin-top: 0 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    float: none !important;
+    display: inline-flex !important;
+    margin-left: 2px;
+    margin-right: 2px;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    width: auto;
+    padding: 8px 12px;
+  }
+
+  /* Принудительное отображение пагинации */
+  .table-pagination {
+    min-height: 50px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .table-pagination .dataTables_paginate {
+    display: flex !important;
+    visibility: visible !important;
+  }
+
+  /* Стили для информации о записях */
+  .dataTables_info {
+    color: var(--text-secondary, #475569);
+    font-size: 0.875rem;
+  }
 </style>
 {% endblock %}
 
@@ -1266,8 +1347,9 @@ $(document).ready(function() {
                     "url": "/static/js/datatables/Russian.json"
                 },
                 "order": [[1, 'desc']],
-                "pageLength": 25,
-                "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+                "pageLength": 10,
+                "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
+                "pagingType": "full_numbers",
                 "columnDefs": [{
                     "targets": 1,
                     "type": "date",
@@ -1286,7 +1368,7 @@ $(document).ready(function() {
                         $(this).addClass('fade-in');
                     });
                 },
-                initComplete: function () {
+                "initComplete": function () {
                     // Перемещаем элементы управления
                     $('.dataTables_filter').detach().appendTo('#searchBoxContainer');
                     $('#searchBoxContainer label').contents().filter(function(){
@@ -1301,7 +1383,28 @@ $(document).ready(function() {
 
                     $('.dataTables_info').detach().appendTo('#infoContainer');
                     $('.dataTables_paginate').detach().appendTo('#paginationContainer');
-                }
+
+                    // Принудительно показываем пагинацию
+                    $('.dataTables_paginate').show();
+
+                    // Отладочная информация
+                    console.log('DataTables инициализирована');
+                    console.log('Количество записей:', this.api().data().length);
+                    console.log('Пагинация найдена:', $('.dataTables_paginate').length);
+
+                    // Дополнительная проверка через небольшую задержку
+                    setTimeout(function() {
+                        if ($('.dataTables_paginate').length === 0) {
+                            console.log('Пагинация не найдена, создаем вручную');
+                            $('#paginationContainer').html('<div class="dataTables_paginate paging_full_numbers"><span class="paginate_button previous disabled">Предыдущая</span><span class="paginate_button current">1</span><span class="paginate_button next disabled">Следующая</span></div>');
+                        }
+                        $('.dataTables_paginate').show();
+                    }, 100);
+                },
+                "paging": true,
+                "info": true,
+                "searching": true,
+                "ordering": true
             });
 
             // Добавляем обработчик изменения фильтра статусов
@@ -1364,6 +1467,94 @@ style.textContent = `
 
 .fade-in {
     animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Стили для пагинации DataTables */
+.dataTables_paginate {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.dataTables_paginate .paginate_button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border: 1px solid var(--border-light, #e2e8f0);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-decoration: none;
+}
+
+.dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+    background: var(--surface-2, #f1f5f9);
+    border-color: var(--primary-300, #64b5f6);
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: var(--primary-500, #2196f3);
+    color: white;
+    border-color: var(--primary-500, #2196f3);
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.dataTables_paginate .ellipsis {
+    padding: 0 8px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+}
+
+/* Стили для информации о записях */
+.dataTables_info {
+    color: var(--text-secondary, #475569);
+    font-size: 0.875rem;
+}
+
+/* Стили для селектора количества записей */
+.dataTables_length select {
+    padding: 8px 12px;
+    border: 2px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    min-width: 80px;
+}
+
+.dataTables_length select:focus {
+    outline: none;
+    border-color: var(--primary-500, #2196f3);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+}
+
+/* Стили для поиска */
+.dataTables_filter input {
+    padding: 12px 16px;
+    border: 2px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    min-width: 250px;
+}
+
+.dataTables_filter input:focus {
+    outline: none;
+    border-color: var(--primary-500, #2196f3);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
 }
 `;
 document.head.appendChild(style);

@@ -1,0 +1,101 @@
+/**
+ * filter_results_section.css - v1.0
+ * Стили для секции результатов фильтрации
+ */
+
+/* Контейнер результатов фильтрации */
+.filter-results-section {
+    display: flex !important;
+    align-items: center !important;
+    padding: 8px 12px !important;
+    background-color: #f8fafc !important;
+    border-radius: 8px !important;
+    margin-top: 8px !important;
+    border: 1px solid #e2e8f0 !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+/* Значок результатов */
+.results-badge-bright {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 6px 12px !important;
+    background-color: rgba(59, 130, 246, 0.1) !important;
+    border-radius: 6px !important;
+    border: 1px solid rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Иконка результатов */
+.results-icon {
+    color: #3b82f6 !important;
+    font-size: 16px !important;
+}
+
+/* Текст результатов */
+.results-text {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    color: #1e293b !important;
+    font-weight: 500 !important;
+}
+
+/* Метка результатов */
+.results-label {
+    font-size: 14px !important;
+    font-weight: 500 !important;
+}
+
+/* Счетчик результатов */
+.results-count {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #3b82f6 !important;
+}
+
+/* Суффикс результатов */
+.results-suffix {
+    font-size: 14px !important;
+    color: #64748b !important;
+}
+
+/* Пульсирующий индикатор */
+.results-pulse {
+    width: 8px !important;
+    height: 8px !important;
+    background-color: #3b82f6 !important;
+    border-radius: 50% !important;
+    animation: pulse 2s infinite !important;
+}
+
+/* Анимация пульсации */
+@keyframes pulse {
+    0% { transform: scale(0.95); opacity: 1; }
+    50% { transform: scale(1.1); opacity: 0.8; }
+    100% { transform: scale(0.95); opacity: 1; }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .filter-results-section {
+        padding: 6px 10px !important;
+    }
+
+    .results-badge-bright {
+        padding: 4px 8px !important;
+    }
+
+    .results-icon {
+        font-size: 14px !important;
+    }
+
+    .results-label, .results-suffix {
+        font-size: 12px !important;
+    }
+
+    .results-count {
+        font-size: 14px !important;
+    }
+}
