@@ -1,0 +1,2195 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мои задачи | Helpdesk</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/datatable-modern.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_stats.css') }}?v=FIXED_2024_FINAL">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_stats_modern.css') }}?v=SUPER_COMPACT_2024">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_pagination.css') }}?v=COUNTER_INDICATOR_2024">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/statistics_interactive.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_enhanced.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/project-tree-integration.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/fix_filter_buttons.css') }}?v=1.0">
+{% endblock %}
+
+{% block main_page %}
+<div class="tasks-page-container">
+
+
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-icon">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h3>Загрузка задач...</h3>
+      <p>Подключение к системе Redmine и получение данных</p>
+    </div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои задачи в Redmine</h1>
+          <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://helpdesk.teztour.com" target="_blank" class="action-button secondary">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Перейти в Redmine</span>
+        </a>
+        <a href="{{ url_for('main.my_issues') }}" class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Мои заявки</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Status Breakdown Dashboard -->
+  <section class="status-breakdown-dashboard">
+    <div class="breakdown-header">
+      <div class="breakdown-title">
+        <i class="fas fa-chart-pie"></i>
+        <h2>Разбивка по статусам</h2>
+      </div>
+      <div class="breakdown-summary">
+        <span class="summary-value" id="total-tasks-summary">-</span>
+        <span class="summary-label">всего задач</span>
+        <!-- Глобальная кнопка управления всеми карточками -->
+        <button class="global-toggle-btn collapsed-state" id="globalToggleBtn" title="Показать детали всех карточек">
+          <i class="fas fa-expand-alt"></i>
+          <span>Развернуть все</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="status-breakdown-grid">
+      <!-- Всего задач -->
+      <div class="status-breakdown-card total-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-list-alt"></i>
+          </div>
+          <div class="card-title">Всего задач</div>
+          <button class="card-toggle-btn" data-target="total-breakdown" title="Показать/скрыть детали">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-value" id="total-tasks">-</div>
+          <div class="card-description">Все задачи в системе</div>
+          <div class="card-breakdown collapsed" id="total-breakdown">
+            <!-- Детализация добавляется динамически -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Открытые задачи -->
+      <div class="status-breakdown-card open-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <div class="card-title">Открытые задачи</div>
+          <button class="card-toggle-btn" data-target="open-breakdown" title="Показать/скрыть детали">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-value" id="open-tasks">-</div>
+          <div class="card-description">Новые и ожидающие</div>
+          <div class="card-breakdown collapsed" id="open-breakdown">
+            <!-- Детализация добавляется динамически -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Закрытые в БД -->
+      <div class="status-breakdown-card closed-db-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-database"></i>
+          </div>
+          <div class="card-title">Закрытые в БД</div>
+          <button class="card-toggle-btn" data-target="closed-breakdown" title="Показать/скрыть детали">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-value" id="closed-db-tasks">-</div>
+          <div class="card-description">Фактически закрытые</div>
+          <div class="card-breakdown collapsed" id="closed-breakdown">
+            <!-- Детализация добавляется динамически -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Приостановленные -->
+      <div class="status-breakdown-card paused-card">
+        <div class="card-header">
+          <div class="card-icon">
+            <i class="fas fa-pause-circle"></i>
+          </div>
+          <div class="card-title">Приостановленные</div>
+          <button class="card-toggle-btn" data-target="paused-breakdown" title="Показать/скрыть детали">
+            <i class="fas fa-chevron-down"></i>
+          </button>
+        </div>
+        <div class="card-content">
+          <div class="card-value" id="paused-tasks">-</div>
+          <div class="card-description">На паузе и заморожены</div>
+          <div class="card-breakdown collapsed" id="paused-breakdown">
+            <!-- Детализация добавляется динамически -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Детальная разбивка по статусам -->
+    <div class="detailed-status-breakdown">
+      <div class="breakdown-section-header">
+        <h3>Детальная разбивка</h3>
+        <button class="expand-breakdown-btn" id="expandBreakdownBtn">
+          <i class="fas fa-chevron-down"></i>
+          <span>Показать детали</span>
+        </button>
+      </div>
+      <div class="detailed-breakdown-content" id="detailedBreakdownContent">
+        <div class="status-items-grid" id="statusItemsGrid">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Panel -->
+  <section class="controls-panel">
+    <div class="controls-content">
+      <!-- Левая часть - управление пагинацией -->
+      <div class="left-controls">
+        <div class="display-options">
+          <div class="display-item">
+            <div id="lengthContainer" class="length-container">
+              <!-- Сюда будет перемещен селектор количества записей DataTables -->
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Правая часть - фильтры и поиск -->
+      <div class="right-controls">
+        <div class="filters-section">
+          <div class="filter-group">
+            <div class="filter-item">
+              <label class="filter-label">
+                <i class="fas fa-filter"></i>
+                Статус задачи
+              </label>
+              <div id="statusFilterContainer" class="filter-container">
+                <select id="status-filter" class="form-control">
+                  <option value="">Все статусы</option>
+                </select>
+                <button type="button" class="filter-clear-btn" id="clear-status-filter" title="Сбросить фильтр">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <div class="filter-item">
+              <label class="filter-label">
+                <i class="fas fa-project-diagram"></i>
+                Проект
+              </label>
+              <div id="projectFilterContainer" class="filter-container">
+                <select id="project-filter" class="form-control searchable-select">
+                  <option value="">Все проекты</option>
+                </select>
+                <button type="button" class="filter-clear-btn" id="clear-project-filter" title="Сбросить фильтр">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+            <div class="filter-item">
+              <label class="filter-label">
+                <i class="fas fa-exclamation-triangle"></i>
+                Приоритет
+              </label>
+              <div id="priorityFilterContainer" class="filter-container">
+                <select id="priority-filter" class="form-control">
+                  <option value="">Все приоритеты</option>
+                </select>
+                <button type="button" class="filter-clear-btn" id="clear-priority-filter" title="Сбросить фильтр">
+                  <i class="fas fa-times"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="search-section">
+            <label class="search-label">
+              <i class="fas fa-search"></i>
+              Быстрый поиск
+            </label>
+            <div id="searchBoxContainer" class="search-container">
+              <!-- Сюда будет перемещен поиск DataTables -->
+            </div>
+          </div>
+
+          <!-- Результаты фильтрации - интегрированные в блок фильтров -->
+          <div class="filter-results-section" style="display: none;">
+            <div class="results-badge-bright">
+              <div class="results-icon">
+                <i class="fas fa-list-alt"></i>
+              </div>
+              <div class="results-text">
+                <span class="results-label">Найдено:</span>
+                <span id="filtered-tasks-count" class="results-count">0</span>
+                <span class="results-suffix">задач</span>
+              </div>
+              <div class="results-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Removed the Tasks Counter Indicator -->
+  <!-- The indicator has been removed as it was redundant with the existing task count display -->
+
+  <!-- Tasks Table -->
+  <section class="tasks-section">
+    <div class="table-container">
+      <!-- Table Loading Spinner -->
+      <div class="table-loading-overlay">
+        <div class="table-loading-content">
+          <div class="table-spinner-icon">
+            <i class="fas fa-spinner fa-spin"></i>
+          </div>
+          <p>Загрузка данных...</p>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="tasksTable" class="tasks-table">
+          <thead>
+            <tr>
+              <th class="column-id">
+                <div class="column-header">
+                  <i class="fas fa-hashtag"></i>
+                  <span>ID</span>
+                </div>
+              </th>
+              <th class="column-subject">
+                <div class="column-header">
+                  <i class="fas fa-envelope"></i>
+                  <span>Тема</span>
+                </div>
+              </th>
+              <th class="column-status">
+                <div class="column-header">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Статус</span>
+                </div>
+              </th>
+              <th class="column-priority">
+                <div class="column-header">
+                  <i class="fas fa-exclamation-triangle"></i>
+                  <span>Приоритет</span>
+                </div>
+              </th>
+              <th class="column-email-to">
+                <div class="column-header">
+                  <i class="fas fa-envelope"></i>
+                  <span>Отправитель</span>
+                </div>
+              </th>
+              <th class="column-updated">
+                <div class="column-header">
+                  <i class="fas fa-sync-alt"></i>
+                  <span>Обновлено</span>
+                </div>
+              </th>
+              <th class="column-created">
+                <div class="column-header">
+                  <i class="fas fa-calendar"></i>
+                  <span>Создан</span>
+                </div>
+              </th>
+              <th class="column-start-date">
+                <div class="column-header">
+                  <i class="fas fa-calendar-plus"></i>
+                  <span>Дата начала</span>
+                </div>
+              </th>
+            </tr>
+          </thead>
+          <tbody id="tasks-table-body">
+            <!-- Динамически заполняется JavaScript -->
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Table Footer with Info and Pagination -->
+      <div class="table-footer">
+        <div class="table-info">
+          <div id="tasksInfoContainer">
+            <!-- Динамически заполняется DataTables -->
+          </div>
+        </div>
+        <div class="table-pagination">
+          <div id="tasksPaginationContainer">
+            <!-- Динамически заполняется DataTables -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock main_page %}
+
+{% block styles %}
+<!-- Подключение стилей пагинации -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_pagination.css') }}">
+
+<!-- Force CSS reload with timestamp -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_stats.css') }}?v=CARD_TOGGLE_FIXED_v2">
+
+<!-- Inline Critical Styles -->
+<style>
+  /* Force immediate styling before JS loads */
+  .filter-container select,
+  .search-container input,
+  .length-container select,
+  #status-filter,
+  #project-filter,
+  #priority-filter,
+  #tasksTable_filter input,
+  #tasksTable_length select {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    height: 48px !important;
+    padding: 12px !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 8px !important;
+    background-color: #ffffff !important;
+    color: #374151 !important;
+  }
+
+  .filter-label,
+  .search-label,
+  .display-label,
+  .dataTables_length label,
+  .dataTables_filter label {
+    font-size: 16px !important;
+    font-weight: 500 !important;
+    color: #374151 !important;
+  }
+
+  /* ИСПРАВЛЕНИЕ: Принудительно скрываем индикатор задач */
+  #tasksCounterIndicator {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* ИСПРАВЛЕНИЕ: Гарантируем работу переключения карточек */
+  .card-toggle-btn {
+    z-index: 10 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+  }
+
+  .card-breakdown {
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                transform 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+  }
+
+  .card-breakdown.collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    transform: translateY(-10px) !important;
+    margin-top: 0 !important;
+    padding-top: 0 !important;
+    border-top: none !important;
+    pointer-events: none !important;
+  }
+
+  .card-breakdown.expanded {
+    max-height: 200px !important;
+    opacity: 1 !important;
+    transform: translateY(0) !important;
+    margin-top: 8px !important;
+    padding-top: 6px !important;
+    border-top: 1px solid rgba(100, 116, 139, 0.1) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important;
+  }
+
+  /* Принудительные стили для работы кнопок детализации */
+  .card-toggle-btn {
+    position: absolute !important;
+    top: 0.75rem !important;
+    right: 0.875rem !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(100, 116, 139, 0.3) !important;
+    color: #3b82f6 !important;
+    font-size: 12px !important;
+    cursor: pointer !important;
+    padding: 8px !important;
+    border-radius: 8px !important;
+    transition: all 0.3s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    min-width: 28px !important;
+    min-height: 28px !important;
+    z-index: 100 !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .card-toggle-btn:hover {
+    background: #3b82f6 !important;
+    color: white !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  .card-toggle-btn i {
+    transition: transform 0.3s ease !important;
+    display: inline-block !important;
+  }
+
+  .card-toggle-btn.expanded i {
+    transform: rotate(180deg) !important;
+  }
+
+  /* Принудительные стили для разворачиваемой области */
+  .card-breakdown {
+    overflow: hidden !important;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-top: 1px solid rgba(226, 232, 240, 0.5) !important;
+    margin-top: 0.75rem !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+  }
+
+  .card-breakdown.collapsed {
+    max-height: 0 !important;
+    opacity: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    margin-top: 0 !important;
+    border-top: none !important;
+    transform: translateY(-10px) !important;
+    pointer-events: none !important;
+    display: block !important; /* Важно: не скрываем элемент полностью */
+    visibility: hidden !important;
+  }
+
+  .card-breakdown.expanded {
+    max-height: 150px !important;
+    opacity: 1 !important;
+    padding-top: 0.75rem !important;
+    padding-bottom: 0.75rem !important;
+    transform: translateY(0) !important;
+    overflow-y: auto !important;
+    pointer-events: auto !important;
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  /* ИСПРАВЛЕНИЕ: Принудительно скрываем индикатор задач */
+  #tasksCounterIndicator {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* Import Modern Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+
+  /* CSS Custom Properties */
+  :root {
+    /* Primary Color Palette */
+    --primary-50: #e3f2fd;
+    --primary-100: #bbdefb;
+    --primary-200: #90caf9;
+    --primary-300: #64b5f6;
+    --primary-400: #42a5f5;
+    --primary-500: #2196f3;
+    --primary-600: #1e88e5;
+    --primary-700: #1976d2;
+    --primary-800: #1565c0;
+    --primary-900: #0d47a1;
+
+    /* Secondary Color Palette */
+    --secondary-50: #e8f5e8;
+    --secondary-100: #c8e6c9;
+    --secondary-200: #a5d6a7;
+    --secondary-300: #81c784;
+    --secondary-400: #66bb6a;
+    --secondary-500: #4caf50;
+    --secondary-600: #43a047;
+    --secondary-700: #388e3c;
+    --secondary-800: #2e7d32;
+    --secondary-900: #1b5e20;
+
+    /* Status Colors */
+    --status-new: #ff9800;
+    --status-progress: #2196f3;
+    --status-closed: #4caf50;
+    --status-rejected: #f44336;
+
+    /* Priority Colors */
+    --priority-low: #4caf50;
+    --priority-normal: #ff9800;
+    --priority-high: #f44336;
+    --priority-urgent: #9c27b0;
+
+    /* Surface Colors */
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
+    --surface-3: #e2e8f0;
+    --surface-card: rgba(255, 255, 255, 0.95);
+
+    /* Text Colors */
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+
+    /* Border & Effects */
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-focus: var(--primary-500);
+
+    /* Shadows */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --shadow-card: 0 8px 25px rgba(33, 150, 243, 0.08);
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Base Styles */
+  .tasks-page-container {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+    min-height: 100vh;
+    padding: var(--spacing-xl) 0;
+  }
+
+  /* Loading Spinner - компактный стиль как в "Мои заявки" */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    backdrop-filter: blur(10px);
+  }
+
+  .loading-content {
+    text-align: center;
+    color: var(--text-primary);
+    background: var(--surface-0);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+    border: 1px solid var(--border-light);
+    max-width: 300px;
+  }
+
+  .spinner-icon {
+    font-size: 4rem;
+    color: var(--primary-600);
+    margin-bottom: var(--spacing-lg);
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+  }
+
+  .loading-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Table Loading Spinner - компактный спиннер для таблицы */
+  .table-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    backdrop-filter: blur(2px);
+  }
+
+  .table-loading-content {
+    text-align: center;
+    padding: var(--spacing-lg);
+    background: var(--surface-0);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-2);
+    border: 1px solid var(--border-light);
+  }
+
+  .table-spinner-icon {
+    font-size: 2rem;
+    color: var(--primary-500);
+    margin-bottom: var(--spacing-sm);
+    animation: spin 1s linear infinite;
+  }
+
+  .table-loading-content p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-size: 0.875rem;
+  }
+
+  /* DataTables Processing Indicator */
+  .dataTables_processing {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: auto;
+    height: auto;
+    margin-left: -100px;
+    margin-top: -26px;
+    padding: 20px;
+    text-align: center;
+    background: var(--surface-0);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+    z-index: 10000;
+  }
+
+  .dt-processing {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    color: var(--text-primary);
+  }
+
+  .dt-processing .spinner-border {
+    width: 24px;
+    height: 24px;
+    border-width: 3px;
+    border-color: var(--primary-200);
+    border-top-color: var(--primary-500);
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Page Header */
+  .page-header {
+    background: var(--surface-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-card);
+    padding: var(--spacing-xl) var(--spacing-xxl);
+    margin-bottom: var(--spacing-xxl);
+    animation: slideDown 0.8s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+  }
+
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border-radius: var(--radius-xl);
+    color: white;
+    font-size: 1.75rem;
+    box-shadow: var(--shadow-2);
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .action-button {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all var(--transition-normal);
+    border: 2px solid transparent;
+    white-space: nowrap;
+  }
+
+  .action-button.primary {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    color: white;
+    box-shadow: var(--shadow-1);
+  }
+
+  .action-button.primary:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .action-button.secondary {
+    background: var(--surface-0);
+    color: var(--text-primary);
+    border-color: var(--border-medium);
+  }
+
+  .action-button.secondary:hover {
+    background: var(--surface-2);
+    border-color: var(--primary-300);
+    transform: translateY(-2px);
+  }
+
+  /* Statistics Dashboard */
+  .stats-dashboard {
+    margin-bottom: var(--spacing-xxl);
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--spacing-lg);
+    align-items: stretch;
+  }
+
+  .stat-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    min-height: 120px;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+  }
+
+  .stat-card.total::before {
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+  }
+
+  .stat-card.open::before {
+    background: linear-gradient(90deg, #ff9800, #f57c00);
+  }
+
+  .stat-card.progress::before {
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+  }
+
+  .stat-card.closed::before {
+    background: linear-gradient(90deg, var(--secondary-400), var(--secondary-600));
+  }
+
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    font-size: 1.5rem;
+    color: white;
+    flex-shrink: 0;
+  }
+
+  .stat-card.total .stat-icon {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+  }
+
+  .stat-card.open .stat-icon {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+  }
+
+  .stat-card.progress .stat-icon {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+  }
+
+  .stat-card.closed .stat-icon {
+    background: linear-gradient(135deg, var(--secondary-500), var(--secondary-400));
+  }
+
+  .stat-content {
+    flex: 1;
+  }
+
+  .stat-value {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1;
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  /* Controls Panel */
+  .controls-panel {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-xl);
+    margin-bottom: var(--spacing-xxl);
+    box-shadow: var(--shadow-1);
+    animation: fadeInUp 0.8s ease-out 0.4s both;
+  }
+
+  .controls-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--spacing-lg);
+    flex-wrap: nowrap; /* ИСПРАВЛЕНО: Запрещаем перенос на новую строку */
+  }
+
+  .filters-section {
+    display: flex;
+    gap: var(--spacing-lg);
+    flex-wrap: nowrap; /* ИСПРАВЛЕНО: Запрещаем перенос фильтров */
+    flex: 1;
+    overflow: hidden; /* Скрываем переполнение */
+  }
+
+  .filter-group {
+    display: flex;
+    gap: var(--spacing-md);
+    flex-wrap: nowrap; /* ИСПРАВЛЕНО: Запрещаем перенос фильтров */
+    align-items: flex-end; /* Выравниваем по нижнему краю */
+    overflow: hidden; /* Скрываем переполнение */
+  }
+
+  .filter-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    min-width: 160px; /* ИСПРАВЛЕНО: Уменьшили минимальную ширину */
+    flex: 1; /* Одинаковая ширина */
+    max-width: 220px; /* ИСПРАВЛЕНО: Уменьшили максимальную ширину */
+  }
+
+  /* ДОБАВЛЕНО: Стили для правой части контролов */
+  .right-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    flex-shrink: 0; /* Не сжимаем правую часть */
+    min-width: 0; /* Позволяем сжатие содержимого */
+  }
+
+  /* Фиксированная высота для всех селектов и инпутов */
+  .filter-item .form-control,
+  .search-section .form-control {
+    height: 48px; /* Фиксированная высота */
+    min-height: 48px;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+  }
+
+  /* Контейнер для селектов с кнопкой очистки */
+  .filter-container {
+    height: 48px; /* Фиксированная высота контейнера */
+    min-height: 48px;
+    position: relative; /* Для правильного позиционирования dropdown */
+  }
+
+  .filter-container .form-control {
+    height: 100%; /* Заполняем весь контейнер */
+  }
+
+  /* Эффект загрузки фильтров */
+  .filters-section.loading-filters {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  .filters-section.loading-filters .filter-item {
+    position: relative;
+  }
+
+  .filters-section.loading-filters .filter-item::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    right: 10px;
+    width: 16px;
+    height: 16px;
+    border: 2px solid var(--primary-300);
+    border-top: 2px solid var(--primary-600);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    z-index: 10;
+  }
+
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+
+  .filter-label,
+  .search-label,
+  .display-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .form-control {
+    padding: var(--spacing-md);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.9rem;
+    transition: all var(--transition-normal);
+    background: var(--surface-0);
+    color: var(--text-primary);
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  .search-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    min-width: 250px;
+  }
+
+  .display-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    align-items: flex-start;
+  }
+
+  .display-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: 0;
+  }
+
+  .display-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    margin-bottom: 0;
+  }
+
+  .length-container {
+    display: flex;
+    align-items: center;
+    min-width: 120px;
+  }
+
+  .length-container .dataTables_length {
+    margin: 0;
+    width: 100%;
+  }
+
+  .length-container .dataTables_length label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    width: 100%;
+  }
+
+  .length-container .dataTables_length select {
+    min-width: 70px;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    background: var(--surface-0);
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+    flex-shrink: 0;
+  }
+
+  .length-container .dataTables_length select:focus {
+    outline: none;
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  /* Современный стильный счетчик записей */
+  .table-info {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+  }
+
+  #tasksInfoContainer {
+    background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-xl);
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--primary-700);
+    border: 2px solid var(--primary-200);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.15);
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #tasksInfoContainer::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, var(--primary-500), var(--secondary-500));
+  }
+
+  #tasksInfoContainer::after {
+    content: '📊';
+    font-size: 1.2rem;
+    margin-right: var(--spacing-sm);
+  }
+
+  #tasksInfoContainer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(33, 150, 243, 0.25);
+    background: linear-gradient(135deg, var(--primary-100), var(--primary-200));
+  }
+
+  /* Анимация для обновления счетчика */
+  #tasksInfoContainer.updating {
+    animation: counterPulse 0.6s ease-in-out;
+  }
+
+  @keyframes counterPulse {
+    0% { transform: scale(1); }
+    50% {
+      transform: scale(1.05);
+      background: linear-gradient(135deg, var(--secondary-100), var(--secondary-200));
+    }
+    100% { transform: scale(1); }
+  }
+
+  /* Стили для мобильных устройств */
+  @media (max-width: 768px) {
+    #tasksInfoContainer {
+      font-size: 0.8rem;
+      padding: var(--spacing-sm) var(--spacing-md);
+      min-height: 38px;
+    }
+
+    #tasksInfoContainer::after {
+      font-size: 1rem;
+    }
+  }
+
+  /* Пагинация справа */
+  .table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-lg);
+    border-top: 1px solid var(--border-light);
+    background: var(--surface-1);
+  }
+
+  .table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex: 1;
+  }
+
+  /* Pagination Type Selector */
+  .pagination-type-selector {
+    display: flex;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background: var(--surface-0);
+  }
+
+  .pagination-type-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    background: var(--surface-0);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    border-right: 1px solid var(--border-light);
+    min-width: 100px;
+    justify-content: center;
+  }
+
+  .pagination-type-btn:last-child {
+    border-right: none;
+  }
+
+  .pagination-type-btn:hover:not(.active) {
+    background: var(--surface-1);
+    color: var(--text-primary);
+  }
+
+  .pagination-type-btn.active {
+    background: var(--primary-500);
+    color: white;
+  }
+
+  .pagination-type-btn.active:hover {
+    background: var(--primary-600);
+  }
+
+  .pagination-type-btn i {
+    font-size: 0.875rem;
+  }
+
+  .pagination-type-btn.active .scroll-icon {
+    animation: bounce 2s infinite;
+  }
+
+  .pagination-type-btn.active .pages-icon {
+    animation: none;
+  }
+
+  @keyframes bounce {
+    0%, 100% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-3px);
+    }
+  }
+
+  /* Scroll Pagination Styles */
+  .scroll-pagination-indicator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: var(--spacing-lg);
+    background: var(--surface-card);
+    border: 2px dashed var(--border-light);
+    border-radius: var(--radius-lg);
+    margin: var(--spacing-md) 0;
+    transition: all var(--transition-normal);
+  }
+
+  .scroll-pagination-indicator:hover {
+    border-color: var(--primary-500);
+    background: rgba(33, 150, 243, 0.05);
+  }
+
+  .scroll-indicator-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .scroll-indicator-content i {
+    color: var(--primary-500);
+    font-size: 1.25rem;
+    animation: scrollPulse 2s infinite;
+  }
+
+  @keyframes scrollPulse {
+    0%, 100% {
+      opacity: 0.6;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.1);
+    }
+  }
+
+  .scroll-loading-indicator {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid var(--border-light);
+    padding: var(--spacing-md);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+  }
+
+  .scroll-loading-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .scroll-loading-content i {
+    color: var(--primary-500);
+    font-size: 1.125rem;
+  }
+
+  /* Table Container for Scroll Pagination */
+  .table-container {
+    position: relative;
+    max-height: 70vh;
+    overflow-y: auto;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    background: var(--surface-0);
+  }
+
+  .table-container::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .table-container::-webkit-scrollbar-track {
+    background: var(--surface-100);
+    border-radius: 4px;
+  }
+
+  .table-container::-webkit-scrollbar-thumb {
+    background: var(--border-light);
+    border-radius: 4px;
+    transition: background var(--transition-normal);
+  }
+
+  .table-container::-webkit-scrollbar-thumb:hover {
+    background: var(--primary-500);
+  }
+
+  /* Pagination Info */
+  .pagination-info {
+    text-align: center;
+    margin-top: var(--spacing-sm);
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Tasks Table */
+  .tasks-section {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    max-width: 100%;
+    border-radius: var(--radius-xl);
+    position: relative;
+  }
+
+  .table-wrapper {
+    min-width: 1200px;
+  }
+
+  .tasks-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+    table-layout: auto;
+  }
+
+  .tasks-table thead {
+    background: linear-gradient(135deg, var(--surface-2), var(--surface-1));
+    border-bottom: 2px solid var(--border-light);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .tasks-table th {
+    padding: var(--spacing-lg);
+    text-align: left;
+    font-weight: 600;
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+    white-space: nowrap;
+    min-width: 120px;
+  }
+
+  .column-id {
+    min-width: 80px;
+    width: 80px;
+  }
+
+  .column-subject {
+    min-width: 300px;
+    width: 35%;
+  }
+
+  .column-status {
+    min-width: 140px;
+    width: 140px;
+  }
+
+  .column-priority {
+    min-width: 130px;
+    width: 130px;
+  }
+
+  .column-email-to {
+    min-width: 180px;
+    width: 180px;
+  }
+
+  .column-updated,
+  .column-created,
+  .column-start-date {
+    min-width: 130px;
+    width: 130px;
+  }
+
+  .column-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .column-header i {
+    color: var(--primary-500);
+    font-size: 0.875rem;
+  }
+
+  .tasks-table tbody tr {
+    transition: all var(--transition-fast);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .tasks-table tbody tr:hover {
+    background: var(--surface-1);
+    transform: scale(1.01);
+  }
+
+  .tasks-table td {
+    padding: var(--spacing-lg);
+    vertical-align: middle;
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .task-id {
+    font-weight: 600;
+    color: var(--primary-600);
+    text-decoration: none;
+    transition: color var(--transition-fast);
+  }
+
+  .task-id:hover {
+    color: var(--primary-700);
+    text-decoration: underline;
+  }
+
+  .task-id-link {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 600;
+    color: var(--primary-600);
+    text-decoration: none;
+    cursor: pointer;
+    transition: color var(--transition-fast);
+  }
+
+  .task-id-link:hover {
+    color: var(--primary-700);
+    text-decoration: underline;
+  }
+
+  .task-id-link:focus {
+    outline: 2px solid var(--primary-300);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  .task-subject {
+    font-weight: 500;
+    color: var(--text-primary);
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .task-project {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: all var(--transition-normal);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .status-badge.status-new {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    border-color: #ef6c00;
+  }
+
+  .status-badge.status-progress {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+    border-color: #1565c0;
+  }
+
+  .status-badge.status-closed {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    border-color: #2e7d32;
+  }
+
+  .status-badge.status-rejected {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+    border-color: #c62828;
+  }
+
+  .status-badge.status-default {
+    background: linear-gradient(135deg, #9e9e9e, #757575);
+    color: white;
+    border-color: #616161;
+  }
+
+  .priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+    border: 1px solid transparent;
+    transition: all var(--transition-normal);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .priority-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+  }
+
+  .priority-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    opacity: 0.8;
+  }
+
+  .priority-badge.priority-low {
+    background: linear-gradient(135deg, #4caf50, #388e3c);
+    color: white;
+    border-color: #2e7d32;
+  }
+
+  .priority-badge.priority-low::before {
+    background: #81c784;
+  }
+
+  .priority-badge.priority-medium {
+    background: linear-gradient(135deg, #2196f3, #1976d2);
+    color: white;
+    border-color: #1565c0;
+  }
+
+  .priority-badge.priority-medium::before {
+    background: #64b5f6;
+  }
+
+  .priority-badge.priority-high {
+    background: linear-gradient(135deg, #ff9800, #f57c00);
+    color: white;
+    border-color: #ef6c00;
+    animation: pulse-high 2s infinite;
+  }
+
+  .priority-badge.priority-high::before {
+    background: #ffb74d;
+  }
+
+  @keyframes pulse-high {
+    0%, 100% { box-shadow: 0 2px 4px rgba(255, 152, 0, 0.3); }
+    50% { box-shadow: 0 4px 12px rgba(255, 152, 0, 0.6); }
+  }
+
+  .priority-badge.priority-urgent {
+    background: linear-gradient(135deg, #f44336, #d32f2f);
+    color: white;
+    border-color: #c62828;
+    animation: pulse-urgent 1.5s infinite;
+    position: relative;
+  }
+
+  .priority-badge.priority-urgent::before {
+    background: #ef5350;
+  }
+
+  .priority-badge.priority-urgent::after {
+    content: '⚡';
+    position: absolute;
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.8rem;
+    animation: flash 1s infinite;
+  }
+
+  @keyframes pulse-urgent {
+    0%, 100% {
+      box-shadow: 0 2px 4px rgba(244, 67, 54, 0.4);
+      transform: scale(1);
+    }
+    50% {
+      box-shadow: 0 6px 16px rgba(244, 67, 54, 0.8);
+      transform: scale(1.02);
+    }
+  }
+
+  @keyframes flash {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .priority-badge.priority-default {
+    background: linear-gradient(135deg, #9e9e9e, #757575);
+    color: white;
+    border-color: #616161;
+  }
+
+  .priority-badge.priority-default::before {
+    background: #bdbdbd;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 8px;
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-400), var(--primary-600));
+    border-radius: var(--radius-sm);
+    transition: width var(--transition-normal);
+  }
+
+  .progress-text {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: var(--spacing-xs);
+    text-align: center;
+  }
+
+  .task-date {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    white-space: nowrap;
+  }
+
+  .task-email {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .task-start-date-cell,
+  .task-created-cell,
+  .task-email-to-cell {
+    text-align: center;
+  }
+
+  .task-start-date-cell .task-date,
+  .task-created-cell .task-date {
+    font-weight: 500;
+  }
+
+  /* Стили для пагинации DataTables */
+  .dataTables_wrapper {
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    float: none !important;
+    text-align: center;
+    margin-top: 0 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    display: inline-block !important;
+    padding: 8px 12px !important;
+    margin: 0 2px !important;
+    border: 1px solid var(--border-light, #e2e8f0) !important;
+    background: var(--surface-0, #ffffff) !important;
+    color: var(--text-primary, #0f172a) !important;
+    border-radius: 6px !important;
+    cursor: pointer !important;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    text-decoration: none !important;
+    min-width: 36px !important;
+    text-align: center !important;
+    box-sizing: border-box !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+    background: var(--surface-2, #f1f5f9) !important;
+    border-color: var(--primary-300, #64b5f6) !important;
+    transform: translateY(-1px) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500, #2196f3) !important;
+    color: white !important;
+    border-color: var(--primary-500, #2196f3) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover {
+    background: var(--primary-600, #1976d2) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.first,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.last {
+    min-width: auto !important;
+    padding: 8px 16px !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .ellipsis {
+    padding: 8px 4px !important;
+    color: var(--text-muted, #64748b) !important;
+    font-weight: 500 !important;
+    border: none !important;
+    background: none !important;
+  }
+
+  /* Принудительное отображение пагинации */
+  .table-pagination {
+    min-height: 50px;
+    display: flex !important;
+    align-items: center;
+    justify-content: flex-end;
+  }
+
+  .table-pagination .dataTables_paginate {
+    display: block !important;
+    visibility: visible !important;
+  }
+
+  #tasksPaginationContainer {
+    display: flex !important;
+    justify-content: flex-end !important;
+  }
+
+  #tasksPaginationContainer .dataTables_paginate {
+    margin: 0 !important;
+  }
+
+  /* CSS анимации для появления строк */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  /* Стили для интеграции DataTables с пользовательскими фильтрами */
+  #searchBoxContainer .dataTables_filter {
+    margin: 0;
+  }
+
+  #searchBoxContainer .dataTables_filter label {
+    margin: 0;
+    width: 100%;
+  }
+
+  /* Стили для поля поиска определены в tasks_stats.css */
+
+  #lengthContainer .dataTables_length {
+    margin: 0;
+  }
+
+  #lengthContainer .dataTables_length label {
+    margin: 0;
+    width: 100%;
+  }
+
+  /* Стили для селектора количества определены в tasks_stats.css */
+
+  /* Скрываем стандартные элементы DataTables в таблице */
+  .dataTables_wrapper .top,
+  .dataTables_wrapper .bottom {
+    display: none !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_info {
+    display: none !important;
+  }
+
+  /* Показываем только перемещенные элементы */
+  #searchBoxContainer .dataTables_filter,
+  #lengthContainer .dataTables_length,
+  #tasksInfoContainer .dataTables_info,
+  #tasksPaginationContainer .dataTables_paginate {
+    display: block !important;
+  }
+
+  /* Скрываем пустые контейнеры */
+  #tasksInfoContainer:empty,
+  #tasksInfoContainer .dataTables_info:empty {
+    display: none !important;
+  }
+
+  #tasksInfoContainer:not(:has(.dataTables_info)) {
+    display: none !important;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .controls-content {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .filters-section {
+      justify-content: space-between;
+    }
+
+    .table-wrapper {
+      min-width: 1000px;
+    }
+
+    .column-subject {
+      min-width: 250px;
+      width: 30%;
+    }
+
+    .tasks-table {
+      font-size: 0.85rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 2rem;
+    }
+
+    .header-content {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .header-actions {
+      justify-content: center;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .filter-group {
+      flex-direction: column;
+    }
+
+    .filter-item {
+      min-width: auto;
+    }
+
+    .table-wrapper {
+      min-width: 800px;
+    }
+
+    .tasks-table {
+      font-size: 0.8rem;
+    }
+
+    .tasks-table th,
+    .tasks-table td {
+      padding: var(--spacing-md);
+    }
+
+    .task-subject {
+      max-width: 200px;
+    }
+
+    .column-subject {
+      min-width: 200px;
+      width: 25%;
+    }
+
+    .column-email-to {
+      min-width: 150px;
+      width: 150px;
+    }
+
+    .status-badge,
+    .priority-badge {
+      font-size: 0.7rem;
+      padding: var(--spacing-xs) var(--spacing-sm);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .page-title {
+      font-size: 1.75rem;
+    }
+
+    .action-button {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .table-wrapper {
+      min-width: 600px;
+    }
+
+    .tasks-table {
+      font-size: 0.75rem;
+    }
+
+    .column-id {
+      min-width: 60px;
+      width: 60px;
+    }
+
+    .column-subject {
+      min-width: 150px;
+      width: 20%;
+    }
+
+    .column-status,
+    .column-priority {
+      min-width: 100px;
+      width: 100px;
+    }
+
+    .column-email-to {
+      min-width: 120px;
+      width: 120px;
+    }
+
+    .column-updated,
+    .column-created,
+    .column-start-date {
+      min-width: 100px;
+      width: 100px;
+    }
+
+    .status-badge,
+    .priority-badge {
+      font-size: 0.65rem;
+      padding: 2px 6px;
+      font-weight: 500;
+    }
+
+    .status-badge i,
+    .priority-badge i {
+      font-size: 0.6rem;
+    }
+
+    /* Упрощаем анимации на мобильных */
+    .priority-badge.priority-urgent {
+      animation: none;
+    }
+
+    .priority-badge.priority-high {
+      animation: none;
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .loading-overlay,
+    .header-actions,
+    .controls-panel {
+      display: none !important;
+    }
+
+    .tasks-section {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+    }
+
+    .tasks-table tbody tr:hover {
+      background: none !important;
+      transform: none !important;
+    }
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .tasks-page-container .header-content {
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+
+    .tasks-page-container .filters-container {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-md);
+    }
+
+    .tasks-page-container .table-controls {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    .tasks-page-container .tasks-table {
+      font-size: 0.875rem;
+    }
+
+    .tasks-page-container .tasks-table th,
+    .tasks-page-container .tasks-table td {
+      padding: var(--spacing-sm);
+    }
+  }
+
+  /* Filter Results Section */
+  .filter-results-section {
+    margin-bottom: var(--spacing-xl);
+    animation: slideUp 0.6s ease-out;
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .filter-results-container {
+    display: flex;
+    justify-content: center;
+  }

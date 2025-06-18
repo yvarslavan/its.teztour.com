@@ -1,0 +1,41 @@
+/* ============================
+   ENHANCED TASKS UI STYLES
+   Complete Theme & View System
+   ============================ */
+
+/* ===== ОСНОВНЫЕ СТИЛИ ===== */
+
+/* ===== УЛУЧШЕННЫЕ СТИЛИ ===== */
+
+/* Стили карточек статистики */
+.stat-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 18px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ СТИЛИ ===== */
+
+/* ===== ПЕРЕХОДЫ И АНИМАЦИИ ===== */
+.tasks-page-container,
+.stat-card,
+.controls-panel,
+.table-container {
+  transition: all 0.3s ease !important;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+  .stat-card {
+    padding: 14px;
+    margin-bottom: 12px;
+  }
+}

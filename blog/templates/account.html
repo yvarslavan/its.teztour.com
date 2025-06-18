@@ -97,6 +97,12 @@
                                 <i class="fas fa-ticket-alt"></i>
                                 <span>Мои заявки</span>
                             </a>
+                            {% if current_user.is_redmine_user %}
+                            <a href="{{ url_for('tasks.my_tasks_page') }}" class="nav-item">
+                                <i class="fas fa-tasks"></i>
+                                <span>Мои задачи</span>
+                            </a>
+                            {% endif %}
                         </nav>
                     </div>
                 </div>
@@ -286,53 +292,69 @@
                                 </div>
                             </div>
 
-                            <!-- Browser Push Notifications -->
-                            <div class="settings-item">
+                            <!-- Polling Notifications -->
+                            <div class="settings-item notifications-system">
                                 <div class="setting-header">
-                                    <div class="setting-icon">
-                                        <i class="fas fa-bell"></i>
+                                    <div class="setting-icon pulse-animation">
+                                        <i class="fas fa-satellite-dish"></i>
                                     </div>
                                     <div class="setting-content">
-                                        <span class="setting-label">Браузерные уведомления</span>
+                                        <span class="setting-label">📡 Система уведомлений</span>
                                         <div class="notification-controls">
-                                            <div class="notification-status" id="push-notification-status">
-                                                <div class="status-indicator" id="push-status-indicator">
-                                                    <i id="pushNotificationIcon" class="fas fa-spinner fa-spin text-info"></i>
-                                                    <span id="pushNotificationStatus">Загрузка статуса уведомлений...</span>
+                                            <div class="notification-status active-status" id="polling-notification-status">
+                                                <div class="status-indicator" id="polling-status-indicator">
+                                                    <div class="status-badge success-badge">
+                                                        <i id="pollingNotificationIcon" class="fas fa-check-circle"></i>
+                                                        <span id="pollingNotificationStatus">Активна (Polling)</span>
+                                                    </div>
+                                                    <div class="connection-indicator">
+                                                        <span class="connection-dot"></span>
+                                                        <span class="connection-text">Подключено</span>
+                                                    </div>
                                                 </div>
-                                                <div class="status-description" id="push-status-description">
-                                                    Проверка поддержки браузерных уведомлений...
+                                                <div class="status-description" id="polling-status-description">
+                                                    <div class="description-main">
+                                                        Автоматическая проверка новых уведомлений каждые 30 секунд
+                                                    </div>
+                                                    <div class="status-details">
+                                                        <span class="detail-item">
+                                                            <i class="fas fa-clock"></i>
+                                                            Интервал: 30 сек
+                                                        </span>
+                                                        <span class="detail-item">
+                                                            <i class="fas fa-volume-up"></i>
+                                                            Звук включен
+                                                        </span>
+                                                        <span class="detail-item">
+                                                            <i class="fas fa-bell"></i>
+                                                            Виджет активен
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                            </div>
-                                            <div class="notification-actions">
-                                                <button type="button" id="enablePushNotifications" class="notification-btn" style="display: none;">
-                                                    <i class="fas fa-bell"></i>
-                                                    <span>Включить</span>
-                                                </button>
-                                                <button type="button" id="disablePushNotifications" class="notification-btn" style="display: none;">
-                                                    <i class="fas fa-bell-slash"></i>
-                                                    <span>Отключить</span>
-                                                </button>
-                                                <button type="button" id="testPushNotification" class="notification-test-btn" style="display: none;">
-                                                    <i class="fas fa-volume-up"></i>
-                                                    <span>Тест</span>
-                                                </button>
-                                                <button type="button" id="diagnosePushNotifications" class="notification-debug-btn">
-                                                    <i class="fas fa-stethoscope"></i>
-                                                    <span>Диагностика</span>
-                                                </button>
                                             </div>
                                         </div>
-                                        <div class="notification-info">
-                                            <div class="info-item">
-                                                <i class="fas fa-info-circle"></i>
-                                                <span>Получайте мгновенные уведомления об изменениях статуса и новых комментариях ваших заявок прямо в браузере</span>
+                                    </div>
+                                </div>
+                                <div class="setting-actions">
+                                    <div class="action-buttons-group">
+                                        <a href="/notifications-polling" class="modern-settings-btn primary-btn compact-btn" target="_blank">
+                                            <div class="btn-content">
+                                                <i class="fas fa-cogs"></i>
+                                                <span>Настройки</span>
                                             </div>
-                                            <div class="info-item">
+                                        </a>
+                                        <button onclick="testNotificationFromProfile()" class="modern-settings-btn secondary-btn compact-btn">
+                                            <div class="btn-content">
                                                 <i class="fas fa-volume-up"></i>
-                                                <span>Звуковые сигналы помогут не пропустить важные уведомления</span>
+                                                <span>Тест</span>
                                             </div>
-                                        </div>
+                                        </button>
+                                        <button onclick="toggleNotificationsAndSound()" class="modern-settings-btn danger-btn compact-btn" id="toggleNotificationsBtn">
+                                            <div class="btn-content">
+                                                <i class="fas fa-bell-slash"></i>
+                                                <span>Отключить всё</span>
+                                            </div>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
@@ -514,6 +536,12 @@
         /* Shadows */
         --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
         --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+
+        /* Notification System Colors */
+        --notification-active: #22c55e;
+        --notification-inactive: #ef4444;
+        --notification-bg: #f0fdf4;
+        --notification-border: #bbf7d0;
         --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
         --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
         --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
@@ -1368,32 +1396,50 @@
         box-shadow: var(--shadow-1);
     }
 
-    /* Actions Grid */
+    /* Actions Grid - ИСПРАВЛЕНО: Увеличены размеры для полного отображения текста */
     .account-page-wrapper .actions-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: var(--spacing-lg);
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* УВЕЛИЧЕНА минимальная ширина с 200px до 250px для полного отображения текста */
+        gap: var(--spacing-lg); /* УВЕЛИЧЕН отступ между кнопками с md до lg для лучшего разделения */
+        max-width: 600px; /* УВЕЛИЧЕНА максимальная ширина контейнера с 450px до 600px */
+        justify-content: center; /* ДОБАВЛЕНО: Центрирование кнопок по горизонтали */
+        align-items: stretch; /* ДОБАВЛЕНО: Равная высота всех кнопок */
     }
 
     .account-page-wrapper .action-btn {
         display: flex;
         align-items: center;
-        gap: var(--spacing-lg);
-        padding: var(--spacing-xl);
+        gap: var(--spacing-lg); /* УВЕЛИЧЕН внутренний отступ между элементами с md до lg для лучшего разделения */
+        padding: var(--spacing-xl); /* УВЕЛИЧЕН внутренний отступ с lg до xl для большего пространства */
         background: var(--surface-card);
         border: 1px solid var(--border-light);
-        border-radius: var(--radius-xl);
+        border-radius: var(--radius-lg);
         cursor: pointer;
         transition: all var(--transition-normal);
         position: relative;
         overflow: hidden;
         text-align: left;
+        min-height: 100px; /* УВЕЛИЧЕНА минимальная высота с 80px до 100px для лучшего отображения текста */
+        width: 100%; /* ДОБАВЛЕНО: Полная ширина контейнера */
+        box-sizing: border-box; /* ДОБАВЛЕНО: Правильный расчет размеров с учетом padding и border */
     }
 
     .account-page-wrapper .action-btn:hover {
-        transform: translateY(-4px);
+        transform: translateY(-2px); /* Уменьшен эффект поднятия с -4px до -2px для более деликатного эффекта */
         box-shadow: var(--shadow-2);
         border-color: var(--primary-200);
+    }
+
+    /* Улучшенная адаптивность для touch-устройств */
+    @media (hover: none) and (pointer: coarse) {
+        .account-page-wrapper .action-btn:hover {
+            transform: none; /* Отключаем hover-эффекты на touch-устройствах */
+        }
+
+        .account-page-wrapper .action-btn:active {
+            transform: scale(0.98); /* Добавляем эффект нажатия для touch-устройств */
+            transition: transform 0.1s ease;
+        }
     }
 
     .account-page-wrapper .download-btn {
@@ -1420,10 +1466,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 60px;
-        height: 60px;
-        border-radius: var(--radius-xl);
-        font-size: 1.5rem;
+        width: 50px; /* УВЕЛИЧЕНА ширина иконки с 40px до 50px для лучшей пропорции */
+        height: 50px; /* УВЕЛИЧЕНА высота иконки с 40px до 50px для лучшей пропорции */
+        border-radius: var(--radius-lg);
+        font-size: 1.4rem; /* УВЕЛИЧЕН размер шрифта иконки с 1.2rem до 1.4rem для лучшей видимости */
         flex-shrink: 0;
         transition: all var(--transition-normal);
     }
@@ -1442,20 +1488,30 @@
         flex: 1;
         display: flex;
         flex-direction: column;
-        gap: var(--spacing-xs);
+        gap: var(--spacing-sm); /* УВЕЛИЧЕН отступ между заголовком и описанием с xs до sm */
+        justify-content: center; /* ДОБАВЛЕНО: Вертикальное центрирование содержимого */
+        min-width: 0; /* ДОБАВЛЕНО: Позволяет flex-элементу сжиматься меньше своего содержимого */
     }
 
     .account-page-wrapper .btn-title {
-        font-size: 1.125rem;
+        font-size: 1.125rem; /* УВЕЛИЧЕН размер заголовка с 1rem до 1.125rem для лучшей читаемости */
         font-weight: 600;
         color: var(--text-primary);
         transition: all var(--transition-normal);
+        line-height: 1.4; /* УВЕЛИЧЕНА высота строки с 1.3 до 1.4 для лучшего отображения */
+        white-space: nowrap; /* ДОБАВЛЕНО: Предотвращение переноса текста на новую строку */
+        overflow: hidden; /* ДОБАВЛЕНО: Скрытие переполнения */
+        text-overflow: ellipsis; /* ДОБАВЛЕНО: Многоточие при переполнении */
     }
 
     .account-page-wrapper .btn-description {
-        font-size: 0.875rem;
+        font-size: 0.875rem; /* УВЕЛИЧЕН размер описания с 0.8rem до 0.875rem для лучшей читаемости */
         color: var(--text-secondary);
         transition: all var(--transition-normal);
+        line-height: 1.3; /* УВЕЛИЧЕНА высота строки с 1.2 до 1.3 для лучшего отображения */
+        white-space: nowrap; /* ДОБАВЛЕНО: Предотвращение переноса текста на новую строку */
+        overflow: hidden; /* ДОБАВЛЕНО: Скрытие переполнения */
+        text-overflow: ellipsis; /* ДОБАВЛЕНО: Многоточие при переполнении */
     }
 
     .account-page-wrapper .action-btn:hover .btn-title,
@@ -1644,6 +1700,48 @@
 
         .account-page-wrapper .actions-grid {
             grid-template-columns: 1fr;
+            max-width: none; /* Убираем ограничение ширины на мобильных */
+        }
+
+        /* Адаптивные стили для кнопок действий на планшетах */
+        .account-page-wrapper .action-btn {
+            min-height: 85px; /* УВЕЛИЧЕНА высота с 70px до 85px для лучшего отображения текста */
+            padding: var(--spacing-lg); /* УВЕЛИЧЕН padding с md до lg для лучшего пространства */
+            gap: var(--spacing-md); /* Уменьшен gap для экономии места */
+        }
+
+        .account-page-wrapper .btn-icon {
+            width: 42px; /* УВЕЛИЧЕН размер иконки с 36px до 42px */
+            height: 42px;
+            font-size: 1.25rem; /* УВЕЛИЧЕН размер шрифта с 1.1rem до 1.25rem */
+        }
+
+        .account-page-wrapper .btn-title {
+            font-size: 1rem; /* Немного уменьшен размер заголовка для планшетов */
+        }
+
+        .account-page-wrapper .btn-description {
+            font-size: 0.8rem; /* Немного уменьшен размер описания для планшетов */
+        }
+    }
+
+    /* Дополнительные адаптивные стили для средних экранов */
+    @media (max-width: 900px) and (min-width: 769px) {
+        .account-page-wrapper .actions-grid {
+            grid-template-columns: repeat(2, 1fr); /* Две колонки на средних экранах */
+            max-width: 500px; /* УВЕЛИЧЕНА ширина с 400px до 500px для лучшего отображения */
+            gap: var(--spacing-md); /* Уменьшен отступ для экономии места */
+        }
+
+        .account-page-wrapper .action-btn {
+            min-height: 90px; /* УВЕЛИЧЕНА промежуточная высота с 75px до 90px */
+            padding: var(--spacing-lg); /* Уменьшен padding для экономии места */
+        }
+
+        .account-page-wrapper .btn-icon {
+            width: 45px; /* Промежуточный размер иконки */
+            height: 45px;
+            font-size: 1.3rem;
         }
     }
 
@@ -1678,6 +1776,33 @@
             align-items: stretch;
             gap: var(--spacing-md);
         }
+
+        /* Адаптивные стили для кнопок действий на мобильных */
+        .account-page-wrapper .action-btn {
+            min-height: 75px; /* УВЕЛИЧЕНА высота с 60px до 75px для лучшего отображения */
+            padding: var(--spacing-md); /* УВЕЛИЧЕН padding для лучшего пространства */
+            gap: var(--spacing-sm); /* Компактный отступ между элементами */
+        }
+
+        .account-page-wrapper .btn-icon {
+            width: 38px; /* УВЕЛИЧЕН размер иконки с 32px до 38px */
+            height: 38px;
+            font-size: 1.15rem; /* УВЕЛИЧЕН размер шрифта с 1rem до 1.15rem */
+        }
+
+        .account-page-wrapper .btn-title {
+            font-size: 0.95rem; /* УВЕЛИЧЕН размер заголовка с 0.9rem до 0.95rem */
+            white-space: normal; /* РАЗРЕШЕН перенос текста на мобильных */
+            overflow: visible; /* Показываем весь текст */
+            text-overflow: initial; /* Убираем многоточие */
+        }
+
+        .account-page-wrapper .btn-description {
+            font-size: 0.8rem; /* УВЕЛИЧЕН размер описания с 0.75rem до 0.8rem */
+            white-space: normal; /* РАЗРЕШЕН перенос текста на мобильных */
+            overflow: visible; /* Показываем весь текст */
+            text-overflow: initial; /* Убираем многоточие */
+        }
     }
 
     @media (max-width: 480px) {
@@ -1695,6 +1820,38 @@
 
         .account-page-wrapper .card-header {
             padding: var(--spacing-md);
+        }
+
+        /* Адаптивные стили для кнопок действий на очень маленьких экранах */
+        .account-page-wrapper .actions-grid {
+            gap: var(--spacing-sm); /* Минимальные отступы между кнопками */
+            grid-template-columns: 1fr; /* ДОБАВЛЕНО: Одна колонка на очень маленьких экранах */
+        }
+
+        .account-page-wrapper .action-btn {
+            min-height: 70px; /* УВЕЛИЧЕНА минимальная высота с 55px до 70px */
+            padding: var(--spacing-md); /* УВЕЛИЧЕН padding с sm до md */
+            gap: var(--spacing-sm); /* Компактный отступ */
+        }
+
+        .account-page-wrapper .btn-icon {
+            width: 35px; /* УВЕЛИЧЕН размер иконки с 28px до 35px */
+            height: 35px;
+            font-size: 1.1rem; /* УВЕЛИЧЕН размер шрифта с 0.9rem до 1.1rem */
+        }
+
+        .account-page-wrapper .btn-title {
+            font-size: 0.9rem; /* Компактный но читаемый размер заголовка */
+            white-space: normal; /* Разрешен перенос текста */
+            overflow: visible;
+            text-overflow: initial;
+        }
+
+        .account-page-wrapper .btn-description {
+            font-size: 0.75rem; /* Компактный размер описания */
+            white-space: normal; /* Разрешен перенос текста */
+            overflow: visible;
+            text-overflow: initial;
         }
     }
 
@@ -1947,6 +2104,334 @@
         transform: none;
         box-shadow: none;
     }
+
+    /* Clear notifications button */
+    .account-page-wrapper .notification-clear-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: #dc2626;
+        color: white;
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: var(--transition-normal);
+        text-decoration: none;
+        white-space: nowrap;
+    }
+
+    .account-page-wrapper .notification-clear-btn:hover:not(:disabled) {
+        background: #b91c1c;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-1);
+    }
+
+    .account-page-wrapper .notification-clear-btn:disabled {
+        background: var(--surface-3);
+        color: var(--text-disabled);
+        cursor: not-allowed;
+        transform: none;
+        box-shadow: none;
+    }
+
+    /* Enhanced Notification System Styles */
+    .account-page-wrapper .notifications-system {
+        background: linear-gradient(135deg, var(--notification-bg) 0%, #ffffff 100%);
+        border: 1px solid var(--notification-border);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .account-page-wrapper .notifications-system::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--notification-active) 0%, var(--primary-500) 100%);
+        border-radius: 12px 12px 0 0;
+    }
+
+    .account-page-wrapper .notifications-system:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+    }
+
+    .account-page-wrapper .pulse-animation {
+        animation: pulse-glow 2s infinite;
+    }
+
+    @keyframes pulse-glow {
+        0%, 100% {
+            transform: scale(1);
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+        }
+        50% {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+        }
+    }
+
+    .account-page-wrapper .active-status {
+        background: rgba(34, 197, 94, 0.05);
+        border: 1px solid rgba(34, 197, 94, 0.2);
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .account-page-wrapper .status-badge {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .account-page-wrapper .success-badge {
+        color: var(--notification-active);
+        font-weight: 600;
+    }
+
+    .account-page-wrapper .success-badge i {
+        font-size: 1.1rem;
+        animation: spin-success 2s linear infinite;
+    }
+
+    @keyframes spin-success {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .account-page-wrapper .connection-indicator {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    .account-page-wrapper .connection-dot {
+        width: 8px;
+        height: 8px;
+        background: var(--notification-active);
+        border-radius: 50%;
+        animation: pulse-dot 1.5s infinite;
+    }
+
+    @keyframes pulse-dot {
+        0%, 100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+        50% {
+            opacity: 0.6;
+            transform: scale(1.2);
+        }
+    }
+
+    .account-page-wrapper .description-main {
+        color: var(--text-primary);
+        font-weight: 500;
+        margin-bottom: 0.75rem;
+        line-height: 1.4;
+    }
+
+    .account-page-wrapper .status-details {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+
+    .account-page-wrapper .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        background: rgba(255, 255, 255, 0.7);
+        padding: 0.3rem 0.6rem;
+        border-radius: 12px;
+        border: 1px solid rgba(34, 197, 94, 0.2);
+    }
+
+    .account-page-wrapper .detail-item i {
+        color: var(--notification-active);
+    }
+
+    .account-page-wrapper .action-buttons-group {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .account-page-wrapper .modern-settings-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 1.25rem;
+        border-radius: 8px;
+        border: none;
+        font-weight: 500;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        position: relative;
+        overflow: hidden;
+        min-width: 100px;
+    }
+
+    /* ИСПРАВЛЕНО: Еще более компактные кнопки */
+    .account-page-wrapper .modern-settings-btn.compact-btn {
+        padding: 0.4rem 0.8rem;
+        min-height: 32px;
+        font-size: 0.8rem;
+        line-height: 1.2;
+    }
+
+    .account-page-wrapper .modern-settings-btn::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+        transition: left 0.6s;
+    }
+
+    .account-page-wrapper .modern-settings-btn:hover::before {
+        left: 100%;
+    }
+
+    .account-page-wrapper .primary-btn {
+        background: linear-gradient(135deg, var(--primary-500) 0%, var(--primary-700) 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(0, 121, 140, 0.3);
+    }
+
+    .account-page-wrapper .primary-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0, 121, 140, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .account-page-wrapper .secondary-btn {
+        background: rgba(100, 116, 139, 0.1);
+        color: var(--text-secondary);
+        border: 1px solid rgba(100, 116, 139, 0.2);
+    }
+
+    .account-page-wrapper .secondary-btn:hover {
+        background: rgba(100, 116, 139, 0.15);
+        color: var(--text-primary);
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .account-page-wrapper .danger-btn {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    }
+
+    .account-page-wrapper .danger-btn:hover {
+        background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+        color: white;
+        text-decoration: none;
+    }
+
+    .account-page-wrapper .danger-btn.disabled {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+        /* ИСПРАВЛЕНО: Принудительно делаем кнопку кликабельной */
+        cursor: pointer !important;
+        pointer-events: auto !important;
+        opacity: 1 !important;
+    }
+
+    .account-page-wrapper .danger-btn.disabled:hover {
+        background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+        transform: translateY(-2px);
+    }
+
+    .account-page-wrapper .btn-content {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        z-index: 2;
+    }
+
+    .account-page-wrapper .btn-content i {
+        font-size: 0.9rem;
+    }
+
+    /* Mobile responsiveness for notification system */
+    @media (max-width: 768px) {
+        .account-page-wrapper .status-details {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .account-page-wrapper .action-buttons-group {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .account-page-wrapper .modern-settings-btn {
+            width: 100%;
+            min-width: auto;
+        }
+
+        .account-page-wrapper .modern-settings-btn.compact-btn {
+            padding: 0.4rem 0.8rem;
+            min-height: 32px;
+        }
+
+        .account-page-wrapper .detail-item {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    /* НОВЫЕ СТИЛИ: Состояния системы уведомлений */
+    .account-page-wrapper .notification-status.active-status .status-badge {
+        background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+        color: white;
+    }
+
+    .account-page-wrapper .notification-status.inactive-status .status-badge {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        color: white;
+    }
+
+    .account-page-wrapper .notification-status.inactive-status .connection-indicator {
+        opacity: 0.7;
+    }
+
+    .account-page-wrapper .notification-status.inactive-status .status-description {
+        opacity: 0.8;
+    }
+
+    .account-page-wrapper .connection-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #22c55e;
+        display: inline-block;
+        margin-right: 6px;
+        transition: background-color 0.3s ease;
+    }
 </style>
 {% endblock %}
 
@@ -1958,30 +2443,15 @@ document.addEventListener('DOMContentLoaded', function () {
     const PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER = {{ push_subscription_active|tojson }};
     console.log('[Account] Initial subscription state from server:', PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER);
 
-    // Сразу устанавливаем начальное состояние UI на основе данных с сервера
-    setInitialPushUIStateFromServer(PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER);
+    // Удален вызов setInitialPushUIStateFromServer - больше не используется
 
     console.log('[Account] DOM загружен, начинаю инициализацию');
 
-    // Сразу проверяем наличие элементов браузерных уведомлений
-    console.log('[Account] Проверка элементов уведомлений при загрузке DOM:');
-    console.log('  enablePushNotifications:', document.getElementById('enablePushNotifications'));
-    console.log('  disablePushNotifications:', document.getElementById('disablePushNotifications'));
-    console.log('  testPushNotification:', document.getElementById('testPushNotification'));
-    console.log('  pushNotificationStatus:', document.getElementById('pushNotificationStatus'));
-    console.log('  pushNotificationIcon:', document.getElementById('pushNotificationIcon'));
-
-    // Альтернативный поиск
-    console.log('[Account] Альтернативный поиск через querySelector:');
-    console.log('  pushNotificationStatus (querySelector):', document.querySelector('#pushNotificationStatus'));
-    console.log('  pushNotificationIcon (querySelector):', document.querySelector('#pushNotificationIcon'));
-
-    // Проверяем содержимое status-indicator
-    const statusIndicator = document.getElementById('push-status-indicator');
-    console.log('[Account] Содержимое push-status-indicator:', statusIndicator);
-    if (statusIndicator) {
-        console.log('[Account] innerHTML push-status-indicator:', statusIndicator.innerHTML);
-    }
+    // Проверяем наличие элементов управления виджетом уведомлений
+    console.log('[Account] Проверка элементов виджета уведомлений при загрузке DOM:');
+    console.log('  toggleNotificationsBtn:', document.getElementById('toggleNotificationsBtn'));
+    console.log('  modern-notifications-widget:', document.getElementById('modern-notifications-widget'));
+    console.log('  notifications-restore-btn:', document.getElementById('notifications-restore-btn'));
 
     // Ripple effect for action buttons
     const actionBtns = document.querySelectorAll('.action-btn');
@@ -2260,358 +2730,490 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Удаляем предыдущий блок инициализации PushNotificationManager (и немедленный, и тот что в setTimeout)
-    // Вместо него будет новый блок ниже:
-
-    // Инициализация браузерных уведомлений с задержкой для гарантированной загрузки модуля
+    // ОТКЛЮЧЕНО: Инициализация системы push-уведомлений (фоновая)
+    // Мы используем только polling уведомления, браузерные push-уведомления не нужны
+    /*
     setTimeout(() => {
         if (typeof window.PushNotificationManagerInstance !== 'undefined' && typeof window.PushNotificationManagerInstance.init === 'function') {
             console.log('[Account] window.PushNotificationManagerInstance object and init method found, proceeding with init.');
             window.PushNotificationManagerInstance.init()
                 .then(() => {
                     console.log('[Account] PushNotificationManagerInstance.init() completed successfully.');
-                    updatePushNotificationUI();
-                    setupPushNotificationHandlers();
+                    // Push UI на странице account больше не используется
                 })
                 .catch(error => {
                     console.error('[Account] Error initializing PushNotificationManagerInstance:', error);
-                    displayPushErrorState(`Ошибка инициализации push-уведомлений: ${error.message}`);
                 });
         } else {
             console.warn('[Account] window.PushNotificationManagerInstance or its init method is not available after timeout.');
-            displayPushErrorState('Модуль управления push-уведомлениями не загрузился или неисправен (экземпляр или метод init не найден). Пожалуйста, обновите страницу или попробуйте позже.');
         }
     }, 750);
+    */
+    console.log('[Account] 📡 Система push-уведомлений отключена - используем только polling уведомления');
 
-    function setInitialPushUIStateFromServer(isSubscribed) {
-        console.log('[Account] Setting initial UI state based on server data:', isSubscribed);
-        const enableBtn = document.getElementById('enablePushNotifications');
-        const disableBtn = document.getElementById('disablePushNotifications');
-        const testBtn = document.getElementById('testPushNotification');
-        const statusText = document.getElementById('pushNotificationStatus');
-        const statusIcon = document.getElementById('pushNotificationIcon');
-        const statusDescription = document.getElementById('push-status-description');
+    // Удалена функция setInitialPushUIStateFromServer - больше не используется
 
-        if (!enableBtn || !disableBtn || !testBtn || !statusText || !statusIcon || !statusDescription) {
-            console.warn('[Account] UI elements for initial push state not fully found. Skipping initial UI setup based on server data.');
-            return;
-        }
+    // Удалены функции push-уведомлений - больше не используются на данной странице
 
-        // Проверка поддержки Push API в браузере (синхронно)
-        if (!('serviceWorker' in navigator && 'PushManager' in window)) {
-            statusText.textContent = 'Не поддерживается';
-            statusIcon.className = 'fas fa-ban text-danger'; // Иконка запрета
-            statusDescription.textContent = 'Ваш браузер не поддерживает push-уведомления.';
-            enableBtn.style.display = 'none';
-            disableBtn.style.display = 'none';
-            testBtn.style.display = 'none';
-            return;
-        }
+    // Удалены функции push-уведомлений - больше не используются на данной странице
 
-        // Отображаем состояние, известное серверу, с пометкой о последующей проверке
-        if (isSubscribed) {
-            statusText.textContent = 'Включены (сервер)';
-            statusIcon.className = 'fas fa-check-circle text-success'; // Зеленая галочка
-            statusDescription.textContent = 'По данным сервера, подписка активна. Проверяем актуальный статус в браузере...';
-            enableBtn.style.display = 'none';
-            disableBtn.style.display = 'inline-block';
-            testBtn.style.display = 'inline-block';
-        } else {
-            statusText.textContent = 'Отключены (сервер)';
-            statusIcon.className = 'fas fa-times-circle text-danger'; // Красный крестик
-            statusDescription.textContent = 'По данным сервера, подписка неактивна. Проверяем актуальный статус в браузере...';
-            enableBtn.style.display = 'inline-block';
-            disableBtn.style.display = 'none';
-            testBtn.style.display = 'none';
-        }
-    }
+    // 📡 Обработчики для Polling системы уведомлений
+    const testPollingBtn = document.getElementById('testPollingNotification');
+    const managePollingBtn = document.getElementById('managePollingNotifications');
+    const clearNotificationsBtn = document.getElementById('clearAllNotifications');
 
-    function displayPushErrorState(message) {
-        console.log(`[Account] Displaying push error state: ${message}`);
-        const statusText = document.getElementById('pushNotificationStatus');
-        const statusIcon = document.getElementById('pushNotificationIcon');
-        const statusDescription = document.getElementById('push-status-description');
-        const enableBtn = document.getElementById('enablePushNotifications');
-        const disableBtn = document.getElementById('disablePushNotifications');
-        const testBtn = document.getElementById('testPushNotification');
-
-        if (!statusText || !statusIcon || !statusDescription || !enableBtn || !disableBtn || !testBtn) {
-            console.error("[Account] Critical UI elements for push notifications missing for error display.");
-            return;
-        }
-
-        statusText.textContent = 'Ошибка';
-        statusIcon.className = 'fas fa-exclamation-triangle text-danger';
-        statusDescription.textContent = message;
-
-        // Скрываем кнопки действий при ошибке, чтобы пользователь не пытался с ними взаимодействовать
-        enableBtn.style.display = 'none';
-        disableBtn.style.display = 'none';
-        testBtn.style.display = 'none';
-    }
-
-    function updatePushNotificationUI() {
-        console.log('[Account] Обновление UI браузерных уведомлений (финальное, после init)');
-        let enableBtn = document.getElementById('enablePushNotifications');
-        let disableBtn = document.getElementById('disablePushNotifications');
-        let testBtn = document.getElementById('testPushNotification');
-        let statusText = document.getElementById('pushNotificationStatus');
-        let statusIcon = document.getElementById('pushNotificationIcon');
-
-        console.log('[Account] Поиск элементов UI:');
-        console.log('  enableBtn:', enableBtn);
-        console.log('  disableBtn:', disableBtn);
-        console.log('  testBtn:', testBtn);
-        console.log('  statusText:', statusText);
-        console.log('  statusIcon:', statusIcon);
-
-        // Если элементы statusText и statusIcon не найдены, создаем их (этот блок можно оставить для надежности, если есть сомнения в HTML)
-        if (!statusText || !statusIcon) {
-            const statusIndicator = document.getElementById('push-status-indicator');
-            console.log('[Account] statusIndicator найден:', statusIndicator);
-
-            if (statusIndicator) {
-                console.log('[Account] Содержимое statusIndicator:', statusIndicator.innerHTML);
-
-                // Очищаем и пересоздаем содержимое
-                statusIndicator.innerHTML = `
-                    <i id="pushNotificationIcon" class="fas fa-spinner fa-spin text-info"></i>
-                    <span id="pushNotificationStatus">Проверка...</span>
-                `;
-
-                // Получаем созданные элементы
-                statusText = document.getElementById('pushNotificationStatus');
-                statusIcon = document.getElementById('pushNotificationIcon');
-
-                console.log('[Account] Элементы созданы динамически:');
-                console.log('  statusText:', statusText);
-                console.log('  statusIcon:', statusIcon);
-            }
-        }
-
-        if (!enableBtn || !disableBtn || !testBtn || !statusText || !statusIcon) {
-            console.log('[Account] Не найдены элементы UI для уведомлений');
-            console.log('[Account] Все элементы на странице с ID:');
-
-            // Выводим все элементы с ID для отладки
-            const allElementsWithId = document.querySelectorAll('[id]');
-            allElementsWithId.forEach(el => {
-                console.log(`  ID: ${el.id}, тег: ${el.tagName}, текст: ${el.textContent?.substring(0, 50) || 'нет текста'}`);
-            });
-            return;
-        }
-
-        // Проверяем статус через глобальный экземпляр
-        if (window.PushNotificationManagerInstance && typeof window.PushNotificationManagerInstance.isSupported !== 'undefined') { // Проверяем свойство isSupported для уверенности, что это наш объект
-            const manager = window.PushNotificationManagerInstance;
-            const statusDescription = document.getElementById('push-status-description');
-
-            if (!manager.isSupported) {
-                statusText.textContent = 'Не поддерживается';
-                statusIcon.className = 'fas fa-ban text-danger';
-                if(statusDescription) statusDescription.textContent = 'Ваш браузер не поддерживает push-уведомления.';
-                enableBtn.style.display = 'none';
-                disableBtn.style.display = 'none';
-                testBtn.style.display = 'none';
-                return;
-            }
-
-            if (manager.isSubscribed) {
-                statusText.textContent = 'Включены';
-                statusIcon.className = 'fas fa-check-circle text-success';
-                if(statusDescription) statusDescription.textContent = 'Вы подписаны на push-уведомления.';
-                enableBtn.style.display = 'none';
-                disableBtn.style.display = 'inline-block';
-                testBtn.style.display = 'inline-block';
-            } else {
-                statusText.textContent = 'Отключены';
-                statusIcon.className = 'fas fa-times-circle text-danger';
-                if(statusDescription) statusDescription.textContent = 'Вы не подписаны на push-уведомления. Нажмите "Включить", чтобы получать их.';
-                enableBtn.style.display = 'inline-block';
-                disableBtn.style.display = 'none';
-                testBtn.style.display = 'none';
-            }
-        } else {
-            // Эта ветка не должна активно использоваться, если displayPushErrorState обрабатывает отсутствие менеджера
-            // Но оставим как фоллбэк для "Проверка..."
-            const statusDescription = document.getElementById('push-status-description');
-            statusText.textContent = 'Проверка...';
-            statusIcon.className = 'fas fa-spinner fa-spin text-info';
-            if(statusDescription) statusDescription.textContent = 'Идет проверка статуса подписки на уведомления...';
-            enableBtn.style.display = 'none';
-            disableBtn.style.display = 'none';
-            testBtn.style.display = 'none';
-        }
-    }
-
-    function setupPushNotificationHandlers() {
-        console.log('[Account] Настройка обработчиков браузерных уведомлений');
-
-        const enableBtn = document.getElementById('enablePushNotifications');
-        const disableBtn = document.getElementById('disablePushNotifications');
-        const testBtn = document.getElementById('testPushNotification');
-
-        if (!enableBtn || !disableBtn || !testBtn) {
-            console.log('[Account] Элементы управления уведомлениями не найдены для обработчиков');
-            return;
-        }
-
-        // Обработчик включения уведомлений
-        enableBtn.addEventListener('click', async function() {
-            console.log('[Account] Нажата кнопка включения уведомлений');
-
-            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.subscribe !== 'function') {
-                console.error('[Account] PushNotificationManagerInstance или его метод subscribe не инициализирован');
-                alert('Ошибка: Менеджер уведомлений не готов.');
-                return;
-            }
+    // Обработчик тестового уведомления
+    if (testPollingBtn) {
+        testPollingBtn.addEventListener('click', async function() {
+            console.log('[Account] Тест polling уведомления');
 
             try {
-                enableBtn.disabled = true;
-                enableBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Включение...';
+                testPollingBtn.disabled = true;
+                testPollingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Тестирование...';
 
-                // Добавляем таймаут для всей операции
-                const subscribePromise = window.PushNotificationManagerInstance.subscribe();
-                const timeoutPromise = new Promise((_, reject) => {
-                    setTimeout(() => reject(new Error('Таймаут операции подписки')), 15000);
-                });
-
-                const result = await Promise.race([subscribePromise, timeoutPromise]);
-
-                if (result && result.success) { // result может быть undefined, если subscribe не возвращает объект
-                    updatePushNotificationUI();
-                } else if (result && result.error) {
-                    console.error('[Account] Ошибка включения уведомлений (из PushManager):', result.error);
-                     alert('Ошибка включения уведомлений: ' + result.error);
-                } else if (!result) {
-                    // Этого не должно быть, если PushManager.subscribe всегда возвращает объект
-                    console.error('[Account] window.PushNotificationManagerInstance.subscribe() не вернул результат.');
-                     alert('Произошла неожиданная ошибка при попытке включить уведомления.');
-                }
-            } catch (error) {
-                console.error('[Account] Ошибка при включении уведомлений:', error);
-
-                // Показываем пользователю понятное сообщение
-                if (error.message.includes('Таймаут')) {
-                    alert('Операция заняла слишком много времени. Попробуйте еще раз или перезагрузите страницу.');
-                } else {
-                    alert('Ошибка включения уведомлений: ' + error.message);
-                }
-            } finally {
-                enableBtn.disabled = false;
-                enableBtn.innerHTML = '<i class="fas fa-bell"></i> Включить';
-
-                // Обновляем UI через небольшую задержку
-                setTimeout(() => {
-                    updatePushNotificationUI();
-                }, 500);
-            }
-        });
-
-        // Обработчик отключения уведомлений
-        disableBtn.addEventListener('click', async function() {
-            console.log('[Account] Нажата кнопка отключения уведомлений');
-
-            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.unsubscribe !== 'function') {
-                console.error('[Account] PushNotificationManagerInstance или его метод unsubscribe не инициализирован');
-                alert('Ошибка: Менеджер уведомлений не готов.');
-                return;
-            }
-
-            try {
-                disableBtn.disabled = true;
-                disableBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отключение...';
-
-                const result = await window.PushNotificationManagerInstance.unsubscribe();
-
-                if (result.success) {
-                    updatePushNotificationUI();
-                } else {
-                    console.error('[Account] Ошибка отключения уведомлений:', result.error);
-                }
-            } catch (error) {
-                console.error('[Account] Ошибка при отключении уведомлений:', error);
-            } finally {
-                disableBtn.disabled = false;
-                disableBtn.innerHTML = '<i class="fas fa-bell-slash"></i> Отключить';
-            }
-        });
-
-        // Обработчик тестового уведомления
-        testBtn.addEventListener('click', async function() {
-            console.log('[Account] Нажата кнопка тестового уведомления');
-
-            if (!window.PushNotificationManagerInstance || typeof window.PushNotificationManagerInstance.sendTestNotification !== 'function') {
-                console.error('[Account] PushNotificationManagerInstance или его метод sendTestNotification не инициализирован для теста');
-                // Для sendTestNotification в PushNotificationManager он был внутренним,
-                // но если он вызывается извне, он должен быть частью публичного API класса
-                // или тестовый запрос должен идти на сервер, как это было в предыдущей версии.
-                // Текущий PushNotificationManager.sendTestNotification() делает запрос на /api/push/test, что правильно.
-                alert('Ошибка: Менеджер уведомлений не готов для теста.');
-                return;
-            }
-
-            try {
-                testBtn.disabled = true;
-                testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
-
-                // Получаем CSRF токен
-                const csrfToken = document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || '';
-                console.log('[Account] CSRF токен:', csrfToken ? 'найден' : 'не найден');
-
-                console.log('[Account] Отправка запроса на /api/push/test...');
-                const response = await fetch('/api/push/test', {
+                const response = await fetch('/api/push/test-polling', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'X-CSRFToken': csrfToken
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
                     }
                 });
 
-                console.log('[Account] Ответ сервера:', response.status, response.statusText);
                 const data = await response.json();
-                console.log('[Account] Данные ответа:', data);
 
-                if (response.ok) {
-                    console.log('[Account] Тестовое уведомление отправлено успешно');
-                    alert('Тестовое уведомление отправлено! Проверьте браузер.');
+                if (response.ok && data.success) {
+                    alert('✅ Тестовое уведомление создано!\n📋 ID: ' + data.notification_id + '\n🔄 Проверьте через 30 секунд появится ли toast');
                 } else {
-                    console.error('[Account] Ошибка отправки тестового уведомления:', data.error);
-                    alert('Ошибка отправки: ' + (data.error || 'Неизвестная ошибка'));
+                    alert('❌ Ошибка: ' + (data.message || 'Неизвестная ошибка'));
                 }
             } catch (error) {
-                console.error('[Account] Ошибка при отправке тестового уведомления:', error);
-                alert('Ошибка сети: ' + error.message);
+                console.error('[Account] Ошибка теста polling:', error);
+                alert('❌ Ошибка сети: ' + error.message);
             } finally {
-                testBtn.disabled = false;
-                testBtn.innerHTML = '<i class="fas fa-volume-up"></i> Тест';
+                testPollingBtn.disabled = false;
+                testPollingBtn.innerHTML = '<i class="fas fa-volume-up"></i> Тест';
             }
         });
-
-        console.log('[Account] Обработчики браузерных уведомлений настроены');
     }
 
-    // Обработчик кнопки диагностики
-    const diagnoseBtn = document.getElementById('diagnosePushNotifications');
-    if (diagnoseBtn) {
-        diagnoseBtn.addEventListener('click', async function() {
-            console.log('[Account] Запуск диагностики пуш-уведомлений');
+    // Обработчик управления уведомлениями
+    if (managePollingBtn) {
+        managePollingBtn.addEventListener('click', function() {
+            window.open('/notifications-polling', '_blank');
+        });
+    }
 
-            if (typeof window.PushDebug !== 'undefined') {
-                try {
-                    await window.PushDebug.runFullDiagnostic();
+    // Обработчик очистки всех уведомлений
+    if (clearNotificationsBtn) {
+        clearNotificationsBtn.addEventListener('click', async function() {
+            if (!confirm('❓ Вы уверены, что хотите удалить ВСЕ уведомления?')) {
+                return;
+            }
 
-                    // Показываем пользователю, что диагностика завершена
-                    alert('Диагностика завершена! Результаты в консоли разработчика (F12).');
-                } catch (error) {
-                    console.error('[Account] Ошибка диагностики:', error);
-                    alert('Ошибка диагностики. Проверьте консоль разработчика.');
+            try {
+                clearNotificationsBtn.disabled = true;
+                clearNotificationsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Очистка...';
+
+                const response = await fetch('/api/notifications/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    alert('✅ Все уведомления успешно удалены!');
+                } else {
+                    alert('❌ Ошибка: ' + (data.message || 'Не удалось очистить уведомления'));
                 }
-            } else {
-                alert('Модуль диагностики не загружен. Перезагрузите страницу.');
+            } catch (error) {
+                console.error('[Account] Ошибка очистки уведомлений:', error);
+                alert('❌ Ошибка сети: ' + error.message);
+            } finally {
+                clearNotificationsBtn.disabled = false;
+                clearNotificationsBtn.innerHTML = '<i class="fas fa-trash"></i> Очистить все';
             }
         });
     }
+
+        // Очистка всех уведомлений (проверяем существование элемента)
+    const clearAllNotificationsBtn = document.getElementById('clearAllNotifications');
+    if (clearAllNotificationsBtn) {
+        clearAllNotificationsBtn.addEventListener('click', async function() {
+            const btn = this;
+            const originalText = btn.innerHTML;
+
+            if (!confirm('Очистить все уведомления? Это действие нельзя отменить.')) {
+                return;
+            }
+
+            try {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Очистка...';
+
+                const response = await fetch('/api/notifications/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    Swal.fire({
+                        title: 'Успешно!',
+                        text: 'Все уведомления очищены',
+                        icon: 'success',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    throw new Error(data.message || 'Ошибка очистки');
+                }
+
+            } catch (error) {
+                console.error('Ошибка очистки уведомлений:', error);
+                Swal.fire({
+                    title: 'Ошибка!',
+                    text: `Не удалось очистить уведомления: ${error.message}`,
+                    icon: 'error'
+                });
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = originalText;
+            }
+        });
+    }
+
+    // === ИНИЦИАЛИЗАЦИЯ УПРАВЛЕНИЯ ВИДЖЕТОМ ===
+    console.log('[Account] 🔧 Инициализация управления виджетом уведомлений');
+
+    // Инициализируем состояние кнопки управления виджетом
+    const toggleBtn = document.getElementById('toggleNotificationsBtn');
+    if (toggleBtn) {
+        console.log('[Account] ✅ Кнопка управления виджетом найдена, инициализируем состояние');
+
+        // ИСПРАВЛЕНО: Принудительно снимаем блокировку кнопки
+        toggleBtn.style.pointerEvents = 'auto';
+        toggleBtn.style.cursor = 'pointer';
+        toggleBtn.disabled = false;
+        console.log('[Account] 🔓 Принудительно разблокировали кнопку');
+
+        updateToggleButtonState();
+
+        // Проверяем, нужно ли скрыть виджет при загрузке
+        const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+        if (widgetDisabled) {
+            console.log('[Account] 🔕 Виджет должен быть отключен, скрываем его');
+
+            // Скрываем виджет
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                widget.style.display = 'none';
+                widget.classList.add('closed', 'initial-hidden');
+            }
+
+            // Показываем кнопку восстановления
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                restoreBtn.style.display = 'block';
+            }
+        }
+    } else {
+        console.warn('[Account] ⚠️ Кнопка управления виджетом не найдена (toggleNotificationsBtn)');
+    }
+});
+
+// Функция тестирования звука из профиля
+function testNotificationFromProfile() {
+    console.log('[Account] Тест звука из профиля');
+
+    try {
+        // Сначала проверяем, есть ли глобальная функция воспроизведения звука
+        if (typeof window.playNotificationSound === 'function') {
+            window.playNotificationSound();
+            console.log('[Account] Использована глобальная функция playNotificationSound');
+        } else if (typeof window.testNotificationSound === 'function') {
+            window.testNotificationSound();
+            console.log('[Account] Использована глобальная функция testNotificationSound');
+        } else {
+            // Fallback: создаем звук вручную
+            const audio = new Audio('/static/sounds/notification.mp3');
+            audio.volume = 0.7;
+            audio.play().then(() => {
+                console.log('[Account] Звук воспроизведен успешно (fallback)');
+            }).catch(error => {
+                console.error('[Account] Ошибка воспроизведения звука:', error);
+                // Показываем уведомление пользователю
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        title: '🔊 Тест звука',
+                        text: 'Звуковые файлы недоступны или отключены в браузере. Проверьте настройки браузера и наличие файлов.',
+                        icon: 'warning',
+                        timer: 3000,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert('🔊 Тест звука: звуковые файлы недоступны или отключены в браузере');
+                }
+            });
+        }
+    } catch (error) {
+        console.error('[Account] Ошибка при тестировании звука:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Ошибка',
+                text: 'Произошла ошибка при тестировании звука: ' + error.message,
+                icon: 'error'
+            });
+        } else {
+            alert('Произошла ошибка при тестировании звука: ' + error.message);
+        }
+    }
+}
+
+// Функция переключения виджета уведомлений и звука
+function toggleNotificationsAndSound() {
+    console.log('[Account] Переключение виджета и звука');
+
+    const btn = document.getElementById('toggleNotificationsBtn');
+    const btnContent = btn.querySelector('.btn-content');
+    const icon = btnContent.querySelector('i');
+    const text = btnContent.querySelector('span');
+
+    // Получаем текущее состояние из localStorage
+    const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+    const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+
+    try {
+        if (!widgetDisabled || !soundDisabled) {
+            // Отключаем всё
+            localStorage.setItem('notificationsWidgetDisabled', 'true');
+            localStorage.setItem('notificationSoundDisabled', 'true');
+            localStorage.setItem('notificationsWidgetClosed', 'true');
+
+            // Обновляем UI кнопки
+            btn.classList.add('disabled');
+            icon.className = 'fas fa-bell';
+            text.textContent = 'Включить всё';
+
+            // ИСПРАВЛЕНИЕ: Принудительно скрываем виджет
+            if (window.notificationsWidget) {
+                window.notificationsWidget.closeWidget();
+            }
+
+            // Альтернативный способ скрытия виджета
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                widget.style.display = 'none';
+                widget.classList.add('closed', 'initial-hidden');
+            }
+
+            // ИСПРАВЛЕНО: НЕ показываем кнопку восстановления при полном отключении виджета
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                restoreBtn.style.display = 'none'; // ИСПРАВЛЕНО: скрываем кнопку при отключении
+                console.log('[Account] 🔕 Кнопка восстановления скрыта при отключении виджета');
+            }
+
+            // Показываем уведомление
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '🔕 Уведомления отключены',
+                    text: 'Виджет уведомлений и звуковые сигналы отключены',
+                    icon: 'info',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }
+
+            console.log('[Account] ✅ Виджет и звук ОТКЛЮЧЕНЫ');
+        } else {
+            // Включаем всё
+            localStorage.setItem('notificationsWidgetDisabled', 'false');
+            localStorage.setItem('notificationSoundDisabled', 'false');
+            localStorage.setItem('notificationsWidgetClosed', 'false');
+
+            // Обновляем UI кнопки
+            btn.classList.remove('disabled');
+            icon.className = 'fas fa-bell-slash';
+            text.textContent = 'Отключить всё';
+
+            // Скрываем кнопку восстановления
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                restoreBtn.style.display = 'none';
+            }
+
+            // ИСПРАВЛЕНИЕ: Перезагружаем страницу для правильной инициализации виджета
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '🔔 Уведомления включены',
+                    text: 'Страница будет перезагружена для корректной инициализации виджета',
+                    icon: 'success',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
+            }
+
+            console.log('[Account] 🔄 Перезагружаем страницу для корректной инициализации виджета');
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+            return;
+        }
+
+        // Обновляем состояние кнопки
+        updateToggleButtonState();
+
+    } catch (error) {
+        console.error('[Account] ❌ Ошибка при переключении уведомлений:', error);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Ошибка',
+                text: 'Произошла ошибка при изменении настроек: ' + error.message,
+                icon: 'error'
+            });
+        }
+    }
+}
+
+// Функция обновления состояния кнопки переключения
+function updateToggleButtonState() {
+    const btn = document.getElementById('toggleNotificationsBtn');
+    if (!btn) return;
+
+    // ИСПРАВЛЕНО: Принудительно снимаем блокировку кнопки
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'pointer';
+    btn.disabled = false;
+
+    const btnContent = btn.querySelector('.btn-content');
+    const icon = btnContent.querySelector('i');
+    const text = btnContent.querySelector('span');
+
+    const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+    const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+
+    if (widgetDisabled || soundDisabled) {
+        // Уведомления отключены
+        btn.classList.add('disabled');
+        icon.className = 'fas fa-bell';
+        text.textContent = 'Включить всё';
+
+        // ИСПРАВЛЕНО: Обновляем статус системы
+        updateSystemStatus(false);
+    } else {
+        // Уведомления включены
+        btn.classList.remove('disabled');
+        icon.className = 'fas fa-bell-slash';
+        text.textContent = 'Отключить всё';
+
+        // ИСПРАВЛЕНО: Обновляем статус системы
+        updateSystemStatus(true);
+    }
+
+    console.log('[Account] 🔄 Состояние кнопки обновлено:', {
+        disabled: btn.classList.contains('disabled'),
+        text: text.textContent,
+        clickable: btn.style.pointerEvents !== 'none'
+    });
+}
+
+// НОВАЯ ФУНКЦИЯ: Обновление статуса системы уведомлений
+function updateSystemStatus(isActive) {
+    console.log('[Account] 🔄 Обновление статуса системы:', isActive ? 'АКТИВНА' : 'ОТКЛЮЧЕНА');
+
+    // Обновляем основной статус
+    const statusElement = document.getElementById('pollingNotificationStatus');
+    const iconElement = document.getElementById('pollingNotificationIcon');
+    const statusContainer = document.getElementById('polling-notification-status');
+
+    if (statusElement && iconElement && statusContainer) {
+        if (isActive) {
+            // Система активна
+            statusElement.textContent = 'Активна (Polling)';
+            iconElement.className = 'fas fa-check-circle';
+            statusContainer.className = 'notification-status active-status';
+
+            // Обновляем детали статуса
+            updateStatusDetails(true, true, true); // звук включен, виджет активен
+        } else {
+            // Система отключена
+            statusElement.textContent = 'Отключена';
+            iconElement.className = 'fas fa-times-circle';
+            statusContainer.className = 'notification-status inactive-status';
+
+            // Обновляем детали статуса
+            updateStatusDetails(false, false, false); // звук отключен, виджет неактивен
+        }
+    }
+
+    // Обновляем индикатор подключения
+    const connectionText = document.querySelector('.connection-text');
+    const connectionDot = document.querySelector('.connection-dot');
+
+    if (connectionText && connectionDot) {
+        if (isActive) {
+            connectionText.textContent = 'Подключено';
+            connectionDot.style.backgroundColor = '#22c55e'; // зеленый
+        } else {
+            connectionText.textContent = 'Отключено';
+            connectionDot.style.backgroundColor = '#ef4444'; // красный
+        }
+    }
+}
+
+// НОВАЯ ФУНКЦИЯ: Обновление деталей статуса
+function updateStatusDetails(soundEnabled, widgetActive, systemActive) {
+    const statusDetails = document.querySelector('.status-details');
+    if (!statusDetails) return;
+
+    // Находим элементы деталей
+    const soundDetail = statusDetails.children[1]; // Звук
+    const widgetDetail = statusDetails.children[2]; // Виджет
+
+    if (soundDetail) {
+        const soundIcon = soundDetail.querySelector('i');
+        const soundText = soundDetail.childNodes[soundDetail.childNodes.length - 1];
+
+        if (soundEnabled) {
+            soundIcon.className = 'fas fa-volume-up';
+            soundText.textContent = 'Звук включен';
+            soundDetail.style.color = '#22c55e';
+        } else {
+            soundIcon.className = 'fas fa-volume-mute';
+            soundText.textContent = 'Звук отключен';
+            soundDetail.style.color = '#ef4444';
+        }
+    }
+
+    if (widgetDetail) {
+        const widgetIcon = widgetDetail.querySelector('i');
+        const widgetText = widgetDetail.childNodes[widgetDetail.childNodes.length - 1];
+
+        if (widgetActive) {
+            widgetIcon.className = 'fas fa-bell';
+            widgetText.textContent = 'Виджет активен';
+            widgetDetail.style.color = '#22c55e';
+        } else {
+            widgetIcon.className = 'fas fa-bell-slash';
+            widgetText.textContent = 'Виджет отключен';
+            widgetDetail.style.color = '#ef4444';
+        }
+    }
+}
+
+// Инициализация состояния кнопки при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        updateToggleButtonState();
+    }, 100);
 });
 
 // Ripple effect function
@@ -2644,9 +3246,14 @@ function createRipple(event, element) {
 }
 </script>
 
-<!-- Подключение модуля пуш-уведомлений -->
+<!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
+<!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->
+<!--
 <script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+-->
 
-<!-- Отладочный модуль для диагностики -->
+<!-- ОТКЛЮЧЕНО: Отладочный модуль для диагностики -->
+<!--
 <script src="{{ url_for('static', filename='js/push-notifications-debug.js') }}"></script>
+-->
 {% endblock %}

@@ -1,0 +1,220 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Мои задачи | Helpdesk (Refactored)</title>
+
+<!-- Новая модульная система стилей -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks-refactored.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- DataTables (минимальный набор) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/datatables.min.css') }}">
+<script src="{{ url_for('static', filename='js/datatables.min.js') }}"></script>
+{% endblock %}
+
+{% block content %}
+<div class="tasks-page-container" data-component="tasks-app">
+
+  <!-- Заголовок страницы -->
+  <header class="page-header" data-component="header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-tasks"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои задачи в Redmine</h1>
+          <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://redmine.tez-tour.com"
+           class="action-button secondary"
+           target="_blank"
+           rel="noopener noreferrer">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Перейти в Redmine</span>
+        </a>
+        <a href="{{ url_for('main.issues') }}"
+           class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Мои заявки</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Панель статистики -->
+  <section class="statistics-section" data-component="statistics">
+    <div class="status-breakdown-dashboard">
+      <!-- Содержимое будет рендериться JavaScript компонентом -->
+    </div>
+  </section>
+
+  <!-- Панель фильтров -->
+  <section class="filters-section" data-component="filters">
+    <div class="filters-container">
+      <!-- Содержимое будет рендериться JavaScript компонентом -->
+    </div>
+  </section>
+
+  <!-- Таблица задач -->
+  <section class="table-section" data-component="table">
+    <div class="table-container">
+      <table id="tasksTable" class="display nowrap" style="width:100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Тема</th>
+            <th>Статус</th>
+            <th>Приоритет</th>
+            <th>Проект</th>
+            <th>Назначен</th>
+            <th>Обновлено</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Данные загружаются через AJAX -->
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Полноэкранный спинер -->
+  <div id="loading-spinner" style="display: none;">
+    <!-- Будет управляться LoadingManager -->
+  </div>
+
+</div>
+
+<!-- Скрипты новой архитектуры -->
+<script type="module">
+  // Импорт основных модулей
+  import('./{{ url_for("static", filename="js/pages/tasks/core/EventBus.js") }}').then(() => {
+    return import('./{{ url_for("static", filename="js/pages/tasks/core/LoadingManager.js") }}');
+  }).then(() => {
+    return import('./{{ url_for("static", filename="js/pages/tasks/core/TasksApp.js") }}');
+  }).then(() => {
+    // Инициализация приложения
+    console.log('[TasksRefactored] Инициализация нового приложения...');
+
+    // Создаем экземпляр приложения с конфигурацией
+    window.tasksApp = new TasksApp({
+      debug: {{ 'true' if config.DEBUG else 'false' }},
+      autoInit: true,
+      preserveTaskNavigation: true // КРИТИЧНО: сохраняем навигацию
+    });
+
+    // Слушаем событие готовности
+    window.tasksApp.eventBus.on('app:ready', (state) => {
+      console.log('[TasksRefactored] ✅ Приложение готово к работе', state);
+
+      // Уведомляем о завершении загрузки
+      if (window.notificationManager) {
+        window.notificationManager.showSuccess('Страница задач загружена');
+      }
+    });
+
+    // Обработка ошибок
+    window.tasksApp.eventBus.on('app:error', (error) => {
+      console.error('[TasksRefactored] ❌ Ошибка приложения:', error);
+
+      if (window.notificationManager) {
+        window.notificationManager.showError('Ошибка загрузки страницы задач');
+      }
+    });
+
+  }).catch(error => {
+    console.error('[TasksRefactored] ❌ Ошибка загрузки модулей:', error);
+
+    // Fallback для случая ошибки загрузки модулей
+    document.querySelector('.tasks-page-container').innerHTML = `
+      <div class="error-fallback">
+        <h2>Ошибка загрузки</h2>
+        <p>Не удалось загрузить компоненты страницы. Пожалуйста, обновите страницу.</p>
+        <button onclick="location.reload()" class="action-button primary">
+          <i class="fas fa-redo"></i>
+          Обновить страницу
+        </button>
+      </div>
+    `;
+  });
+</script>
+
+<!-- Fallback для браузеров без поддержки ES6 модулей -->
+<script nomodule>
+  console.warn('[TasksRefactored] ⚠️ Браузер не поддерживает ES6 модули');
+
+  // Показываем сообщение о необходимости обновления браузера
+  document.querySelector('.tasks-page-container').innerHTML = `
+    <div class="browser-compatibility-warning">
+      <h2>Обновите браузер</h2>
+      <p>Для корректной работы страницы требуется современный браузер с поддержкой ES6 модулей.</p>
+      <p>Рекомендуем использовать последние версии Chrome, Firefox, Safari или Edge.</p>
+    </div>
+  `;
+</script>
+
+<!-- Стили для fallback сообщений -->
+<style>
+.error-fallback,
+.browser-compatibility-warning {
+  text-align: center;
+  padding: var(--tasks-spacing-3xl);
+  background: var(--tasks-bg-secondary);
+  border-radius: var(--tasks-radius-lg);
+  border: 1px solid var(--tasks-border-color);
+  margin: var(--tasks-spacing-xl) 0;
+}
+
+.error-fallback h2,
+.browser-compatibility-warning h2 {
+  color: var(--tasks-error);
+  margin-bottom: var(--tasks-spacing-lg);
+}
+
+.error-fallback p,
+.browser-compatibility-warning p {
+  color: var(--tasks-text-secondary);
+  margin-bottom: var(--tasks-spacing-md);
+}
+
+.error-fallback .action-button {
+  margin-top: var(--tasks-spacing-lg);
+}
+</style>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Дополнительные скрипты если нужны -->
+<script>
+  // Глобальная конфигурация для отладки
+  if ({{ 'true' if config.DEBUG else 'false' }}) {
+    window.TASKS_DEBUG = true;
+    console.log('[TasksRefactored] 🔧 Режим отладки включен');
+  }
+
+  // Интеграция с существующими системами
+  document.addEventListener('DOMContentLoaded', function() {
+    // Отключаем старые обработчики если они есть
+    const oldHandlers = [
+      'LoadingManager',
+      'TasksCounterManager',
+      'ModernLoadingManager',
+      'SpinnerManager'
+    ];
+
+    oldHandlers.forEach(handler => {
+      if (window[handler]) {
+        console.log(`[TasksRefactored] 🔄 Отключаем старый ${handler}`);
+        if (window[handler].destroy) {
+          window[handler].destroy();
+        }
+        window[handler] = null;
+      }
+    });
+  });
+</script>
+{% endblock %}

@@ -1,74 +1,250 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
-  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TEZ TOUR Технический отдел</title>
+  <style>
+    /* Основные стили */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #2D3748;
+      background-color: #EDF2F7;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+
+    table {
+      border-spacing: 0;
+      border-collapse: collapse;
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+
+    td {
+      padding: 0;
+    }
+
+    img {
+      border: 0;
+      -ms-interpolation-mode: bicubic;
+      max-width: 100%;
+      display: block;
+    }
+
+    .wrapper {
+      width: 100%;
+      table-layout: fixed;
+      background-color: #EDF2F7;
+      padding: 30px 0;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 640px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+      overflow: hidden;
+    }
+
+    .header {
+      position: relative;
+      background: linear-gradient(135deg, #0f5ca5 0%, #1B69D1 100%);
+      padding: 40px 0;
+      text-align: center;
+    }
+
+    .logo-container {
+      position: relative;
+      z-index: 2;
+    }
+
+    .header:before {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQ0MCIgaGVpZ2h0PSIzMDAiIHZpZXdCb3g9IjAgMCAxNDQwIDMwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTQ0MC0xLjVMMCAxVjMwMUwxNDQwIDI5OFYtMS41WiIgZmlsbD0idXJsKCNwYWludDBfbGluZWFyXzI4MF8zNTM2KSIgZmlsbC1vcGFjaXR5PSIwLjEiLz48ZGVmcz48bGluZWFyR3JhZGllbnQgaWQ9InBhaW50MF9saW5lYXJfMjgwXzM1MzYiIHgxPSI3MjAiIHkxPSItNDIuNSIgeDI9IjcyMCIgeTI9IjMwMSIgZ3JhZGllbnRVbml0cz0idXNlclNwYWNlT25Vc2UiPjxzdG9wIHN0b3AtY29sb3I9IndoaXRlIi8+PHN0b3Agb2Zmc2V0PSIxIiBzdG9wLWNvbG9yPSJ3aGl0ZSIgc3RvcC1vcGFjaXR5PSIwIi8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PC9zdmc+');
+      background-size: cover;
+      background-position: center;
+      opacity: 0.2;
+    }
+
+    .accent-bar {
+      height: 4px;
+      background: linear-gradient(90deg, #268d90 0%, #1BE8B9 100%);
+    }
+
+    .main-content {
+      padding: 40px;
+    }
+
+    .section-title {
+      font-size: 22px;
+      font-weight: 600;
+      color: #175ebb;
+      margin-top: 0;
+      margin-bottom: 16px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #EDF2F7;
+    }
+
+    .text-content {
+      color: #4A5568;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+
+    .button {
+      display: inline-block;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: 600;
+      text-decoration: none;
+      text-align: center;
+      color: #ffffff !important;
+      background: linear-gradient(90deg, #268d90 0%, #1BE8B9 100%);
+      border-radius: 30px;
+      margin: 20px 0;
+      transition: transform 0.3s, box-shadow 0.3s;
+      box-shadow: 0 4px 10px rgba(38, 141, 144, 0.3);
+    }
+
+    .footer-wrapper {
+      background-color: #F7FAFC;
+    }
+
+    .footer {
+      padding: 30px 40px;
+      text-align: center;
+    }
+
+    .social-links {
+      margin-bottom: 24px;
+    }
+
+    .social-links a {
+      display: inline-block;
+      margin: 0 8px;
+    }
+
+    .footer-contact {
+      color: #4A5568;
+      font-size: 15px;
+      margin-bottom: 16px;
+    }
+
+    .footer-contact a {
+      color: #175ebb;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .copyright {
+      color: #718096;
+      font-size: 12px;
+    }
+
+    /* Адаптивные стили */
+    @media screen and (max-width: 640px) {
+      .wrapper {
+        padding: 20px 15px;
+      }
+
+      .main-content {
+        padding: 30px 20px;
+      }
+
+      .footer {
+        padding: 25px 20px;
+      }
+
+      .header {
+        padding: 30px 0;
+      }
+
+      .button {
+        display: block;
+        width: 100%;
+      }
+    }
+  </style>
 </head>
-<body text="#000000" bgcolor="#FFFFFF">
-  <div style="margin: 0px; padding: 0px;">
-    <table width="100%" cellspacing="0" cellpadding="0" border="0" bgcolor="#000000">
-      <tbody>
-        <tr>
-          <td valign="top" bgcolor="#ebebeb">
-            <table width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tbody>
-                <tr>
-                  <td height="150" bgcolor="#0e4e91"></td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-          <td width="600" valign="top" bgcolor="#ebebeb">
-            <table width="600" cellspacing="0" cellpadding="0" border="0">
-              <tbody>
-                <tr>
-                  <td valign="top" bgcolor="#ebebeb">
-                    <table valign="top" width="600" cellspacing="0" cellpadding="10" border="0" align="center">
-                      <tbody>
-                        <tr>
-                          <td bgcolor="#0e4e91" align="center">
-                            <img src="cid:part1.ZSfJ5NXV.kGM1ZpH9@tez-tour.com" alt="Tez Tour" width="211" height="62">
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <table style="border-bottom: 1px solid #c2c2c2;" width="600" cellspacing="0" cellpadding="0" border="0">
-                      <tbody>
-                        <tr>
-                          <td width="212" valign="bottom" bgcolor="#268d90" align="center">
-                            <img src="cid:part2.i7cWltsK.HtvnlZ0A@tez-tour.com" alt="Department of system integration" width="212" height="180" border="0">
-                          </td>
-                          <td width="388" bgcolor="#268d90" align="center">
-                            <span style="font-size: 35px; color: rgb(255, 255, 255);">Служба технической поддержки TEZ TOUR</span>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <div style="text-align: center;">
-                      <b>Мы на связи!</b><br>
-                      <a href="mailto:help@tez-tour.com">help@tez-tour.com</a><br>
-                      +74957751009 (1000) <br>
-                      <a href="http://vk.com/teztourrf" target="_blank"><img src="cid:part3.5XaJj6MD.LHon2jN8@tez-tour.com" width="30" height="30" border="0"></a>
-                      <a href="http://www.odnoklassniki.ru/teztourus" target="_blank"><img src="cid:part4.I0JGAx37.QeYaEXJC@tez-tour.com" width="30" height="30" border="0"></a>
-                    </div>
-                  </td>
-                </tr>
-                <tr>
-                  <td height="28" bgcolor="#ebebeb"></td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-          <td valign="top" bgcolor="#ebebeb">
-            <table width="100%" cellspacing="0" cellpadding="0" border="0">
-              <tbody>
-                <tr>
-                  <td height="150" bgcolor="#0e4e91"></td>
-                </tr>
-              </tbody>
-            </table>
-          </td>
-        </tr>
-      </tbody>
+<body>
+  <div class="wrapper">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+      <tr>
+        <td align="center">
+          <table role="presentation" class="container" width="640" cellspacing="0" cellpadding="0" border="0">
+            <!-- Шапка -->
+            <tr>
+              <td class="header">
+                <div class="logo-container">
+                  <a href="https://tez-tour.com" target="_blank">
+                    <img src="cid:part1.ZSfJ5NXV.kGM1ZpH9@tez-tour.com" alt="Tez Tour" width="200" style="margin: 0 auto;">
+                  </a>
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td class="accent-bar"></td>
+            </tr>
+
+            <!-- Основной контент -->
+            <tr>
+              <td class="main-content">
+                <!-- Здесь будет размещаться основной текст письма -->
+                <h2 class="section-title">Заголовок Вашего письма</h2>
+                <div class="text-content">
+                  <p>Это основной текст вашего сообщения. Здесь вы можете рассказать о новостях, обновлениях или предоставить важную информацию вашим коллегам.</p>
+
+                  <p>Используйте этот шаблон для эффективной коммуникации. Вы можете легко настроить его под свои нужды, добавляя или удаляя разделы по необходимости.</p>
+                </div>
+
+                <div style="text-align:center;">
+                  <a href="#" class="button">Перейти на сайт</a>
+                </div>
+
+                <p>С уважением,<br>Команда технической поддержки TEZ TOUR</p>
+              </td>
+            </tr>
+
+            <!-- Подвал -->
+            <tr>
+              <td class="footer-wrapper">
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                  <tr>
+                    <td class="footer">
+                      <div class="social-links">
+                        <a href="http://vk.com/teztourrf" target="_blank"><img src="cid:part3.byyaSwjG.yfiqYQbk@tez-tour.com" width="30" height="30" alt="VK"></a>
+                        <a href="http://www.odnoklassniki.ru/teztourus" target="_blank"><img src="cid:part4.zMaMfl91.3ma9kZzr@tez-tour.com" width="30" height="30" alt="OK"></a>
+                      </div>
+
+                      <div class="footer-contact">
+                        <strong>Мы на связи!</strong><br>
+                        <a href="mailto:help@tez-tour.com">help@tez-tour.com</a> | +7 495 775 10 09 (доб. 1000)
+                      </div>
+
+                      <div class="copyright">
+                        © TEZ TOUR, 2023. Все права защищены.
+                      </div>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
     </table>
   </div>
 </body>

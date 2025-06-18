@@ -1,0 +1,82 @@
+<!-- Modern Header Redesign for Redmine Tasks Page -->
+<!-- Версия 1.0 - Современный адаптивный дизайн с улучшенной визуальной иерархией -->
+
+<!-- Header Section с поддержкой двух цветовых схем -->
+<!-- Для активации фиолетовой темы добавьте класс "theme-purple" к элементу page-header -->
+<header class="page-header">
+  <div class="header-content">
+    <!-- Основная часть заголовка -->
+    <div class="header-main">
+      <!-- Анимированная иконка с градиентным фоном -->
+      <div class="header-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+
+      <!-- Текстовый блок с градиентным заголовком -->
+      <div class="header-text">
+        <h1 class="page-title">Мои задачи в Redmine</h1>
+        <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+      </div>
+    </div>
+
+    <!-- Блок действий с современными кнопками -->
+    <div class="header-actions">
+      <!-- Вторичная кнопка - внешняя ссылка на Redmine -->
+      <a href="https://helpdesk.teztour.com"
+         target="_blank"
+         rel="noopener noreferrer"
+         class="action-button secondary"
+         aria-label="Открыть Redmine в новой вкладке">
+        <i class="fas fa-external-link-alt" aria-hidden="true"></i>
+        <span>Перейти в Redmine</span>
+      </a>
+
+      <!-- Первичная кнопка - внутренняя навигация -->
+      <a href="{{ url_for('main.my_issues') }}"
+         class="action-button primary"
+         aria-label="Перейти к моим заявкам">
+        <i class="fas fa-ticket-alt" aria-hidden="true"></i>
+        <span>Мои заявки</span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<!-- Альтернативный вариант с дополнительными элементами (опционально) -->
+<!--
+<header class="page-header theme-purple">
+  <div class="header-content">
+    <div class="header-main">
+      <div class="header-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="page-title">Мои задачи в Redmine</h1>
+        <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+        <div class="header-stats">
+          <span class="stat-item">
+            <i class="fas fa-clock"></i>
+            <span class="stat-value">12</span>
+            <span class="stat-label">активных</span>
+          </span>
+          <span class="stat-item">
+            <i class="fas fa-check-circle"></i>
+            <span class="stat-value">48</span>
+            <span class="stat-label">выполнено</span>
+          </span>
+        </div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <a href="https://helpdesk.teztour.com" target="_blank" class="action-button secondary">
+        <i class="fas fa-external-link-alt"></i>
+        <span>Перейти в Redmine</span>
+      </a>
+      <a href="{{ url_for('main.my_issues') }}" class="action-button primary">
+        <i class="fas fa-ticket-alt"></i>
+        <span>Мои заявки</span>
+      </a>
+    </div>
+  </div>
+</header>
+-->

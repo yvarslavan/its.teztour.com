@@ -1,8 +1,11 @@
+import traceback
 import os
 from configparser import ConfigParser
 import logging
 from logging.handlers import RotatingFileHandler
 import sys
+import time
+from datetime import datetime, timedelta, timezone, date
 from flask import (
     Blueprint,
     render_template,
@@ -13,14 +16,12 @@ from flask import (
     jsonify,
     g,
     abort,
-    current_app,
-    send_from_directory
+    current_app
 )
 from flask_login import login_required, current_user
 from sqlalchemy import or_, desc, text
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import count
-from datetime import datetime, timedelta, timezone
 from config import get
 from blog import db
 from blog.utils.connection_monitor import check_database_connections, get_connection_health
@@ -30,14 +31,12 @@ from blog.main.forms import IssueForm
 from blog.notification_service import (
     notification_service,
     NotificationData,
-    NotificationType,
-    WebPushException
+    NotificationType
 )
 from mysql_db import (
     Issue,
     Status,
     Session,
-    get_issue_details,
     get_quality_connection,
     CustomValue,
     Tracker,
@@ -72,12 +71,25 @@ from erp_oracle import (
     get_user_erp_password,
 )
 
-import json
-from blog.notification_service import notification_service as global_notification_service
-import uuid
+from blog.utils.cache_manager import (
+    CacheManager,
+    TasksCacheOptimizer,
+    cached_response,
+    weekend_performance_optimizer
+)
+
+# Импорты из blog.tasks.utils
+from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_paginated_optimized, task_to_dict
+from concurrent.futures import ThreadPoolExecutor
+
+
+
+cache_manager = CacheManager()
+tasks_cache_optimizer = TasksCacheOptimizer()
 
 main = Blueprint("main", __name__)
 
+MY_TASKS_REDIRECT = "main.my_tasks"
 
 # Настройка логгера
 def configure_blog_logger():
@@ -91,20 +103,29 @@ def configure_blog_logger():
             "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
         )
 
-        # Файловый обработчик с ротацией
+        # Файловый обработчик с ротацией (с улучшенной обработкой ошибок)
         try:
             log_file_path = get("logging", "path", "app.log")
+            # Добавляем PID к имени лога для избежания конфликтов
+            import os
+            pid = os.getpid()
+            log_file_name = f"app_{pid}.log"
+            log_dir = os.path.dirname(log_file_path)
+            log_file_path_with_pid = os.path.join(log_dir, log_file_name)
+
             file_handler = RotatingFileHandler(
-                log_file_path,
+                log_file_path_with_pid,
                 maxBytes=1024 * 1024 * 5,  # 5 MB
                 backupCount=3,
-                encoding='utf-8'
+                encoding='utf-8',
+                delay=True  # Откладывает создание файла до первой записи
             )
             file_handler.setFormatter(formatter)
             file_handler.setLevel(logging.INFO)
             blog_package_logger.addHandler(file_handler)
         except Exception as e:
             print(f"CRITICAL: Failed to configure file logger: {e}", file=sys.stderr)
+            # Продолжаем работу только с консольным логированием
 
         # Обработчик для вывода в консоль
         console_handler = logging.StreamHandler(sys.stdout)
@@ -164,8 +185,447 @@ def get_notification_count():
         return jsonify({"count": 0, "error": str(e)}), 500
 
 
+@main.route("/api/notifications/poll", methods=["GET"])
+@login_required
+def poll_notifications():
+    """API для опроса уведомлений (для JavaScript)"""
+    try:
+        from datetime import datetime
+
+        # Получаем уведомления пользователя
+        notifications_data = notification_service.get_user_notifications(current_user.id)
+
+        # Формируем ответ в ожидаемом формате
+        response_data = {
+            'success': True,
+            'notifications': {
+                'status_notifications': notifications_data['status_notifications'],
+                'comment_notifications': notifications_data['comment_notifications']
+            },
+            'timestamp': datetime.now().isoformat(),
+            'total_count': notifications_data['total_count']
+        }
+
+        return jsonify(response_data)
+
+    except Exception as e:
+        logger.error(f"Ошибка при опросе уведомлений: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'notifications': {
+                'status_notifications': [],
+                'comment_notifications': []
+            },
+            'timestamp': datetime.now().isoformat(),
+            'total_count': 0
+        }), 500
+
+
+@main.route("/check-connection", methods=["GET"])
+@login_required
+def check_connection():
+    """API для проверки соединения с базой данных"""
+    try:
+        # Простая проверка - пытаемся получить количество уведомлений
+        count = get_total_notification_count(current_user)
+        return jsonify({
+            'connected': True,
+            'status': 'ok'
+        })
+    except Exception as e:
+        logger.error(f"Ошибка соединения с БД: {e}")
+        return jsonify({
+            'connected': False,
+            'status': 'error',
+            'error': str(e)
+        })
+
+
+@main.route("/get-my-tasks-paginated", methods=["GET"])
+@login_required
+def get_my_tasks_paginated():
+    """API для получения задач с пагинацией (перенаправление на новый модуль tasks)"""
+    try:
+        # Проверяем, является ли пользователь пользователем Redmine
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "success": False,
+                "error": "У вас нет доступа к модулю 'Мои задачи'. Этот раздел доступен только для пользователей Redmine.",
+                "tasks": [],
+                "pagination": {
+                    "page": 1,
+                    "per_page": 25,
+                    "total": 0,
+                    "total_display_records": 0
+                }
+            }), 403
+
+        # Получаем параметры DataTables
+        draw = request.args.get('draw', 1, type=int)
+        page = request.args.get("start", 0, type=int) // request.args.get("length", 25, type=int) + 1
+        per_page = request.args.get("length", 25, type=int)
+        search_term = request.args.get("search[value]", "", type=str).strip()
+
+        order_column_index = request.args.get('order[0][column]', 0, type=int)
+        order_column_name_dt = request.args.get(f'columns[{order_column_index}][data]', 'updated_on', type=str)
+        sort_direction = request.args.get('order[0][dir]', 'desc', type=str)
+
+        # Сопоставление имен столбцов DataTables с полями Redmine
+        column_mapping = {
+            'id': 'id',
+            'subject': 'subject',
+            'status_name': 'status.name',
+            'priority_name': 'priority.name',
+            'updated_on': 'updated_on',
+            'created_on': 'created_on',
+            'start_date': 'start_date'
+        }
+        sort_column = column_mapping.get(order_column_name_dt, 'updated_on')
+
+        # Получаем фильтры
+        status_ids = [x for x in request.args.getlist('status_id[]') if x]  # Убираем пустые значения
+        project_ids = [x for x in request.args.getlist('project_id[]') if x]
+        priority_ids = [x for x in request.args.getlist('priority_id[]') if x]
+
+        logger.info(f"API пагинации - параметры: draw={draw}, page={page}, per_page={per_page}, search_term='{search_term}'")
+        logger.info(f"Фильтры из запроса: status_ids={status_ids}, project_ids={project_ids}, priority_ids={priority_ids}")
+
+        # Получаем коннектор Redmine
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            return jsonify({
+                "success": False,
+                "error": "Ошибка подключения к Oracle для получения пароля Redmine.",
+                "tasks": [],
+                "pagination": {"page": page, "per_page": per_page, "total": 0, "total_display_records": 0}
+            }), 500
+
+        user_password_erp = get_user_erp_password(oracle_conn, current_user.username)
+        if not user_password_erp:
+            return jsonify({
+                "success": False,
+                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
+                "tasks": [],
+                "pagination": {"page": page, "per_page": per_page, "total": 0, "total_display_records": 0}
+            }), 500
+
+        actual_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
+
+        # Создаем коннектор
+        redmine_connector = get_redmine_connector(current_user, actual_password)
+        if not redmine_connector or not hasattr(redmine_connector, 'redmine') or not redmine_connector.redmine:
+            return jsonify({
+                "success": False,
+                "error": "Не удалось создать коннектор Redmine.",
+                "tasks": [],
+                "pagination": {"page": page, "per_page": per_page, "total": 0, "total_display_records": 0}
+            }), 500
+
+        # Получаем ID пользователя Redmine
+        redmine_user_obj = redmine_connector.redmine.user.get('current')
+        redmine_user_id = redmine_user_obj.id
+
+        # Получаем задачи
+        issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
+            redmine_connector,
+            redmine_user_id,
+            page=page,
+            per_page=per_page,
+            search_term=search_term,
+            sort_column=sort_column,
+            sort_direction=sort_direction,
+            status_ids=status_ids,
+            project_ids=project_ids,
+            priority_ids=priority_ids
+        )
+
+        # Преобразуем задачи в словари
+        tasks_data = [task_to_dict(issue) for issue in issues_list]
+
+        # Возвращаем формат DataTables
+        return jsonify({
+            "draw": draw,
+            "recordsTotal": total_count,
+            "recordsFiltered": total_count,
+            "data": tasks_data
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка в get_my_tasks_paginated: {e}")
+        return jsonify({
+            "draw": request.args.get('draw', 1, type=int),
+            "error": str(e),
+            "recordsTotal": 0,
+            "recordsFiltered": 0,
+            "data": []
+        }), 500
+
+
+@main.route("/get-my-tasks-statistics-optimized", methods=["GET"])
+@login_required
+def get_my_tasks_statistics_optimized():
+    """API для получения статистики задач"""
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "У вас нет доступа к модулю 'Мои задачи'.",
+                "total_tasks": 0,
+                "new_tasks": 0,
+                "in_progress_tasks": 0,
+                "closed_tasks": 0
+            }), 403
+
+        # Получаем коннектор Redmine
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            return jsonify({
+                "error": "Ошибка подключения к Oracle",
+                "total_tasks": 0,
+                "new_tasks": 0,
+                "in_progress_tasks": 0,
+                "closed_tasks": 0
+            }), 500
+
+        user_password_erp = get_user_erp_password(oracle_conn, current_user.username)
+        if not user_password_erp:
+            return jsonify({
+                "error": "Не удалось получить пароль пользователя",
+                "total_tasks": 0,
+                "new_tasks": 0,
+                "in_progress_tasks": 0,
+                "closed_tasks": 0
+            }), 500
+
+        actual_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
+        redmine_connector = get_redmine_connector(current_user, actual_password)
+
+        if not redmine_connector or not hasattr(redmine_connector, 'redmine'):
+            return jsonify({
+                "error": "Не удалось создать коннектор Redmine",
+                "total_tasks": 0,
+                "new_tasks": 0,
+                "in_progress_tasks": 0,
+                "closed_tasks": 0
+            }), 500
+
+        # Получаем ID пользователя Redmine
+        redmine_user_obj = redmine_connector.redmine.user.get('current')
+        redmine_user_id = redmine_user_obj.id
+
+        # Получаем статистику задач
+        all_issues = redmine_connector.redmine.issue.filter(assigned_to_id=redmine_user_id, limit=1000)
+
+        total_tasks = 0
+        new_tasks = 0
+        in_progress_tasks = 0
+        closed_tasks = 0
+
+        # Получаем все статусы для корректной классификации
+        redmine_statuses = redmine_connector.redmine.issue_status.all()
+        status_mapping = {}
+
+        for status in redmine_statuses:
+            status_name_lower = status.name.lower()
+            logger.debug(f"Классификация статуса: '{status.name}' (ID: {status.id}) -> '{status_name_lower}'")
+
+            # NEW (новые задачи)
+            if any(keyword in status_name_lower for keyword in ['новая', 'новый', 'new', 'создан', 'создана', 'открыта', 'открыт', 'в очереди', 'очереди']):
+                status_mapping[status.id] = 'new'
+                logger.debug(f"Статус '{status.name}' классифицирован как NEW")
+            # CLOSED (завершенные задачи)
+            elif any(keyword in status_name_lower for keyword in ['закрыт', 'закрыта', 'closed', 'выполнена', 'выполнен', 'отклонена', 'отклонен', 'done']):
+                status_mapping[status.id] = 'closed'
+                logger.debug(f"Статус '{status.name}' классифицирован как CLOSED")
+            # IN_PROGRESS (все остальные - задачи в процессе работы)
+            else:
+                status_mapping[status.id] = 'in_progress'
+                logger.debug(f"Статус '{status.name}' классифицирован как IN_PROGRESS")
+
+        for issue in all_issues:
+            total_tasks += 1
+            status_id = issue.status.id if hasattr(issue, 'status') and issue.status else None
+            status_name = issue.status.name if hasattr(issue, 'status') and issue.status else "Unknown"
+            status_category = status_mapping.get(status_id, 'other')
+
+            logger.debug(f"Задача #{issue.id}: статус '{status_name}' (ID: {status_id}) -> категория '{status_category}'")
+
+            if status_category == 'new':
+                new_tasks += 1
+            elif status_category == 'in_progress':
+                in_progress_tasks += 1
+            elif status_category == 'closed':
+                closed_tasks += 1
+
+        # Создаем детальную статистику для модального окна
+        debug_status_counts = {}
+        additional_stats = {
+            "avg_completion_time": "Не определено",
+            "most_active_project": "Не определено",
+            "completion_rate": 0
+        }
+
+        # Подсчитываем статистику по статусам
+        for issue in all_issues:
+            status_name = issue.status.name if hasattr(issue, 'status') and issue.status else "Неизвестно"
+            if status_name in debug_status_counts:
+                debug_status_counts[status_name] += 1
+            else:
+                debug_status_counts[status_name] = 1
+
+        # Вычисляем процент завершения
+        if total_tasks > 0:
+            additional_stats["completion_rate"] = round((closed_tasks / total_tasks) * 100, 1)
+
+        # Логируем итоговую статистику
+        logger.info(f"СТАТИСТИКА для {current_user.username}: ВСЕГО={total_tasks}, НОВЫХ={new_tasks}, В РАБОТЕ={in_progress_tasks}, ЗАКРЫТЫХ={closed_tasks}")
+
+        return jsonify({
+            "success": True,
+            "total_tasks": total_tasks,
+            "new_tasks": new_tasks,
+            "in_progress_tasks": in_progress_tasks,
+            "closed_tasks": closed_tasks,
+            "statistics": {
+                "debug_status_counts": debug_status_counts,
+                "additional_stats": additional_stats,
+                "focused_data": {
+                    "total": {
+                        "additional_stats": additional_stats,
+                        "status_breakdown": debug_status_counts
+                    },
+                    "new": {
+                        "debug_status_counts": debug_status_counts,
+                        "filter_description": f"Отображены задачи со статусом 'Новый' или 'New'"
+                    },
+                    "progress": {
+                        "debug_status_counts": debug_status_counts,
+                        "filter_description": f"Отображены задачи в статусе 'В работе' или 'Progress'"
+                    },
+                    "closed": {
+                        "debug_status_counts": debug_status_counts,
+                        "filter_description": f"Отображены завершенные задачи"
+                    }
+                }
+            }
+        })
+
+    except Exception as e:
+        logger.error(f"Ошибка в get_my_tasks_statistics_optimized: {e}")
+        return jsonify({
+            "error": str(e),
+            "total_tasks": 0,
+            "new_tasks": 0,
+            "in_progress_tasks": 0,
+            "closed_tasks": 0
+        }), 500
+
+
+
+@main.route("/notifications-polling", methods=["GET"])
+@login_required
+def notifications_polling():
+    """Страница тестирования уведомлений"""
+    return render_template("notifications_polling.html", title="Тестирование уведомлений")
+
+
+@main.route("/sw.js", methods=["GET"])
+def service_worker():
+    """Обслуживает Service Worker файл из корня"""
+    from flask import send_from_directory
+    return send_from_directory('static/js', 'sw.js', mimetype='application/javascript')
+
+
+@main.route("/api/notifications/widget/status", methods=["GET"])
+@login_required
+def notifications_widget_status():
+    """API для получения статуса виджета уведомлений"""
+    try:
+        # Возвращаем настройки виджета с enabled: true для включения
+        return jsonify({
+            "success": True,
+            "enabled": True,  # ВАЖНО: ключ enabled для проверки в JavaScript
+            "widget_enabled": True,
+            "position": "bottom-right",
+            "sound_enabled": True,
+            "notifications_enabled": True,
+            "polling_interval": 30000,  # 30 секунд
+            "widget_settings": {
+                "position": "bottom-right",
+                "theme": "light",
+                "auto_hide": False,
+                "show_counter": True
+            }
+        })
+    except Exception as e:
+        logger.error(f"Ошибка в notifications_widget_status: {e}")
+        return jsonify({
+            "success": False,
+            "error": str(e),
+            "enabled": False,
+            "widget_enabled": False
+        }), 500
+
+
+@main.route("/api/notifications/clear", methods=["POST"])
+@login_required
+def api_clear_notifications():
+    """API для очистки всех уведомлений пользователя (для AJAX запросов)"""
+    try:
+        logger.info(f"API очистка уведомлений для пользователя: {current_user.id}")
+
+        success = notification_service.clear_user_notifications(current_user.id)
+
+        if success:
+            logger.info(f"Уведомления успешно очищены для пользователя: {current_user.id}")
+            return jsonify({
+                "success": True,
+                "message": "Все уведомления успешно удалены"
+            })
+        else:
+            logger.error(f"Не удалось очистить уведомления для пользователя: {current_user.id}")
+            return jsonify({
+                "success": False,
+                "message": "Ошибка при удалении уведомлений"
+            }), 500
+
+    except Exception as e:
+        logger.error(f"Ошибка API очистки уведомлений для пользователя {current_user.id}: {str(e)}")
+        return jsonify({
+            "success": False,
+            "message": f"Ошибка при удалении уведомлений: {str(e)}"
+        }), 500
+
+
+# ===== МАРШРУТЫ ДЛЯ ТЕСТОВЫХ ФАЙЛОВ (для удобства) =====
+
+@main.route("/test_statistics_debug.html")
+@main.route("/test-statistics-debug-main")
+def test_statistics_debug_main():
+    """Отладочная страница для тестирования API статистики (основной маршрут)"""
+    try:
+        with open('test_statistics_debug.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except FileNotFoundError:
+        return "Файл test_statistics_debug.html не найден", 404
+
+@main.route("/test_statistics_fix.html")
+@main.route("/test-statistics-fix-main")
+def test_statistics_fix_main():
+    """Тестовая страница для проверки исправленной статистики (основной маршрут)"""
+    try:
+        with open('test_statistics_fix.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except FileNotFoundError:
+        return "Файл test_statistics_fix.html не найден", 404
+
 @main.route("/")
 @main.route("/home")
+@main.route("/index")
 def home():
     return render_template("index.html", title="Главная")
 
@@ -183,6 +643,49 @@ def my_issues():
         current_app.logger.error(f"Error in my_issues: {str(e)}")
         flash("Произошла ошибка при загрузке заявок", "error")
         return redirect(url_for("main.index"))
+
+
+@main.route("/debug-statuses", methods=["GET"])
+@login_required
+def debug_statuses():
+    """Отладочная страница для проверки статусов"""
+    if not current_user.is_redmine_user:
+        flash("У вас нет доступа к этому разделу", "warning")
+        return redirect(url_for("main.home"))
+
+    import os
+    debug_file_path = os.path.join(os.getcwd(), 'debug_statuses.html')
+    with open(debug_file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return content
+
+@main.route("/test-filters-api", methods=["GET"])
+@login_required
+def test_filters_api():
+    """Тестовая страница для проверки API фильтров"""
+    if not current_user.is_redmine_user:
+        flash("У вас нет доступа к этому разделу", "warning")
+        return redirect(url_for("main.home"))
+
+    import os
+    test_file_path = os.path.join(os.getcwd(), 'test_filters_api.html')
+    with open(test_file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return content
+
+@main.route("/simple-api-test", methods=["GET"])
+@login_required
+def simple_api_test():
+    """Простая тестовая страница для проверки базового API"""
+    if not current_user.is_redmine_user:
+        flash("У вас нет доступа к этому разделу", "warning")
+        return redirect(url_for("main.home"))
+
+    import os
+    test_file_path = os.path.join(os.getcwd(), 'simple_api_test.html')
+    with open(test_file_path, 'r', encoding='utf-8') as f:
+        content = f.read()
+    return content
 
 
 @main.route("/get-my-issues", methods=["GET"])
@@ -266,59 +769,87 @@ def blog():
     )
 
 
+# REDIRECT: /my-tasks/ -> /tasks/my-tasks/ (для совместимости)
+@main.route("/my-tasks", methods=["GET"])
+@login_required
+def my_tasks_redirect():
+    """Перенаправление со старого URL на новый tasks blueprint"""
+    return redirect(url_for('tasks.my_tasks_page'))
+
+@main.route("/my-tasks/<int:task_id>", methods=["GET"])
+@login_required
+def task_detail_redirect(task_id):
+    """Перенаправление со старого URL детализации на новый tasks blueprint"""
+    return redirect(url_for('tasks.task_detail', task_id=task_id))
+
 @main.route("/my-issues/<int:issue_id>", methods=["GET", "POST"])
 @login_required
 def issue(issue_id):
     """Вывод истории заявки"""
     form = AddCommentRedmine()
-    oracle_connect = connect_oracle(
+    # Эти переменные redmine_login_admin, redmine_password_admin, redmine_api_key
+    # определяются глобально в этом файле при чтении config.ini
+    global redmine_login_admin, redmine_password_admin, redmine_api_key
+
+    oracle_connect_instance = connect_oracle(
         db_host, db_port, db_service_name, db_user_name, db_password
     )
 
-    user_password_erp = get_user_erp_password(oracle_connect, current_user.username)
-    if not oracle_connect or not user_password_erp:
+    user_password_erp = get_user_erp_password(oracle_connect_instance, current_user.username)
+    if not oracle_connect_instance or not user_password_erp:
         flash(
-            "Не удалось подключиться к базе данных или получить пароль пользователя.",
+            "Не удалось подключиться к базе данных Oracle или получить пароль пользователя для Redmine.",
             "error",
         )
-        return redirect(url_for("main.issue", issue_id=issue_id))
+        return redirect(url_for("main.my_issues"))
 
-    redmine_connector = get_redmine_connector(current_user, user_password_erp)
+    # Используем get_redmine_connector из blog.tasks.utils для текущего пользователя
+    # user_password_erp может быть кортежем, get_redmine_connector должен это обработать или ожидать строку
+    # В utils.py get_redmine_connector -> create_redmine_connector ожидает строку пароля.
+    actual_user_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
+
+    redmine_connector_user = get_redmine_connector(current_user, actual_user_password)
+
+    if not redmine_connector_user or not hasattr(redmine_connector_user, 'redmine'):
+        flash("Не удалось создать пользовательский коннектор Redmine.", "error")
+        current_app.logger.error(f"Не удалось создать redmine_connector_user для {current_user.username} в функции issue.")
+        return redirect(url_for("main.my_issues"))
+
+    issue_history = None
+    attachment_list = []
+    issue_detail_obj = None
+
+    # Загружаем данные задачи
+    try:
+        issue_detail_obj = redmine_connector_user.redmine.issue.get(issue_id, include=['attachments', 'journals'])
+        # Получаем вложения
+        if hasattr(issue_detail_obj, 'attachments'):
+            attachment_list = issue_detail_obj.attachments
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при загрузке задачи #{issue_id}: {e}")
+        flash(f"Не удалось загрузить задачу #{issue_id}.", "error")
+        return redirect(url_for("main.my_issues"))
 
     try:
-        # Получение истории заявки
-        issue_history = redmine_connector.get_issue_history(issue_id)
-        if issue_history is None:
-            # Если доступ запрещен, подкаемся как адмнистратор для получения истории
-            redmine_connector = create_redmine_connector(
-                True, redmine_login_admin, redmine_password_admin, redmine_api_key
-            )
-            issue_history = redmine_connector.get_issue_history(issue_id)
-
-        issue_detail = get_issue_details(issue_id)  # Выборка деталей заявки
-        attachment_list = redmine_connector.get_issue_attachments(
-            issue_id
-        )  # Получение прикрепленных файлов
+        issue_history = redmine_connector_user.get_issue_history(issue_id)
     except Exception as e:
-        logging.error("Ошибка при работе с Redmine API: %s", str(e))
-        flash("Произошла ошибка при работе с Redmine API.", "error")
-        return redirect(url_for("main.issue", issue_id=issue_id))
+        current_app.logger.error(f"Ошибка при загрузке истории для задачи #{issue_id}: {e}")
+        flash(f"Не удалось загрузить историю изменений для задачи #{issue_id}. Попробуйте обновить страницу позже.", "warning")
 
-    # Обработка добавления комментария
+    # Используем redmine_connector_user для добавления комментария
     if form.validate_on_submit() and handle_comment_submission(
-        form, issue_id, redmine_connector
+        form, issue_id, redmine_connector_user
     ):
         return redirect(url_for("main.issue", issue_id=issue_id))
 
     return render_template(
         "issue.html",
-        title=f"#{issue_detail.id} - {issue_detail.subject}",
-        issue_detail=issue_detail,
+        title=f"#{issue_detail_obj.id} - {issue_detail_obj.subject}",
+        issue_detail=issue_detail_obj,
         issue_history=issue_history,
         attachment_list=attachment_list,
         form=form,
-        clear_comment=True,  # Для очистки комментария
-        # Дополнительные функции для шаблона
+        clear_comment=True,
         convert_datetime_msk_format=convert_datetime_msk_format,
         get_property_name=get_property_name,
         get_status_name_from_id=get_status_name_from_id,
@@ -329,13 +860,6 @@ def issue(issue_id):
     )
 
 
-def get_redmine_connector(user, user_password_erp):
-    """Получение экземпляра RedmineConnector"""
-    password = user_password_erp if user_password_erp else None
-    redmine_connector = create_redmine_connector(
-        user.is_redmine_user, user.username, password, redmine_api_key
-    )
-    return redmine_connector
 
 
 def handle_comment_submission(form, issue_id, redmine_connector):
@@ -355,16 +879,6 @@ def handle_comment_submission(form, issue_id, redmine_connector):
     flash(message, "danger")
     return False
 
-
-def create_redmine_connector(is_redmine_user, user, password=None, api_key=None):
-    if is_redmine_user:
-        return RedmineConnector(
-            url=redmine_url, username=user, password=password, api_key=api_key
-        )
-    # Авторизация как аноним по API ключу
-    return RedmineConnector(
-        url=redmine_url, username=None, password=None, api_key=api_key
-    )
 
 
 @main.route("/my-issues/new", methods=["GET", "POST"])
@@ -1754,13 +2268,6 @@ def mark_all_comments_read():
         session.close()
 
 
-@main.app_template_filter("datetimeformat")
-def datetimeformat(value, format="%d.%m.%Y %H:%M"):
-    if value is None:
-        return ""
-    return value.strftime(format)
-
-
 @main.route("/get-countries")
 @login_required
 def get_countries():
@@ -1840,7 +2347,6 @@ def get_new_issues_list():
         return jsonify(
             {"success": True, "html": html_content, "count": len(issues_data)}
         )
-
     except Exception as e:
         logger.error(f"Неожиданная ошибка при получении списка новых обращений: {str(e)}")
         return jsonify({
@@ -1850,586 +2356,28 @@ def get_new_issues_list():
             "count": 0
         }), 500
 
-
-@main.route("/check-connection")
+@main.route("/api/notifications/widget/toggle", methods=["POST"])
 @login_required
-def check_connection():
-    """Проверка состояния соединений с базами данных"""
-    try:
-        is_connected = check_database_connections()
-        health_report = get_connection_health()
-
-        return jsonify({
-            "connected": is_connected,
-            "health": health_report,
-            "timestamp": datetime.now().isoformat()
-        })
-    except Exception as e:
-        logger.error(f"Ошибка при проверке соединений: {str(e)}")
-        return jsonify({
-            "connected": False,
-            "error": str(e),
-            "timestamp": datetime.now().isoformat()
-        }), 500
-
-@main.route("/admin/db-status")
-@login_required
-def database_status():
-    """Административная страница для мониторинга базы данных"""
-    try:
-        # Проверяем права доступа (можно добавить проверку на роль администратора)
-        if not current_user.is_authenticated:
-            abort(403)
-
-        health_report = get_connection_health()
-        connection_stats = db_manager.get_connection_status()
-
-        return render_template('admin/db_status.html',
-                             health=health_report,
-                             stats=connection_stats,
-                             title="Состояние базы данных")
-    except Exception as e:
-        logger.error(f"Ошибка при загрузке страницы состояния БД: {str(e)}")
-        flash("Ошибка при загрузке состояния базы данных", "error")
-        return redirect(url_for("main.index"))
-
-
-@main.route("/api/push/subscribe", methods=["POST"])
-@login_required
-def push_subscribe():
-    logger.info("[API] /api/push/subscribe вызван")
-    logger.info(f"[API] Headers: {{dict(request.headers)}}")
-    logger.info(f"[API] Content-Type: {{request.content_type}}")
-    logger.info(f"[API] Is JSON: {{request.is_json}}")
-
+def api_toggle_notification_widget():
+    """API для переключения состояния виджета уведомлений"""
     try:
         data = request.get_json()
-        logger.info(f"[API] Received data: {{data}}")
-    except Exception as e:
-        logger.error(f"[API] Error parsing JSON: {{e}}")
-        return jsonify({"success": False, "error": "Invalid JSON"}), 400
+        enabled = data.get('enabled', True)
 
-    if not data:
-        logger.error("[API] No JSON data received")
-        return jsonify({"success": False, "error": "No subscription data provided"}), 400
+        logger.info(f"Переключение виджета уведомлений для пользователя {current_user.id}: {enabled}")
 
-    try:
-        if 'subscription' not in data:
-            logger.error("[API] 'subscription' not in data")
-            return jsonify({'error': 'Неверные данные подписки (отсутствует ключ subscription)'}), 400
-
-        subscription_data = data['subscription']
-        if not isinstance(subscription_data, dict):
-            logger.error(f"[API] 'subscription' is not a dictionary: {{type(subscription_data)}}")
-            return jsonify({'error': 'Неверные данные подписки (subscription не словарь)'}), 400
-
-        endpoint = subscription_data.get('endpoint')
-        keys = subscription_data.get('keys', {})
-        if not isinstance(keys, dict):
-            logger.error(f"[API] 'keys' is not a dictionary: {{type(keys)}}")
-            return jsonify({'error': 'Неверные данные подписки (keys не словарь)'}), 400
-
-        p256dh_key = keys.get('p256dh')
-        auth_key = keys.get('auth')
-
-        if not all([endpoint, p256dh_key, auth_key]):
-            logger.error(f"[API] Incomplete subscription data: endpoint={{bool(endpoint)}}, p256dh={{bool(p256dh_key)}}, auth={{bool(auth_key)}}")
-            return jsonify({'error': 'Неполные данные подписки (отсутствует endpoint, p256dh или auth)'}), 400
-
-        logger.info(f"[API_SUB_RAW] User {{current_user.id}}: Raw Endpoint: {{endpoint}}")
-
-        # Адаптируем FCM endpoint перед сохранением
-        adapted_endpoint = endpoint
-        if "fcm.googleapis.com/fcm/send/" in endpoint:
-            adapted_endpoint = endpoint.replace("fcm.googleapis.com/fcm/send/", "fcm.googleapis.com/wp/")
-            logger.info(f"[API_SUB_ADAPT] User {{current_user.id}}: Adapted FCM Endpoint: {{adapted_endpoint}}")
-        else:
-            logger.info(f"[API_SUB_ADAPT] User {{current_user.id}}: Endpoint not FCM, no adaptation: {{adapted_endpoint}}")
-
-
-        user_agent = request.headers.get('User-Agent', '')
-
-        # Деактивируем все существующие активные подписки пользователя перед добавлением/обновлением новой
-        logger.info(f"[API_SUB_DEACTIVATE_OLD] User {{current_user.id}}: Деактивация старых активных подписок...")
-        PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).update({"is_active": False})
-        # Коммит здесь не нужен, он будет ниже
-
-        existing_subscription = PushSubscription.query.filter_by(
-            user_id=current_user.id,
-            endpoint=adapted_endpoint
-        ).first()
-
-        if existing_subscription:
-            logger.info(f"[API_SUB_UPDATE] User {{current_user.id}}: Updating existing subscription ID {{existing_subscription.id}} for endpoint {{adapted_endpoint}}")
-            existing_subscription.p256dh_key = p256dh_key
-            existing_subscription.auth_key = auth_key
-            existing_subscription.user_agent = user_agent
-            existing_subscription.last_used = datetime.now(timezone.utc)
-            existing_subscription.is_active = True
-        else:
-            logger.info(f"[API_SUB_NEW] User {{current_user.id}}: Creating new subscription for endpoint {{adapted_endpoint}}")
-            new_subscription = PushSubscription(
-                user_id=current_user.id,
-                endpoint=adapted_endpoint, # Сохраняем адаптированный эндпоинт
-                p256dh_key=p256dh_key,
-                auth_key=auth_key,
-                user_agent=user_agent
-            )
-            db.session.add(new_subscription)
-
-        current_user.browser_notifications_enabled = True
-        db.session.commit()
-
-        logger.info(f"Пользователь {{current_user.id}} успешно подписался/обновил подписку на пуш-уведомления (Endpoint: {{adapted_endpoint}})")
-        return jsonify({
-            'success': True,
-            'message': 'Подписка на уведомления успешно оформлена/обновлена'
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Ошибка при подписке на пуш-уведомления для пользователя {{current_user.id if current_user and current_user.is_authenticated else 'Unknown'}}: {{e}}", exc_info=True)
-        return jsonify({'error': 'Ошибка сервера при обработке подписки'}), 500
-
-
-@main.route("/api/push/unsubscribe", methods=["POST"])
-@login_required
-def unsubscribe_push():
-    """Отписка от браузерных пуш-уведомлений"""
-    try:
-        data = request.get_json()
-        endpoint = data.get('endpoint') if data else None
-
-        if endpoint:
-            # Удаляем конкретную подписку
-            subscription = PushSubscription.query.filter_by(
-                user_id=current_user.id,
-                endpoint=endpoint
-            ).first()
-
-            if subscription:
-                db.session.delete(subscription)
-        else:
-            # Удаляем все подписки пользователя
-            PushSubscription.query.filter_by(user_id=current_user.id).delete()
-
-        # Проверяем, остались ли активные подписки
-        remaining_subscriptions = PushSubscription.query.filter_by(
-            user_id=current_user.id,
-            is_active=True
-        ).count()
-
-        if remaining_subscriptions == 0:
-            current_user.browser_notifications_enabled = False
-
-        db.session.commit()
-
-        logger.info(f"Пользователь {current_user.id} отписался от пуш-уведомлений")
-
-        return jsonify({
-            'success': True,
-            'message': 'Отписка от уведомлений выполнена'
-        })
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error(f"Ошибка при отписке от пуш-уведомлений: {e}")
-        return jsonify({'error': 'Ошибка сервера'}), 500
-
-
-@main.route("/api/push/status", methods=["GET"])
-@login_required
-def push_status():
-    """Получение статуса подписки на пуш-уведомления"""
-    try:
-        subscriptions_count = PushSubscription.query.filter_by(
-            user_id=current_user.id,
-            is_active=True
-        ).count()
-
-        return jsonify({
-            'enabled': current_user.browser_notifications_enabled,
-            'subscriptions_count': subscriptions_count,
-            'has_subscriptions': subscriptions_count > 0
-        })
-
-    except Exception as e:
-        logger.error(f"Ошибка при получении статуса пуш-уведомлений: {e}")
-        return jsonify({'error': 'Ошибка сервера'}), 500
-
-
-@main.route("/api/push/test", methods=["POST"])
-@login_required
-def test_push_notification():
-    """Отправка тестового пуш-уведомления"""
-    try:
-        logger.info(f"[PUSH_TEST] Запрос тестового уведомления от пользователя {current_user.id}")
-        active_subscriptions = PushSubscription.query.filter_by(user_id=current_user.id, is_active=True).all()
-
-        if not active_subscriptions:
-            logger.warning(f"[PUSH_TEST] У пользователя {current_user.id} нет активных подписок.")
-            return jsonify({"error": "Нет активных подписок для тестового уведомления", "successful_sends": 0, "total_attempts": 0}), 404
-
-        logger.info(f"[PUSH_TEST] Найдено {len(active_subscriptions)} активных подписок для пользователя {current_user.id}")
-
-        # Формируем данные для тестового уведомления
-        current_time_str = datetime.now().strftime("%H:%M:%S")
-        test_title = "Тестовое уведомление (маршрут)"
-        test_message = f"Это тестовое push-уведомление от HelpDesk для пользователя {current_user.username}. Время: {current_time_str}"
-
-        base_url = request.url_root.rstrip('/')
-        default_icon = f"{base_url}{url_for('static', filename='img/push-icon.png')}"
-
-        test_data_payload = {
-            'url': f"{base_url}{url_for('main.push_test')}", # Ссылка на страницу тестирования
-            'icon': default_icon,
-            'source': 'test_route'
-        }
-        logger.info(f"[PUSH_TEST] Сформированы данные для тестового уведомления: {test_title}")
-
-        test_notification_data = NotificationData(
-            user_id=current_user.id,
-            issue_id=0, # Тестовые уведомления не привязаны к заявке
-            notification_type=NotificationType.TEST,
-            title=test_title,
-            message=test_message,
-            data=test_data_payload,
-            created_at=datetime.now(timezone.utc)
-        )
-
-        push_service_instance = notification_service.push_service # Получаем экземпляр сервиса
-        send_result = push_service_instance.send_push_notification(test_notification_data)
-        logger.info(f"[PUSH_TEST] Результат от push_service.send_push_notification: {send_result}")
-
-        successful_sends = 0
-        total_attempts = 0
-
-        if send_result and isinstance(send_result.get('results'), list):
-            successful_sends = sum(1 for r in send_result.get('results', []) if r.get('status') == 'success')
-            total_attempts = len(send_result.get('results', []))
-        elif send_result and send_result.get('status') == 'success' and not send_result.get('results'):
-            # Случай, когда send_push_notification мог вернуть успех, но без списка results (например, если логика изменится)
-            # Попробуем оценить успех по общему статусу, если results пусто, но статус success.
-            # Это маловероятно с текущей логикой send_push_notification, но для подстраховки.
-            if total_attempts == 0 and len(active_subscriptions) > 0: # Если были активные подписки
-                total_attempts = len(active_subscriptions) # Предполагаем, что попытки были для всех
-                successful_sends = total_attempts # Раз статус success
-
-        if successful_sends > 0:
-            final_message = f"Тестовое уведомление обработано. Отправлено: {successful_sends}/{total_attempts}."
-            if successful_sends == total_attempts:
-                status_code = 200
-                final_message += " Все успешно."
-            else:
-                status_code = 207 # Multi-Status for partial success
-                final_message += f" Некоторые ({total_attempts - successful_sends}) не удалось отправить."
-
-            logger.info(f"[PUSH_TEST] {final_message} для пользователя {current_user.id}.")
-            return jsonify({
-                "message": final_message,
-                "successful_sends": successful_sends,
-                "total_attempts": total_attempts,
-                "details": send_result
-            }), status_code
-        else:
-            # Все попытки не удались, или не было попыток (например, из-за ошибки конфигурации VAPID)
-            error_message = "Не удалось отправить тестовое уведомление."
-            if send_result and send_result.get('message'):
-                # Используем сообщение из send_result, если оно есть и информативно
-                 error_message = send_result.get('message')
-            elif not active_subscriptions: # Этот случай должен быть обработан ранее
-                 error_message = "Нет активных подписок для тестового уведомления."
-
-            logger.error(f"[PUSH_TEST] {error_message} для пользователя {current_user.id}. Details: {send_result}")
-            return jsonify({
-                "error": error_message,
-                "successful_sends": 0,
-                "total_attempts": total_attempts, # total_attempts может быть > 0, если все они не удались
-                "details": send_result
-            }), 500
-
-    except Exception as e:
-        logger.error(f"[PUSH_TEST] КРИТИЧЕСКАЯ ОШИБКА в test_push_notification: {e}", exc_info=True)
-        return jsonify({"error": f"Внутренняя ошибка сервера при отправке тестового уведомления: {str(e)}", "successful_sends": 0}), 500
-
-@main.route("/api/vapid-public-key", methods=["GET"])
-def get_vapid_public_key():
-    """Получение публичного VAPID ключа через BrowserPushService"""
-    try:
-        logger.info("[VAPID] Запрос публичного ключа через BrowserPushService")
-        # Доступ к push_service вызовет _ensure_vapid_config, если ключи еще не инициализированы
-        push_service = global_notification_service.push_service
-
-        # Явно вызываем _ensure_vapid_config, чтобы гарантировать инициализацию
-        # и получить результат проверки конфигурации.
-        if not push_service._ensure_vapid_config():
-            logger.error("[VAPID] VAPID конфигурация неполная после вызова _ensure_vapid_config.")
-            return jsonify({'error': 'VAPID ключ не может быть получен или сгенерирован'}), 500
-
-        vapid_public_key = push_service.vapid_public_key
-
-        if not vapid_public_key:
-            logger.error("[VAPID] Публичный ключ не найден даже после инициализации BrowserPushService")
-            # Эта ситуация не должна возникать, если _ensure_vapid_config отработал корректно
-            # и вернул True. Но лучше перестраховаться.
-            return jsonify({'error': 'VAPID ключ не настроен в сервисе'}), 500
-
-        logger.info(f"[VAPID] Возвращаем публичный ключ (из push_service): {vapid_public_key[:20]}...")
-        return jsonify({'publicKey': vapid_public_key})
-
-    except Exception as e:
-        logger.error(f"[VAPID] Ошибка при получении публичного ключа: {e}", exc_info=True)
-        return jsonify({'error': 'Внутренняя ошибка сервера при получении VAPID ключа'}), 500
-
-
-@main.route("/notification-test")
-def notification_test():
-    """Тестовая страница для диагностики уведомлений"""
-    return render_template('notification_test.html')
-
-
-@main.route("/admin/cleanup-push-subscriptions", methods=["POST"])
-@login_required
-def cleanup_push_subscriptions():
-    """Административная очистка неактивных пуш-подписок"""
-    try:
-        # Проверяем права доступа (можно добавить проверку на роль администратора)
-        # if not current_user.is_authenticated:  # Эта проверка избыточна из-за @login_required
-        #     return jsonify({"error": "Доступ запрещен"}), 403
-
-        from datetime import timedelta
-
-        # Получаем параметры из запроса
-        data = request.get_json() or {}
-        days_threshold = data.get('days', 7)  # По умолчанию 7 дней
-
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=days_threshold)
-
-        # Находим неактивные подписки
-        inactive_subscriptions = PushSubscription.query.filter(
-            PushSubscription.is_active == False,
-            PushSubscription.last_used < cutoff_date  # Исправлено с updated_at на last_used
-        ).all()
-
-        # Находим подписки с ошибками
-        error_subscriptions = PushSubscription.query.filter(
-            or_(
-                PushSubscription.endpoint == None,
-                PushSubscription.endpoint == '',
-                PushSubscription.p256dh_key == None,
-                PushSubscription.auth_key == None
-            )
-        ).all()
-
-        # Подсчитываем статистику
-        total_before = PushSubscription.query.count()
-        to_delete = len(inactive_subscriptions) + len(error_subscriptions)
-
-        # Удаляем подписки
-        for subscription in inactive_subscriptions + error_subscriptions:
-            db.session.delete(subscription)
-
-        db.session.commit()
-
-        total_after = PushSubscription.query.count()
-
-        logger.info(f"Административная очистка: удалено {to_delete} подписок")
+        # Здесь можно сохранить настройку в базе данных или профиле пользователя
+        # Пока что просто возвращаем успех
 
         return jsonify({
             "success": True,
-            "message": f"Очистка завершена успешно",
-            "statistics": {
-                "total_before": total_before,
-                "total_after": total_after,
-                "deleted": to_delete,
-                "inactive_deleted": len(inactive_subscriptions),
-                "error_deleted": len(error_subscriptions)
-            }
+            "enabled": enabled,
+            "message": f"Виджет уведомлений {'включен' if enabled else 'отключен'}"
         })
 
     except Exception as e:
-        db.session.rollback()
-        logger.error(f"Ошибка при административной очистке подписок: {str(e)}")
-        return jsonify({"error": f"Ошибка очистки: {str(e)}"}), 500
-
-
-@main.route("/admin/push-subscriptions-stats", methods=["GET"])
-@login_required
-def push_subscriptions_stats():
-    """Статистика пуш-подписок"""
-    try:
-        # if not current_user.is_authenticated: # Эта проверка избыточна из-за @login_required
-        #     return jsonify({"error": "Доступ запрещен"}), 403
-
-        # Общая статистика
-        total_subscriptions = PushSubscription.query.count()
-        active_subscriptions = PushSubscription.query.filter_by(is_active=True).count()
-        inactive_subscriptions = PushSubscription.query.filter_by(is_active=False).count()
-
-        # Статистика по типам endpoint
-        fcm_count = PushSubscription.query.filter(
-            PushSubscription.endpoint.like('%fcm.googleapis.com%')
-        ).count()
-
-        mozilla_count = PushSubscription.query.filter(
-            PushSubscription.endpoint.like('%mozilla.com%')
-        ).count()
-
-        # Подписки с ошибками
-        error_subscriptions = PushSubscription.query.filter(
-            or_(
-                PushSubscription.endpoint == None,
-                PushSubscription.endpoint == '',
-                PushSubscription.p256dh_key == None,
-                PushSubscription.auth_key == None
-            )
-        ).count()
-
-        # Старые подписки (более 30 дней без использования)
-        cutoff_date = datetime.now(timezone.utc) - timedelta(days=30)
-        old_subscriptions = PushSubscription.query.filter(
-            or_(
-                PushSubscription.last_used < cutoff_date,
-                PushSubscription.last_used == None
-            )
-        ).count()
-
-        return jsonify({
-            "total": total_subscriptions,
-            "active": active_subscriptions,
-            "inactive": inactive_subscriptions,
-            "by_type": {
-                "fcm": fcm_count,
-                "mozilla": mozilla_count,
-                "other": total_subscriptions - fcm_count - mozilla_count
-            },
-            "problematic": {
-                "with_errors": error_subscriptions,
-                "old_unused": old_subscriptions
-            }
-        })
-
-    except Exception as e:
-        logger.error(f"Ошибка при получении статистики подписок: {str(e)}")
-        return jsonify({"error": f"Ошибка получения статистики: {str(e)}"}), 500
-
-@main.route("/admin/push-subscriptions")
-@login_required
-def admin_push_subscriptions():
-    """Административная страница управления пуш-подписками"""
-    try:
-        # Проверяем права доступа (можно добавить проверку на роль администратора)
-        # if not current_user.is_authenticated: # Эта проверка избыточна из-за @login_required
-        #     abort(403)
-
-        return render_template('admin/push_subscriptions.html',
-                             title="Управление пуш-подписками")
-    except Exception as e:
-        logger.error(f"Ошибка при загрузке страницы управления пуш-подписками: {str(e)}")
-        flash("Ошибка при загрузке страницы управления", "error")
-        return redirect(url_for("main.index"))
-
-@main.route("/push-test")
-@login_required
-def push_test():
-    """Страница для тестирования push-уведомлений"""
-    return render_template('push_test.html')
-
-@main.route('/sw.js')
-def service_worker():
-    """Отдаем service worker скрипт с правильными заголовками"""
-    # Путь к sw.js файлу
-    sw_path = current_app.static_folder + '/js/sw.js'
-
-    # Проверяем, что файл существует
-    if not os.path.exists(sw_path):
-        logger.error(f"Service Worker файл не найден по пути: {sw_path}")
-        return "Service Worker not found", 404
-
-    # Читаем содержимое файла
-    try:
-        with open(sw_path, 'r') as f:
-            content = f.read()
-        logger.debug("Service Worker файл успешно прочитан")
-    except Exception as e:
-        logger.error(f"Ошибка при чтении Service Worker файла: {e}")
-        return "Error reading Service Worker", 500
-
-    # Отдаем с правильными заголовками для кэширования и типа содержимого
-    response = current_app.response_class(content, mimetype='application/javascript')
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
-    response.headers['Service-Worker-Allowed'] = '/'
-
-    logger.info("Service Worker отдан клиенту с правильными заголовками")
-    return response
-
-@main.route("/push-debug")
-@login_required
-def push_debug():
-    """Диагностическая страница для проверки конфигурации push-уведомлений!!!"""
-    try:
-        # Собираем информацию о конфигурации
-        config_info = {
-            "vapid_public_key_exists": bool(current_app.config.get('VAPID_PUBLIC_KEY')),
-            "vapid_private_key_exists": bool(current_app.config.get('VAPID_PRIVATE_KEY')),
-            "vapid_claims": current_app.config.get('VAPID_CLAIMS', {"sub": "mailto:admin@tez-tour.com"}),
-            "active_subscriptions_count": PushSubscription.query.filter_by(
-                user_id=current_user.id,
-                is_active=True
-            ).count(),
-            "pywebpush_available": False
-        }
-
-        # Проверяем наличие библиотеки pywebpush
-        try:
-            from pywebpush import webpush, WebPushException
-            config_info["pywebpush_available"] = True
-            config_info["pywebpush_version"] = getattr(webpush, "__version__", "unknown")
-        except ImportError:
-            pass
-
-        # Получаем ключи для отображения (только первые и последние символы)
-        public_key = current_app.config.get('VAPID_PUBLIC_KEY', '')
-        private_key = current_app.config.get('VAPID_PRIVATE_KEY', '')
-
-        if public_key and len(public_key) > 10:
-            config_info["vapid_public_key_preview"] = f"{public_key[:5]}...{public_key[-5:]}"
-        else:
-            config_info["vapid_public_key_preview"] = "Не задан"
-
-        if private_key and len(private_key) > 10:
-            config_info["vapid_private_key_preview"] = f"{private_key[:5]}...{private_key[-5:]}"
-        else:
-            config_info["vapid_private_key_preview"] = "Не задан"
-
-        # Получаем информацию о подписках пользователя!
-        subscriptions = []
-        user_subs = PushSubscription.query.filter_by(
-            user_id=current_user.id
-        ).order_by(PushSubscription.created_at.desc()).limit(5).all()
-
-        for sub in user_subs:
-            subscriptions.append({
-                "id": sub.id,
-                "is_active": sub.is_active,
-                "created_at": sub.created_at,
-                "last_used": sub.last_used,
-                "endpoint_preview": sub.endpoint[:30] + "..." if sub.endpoint else "Не задан",
-                "p256dh_key_exists": bool(sub.p256dh_key),
-                "auth_key_exists": bool(sub.auth_key)
-            })
-
-        return jsonify({
-            "success": True,
-            "config": config_info,
-            "subscriptions": subscriptions
-        })
-
-    except Exception as e:
-        logger.error(f"[PUSH_DEBUG] Ошибка при сборе диагностической информации: {str(e)}")
+        logger.error(f"Ошибка переключения виджета уведомлений: {e}")
         return jsonify({
             "success": False,
-            "error": f"Ошибка: {str(e)}"
+            "error": str(e)
         }), 500

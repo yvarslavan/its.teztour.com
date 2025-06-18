@@ -1093,7 +1093,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         };
     } else {
-        console.warn("[NotificationsPage] Service Worker не активен или не поддерживается, real-time обновления PUSH_RECEIVED не будут работать.");
+        console.log("[NotificationsPage] ℹ️ Service Worker не активен - real-time обновления через push недоступны (обычный режим работы)");
     }
 });
 </script>

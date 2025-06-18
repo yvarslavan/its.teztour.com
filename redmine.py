@@ -224,6 +224,21 @@ def get_property_name(property_name, prop_key, old_value, value):
         elif prop_key == "done_ratio":
             result = "Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "%</b>&nbsp;на&nbsp;<b>" + str(value) + "%</b>"
 
+        elif prop_key == "16":  # Кастомное поле "Что нового"
+            if old_value and not value:
+                # Удаление значения: было что-то, стало пустое (None/null)
+                old_text = "Да" if str(old_value) != "0" else "Нет"
+                result = "Значение&nbsp;<b>" + old_text + "</b>&nbsp;параметра&nbsp;<b>Что&nbsp;нового</b>&nbsp;удалено"
+            elif not old_value and value:
+                # Добавление значения: было пустое (None/null), стало что-то
+                new_text = "Да" if str(value) != "0" else "Нет"
+                result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;на&nbsp;<b>" + new_text + "</b>"
+            else:
+                # Обычное изменение значения
+                old_text = "Да" if old_value and str(old_value) != "0" else "Нет"
+                new_text = "Да" if value and str(value) != "0" else "Нет"
+                result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_text + "</b>&nbsp;на&nbsp;<b>" + new_text + "</b>"
+
         elif property_name == "attachment":
             result = "Файл&nbsp;<b>" + str(value) + "</b>&nbsp;добавлен"
 
