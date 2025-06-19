@@ -8,11 +8,33 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted
+    runs-on: self-hosted  # Возвращаем после оптимизации диска
     name: Test Dependencies & Application
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Check disk space
+      run: |
+        echo "🔍 Checking disk space..."
+        df -h
+        echo ""
+
+        # Check if we have at least 1GB free
+        AVAILABLE=$(df /home/github-actions --output=avail | tail -n1)
+        if [ "$AVAILABLE" -lt 1048576 ]; then
+          echo "⚠️ Warning: Less than 1GB free space available"
+          echo "Running cleanup..."
+
+          # Emergency cleanup
+          rm -rf /home/github-actions/actions-runner/_diag/*.log 2>/dev/null || true
+          rm -rf /home/github-actions/actions-runner/_work/*/temp 2>/dev/null || true
+
+          echo "After cleanup:"
+          df -h
+        else
+          echo "✅ Sufficient disk space available"
+        fi
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -84,7 +106,7 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: self-hosted
+    runs-on: self-hosted  # Возвращаем после оптимизации диска
     # 🎯 Деплой только при push в main (не при PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Deploy to Production
