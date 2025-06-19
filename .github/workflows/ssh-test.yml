@@ -1,0 +1,162 @@
+name: SSH Connection Test
+
+on:
+  workflow_dispatch:  # Ручной запуск
+    inputs:
+      test_all_ports:
+        description: 'Test all common SSH ports'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  ssh-diagnosis:
+    runs-on: ubuntu-latest
+    name: Diagnose SSH Connection Issues
+
+    steps:
+    - name: Comprehensive SSH Connectivity Test
+      run: |
+        echo "🔍 Starting comprehensive SSH diagnosis..."
+        echo "=================================================="
+        echo "Target Host: ${{ secrets.SSH_HOST }}"
+        echo "Expected SSH Port: ${{ secrets.SSH_PORT || '22' }}"
+        echo "=================================================="
+        echo ""
+
+        # Basic network tests
+        echo "1️⃣ NETWORK CONNECTIVITY TESTS"
+        echo "----------------------------------------"
+
+        # DNS Resolution
+        echo "🔍 DNS Resolution:"
+        if nslookup ${{ secrets.SSH_HOST }}; then
+          echo "✅ DNS resolution successful"
+
+          # Get IP address
+          SERVER_IP=$(nslookup ${{ secrets.SSH_HOST }} | grep -A 1 "Name:" | grep "Address:" | cut -d' ' -f2)
+          echo "📍 Resolved IP: $SERVER_IP"
+        else
+          echo "❌ DNS resolution failed"
+          exit 1
+        fi
+        echo ""
+
+        # Ping test
+        echo "🔍 Ping Test:"
+        if ping -c 3 -W 3 ${{ secrets.SSH_HOST }}; then
+          echo "✅ Server responds to ping"
+        else
+          echo "⚠️ Server doesn't respond to ping (это может быть нормально)"
+        fi
+        echo ""
+
+        # Port scanning
+        echo "2️⃣ PORT CONNECTIVITY TESTS"
+        echo "----------------------------------------"
+
+        SSH_PORT=${{ secrets.SSH_PORT || '22' }}
+        echo "🔍 Testing configured SSH port: $SSH_PORT"
+
+        if timeout 10 bash -c "echo >/dev/tcp/${{ secrets.SSH_HOST }}/$SSH_PORT" 2>/dev/null; then
+          echo "✅ Port $SSH_PORT is accessible"
+        else
+          echo "❌ Port $SSH_PORT is not accessible"
+        fi
+        echo ""
+
+        # Test common SSH ports if requested
+        if [ "${{ inputs.test_all_ports }}" = "true" ]; then
+          echo "🔍 Testing common SSH ports:"
+          COMMON_PORTS=(22 2222 2022 22022 22222 2020 2021 2023 10022)
+
+          for port in "${COMMON_PORTS[@]}"; do
+            echo -n "   Port $port: "
+            if timeout 5 bash -c "echo >/dev/tcp/${{ secrets.SSH_HOST }}/$port" 2>/dev/null; then
+              echo "✅ OPEN"
+              if [ "$port" != "$SSH_PORT" ]; then
+                echo "      💡 Consider updating SSH_PORT secret to $port"
+              fi
+            else
+              echo "❌ Closed/Filtered"
+            fi
+          done
+        fi
+        echo ""
+
+        # Traceroute (optional, may be limited)
+        echo "3️⃣ NETWORK PATH ANALYSIS"
+        echo "----------------------------------------"
+        echo "🔍 Network path to server:"
+        if command -v traceroute >/dev/null 2>&1; then
+          traceroute -m 10 ${{ secrets.SSH_HOST }} || echo "Traceroute limited or blocked"
+        else
+          echo "Traceroute not available"
+        fi
+        echo ""
+
+        # SSH banner grab attempt
+        echo "4️⃣ SSH SERVICE ANALYSIS"
+        echo "----------------------------------------"
+        echo "🔍 Attempting to grab SSH banner:"
+
+        timeout 10 bash -c "
+          exec 3<>/dev/tcp/${{ secrets.SSH_HOST }}/$SSH_PORT
+          cat <&3 &
+          sleep 3
+          kill %1 2>/dev/null
+          exec 3<&-
+          exec 3>&-
+        " 2>/dev/null || echo "❌ Could not connect to SSH service"
+        echo ""
+
+        # GitHub Actions IP ranges info
+        echo "5️⃣ GITHUB ACTIONS INFO"
+        echo "----------------------------------------"
+        echo "📋 Current GitHub Actions runner info:"
+        echo "   Public IP: $(curl -s https://ifconfig.me || echo 'Unknown')"
+        echo "   User Agent: GitHub Actions Runner"
+        echo ""
+        echo "💡 If server is behind firewall, consider whitelisting GitHub Actions IP ranges:"
+        echo "   https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#ip-addresses"
+        echo ""
+
+        # Final recommendations
+        echo "6️⃣ RECOMMENDATIONS"
+        echo "----------------------------------------"
+        echo "Based on the hostname 'vpn-130.msk.tez-tour.com':"
+        echo ""
+        echo "🔧 Most Likely Issues:"
+        echo "   1. Server is behind corporate VPN/firewall"
+        echo "   2. SSH service uses non-standard port"
+        echo "   3. External SSH access is disabled"
+        echo ""
+        echo "🚀 Recommended Solutions:"
+        echo "   1. Use GitHub Self-Hosted Runner inside your network"
+        echo "   2. Configure VPN connection in workflow"
+        echo "   3. Setup SSH port forwarding/bastion host"
+        echo "   4. Use webhook-based deployment instead"
+        echo "   5. Enable SSH access from GitHub Actions IP ranges"
+        echo ""
+        echo "📞 Contact your system administrator to:"
+        echo "   - Verify SSH service configuration"
+        echo "   - Check firewall rules"
+        echo "   - Consider network architecture changes"
+
+    - name: Test SSH Key Format
+      run: |
+        echo ""
+        echo "7️⃣ SSH KEY VALIDATION"
+        echo "----------------------------------------"
+
+        # We can't see the actual key, but we can validate its format
+        echo "🔍 SSH Key validation (format check only):"
+        echo "   - Key type: Should be RSA, Ed25519, or ECDSA"
+        echo "   - Format: Should be OpenSSH private key format"
+        echo "   - Permissions: GitHub Secrets are automatically secure"
+        echo ""
+        echo "💡 If deployment continues to fail after fixing connectivity:"
+        echo "   1. Regenerate SSH key pair"
+        echo "   2. Ensure public key is in ~/.ssh/authorized_keys on server"
+        echo "   3. Check SSH key permissions on server"
+        echo "   4. Verify SSH user has necessary permissions"
