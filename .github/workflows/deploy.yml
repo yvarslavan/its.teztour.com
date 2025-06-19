@@ -22,9 +22,8 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Run tests (if any)
-      run: |
-        echo "Tests placeholder"
+    - name: Run tests
+      run: echo "Tests placeholder"
 
     - name: Stop existing application
       run: |
@@ -56,7 +55,7 @@ jobs:
         pip install --upgrade pip
         pip install -r requirements.txt
 
-    - name: Database migrations (if needed)
+    - name: Database migrations
       run: |
         echo "Running database migrations..."
         cd /var/www/flask_helpdesk
