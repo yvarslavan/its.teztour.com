@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: self-hosted  # ✅ Диск очищен - возврат к self-hosted runner
+    runs-on: ubuntu-latest  # 🔧 Временно: переустанавливается self-hosted runner
     name: Test Dependencies & Application
 
     steps:
@@ -126,7 +126,7 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: self-hosted  # ✅ Диск очищен - возврат к self-hosted runner
+    runs-on: ubuntu-latest  # 🔧 Временно: переустанавливается self-hosted runner
     # 🎯 Деплой только при push в main (не при PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Deploy to Production
