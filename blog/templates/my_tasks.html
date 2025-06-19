@@ -296,9 +296,9 @@
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
 
 <!-- Кастомные CSS для страницы -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster or '1' }}">
 
 <!-- Проверяем наличие jQuery и загружаем если нужно -->
 <script>
@@ -314,8 +314,8 @@ if (typeof jQuery === 'undefined') {
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
 
 <!-- Кастомные JS для страницы -->
-<script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster }}"></script>
-<script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster }}"></script>
+<script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster or '1' }}"></script>
+<script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster or '1' }}"></script>
 
 <script>
 // Функция инициализации с проверкой зависимостей
