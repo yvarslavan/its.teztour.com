@@ -32,13 +32,25 @@ jobs:
         pkill -f "gunicorn.*wsgi" || echo "No Gunicorn processes found"
         sleep 2
 
+    - name: Prepare production directory
+      run: |
+        echo "Preparing production directory..."
+        mkdir -p /var/www/flask_helpdesk/
+        if [ -w "/var/www/flask_helpdesk/" ]; then
+          echo "✅ Write access to /var/www/flask_helpdesk/ confirmed"
+        else
+          echo "❌ No write access to /var/www/flask_helpdesk/"
+          echo "Current user: $(whoami)"
+          echo "Directory owner: $(ls -ld /var/www/flask_helpdesk/ | awk '{print $3":"$4}')"
+          exit 1
+        fi
+
     - name: Copy files to production directory
       run: |
         echo "Copying files to production directory..."
         rsync -av --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' \
               $GITHUB_WORKSPACE/ /var/www/flask_helpdesk/
 
-        sudo chown -R $USER:$USER /var/www/flask_helpdesk/
         chmod +x /var/www/flask_helpdesk/app.py
         chmod +x /var/www/flask_helpdesk/wsgi.py
 
@@ -59,7 +71,6 @@ jobs:
       run: |
         echo "Running database migrations..."
         cd /var/www/flask_helpdesk
-        source venv/bin/activate
 
         if [ -f "migrations/env.py" ]; then
           flask db upgrade || echo "No migrations to run"
