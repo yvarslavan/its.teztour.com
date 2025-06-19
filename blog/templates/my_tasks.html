@@ -299,6 +299,139 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster or '1' }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_enhanced.css') }}?v={{ cache_buster or '1' }}">
+
+<!-- Улучшенные стили для email-ссылок -->
+<style>
+/* Вариант 1: Современный Tech-стиль */
+.email-link {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4f46e5 !important;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    position: relative;
+    letter-spacing: 0.02em;
+}
+
+/* Убираем дублирующуюся иконку - используем только FontAwesome иконку из HTML */
+
+.email-link:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-color: #4f46e5;
+}
+
+.email-link:active {
+    transform: translateY(-1px) scale(1.01);
+}
+
+.email-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff !important;
+}
+
+/* Стили для FontAwesome иконки в email-контейнере */
+.email-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.email-container .fa-envelope {
+    flex-shrink: 0;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.email-container:hover .fa-envelope {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Альтернативный стиль для компактного отображения */
+.email-link.compact {
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 6px;
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    color: #0ea5e9 !important;
+}
+
+.email-link.compact:hover {
+    background: #0ea5e9;
+    color: #ffffff !important;
+}
+
+/* Дополнительные утилиты для быстрого переключения стилей */
+.email-style-selector {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+}
+
+.email-style-selector select {
+    padding: 4px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 11px;
+}
+</style>
+
+<!-- Селектор стилей для демонстрации (можно удалить в продакшене) -->
+<div class="email-style-selector" style="display: none;">
+    <label>Email стиль:</label>
+    <select id="emailStyleSelector">
+        <option value="">Tech (по умолчанию)</option>
+        <option value="minimal">Минималистичный</option>
+        <option value="glass">Glassmorphism</option>
+        <option value="neomorphic">Неоморфизм</option>
+    </select>
+</div>
+
+<script>
+// Функция переключения стилей email-ссылок (для демонстрации)
+function switchEmailStyle(newStyle) {
+    const emailLinks = document.querySelectorAll('.email-link');
+    emailLinks.forEach(link => {
+        // Удаляем все классы стилей
+        link.classList.remove('minimal', 'glass', 'neomorphic');
+        // Добавляем новый стиль если указан
+        if (newStyle) {
+            link.classList.add(newStyle);
+        }
+    });
+}
+
+// Обработчик для селектора стилей
+document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('emailStyleSelector');
+    if (selector) {
+        selector.addEventListener('change', function() {
+            switchEmailStyle(this.value);
+        });
+    }
+});
+</script>
 
 <!-- Проверяем наличие jQuery и загружаем если нужно -->
 <script>

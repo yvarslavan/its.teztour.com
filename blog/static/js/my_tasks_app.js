@@ -124,7 +124,7 @@ const MyTasksApp = {
                     render: (data, type, row) => {
                         if (type === 'display') {
                             return `<div class="task-id-container">
-                                        <a href="/tasks/my-tasks/${data}" class="task-id-link">
+                                        <a href="/tasks/my-tasks/${data}" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${data} в новой вкладке">
                                             <span class="task-id-number">#${data}</span>
                                         </a>
                                     </div>`;
@@ -148,10 +148,21 @@ const MyTasksApp = {
                                     </div>`;
                         }
                         const truncatedEmail = data.length > 25 ? data.substring(0, 25) + '...' : data;
-                        return `<div class="email-container">
-                                    <i class="fas fa-envelope text-primary"></i>
-                                    <span class="email-text" title="${this.escapeHtml(data)}">${this.escapeHtml(truncatedEmail)}</span>
-                                </div>`;
+                        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data);
+
+                        if (isValidEmail) {
+                            return `<div class="email-container">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                        <a href="mailto:${this.escapeHtml(data)}" class="email-link" title="Написать письмо: ${this.escapeHtml(data)}">
+                                            <span class="email-text">${this.escapeHtml(truncatedEmail)}</span>
+                                        </a>
+                                    </div>`;
+                        } else {
+                            return `<div class="email-container">
+                                        <i class="fas fa-envelope text-primary"></i>
+                                        <span class="email-text" title="${this.escapeHtml(data)}">${this.escapeHtml(truncatedEmail)}</span>
+                                    </div>`;
+                        }
                     }
                 },
                 {
