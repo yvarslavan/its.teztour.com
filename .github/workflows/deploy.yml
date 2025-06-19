@@ -66,6 +66,33 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Test server connectivity
+      run: |
+        echo "🔍 Testing server connectivity..."
+        echo "Server host: ${{ secrets.SSH_HOST }}"
+
+        # Test DNS resolution
+        if nslookup ${{ secrets.SSH_HOST }}; then
+          echo "✅ DNS resolution successful"
+        else
+          echo "❌ DNS resolution failed"
+        fi
+
+        # Test ping (may fail due to firewall, but worth trying)
+        if ping -c 3 ${{ secrets.SSH_HOST }}; then
+          echo "✅ Server is reachable via ping"
+        else
+          echo "⚠️ Server doesn't respond to ping (may be blocked by firewall)"
+        fi
+
+        # Test port 22 connectivity
+        if timeout 10 bash -c "</dev/tcp/${{ secrets.SSH_HOST }}/22"; then
+          echo "✅ Port 22 is accessible"
+        else
+          echo "❌ Port 22 is not accessible"
+          exit 1
+        fi
+
     - name: Deploy to server
       uses: appleboy/ssh-action@v1.0.3
       with:
@@ -73,6 +100,7 @@ jobs:
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
         port: 22
+        debug: true
         script: |
           echo "🚀 Starting deployment..."
 
