@@ -10,7 +10,7 @@
                         {{ issue.subject }}
                     </span>
                     <span class="notification-date">
-                        {{ issue.created_on|datetimeformat }}
+                        {{ issue.created_on.strftime('%d.%m.%Y %H:%M') if issue.created_on else 'Неизвестно' }}
                     </span>
                 </div>
                 <div class="notification-content">

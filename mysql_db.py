@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship, aliased, scoped_session
 from sqlalchemy.exc import OperationalError, DatabaseError
 from config import get  # Исправленный импорт
+from configparser import ConfigParser
+import os
 
 # Настройка логирования
 logger = logging.getLogger(__name__)
@@ -128,8 +130,37 @@ def get_quality_session_safe():
             session.close()
 
 Base = declarative_base()
+
+# ИСПРАВЛЕНИЕ: Убираем хардкод и используем конфигурацию
+def get_database_config():
+    """Получает конфигурацию базы данных из config.ini"""
+    config = ConfigParser()
+    config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
+    config.read(config_path)
+
+    return {
+        'mysql': {
+            'host': config.get('mysql', 'host'),
+            'database': config.get('mysql', 'database'),
+            'user': config.get('mysql', 'user'),
+            'password': config.get('mysql', 'password')
+        },
+        'mysql_quality': {
+            'host': config.get('mysql_quality', 'host'),
+            'database': config.get('mysql_quality', 'database'),
+            'user': config.get('mysql_quality', 'user'),
+            'password': config.get('mysql_quality', 'password')
+        }
+    }
+
+# Получаем конфигурацию
+db_config = get_database_config()
+
+# ИСПРАВЛЕНИЕ: Формируем URL соединения из конфигурации
 DATABASE_URL = (
-    "mysql+mysqlconnector://easyredmine:QhAKtwCLGW@helpdesk.teztour.com/redmine"
+    f"mysql+mysqlconnector://{db_config['mysql']['user']}:"
+    f"{db_config['mysql']['password']}@{db_config['mysql']['host']}/"
+    f"{db_config['mysql']['database']}"
 )
 
 engine = create_engine(
@@ -145,9 +176,13 @@ engine = create_engine(
 )
 Session = sessionmaker(bind=engine)
 
+# ИСПРАВЛЕНИЕ: Формируем URL соединения для quality из конфигурации
 QUALITY_DATABASE_URL = (
-    "mysql+mysqlconnector://easyredmine:QhAKtwCLGW@quality.teztour.com/redmine"
+    f"mysql+mysqlconnector://{db_config['mysql_quality']['user']}:"
+    f"{db_config['mysql_quality']['password']}@{db_config['mysql_quality']['host']}/"
+    f"{db_config['mysql_quality']['database']}"
 )
+
 quality_engine = create_engine(
     QUALITY_DATABASE_URL,
     pool_size=10,

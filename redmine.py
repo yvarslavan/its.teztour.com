@@ -26,7 +26,8 @@ import xmpp
 from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
 from blog import db
 import uuid
-from blog.notification_service import notification_service, NotificationData, NotificationType, WebPushException
+# ИСПРАВЛЕНИЕ: Убираем импорт notification_service отсюда, чтобы избежать циклического импорта
+# from blog.notification_service import notification_service, NotificationData, NotificationType, WebPushException
 
 
 # Настройка базовой конфигурации логирования
@@ -779,6 +780,9 @@ def process_status_changes(connection, cursor, email_part, current_user_id, easy
                                 # Если нужно строго следовать "статус заявки номер X изменен на Y" без темы:
                                 # message = f"Статус задачи #{current_issue_id} изменен на '{status_name_to or new_status_id}'."
 
+                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
+                                from blog.notification_service import NotificationData, NotificationType, WebPushException
+
                                 notification_payload_for_push = NotificationData(
                                     user_id=current_user_id,
                                     issue_id=current_issue_id, # Используем current_issue_id
@@ -797,6 +801,8 @@ def process_status_changes(connection, cursor, email_part, current_user_id, easy
                                     created_at=new_notification_status.date_created
                                 )
                                 log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Попытка PUSH для SQLiteID={new_notification_status.id}, IssueID={current_issue_id}. Payload: {notification_payload_for_push.to_dict()}")
+                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
+                                from blog.notification_service import notification_service
                                 push_service_instance = notification_service.push_service
                                 push_service_instance.send_push_notification(notification_payload_for_push)
                                 log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: PUSH для SQLiteID={new_notification_status.id} ВЫЗВАН.")
@@ -946,6 +952,9 @@ def process_added_notes(connection, cursor, email_part, current_user_id, easy_em
 
                                 message = f'К задаче #{issue_id_notes} добавлен новый комментарий: "{comment_preview}".'
 
+                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
+                                from blog.notification_service import NotificationData, NotificationType, WebPushException
+
                                 notification_payload_for_push = NotificationData(
                                     user_id=current_user_id,
                                     issue_id=issue_id_notes,
@@ -962,6 +971,8 @@ def process_added_notes(connection, cursor, email_part, current_user_id, easy_em
                                     created_at=new_notification_add_notes.date_created
                                 )
                                 log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: Попытка PUSH для SQLiteID={new_notification_add_notes.id} (комментарий). Payload: {notification_payload_for_push.to_dict()}")
+                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
+                                from blog.notification_service import notification_service
                                 push_service_instance = notification_service.push_service
                                 push_service_instance.send_push_notification(notification_payload_for_push)
                                 log.info(f"{func_name}_RUN_ID={run_id}: UserID={current_user_id}: PUSH для SQLiteID={new_notification_add_notes.id} (комментарий) ВЫЗВАН.")

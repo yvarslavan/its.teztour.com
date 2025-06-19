@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import sys
+from configparser import ConfigParser
 
 from dotenv import load_dotenv
 
@@ -39,6 +40,43 @@ class Config:
         SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES = "sqlite:///db/dummy_sales.db"
 
     SQLALCHEMY_TRACK_MODIFICATIONS = os.environ.get("SQLALCHEMY_TRACK_MODIFICATIONS", False)
+
+    # ИСПРАВЛЕНИЕ: Добавляем конфигурацию MySQL Redmine из config.ini
+    @classmethod
+    def _load_config_ini(cls):
+        """Загружает настройки из config.ini"""
+        config = ConfigParser()
+        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.ini')
+        config.read(config_path)
+        return config
+
+    @classmethod
+    def get_db_redmine_config(cls):
+        """Возвращает конфигурацию MySQL Redmine"""
+        config = cls._load_config_ini()
+        return {
+            'host': config.get('mysql', 'host'),
+            'database': config.get('mysql', 'database'),
+            'user': config.get('mysql', 'user'),
+            'password': config.get('mysql', 'password')
+        }
+
+    # Константы для доступа к конфигурации Redmine
+    @property
+    def DB_REDMINE_HOST(self):
+        return self.get_db_redmine_config()['host']
+
+    @property
+    def DB_REDMINE_NAME(self):
+        return self.get_db_redmine_config()['database']
+
+    @property
+    def DB_REDMINE_USER_NAME(self):
+        return self.get_db_redmine_config()['user']
+
+    @property
+    def DB_REDMINE_PASSWORD(self):
+        return self.get_db_redmine_config()['password']
 
     # VAPID ключи для браузерных пуш-уведомлений
     try:

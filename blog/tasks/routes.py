@@ -49,6 +49,7 @@ MY_TASKS_PAGE_ENDPOINT = ".my_tasks_page"
 
 # ===== МОДУЛЬ "МОИ ЗАДАЧИ" (перенесено из main) =====
 
+
 @tasks_bp.route("/my-tasks", methods=["GET"])
 @login_required
 @weekend_performance_optimizer
@@ -60,7 +61,13 @@ def my_tasks_page():
 
     # Передаем переменную count_notifications для совместимости с layout.html
     count_notifications = 0  # Значение по умолчанию
-    return render_template("tasks.html", title="Мои задачи", count_notifications=count_notifications)
+
+    # Генерируем cache_buster для принудительного обновления кэша
+    import time
+    cache_buster = str(int(time.time()))
+
+    return render_template("my_tasks.html", title="Мои задачи", count_notifications=count_notifications,
+                         cache_buster=cache_buster)
 
 @tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET"])
 @login_required
@@ -319,6 +326,12 @@ def get_my_tasks_statistics_optimized():
         actually_closed_tasks = 0
         debug_status_counts = {}
 
+        # Структуры для группировки статусов
+        open_statuses_breakdown = []
+        completed_statuses_breakdown = []
+        in_progress_statuses_breakdown = []
+        localized_status_names = {}
+
         try:
             # 1. ОБЩЕЕ количество задач (БЕЗ ЛИМИТОВ!)
             sql_total = """
@@ -332,22 +345,53 @@ def get_my_tasks_statistics_optimized():
             total_tasks = result['total_count'] if result else 0
             current_app.logger.info(f"📊 [STATISTICS] ОБЩЕЕ количество задач (SQL): {total_tasks}")
 
-            # 2. ЗАКРЫТЫЕ задачи (is_closed=1)
-            sql_closed = """
-                SELECT COUNT(*) as closed_count
+            # 2. Получаем локализованные названия статусов из u_statuses
+            sql_localized_statuses = """
+                SELECT id, name
+                FROM u_statuses
+            """
+            cursor.execute(sql_localized_statuses)
+            localized_rows = cursor.fetchall()
+            for row in localized_rows:
+                localized_status_names[row['id']] = row['name']
+            current_app.logger.info(f"📊 [STATISTICS] Загружено {len(localized_status_names)} локализованных названий статусов")
+
+            # 3. ЗАВЕРШЁННЫЕ задачи (is_closed=1) с локализованными названиями
+            sql_completed_detailed = """
+                SELECT s.name as status_name_en, s.id as status_id, COUNT(i.id) as task_count
                 FROM issues i
                 INNER JOIN issue_statuses s ON i.status_id = s.id
                 WHERE i.assigned_to_id = %s AND s.is_closed = 1
+                GROUP BY s.id, s.name
+                ORDER BY task_count DESC
             """
-            cursor.execute(sql_closed, (redmine_user_id,))
-            result = cursor.fetchone()
-            closed_tasks = result['closed_count'] if result else 0
-            actually_closed_tasks = closed_tasks  # Теперь одинаковые значения
-            current_app.logger.info(f"📊 [STATISTICS] ЗАКРЫТЫЕ задачи (SQL, is_closed=1): {closed_tasks}")
+            cursor.execute(sql_completed_detailed, (redmine_user_id,))
+            completed_statuses_raw = cursor.fetchall()
 
-            # 3. ОТКРЫТЫЕ задачи (is_closed=0) с детализацией по статусам
+            current_app.logger.info(f"📊 [STATISTICS] ЗАВЕРШЁННЫЕ статусы (is_closed=1):")
+            for status_row in completed_statuses_raw:
+                status_name_en = status_row['status_name_en']
+                status_id = status_row['status_id']
+                status_count = status_row['task_count']
+
+                # Используем локализованное название если доступно
+                status_name_ru = localized_status_names.get(status_id, status_name_en)
+
+                closed_tasks += status_count
+                debug_status_counts[status_name_ru] = status_count
+                completed_statuses_breakdown.append({
+                    'name': status_name_ru,
+                    'count': status_count,
+                    'id': status_id
+                })
+
+                current_app.logger.info(f"   📌 {status_name_ru} (EN: {status_name_en}, ID: {status_id}) = {status_count} задач")
+
+            actually_closed_tasks = closed_tasks
+
+            # 4. ОТКРЫТЫЕ задачи (is_closed=0) с детализацией и локализацией
             sql_open_detailed = """
-                SELECT s.name as status_name, s.id as status_id, COUNT(i.id) as task_count
+                SELECT s.name as status_name_en, s.id as status_id, COUNT(i.id) as task_count
                 FROM issues i
                 INNER JOIN issue_statuses s ON i.status_id = s.id
                 WHERE i.assigned_to_id = %s AND s.is_closed = 0
@@ -355,84 +399,53 @@ def get_my_tasks_statistics_optimized():
                 ORDER BY task_count DESC
             """
             cursor.execute(sql_open_detailed, (redmine_user_id,))
-            open_statuses = cursor.fetchall()
+            open_statuses_raw = cursor.fetchall()
 
             current_app.logger.info(f"📊 [STATISTICS] ОТКРЫТЫЕ статусы (is_closed=0):")
-            for status_row in open_statuses:
-                status_name = status_row['status_name']
+            for status_row in open_statuses_raw:
+                status_name_en = status_row['status_name_en']
+                status_id = status_row['status_id']
                 status_count = status_row['task_count']
-                debug_status_counts[status_name] = status_count
 
-                current_app.logger.info(f"   📌 {status_name} (ID: {status_row['status_id']}) = {status_count} задач")
+                # Используем локализованное название если доступно
+                status_name_ru = localized_status_names.get(status_id, status_name_en)
+                debug_status_counts[status_name_ru] = status_count
 
-                                # ИСПРАВЛЕННАЯ классификация статусов (ПОДДЕРЖКА АНГЛИЙСКИХ И РУССКИХ НАЗВАНИЙ)
-                status_name_lower = status_name.lower().strip()
+                current_app.logger.info(f"   📌 {status_name_ru} (EN: {status_name_en}, ID: {status_id}) = {status_count} задач")
 
-                # NEW TASKS (Новые и Открытые) - ПОДДЕРЖКА АНГЛИЙСКОГО И РУССКОГО
-                if status_name_lower in ['новая', 'новый', 'новое', 'new'] or 'нов' in status_name_lower:
+                # НОВАЯ классификация статусов согласно требованиям пользователя
+                status_name_lower = status_name_ru.lower().strip()
+                status_name_en_lower = status_name_en.lower().strip()
+
+                # ОТКРЫТЫЕ ЗАДАЧИ: Новая и Открыта
+                if (status_name_lower in ['новая', 'новый', 'новое'] or 'нов' in status_name_lower or
+                    status_name_en_lower in ['new'] or 'new' in status_name_en_lower or
+                    status_name_lower in ['открыта', 'открыт', 'открыто'] or 'открыт' in status_name_lower or
+                    status_name_en_lower in ['open'] or 'open' in status_name_en_lower):
+
                     new_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к NEW (новая/new): +{status_count}")
-                elif status_name_lower in ['открыта', 'открыт', 'открыто', 'open'] or 'открыт' in status_name_lower:
-                    new_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к NEW (открыта/open): +{status_count}")
+                    open_statuses_breakdown.append({
+                        'name': status_name_ru,
+                        'count': status_count,
+                        'id': status_id
+                    })
+                    current_app.logger.info(f"   ✅ Отнесено к ОТКРЫТЫМ: +{status_count}")
 
-                # IN_PROGRESS TASKS - АНГЛИЙСКИЕ И РУССКИЕ ВАРИАНТЫ
-                elif status_name_lower in ['в работе', 'в процессе выполнения', 'in progress'] or any(keyword in status_name_lower for keyword in ['в работе', 'progress']):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (в работе/in progress): +{status_count}")
-                elif status_name_lower in ['запрошено уточнение', 'уточнение', 'feedback'] or any(keyword in status_name_lower for keyword in ['уточнение', 'feedback']):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (запрошено уточнение/feedback): +{status_count}")
-                elif status_name_lower in ['на согласовании', 'согласование'] or 'согласован' in status_name_lower:
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (на согласовании): +{status_count}")
-                elif status_name_lower in ['на тестировании', 'тестирование', 'tested'] or any(keyword in status_name_lower for keyword in ['тестиров', 'tested']):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (на тестировании/tested): +{status_count}")
-                elif status_name_lower in ['протестирована', 'протестирован'] or 'протестиров' in status_name_lower:
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (протестирована): +{status_count}")
-                elif status_name_lower in ['приостановлена', 'приостановлен', 'заморожена', 'заморожен'] or any(keyword in status_name_lower for keyword in ['приостанов', 'заморож']):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (приостановлена/заморожена): +{status_count}")
-                elif status_name_lower in ['выполнена', 'выполнен', 'выполнено', 'resolved', 'executed'] or any(keyword in status_name_lower for keyword in ['выполнен', 'resolved', 'executed']):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (выполнена/resolved/executed): +{status_count}")
-                elif any(keyword in status_name_lower for keyword in [
-                    'work', 'progress', 'назначен', 'назначена', 'выполняется', 'в процессе'
-                ]):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (общие ключевые слова): +{status_count}")
-                elif any(keyword in status_name_lower for keyword in [
-                    'решен', 'решена', 'решено', 'завершен', 'завершена', 'завершено', 'done'
-                ]):
-                    in_progress_tasks += status_count
-                    current_app.logger.info(f"   ✅ Отнесено к IN_PROGRESS (завершенные, но не закрытые): +{status_count}")
+                # В РАБОТЕ: все остальные статусы согласно требованиям
                 else:
-                    # Все остальные неизвестные открытые статусы - в IN_PROGRESS по умолчанию
                     in_progress_tasks += status_count
-                    current_app.logger.warning(f"   ⚠️ Статус '{status_name}' НЕ РАСПОЗНАН! Отнесен к IN_PROGRESS по умолчанию: +{status_count}")
+                    in_progress_statuses_breakdown.append({
+                        'name': status_name_ru,
+                        'count': status_count,
+                        'id': status_id
+                    })
+                    current_app.logger.info(f"   ✅ Отнесено к В РАБОТЕ: +{status_count}")
 
-            # 4. Дополнительно логируем закрытые статусы
-            sql_closed_detailed = """
-                SELECT s.name as status_name, s.id as status_id, COUNT(i.id) as task_count
-                FROM issues i
-                INNER JOIN issue_statuses s ON i.status_id = s.id
-                WHERE i.assigned_to_id = %s AND s.is_closed = 1
-                GROUP BY s.id, s.name
-                ORDER BY task_count DESC
-            """
-            cursor.execute(sql_closed_detailed, (redmine_user_id,))
-            closed_statuses = cursor.fetchall()
-
-            current_app.logger.info(f"📊 [STATISTICS] ЗАКРЫТЫЕ статусы (is_closed=1):")
-            for status_row in closed_statuses:
-                status_name = status_row['status_name']
-                status_count = status_row['task_count']
-                debug_status_counts[status_name] = status_count
-                current_app.logger.info(f"   📌 {status_name} (ID: {status_row['status_id']}) = {status_count} задач")
-
-            current_app.logger.info(f"🎯 [STATISTICS] ИСПРАВЛЕННАЯ ИТОГОВАЯ СТАТИСТИКА: total={total_tasks}, new={new_tasks}, in_progress={in_progress_tasks}, closed={closed_tasks}")
+            current_app.logger.info(f"🎯 [STATISTICS] НОВАЯ ИТОГОВАЯ СТАТИСТИКА:")
+            current_app.logger.info(f"   📊 Всего: {total_tasks}")
+            current_app.logger.info(f"   📊 Открытые: {new_tasks}")
+            current_app.logger.info(f"   📊 В работе: {in_progress_tasks}")
+            current_app.logger.info(f"   📊 Завершённые: {closed_tasks}")
             current_app.logger.info(f"📈 [STATISTICS] ПОЛНАЯ РАЗБИВКА ПО СТАТУСАМ: {debug_status_counts}")
 
         except Exception as e_sql:
@@ -465,28 +478,41 @@ def get_my_tasks_statistics_optimized():
         return jsonify({
             "success": True,
             "total_tasks": total_tasks,
-            "new_tasks": new_tasks,
+            "open_tasks": new_tasks,
             "in_progress_tasks": in_progress_tasks,
-            "closed_tasks": closed_tasks,
+            "completed_tasks": closed_tasks,
+            "closed_tasks": closed_tasks,  # Для обратной совместимости
+            # Данные для JavaScript обработки
+            "status_counts": debug_status_counts,
+            "detailed_breakdown": {
+                "open_statuses": [item['name'] for item in open_statuses_breakdown],
+                "in_progress_statuses": [item['name'] for item in in_progress_statuses_breakdown],
+                "completed_statuses": [item['name'] for item in completed_statuses_breakdown]
+            },
             "statistics": {
                 "debug_status_counts": debug_status_counts,
                 "additional_stats": additional_stats,
+                "breakdown_details": {
+                    "open": open_statuses_breakdown,
+                    "in_progress": in_progress_statuses_breakdown,
+                    "completed": completed_statuses_breakdown
+                },
                 "focused_data": {
                     "total": {
                         "additional_stats": additional_stats,
                         "status_breakdown": debug_status_counts
                     },
-                    "new": {
-                        "debug_status_counts": debug_status_counts,
-                        "filter_description": f"Отображены задачи со статусом 'Новый' или 'New'"
+                    "open": {
+                        "statuses": open_statuses_breakdown,
+                        "filter_description": "Новые и открытые задачи"
                     },
-                    "progress": {
-                        "debug_status_counts": debug_status_counts,
-                        "filter_description": f"Отображены задачи в статусе 'В работе' или 'Progress'"
+                    "in_progress": {
+                        "statuses": in_progress_statuses_breakdown,
+                        "filter_description": "В процессе выполнения, на согласовании, тестировании"
                     },
-                    "closed": {
-                        "debug_status_counts": debug_status_counts,
-                        "filter_description": f"Отображены завершенные задачи"
+                    "completed": {
+                        "statuses": completed_statuses_breakdown,
+                        "filter_description": "Фактически закрытые задачи"
                     }
                 }
             }

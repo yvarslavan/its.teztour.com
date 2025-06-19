@@ -23,7 +23,7 @@ from blog.scheduler_tasks import scheduled_check_all_user_notifications
 # Импортируем BrowserPushService
 from blog.notification_service import BrowserPushService
 # Импортируем функцию конфигурации логгера
-from blog.main.routes import configure_blog_logger
+from blog.utils.logger import configure_blog_logger
 
 bcrypt = Bcrypt()
 migrate = Migrate()
@@ -144,14 +144,34 @@ def create_app():
     # Инициализируем CSRF защиту
     csrf.init_app(app)
 
-    # Настройка CORS - поместите ДО регистрации blueprints
+    # Настройка CORS - универсальная для всех сред
+    cors_origins = ["*"] if app.debug else [
+        "https://your-domain.com",
+        "https://www.your-domain.com",
+        "https://tez-tour.com",
+        "https://www.tez-tour.com"
+    ]
+
     CORS(
         app,
-        resources={r"/*": {"origins": "*"}},
-        supports_credentials=True,
-        allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-        methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+        resources={
+            r"/*": {
+                "origins": cors_origins,
+                "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+                "allow_headers": [
+                    "Content-Type",
+                    "Authorization",
+                    "X-Requested-With",
+                    "Access-Control-Allow-Origin",
+                    "Access-Control-Allow-Headers",
+                    "Access-Control-Allow-Methods"
+                ],
+                "supports_credentials": True,
+                "expose_headers": ["Content-Range", "X-Total-Count"]
+            }
+        }
     )
+    print(f"🌐 [INIT] CORS настроен для origins: {cors_origins}")
 
     # Регистрируем blueprint'ы
     from blog.main.routes import main
@@ -161,6 +181,7 @@ def create_app():
     from blog.finesse.routes import finesse
     from blog.netmonitor.routes import netmonitor  # Импортируем маршруты
     from blog.tasks.routes import tasks_bp  # Импортируем блюпринт задач
+    from blog.tasks.api_routes import api_bp  # Импортируем новый API блюпринт
 
     app.register_blueprint(main)
     app.register_blueprint(users)
@@ -169,6 +190,11 @@ def create_app():
     app.register_blueprint(finesse, url_prefix="/finesse")
     app.register_blueprint(netmonitor)
     app.register_blueprint(tasks_bp, url_prefix="/tasks")  # Регистрируем блюпринт задач с префиксом
+    app.register_blueprint(api_bp)  # Регистрируем новый API блюпринт (уже с префиксом /tasks/api)
+
+    # ИСПРАВЛЕНИЕ: Регистрируем template helpers для устранения хардкода в шаблонах
+    from blog.utils.template_helpers import register_template_helpers
+    register_template_helpers(app)
 
     # Дополнительная инициализация в контексте приложения
     with app.app_context():

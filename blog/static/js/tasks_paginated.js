@@ -1437,14 +1437,16 @@ function getStatusInfo(status) {
 function getPriorityInfo(priority) {
     const priorityStr = String(priority || '');
     const priorityLower = priorityStr.toLowerCase();
-    if (priorityLower.includes('высок') || priorityLower.includes('urgent')) {
-        return { class: 'priority-high', icon: 'fas fa-exclamation-triangle' };
-    } else if (priorityLower.includes('норм') || priorityLower.includes('normal')) {
-        return { class: 'priority-normal', icon: 'fas fa-minus-circle' };
+    if (priorityLower.includes('высок') || priorityLower.includes('urgent') || priorityLower.includes('high')) {
+        return { class: 'priority-high', icon: 'fas fa-arrow-up' };
+    } else if (priorityLower.includes('норм') || priorityLower.includes('normal') || priorityLower.includes('нормальн')) {
+        return { class: 'priority-normal', icon: 'fas fa-circle' };
     } else if (priorityLower.includes('низк') || priorityLower.includes('low')) {
         return { class: 'priority-low', icon: 'fas fa-arrow-down' };
+    } else if (priorityLower.includes('критич') || priorityLower.includes('critical') || priorityLower.includes('срочн')) {
+        return { class: 'priority-critical', icon: 'fas fa-exclamation-triangle' };
     }
-    return { class: 'priority-default', icon: 'fas fa-circle' };
+    return { class: 'priority-default', icon: 'fas fa-question' };
 }
 
 // Форматирование дат
@@ -2144,14 +2146,19 @@ function loadFullStatisticsAsync() {
                 console.log('[TasksPaginated] Статистика получена:', response);
                 updateStatusBreakdownCards(response);
                 updateDetailedStatusBreakdown(response);
+
+                // Инициализируем аккордеон статусов
+                initializeStatusAccordion(response);
             } else {
                 console.error('[TasksPaginated] Ошибка загрузки статистики:', response.error);
                 showErrorState();
+                showAccordionError();
             }
         })
         .fail(function() {
             console.error('[TasksPaginated] Критическая ошибка API статистики.');
             showErrorState();
+            showAccordionError();
         });
 }
 
@@ -3180,4 +3187,86 @@ function initializeGlobalToggleButton() {
     console.log('[TasksPaginated] Инициализация глобальной кнопки переключения');
     // Пустая реализация, чтобы избежать ошибки
     // Реальная логика уже реализована в card_breakdown_handler.js
+}
+
+// Функция для инициализации аккордеона статусов
+function initializeStatusAccordion(response) {
+    console.log('[TasksPaginated] Инициализация аккордеона статусов...');
+
+    // Проверяем, есть ли данные статистики
+    const statusCounts = response.statistics?.debug_status_counts || {};
+
+    if (Object.keys(statusCounts).length === 0) {
+        showAccordionNoData();
+        return;
+    }
+
+    // Загружаем расширенную статистику для аккордеона
+    $.get('/tasks/api/statistics-extended')
+        .done(function(extendedResponse) {
+            if (extendedResponse.success && extendedResponse.status_groups) {
+                console.log('[TasksPaginated] Расширенная статистика получена для аккордеона:', extendedResponse);
+
+                // Инициализируем аккордеон с данными
+                if (typeof window.StatusAccordion !== 'undefined') {
+                    window.StatusAccordion.init(extendedResponse.status_groups, 'statusAccordion');
+                    hideAccordionLoading();
+                } else {
+                    console.warn('[TasksPaginated] StatusAccordion класс не найден, пытаемся загрузить...');
+                    // Пытаемся загрузить скрипт аккордеона
+                    loadStatusAccordionScript().then(() => {
+                        if (typeof window.StatusAccordion !== 'undefined') {
+                            window.StatusAccordion.init(extendedResponse.status_groups, 'statusAccordion');
+                            hideAccordionLoading();
+                        } else {
+                            showAccordionError();
+                        }
+                    }).catch(() => {
+                        showAccordionError();
+                    });
+                }
+            } else {
+                console.error('[TasksPaginated] Ошибка получения расширенной статистики:', extendedResponse);
+                showAccordionError();
+            }
+        })
+        .fail(function(xhr, status, error) {
+            console.error('[TasksPaginated] Ошибка API расширенной статистики:', error);
+            showAccordionError();
+        });
+}
+
+// Функция для динамической загрузки скрипта аккордеона
+function loadStatusAccordionScript() {
+    return new Promise((resolve, reject) => {
+        if (typeof window.StatusAccordion !== 'undefined') {
+            resolve();
+            return;
+        }
+
+        const script = document.createElement('script');
+        script.src = '/static/js/status_accordion.js?v=' + Math.random();
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
+
+// Функции управления состоянием аккордеона
+function hideAccordionLoading() {
+    $('#accordionLoading').hide();
+    $('#accordionError').hide();
+    $('#accordionNoData').hide();
+}
+
+function showAccordionError() {
+    $('#accordionLoading').hide();
+    $('#accordionError').show();
+    $('#accordionNoData').hide();
+}
+
+function showAccordionNoData() {
+    $('#accordionLoading').hide();
+    $('#accordionError').hide();
+    $('#accordionNoData').show();
 }
