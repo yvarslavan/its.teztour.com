@@ -7,7 +7,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 # Оставляем только те импорты, которые нужны на уровне модуля
 from blog.models import User
-from redmine import check_notifications
+# ИСПРАВЛЕНИЕ: Убираем импорт check_notifications отсюда, чтобы избежать циклического импорта
+# from redmine import check_notifications
 # db можно импортировать здесь, если он нужен глобально в модуле,
 # но create_app будем импортировать внутри функции
 from blog import db
@@ -56,6 +57,9 @@ def scheduled_check_all_user_notifications():
             logger.info(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Начало проверки уведомлений для пользователя ID: {user.id}, Email: {user.email}")
             user_check_start_time = time.time()
             try:
+                # ИСПРАВЛЕНИЕ: Импортируем check_notifications внутри функции, чтобы избежать циклического импорта
+                from redmine import check_notifications
+
                 # Вызываем оригинальную функцию check_notifications из redmine.py
                 # Эта функция ожидает email и id пользователя.
                 # Она также сама обрабатывает внутренние ошибки и логирование.

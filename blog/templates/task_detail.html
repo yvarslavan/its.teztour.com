@@ -417,23 +417,23 @@
                       {% endif %}
                       <span class="new-value">
                         {% if detail.name == 'status_id' %}
-                          {{ get_status_name_from_id(get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name), detail.new_value) or detail.new_value }}
+                          {{ get_status_name_safe(detail.new_value) }}
                         {% elif detail.name == 'assigned_to_id' %}
                           {% if detail.new_value %}
-                            {{ get_user_full_name_from_id(get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name), detail.new_value) or detail.new_value }}
+                            {{ get_user_name_safe(detail.new_value) }}
                           {% else %}
                             Не назначен
                           {% endif %}
                         {% elif detail.name == 'project_id' %}
-                          {{ get_project_name_from_id(get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name), detail.new_value) or detail.new_value }}
+                          {{ get_project_name_safe(detail.new_value) }}
                         {% elif detail.name == 'priority_id' %}
-                          {{ get_priority_name_from_id(get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name), detail.new_value) or detail.new_value }}
+                          {{ get_priority_name_safe(detail.new_value) }}
                         {% elif detail.name == 'done_ratio' %}
                           {{ detail.new_value }}%
                         {% elif detail.name == 'easy_helpdesk_need_reaction' %}
-                          {% if detail.new_value == '1' %}Да{% else %}Нет{% endif %}
+                          {{ format_boolean_field(detail.new_value, detail.name) }}
                         {% elif detail.name == '16' %}
-                          {% if detail.new_value and detail.new_value != '0' %}Да{% else %}Нет{% endif %}
+                          {{ format_boolean_field(detail.new_value, detail.name) }}
                         {% else %}
                           {% if detail.new_value %}
                             {{ detail.new_value }}

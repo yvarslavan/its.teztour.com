@@ -131,7 +131,8 @@ node_modules/
 #IDE settings
 .idea/
 .vscode/
-
+*.new,
+*_temp.py
 # Flask session files
 flask_session/
 blog/flask_session/
