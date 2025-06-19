@@ -2,160 +2,132 @@ name: Deploy Flask Helpdesk
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
-  deploy:
-    runs-on: self-hosted
+  test-dependencies:
+    runs-on: ubuntu-latest
+    name: Test Dependencies Compatibility
 
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    - uses: actions/checkout@v4
 
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: '3.9'
+        python-version: '3.11'
+
+    - name: Create virtual environment
+      run: |
+        python -m venv venv
+        source venv/bin/activate
+        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+
+    - name: Upgrade pip and install build tools
+      run: |
+        python -m pip install --upgrade pip setuptools wheel
+
+    - name: Test dependency resolution
+      run: |
+        echo "🔍 Testing dependency resolution..."
+        python -m pip install --dry-run -r requirements.txt
+        echo "✅ Dependencies are compatible"
 
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
+        echo "📦 Installing dependencies..."
+        python -m pip install -r requirements.txt
+        echo "✅ Dependencies installed successfully"
 
-    - name: Run tests
-      run: echo "Tests placeholder"
-
-    - name: Stop existing application
+    - name: Test Flask import
       run: |
-        echo "Stopping existing Flask application..."
-        pkill -f "python.*app.py" || echo "No Flask processes found"
-        pkill -f "gunicorn.*wsgi" || echo "No Gunicorn processes found"
-        sleep 2
+        echo "🧪 Testing Flask application..."
+        python -c "
+        import flask
+        import werkzeug
+        from blog import create_app
 
-    - name: Prepare production directory
-      run: |
-        echo "Preparing production directory..."
-        mkdir -p /var/www/flask_helpdesk/
-        if [ -w "/var/www/flask_helpdesk/" ]; then
-          echo "✅ Write access to /var/www/flask_helpdesk/ confirmed"
-        else
-          echo "❌ No write access to /var/www/flask_helpdesk/"
-          echo "Current user: $(whoami)"
-          echo "Directory owner: $(ls -ld /var/www/flask_helpdesk/ | awk '{print $3":"$4}')"
-          exit 1
-        fi
+        print(f'Flask version: {flask.__version__}')
+        print(f'Werkzeug version: {werkzeug.__version__}')
 
-    - name: Copy files to production directory
-      run: |
-        echo "Copying files to production directory..."
-        rsync -av --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' \
-              $GITHUB_WORKSPACE/ /var/www/flask_helpdesk/
+        app = create_app()
+        print('✅ Flask app created successfully')
+        "
 
-        chmod +x /var/www/flask_helpdesk/app.py
-        chmod +x /var/www/flask_helpdesk/wsgi.py
+  deploy:
+    needs: test-dependencies
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    name: Deploy to Production
 
-    - name: Install/Update dependencies
-      run: |
-        echo "Installing/updating Python dependencies..."
-        cd /var/www/flask_helpdesk
+    steps:
+    - uses: actions/checkout@v4
 
-        if [ -d "venv" ]; then
-          echo "Removing old virtual environment..."
-          rm -rf venv
-        fi
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.KEY }}
+        port: ${{ secrets.PORT }}
+        script: |
+          echo "🚀 Starting deployment..."
 
-        python3 -m venv venv
-        source venv/bin/activate
+          # Navigate to project directory
+          cd /var/www/flask_helpdesk
 
-        pip install --upgrade pip
-        pip cache purge || echo "Cache purge failed, continuing..."
+          # Pull latest changes
+          echo "📥 Pulling latest changes..."
+          git pull origin main
 
-        pip install --force-reinstall -r requirements.txt
+          # Activate virtual environment
+          echo "🔧 Activating virtual environment..."
+          source venv/bin/activate
 
-        echo "=== Installed packages ==="
-        pip list | grep -E "(Flask|Werkzeug|flask-login)"
-        echo "=========================="
+          # Upgrade pip and install/upgrade dependencies
+          echo "📦 Updating dependencies..."
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt --upgrade
 
-    - name: Database migrations
-      run: |
-        echo "Running database migrations..."
-        cd /var/www/flask_helpdesk
+          # Run database migrations if needed
+          echo "🗄️ Running database migrations..."
+          python -m flask db upgrade || echo "No migrations to run"
 
-        if [ -f "migrations/env.py" ]; then
-          flask db upgrade || echo "No migrations to run"
-        fi
+          # Check application health
+          echo "🏥 Checking application health..."
+          python -c "
+          from blog import create_app
+          app = create_app()
+          print('✅ Application health check passed')
+          " || exit 1
 
-    - name: Start application
-      run: |
-        echo "Starting Flask Helpdesk application..."
-        cd /var/www/flask_helpdesk
+          # Restart application services
+          echo "🔄 Restarting services..."
 
-        mkdir -p logs
+          # Stop existing processes
+          pkill -f "python.*app.py" || echo "No existing processes found"
+          pkill -f "gunicorn.*wsgi:app" || echo "No gunicorn processes found"
 
-        nohup /var/www/flask_helpdesk/venv/bin/python app.py > /var/www/flask_helpdesk/logs/app.log 2>&1 &
-        APP_PID=$!
-        echo "Started Flask app with PID: $APP_PID"
-        echo $APP_PID > /var/www/flask_helpdesk/app.pid
+          # Start application in background
+          echo "▶️ Starting application..."
+          nohup python app.py > app.log 2>&1 &
 
-        echo "Waiting for application to start..."
-        sleep 10
+          # Wait a moment for startup
+          sleep 5
 
-    - name: Health check
-      run: |
-        echo "Performing health check..."
-        cd /var/www/flask_helpdesk
-
-        if [ -f "app.pid" ]; then
-          APP_PID=$(cat app.pid)
-          echo "Checking PID from file: $APP_PID"
-          if kill -0 $APP_PID 2>/dev/null; then
-            echo "✅ Flask process is running (PID: $APP_PID)"
-            PROCESS_FOUND=true
+          # Check if application started successfully
+          if pgrep -f "python.*app.py" > /dev/null; then
+            echo "✅ Application started successfully"
+            echo "📊 Process info:"
+            ps aux | grep -E "(python.*app.py|gunicorn)" | grep -v grep
           else
-            echo "⚠️ PID from file is not active"
-            PROCESS_FOUND=false
+            echo "❌ Application failed to start"
+            echo "📋 Recent logs:"
+            tail -20 app.log
+            exit 1
           fi
-        else
-          echo "⚠️ PID file not found"
-          PROCESS_FOUND=false
-        fi
 
-        if [ "$PROCESS_FOUND" = false ]; then
-          echo "Searching for Flask processes..."
-          if pgrep -f "app.py" > /dev/null; then
-            echo "✅ Flask process found via pgrep"
-            PROCESS_FOUND=true
-          else
-            echo "⚠️ No Flask processes found via pgrep"
-          fi
-        fi
-
-        echo "=== Application logs (last 10 lines) ==="
-        tail -10 /var/www/flask_helpdesk/logs/app.log || echo "No logs found"
-        echo "========================================"
-
-        echo "Testing HTTP connection..."
-        HTTP_SUCCESS=false
-        for i in {1..10}; do
-          if curl -f -s http://localhost:5000 > /dev/null; then
-            echo "✅ Application is responding on port 5000 (attempt $i)"
-            HTTP_SUCCESS=true
-            break
-          else
-            echo "⏳ Attempt $i/10: Application not ready, waiting 3 seconds..."
-            sleep 3
-          fi
-        done
-
-        if [ "$HTTP_SUCCESS" = true ]; then
-          echo "🚀 Deployment completed successfully!"
-          echo "✅ Application is accessible via HTTP"
-          exit 0
-        elif [ "$PROCESS_FOUND" = true ]; then
-          echo "⚠️ Process is running but HTTP check failed"
-          echo "This might be a startup delay - check logs manually"
-          exit 0
-        else
-          echo "❌ Both process and HTTP checks failed"
-          exit 1
-        fi
+          echo "🎉 Deployment completed successfully!"
