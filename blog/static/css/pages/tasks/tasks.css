@@ -134,6 +134,11 @@
   --tasks-z-tooltip: 1070;
   --tasks-z-loading: 1080;
   --tasks-z-notification: 1090;
+
+  /* === EMAIL ССЫЛКИ === */
+  --tasks-email-color: var(--tasks-primary);
+  --tasks-email-hover-color: var(--tasks-primary-hover);
+  --tasks-email-bg-hover: var(--tasks-primary-light);
   /* === БРЕЙКПОИНТЫ === */
   --tasks-breakpoint-sm: 640px;
   --tasks-breakpoint-md: 768px;
@@ -611,6 +616,67 @@
 .dt-processing:not([data-loading-state]),
 #loading-spinner:not([data-loading-state]) {
   display: none !important;
+}
+
+/* === EMAIL ССЫЛКИ === */
+.email-link {
+  color: var(--tasks-email-color) !important;
+  text-decoration: none;
+  padding: 2px 4px;
+  border-radius: var(--tasks-radius-sm);
+  transition: var(--tasks-transition-colors), var(--tasks-transition-transform);
+  position: relative;
+  display: inline-block;
+}
+
+.email-link:hover {
+  color: var(--tasks-email-hover-color) !important;
+  background-color: var(--tasks-email-bg-hover);
+  text-decoration: none;
+  transform: translateY(-1px);
+}
+
+.email-link:active {
+  transform: translateY(0);
+}
+
+/* Стили для email-контейнеров */
+.email-container .email-link {
+  margin-left: var(--tasks-spacing-xs);
+}
+
+.email-container .email-link .email-text {
+  color: inherit;
+}
+
+/* Специальные стили для карточного представления */
+.task-card .task-email .email-link {
+  font-size: var(--tasks-font-sm);
+  font-weight: var(--tasks-font-medium);
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+  .email-link {
+    font-size: var(--tasks-font-xs);
+    padding: 1px 2px;
+  }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tasks-email-color: #60a5fa;
+    --tasks-email-hover-color: #93c5fd;
+    --tasks-email-bg-hover: rgba(59, 130, 246, 0.1);
+  }
+}
+
+/* Фокус для доступности */
+.email-link:focus {
+  outline: 2px solid var(--tasks-email-color);
+  outline-offset: 2px;
+  background-color: var(--tasks-email-bg-hover);
 }
 
 /**

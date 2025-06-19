@@ -503,7 +503,7 @@ function generateTaskCards() {
         const cardHtml = `
             <div class="task-card ${rowData.priority_name.toLowerCase().includes('высок') ? 'high-priority-task' : ''}">
                 <div class="task-card-header">
-                    <a href="/tasks/my-tasks/${rowData.id}" class="task-card-id">#${rowData.id}</a>
+                    <a href="/tasks/my-tasks/${rowData.id}" class="task-card-id" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${rowData.id} в новой вкладке">#${rowData.id}</a>
                     <div class="status-badge ${statusInfo.class}" data-status="${escapeHtml(rowData.status_name || 'N/A')}">
                         <i class="${statusInfo.icon}"></i>
                         <span>${escapeHtml(rowData.status_name || 'N/A')}</span>
@@ -516,7 +516,12 @@ function generateTaskCards() {
                         <i class="${priorityInfo.icon}"></i>
                         <span>${escapeHtml(rowData.priority_name || 'N/A')}</span>
                     </div>
-                    <div class="task-email mt-2">${escapeHtml(rowData.easy_email_to || '-')}</div>
+                    <div class="task-email mt-2">
+                        ${rowData.easy_email_to && rowData.easy_email_to !== '-' && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(rowData.easy_email_to)
+                          ? `<a href="mailto:${escapeHtml(rowData.easy_email_to)}" class="email-link" title="Написать письмо: ${escapeHtml(rowData.easy_email_to)}">${escapeHtml(rowData.easy_email_to)}</a>`
+                          : escapeHtml(rowData.easy_email_to || '-')
+                        }
+                    </div>
                 </div>
                 <div class="task-card-footer">
                     <div>Создана: ${formatDate(rowData.created_on)}</div>
@@ -770,7 +775,7 @@ function initializeDataTable() {
                 {
                     data: 'id',
                     render: function(data, type, row) {
-                        return type === 'display' ? '<a href="/tasks/my-tasks/' + data + '" class="task-id-link" title="Открыть задачу #' + data + '">#' + data + '</a>' : data;
+                        return type === 'display' ? '<a href="/tasks/my-tasks/' + data + '" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #' + data + ' в новой вкладке">#' + data + '</a>' : data;
                     },
                     orderable: true,
                     searchable: true
@@ -811,7 +816,25 @@ function initializeDataTable() {
                 {
                     data: 'easy_email_to',
                     render: function(data, type, row) {
-                         return type === 'display' ? '<div class="task-email">' + escapeHtml(data || '-') + '</div>' : data;
+                        if (type === 'display') {
+                            if (!data || data === '-') {
+                                return '<div class="task-email">-</div>';
+                            }
+
+                            // Проверяем валидность email
+                            const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data);
+
+                            if (isValidEmail) {
+                                return '<div class="task-email">' +
+                                       '<a href="mailto:' + escapeHtml(data) + '" class="email-link" title="Написать письмо: ' + escapeHtml(data) + '">' +
+                                       escapeHtml(data) +
+                                       '</a>' +
+                                       '</div>';
+                            } else {
+                                return '<div class="task-email">' + escapeHtml(data) + '</div>';
+                            }
+                        }
+                        return data;
                     },
                     orderable: true
                 },

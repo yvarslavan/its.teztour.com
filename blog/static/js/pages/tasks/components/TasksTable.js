@@ -355,7 +355,7 @@ class TasksTable {
                 data: 'id',
                 render: (data, type, row) => {
                     return type === 'display'
-                        ? `<a href="/tasks/my-tasks/${data}" class="task-id-link" title="Открыть задачу #${data}">#${data}</a>`
+                        ? `<a href="/tasks/my-tasks/${data}" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${data} в новой вкладке">#${data}</a>`
                         : data;
                 },
                 orderable: true,
@@ -412,7 +412,18 @@ class TasksTable {
                 data: 'easy_email_to',
                 render: (data, type, row) => {
                     if (type === 'display') {
-                        return data ? this._escapeHtml(data) : 'Не назначена';
+                        if (!data) {
+                            return 'Не назначена';
+                        }
+
+                        // Проверяем валидность email
+                        const isValidEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data);
+
+                        if (isValidEmail) {
+                            return `<a href="mailto:${this._escapeHtml(data)}" class="email-link" title="Написать письмо: ${this._escapeHtml(data)}">${this._escapeHtml(data)}</a>`;
+                        } else {
+                            return this._escapeHtml(data);
+                        }
                     }
                     return data;
                 },
