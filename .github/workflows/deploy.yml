@@ -8,32 +8,52 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # КРИТИЧНО: Диск заполнен на 99%
+    runs-on: self-hosted  # ✅ Диск очищен - возврат к self-hosted runner
     name: Test Dependencies & Application
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Check disk space
+    - name: Check disk space and run monitoring
       run: |
-        echo "🔍 Checking disk space..."
+        echo "🔍 Checking disk space after cleanup..."
         df -h
         echo ""
 
-        # Check if we have at least 1GB free
-        AVAILABLE=$(df /home/github-actions --output=avail | tail -n1)
-        if [ "$AVAILABLE" -lt 1048576 ]; then
-          echo "⚠️ Warning: Less than 1GB free space available"
-          echo "Running cleanup..."
+        # Run disk monitoring script
+        if [ -f /home/yvarslavan/disk_monitoring.sh ]; then
+          echo "📊 Running disk monitoring..."
+          bash /home/yvarslavan/disk_monitoring.sh
+        fi
+
+        # Check if we have at least 2GB free (increased threshold)
+        AVAILABLE=$(df / --output=avail | tail -n1)
+        if [ "$AVAILABLE" -lt 2097152 ]; then
+          echo "🚨 CRITICAL: Less than 2GB free space available"
+          echo "Current free space: $(df -h / | tail -1 | awk '{print $4}')"
 
           # Emergency cleanup
-          rm -rf /home/github-actions/actions-runner/_diag/*.log 2>/dev/null || true
-          rm -rf /home/github-actions/actions-runner/_work/*/temp 2>/dev/null || true
+          rm -rf /home/github-actions/actions-runner/_work/* 2>/dev/null || true
+          rm -rf /home/github-actions/.cache/* 2>/dev/null || true
 
-          echo "After cleanup:"
+          # Check Flask logs
+          FLASK_LOG_SIZE=$(du -m /var/www/flask_helpdesk/app_err.log 2>/dev/null | cut -f1 || echo "0")
+          if [ "$FLASK_LOG_SIZE" -gt 100 ]; then
+            echo "⚠️ Flask log is ${FLASK_LOG_SIZE}MB - truncating..."
+            sudo truncate -s 10M /var/www/flask_helpdesk/app_err.log 2>/dev/null || true
+          fi
+
+          echo "After emergency cleanup:"
           df -h
+
+          # Still not enough? Stop runner
+          AVAILABLE_AFTER=$(df / --output=avail | tail -n1)
+          if [ "$AVAILABLE_AFTER" -lt 1048576 ]; then
+            echo "🛑 Still less than 1GB free - stopping runner for safety"
+            exit 1
+          fi
         else
-          echo "✅ Sufficient disk space available"
+          echo "✅ Sufficient disk space available: $(df -h / | tail -1 | awk '{print $4}')"
         fi
 
     - name: Set up Python
@@ -106,7 +126,7 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: ubuntu-latest  # КРИТИЧНО: Диск заполнен на 99%
+    runs-on: self-hosted  # ✅ Диск очищен - возврат к self-hosted runner
     # 🎯 Деплой только при push в main (не при PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Deploy to Production
