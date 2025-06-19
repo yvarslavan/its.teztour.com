@@ -70,6 +70,7 @@ jobs:
       run: |
         echo "🔍 Testing server connectivity..."
         echo "Server host: ${{ secrets.SSH_HOST }}"
+        echo "SSH port: ${{ secrets.SSH_PORT || '22' }}"
 
         # Test DNS resolution
         if nslookup ${{ secrets.SSH_HOST }}; then
@@ -85,11 +86,16 @@ jobs:
           echo "⚠️ Server doesn't respond to ping (may be blocked by firewall)"
         fi
 
-        # Test port 22 connectivity
-        if timeout 10 bash -c "</dev/tcp/${{ secrets.SSH_HOST }}/22"; then
-          echo "✅ Port 22 is accessible"
+        # Test SSH port connectivity
+        SSH_PORT=${{ secrets.SSH_PORT || '22' }}
+        if timeout 10 bash -c "</dev/tcp/${{ secrets.SSH_HOST }}/$SSH_PORT"; then
+          echo "✅ Port $SSH_PORT is accessible"
         else
-          echo "❌ Port 22 is not accessible"
+          echo "❌ Port $SSH_PORT is not accessible"
+          echo "💡 Possible solutions:"
+          echo "   - Check if SSH_HOST is correct public IP (not 10.7.74.252)"
+          echo "   - Ensure port forwarding is configured on router"
+          echo "   - Check firewall settings"
           exit 1
         fi
 
@@ -99,10 +105,11 @@ jobs:
         host: ${{ secrets.SSH_HOST }}
         username: ${{ secrets.SSH_USER }}
         key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
+        port: ${{ secrets.SSH_PORT || '22' }}
         debug: true
         script: |
           echo "🚀 Starting deployment..."
+          echo "Connected to: $(hostname -I | awk '{print $1}')"
 
           # Navigate to project directory
           cd /var/www/flask_helpdesk
