@@ -3,7 +3,6 @@ name: Deploy Flask Helpdesk
 on:
   push:
     branches: [ main, master ]
-  # Убираем pull_request чтобы деплой происходил только при push
 
 jobs:
   deploy:
@@ -25,13 +24,11 @@ jobs:
 
     - name: Run tests (if any)
       run: |
-        # python -m pytest tests/ || echo "No tests found"
         echo "Tests placeholder"
 
     - name: Stop existing application
       run: |
         echo "Stopping existing Flask application..."
-        # Останавливаем процессы Flask если они запущены
         pkill -f "python.*app.py" || echo "No Flask processes found"
         pkill -f "gunicorn.*wsgi" || echo "No Gunicorn processes found"
         sleep 2
@@ -39,11 +36,9 @@ jobs:
     - name: Copy files to production directory
       run: |
         echo "Copying files to production directory..."
-        # Копируем файлы в рабочую директорию на сервере
         rsync -av --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' \
               $GITHUB_WORKSPACE/ /var/www/flask_helpdesk/
 
-        # Устанавливаем правильные права доступа
         sudo chown -R $USER:$USER /var/www/flask_helpdesk/
         chmod +x /var/www/flask_helpdesk/app.py
         chmod +x /var/www/flask_helpdesk/wsgi.py
@@ -53,7 +48,6 @@ jobs:
         echo "Installing/updating Python dependencies..."
         cd /var/www/flask_helpdesk
 
-        # Активируем виртуальное окружение или создаем новое
         if [ ! -d "venv" ]; then
           python3 -m venv venv
         fi
@@ -68,30 +62,25 @@ jobs:
         cd /var/www/flask_helpdesk
         source venv/bin/activate
 
-        # Запускаем миграции если они есть
         if [ -f "migrations/env.py" ]; then
           flask db upgrade || echo "No migrations to run"
         fi
 
-        - name: Start application
+    - name: Start application
       run: |
         echo "Starting Flask Helpdesk application..."
         cd /var/www/flask_helpdesk
 
-        # Создаем директорию логов если её нет
         mkdir -p logs
 
-        # Запускаем приложение в фоновом режиме
         nohup /var/www/flask_helpdesk/venv/bin/python app.py > /var/www/flask_helpdesk/logs/app.log 2>&1 &
 
-        # Ждем немного для запуска
         sleep 5
 
     - name: Health check
       run: |
         echo "Performing health check..."
 
-        # Проверяем что процесс запущен
         if pgrep -f "python.*app.py"; then
           echo "✅ Flask process is running"
         else
@@ -99,7 +88,6 @@ jobs:
           exit 1
         fi
 
-        # Проверяем HTTP ответ
         for i in {1..5}; do
           if curl -f -s http://localhost:5000 > /dev/null; then
             echo "✅ Application is responding on port 5000"
