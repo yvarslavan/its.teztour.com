@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest  # 🔧 Временно: переустанавливается self-hosted runner
+    runs-on: self-hosted  # 🎉 ITS_TEZ_RUNNER готов - конфликт сессий исправлен
     name: Test Dependencies & Application
 
     steps:
@@ -126,7 +126,7 @@ jobs:
 
   deploy:
     needs: test
-    runs-on: ubuntu-latest  # 🔧 Временно: переустанавливается self-hosted runner
+    runs-on: self-hosted  # 🎉 ITS_TEZ_RUNNER готов - конфликт сессий исправлен
     # 🎯 Деплой только при push в main (не при PR)
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     name: Deploy to Production
