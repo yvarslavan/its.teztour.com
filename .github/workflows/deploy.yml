@@ -57,80 +57,77 @@ jobs:
         print('✅ Flask app created successfully')
         "
 
-  # Deploy job временно отключен до настройки секретов
-  # Раскомментируйте после добавления HOST, USERNAME, KEY, PORT в GitHub Secrets
-  #
-  # deploy:
-  #   needs: test-dependencies
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main'
-  #   name: Deploy to Production
-  #
-  #   steps:
-  #   - uses: actions/checkout@v4
-  #
-  #   - name: Deploy to server
-  #     uses: appleboy/ssh-action@v1.0.3
-  #     with:
-  #       host: ${{ secrets.HOST }}
-  #       username: ${{ secrets.USERNAME }}
-  #       key: ${{ secrets.KEY }}
-  #       port: ${{ secrets.PORT }}
-  #       script: |
-  #         echo "🚀 Starting deployment..."
-  #
-  #         # Navigate to project directory
-  #         cd /var/www/flask_helpdesk
-  #
-  #         # Pull latest changes
-  #         echo "📥 Pulling latest changes..."
-  #         git pull origin main
-  #
-  #         # Activate virtual environment
-  #         echo "🔧 Activating virtual environment..."
-  #         source venv/bin/activate
-  #
-  #         # Upgrade pip and install/upgrade dependencies
-  #         echo "📦 Updating dependencies..."
-  #         python -m pip install --upgrade pip
-  #         python -m pip install -r requirements.txt --upgrade
-  #
-  #         # Run database migrations if needed
-  #         echo "🗄️ Running database migrations..."
-  #         python -m flask db upgrade || echo "No migrations to run"
-  #
-  #         # Check application health
-  #         echo "🏥 Checking application health..."
-  #         python -c "
-  #         from blog import create_app
-  #         app = create_app()
-  #         print('✅ Application health check passed')
-  #         " || exit 1
-  #
-  #         # Restart application services
-  #         echo "🔄 Restarting services..."
-  #
-  #         # Stop existing processes
-  #         pkill -f "python.*app.py" || echo "No existing processes found"
-  #         pkill -f "gunicorn.*wsgi:app" || echo "No gunicorn processes found"
-  #
-  #         # Start application in background
-  #         echo "▶️ Starting application..."
-  #         nohup python app.py > app.log 2>&1 &
-  #
-  #         # Wait a moment for startup
-  #         sleep 5
-  #
-  #         # Check if application started successfully
-  #         if pgrep -f "python.*app.py" > /dev/null; then
-  #           echo "✅ Application started successfully"
-  #           echo "📊 Process info:"
-  #           ps aux | grep -E "(python.*app.py|gunicorn)" | grep -v grep
-  #         else
-  #           echo "❌ Application failed to start"
-  #           echo "📋 Recent logs:"
-  #           tail -20 app.log
-  #           exit 1
-  #         fi
-  #
-  #         echo "🎉 Deployment completed successfully!"
+  deploy:
+    needs: test-dependencies
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    name: Deploy to Production
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to server
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.SSH_HOST }}
+        username: ${{ secrets.SSH_USER }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: 22
+        script: |
+          echo "🚀 Starting deployment..."
+
+          # Navigate to project directory
+          cd /var/www/flask_helpdesk
+
+          # Pull latest changes
+          echo "📥 Pulling latest changes..."
+          git pull origin main
+
+          # Activate virtual environment
+          echo "🔧 Activating virtual environment..."
+          source venv/bin/activate
+
+          # Upgrade pip and install/upgrade dependencies
+          echo "📦 Updating dependencies..."
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt --upgrade
+
+          # Run database migrations if needed
+          echo "🗄️ Running database migrations..."
+          python -m flask db upgrade || echo "No migrations to run"
+
+          # Check application health
+          echo "🏥 Checking application health..."
+          python -c "
+          from blog import create_app
+          app = create_app()
+          print('✅ Application health check passed')
+          " || exit 1
+
+          # Restart application services
+          echo "🔄 Restarting services..."
+
+          # Stop existing processes
+          pkill -f "python.*app.py" || echo "No existing processes found"
+          pkill -f "gunicorn.*wsgi:app" || echo "No gunicorn processes found"
+
+          # Start application in background
+          echo "▶️ Starting application..."
+          nohup python app.py > app.log 2>&1 &
+
+          # Wait a moment for startup
+          sleep 5
+
+          # Check if application started successfully
+          if pgrep -f "python.*app.py" > /dev/null; then
+            echo "✅ Application started successfully"
+            echo "📊 Process info:"
+            ps aux | grep -E "(python.*app.py|gunicorn)" | grep -v grep
+          else
+            echo "❌ Application failed to start"
+            echo "📋 Recent logs:"
+            tail -20 app.log
+            exit 1
+          fi
+
+          echo "🎉 Deployment completed successfully!"
