@@ -1,16 +1,65 @@
 stages:
+  - validate
   - test
+  - build
 
 variables:
   PYTHON_VERSION: "3.11"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-test_simple:
-  stage: test
+cache:
+  paths:
+    - .cache/pip/
+
+validate_project:
+  stage: validate
   image: python:3.11-slim
   script:
-    - echo "Simple test started"
-    - python --version
-    - echo "Test completed successfully"
+    - echo "Validating project structure"
+    - ls -la
+    - find . -name "*.py" | wc -l | xargs echo "Python files:"
+    - find . -name "*.html" | wc -l | xargs echo "HTML templates:"
   only:
     - main
     - merge_requests
+
+test_dependencies:
+  stage: test
+  image: python:3.11-slim
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+  script:
+    - source venv/bin/activate
+    - echo "Installing dependencies..."
+    - pip install -r requirements.txt
+    - echo "Testing Flask application import..."
+    - python -c "from blog import create_app; app = create_app(); print('Flask app created successfully')"
+    - echo "Basic application tests completed"
+  artifacts:
+    paths:
+      - venv/
+    expire_in: 1 hour
+  only:
+    - main
+    - merge_requests
+
+build_application:
+  stage: build
+  image: python:3.11-slim
+  dependencies:
+    - test_dependencies
+  script:
+    - echo "Building Flask application..."
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' .
+    - echo "Build completed successfully"
+    - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
+  artifacts:
+    paths:
+      - flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
+    expire_in: 1 week
+  only:
+    - main
