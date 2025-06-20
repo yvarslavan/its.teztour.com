@@ -1,6 +1,7 @@
 {% extends 'layout.html' %}
 
 {% block content %}
+<!-- CSS Update Version: 2.1 - Updated button sizes {{ moment().format('YYYY-MM-DD HH:mm:ss') }} -->
 <div class="profile-page-wrapper">
     <!-- Background Elements -->
     <div class="background-shapes">
@@ -273,6 +274,9 @@
 
 {% block scripts %}
 <script>
+    // Debug: Check if new CSS version loaded
+    console.log('Profile template loaded - CSS Version 2.1');
+    console.log('Button styles should be updated now');
 document.addEventListener('DOMContentLoaded', function() {
     // Ripple effect for buttons
     const actionBtns = document.querySelectorAll('.action-btn');
@@ -360,7 +364,9 @@ function createRipple(event, element) {
 {% endblock %}
 
 {% block styles %}
+<!-- Profile Styles v2.1 - Force cache refresh -->
 <style>
+    /* Force CSS cache refresh - Version 2.1 */
     /* Import Modern Fonts */
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
@@ -784,15 +790,24 @@ function createRipple(event, element) {
         justify-content: center !important;
         gap: var(--spacing-lg) !important;
         padding: 16px 24px !important;
-        border-radius: var(--radius-lg);
-        text-decoration: none;
+        border-radius: var(--radius-lg) !important;
+        text-decoration: none !important;
         font-weight: 600 !important;
         font-size: 1.1rem !important;
         min-height: 56px !important;
         width: 100% !important;
-        transition: all var(--transition-normal);
-        position: relative;
-        overflow: hidden;
+        transition: all var(--transition-normal) !important;
+        position: relative !important;
+        overflow: hidden !important;
+        box-sizing: border-box !important;
+    }
+
+    /* Alternative selector for extra specificity */
+    .quick-actions .action-btn {
+        display: flex !important;
+        padding: 16px 24px !important;
+        font-size: 1.1rem !important;
+        min-height: 56px !important;
     }
 
     .primary-btn {
