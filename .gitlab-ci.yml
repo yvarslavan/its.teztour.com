@@ -39,10 +39,6 @@ test_dependencies:
     - echo "Testing Flask application import..."
     - python -c "from blog import create_app; app = create_app(); print('Flask app created successfully')"
     - echo "Basic application tests completed"
-  artifacts:
-    paths:
-      - venv/
-    expire_in: 1 hour
   only:
     - main
     - merge_requests
@@ -50,11 +46,17 @@ test_dependencies:
 build_application:
   stage: build
   image: python:3.11-slim
-  dependencies:
-    - test_dependencies
+  before_script:
+    - apt-get update -qy
+    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config
   script:
     - echo "Building Flask application..."
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' .
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - echo "Creating deployment package..."
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' .
     - echo "Build completed successfully"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
   artifacts:
