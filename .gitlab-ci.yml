@@ -81,12 +81,17 @@ deploy_to_server:
     - echo "Preparing deployment environment..."
     - apk add --no-cache openssh-client rsync
     - eval $(ssh-agent -s)
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - echo "SSH_PRIVATE_KEY length:" $(echo "$SSH_PRIVATE_KEY" | wc -c)
+    - echo "SSH_PRIVATE_KEY first line:" $(echo "$SSH_PRIVATE_KEY" | head -1)
+    - echo "SSH_PRIVATE_KEY last line:" $(echo "$SSH_PRIVATE_KEY" | tail -1)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || echo "SSH key loading failed, trying alternative method"
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
     - ssh-keyscan -H -p ${DEPLOY_PORT:-22} $DEPLOY_HOST >> ~/.ssh/known_hosts
     - echo "SSH connection prepared"
   script:
+    - echo "Testing SSH connection..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH connection successful' && whoami && pwd"
     - echo "Starting deployment to $DEPLOY_HOST..."
     - echo "Archive to deploy flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
