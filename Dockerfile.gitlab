@@ -1,0 +1,61 @@
+# 🐳 Dockerfile для Flask Helpdesk в GitLab CI/CD
+
+# Используем официальный Python образ
+FROM python:3.11-slim
+
+# Метаданные
+LABEL maintainer="Flask Helpdesk Team"
+LABEL version="1.0"
+LABEL description="Flask Helpdesk Application for GitLab CI/CD"
+
+# Установка системных зависимостей
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    libffi-dev \
+    libssl-dev \
+    default-libmysqlclient-dev \
+    pkg-config \
+    libldap2-dev \
+    libsasl2-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Создание пользователя приложения
+RUN groupadd -r flask && useradd -r -g flask flask
+
+# Установка рабочей директории
+WORKDIR /app
+
+# Копирование requirements.txt и установка зависимостей
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Копирование кода приложения
+COPY . .
+
+# Создание необходимых директорий
+RUN mkdir -p logs flask_session migrations
+
+# Настройка прав доступа
+RUN chown -R flask:flask /app
+RUN chmod +x wsgi.py
+
+# Переключение на пользователя приложения
+USER flask
+
+# Открытие порта
+EXPOSE 5000
+
+# Переменные окружения
+ENV FLASK_APP=wsgi.py
+ENV FLASK_ENV=production
+ENV PYTHONPATH=/app
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
+# Команда запуска
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "4", "--timeout", "120", "--keep-alive", "2", "wsgi:application"]
