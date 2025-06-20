@@ -779,15 +779,17 @@ function createRipple(event, element) {
     }
 
     .action-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md) var(--spacing-lg);
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: var(--spacing-lg) !important;
+        padding: 16px 24px !important;
         border-radius: var(--radius-lg);
         text-decoration: none;
-    font-weight: 600;
-        font-size: 0.9rem;
+        font-weight: 600 !important;
+        font-size: 1.1rem !important;
+        min-height: 56px !important;
+        width: 100% !important;
         transition: all var(--transition-normal);
         position: relative;
         overflow: hidden;
@@ -817,6 +819,16 @@ function createRipple(event, element) {
         color: var(--text-primary);
         transform: translateY(-2px);
         box-shadow: var(--shadow-1);
+    }
+
+    .action-btn i {
+        font-size: 1.2rem !important;
+        margin-right: 4px !important;
+    }
+
+    .action-btn span {
+        font-size: inherit !important;
+        font-weight: inherit !important;
     }
 
     .btn-ripple {
@@ -1224,10 +1236,16 @@ function createRipple(event, element) {
             gap: var(--spacing-md);
         }
 
+        .action-btn {
+            padding: 14px 20px !important;
+            font-size: 1rem !important;
+            min-height: 52px !important;
+        }
+
         .user-avatar {
-        width: 120px;
-        height: 120px;
-    }
+            width: 120px;
+            height: 120px;
+        }
 
         .user-full-name {
             font-size: 1.5rem;
@@ -1259,6 +1277,12 @@ function createRipple(event, element) {
 
         .card-header {
             padding: var(--spacing-md);
+        }
+
+        .action-btn {
+            padding: 12px 18px !important;
+            font-size: 0.95rem !important;
+            min-height: 48px !important;
         }
 
         .modal-modern .modal-body {
