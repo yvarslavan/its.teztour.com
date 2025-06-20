@@ -88,7 +88,7 @@ deploy_to_server:
     - echo "SSH connection prepared"
   script:
     - echo "Starting deployment to $DEPLOY_HOST..."
-    - echo "Archive to deploy: flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
+    - echo "Archive to deploy flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
     - echo "Uploading archive to server..."
     - scp -P ${DEPLOY_PORT:-22} flask-helpdesk-${CI_COMMIT_SHA}.tar.gz $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
@@ -105,10 +105,10 @@ deploy_to_server:
     - echo "Cleaning up old archives..."
     - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && find . -name 'flask-helpdesk-*.tar.gz' -mtime +7 -delete || echo 'Cleanup completed'"
     - echo "Deployment completed successfully!"
-    - echo "Application should be available at: https://your-domain.com"
+    - echo "Application should be available at https://its.tez-tour.com"
   environment:
     name: production
-    url: https://your-domain.com
+    url: https://its.tez-tour.com
   when: manual
   only:
     - main
