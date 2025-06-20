@@ -56,7 +56,7 @@ build_application:
     - pip install --upgrade pip
     - pip install -r requirements.txt
     - echo "Creating deployment package..."
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' .
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' --exclude='flask-helpdesk-*.tar.gz' .
     - echo "Build completed successfully"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
   artifacts:
