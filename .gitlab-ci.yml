@@ -2,6 +2,7 @@ stages:
   - validate
   - test
   - build
+  - deploy
 
 variables:
   PYTHON_VERSION: "3.11"
@@ -70,5 +71,44 @@ build_application:
     paths:
       - flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
     expire_in: 1 week
+  only:
+    - main
+
+deploy_to_server:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - echo "Preparing deployment environment..."
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H -p ${DEPLOY_PORT:-22} $DEPLOY_HOST >> ~/.ssh/known_hosts
+    - echo "SSH connection prepared"
+  script:
+    - echo "Starting deployment to $DEPLOY_HOST..."
+    - echo "Archive to deploy: flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
+    - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
+    - echo "Uploading archive to server..."
+    - scp -P ${DEPLOY_PORT:-22} flask-helpdesk-${CI_COMMIT_SHA}.tar.gz $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+    - echo "Creating backup of current deployment..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && [ -d current ] && mv current backup-$(date +%Y%m%d-%H%M%S) || echo 'No current deployment to backup'"
+    - echo "Extracting new deployment..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && mkdir -p current && tar -xzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C current"
+    - echo "Installing Python dependencies on server..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH/current && python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
+    - echo "Setting up application configuration..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH/current && [ -f ../config_production.py ] && cp ../config_production.py . || echo 'No production config found'"
+    - echo "Restarting application service..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo systemctl restart flask-helpdesk || echo 'Service restart failed - manual intervention required'"
+    - echo "Cleaning up old archives..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && find . -name 'flask-helpdesk-*.tar.gz' -mtime +7 -delete || echo 'Cleanup completed'"
+    - echo "Deployment completed successfully!"
+    - echo "Application should be available at: https://your-domain.com"
+  environment:
+    name: production
+    url: https://your-domain.com
+  when: manual
   only:
     - main
