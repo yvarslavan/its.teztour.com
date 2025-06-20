@@ -50,6 +50,7 @@ build_application:
     - echo "Building Flask application..."
     - echo "Creating lightweight deployment package..."
     - mkdir -p /tmp/deploy
+    - mkdir -p /tmp/archive
     - cp -r blog /tmp/deploy/
     - cp -r migrations /tmp/deploy/ || echo "No migrations directory"
     - cp -r static /tmp/deploy/ || echo "No static directory"
@@ -58,8 +59,9 @@ build_application:
     - cp wsgi.py /tmp/deploy/ || echo "No wsgi.py"
     - cp config.py /tmp/deploy/ || echo "No config.py"
     - cp *.py /tmp/deploy/ || echo "No additional Python files"
-    - cd /tmp/deploy
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz .
+    - echo "Creating archive..."
+    - cd /tmp/archive
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C /tmp/deploy .
     - mv flask-helpdesk-${CI_COMMIT_SHA}.tar.gz ${CI_PROJECT_DIR}/
     - cd ${CI_PROJECT_DIR}
     - echo "Build completed successfully"
