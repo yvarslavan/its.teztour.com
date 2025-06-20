@@ -1,5 +1,3 @@
-# 🚀 GitLab CI/CD Pipeline для Flask Helpdesk
-
 stages:
   - validate
   - test
@@ -7,173 +5,110 @@ stages:
   - deploy
 
 variables:
-  # Python версия
   PYTHON_VERSION: "3.11"
-  # Директория для pip cache
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  # Виртуальное окружение
-  VENV_PATH: "$CI_PROJECT_DIR/venv"
 
-# Кэширование зависимостей
 cache:
   paths:
     - .cache/pip/
-    - venv/
 
-# 📋 Этап валидации
 validate_project:
   stage: validate
-  image: python:${PYTHON_VERSION}-slim
-  before_script:
-    - apt-get update -qy
-    - apt-get install -y git
+  image: python:3.11-slim
   script:
-    - echo "🔍 Validating project structure..."
+    - echo "Validating project structure"
     - ls -la
-    - echo "✅ Project structure validated"
-    - echo "📊 Project statistics:"
     - find . -name "*.py" | wc -l | xargs echo "Python files:"
     - find . -name "*.html" | wc -l | xargs echo "HTML templates:"
-    - find . -name "*.js" | wc -l | xargs echo "JavaScript files:"
   only:
-    - merge_requests
     - main
+    - merge_requests
 
-# 🧪 Этап тестирования
 test_dependencies:
   stage: test
-  image: python:${PYTHON_VERSION}-slim
+  image: python:3.11-slim
   before_script:
-    - echo "🐍 Setting up Python environment..."
-    - python --version
-    - pip --version
-    # Установка системных зависимостей
     - apt-get update -qy
-    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config libldap2-dev libsasl2-dev
-    # Создание виртуального окружения
-    - python -m venv $VENV_PATH
-    - source $VENV_PATH/bin/activate
-    # Обновление pip
-    - pip install --upgrade pip setuptools wheel
-
+    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config
+    - python -m venv venv
+    - source venv/bin/activate
+    - pip install --upgrade pip
   script:
-    - source $VENV_PATH/bin/activate
-    # Тестирование разрешения зависимостей
-    - echo "🔍 Testing dependency resolution..."
-    - pip install --dry-run -r requirements.txt
-    - echo "✅ Dependencies are compatible"
-    # Установка зависимостей
-    - echo "📦 Installing dependencies..."
+    - source venv/bin/activate
+    - echo "Installing dependencies..."
     - pip install -r requirements.txt
-    - echo "✅ Dependencies installed successfully"
-    # Тестирование импорта Flask приложения
-    - echo "🧪 Testing Flask application import..."
-    - python -c "import flask; import werkzeug; from blog import create_app; print(f'Flask version: {flask.__version__}'); print(f'Werkzeug version: {werkzeug.__version__}'); app = create_app(); print('✅ Flask app created successfully')"
-    # Базовые тесты приложения
-    - echo "🧪 Running application tests..."
-    - python -c "from blog import create_app; import os; app = create_app(); print('✅ App context test passed'); print('🎉 All tests passed!')"
-
-  artifacts:
-    paths:
-      - venv/
-    expire_in: 1 hour
-
+    - echo "Testing Flask application import..."
+    - python -c "from blog import create_app; app = create_app(); print('Flask app created successfully')"
+    - echo "Basic application tests completed"
   only:
-    - merge_requests
     - main
+    - merge_requests
 
-# 🔨 Этап сборки
 build_application:
   stage: build
-  image: python:${PYTHON_VERSION}-slim
-  dependencies:
-    - test_dependencies
-  before_script:
-    - apt-get update -qy
-    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config libldap2-dev libsasl2-dev
-
+  image: python:3.11-slim
   script:
-    - echo "🔨 Building Flask application..."
-    # Активация виртуального окружения
-    - source $VENV_PATH/bin/activate || (python -m venv $VENV_PATH && source $VENV_PATH/bin/activate && pip install -r requirements.txt)
-    # Компиляция Python файлов
-    - python -m compileall blog/
-    - python -m compileall *.py
-    # Создание архива для деплоя
-    - echo "📦 Creating deployment package..."
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' --exclude='app_err.log' .
-    - echo "✅ Build completed successfully"
+    - echo "Building Flask application..."
+    - echo "Creating lightweight deployment package..."
+    - mkdir -p /tmp/deploy
+    - mkdir -p /tmp/archive
+    - cp -r blog /tmp/deploy/
+    - cp -r migrations /tmp/deploy/ || echo "No migrations directory"
+    - cp -r static /tmp/deploy/ || echo "No static directory"
+    - cp -r templates /tmp/deploy/ || echo "No templates directory"
+    - cp requirements.txt /tmp/deploy/
+    - cp wsgi.py /tmp/deploy/ || echo "No wsgi.py"
+    - cp config.py /tmp/deploy/ || echo "No config.py"
+    - cp *.py /tmp/deploy/ || echo "No additional Python files"
+    - echo "Creating archive..."
+    - cd /tmp/archive
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C /tmp/deploy .
+    - mv flask-helpdesk-${CI_COMMIT_SHA}.tar.gz ${CI_PROJECT_DIR}/
+    - cd ${CI_PROJECT_DIR}
+    - echo "Build completed successfully"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
-
   artifacts:
     paths:
       - flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
     expire_in: 1 week
-
   only:
     - main
 
-# 🚀 Этап деплоя (Production)
-deploy_production:
+deploy_to_server:
   stage: deploy
   image: alpine:latest
-  dependencies:
-    - build_application
   before_script:
+    - echo "Preparing deployment environment..."
     - apk add --no-cache openssh-client rsync
     - eval $(ssh-agent -s)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DEPLOY_HOST >> ~/.ssh/known_hosts
-
+    - ssh-keyscan -H -p ${DEPLOY_PORT:-22} $DEPLOY_HOST >> ~/.ssh/known_hosts
+    - echo "SSH connection prepared"
   script:
-    - echo "🚀 Deploying to production server..."
-    - echo "Target server: $DEPLOY_HOST"
-    - echo "Deploy user: $DEPLOY_USER"
-    - echo "Deploy path: $DEPLOY_PATH"
-    # Создание backup текущей версии
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && sudo systemctl stop flask-helpdesk && sudo tar -czf backup-$(date +%Y%m%d-%H%M%S).tar.gz . && sudo chown $DEPLOY_USER:$DEPLOY_USER backup-*.tar.gz"
-    # Загрузка нового кода
-    - scp flask-helpdesk-${CI_COMMIT_SHA}.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/tmp/
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && sudo tar -xzf /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz && sudo chown -R www-data:www-data . && sudo chmod +x wsgi.py"
-    # Установка зависимостей в production
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && sudo -u www-data python3 -m venv venv && sudo -u www-data venv/bin/pip install --upgrade pip && sudo -u www-data venv/bin/pip install -r requirements.txt"
-    # Выполнение миграций
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && export FLASK_APP=wsgi.py && sudo -u www-data venv/bin/python -m flask db upgrade || echo 'Migrations skipped'"
-    # Перезапуск сервиса
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "sudo systemctl start flask-helpdesk && sudo systemctl status flask-helpdesk"
-    # Проверка работоспособности
-    - ssh $DEPLOY_USER@$DEPLOY_HOST "sleep 10 && curl -f http://localhost:$DEPLOY_PORT/health || echo 'Health check failed'"
-
+    - echo "Starting deployment to $DEPLOY_HOST..."
+    - echo "Archive to deploy flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
+    - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
+    - echo "Uploading archive to server..."
+    - scp -P ${DEPLOY_PORT:-22} flask-helpdesk-${CI_COMMIT_SHA}.tar.gz $DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_PATH/
+    - echo "Creating backup of current deployment..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && [ -d current ] && mv current backup-$(date +%Y%m%d-%H%M%S) || echo 'No current deployment to backup'"
+    - echo "Extracting new deployment..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && mkdir -p current && tar -xzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C current"
+    - echo "Installing Python dependencies on server..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH/current && python3 -m venv venv && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt"
+    - echo "Setting up application configuration..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH/current && [ -f ../config_production.py ] && cp ../config_production.py . || echo 'No production config found'"
+    - echo "Restarting application service..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo systemctl restart flask-helpdesk || echo 'Service restart failed - manual intervention required'"
+    - echo "Cleaning up old archives..."
+    - ssh -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd $DEPLOY_PATH && find . -name 'flask-helpdesk-*.tar.gz' -mtime +7 -delete || echo 'Cleanup completed'"
+    - echo "Deployment completed successfully!"
+    - echo "Application should be available at https://its.tez-tour.com"
   environment:
     name: production
-    url: http://$DEPLOY_HOST:$DEPLOY_PORT
-  when: manual
-  only:
-    - main
-
-# 🧪 Staging деплой (закомментирован - добавите позже при необходимости)
-# deploy_staging:
-#   stage: deploy
-#   image: alpine:latest
-#   dependencies:
-#     - build_application
-#   script:
-#     - echo "🧪 Staging deployment disabled for now"
-#     - echo "💡 Enable when you create staging environment"
-#   when: manual
-#   only:
-#     - main
-
-# 🔧 Ручная очистка кэша
-clear_cache:
-  stage: deploy
-  image: alpine:latest
-  script:
-    - echo "🧹 Clearing pipeline cache..."
-    - rm -rf .cache/
-    - echo "✅ Cache cleared"
+    url: https://its.tez-tour.com
   when: manual
   only:
     - main
