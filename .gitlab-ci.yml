@@ -46,17 +46,22 @@ test_dependencies:
 build_application:
   stage: build
   image: python:3.11-slim
-  before_script:
-    - apt-get update -qy
-    - apt-get install -y gcc g++ libffi-dev libssl-dev default-libmysqlclient-dev pkg-config
   script:
     - echo "Building Flask application..."
-    - python -m venv venv
-    - source venv/bin/activate
-    - pip install --upgrade pip
-    - pip install -r requirements.txt
-    - echo "Creating deployment package..."
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz --exclude='.git' --exclude='venv' --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' --exclude='flask-helpdesk-*.tar.gz' .
+    - echo "Creating lightweight deployment package..."
+    - mkdir -p /tmp/deploy
+    - cp -r blog /tmp/deploy/
+    - cp -r migrations /tmp/deploy/ || echo "No migrations directory"
+    - cp -r static /tmp/deploy/ || echo "No static directory"
+    - cp -r templates /tmp/deploy/ || echo "No templates directory"
+    - cp requirements.txt /tmp/deploy/
+    - cp wsgi.py /tmp/deploy/ || echo "No wsgi.py"
+    - cp config.py /tmp/deploy/ || echo "No config.py"
+    - cp *.py /tmp/deploy/ || echo "No additional Python files"
+    - cd /tmp/deploy
+    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz .
+    - mv flask-helpdesk-${CI_COMMIT_SHA}.tar.gz ${CI_PROJECT_DIR}/
+    - cd ${CI_PROJECT_DIR}
     - echo "Build completed successfully"
     - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
   artifacts:
