@@ -49,17 +49,15 @@ build_application:
   image: python:3.11-slim
   script:
     - echo "Building Flask application..."
-    - echo "Creating lightweight deployment package..."
+    - echo "Creating COMPLETE deployment package..."
     - mkdir -p /tmp/deploy
     - mkdir -p /tmp/archive
-    - cp -r blog /tmp/deploy/
-    - cp -r migrations /tmp/deploy/ || echo "No migrations directory"
-    - cp -r static /tmp/deploy/ || echo "No static directory"
-    - cp -r templates /tmp/deploy/ || echo "No templates directory"
-    - cp requirements.txt /tmp/deploy/
-    - cp wsgi.py /tmp/deploy/ || echo "No wsgi.py"
-    - cp config.py /tmp/deploy/ || echo "No config.py"
-    - cp *.py /tmp/deploy/ || echo "No additional Python files"
+    - echo "Copying ALL project files including hidden files..."
+    - cp -r . /tmp/deploy/
+    - rm -rf /tmp/deploy/.git
+    - rm -rf /tmp/deploy/.cache
+    - rm -rf /tmp/deploy/venv
+    - ls -la /tmp/deploy/
     - echo "Creating archive..."
     - cd /tmp/archive
     - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C /tmp/deploy .
