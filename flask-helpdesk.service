@@ -1,0 +1,21 @@
+[Unit]
+Description=Flask Helpdesk Application
+After=network.target
+
+[Service]
+Type=exec
+User=www-data
+Group=www-data
+WorkingDirectory=/var/www/flask_helpdesk
+Environment=PATH=/var/www/flask_helpdesk/venv/bin
+Environment=FLASK_ENV=production
+Environment=PYTHONPATH=/var/www/flask_helpdesk
+ExecStart=/var/www/flask_helpdesk/venv/bin/python wsgi.py
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
