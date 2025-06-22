@@ -108,7 +108,7 @@ deploy_to_server:
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "ls -lah /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz" || (echo "Archive not found on server" && exit 1)
     - echo "Creating backup of current deployment..."
     - BACKUP_NAME="flask_helpdesk_backup_$(date +%Y%m%d-%H%M%S)"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d flask_helpdesk ] && rsync -av --exclude='flask_session/' --exclude='__pycache__/' --exclude='*.pyc' flask_helpdesk/ $BACKUP_NAME/ || echo 'No current deployment to backup'"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d flask_helpdesk ] && rsync -a --exclude='flask_session/' --exclude='__pycache__/' --exclude='*.pyc' flask_helpdesk/ $BACKUP_NAME/ || echo 'No current deployment to backup'"
     - echo "Extracting new deployment..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && rm -rf flask_helpdesk_temp && mkdir -p flask_helpdesk_temp"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && tar -xzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C flask_helpdesk_temp --no-same-owner" || (echo "Archive extraction failed" && exit 1)
@@ -116,7 +116,7 @@ deploy_to_server:
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/app.py ] || (echo 'Main application file not found after extraction' && exit 1)"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/requirements.txt ] || (echo 'Requirements file not found after extraction' && exit 1)"
     - echo "Syncing to Flask working directory..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rsync -av --delete --progress /tmp/flask_helpdesk_temp/ /var/www/flask_helpdesk/" || (echo "Rsync failed" && exit 1)
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rsync -a --delete /tmp/flask_helpdesk_temp/ /var/www/flask_helpdesk/" || (echo "Rsync failed" && exit 1)
     - echo "Verifying deployment files..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/app.py ] || (echo 'Main application file not found in deployment directory' && exit 1)"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/requirements.txt ] || (echo 'Requirements file not found in deployment directory' && exit 1)"
