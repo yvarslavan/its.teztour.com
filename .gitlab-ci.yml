@@ -87,20 +87,76 @@ build_deployment_package:
   stage: build
   image: python:3.11-slim
   script:
-    - echo "📦 Создание deployment пакета..."
+    - echo "📦 Создание оптимизированного deployment пакета..."
     - apt-get update && apt-get install -y rsync
     - mkdir -p deployment_package
     - |
-      rsync -av --exclude='.git' --exclude='.gitlab-ci.yml' --exclude='deployment_package' \
-            --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' \
-            --exclude='venv' --exclude='.venv' --exclude='node_modules' \
-            ./ deployment_package/
-    - echo "✅ Deployment пакет создан"
+      # Создаем компактный deployment пакет исключая ненужные файлы
+      rsync -av \
+        --exclude='.git*' \
+        --exclude='.gitlab-ci.yml' \
+        --exclude='deployment_package' \
+        --exclude='__pycache__' \
+        --exclude='*.pyc' \
+        --exclude='*.pyo' \
+        --exclude='.pytest_cache' \
+        --exclude='venv' \
+        --exclude='.venv' \
+        --exclude='node_modules' \
+        --exclude='.cache' \
+        --exclude='*.log' \
+        --exclude='logs/' \
+        --exclude='.env*' \
+        --exclude='*.tmp' \
+        --exclude='*.bak' \
+        --exclude='*.swp' \
+        --exclude='.DS_Store' \
+        --exclude='Thumbs.db' \
+        --exclude='.coverage' \
+        --exclude='htmlcov/' \
+        --exclude='*.egg-info/' \
+        --exclude='dist/' \
+        --exclude='build/' \
+        --exclude='.tox/' \
+        --exclude='.mypy_cache/' \
+        --exclude='.vscode/' \
+        --exclude='.idea/' \
+        --exclude='*.map' \
+        --exclude='*.min.js.map' \
+        --exclude='*.css.map' \
+        ./ deployment_package/
+    - |
+      # Дополнительная очистка внутри пакета
+      find deployment_package/ -name "*.pyc" -delete
+      find deployment_package/ -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
+      find deployment_package/ -name "*.log" -delete
+      find deployment_package/ -name ".DS_Store" -delete
+    - echo "✅ Deployment пакет создан и оптимизирован"
+    - echo "📊 Размер пакета до сжатия:"
     - du -sh deployment_package/
+    - echo "📋 Содержимое пакета (топ-уровень):"
+    - ls -la deployment_package/
+    - echo "📈 Количество файлов:"
+    - find deployment_package/ -type f | wc -l
+    - |
+      # Создаем сжатый архив для экономии места при передаче
+      echo "🗜️ Создаем сжатый архив..."
+      tar -czf deployment_package.tar.gz -C deployment_package .
+      echo "📊 Размер сжатого архива:"
+      ls -lh deployment_package.tar.gz
+      echo "📉 Коэффициент сжатия:"
+      ORIGINAL_SIZE=$(du -sb deployment_package | cut -f1)
+      COMPRESSED_SIZE=$(stat -f%z deployment_package.tar.gz 2>/dev/null || stat -c%s deployment_package.tar.gz)
+      echo "Оригинал: $(numfmt --to=iec $ORIGINAL_SIZE)"
+      echo "Сжатый: $(numfmt --to=iec $COMPRESSED_SIZE)"
+      echo "Экономия: $(( (ORIGINAL_SIZE - COMPRESSED_SIZE) * 100 / ORIGINAL_SIZE ))%"
   artifacts:
     paths:
       - deployment_package/
+      - deployment_package.tar.gz
     expire_in: 1 hour
+    # Ограничиваем размер артефакта
+    when: on_success
   only:
     - main
 
@@ -196,9 +252,22 @@ deploy_to_server:
         sudo chmod -R 755 $DEPLOY_PATH
       "
     - |
-      # Синхронизируем файлы
+      # Синхронизируем файлы (используем сжатый архив если он меньше)
       echo '📁 Синхронизируем файлы...'
-      rsync -avz --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
+      if [ -f "deployment_package.tar.gz" ]; then
+        echo '🗜️ Используем сжатый архив для передачи'
+        scp deployment_package.tar.gz $DEPLOY_USER@$DEPLOY_SERVER:/tmp/
+        ssh $DEPLOY_USER@$DEPLOY_SERVER "
+          cd $DEPLOY_PATH
+          sudo rm -rf ./*
+          sudo tar -xzf /tmp/deployment_package.tar.gz -C $DEPLOY_PATH
+          sudo rm -f /tmp/deployment_package.tar.gz
+          echo '✅ Архив распакован'
+        "
+      else
+        echo '📁 Используем обычную синхронизацию'
+        rsync -avz --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
+      fi
     - |
       # Исправляем права после синхронизации
       ssh $DEPLOY_USER@$DEPLOY_SERVER "
