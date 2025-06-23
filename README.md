@@ -264,3 +264,29 @@ Blueprint "calls" осуществляет:
 *   **График** показывает историю пингов **только** с сервера Helpdesk до Finesse.
 *   **Кнопка "Обновить"** запускает оба теста вручную.
 *   Все данные автоматически обновляются каждые 10 секунд.
+
+# Проверить статус
+sudo systemctl status flask-helpdesk
+
+# Перезапустить
+sudo systemctl restart flask-helpdesk
+
+# Остановить
+sudo systemctl stop flask-helpdesk
+
+# Просмотр логов в реальном времени
+sudo journalctl -u flask-helpdesk -f
+
+# Проверить основной gunicorn сервис
+sudo systemctl status gunicorn
+
+# Посмотреть бэкапы
+ssh -i C:\Users\VARSLAVAN.DESKTOP-MNJ5CKG\.ssh\gitlab_ci_deploy yvarslavan@10.7.74.252 "cd /tmp && ./manage_backups.sh list"
+
+# Очистить бэкапы На Windows (оставить 2 последних)
+ssh -i C:\Users\VARSLAVAN.DESKTOP-MNJ5CKG\.ssh\gitlab_ci_deploy yvarslavan@10.7.74.252 "cd /tmp && echo 'y' | ./manage_backups.sh clean 2"
+
+# На сервере (после SSH подключения):
+cd /tmp
+./manage_backups.sh list    # Посмотреть список
+./manage_backups.sh clean 2 # Оставить 2 последних

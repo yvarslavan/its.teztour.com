@@ -1,0 +1,364 @@
+/**
+ * Tasks Table Header Redesign
+ * Современный дизайн шапки таблицы DataTables для страницы /tasks/my-tasks
+ * Версия: 1.0
+ * Дата: 2024-12-27
+ */
+
+/* ===== ОСНОВНЫЕ СТИЛИ ШАПКИ ТАБЛИЦЫ ===== */
+
+/* Контейнер таблицы */
+.table-wrapper {
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+/* Основные стили для шапки таблицы */
+#tasksTable thead th {
+    /* Современный градиентный фон с легкими оттенками */
+    background: linear-gradient(135deg,
+        #f8fafc 0%,
+        #f1f5f9 25%,
+        #e2e8f0 75%,
+        #cbd5e1 100%) !important;
+
+    /* Цвет текста и типографика */
+    color: #334155 !important;
+    font-weight: 700 !important;
+    font-size: 0.875rem !important;
+    letter-spacing: 0.025em !important;
+
+    /* Отступы и размеры */
+    padding: 1rem 0.875rem !important;
+
+    /* Границы */
+    border-bottom: 3px solid #3b82f6 !important;
+    border-right: 1px solid rgba(203, 213, 225, 0.6) !important;
+
+    /* Позиционирование */
+    position: relative !important;
+    vertical-align: middle !important;
+
+    /* Анимации */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    /* Тени */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Убираем правую границу у последнего заголовка */
+#tasksTable thead th:last-child {
+    border-right: none !important;
+}
+
+/* Эффект при наведении на заголовки */
+#tasksTable thead th:hover {
+    background: linear-gradient(135deg,
+        #f1f5f9 0%,
+        #e2e8f0 25%,
+        #cbd5e1 75%,
+        #94a3b8 100%) !important;
+
+    color: #1e293b !important;
+
+    /* Легкое поднятие при наведении */
+    transform: translateY(-1px) !important;
+
+    /* Усиленная тень */
+    box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.9),
+        0 2px 8px rgba(59, 130, 246, 0.15) !important;
+
+    /* Более яркая нижняя граница */
+    border-bottom-color: #2563eb !important;
+}
+
+/* ===== СТИЛИ ДЛЯ СОДЕРЖИМОГО ЗАГОЛОВКОВ ===== */
+
+/* Контейнер содержимого заголовка */
+#tasksTable thead th .th-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    white-space: nowrap !important;
+    font-weight: inherit !important;
+}
+
+/* Иконки в заголовках */
+#tasksTable thead th .th-content i {
+    color: #3b82f6 !important;
+    font-size: 0.875rem !important;
+    opacity: 0.85 !important;
+    transition: all 0.3s ease !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Изменение цвета иконок при наведении */
+#tasksTable thead th:hover .th-content i {
+    color: #1d4ed8 !important;
+    opacity: 1 !important;
+    transform: scale(1.1) !important;
+}
+
+/* Текст заголовков */
+#tasksTable thead th .th-content span {
+    color: inherit !important;
+    font-weight: inherit !important;
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ===== СПЕЦИФИЧЕСКИЕ СТИЛИ ДЛЯ РАЗНЫХ КОЛОНОК ===== */
+
+/* ID колонка */
+#tasksTable thead th.col-id .th-content i {
+    color: #059669 !important;
+}
+#tasksTable thead th.col-id:hover .th-content i {
+    color: #047857 !important;
+}
+
+/* Email колонка */
+#tasksTable thead th.col-email .th-content i {
+    color: #dc2626 !important;
+}
+#tasksTable thead th.col-email:hover .th-content i {
+    color: #b91c1c !important;
+}
+
+/* Тема задачи колонка */
+#tasksTable thead th.col-subject .th-content i {
+    color: #7c3aed !important;
+}
+#tasksTable thead th.col-subject:hover .th-content i {
+    color: #6d28d9 !important;
+}
+
+/* Статус колонка */
+#tasksTable thead th.col-status .th-content i {
+    color: #ea580c !important;
+}
+#tasksTable thead th.col-status:hover .th-content i {
+    color: #c2410c !important;
+}
+
+/* Приоритет колонка */
+#tasksTable thead th.col-priority .th-content i {
+    color: #be123c !important;
+}
+#tasksTable thead th.col-priority:hover .th-content i {
+    color: #9f1239 !important;
+}
+
+/* Дата создания колонка */
+#tasksTable thead th.col-created .th-content i {
+    color: #0891b2 !important;
+}
+#tasksTable thead th.col-created:hover .th-content i {
+    color: #0e7490 !important;
+}
+
+/* Дата обновления колонка */
+#tasksTable thead th.col-updated .th-content i {
+    color: #7c2d12 !important;
+}
+#tasksTable thead th.col-updated:hover .th-content i {
+    color: #65a30d !important;
+}
+
+/* ===== СТИЛИ СОРТИРОВКИ ===== */
+
+/* Базовые стили для сортировки */
+#tasksTable thead th.sorting:after,
+#tasksTable thead th.sorting_asc:after,
+#tasksTable thead th.sorting_desc:after {
+    font-family: 'Font Awesome 5 Free' !important;
+    font-weight: 900 !important;
+    position: absolute !important;
+    right: 0.75rem !important;
+    top: 50% !important;
+    transform: translateY(-50%) !important;
+    font-size: 0.75rem !important;
+    opacity: 0.6 !important;
+    transition: all 0.3s ease !important;
+    color: #64748b !important;
+}
+
+/* Иконка для несортированных колонок */
+#tasksTable thead th.sorting:after {
+    content: "\f0dc" !important; /* fa-sort */
+    opacity: 0.4 !important;
+}
+
+/* Иконка для сортировки по возрастанию */
+#tasksTable thead th.sorting_asc:after {
+    content: "\f0de" !important; /* fa-sort-up */
+    opacity: 0.8 !important;
+    color: #3b82f6 !important;
+}
+
+/* Иконка для сортировки по убыванию */
+#tasksTable thead th.sorting_desc:after {
+    content: "\f0dd" !important; /* fa-sort-down */
+    opacity: 0.8 !important;
+    color: #3b82f6 !important;
+}
+
+/* Эффект при наведении на сортируемые заголовки */
+#tasksTable thead th.sorting:hover:after {
+    opacity: 0.8 !important;
+    color: #3b82f6 !important;
+    transform: translateY(-50%) scale(1.1) !important;
+}
+
+/* ===== АДАПТИВНЫЕ СТИЛИ ===== */
+
+/* Планшеты */
+@media (max-width: 1024px) {
+    #tasksTable thead th {
+        padding: 0.875rem 0.75rem !important;
+        font-size: 0.8125rem !important;
+    }
+
+    #tasksTable thead th .th-content {
+        gap: 0.375rem !important;
+    }
+
+    #tasksTable thead th .th-content i {
+        font-size: 0.8125rem !important;
+    }
+}
+
+/* Мобильные устройства */
+@media (max-width: 768px) {
+    #tasksTable thead th {
+        padding: 0.75rem 0.5rem !important;
+        font-size: 0.75rem !important;
+    }
+
+    #tasksTable thead th .th-content {
+        gap: 0.25rem !important;
+    }
+
+    #tasksTable thead th .th-content i {
+        font-size: 0.75rem !important;
+    }
+
+    /* Скрываем некоторые иконки на очень маленьких экранах для экономии места */
+    #tasksTable thead th.col-created .th-content i,
+    #tasksTable thead th.col-updated .th-content i {
+        display: none !important;
+    }
+}
+
+/* Очень маленькие экраны */
+@media (max-width: 480px) {
+    #tasksTable thead th {
+        padding: 0.625rem 0.375rem !important;
+        font-size: 0.6875rem !important;
+    }
+
+    /* Упрощенный дизайн для очень маленьких экранов */
+    #tasksTable thead th {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+        border-bottom: 2px solid #3b82f6 !important;
+    }
+}
+
+/* ===== УЛУЧШЕНИЯ ДЛЯ ACCESSIBILITY ===== */
+
+/* Фокус для клавиатурной навигации */
+#tasksTable thead th:focus {
+    outline: 2px solid #3b82f6 !important;
+    outline-offset: 2px !important;
+    background: linear-gradient(135deg,
+        #dbeafe 0%,
+        #bfdbfe 25%,
+        #93c5fd 75%,
+        #60a5fa 100%) !important;
+}
+
+/* Высокий контраст для пользователей с нарушениями зрения */
+@media (prefers-contrast: high) {
+    #tasksTable thead th {
+        background: #ffffff !important;
+        color: #000000 !important;
+        border-bottom: 3px solid #000000 !important;
+        border-right: 1px solid #000000 !important;
+    }
+
+    #tasksTable thead th .th-content i {
+        color: #000000 !important;
+    }
+}
+
+/* Уменьшенная анимация для пользователей с чувствительностью к движению */
+@media (prefers-reduced-motion: reduce) {
+    #tasksTable thead th,
+    #tasksTable thead th .th-content i,
+    #tasksTable thead th.sorting:after,
+    #tasksTable thead th.sorting_asc:after,
+    #tasksTable thead th.sorting_desc:after {
+        transition: none !important;
+        transform: none !important;
+    }
+
+    #tasksTable thead th:hover {
+        transform: none !important;
+    }
+}
+
+/* ===== ДОПОЛНИТЕЛЬНЫЕ ВИЗУАЛЬНЫЕ УЛУЧШЕНИЯ ===== */
+
+/* Легкая анимация при загрузке шапки */
+@keyframes headerFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+#tasksTable thead {
+    animation: headerFadeIn 0.6s ease-out !important;
+}
+
+/* Пульсирующий эффект для активной сортировки */
+@keyframes sortPulse {
+    0% { opacity: 0.8; }
+    50% { opacity: 1; }
+    100% { opacity: 0.8; }
+}
+
+#tasksTable thead th.sorting_asc:after,
+#tasksTable thead th.sorting_desc:after {
+    animation: sortPulse 2s ease-in-out infinite !important;
+}
+
+/* Тонкая настройка для темной темы (если используется) */
+@media (prefers-color-scheme: dark) {
+    #tasksTable thead th {
+        background: linear-gradient(135deg,
+            #1e293b 0%,
+            #334155 25%,
+            #475569 75%,
+            #64748b 100%) !important;
+        color: #f1f5f9 !important;
+        border-bottom-color: #60a5fa !important;
+        border-right-color: rgba(148, 163, 184, 0.6) !important;
+    }
+
+    #tasksTable thead th .th-content span {
+        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8) !important;
+    }
+
+    .table-wrapper {
+        background: #0f172a !important;
+        border-color: #334155 !important;
+    }
+}
