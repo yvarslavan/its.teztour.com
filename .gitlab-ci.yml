@@ -2,9 +2,14 @@ stages:
   - validate
   - test
   - build
+  - pre-deploy
   - deploy
+  - post-deploy
 
 variables:
+  DEPLOY_PATH: "/var/www/flask_helpdesk"
+  SERVICE_NAME: "flask-helpdesk"
+  BACKUP_PATH: "/var/backups/flask_helpdesk"
   PYTHON_VERSION: "3.11"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
   AFTER_SCRIPT_IGNORE_ERRORS: false
@@ -13,18 +18,37 @@ cache:
   paths:
     - .cache/pip/
 
+# ============ ЭТАП 1: ВАЛИДАЦИЯ ============
 validate_project:
   stage: validate
   image: python:3.11-slim
   script:
-    - echo "Validating project structure"
-    - ls -la
-    - find . -name "*.py" | wc -l | xargs echo "Python files:"
-    - find . -name "*.html" | wc -l | xargs echo "HTML templates:"
+    - echo "🔍 Проверка структуры проекта..."
+    - |
+      if [ ! -f "requirements.txt" ]; then
+        echo "❌ Файл requirements.txt не найден"
+        exit 1
+      fi
+      if [ ! -f "app.py" ]; then
+        echo "❌ Файл app.py не найден"
+        exit 1
+      fi
+      if [ ! -f "flask-helpdesk.service" ]; then
+        echo "❌ Файл flask-helpdesk.service не найден"
+        exit 1
+      fi
+    - echo "✅ Структура проекта валидна"
+    - echo "📊 Статистика проекта:"
+    - find . -name "*.py" | wc -l | xargs echo "Python файлов:"
+    - find . -name "*.html" | wc -l | xargs echo "HTML шаблонов:"
+    - find . -name "*.css" | wc -l | xargs echo "CSS файлов:"
+    - find . -name "*.js" | wc -l | xargs echo "JavaScript файлов:"
   only:
     - main
+    - develop
     - merge_requests
 
+# ============ ЭТАП 2: ТЕСТИРОВАНИЕ ============
 test_dependencies:
   stage: test
   image: python:3.11-slim
@@ -36,147 +60,324 @@ test_dependencies:
     - pip install --upgrade pip
   script:
     - source venv/bin/activate
-    - echo "Installing dependencies..."
+    - echo "🧪 Тестирование зависимостей..."
     - pip install -r requirements.txt
-    - echo "Testing Flask application import..."
-    - python -c "from blog import create_app; app = create_app(); print('Flask app created successfully')"
-    - echo "Basic application tests completed"
+    - echo "✅ Все зависимости установлены успешно"
   only:
     - main
+    - develop
     - merge_requests
 
-build_application:
+test_flask_import:
+  stage: test
+  image: python:3.11-slim
+  script:
+    - echo "🧪 Проверка импорта Flask приложения..."
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+    - python -c "from blog import create_app; print('✅ Flask приложение импортируется корректно')"
+    - python -c "import flask; print('Flask версия:', flask.__version__)"
+  only:
+    - main
+    - develop
+    - merge_requests
+
+# ============ ЭТАП 3: СБОРКА ============
+build_deployment_package:
   stage: build
   image: python:3.11-slim
   script:
-    - echo "Building Flask application..."
-    - echo "Creating COMPLETE deployment package..."
-    - mkdir -p /tmp/deploy
-    - mkdir -p /tmp/archive
-    - echo "Copying project files excluding unnecessary directories..."
-    - cp -r . /tmp/deploy/
-    - rm -rf /tmp/deploy/.git
-    - rm -rf /tmp/deploy/.cache
-    - rm -rf /tmp/deploy/venv
-    - rm -rf /tmp/deploy/__pycache__
-    - rm -rf /tmp/deploy/flask_session
-    - find /tmp/deploy -name "*.pyc" -delete
-    - find /tmp/deploy -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-    - ls -la /tmp/deploy/
-    - echo "Creating archive..."
-    - cd /tmp/archive
-    - tar -czf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C /tmp/deploy .
-    - mv flask-helpdesk-${CI_COMMIT_SHA}.tar.gz ${CI_PROJECT_DIR}/
-    - cd ${CI_PROJECT_DIR}
-    - echo "Build completed successfully"
-    - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
+    - echo "📦 Создание deployment пакета..."
+    - apt-get update && apt-get install -y rsync
+    - mkdir -p deployment_package
+    - |
+      rsync -av --exclude='.git' --exclude='.gitlab-ci.yml' --exclude='deployment_package' \
+            --exclude='__pycache__' --exclude='*.pyc' --exclude='.pytest_cache' \
+            --exclude='venv' --exclude='.venv' --exclude='node_modules' \
+            ./ deployment_package/
+    - echo "✅ Deployment пакет создан"
+    - du -sh deployment_package/
   artifacts:
     paths:
-      - flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
-    expire_in: 1 week
+      - deployment_package/
+    expire_in: 1 hour
   only:
     - main
 
-deploy_to_server:
-  stage: deploy
+# ============ ЭТАП 4: ПРЕДВАРИТЕЛЬНАЯ ПРОВЕРКА ============
+pre_deploy_checks:
+  stage: pre-deploy
   image: alpine:latest
-  resource_group: production
   before_script:
-    - echo "Preparing deployment environment..."
-    - apk add --no-cache openssh-client
+    - apk add --no-cache openssh-client curl
     - eval $(ssh-agent -s)
-    - echo "SSH_PRIVATE_KEY length:" $(echo "$SSH_PRIVATE_KEY" | wc -c)
-    - echo "SSH_PRIVATE_KEY first line:" $(echo "$SSH_PRIVATE_KEY" | head -1)
-    - echo "SSH_PRIVATE_KEY last line:" $(echo "$SSH_PRIVATE_KEY" | tail -1)
     - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H -p ${DEPLOY_PORT:-22} $DEPLOY_HOST >> ~/.ssh/known_hosts || echo "ssh-keyscan failed, using StrictHostKeyChecking=no"
-    - echo "Host $DEPLOY_HOST" >> ~/.ssh/config
-    - echo "  StrictHostKeyChecking no" >> ~/.ssh/config
-    - echo "  UserKnownHostsFile /dev/null" >> ~/.ssh/config
-    - echo "  ServerAliveInterval 60" >> ~/.ssh/config
-    - echo "  ServerAliveCountMax 5" >> ~/.ssh/config
-    - chmod 600 ~/.ssh/config
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
   script:
-    - echo "Checking disk space and cleaning up..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "df -h && echo 'Cleaning temporary files...'"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rm -rf /tmp/flask* || true"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && ls -la | grep flask_helpdesk_backup || echo 'No old backups found'"
-    - echo "Testing SSH connection..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH connection successful' && whoami && pwd" || (echo "SSH connection failed" && exit 1)
-    - echo "Starting deployment to $DEPLOY_HOST..."
-    - echo "Archive to deploy flask-helpdesk-${CI_COMMIT_SHA}.tar.gz"
-    - ls -lah flask-helpdesk-${CI_COMMIT_SHA}.tar.gz
-    - echo "Verifying archive integrity..."
-    - tar -tzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz > /dev/null || (echo "Archive is corrupted" && exit 1)
-    - echo "Uploading archive to server..."
-    - scp -o ConnectTimeout=10 -P ${DEPLOY_PORT:-22} flask-helpdesk-${CI_COMMIT_SHA}.tar.gz $DEPLOY_USER@$DEPLOY_HOST:/tmp/ || (echo "Archive upload failed" && exit 1)
-    - echo "Verifying archive upload..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "ls -lah /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz" || (echo "Archive not found on server" && exit 1)
-    - echo "Creating backup of current deployment..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && if [ -d flask_helpdesk ]; then echo 'Backing up current deployment...'; rm -rf flask_helpdesk_backup 2>/dev/null || true; cp -r flask_helpdesk flask_helpdesk_backup; echo 'Cleaning backup from problematic files...'; rm -rf flask_helpdesk_backup/venv flask_helpdesk_backup/logs 2>/dev/null || true; find flask_helpdesk_backup -name '*.pyc' -delete 2>/dev/null || true; find flask_helpdesk_backup -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true; else echo 'No current deployment to backup'; fi"
-    - echo "Extracting new deployment..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && rm -rf flask_helpdesk_temp && mkdir -p flask_helpdesk_temp"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && tar -xzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C flask_helpdesk_temp --no-same-owner" || (echo "Archive extraction failed" && exit 1)
-    - echo "Verifying extraction..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/app.py ] || (echo 'Main application file not found after extraction' && exit 1)"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/requirements.txt ] || (echo 'Requirements file not found after extraction' && exit 1)"
-    - echo "Safely cleaning up old deployment files..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "if [ -d /var/www/flask_helpdesk ]; then echo 'Removing old venv and cache files...'; rm -rf /var/www/flask_helpdesk/venv 2>/dev/null || true; find /var/www/flask_helpdesk -name '*.pyc' -delete 2>/dev/null || true; find /var/www/flask_helpdesk -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true; echo 'Attempting to clean flask_session files...'; find /var/www/flask_helpdesk/flask_session -type f -delete 2>/dev/null || echo 'Some flask_session files could not be removed (permission issues)'; fi"
-    - echo "Syncing to Flask working directory..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /var/www/flask_helpdesk"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp/flask_helpdesk_temp && cp -r . /var/www/flask_helpdesk/" || (echo "Copy failed" && exit 1)
-    - echo "Verifying deployment files..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/app.py ] || (echo 'Main application file not found in deployment directory' && exit 1)"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/requirements.txt ] || (echo 'Requirements file not found in deployment directory' && exit 1)"
-    - echo "Creating necessary directories..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /var/www/flask_helpdesk/logs /var/www/flask_helpdesk/flask_session && chmod 755 /var/www/flask_helpdesk/logs /var/www/flask_helpdesk/flask_session"
-    - echo "Installing Python dependencies on server..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && python3 -m venv venv" || (echo "Virtual environment creation failed" && exit 1)
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt" || (echo "Dependencies installation failed" && exit 1)
-    - echo "Setting up application configuration..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && [ -f ../config_production.py ] && cp ../config_production.py . || echo 'No production config found'"
-    - echo "Setting up database scripts..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && chmod +x scripts/*.py"
-    - echo "Running automated deployment with type detection..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && export FLASK_APP=app.py && if [ -f blog/db/blog.db ]; then echo 'Running update with backup...' && python scripts/deploy_automation.py update-safe; else echo 'Running fresh installation...' && python scripts/deploy_automation.py fresh; fi" || (echo "Automated deployment failed" && exit 1)
-    - echo "Running post-deployment checks..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && export FLASK_APP=app.py && python scripts/deploy_automation.py check" || (echo "Post-deployment checks failed" && exit 1)
-    - echo "Testing application import..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && python -c 'from blog import create_app; app = create_app(); print(\"Application loads successfully\")'" || (echo "Application test failed, rolling back..." && ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d flask_helpdesk_backup ] && rm -rf flask_helpdesk && mv flask_helpdesk_backup flask_helpdesk" && exit 1)
-    - echo "Notifying about manual service restart requirement..."
-    - echo "⚠️  MANUAL ACTION REQUIRED:"
-    - echo "   Please run the following commands on the server to complete deployment:"
-    - echo "   sudo cp /var/www/flask_helpdesk/flask-helpdesk.service /etc/systemd/system/"
-    - echo "   sudo systemctl daemon-reload"
-    - echo "   sudo systemctl enable flask-helpdesk"
-    - echo "   sudo systemctl restart flask-helpdesk"
-    - echo "   sudo chown -R www-data:www-data /var/www/flask_helpdesk/flask_session"
-    - echo "   sudo chown -R www-data:www-data /var/www/flask_helpdesk/logs"
-    - echo "Cleaning up temporary files..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rm -f /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz && rm -rf /tmp/flask_helpdesk_temp"
-    - echo "Checking disk space after deployment..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "df -h | grep -E '(Filesystem|/dev/mapper)'"
-    - echo "✅ Deployment completed successfully!"
-    - echo "🌐 Application files updated at /var/www/flask_helpdesk/"
-    - echo "🔧 Manual service restart required to complete deployment"
-    - echo "📍 Application will be available at https://its.tez-tour.com after service restart"
-  environment:
-    name: production
-    url: https://its.tez-tour.com
+    - echo "🔍 Предварительные проверки сервера..."
+    - |
+      # Проверка SSH подключения
+      if ! ssh $DEPLOY_USER@$DEPLOY_SERVER "echo 'SSH соединение OK'"; then
+        echo "❌ Ошибка SSH подключения"
+        exit 1
+      fi
+    - |
+      # Проверка свободного места (минимум 1GB)
+      AVAILABLE_SPACE=$(ssh $DEPLOY_USER@$DEPLOY_SERVER "df $DEPLOY_PATH | awk 'NR==2 {print \$4}'")
+      if [ "$AVAILABLE_SPACE" -lt 1048576 ]; then
+        echo "❌ Недостаточно свободного места на сервере"
+        exit 1
+      fi
+      echo "✅ Свободного места: $(($AVAILABLE_SPACE / 1024)) MB"
+    - |
+      # Проверка прав доступа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        if [ ! -w '$DEPLOY_PATH' ]; then
+          echo '❌ Нет прав записи в $DEPLOY_PATH'
+          exit 1
+        fi
+        echo '✅ Права доступа корректны'
+      "
+    - |
+      # Проверка статуса сервиса
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        if ! sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '⚠️ Сервис $SERVICE_NAME не запущен, но это нормально для первого деплоя'
+        else
+          echo '✅ Сервис $SERVICE_NAME активен'
+        fi
+      "
+    - echo "✅ Все предварительные проверки пройдены"
+  only:
+    - main
+
+# ============ ЭТАП 5: ДЕПЛОЙ ============
+deploy_to_server:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo "🚀 Начинаем деплой на сервер..."
+    - |
+      # Создаем бэкап существующего проекта
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '💾 Создаем бэкап...'
+        if [ -d '$DEPLOY_PATH' ]; then
+          sudo mkdir -p $BACKUP_PATH
+          sudo cp -r $DEPLOY_PATH $BACKUP_PATH/backup_\$(date +%Y%m%d_%H%M%S)
+          echo '✅ Бэкап создан'
+        fi
+      "
+    - |
+      # Останавливаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⏹️ Останавливаем сервис...'
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          sudo systemctl stop $SERVICE_NAME
+          echo '✅ Сервис остановлен'
+        else
+          echo 'ℹ️ Сервис уже остановлен'
+        fi
+      "
+    - |
+      # Убеждаемся что все права правильные перед синхронизацией
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Исправляем права доступа перед деплоем...'
+        sudo mkdir -p $DEPLOY_PATH
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo chmod -R 755 $DEPLOY_PATH
+      "
+    - |
+      # Синхронизируем файлы
+      echo '📁 Синхронизируем файлы...'
+      rsync -avz --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
+    - |
+      # Исправляем права после синхронизации
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Исправляем права доступа после синхронизации...'
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo find $DEPLOY_PATH -type d -exec chmod 755 {} \;
+        sudo find $DEPLOY_PATH -type f -exec chmod 644 {} \;
+        sudo chmod +x $DEPLOY_PATH/app.py
+      "
+    - |
+      # Пересоздаем виртуальное окружение
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🐍 Настраиваем Python окружение...'
+        cd $DEPLOY_PATH
+
+        # Удаляем старое venv если есть
+        if [ -d 'venv' ]; then
+          sudo rm -rf venv
+        fi
+
+        # Создаем новое venv
+        sudo python3 -m venv venv --prompt flask_helpdesk
+        sudo chown -R www-data:www-data venv/
+
+        # Активируем и устанавливаем зависимости
+        sudo -u www-data venv/bin/pip install --upgrade pip
+        sudo -u www-data venv/bin/pip install -r requirements.txt
+
+        echo '✅ Python окружение настроено'
+      "
+    - |
+      # Тестируем приложение
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🧪 Тестируем приложение...'
+        cd $DEPLOY_PATH
+
+        # Проверяем что приложение может быть импортировано
+        sudo -u www-data venv/bin/python -c 'from blog import create_app; print(\"✅ Приложение импортируется корректно\")'
+      "
+    - |
+      # Настраиваем systemd сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⚙️ Настраиваем systemd сервис...'
+
+        # Копируем service файл
+        sudo cp $DEPLOY_PATH/flask-helpdesk.service /etc/systemd/system/
+        sudo systemctl daemon-reload
+        sudo systemctl enable $SERVICE_NAME
+
+        echo '✅ Systemd сервис настроен'
+      "
+    - |
+      # Финальное исправление прав
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Финальное исправление прав...'
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo chmod -R 755 $DEPLOY_PATH
+
+        # Особые права для важных файлов
+        sudo chmod 644 $DEPLOY_PATH/requirements.txt
+        sudo chmod 755 $DEPLOY_PATH/app.py
+
+        echo '✅ Все права исправлены'
+      "
+    - |
+      # Запускаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '▶️ Запускаем сервис...'
+        sudo systemctl start $SERVICE_NAME
+
+        # Ждем запуска
+        sleep 5
+
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Сервис запущен успешно'
+        else
+          echo '❌ Ошибка запуска сервиса'
+          sudo systemctl status $SERVICE_NAME
+          exit 1
+        fi
+      "
+    - echo "🎉 Деплой завершен успешно!"
+  only:
+    - main
+
+# ============ ЭТАП 6: ПОСТ-ДЕПЛОЙ ПРОВЕРКИ ============
+post_deploy_verification:
+  stage: post-deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client curl
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo "🔍 Проверяем результат деплоя..."
+    - |
+      # Проверка статуса сервиса
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '📊 Статус сервиса:'
+        sudo systemctl status $SERVICE_NAME --no-pager
+
+        echo '📝 Последние логи:'
+        sudo journalctl -u $SERVICE_NAME --no-pager -n 10
+      "
+    - |
+      # Проверка HTTP ответа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🌐 Проверяем HTTP ответ...'
+        if curl -f -s -o /dev/null http://localhost:5000; then
+          echo '✅ Приложение отвечает по HTTP'
+        else
+          echo '❌ Приложение не отвечает по HTTP'
+          exit 1
+        fi
+      "
+    - |
+      # Проверка прав доступа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔐 Проверяем права доступа:'
+        ls -la $DEPLOY_PATH/
+        echo '🐍 Права venv:'
+        ls -la $DEPLOY_PATH/venv/
+      "
+    - |
+      # Финальный отчет
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '📈 ОТЧЕТ О ДЕПЛОЕ:'
+        echo '=================='
+        echo 'Сервис:' \$(sudo systemctl is-active $SERVICE_NAME)
+        echo 'PID:' \$(sudo systemctl show $SERVICE_NAME --property=MainPID --value)
+        echo 'Время запуска:' \$(sudo systemctl show $SERVICE_NAME --property=ActiveEnterTimestamp --value)
+        echo 'Использование памяти:' \$(sudo systemctl show $SERVICE_NAME --property=MemoryCurrent --value | numfmt --to=iec)
+        echo '=================='
+      "
+    - echo "✅ Пост-деплой проверки завершены успешно!"
+  only:
+    - main
+
+# ============ ROLLBACK ЗАДАЧА (ВРУЧНУЮ) ============
+rollback_deployment:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+  script:
+    - echo "🔄 Выполняем откат к предыдущей версии..."
+    - |
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        # Останавливаем текущий сервис
+        sudo systemctl stop $SERVICE_NAME
+
+        # Находим последний бэкап
+        LAST_BACKUP=\$(ls -t $BACKUP_PATH/backup_* | head -n 1)
+
+        if [ -z \"\$LAST_BACKUP\" ]; then
+          echo '❌ Бэкапы не найдены'
+          exit 1
+        fi
+
+        echo '🔄 Восстанавливаем из бэкапа:' \$LAST_BACKUP
+
+        # Удаляем текущую версию и восстанавливаем бэкап
+        sudo rm -rf $DEPLOY_PATH
+        sudo cp -r \$LAST_BACKUP $DEPLOY_PATH
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+
+        # Запускаем сервис
+        sudo systemctl start $SERVICE_NAME
+
+        echo '✅ Откат выполнен успешно'
+      "
   when: manual
   only:
     - main
-  after_script:
-    - echo "Running after_script cleanup..."
-    - eval $(ssh-agent -s) || true
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || true
-    - |
-      if [ "$CI_JOB_STATUS" == "failed" ]; then
-        echo "Deployment failed, checking for backup to rollback..."
-        ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && if [ -d flask_helpdesk_backup ]; then echo 'Rolling back to previous version...'; rm -rf flask_helpdesk && mv flask_helpdesk_backup flask_helpdesk && echo 'Rollback completed'; else echo 'No backup found for rollback'; fi" || echo "Rollback failed or no SSH connection"
-      else
-        echo "Deployment successful, cleaning up backup..."
-        ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && rm -rf flask_helpdesk_backup || echo 'No backup to clean'" || echo "Backup cleanup failed"
-      fi
