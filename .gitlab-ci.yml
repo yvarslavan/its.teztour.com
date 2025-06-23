@@ -91,46 +91,34 @@ build_deployment_package:
     - apt-get update && apt-get install -y rsync
     - mkdir -p deployment_package
     - |
-      # Создаем компактный deployment пакет исключая ненужные файлы
-      rsync -av \
-        --exclude='.git*' \
-        --exclude='.gitlab-ci.yml' \
-        --exclude='deployment_package' \
-        --exclude='__pycache__' \
-        --exclude='*.pyc' \
-        --exclude='*.pyo' \
-        --exclude='.pytest_cache' \
-        --exclude='venv' \
-        --exclude='.venv' \
-        --exclude='node_modules' \
-        --exclude='.cache' \
-        --exclude='*.log' \
-        --exclude='logs/' \
-        --exclude='.env*' \
-        --exclude='*.tmp' \
-        --exclude='*.bak' \
-        --exclude='*.swp' \
-        --exclude='.DS_Store' \
-        --exclude='Thumbs.db' \
-        --exclude='.coverage' \
-        --exclude='htmlcov/' \
-        --exclude='*.egg-info/' \
-        --exclude='dist/' \
-        --exclude='build/' \
-        --exclude='.tox/' \
-        --exclude='.mypy_cache/' \
-        --exclude='.vscode/' \
-        --exclude='.idea/' \
-        --exclude='*.map' \
-        --exclude='*.min.js.map' \
-        --exclude='*.css.map' \
-        ./ deployment_package/
+      # НОВАЯ СТРАТЕГИЯ: Включаем только необходимые файлы
+      echo "📦 Создаем минимальный deployment пакет..."
+
+      # Создаем структуру
+      mkdir -p deployment_package/blog
+
+      # Копируем только необходимые файлы
+      cp app.py deployment_package/
+      cp wsgi.py deployment_package/
+      cp requirements.txt deployment_package/
+      cp flask-helpdesk.service deployment_package/
+      cp config.py deployment_package/
+      cp .flaskenv deployment_package/
+      cp config.ini deployment_package/
+      cp mysql_db.py deployment_package/
+      cp redmine.py deployment_package/
+      cp erp_oracle.py deployment_package/
+
+      # Копируем папку blog (основное приложение)
+      rsync -av --exclude='__pycache__' --exclude='*.pyc' blog/ deployment_package/blog/
+
+      echo "✅ Минимальный пакет создан - только необходимые файлы"
     - |
-      # Дополнительная очистка внутри пакета
+      # Финальная очистка минимального пакета
       find deployment_package/ -name "*.pyc" -delete
       find deployment_package/ -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
-      find deployment_package/ -name "*.log" -delete
       find deployment_package/ -name ".DS_Store" -delete
+      echo "🧹 Очистка завершена"
     - echo "✅ Deployment пакет создан и оптимизирован"
     - echo "📊 Размер пакета до сжатия:"
     - du -sh deployment_package/
