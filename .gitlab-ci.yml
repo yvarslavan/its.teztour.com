@@ -87,12 +87,12 @@ build_deployment_package:
   stage: build
   image: python:3.11-slim
   script:
-    - echo "📦 Создание оптимизированного deployment пакета..."
+    - echo "📦 Создание МИНИМАЛЬНОГО deployment пакета (v2)..."
     - apt-get update && apt-get install -y rsync
     - mkdir -p deployment_package
     - |
       # НОВАЯ СТРАТЕГИЯ: Включаем только необходимые файлы
-      echo "📦 Создаем минимальный deployment пакет..."
+      echo "📦 РАДИКАЛЬНО НОВЫЙ ПОДХОД: Создаем минимальный deployment пакет..."
 
       # Создаем структуру
       mkdir -p deployment_package/blog
@@ -113,6 +113,10 @@ build_deployment_package:
       rsync -av --exclude='__pycache__' --exclude='*.pyc' blog/ deployment_package/blog/
 
       echo "✅ Минимальный пакет создан - только необходимые файлы"
+      echo "🔍 ДИАГНОСТИКА: Проверяем что НЕ включено в пакет:"
+      echo "❌ app_err.log - $(if [ -f deployment_package/app_err.log ]; then echo 'НАЙДЕН!'; else echo 'исключен'; fi)"
+      echo "❌ logs/ - $(if [ -d deployment_package/logs ]; then echo 'НАЙДЕНА!'; else echo 'исключена'; fi)"
+      echo "❌ scripts/ - $(if [ -d deployment_package/scripts ]; then echo 'НАЙДЕНА!'; else echo 'исключена'; fi)"
     - |
       # Финальная очистка минимального пакета
       find deployment_package/ -name "*.pyc" -delete
