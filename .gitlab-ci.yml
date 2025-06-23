@@ -156,12 +156,54 @@ build_deployment_package:
 pre_deploy_checks:
   stage: pre-deploy
   image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client curl
   script:
-    - echo "ℹ️ Этап pre_deploy_checks пропущен - переменные деплоя не настроены в GitLab CI/CD"
-    - echo "✅ Для настройки деплоя добавьте переменные SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем проверки"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные деплоя установлены"
+
+      # Настраиваем SSH
+      eval $(ssh-agent -s)
+      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🔍 Предварительные проверки сервера..."
+
+      # Проверка SSH подключения
+      if ! ssh $DEPLOY_USER@$DEPLOY_SERVER "echo 'SSH соединение OK'"; then
+        echo "❌ Ошибка SSH подключения"
+        exit 1
+      fi
+
+      # Проверка свободного места (минимум 1GB)
+      AVAILABLE_SPACE=$(ssh $DEPLOY_USER@$DEPLOY_SERVER "df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}'")
+      if [ "$AVAILABLE_SPACE" -lt 1048576 ]; then
+        echo "❌ Недостаточно свободного места на сервере"
+        exit 1
+      fi
+      echo "✅ Свободного места: $(($AVAILABLE_SPACE / 1024)) MB"
+
+      # Проверка прав доступа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        if [ ! -w '${DEPLOY_PATH:-/var/www/flask_helpdesk}' ]; then
+          echo '❌ Нет прав записи в ${DEPLOY_PATH:-/var/www/flask_helpdesk}'
+          exit 1
+        fi
+        echo '✅ Права доступа корректны'
+      "
+
+      echo "✅ Все предварительные проверки пройдены"
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "main" && $SSH_PRIVATE_KEY && $DEPLOY_SERVER && $DEPLOY_USER'
-      when: never  # Отключаем до настройки переменных
     - if: '$CI_COMMIT_REF_NAME == "main"'
       when: always
 
@@ -169,12 +211,141 @@ pre_deploy_checks:
 deploy_to_server:
   stage: deploy
   image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
   script:
-    - echo "ℹ️ Этап deploy_to_server пропущен - переменные деплоя не настроены в GitLab CI/CD"
-    - echo "✅ Для настройки деплоя добавьте переменные SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения для деплоя..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем деплой"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные деплоя установлены"
+
+      # Настраиваем SSH
+      eval $(ssh-agent -s)
+      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🚀 Начинаем деплой на сервер..."
+
+      # Устанавливаем переменные по умолчанию
+      DEPLOY_PATH=${DEPLOY_PATH:-/var/www/flask_helpdesk}
+      BACKUP_PATH=${BACKUP_PATH:-/var/backups/flask_helpdesk}
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      # Создаем бэкап существующего проекта
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '💾 Создаем бэкап...'
+        if [ -d '$DEPLOY_PATH' ]; then
+          sudo mkdir -p $BACKUP_PATH
+          sudo cp -r $DEPLOY_PATH $BACKUP_PATH/backup_\$(date +%Y%m%d_%H%M%S)
+          echo '✅ Бэкап создан'
+        fi
+      "
+
+      # Останавливаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⏹️ Останавливаем сервис...'
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          sudo systemctl stop $SERVICE_NAME
+          echo '✅ Сервис остановлен'
+        else
+          echo 'ℹ️ Сервис уже остановлен'
+        fi
+      "
+
+      # Подготавливаем директории
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Подготовка директорий...'
+        sudo mkdir -p $DEPLOY_PATH
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo chmod -R 755 $DEPLOY_PATH
+      "
+
+      # Синхронизируем файлы
+      echo '📁 Синхронизируем файлы...'
+      if [ -f "deployment_package.tar.gz" ]; then
+        echo '🗜️ Используем сжатый архив для передачи'
+        scp deployment_package.tar.gz $DEPLOY_USER@$DEPLOY_SERVER:/tmp/
+        ssh $DEPLOY_USER@$DEPLOY_SERVER "
+          cd $DEPLOY_PATH
+          sudo rm -rf ./*
+          sudo tar -xzf /tmp/deployment_package.tar.gz -C $DEPLOY_PATH
+          sudo rm -f /tmp/deployment_package.tar.gz
+          echo '✅ Архив распакован'
+        "
+      else
+        echo '📁 Используем обычную синхронизацию'
+        rsync -avz --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
+      fi
+
+      # Исправляем права после синхронизации
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Исправляем права доступа...'
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo find $DEPLOY_PATH -type d -exec chmod 755 {} \;
+        sudo find $DEPLOY_PATH -type f -exec chmod 644 {} \;
+        sudo chmod +x $DEPLOY_PATH/app.py
+      "
+
+      # Пересоздаем виртуальное окружение
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🐍 Настраиваем Python окружение...'
+        cd $DEPLOY_PATH
+
+        # Удаляем старое venv если есть
+        if [ -d 'venv' ]; then
+          sudo rm -rf venv
+        fi
+
+        # Создаем новое venv
+        sudo python3 -m venv venv --prompt flask_helpdesk
+        sudo chown -R www-data:www-data venv/
+
+        # Активируем и устанавливаем зависимости
+        sudo -u www-data venv/bin/pip install --upgrade pip
+        sudo -u www-data venv/bin/pip install -r requirements.txt
+
+        echo '✅ Python окружение настроено'
+      "
+
+      # Настраиваем systemd сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⚙️ Настраиваем systemd сервис...'
+
+        # Копируем service файл
+        sudo cp $DEPLOY_PATH/flask-helpdesk.service /etc/systemd/system/
+        sudo systemctl daemon-reload
+        sudo systemctl enable $SERVICE_NAME
+
+        echo '✅ Systemd сервис настроен'
+      "
+
+      # Запускаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '▶️ Запускаем сервис...'
+        sudo systemctl start $SERVICE_NAME
+
+        # Ждем запуска
+        sleep 5
+
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Сервис запущен успешно'
+        else
+          echo '❌ Ошибка запуска сервиса'
+          sudo systemctl status $SERVICE_NAME
+          exit 1
+        fi
+      "
+
+      echo "🎉 Деплой завершен успешно!"
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "main" && $SSH_PRIVATE_KEY && $DEPLOY_SERVER && $DEPLOY_USER'
-      when: never  # Отключаем до настройки переменных
     - if: '$CI_COMMIT_REF_NAME == "main"'
       when: always
 
@@ -182,12 +353,61 @@ deploy_to_server:
 post_deploy_verification:
   stage: post-deploy
   image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client curl
   script:
-    - echo "ℹ️ Этап post_deploy_verification пропущен - переменные деплоя не настроены в GitLab CI/CD"
-    - echo "✅ Для настройки деплоя добавьте переменные SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения для верификации..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем верификацию"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные верификации установлены"
+
+      # Настраиваем SSH
+      eval $(ssh-agent -s)
+      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🔍 Проверяем результат деплоя..."
+
+      # Устанавливаем переменные по умолчанию
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      # Проверка статуса сервиса
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '📊 Статус сервиса:'
+        sudo systemctl status $SERVICE_NAME --no-pager
+
+        echo '📝 Последние логи:'
+        sudo journalctl -u $SERVICE_NAME --no-pager -n 10
+      "
+
+      # Проверка HTTP ответа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🌐 Проверяем HTTP ответ...'
+        if curl -f -s -o /dev/null http://localhost:5000; then
+          echo '✅ Приложение отвечает по HTTP'
+        else
+          echo '❌ Приложение не отвечает по HTTP'
+          exit 1
+        fi
+      "
+
+      # Проверка прав доступа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Проверяем права доступа...'
+        ls -la ${DEPLOY_PATH:-/var/www/flask_helpdesk}/
+        echo '✅ Права доступа проверены'
+      "
+
+      echo "✅ Верификация деплоя завершена успешно!"
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "main" && $SSH_PRIVATE_KEY && $DEPLOY_SERVER && $DEPLOY_USER'
-      when: never  # Отключаем до настройки переменных
     - if: '$CI_COMMIT_REF_NAME == "main"'
       when: always
 
@@ -195,10 +415,68 @@ post_deploy_verification:
 rollback_deployment:
   stage: deploy
   image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
   script:
-    - echo "ℹ️ Этап rollback_deployment пропущен - переменные деплоя не настроены в GitLab CI/CD"
-    - echo "✅ Для настройки деплоя добавьте переменные SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения для отката..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - невозможно выполнить откат"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 1
+      fi
+
+      echo "✅ Все переменные отката установлены"
+
+      # Настраиваем SSH
+      eval $(ssh-agent -s)
+      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🔄 Выполняем откат к предыдущей версии..."
+
+      # Устанавливаем переменные по умолчанию
+      DEPLOY_PATH=${DEPLOY_PATH:-/var/www/flask_helpdesk}
+      BACKUP_PATH=${BACKUP_PATH:-/var/backups/flask_helpdesk}
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        # Останавливаем текущий сервис
+        sudo systemctl stop $SERVICE_NAME
+
+        # Находим последний бэкап
+        LAST_BACKUP=\$(ls -t $BACKUP_PATH/backup_* | head -n 1)
+
+        if [ -z \"\$LAST_BACKUP\" ]; then
+          echo '❌ Бэкапы не найдены'
+          exit 1
+        fi
+
+        echo '🔄 Восстанавливаем из бэкапа:' \$LAST_BACKUP
+
+        # Удаляем текущую версию и восстанавливаем бэкап
+        sudo rm -rf $DEPLOY_PATH
+        sudo cp -r \$LAST_BACKUP $DEPLOY_PATH
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+
+        # Запускаем сервис
+        sudo systemctl start $SERVICE_NAME
+
+        # Проверяем статус
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Откат выполнен успешно'
+        else
+          echo '❌ Ошибка после отката'
+          sudo systemctl status $SERVICE_NAME
+          exit 1
+        fi
+      "
+
+      echo "✅ Откат завершен успешно!"
   rules:
-    - if: '$CI_COMMIT_REF_NAME == "main" && $SSH_PRIVATE_KEY && $DEPLOY_SERVER && $DEPLOY_USER'
-      when: manual  # Активируем только при настроенных переменных
-    - when: never
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: manual
+      allow_failure: false
