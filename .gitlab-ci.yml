@@ -53,11 +53,15 @@ build_application:
     - echo "Creating COMPLETE deployment package..."
     - mkdir -p /tmp/deploy
     - mkdir -p /tmp/archive
-    - echo "Copying ALL project files including hidden files..."
+    - echo "Copying project files excluding unnecessary directories..."
     - cp -r . /tmp/deploy/
     - rm -rf /tmp/deploy/.git
     - rm -rf /tmp/deploy/.cache
     - rm -rf /tmp/deploy/venv
+    - rm -rf /tmp/deploy/__pycache__
+    - rm -rf /tmp/deploy/flask_session
+    - find /tmp/deploy -name "*.pyc" -delete
+    - find /tmp/deploy -name "__pycache__" -type d -exec rm -rf {} + 2>/dev/null || true
     - ls -la /tmp/deploy/
     - echo "Creating archive..."
     - cd /tmp/archive
@@ -79,7 +83,7 @@ deploy_to_server:
   resource_group: production
   before_script:
     - echo "Preparing deployment environment..."
-    - apk add --no-cache openssh-client rsync
+    - apk add --no-cache openssh-client
     - eval $(ssh-agent -s)
     - echo "SSH_PRIVATE_KEY length:" $(echo "$SSH_PRIVATE_KEY" | wc -c)
     - echo "SSH_PRIVATE_KEY first line:" $(echo "$SSH_PRIVATE_KEY" | head -1)
@@ -95,6 +99,10 @@ deploy_to_server:
     - echo "  ServerAliveCountMax 5" >> ~/.ssh/config
     - chmod 600 ~/.ssh/config
   script:
+    - echo "Checking disk space and cleaning up..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "df -h && echo 'Cleaning temporary files...'"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rm -rf /tmp/flask* || true"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && ls -la | grep flask_helpdesk_backup || echo 'No old backups found'"
     - echo "Testing SSH connection..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "echo 'SSH connection successful' && whoami && pwd" || (echo "SSH connection failed" && exit 1)
     - echo "Starting deployment to $DEPLOY_HOST..."
@@ -107,38 +115,53 @@ deploy_to_server:
     - echo "Verifying archive upload..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "ls -lah /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz" || (echo "Archive not found on server" && exit 1)
     - echo "Creating backup of current deployment..."
-    - BACKUP_NAME="flask_helpdesk_backup_$(date +%Y%m%d-%H%M%S)"
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d flask_helpdesk ] && rsync -a --exclude='flask_session/' --exclude='__pycache__/' --exclude='*.pyc' flask_helpdesk/ $BACKUP_NAME/ || echo 'No current deployment to backup'"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && if [ -d flask_helpdesk ]; then echo 'Backing up current deployment...'; rm -rf flask_helpdesk_backup 2>/dev/null || true; cp -r flask_helpdesk flask_helpdesk_backup; echo 'Cleaning backup from problematic files...'; rm -rf flask_helpdesk_backup/venv flask_helpdesk_backup/logs 2>/dev/null || true; find flask_helpdesk_backup -name '*.pyc' -delete 2>/dev/null || true; find flask_helpdesk_backup -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true; else echo 'No current deployment to backup'; fi"
     - echo "Extracting new deployment..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && rm -rf flask_helpdesk_temp && mkdir -p flask_helpdesk_temp"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp && tar -xzf flask-helpdesk-${CI_COMMIT_SHA}.tar.gz -C flask_helpdesk_temp --no-same-owner" || (echo "Archive extraction failed" && exit 1)
     - echo "Verifying extraction..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/app.py ] || (echo 'Main application file not found after extraction' && exit 1)"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /tmp/flask_helpdesk_temp/requirements.txt ] || (echo 'Requirements file not found after extraction' && exit 1)"
+    - echo "Safely cleaning up old deployment files..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "if [ -d /var/www/flask_helpdesk ]; then echo 'Removing old venv and cache files...'; rm -rf /var/www/flask_helpdesk/venv 2>/dev/null || true; find /var/www/flask_helpdesk -name '*.pyc' -delete 2>/dev/null || true; find /var/www/flask_helpdesk -name '__pycache__' -type d -exec rm -rf {} + 2>/dev/null || true; echo 'Attempting to clean flask_session files...'; find /var/www/flask_helpdesk/flask_session -type f -delete 2>/dev/null || echo 'Some flask_session files could not be removed (permission issues)'; fi"
     - echo "Syncing to Flask working directory..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rsync -a --delete /tmp/flask_helpdesk_temp/ /var/www/flask_helpdesk/" || (echo "Rsync failed" && exit 1)
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /var/www/flask_helpdesk"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /tmp/flask_helpdesk_temp && cp -r . /var/www/flask_helpdesk/" || (echo "Copy failed" && exit 1)
     - echo "Verifying deployment files..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/app.py ] || (echo 'Main application file not found in deployment directory' && exit 1)"
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "[ -f /var/www/flask_helpdesk/requirements.txt ] || (echo 'Requirements file not found in deployment directory' && exit 1)"
-    - echo "Setting file permissions..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo chown -R www-data:www-data /var/www/flask_helpdesk/" || echo 'Permission setting failed - continuing without changing ownership'
+    - echo "Creating necessary directories..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "mkdir -p /var/www/flask_helpdesk/logs /var/www/flask_helpdesk/flask_session && chmod 755 /var/www/flask_helpdesk/logs /var/www/flask_helpdesk/flask_session"
     - echo "Installing Python dependencies on server..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && python3 -m venv venv" || (echo "Virtual environment creation failed" && exit 1)
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && pip install --upgrade pip && pip install -r requirements.txt" || (echo "Dependencies installation failed" && exit 1)
     - echo "Setting up application configuration..."
     - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && [ -f ../config_production.py ] && cp ../config_production.py . || echo 'No production config found'"
-    - echo "Setting up systemd service..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo cp /var/www/flask_helpdesk/flask-helpdesk.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable flask-helpdesk" || echo "Service setup skipped - manual configuration required"
+    - echo "Setting up database scripts..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && chmod +x scripts/*.py"
+    - echo "Running automated deployment with type detection..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && export FLASK_APP=app.py && if [ -f blog/db/blog.db ]; then echo 'Running update with backup...' && python scripts/deploy_automation.py update-safe; else echo 'Running fresh installation...' && python scripts/deploy_automation.py fresh; fi" || (echo "Automated deployment failed" && exit 1)
+    - echo "Running post-deployment checks..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && export FLASK_APP=app.py && python scripts/deploy_automation.py check" || (echo "Post-deployment checks failed" && exit 1)
     - echo "Testing application import..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && python -c 'from blog import create_app; app = create_app(); print(\"Application loads successfully\")'" || (echo "Application test failed, rolling back..." && ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d $BACKUP_NAME ] && rm -rf flask_helpdesk && mv $BACKUP_NAME flask_helpdesk" && exit 1)
-    - echo "Restarting application service..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo systemctl restart flask-helpdesk" || (echo "Service restart failed - manual intervention required" && exit 1)
-    - echo "Verifying service status..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "sudo systemctl is-active flask-helpdesk" || (echo "Service is not running after restart" && exit 1)
-    - echo "Cleaning up old files..."
-    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rm -f /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz && rm -rf /tmp/flask_helpdesk_temp && find /var/www/flask_helpdesk_backup_* -maxdepth 0 -mtime +7 -exec rm -rf {} + 2>/dev/null || echo 'Cleanup completed'"
-    - echo "Deployment completed successfully!"
-    - echo "Application should be available at https://its.tez-tour.com"
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www/flask_helpdesk && source venv/bin/activate && python -c 'from blog import create_app; app = create_app(); print(\"Application loads successfully\")'" || (echo "Application test failed, rolling back..." && ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && [ -d flask_helpdesk_backup ] && rm -rf flask_helpdesk && mv flask_helpdesk_backup flask_helpdesk" && exit 1)
+    - echo "Notifying about manual service restart requirement..."
+    - echo "⚠️  MANUAL ACTION REQUIRED:"
+    - echo "   Please run the following commands on the server to complete deployment:"
+    - echo "   sudo cp /var/www/flask_helpdesk/flask-helpdesk.service /etc/systemd/system/"
+    - echo "   sudo systemctl daemon-reload"
+    - echo "   sudo systemctl enable flask-helpdesk"
+    - echo "   sudo systemctl restart flask-helpdesk"
+    - echo "   sudo chown -R www-data:www-data /var/www/flask_helpdesk/flask_session"
+    - echo "   sudo chown -R www-data:www-data /var/www/flask_helpdesk/logs"
+    - echo "Cleaning up temporary files..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "rm -f /tmp/flask-helpdesk-${CI_COMMIT_SHA}.tar.gz && rm -rf /tmp/flask_helpdesk_temp"
+    - echo "Checking disk space after deployment..."
+    - ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "df -h | grep -E '(Filesystem|/dev/mapper)'"
+    - echo "✅ Deployment completed successfully!"
+    - echo "🌐 Application files updated at /var/www/flask_helpdesk/"
+    - echo "🔧 Manual service restart required to complete deployment"
+    - echo "📍 Application will be available at https://its.tez-tour.com after service restart"
   environment:
     name: production
     url: https://its.tez-tour.com
@@ -146,8 +169,14 @@ deploy_to_server:
   only:
     - main
   after_script:
+    - echo "Running after_script cleanup..."
+    - eval $(ssh-agent -s) || true
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - || true
     - |
       if [ "$CI_JOB_STATUS" == "failed" ]; then
         echo "Deployment failed, checking for backup to rollback..."
-        ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && LATEST_BACKUP=\$(ls -t flask_helpdesk_backup_* 2>/dev/null | head -1) && [ -n \"\$LATEST_BACKUP\" ] && echo \"Rolling back to \$LATEST_BACKUP\" && rm -rf flask_helpdesk && mv \"\$LATEST_BACKUP\" flask_helpdesk && sudo systemctl restart flask-helpdesk || echo 'No backup found for rollback'"
+        ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && if [ -d flask_helpdesk_backup ]; then echo 'Rolling back to previous version...'; rm -rf flask_helpdesk && mv flask_helpdesk_backup flask_helpdesk && echo 'Rollback completed'; else echo 'No backup found for rollback'; fi" || echo "Rollback failed or no SSH connection"
+      else
+        echo "Deployment successful, cleaning up backup..."
+        ssh -o ConnectTimeout=10 -p ${DEPLOY_PORT:-22} $DEPLOY_USER@$DEPLOY_HOST "cd /var/www && rm -rf flask_helpdesk_backup || echo 'No backup to clean'" || echo "Backup cleanup failed"
       fi
