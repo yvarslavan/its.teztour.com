@@ -133,7 +133,33 @@ def get_quality_session_safe():
 Base = declarative_base()
 
 def get_database_config():
-    """Получает конфигурацию базы данных из config.ini с подробной диагностикой."""
+    """
+    Получает конфигурацию базы данных из переменных окружения или config.ini.
+    Приоритет отдается переменным окружения, что идеально для продакшена.
+    Файл config.ini используется как фоллбэк для локальной разработки.
+    """
+    # Проверка наличия основных переменных окружения для MySQL
+    mysql_host_env = os.getenv('MYSQL_HOST')
+    mysql_quality_host_env = os.getenv('MYSQL_QUALITY_HOST')
+
+    if mysql_host_env and mysql_quality_host_env:
+        print("✅ Конфигурация MySQL загружается из переменных окружения (Production mode).")
+        return {
+            'mysql': {
+                'host': mysql_host_env,
+                'database': os.getenv('MYSQL_DATABASE'),
+                'user': os.getenv('MYSQL_USER'),
+                'password': os.getenv('MYSQL_PASSWORD')
+            },
+            'mysql_quality': {
+                'host': mysql_quality_host_env,
+                'database': os.getenv('MYSQL_QUALITY_DATABASE'),
+                'user': os.getenv('MYSQL_QUALITY_USER'),
+                'password': os.getenv('MYSQL_QUALITY_PASSWORD')
+            }
+        }
+
+    print("ℹ️ Переменные окружения для БД не найдены, используется config.ini (Development mode).")
     config = configparser.ConfigParser()
 
     # Пробуем найти config.ini в нескольких стандартных местах
@@ -175,8 +201,9 @@ def get_database_config():
         raise configparser.NoSectionError('mysql')
 
     print(f"✅ Конфигурация успешно загружена из {config_path}")
+    print(f"ℹ️ Найдены секции: {config.sections()}")
 
-    # Возвращаем конфигурацию, как и раньше
+    # Возвращаем конфигурацию из файла
     return {
         'mysql': {
             'host': config.get('mysql', 'host'),
