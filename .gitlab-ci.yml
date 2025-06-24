@@ -413,14 +413,7 @@ deploy_to_server:
         cd $DEPLOY_PATH
         if [ ! -f 'blog/db/blog.db' ]; then
           echo 'Создаем новую базу данных...'
-          sudo -u www-data $DEPLOY_PATH/venv/bin/python -c \"
-from blog import create_app
-from blog.models import db
-app = create_app()
-with app.app_context():
-    db.create_all()
-    print('База данных создана успешно')
-\" || echo 'Ошибка создания базы данных (возможно уже существует)'
+          sudo -u www-data $DEPLOY_PATH/venv/bin/python -c 'from blog import create_app; from blog.models import db; app = create_app(); app.app_context().push(); db.create_all(); print(\"База данных создана успешно\")' || echo 'Ошибка создания базы данных (возможно уже существует)'
           echo '✅ База данных инициализирована'
         else
           echo 'ℹ️ База данных уже существует'
