@@ -375,6 +375,58 @@ deploy_to_server:
         sudo chmod +x $DEPLOY_PATH/app.py
       "
 
+      # Создаем файл конфигурации для продакшена
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⚙️ Создаем конфигурацию для продакшена...'
+        cd $DEPLOY_PATH
+        if [ ! -f '.env.production' ]; then
+          echo '# Для Linux продакшн' | sudo tee .env.production > /dev/null
+          echo 'FLASK_ENV=production' | sudo tee -a .env.production > /dev/null
+          echo 'FLASK_APP=wsgi.py' | sudo tee -a .env.production > /dev/null
+          echo 'ORACLE_CLIENT_PATH=/opt/oracle/instantclient' | sudo tee -a .env.production > /dev/null
+          echo 'SQLALCHEMY_DATABASE_URI=sqlite:///blog/db/blog.db?timeout=30' | sudo tee -a .env.production > /dev/null
+          echo 'SQLALCHEMY_DATABASE_URI_ORACLE_CRM=oracle+oracledb://crm:sunzHa@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+          echo 'SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES=oracle+oracledb://sales:sunzHa1@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+          echo 'SQLALCHEMY_TRACK_MODIFICATIONS=True' | sudo tee -a .env.production > /dev/null
+          echo 'db_host=10.7.23.4' | sudo tee -a .env.production > /dev/null
+          echo 'db_port=1521' | sudo tee -a .env.production > /dev/null
+          echo 'db_service_name=ENIS' | sudo tee -a .env.production > /dev/null
+          echo 'db_user_name=crm' | sudo tee -a .env.production > /dev/null
+          echo 'db_password=sunzHa' | sudo tee -a .env.production > /dev/null
+          sudo chown www-data:www-data .env.production
+          sudo chmod 600 .env.production
+          echo '✅ Файл .env.production создан'
+        else
+          echo 'ℹ️ Файл .env.production уже существует'
+        fi
+
+        # Создаем директорию для базы данных
+        sudo mkdir -p $DEPLOY_PATH/blog/db
+        sudo chown -R www-data:www-data $DEPLOY_PATH/blog/db
+        sudo chmod -R 755 $DEPLOY_PATH/blog/db
+        echo '✅ Директория для базы данных создана'
+      "
+
+      # Инициализируем базу данных если необходимо
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🗄️ Проверяем базу данных...'
+        cd $DEPLOY_PATH
+        if [ ! -f 'blog/db/blog.db' ]; then
+          echo 'Создаем новую базу данных...'
+          sudo -u www-data $DEPLOY_PATH/venv/bin/python -c \"
+from blog import create_app
+from blog.models import db
+app = create_app()
+with app.app_context():
+    db.create_all()
+    print('База данных создана успешно')
+\" || echo 'Ошибка создания базы данных (возможно уже существует)'
+          echo '✅ База данных инициализирована'
+        else
+          echo 'ℹ️ База данных уже существует'
+        fi
+      "
+
       # Пересоздаем виртуальное окружение
       ssh $DEPLOY_USER@$DEPLOY_SERVER "
         echo '🐍 Настраиваем Python окружение...'
@@ -420,7 +472,29 @@ deploy_to_server:
           echo '✅ Сервис запущен успешно'
         else
           echo '❌ Ошибка запуска сервиса'
-          sudo systemctl status $SERVICE_NAME
+          echo '📋 Статус сервиса:'
+          sudo systemctl status $SERVICE_NAME --no-pager
+          echo '📋 Последние логи сервиса:'
+          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager
+          echo '📋 Проверка файла wsgi.py:'
+          if [ -f '$DEPLOY_PATH/wsgi.py' ]; then
+            echo '✅ wsgi.py найден'
+            head -10 '$DEPLOY_PATH/wsgi.py'
+          else
+            echo '❌ wsgi.py не найден'
+            echo '📁 Содержимое директории:'
+            ls -la '$DEPLOY_PATH/'
+          fi
+          echo '📋 Проверка виртуального окружения:'
+          if [ -f '$DEPLOY_PATH/venv/bin/python' ]; then
+            echo '✅ Python в venv найден'
+            sudo -u www-data '$DEPLOY_PATH/venv/bin/python' --version
+          else
+            echo '❌ Python в venv не найден'
+          fi
+          echo '📋 Попытка ручного запуска:'
+          cd '$DEPLOY_PATH'
+          sudo -u www-data timeout 10s '$DEPLOY_PATH/venv/bin/python' wsgi.py || echo 'Ручной запуск завершился с ошибкой'
           exit 1
         fi
       "
