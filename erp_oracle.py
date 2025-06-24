@@ -2,7 +2,7 @@ from configparser import ConfigParser
 import os
 import logging
 from flask import flash
-import cx_Oracle
+import oracledb
 
 os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 
@@ -21,10 +21,15 @@ def connect_oracle(
     oracle_host, oracle_port, oracle_service_name, oracle_user_name, oracle_password
 ):
     try:
-        dsn = cx_Oracle.makedsn(oracle_host, oracle_port, service_name=oracle_service_name)
-        oracle_connection = cx_Oracle.connect(oracle_user_name, oracle_password, dsn)
+        oracle_connection = oracledb.connect(
+            user=oracle_user_name,
+            password=oracle_password,
+            host=oracle_host,
+            port=oracle_port,
+            service_name=oracle_service_name
+        )
         return oracle_connection
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         logging.error("Ошибка выполнения открытия соединения: %s", str(e))
         return None
 
@@ -34,7 +39,7 @@ def close_oracle_connection(connection):
         try:
             connection.close()
             print("Oracle connection closed successfully")
-        except cx_Oracle.DatabaseError as e:
+        except oracledb.DatabaseError as e:
             logging.error("Ошибка выполнения закрытия соединения: %s", str(e))
     else:
         logging.warning("Попытка закрыть несуществующее соединение")
@@ -53,7 +58,7 @@ def verify_credentials(connection, login_erp_user, password_erp_user):
                 }
             )
             return bool(cursor.fetchone()[0] == 1)
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         logging.error("Ошибка выполнения запроса к базе данных TEZ ERP: %s", str(e))
         flash("Произошла ошибка при выполнении запроса к базе данных TEZ ERP.", "error")
         return False
@@ -82,7 +87,7 @@ def get_user_erp_data(connection, login_erp_user, password_erp_user):
         result = cursor.fetchone()
         if result:
             return result
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         logging.error("Ошибка выполнения запроса к базе данных TEZ ERP: %s", str(e))
         flash("Произошла ошибка при выполнении запроса к базе данных TEZ ERP.", "error")
     return None
@@ -105,7 +110,7 @@ def get_user_erp_password(connection, user_username):
             )
             result = cursor.fetchone()
             return result[0] if result else None  # Возвращаем строку, а не кортеж
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         logging.error("Ошибка выполнения запроса к базе данных TEZ ERP: %s", str(e))
         flash("Произошла ошибка при выполнении запроса к базе данных TEZ ERP.", "error")
         return None  # Лучше возвращать None в случае ошибки

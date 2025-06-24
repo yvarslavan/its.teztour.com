@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import time
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
-import cx_Oracle
+import oracledb
 import sqlalchemy
 from sqlalchemy import func, or_, text
 from sqlalchemy.exc import SQLAlchemyError
@@ -113,7 +113,7 @@ def register():
                 db_host, db_port, db_service_name, db_user_name, db_password
             )
             if oracle_connection is None:
-                raise cx_Oracle.DatabaseError(
+                raise oracledb.DatabaseError(
                     "Failed to establish connection to Oracle DB"
                 )
             # hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
@@ -144,7 +144,7 @@ def register():
             db.session.commit()
             flash("Спасибо за регистрацию. Теперь вы можете авторизоваться.", "success")
             return redirect(url_for("users.login"))
-        except cx_Oracle.DatabaseError as e:
+        except oracledb.DatabaseError as e:
             flash(f"Произошла ошибка при регистрации: {str(e)}", "error")
         finally:
             if oracle_connection:
@@ -218,7 +218,7 @@ def check_and_update_password(user, provided_password):
             db_host, db_port, db_service_name, db_user_name, db_password
         )
         if oracle_connection is None:
-            raise cx_Oracle.DatabaseError("Failed to establish connection to Oracle DB")
+            raise oracledb.DatabaseError("Failed to establish connection to Oracle DB")
 
         # Получаем актуальный пароль из Oracle - НЕ используем text() с cx_Oracle
         cursor = oracle_connection.cursor()
@@ -237,7 +237,7 @@ def check_and_update_password(user, provided_password):
         else:
             logging.error("Не удалось получить пароль для пользователя %s из Oracle", user.username)
             return True  # Позволяем вход с текущим паролем в случае ошибки
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         logging.error("Ошибка при проверке пароля в Oracle: %s", str(e))
         return True  # В случае ошибки, позволяем вход с текущим паролем
     finally:
@@ -815,7 +815,7 @@ def update_vpn_date():
         # Возвращаем актуальную дату и сообщение в формате JSON
         return jsonify({"vpn_end_date": new_vpn_end_date, "message": message})
 
-    except cx_Oracle.DatabaseError as e:
+    except oracledb.DatabaseError as e:
         return jsonify({"error": f"Ошибка базы данных Oracle: {str(e)}"}), 500
     except Exception as e:
         return jsonify({"error": f"Произошла ошибка: {str(e)}"}), 500
