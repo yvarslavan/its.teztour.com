@@ -784,7 +784,16 @@ function initializeDataTable() {
                     data: 'subject',
                     render: function(data, type, row) {
                         if (type === 'display') {
-                            return '<div class="task-subject">' + escapeHtml(data) + '</div><div class="task-project">' + escapeHtml(row.project_name || 'Без проекта') + '</div>';
+                            // Диагностический лог: выводим все данные строки в консоль
+                            console.log('[ЗАДАЧА] Данные для строки:', row);
+
+                            // Возвращаем оригинальный, самый простой и надежный вариант рендеринга
+                            // Возвращаем оригинальный, самый простой и надежный вариант рендеринга
+                            return '<div class="task-title">' + escapeHtml(data) + '</div>' +
+                                   '<div class="project-name">' +
+                                   '<i class="fas fa-folder-open"></i>' + // Иконка добавлена для консистентности
+                                   escapeHtml(row.project_name || 'Без проекта') +
+                                   '</div>';
                         }
                         return data;
                     },

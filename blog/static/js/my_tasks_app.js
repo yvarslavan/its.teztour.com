@@ -171,14 +171,20 @@ const MyTasksApp = {
                     title: 'Тема задачи',
                     className: 'col-subject-cell',
                     responsivePriority: 2,
-                    render: (data) => {
-                        if (!data || data === '-') {
-                            return `<div class="subject-container">
-                                        <span class="subject-placeholder text-muted">Тема не указана</span>
-                                    </div>`;
-                        }
-                        return `<div class="subject-container">
-                                    <span class="subject-text" title="${this.escapeHtml(data)}">${this.escapeHtml(data)}</span>
+                    render: (data, type, row) => {
+                        const subjectHtml = this.escapeHtml(data);
+                        const projectHtml = this.escapeHtml(row.project_name || 'Без проекта');
+
+                        // HTML-структура, которая соответствует CSS из 'tasks_modern_ui.css'
+                        const taskTitleHtml = `<a class="task-title" href="/tasks/my-tasks/${row.id}" title="${subjectHtml}">${subjectHtml}</a>`;
+                        const projectNameHtml = `<div class="project-name">
+                                                   <i class="fas fa-folder-open"></i>
+                                                   <span>${projectHtml}</span>
+                                                 </div>`;
+
+                        return `<div class="task-title-container">
+                                    ${taskTitleHtml}
+                                    ${projectNameHtml}
                                 </div>`;
                     }
                 },

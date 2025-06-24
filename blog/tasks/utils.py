@@ -72,79 +72,72 @@ def format_issue_date(date_obj):
         return str(date_obj)
 
 def task_to_dict(issue):
+    """Преобразует объект задачи Redmine в простой словарь, оптимизированный для DataTables."""
     try:
-        task_data = {
+        if not issue:
+            # Возвращаем структуру-заглушку, чтобы избежать ошибок на фронтенде
+            return {
+                'id': 0,
+                'subject': 'Ошибка: Задача не найдена',
+                'project_name': 'N/A',
+                'status_name': 'N/A',
+                'priority_name': 'N/A',
+                'author_name': 'N/A',
+                'assigned_to_name': 'N/A',
+                'easy_email_to': '-',
+                'created_on': '',
+                'updated_on': '',
+                'start_date': '',
+                'due_date': '',
+                'closed_on': '',
+                'done_ratio': 0,
+                'description': 'Задача не была найдена или произошла ошибка при ее загрузке.',
+            }
+
+        # Формируем "плоский" словарь
+        return {
             'id': issue.id,
             'subject': getattr(issue, 'subject', ''),
-            'status': {
-                'id': issue.status.id if hasattr(issue, 'status') and issue.status else None,
-                'name': issue.status.name if hasattr(issue, 'status') and issue.status else 'Неизвестен'
-            },
-            'priority': {
-                'id': issue.priority.id if hasattr(issue, 'priority') and issue.priority else None,
-                'name': issue.priority.name if hasattr(issue, 'priority') and issue.priority else 'Обычный'
-            },
-            'project': {
-                'id': issue.project.id if hasattr(issue, 'project') and issue.project else None,
-                'name': issue.project.name if hasattr(issue, 'project') and issue.project else 'Без проекта'
-            },
-            'tracker': {
-                'id': issue.tracker.id if hasattr(issue, 'tracker') and issue.tracker else None,
-                'name': issue.tracker.name if hasattr(issue, 'tracker') and issue.tracker else 'Без трекера'
-            },
-            'author': {
-                'id': issue.author.id if hasattr(issue, 'author') and issue.author else None,
-                'name': issue.author.name if hasattr(issue, 'author') and issue.author else 'Аноним'
-            },
-            'assigned_to': {
-                'id': issue.assigned_to.id if hasattr(issue, 'assigned_to') and issue.assigned_to else None,
-                'name': issue.assigned_to.name if hasattr(issue, 'assigned_to') and issue.assigned_to else 'Не назначен'
-            },
-            'easy_email_to': getattr(issue, 'easy_email_to', ''),  # Поле отправителя из таблицы issues
+
+            # Прямые поля для статуса, приоритета и проекта
+            'status_name': getattr(issue.status, 'name', 'Неизвестен') if hasattr(issue, 'status') else 'Неизвестен',
+            'priority_name': getattr(issue.priority, 'name', 'Обычный') if hasattr(issue, 'priority') else 'Обычный',
+            'project_name': getattr(issue.project, 'name', 'Без проекта') if hasattr(issue, 'project') else 'Без проекта',
+
+            # Остальные поля
+            'tracker_name': getattr(issue.tracker, 'name', 'Без трекера') if hasattr(issue, 'tracker') else 'Без трекера',
+            'author_name': getattr(issue.author, 'name', 'Аноним') if hasattr(issue, 'author') else 'Аноним',
+            'assigned_to_name': getattr(issue.assigned_to, 'name', 'Не назначен') if hasattr(issue, 'assigned_to') else 'Не назначен',
+
+            'easy_email_to': getattr(issue, 'easy_email_to', '-'),
             'created_on': format_issue_date(getattr(issue, 'created_on', None)),
             'updated_on': format_issue_date(getattr(issue, 'updated_on', None)),
             'start_date': format_issue_date(getattr(issue, 'start_date', None)),
             'due_date': format_issue_date(getattr(issue, 'due_date', None)),
             'closed_on': format_issue_date(getattr(issue, 'closed_on', None)),
             'done_ratio': getattr(issue, 'done_ratio', 0),
-            'estimated_hours': getattr(issue, 'estimated_hours', None),
-            'spent_hours': getattr(issue, 'spent_hours', None),
-            'description': getattr(issue, 'description', '')[:1000]
-        }
-
-        custom_fields_data = {}
-        if hasattr(issue, 'custom_fields'):
-            for field in issue.custom_fields:
-                field_value_attr = getattr(field, 'value', None)
-                field_value = str(field_value_attr) if field_value_attr is not None else ''
-                custom_fields_data[field.name] = field_value
-
-        task_data['custom_fields'] = custom_fields_data
-        task_data['status_name'] = task_data['status']['name']
-        task_data['priority_name'] = task_data['priority']['name']
-        task_data['project_name'] = task_data['project']['name']
-        task_data['tracker_name'] = task_data['tracker']['name'] if task_data.get('tracker') else 'N/A'
-        task_data['author_name'] = task_data['author']['name'] if task_data.get('author') else 'N/A'
-        task_data['assigned_to_name'] = task_data['assigned_to']['name'] if task_data.get('assigned_to') else 'N/A'
-        task_data['easy_email_to'] = getattr(issue, 'easy_email_to', '')
-        return task_data
-    except AttributeError as e:
-        current_app.logger.warning(f"AttributeError при преобразовании задачи {getattr(issue, 'id', 'unknown')}: {str(e)}")
-        fallback_id = getattr(issue, 'id', 0)
-        return {
-            'id': fallback_id, 'subject': f'Ошибка данных для задачи #{fallback_id}',
-            'status_name': 'Ошибка', 'priority_name': 'Ошибка', 'project_name': 'Ошибка',
-            'easy_email_to': '',
-            'created_on':'', 'updated_on':'', 'assigned_to_name': ''
+            'description': getattr(issue, 'description', ''),
         }
     except Exception as e:
-        current_app.logger.error(f"Критическая ошибка преобразования задачи {getattr(issue, 'id', 'unknown')}: {str(e)}")
+        issue_id = getattr(issue, 'id', 'N/A')
+        current_app.logger.error(f"Ошибка преобразования задачи #{issue_id} в словарь: {e}", exc_info=True)
+        # В случае любой ошибки возвращаем словарь-заглушку с той же структурой
         return {
-            'id': getattr(issue, 'id', 0),
-            'subject': f'Ошибка обработки задачи',
+            'id': issue_id,
+            'subject': f'Ошибка обработки данных для задачи #{issue_id}',
+            'project_name': 'Ошибка',
             'status_name': 'Ошибка',
-            'easy_email_to': '',
-            'created_on':'', 'updated_on':'', 'assigned_to_name': ''
+            'priority_name': 'Ошибка',
+            'author_name': 'Ошибка',
+            'assigned_to_name': 'Ошибка',
+            'easy_email_to': '-',
+            'created_on': '',
+            'updated_on': '',
+            'start_date': '',
+            'due_date': '',
+            'closed_on': '',
+            'done_ratio': 0,
+            'description': f'Произошла ошибка при обработке данных для задачи #{issue_id}.',
         }
 
 def get_accurate_task_count(redmine_connector, filter_params):
