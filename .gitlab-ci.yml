@@ -67,8 +67,8 @@ build_deployment_package:
     - cp config.ini deployment_package/ || echo "⚠️ Файл config.ini не найден"
     - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
     - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
-    - echo "📋 Содержимое пакета деплоя:"
-    - tar -tzf deployment_package.tar.gz | head -20 || true
+    - echo "📦 Полное содержимое архива deployment_package.tar.gz:"
+    - tar -tvf deployment_package.tar.gz
     - echo "✅ Пакет для деплоя создан deployment_package.tar.gz"
     - echo "📏 Размер пакета $(du -h deployment_package.tar.gz | cut -f1)"
   artifacts:
@@ -392,6 +392,23 @@ deploy_to_server:
           sudo rm -f /tmp/deployment_package.tar.gz
           echo '✅ Архив распакован'
         "
+        # >>> НОВЫЙ БЛОК ДИАГНОСТИКИ <<<
+        ssh $DEPLOY_USER@$DEPLOY_SERVER "
+          echo '---'
+          echo '🔍 ПРОВЕРКА ФАЙЛОВ НА СЕРВЕРЕ ПОСЛЕ РАСПАКОВКИ'
+          echo '---'
+          cd $DEPLOY_PATH
+          echo 'Содержимое директории:'
+          sudo ls -la
+          echo '---'
+          echo 'Начало файла mysql_db.py (первые 40 строк):'
+          sudo head -n 40 mysql_db.py
+          echo '---'
+          echo 'Содержимое файла config.ini:'
+          sudo cat config.ini
+          echo '---'
+        "
+        # >>> КОНЕЦ БЛОКА ДИАГНОСТИКИ <<<
       else
         echo '📁 Используем обычную синхронизацию'
         rsync -avz --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
