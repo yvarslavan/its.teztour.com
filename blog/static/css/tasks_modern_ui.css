@@ -104,43 +104,70 @@
 
 .header-actions {
   display: flex !important;
+  align-items: center !important;
   gap: 1rem !important;
+  flex-wrap: nowrap !important;
 }
 
-.action-button {
+/* === КНОПКИ === */
+.hero-actions {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  width: 100% !important;
+  justify-content: flex-start !important;
+}
+
+.action-btn {
   display: inline-flex !important;
   align-items: center !important;
+  justify-content: center !important;
   gap: 0.5rem !important;
-  padding: 0.75rem 1.5rem !important;
+  padding: 0.75rem 1.25rem !important;
   border-radius: 8px !important;
   text-decoration: none !important;
   font-weight: 500 !important;
   transition: all 0.3s ease !important;
   border: none !important;
   cursor: pointer !important;
+  white-space: nowrap !important;
+  flex-shrink: 0 !important;
+  min-width: fit-content !important;
+  font-size: 0.9rem !important;
 }
 
-.action-button.primary {
+/* Стили для группировки кнопок */
+.button-group {
+  display: flex !important;
+  align-items: center !important;
+  gap: 1rem !important;
+  margin: 0 !important;
+}
+
+.action-btn.primary {
   background: rgba(255, 255, 255, 0.9) !important;
-  color: #667eea !important;
+  color: var(--primary-color) !important;
   backdrop-filter: blur(10px) !important;
+  padding: 0.75rem 2rem !important;
 }
 
-.action-button.primary:hover {
-  background: white !important;
-  transform: translateY(-2px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
-}
-
-.action-button.secondary {
+.action-btn.secondary {
   background: rgba(255, 255, 255, 0.1) !important;
   color: white !important;
   border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  padding: 0.75rem 1.5rem !important;
 }
 
-.action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-  transform: translateY(-2px) !important;
+.action-btn i {
+  font-size: 1rem !important;
+  margin-right: 0.5rem !important;
+}
+
+.action-btn span {
+  display: inline-block !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
 }
 
 /* === СТАТИСТИЧЕСКИЕ КАРТОЧКИ === */
@@ -470,8 +497,21 @@
     justify-content: center !important;
   }
 
-  .action-button {
-    flex: 1 !important;
+  .hero-actions {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+    gap: 1rem !important;
+  }
+
+  .button-group {
+    flex-direction: row !important;
+    justify-content: center !important;
+    width: auto !important;
+  }
+
+  .action-btn {
+    width: auto !important;
   }
 
   .statistics-cards {
@@ -485,6 +525,21 @@
 
   #tasks-table-container {
     overflow-x: auto !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-actions {
+    flex-direction: column !important;
+  }
+
+  .button-group {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .action-btn {
+    width: 100% !important;
   }
 }
 
