@@ -60,9 +60,11 @@ build_deployment_package:
     - cp -r blog/ deployment_package/ || echo "⚠️ Директория blog не найдена"
     - cp -r static/ deployment_package/ || echo "⚠️ Директория static не найдена"
     - cp -r templates/ deployment_package/ || echo "⚠️ Директория templates не найдена"
+    - cp -r migrations/ deployment_package/ || echo "⚠️ Директория migrations не найдена"
     - cp app.py deployment_package/ || echo "⚠️ Файл app.py не найден"
     - cp requirements.txt deployment_package/ || echo "⚠️ Файл requirements.txt не найден"
     - cp flask-helpdesk.service deployment_package/ || echo "⚠️ Файл flask-helpdesk.service не найден"
+    - cp config.ini deployment_package/ || echo "⚠️ Файл config.ini не найден"
     - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
     - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
     - echo "📋 Содержимое пакета деплоя:"
@@ -506,6 +508,14 @@ deploy_to_server:
             echo '❌ wsgi.py не найден'
             echo '📁 Содержимое директории:'
             ls -la '$DEPLOY_PATH/'
+          fi
+          echo '📋 Проверка файла config.ini:'
+          if [ -f '$DEPLOY_PATH/config.ini' ]; then
+            echo '✅ config.ini найден'
+            echo 'Секции в config.ini:'
+            grep '^\[' '$DEPLOY_PATH/config.ini'
+          else
+            echo '❌ config.ini не найден'
           fi
           echo '📋 Проверка виртуального окружения:'
           if [ -f '$DEPLOY_PATH/venv/bin/python' ]; then
