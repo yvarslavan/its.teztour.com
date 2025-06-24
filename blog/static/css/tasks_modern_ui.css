@@ -353,6 +353,32 @@
   vertical-align: middle !important;
 }
 
+/* Стили для темы задачи и проекта */
+.task-subject {
+  color: #1e293b !important;
+  font-weight: 500 !important;
+  margin-bottom: 0.25rem !important;
+  line-height: 1.4 !important;
+  font-size: 0.95rem !important;
+}
+
+.task-project {
+  color: #64748b !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
+}
+
+.task-project::before {
+  content: '\f07b' !important;
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+  font-size: 0.75rem !important;
+  opacity: 0.7 !important;
+}
+
 #tasksTable tbody tr {
   transition: all 0.2s ease !important;
 }
@@ -361,16 +387,41 @@
   background-color: #f8fafc !important;
 }
 
-.task-link {
-  color: #667eea !important;
+/* Новые стили для отображения темы задачи и проекта */
+.task-title-container {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.25rem !important;
+}
+
+.task-title {
+  color: #1e293b !important;
   text-decoration: none !important;
   font-weight: 600 !important;
   transition: color 0.2s ease !important;
+  font-size: 0.95rem !important;
+  line-height: 1.4 !important;
 }
 
-.task-link:hover {
+.task-title:hover {
   color: #4c51bf !important;
   text-decoration: underline !important;
+}
+
+.project-name {
+  font-size: 0.8rem !important;
+  color: #64748b !important;
+  font-weight: 500 !important;
+  line-height: 1.2 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.35rem !important;
+}
+
+/* Стили для иконки в названии проекта */
+.project-name i {
+  font-size: 0.75rem !important;
+  opacity: 0.7 !important;
 }
 
 .badge {

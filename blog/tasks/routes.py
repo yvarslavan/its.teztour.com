@@ -956,7 +956,8 @@ def get_my_tasks_projects_hierarchical():
                     WHERE table_schema = %s AND table_name = 'projects'
                     AND column_name IN ('lft', 'rgt')
                 """, (db_redmine_name,))
-                lft_rgt_count = cursor.fetchone()["count"]
+                lft_rgt_result = cursor.fetchone()
+                lft_rgt_count = lft_rgt_result["count"] if lft_rgt_result else 0
 
                 if lft_rgt_count >= 2:
                     # Используем Nested Set Model (lft/rgt) для MySQL
@@ -1214,7 +1215,7 @@ def debug_search_api():
                     current_app.logger.info(f"  ❌ НЕ содержит поисковый термин '{search_term}'")
 
         # Преобразуем задачи в JSON
-        tasks_data = [task_to_dict(issue) for issue in issues_list]
+        tasks_data = [task for task in (task_to_dict(issue) for issue in issues_list) if task]
 
         # Расчет времени выполнения
         execution_time = time.time() - start_time
