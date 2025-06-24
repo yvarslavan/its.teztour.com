@@ -172,7 +172,7 @@ pre_deploy_checks:
 
       # Настраиваем SSH
       eval $(ssh-agent -s)
-      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      ssh-add "$SSH_PRIVATE_KEY"
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
       ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
@@ -254,7 +254,7 @@ deploy_to_server:
 
       # Настраиваем SSH
       eval $(ssh-agent -s)
-      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      ssh-add "$SSH_PRIVATE_KEY"
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
       ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
@@ -396,7 +396,7 @@ post_deploy_verification:
 
       # Настраиваем SSH
       eval $(ssh-agent -s)
-      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      ssh-add "$SSH_PRIVATE_KEY"
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
       ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
@@ -458,7 +458,7 @@ rollback_deployment:
 
       # Настраиваем SSH
       eval $(ssh-agent -s)
-      echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+      ssh-add "$SSH_PRIVATE_KEY"
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
       ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
