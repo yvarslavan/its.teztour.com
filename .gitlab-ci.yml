@@ -191,13 +191,42 @@ pre_deploy_checks:
         exit 1
       fi
 
-      # Проверка свободного места (минимум 1GB)
-      AVAILABLE_SPACE=$(ssh $DEPLOY_USER@$DEPLOY_SERVER "df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}'")
-      if [ "$AVAILABLE_SPACE" -lt 1048576 ]; then
-        echo "❌ Недостаточно свободного места на сервере"
-        exit 1
-      fi
-      echo "✅ Свободного места: $(($AVAILABLE_SPACE / 1024)) MB"
+      # Проверка свободного места и очистка если нужно
+      echo "🔍 Проверка свободного места..."
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        df -h ${DEPLOY_PATH:-/var/www/flask_helpdesk}
+        AVAILABLE_SPACE=\$(df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}')
+        echo \"Доступно: \$((\$AVAILABLE_SPACE / 1024)) MB\"
+
+        if [ \"\$AVAILABLE_SPACE\" -lt 512000 ]; then
+          echo '⚠️ Мало свободного места, выполняем очистку...'
+
+          # Очищаем старые логи
+          sudo journalctl --vacuum-time=7d
+
+          # Очищаем старые бэкапы (оставляем только последние 3)
+          if [ -d '/var/backups/flask_helpdesk' ]; then
+            cd /var/backups/flask_helpdesk
+            sudo ls -t backup_* 2>/dev/null | tail -n +4 | sudo xargs rm -rf
+            echo 'Старые бэкапы очищены'
+          fi
+
+          # Очищаем кеш apt
+          sudo apt-get clean
+
+          # Проверяем место после очистки
+          AVAILABLE_SPACE_AFTER=\$(df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}')
+          echo \"После очистки доступно: \$((\$AVAILABLE_SPACE_AFTER / 1024)) MB\"
+
+          if [ \"\$AVAILABLE_SPACE_AFTER\" -lt 256000 ]; then
+            echo '❌ Критически мало места даже после очистки'
+            df -h
+            exit 1
+          fi
+        fi
+
+        echo '✅ Свободного места достаточно'
+      "
 
       # Проверка прав доступа
       ssh $DEPLOY_USER@$DEPLOY_SERVER "
