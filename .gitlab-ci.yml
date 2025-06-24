@@ -66,7 +66,7 @@ build_deployment_package:
     - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
     - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
     - echo "📋 Содержимое пакета деплоя:"
-    - tar -tzf deployment_package.tar.gz | head -20
+    - tar -tzf deployment_package.tar.gz | head -20 || true
     - echo "✅ Пакет для деплоя создан deployment_package.tar.gz"
     - echo "📏 Размер пакета $(du -h deployment_package.tar.gz | cut -f1)"
   artifacts:
