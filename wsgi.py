@@ -27,6 +27,12 @@ def setup_production_environment():
         print(f"📦 Загружены настройки из {env_file}")
     else:
         print(f"⚠️  Файл {env_file} не найден, используются переменные системы")
+        # Устанавливаем базовые переменные для продакшена
+        if env == 'production':
+            os.environ.setdefault('FLASK_ENV', 'production')
+            os.environ.setdefault('FLASK_DEBUG', 'False')
+            os.environ.setdefault('WTF_CSRF_ENABLED', 'True')
+            print("✅ Установлены базовые настройки для продакшена")
 
     # Создаем необходимые директории
     db_dir = BASE_DIR / 'blog' / 'db'

@@ -7,6 +7,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, relationship, aliased, scoped_session
 from sqlalchemy.exc import OperationalError, DatabaseError
 from config import get  # Исправленный импорт
+import configparser
 from configparser import ConfigParser
 import os
 
@@ -135,8 +136,37 @@ Base = declarative_base()
 def get_database_config():
     """Получает конфигурацию базы данных из config.ini"""
     config = ConfigParser()
-    config_path = os.path.join(os.path.dirname(__file__), 'config.ini')
-    config.read(config_path)
+
+    # Пробуем разные пути к config.ini
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), 'config.ini'),  # В той же директории что mysql_db.py
+        os.path.join(os.getcwd(), 'config.ini'),  # В текущей рабочей директории
+        'config.ini'  # В текущей директории
+    ]
+
+    config_found = False
+    for config_path in possible_paths:
+        if os.path.exists(config_path):
+            config.read(config_path)
+            config_found = True
+            print(f"📁 Config.ini найден по пути: {config_path}")
+            break
+
+    if not config_found:
+        print(f"❌ Config.ini не найден. Проверенные пути:")
+        for path in possible_paths:
+            print(f"   - {path} (существует: {os.path.exists(path)})")
+        print(f"   Текущая директория: {os.getcwd()}")
+        print(f"   Файлы в текущей директории: {os.listdir('.')}")
+        raise FileNotFoundError("config.ini не найден")
+
+    # Проверяем наличие необходимых секций
+    required_sections = ['mysql', 'mysql_quality']
+    for section in required_sections:
+        if not config.has_section(section):
+            print(f"❌ Секция [{section}] не найдена в config.ini")
+            print(f"   Доступные секции: {config.sections()}")
+            raise configparser.NoSectionError(section)
 
     return {
         'mysql': {
