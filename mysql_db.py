@@ -132,42 +132,51 @@ def get_quality_session_safe():
 
 Base = declarative_base()
 
-# ИСПРАВЛЕНИЕ: Убираем хардкод и используем конфигурацию
 def get_database_config():
-    """Получает конфигурацию базы данных из config.ini"""
-    config = ConfigParser()
+    """Получает конфигурацию базы данных из config.ini с подробной диагностикой."""
+    config = configparser.ConfigParser()
 
-    # Пробуем разные пути к config.ini
+    # Пробуем найти config.ini в нескольких стандартных местах
     possible_paths = [
-        os.path.join(os.path.dirname(__file__), 'config.ini'),  # В той же директории что mysql_db.py
-        os.path.join(os.getcwd(), 'config.ini'),  # В текущей рабочей директории
-        'config.ini'  # В текущей директории
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'),
+        os.path.join(os.getcwd(), 'config.ini'),
+        'config.ini'
     ]
 
-    config_found = False
-    for config_path in possible_paths:
-        if os.path.exists(config_path):
-            config.read(config_path)
-            config_found = True
-            print(f"📁 Config.ini найден по пути: {config_path}")
+    config_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            config_path = path
             break
 
-    if not config_found:
-        print(f"❌ Config.ini не найден. Проверенные пути:")
+    # Если файл не найден, вызываем ошибку
+    if not config_path:
+        print("--- [DIAGNOSTIC ERROR] ---")
+        print("❌ Файл config.ini не найден ни по одному из путей:")
         for path in possible_paths:
-            print(f"   - {path} (существует: {os.path.exists(path)})")
-        print(f"   Текущая директория: {os.getcwd()}")
-        print(f"   Файлы в текущей директории: {os.listdir('.')}")
-        raise FileNotFoundError("config.ini не найден")
+            print(f"  - {path}")
+        print(f"Текущая рабочая директория: {os.getcwd()}")
+        print(f"Содержимое директории: {os.listdir('.')}")
+        print("--------------------------")
+        raise FileNotFoundError("Не найден файл конфигурации config.ini")
 
-    # Проверяем наличие необходимых секций
-    required_sections = ['mysql', 'mysql_quality']
-    for section in required_sections:
-        if not config.has_section(section):
-            print(f"❌ Секция [{section}] не найдена в config.ini")
-            print(f"   Доступные секции: {config.sections()}")
-            raise configparser.NoSectionError(section)
+    # Читаем найденный файл
+    config.read(config_path, encoding='utf-8')
 
+    # Проверяем наличие секции [mysql] и выводим содержимое файла при ошибке
+    if not config.has_section('mysql'):
+        print("--- [DIAGNOSTIC ERROR] ---")
+        print(f"❌ Секция [mysql] не найдена в файле: {config_path}")
+        print("🔍 Полное содержимое файла:")
+        with open(config_path, 'r', encoding='utf-8') as f:
+            print(f.read())
+        print(f"Найденные секции: {config.sections()}")
+        print("--------------------------")
+        raise configparser.NoSectionError('mysql')
+
+    print(f"✅ Конфигурация успешно загружена из {config_path}")
+
+    # Возвращаем конфигурацию, как и раньше
     return {
         'mysql': {
             'host': config.get('mysql', 'host'),
