@@ -386,11 +386,24 @@ deploy_to_server:
         echo '🗜️ Используем сжатый архив для передачи'
         scp deployment_package.tar.gz $DEPLOY_USER@$DEPLOY_SERVER:/tmp/
         ssh $DEPLOY_USER@$DEPLOY_SERVER "
-          cd $DEPLOY_PATH
-          sudo rm -rf ./*
-          sudo tar -xzf /tmp/deployment_package.tar.gz -C $DEPLOY_PATH
+          # Создаем временную директорию для безопасной распаковки
+          RELEASE_DIR=\$(mktemp -d)
+
+          # Распаковываем архив в эту директорию
+          echo "Распаковка в \$RELEASE_DIR..."
+          sudo tar -xzf /tmp/deployment_package.tar.gz -C \$RELEASE_DIR
+
+          # Синхронизируем файлы в рабочую директорию, ИСКЛЮЧАЯ БАЗУ ДАННЫХ
+          # Ключ --delete удаляет старые файлы, которых нет в новой версии
+          echo 'Синхронизация файлов с сохранением blog/db...'
+          sudo rsync -av --exclude 'blog/db' --delete \$RELEASE_DIR/ $DEPLOY_PATH/
+
+          # Очищаем временные файлы
+          echo 'Очистка временных файлов...'
+          sudo rm -rf \$RELEASE_DIR
           sudo rm -f /tmp/deployment_package.tar.gz
-          echo '✅ Архив распакован'
+
+          echo '✅ Архив распакован и файлы синхронизированы с сохранением БД'
         "
         # >>> НОВЫЙ БЛОК ДИАГНОСТИКИ <<<
         ssh $DEPLOY_USER@$DEPLOY_SERVER "
