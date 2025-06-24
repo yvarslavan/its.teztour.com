@@ -427,26 +427,35 @@ deploy_to_server:
       ssh $DEPLOY_USER@$DEPLOY_SERVER "
         echo '⚙️ Создаем конфигурацию для продакшена...'
         cd $DEPLOY_PATH
-        if [ ! -f '.env.production' ]; then
-          echo '# Для Linux продакшн' | sudo tee .env.production > /dev/null
-          echo 'FLASK_ENV=production' | sudo tee -a .env.production > /dev/null
-          echo 'FLASK_APP=wsgi.py' | sudo tee -a .env.production > /dev/null
-          echo 'ORACLE_CLIENT_PATH=/opt/oracle/instantclient' | sudo tee -a .env.production > /dev/null
-          echo 'SQLALCHEMY_DATABASE_URI=sqlite:///blog/db/blog.db?timeout=30' | sudo tee -a .env.production > /dev/null
-          echo 'SQLALCHEMY_DATABASE_URI_ORACLE_CRM=oracle+oracledb://crm:sunzHa@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
-          echo 'SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES=oracle+oracledb://sales:sunzHa1@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
-          echo 'SQLALCHEMY_TRACK_MODIFICATIONS=True' | sudo tee -a .env.production > /dev/null
-          echo 'db_host=10.7.23.4' | sudo tee -a .env.production > /dev/null
-          echo 'db_port=1521' | sudo tee -a .env.production > /dev/null
-          echo 'db_service_name=ENIS' | sudo tee -a .env.production > /dev/null
-          echo 'db_user_name=crm' | sudo tee -a .env.production > /dev/null
-          echo 'db_password=sunzHa' | sudo tee -a .env.production > /dev/null
-          sudo chown www-data:www-data .env.production
-          sudo chmod 600 .env.production
-          echo '✅ Файл .env.production создан'
-        else
-          echo 'ℹ️ Файл .env.production уже существует'
-        fi
+        # Удаляем старый файл, чтобы гарантировать свежую конфигурацию
+        sudo rm -f .env.production
+
+        echo '# Для Linux продакшн' | sudo tee .env.production > /dev/null
+        echo 'FLASK_ENV=production' | sudo tee -a .env.production > /dev/null
+        echo 'FLASK_APP=wsgi.py' | sudo tee -a .env.production > /dev/null
+        echo 'ORACLE_CLIENT_PATH=/opt/oracle/instantclient' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_DATABASE_URI=sqlite:///blog/db/blog.db?timeout=30' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_TRACK_MODIFICATIONS=True' | sudo tee -a .env.production > /dev/null
+
+        # Подключения Oracle
+        echo 'SQLALCHEMY_DATABASE_URI_ORACLE_CRM=oracle+oracledb://crm:sunzHa@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES=oracle+oracledb://sales:sunzHa1@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+
+        # Конфигурация MySQL для Redmine
+        echo 'MYSQL_HOST=helpdesk.teztour.com' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_DATABASE=redmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_USER=easyredmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_PASSWORD=QhAKtwCLGW' | sudo tee -a .env.production > /dev/null
+
+        # Конфигурация MySQL для Quality
+        echo 'MYSQL_QUALITY_HOST=quality.teztour.com' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_DATABASE=redmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_USER=easyredmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_PASSWORD=QhAKtwCLGW' | sudo tee -a .env.production > /dev/null
+
+        sudo chown www-data:www-data .env.production
+        sudo chmod 600 .env.production
+        echo '✅ Файл .env.production создан/обновлен'
 
         # Создаем директорию для базы данных
         sudo mkdir -p $DEPLOY_PATH/blog/db
