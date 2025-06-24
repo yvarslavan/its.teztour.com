@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from blog.settings import Config
 import os
-import cx_Oracle
+import oracledb
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла
@@ -14,7 +14,7 @@ oracle_client_path = os.getenv('ORACLE_CLIENT_PATH')
 # # Этот блок удален, так как инициализация происходит в blog/__init__.py
 # if oracle_client_path and os.path.exists(oracle_client_path):
 #     try:
-#         cx_Oracle.init_oracle_client(lib_dir=oracle_client_path)
+#         oracledb.init_oracle_client(lib_dir=oracle_client_path)
 #         print(f"Oracle Client инициализирован: {oracle_client_path}")
 #     except Exception as e:
 #         print(f"Ошибка при инициализации Oracle Client: {e}")

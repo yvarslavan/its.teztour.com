@@ -10,7 +10,7 @@ from flask_wtf.csrf import CSRFProtect
 from flask_apscheduler import APScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from pathlib import Path
-import cx_Oracle
+import oracledb
 from flask_cors import CORS
 from flask_session import Session
 import atexit
@@ -62,7 +62,7 @@ oracle_client_path = os.environ.get('ORACLE_CLIENT_PATH', None)
 
 if oracle_client_path and os.path.exists(oracle_client_path):
     try:
-        cx_Oracle.init_oracle_client(lib_dir=oracle_client_path)
+        oracledb.init_oracle_client(lib_dir=oracle_client_path)
         print(f"Oracle Client инициализирован успешно: {oracle_client_path}")
     except Exception as e:
         print(f"Ошибка инициализации Oracle Client: {e}")

@@ -22,8 +22,7 @@ import pymysql
 import pymysql.cursors
 from flask_login import current_user
 from flask import flash, current_app
-import xmpp
-from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
+from blog.models import User, Notifications, NotificationsAddNotes
 from blog import db
 import uuid
 # ИСПРАВЛЕНИЕ: Убираем импорт notification_service отсюда, чтобы избежать циклического импорта
@@ -186,73 +185,74 @@ def get_property_name(property_name, prop_key, old_value, value):
         db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
     )
     result = None # Инициализируем result
-    with connection:
-        if prop_key == "project_id":
-            project_name_from = get_project_name_from_id(connection, old_value)
-            project_name_to = get_project_name_from_id(connection, value)
-            result = "Параметр&nbsp;<b>Проект</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (project_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (project_name_to or 'None') + "</b>"
+    if connection:
+        with connection:
+            if prop_key == "project_id":
+                project_name_from = get_project_name_from_id(connection, old_value)
+                project_name_to = get_project_name_from_id(connection, value)
+                result = "Параметр&nbsp;<b>Проект</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (project_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (project_name_to or 'None') + "</b>"
 
-        elif prop_key == "assigned_to_id":
-            assigned_name_from = None
-            assigned_name_to = None
-            if old_value is None:
-                assigned_name_to = get_user_full_name_from_id(connection, value)
+            elif prop_key == "assigned_to_id":
+                assigned_name_from = None
+                assigned_name_to = None
+                if old_value is None:
+                    assigned_name_to = get_user_full_name_from_id(connection, value)
+                else:
+                    assigned_name_from = get_user_full_name_from_id(connection, old_value)
+                    assigned_name_to = get_user_full_name_from_id(connection, value)
+                result = "Параметр&nbsp;<b>Назначена</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (assigned_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (assigned_name_to or 'None') + "</b>"
+
+            elif prop_key == "status_id":
+                status_name_from = get_status_name_from_id(connection, old_value)
+                status_name_to = get_status_name_from_id(connection, value)
+                result = "Параметр&nbsp;<b>Статус</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(status_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(status_name_to) + "</b>"
+
+            elif prop_key == "priority_id":
+                priority_name_from = get_priority_name_from_id(connection, old_value)
+                priority_name_to = get_priority_name_from_id(connection, value)
+                result = "Параметр&nbsp;<b>Приоритет</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(priority_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(priority_name_to) + "</b>"
+
+            elif prop_key == "subject":
+                result = (
+                    "Параметр&nbsp;<b>Тема</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "</b>&nbsp;на&nbsp;<b>" + str(value) + "</b>"
+                )
+
+            elif prop_key == "easy_helpdesk_need_reaction":
+                old_reaction_text = 'Да' if old_value == '1' else 'Нет'
+                new_reaction_text = 'Да' if value == '1' else 'Нет'
+                result = "Параметр&nbsp;<b>Нужна&nbsp;реакция?</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_reaction_text + "</b>&nbsp;на&nbsp;<b>" + new_reaction_text + "</b>"
+
+            elif prop_key == "done_ratio":
+                result = "Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "%</b>&nbsp;на&nbsp;<b>" + str(value) + "%</b>"
+
+            elif prop_key == "16":  # Кастомное поле "Что нового"
+                if old_value and not value:
+                    # Удаление значения: было что-то, стало пустое (None/null)
+                    old_text = "Да" if str(old_value) != "0" else "Нет"
+                    result = "Значение&nbsp;<b>" + old_text + "</b>&nbsp;параметра&nbsp;<b>Что&nbsp;нового</b>&nbsp;удалено"
+                elif not old_value and value:
+                    # Добавление значения: было пустое (None/null), стало что-то
+                    new_text = "Да" if str(value) != "0" else "Нет"
+                    result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;на&nbsp;<b>" + new_text + "</b>"
+                else:
+                    # Обычное изменение значения
+                    old_text = "Да" if old_value and str(old_value) != "0" else "Нет"
+                    new_text = "Да" if value and str(value) != "0" else "Нет"
+                    result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_text + "</b>&nbsp;на&nbsp;<b>" + new_text + "</b>"
+
+            elif property_name == "attachment":
+                result = "Файл&nbsp;<b>" + str(value) + "</b>&nbsp;добавлен"
+
+            elif property_name == "relation" and prop_key == "relates":
+                result = "Задача&nbsp;связана&nbsp;с&nbsp;задачей&nbsp;<b>#" + str(value) + "</b>"
+
+            elif (
+                prop_key == "subtask" and property_name == "relation" and value is not None
+            ):
+                result = "Добавлена&nbsp;подзадача&nbsp;<b>#" + str(value) + "</b>"
+
             else:
-                assigned_name_from = get_user_full_name_from_id(connection, old_value)
-                assigned_name_to = get_user_full_name_from_id(connection, value)
-            result = "Параметр&nbsp;<b>Назначена</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + (assigned_name_from or 'None') + "</b>&nbsp;на&nbsp;<b>" + (assigned_name_to or 'None') + "</b>"
-
-        elif prop_key == "status_id":
-            status_name_from = get_status_name_from_id(connection, old_value)
-            status_name_to = get_status_name_from_id(connection, value)
-            result = "Параметр&nbsp;<b>Статус</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(status_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(status_name_to) + "</b>"
-
-        elif prop_key == "priority_id":
-            priority_name_from = get_priority_name_from_id(connection, old_value)
-            priority_name_to = get_priority_name_from_id(connection, value)
-            result = "Параметр&nbsp;<b>Приоритет</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(priority_name_from) + "</b>&nbsp;на&nbsp;<b>" + str(priority_name_to) + "</b>"
-
-        elif prop_key == "subject":
-            result = (
-                "Параметр&nbsp;<b>Тема</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "</b>&nbsp;на&nbsp;<b>" + str(value) + "</b>"
-            )
-
-        elif prop_key == "easy_helpdesk_need_reaction":
-            old_reaction_text = 'Да' if old_value == '1' else 'Нет'
-            new_reaction_text = 'Да' if value == '1' else 'Нет'
-            result = "Параметр&nbsp;<b>Нужна&nbsp;реакция?</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_reaction_text + "</b>&nbsp;на&nbsp;<b>" + new_reaction_text + "</b>"
-
-        elif prop_key == "done_ratio":
-            result = "Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + str(old_value) + "%</b>&nbsp;на&nbsp;<b>" + str(value) + "%</b>"
-
-        elif prop_key == "16":  # Кастомное поле "Что нового"
-            if old_value and not value:
-                # Удаление значения: было что-то, стало пустое (None/null)
-                old_text = "Да" if str(old_value) != "0" else "Нет"
-                result = "Значение&nbsp;<b>" + old_text + "</b>&nbsp;параметра&nbsp;<b>Что&nbsp;нового</b>&nbsp;удалено"
-            elif not old_value and value:
-                # Добавление значения: было пустое (None/null), стало что-то
-                new_text = "Да" if str(value) != "0" else "Нет"
-                result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;на&nbsp;<b>" + new_text + "</b>"
-            else:
-                # Обычное изменение значения
-                old_text = "Да" if old_value and str(old_value) != "0" else "Нет"
-                new_text = "Да" if value and str(value) != "0" else "Нет"
-                result = "Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;c&nbsp;<b>" + old_text + "</b>&nbsp;на&nbsp;<b>" + new_text + "</b>"
-
-        elif property_name == "attachment":
-            result = "Файл&nbsp;<b>" + str(value) + "</b>&nbsp;добавлен"
-
-        elif property_name == "relation" and prop_key == "relates":
-            result = "Задача&nbsp;связана&nbsp;с&nbsp;задачей&nbsp;<b>#" + str(value) + "</b>"
-
-        elif (
-            prop_key == "subtask" and property_name == "relation" and value is not None
-        ):
-            result = "Добавлена&nbsp;подзадача&nbsp;<b>#" + str(value) + "</b>"
-
-        else:
-            result = None
+                result = None
 
     return result
 
@@ -352,7 +352,7 @@ class RedmineConnector:
                 # Сохраняем изменения
                 issue.save()
             return True, "Статус заявки успешно обновлен на Открыта"
-        except pymysql.Error() as e:
+        except pymysql.Error as e:
             logging.error("Ошибка при обновлении статуса заявки:: %s", str(e))
             return False, f"Ошибка при обновлении статуса заявки: {e}"
 
@@ -455,7 +455,7 @@ def check_user_active_redmine(connection, email_address):
         for row in cursor:
             return row["user_id"]
         return 4  # Если не является возвращаем user_id Аноним = 4
-    except pymysql.Error() as e:
+    except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
         return None  # Возвращаем значение в случае исключения
     finally:
