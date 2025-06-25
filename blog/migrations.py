@@ -7,19 +7,9 @@ from dotenv import load_dotenv
 # Загружаем переменные окружения из .env файла
 load_dotenv()
 
-# Получаем путь к Oracle Client
-oracle_client_path = os.getenv('ORACLE_CLIENT_PATH')
-
-# # Настраиваем Oracle Client только если путь указан и существует
-# # Этот блок удален, так как инициализация происходит в blog/__init__.py
-# if oracle_client_path and os.path.exists(oracle_client_path):
-#     try:
-#         oracledb.init_oracle_client(lib_dir=oracle_client_path)
-#         print(f"Oracle Client инициализирован: {oracle_client_path}")
-#     except Exception as e:
-#         print(f"Ошибка при инициализации Oracle Client: {e}")
-# else:
-#     print(f"ВНИМАНИЕ: Путь к Oracle Client не найден: {oracle_client_path}")
+# Oracle Client инициализация отключена - используем Thin Mode
+# python-oracledb работает в Thin Mode без дополнительных библиотек
+print("🟢 [MIGRATIONS] Oracle DB работает в Thin Mode (без Oracle Client)")
 
 # Строки подключения к базам данных
 oracle_crm_uri = os.getenv('SQLALCHEMY_DATABASE_URI_ORACLE_CRM')
