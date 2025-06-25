@@ -2,9 +2,7 @@ import os
 import tempfile
 from datetime import timedelta, datetime
 from configparser import ConfigParser
-import re
 import logging
-import sqlite3
 import time
 from builtins import Exception
 from urllib.parse import urlparse
@@ -16,11 +14,9 @@ from redminelib.exceptions import (
     ResourceNotFoundError,
     AuthError,
     ForbiddenError,
-    ImpersonateError,
 )
 import pymysql
 import pymysql.cursors
-from flask_login import current_user
 from flask import flash, current_app
 from blog.models import User, Notifications, NotificationsAddNotes
 from blog import db

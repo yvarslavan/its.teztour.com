@@ -577,18 +577,18 @@ def export_tasks_api():
 
     try:
         if not current_user.is_redmine_user:
-            return jsonify({
+            return {
                 "error": "Доступ запрещен",
                 "success": False
-            }), 403
+            }, 403
 
         export_format = request.args.get('format', 'csv', type=str).lower()
 
         if export_format not in ['csv', 'xlsx', 'json']:
-            return jsonify({
+            return {
                 "error": "Неподдерживаемый формат экспорта",
                 "success": False
-            }), 400
+            }, 400
 
         # Получаем параметры фильтрации
         status_filter = request.args.get('status_filter', '', type=str)
@@ -604,10 +604,10 @@ def export_tasks_api():
         )
 
         if not redmine_connector:
-            return jsonify({
+            return {
                 "error": "Ошибка подключения к Redmine",
                 "success": False
-            }), 500
+            }, 500
 
         # Получаем ID пользователя Redmine
         redmine_user_id = current_user.id_redmine_user
@@ -648,6 +648,7 @@ def export_tasks_api():
         elif export_format in ['csv', 'xlsx']:
             # Для CSV и Excel нужно импортировать pandas
             try:
+                # Установите pandas и openpyxl: pip install pandas openpyxl
                 import pandas as pd
                 from io import BytesIO
 
@@ -665,7 +666,7 @@ def export_tasks_api():
                 elif export_format == 'xlsx':
                     from flask import make_response
                     output = BytesIO()
-                    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+                    with pd.ExcelWriter(output, engine='openpyxl') as writer:  # type: ignore
                         df.to_excel(writer, index=False, sheet_name='Tasks')
                     output.seek(0)
 
@@ -675,20 +676,23 @@ def export_tasks_api():
                     return response
 
             except ImportError:
-                return jsonify({
+                return {
                     "error": "Модули для экспорта не установлены (pandas, openpyxl)",
                     "success": False
-                }), 500
+                }, 500
 
         execution_time = time.time() - start_time
         current_app.logger.info(f"[API] /export выполнен за {execution_time:.2f}с")
 
+        # Fallback return to satisfy type checker and handle unexpected cases
+        return {"error": "An unexpected error occurred during export.", "success": False}, 500
+
     except Exception as e:
         current_app.logger.error(f"[API] Ошибка в /export: {str(e)}. Traceback: {traceback.format_exc()}")
-        return jsonify({
+        return {
             "error": f"Внутренняя ошибка сервера: {str(e)}",
             "success": False
-        }), 500
+        }, 500
 
 
 @api_bp.route("/priorities", methods=["GET"])

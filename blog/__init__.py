@@ -1,35 +1,32 @@
+import atexit
 import logging
 import os
+from pathlib import Path
+
+from apscheduler.triggers.interval import IntervalTrigger
+from flask import Flask, request, session, Blueprint
+from flask_apscheduler import APScheduler
+from flask_bcrypt import Bcrypt
+from flask_cors import CORS
+from flask_login import LoginManager
+from flask_migrate import Migrate
+from flask_session import Session
+from flask_wtf.csrf import CSRFProtect
+
+from .db_config import db
+from .settings import Config
+from blog.scheduler_tasks import scheduled_check_all_user_notifications
+from blog.notification_service import BrowserPushService
+from blog.utils.logger import configure_blog_logger
+
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', force=True)
 # force=True перезапишет любую существующую конфигурацию корневого логгера, что полезно для отладки.
-from flask import Flask, request, session, Blueprint
-from flask_login import LoginManager
-from flask_bcrypt import Bcrypt
-from flask_migrate import Migrate
-from flask_wtf.csrf import CSRFProtect
-from flask_apscheduler import APScheduler
-from apscheduler.triggers.interval import IntervalTrigger
-from pathlib import Path
-import oracledb
-from flask_cors import CORS
-from flask_session import Session
-import atexit
-
-from .db_config import db  # Импортируем db из нового файла
-from .settings import Config
-
-# Импортируем нашу новую задачу
-from blog.scheduler_tasks import scheduled_check_all_user_notifications
-# Импортируем BrowserPushService
-from blog.notification_service import BrowserPushService
-# Импортируем функцию конфигурации логгера
-from blog.utils.logger import configure_blog_logger
 
 bcrypt = Bcrypt()
 migrate = Migrate()
 
 login_manager = LoginManager()
-login_manager.login_view = "users.login"
+login_manager.login_view = "users.login"  # type: ignore
 login_manager.login_message_category = "info"
 login_manager.login_message = "Авторизуйтесь, чтобы попасть на эту страницу!"
 
@@ -56,18 +53,10 @@ db_path = Path(__file__).parent / "db" / "blog.db"
 if not db_path.parent.exists():
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
-# Инициализация Oracle Client
-# Убираем путь по умолчанию, так как он задается в systemd или .env файлах
-oracle_client_path = os.environ.get('ORACLE_CLIENT_PATH', None)
-
-if oracle_client_path and os.path.exists(oracle_client_path):
-    try:
-        oracledb.init_oracle_client(lib_dir=oracle_client_path)
-        print(f"Oracle Client инициализирован успешно: {oracle_client_path}")
-    except Exception as e:
-        print(f"Ошибка инициализации Oracle Client: {e}")
-else:
-    print(f"ВНИМАНИЕ: Путь к Oracle Client не найден: {oracle_client_path}")
+# Инициализация Oracle Client отключена - используем Thin Mode
+# python-oracledb работает в Thin Mode (чистый Python) без Oracle Client
+# Thick Mode отключен, так как не требует установки Oracle Instant Client
+print("🟢 [INIT] Oracle DB работает в Thin Mode (без Oracle Client)")
 
 def create_app():
     app = Flask(__name__)
@@ -291,13 +280,13 @@ def create_app():
     # Это должно быть сделано до того, как какой-либо код попытается получить доступ к app.browser_push_service
     # Обычно это делается после всех основных инициализаций Flask, но до возврата app
     try:
-        app.browser_push_service = BrowserPushService()
+        setattr(app, 'browser_push_service', BrowserPushService())
         app.logger.info("[INIT] BrowserPushService инициализирован и добавлен в app.")
     except Exception as e:
         app.logger.error(f"[INIT] Ошибка при инициализации BrowserPushService: {e}", exc_info=True)
         # Решаем, что делать в случае ошибки:
         # 1. Позволить приложению упасть (если сервис критичен)
         # 2. Установить в None и логировать (если сервис не критичен для старта)
-        app.browser_push_service = None # Пример: установить в None
+        setattr(app, 'browser_push_service', None)
 
     return app
