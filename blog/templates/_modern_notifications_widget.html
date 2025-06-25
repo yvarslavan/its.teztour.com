@@ -1010,22 +1010,33 @@ try {
                             title: `Новый комментарий к заявке #${n.issue_id}`,
                             description: n.notes.length > 50 ? n.notes.substring(0, 50) + '...' : n.notes,
                             time: this.formatTime(n.date_created),
-                            icon: 'fas fa-comment'
+                            icon: 'fas fa-comment',
+                            raw: n // Сохраняем исходные данные для дебага
                         });
                     });
                 }
 
-                // Воспроизводим звук, если появились новые уведомления
-                const currentCount = this.notifications.length;
-                if (currentCount > previousCount && previousCount >= 0) {
+                // УЛУЧШЕНО: Проверка на новые уведомления и воспроизведение звука
+                const incomingIds = this.notifications.map(n => n.id);
+                const seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
+
+                const newNotificationIds = incomingIds.filter(id => !seenIds.includes(id));
+
+                if (newNotificationIds.length > 0) {
+                    console.log('[ModernWidget] 🎶 Обнаружены новые уведомления, воспроизводим звук. ID:', newNotificationIds);
                     this.playNotificationSound();
+
+                    // Обновляем список просмотренных, добавляя только новые
+                    const updatedSeenIds = [...seenIds, ...newNotificationIds];
+                    localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
                 }
 
                 this.renderNotifications();
 
                 // ИСПРАВЛЕНО: Обновляем badge с правильным количеством уведомлений
+                const currentCount = this.notifications.length;
                 this.updateBadge(currentCount);
-                console.log(`[ModernWidget] 📊 Обработано уведомлений: ${currentCount} (было: ${previousCount})`);
+                console.log(`[ModernWidget] 📊 Обработано уведомлений: ${currentCount}`);
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка обработки уведомлений:', error);
             }
@@ -1218,6 +1229,10 @@ try {
                     this.notifications = [];
                     this.renderNotifications();
                     this.updateBadge(0);
+
+                    // УЛУЧШЕНО: Очищаем также и просмотренные ID
+                    localStorage.removeItem('seenNotificationIds');
+                    console.log('[ModernWidget] 🗑️ Список просмотренных уведомлений очищен.');
 
                     // Show success animation
                     this.widget.style.transform = 'scale(1.02)';
