@@ -18,18 +18,41 @@ from sqlalchemy import and_, or_, func
 import uuid
 from urllib.parse import urlparse
 import pymysql.cursors
+import os
+from configparser import ConfigParser
 
 from blog import db
-from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription
+from blog.models import User, Notifications, NotificationsAddNotes, PushSubscription, RedmineNotification
 import redmine
 
 # Настраиваем логгер сразу
 logger = logging.getLogger(__name__)
 
+# Читаем конфигурацию для доступа к БД Redmine
+config = ConfigParser()
+# Путь к config.ini относительно текущего файла (blog/config.ini)
+config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'config.ini')
+if not os.path.exists(config_path):
+    # Фоллбэк, если структура другая
+    config_path = os.path.join(os.getcwd(), "config.ini")
+
+config.read(config_path)
+
+try:
+    DB_REDMINE_HOST = config.get("mysql", "host")
+    DB_REDMINE_DB = config.get("mysql", "database")
+    DB_REDMINE_USER = config.get("mysql", "user")
+    DB_REDMINE_PASSWORD = config.get("mysql", "password")
+except Exception as e:
+    logger.critical(f"Не удалось прочитать конфигурацию БД Redmine из {config_path}: {e}")
+    # Устанавливаем в None, чтобы приложение упало с понятной ошибкой, если конфиг обязателен
+    DB_REDMINE_HOST, DB_REDMINE_DB, DB_REDMINE_USER, DB_REDMINE_PASSWORD = None, None, None, None
+
 # Импорт pywebpush
 WEBPUSH_AVAILABLE = False
 try:
-    from pywebpush import webpush, WebPushException
+    from pywebpush import webpush, WebPushException as PyWebPushException  # type: ignore
+    WebPushException = PyWebPushException  # Алиас для совместимости  # type: ignore
     WEBPUSH_AVAILABLE = True
     logger.info("pywebpush успешно импортирован")
     print("[INIT] pywebpush успешно импортирован", flush=True)
@@ -38,7 +61,7 @@ except ImportError as e:
     print(f"[CRITICAL_ERROR] Ошибка импорта pywebpush: {e}", flush=True)
     # Заглушки для типизации
     class WebPushException(Exception):
-        pass
+        response = None
     def webpush(*args, **kwargs):
         raise ImportError("pywebpush не установлен")
 
@@ -146,10 +169,10 @@ class NotificationService:
         try:
             # Получаем подключение к MySQL
             connection = redmine.get_connection(
-                redmine.db_redmine_host,
-                redmine.db_redmine_user_name,
-                redmine.db_redmine_password,
-                redmine.db_redmine_name
+                DB_REDMINE_HOST,
+                DB_REDMINE_USER,
+                DB_REDMINE_PASSWORD,
+                DB_REDMINE_DB
             )
 
             if not connection:
@@ -183,6 +206,85 @@ class NotificationService:
         except Exception as e:
             logger.error(f"[REQ_ID:{request_id}] Ошибка при обработке уведомлений для пользователя {user_id}: {e}", exc_info=True)
             return 0
+
+    def _fetch_and_save_redmine_notifications(self, user_id: int):
+        """
+        Получает непрочитанные уведомления из u_redmine_notifications и сохраняет их
+        в локальную базу данных. Не изменяет исходную таблицу.
+        Отметка о прочтении происходит отдельно по действию пользователя.
+        Выполняется только для пользователей с is_redmine_user=True.
+        """
+        user = User.query.get(user_id)
+        if not user or not user.is_redmine_user:
+            # logger.info(f"Пользователь {user_id} не является пользователем Redmine, пропускаем обработку")
+            return
+
+        # logger.info(f"Начало синхронизации Redmine уведомлений для пользователя {user_id}")
+        source_connection = None
+        try:
+            source_connection = redmine.get_connection(
+                DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB
+            )
+            if not source_connection:
+                logger.error(f"Не удалось подключиться к MySQL для Redmine уведомлений (пользователь {user_id})")
+                return
+
+            with source_connection.cursor(pymysql.cursors.DictCursor) as cursor:
+                # Получаем только непрочитанные уведомления
+                query = "SELECT * FROM u_redmine_notifications WHERE user_id = %s AND is_read = 0"
+                cursor.execute(query, (user.id_redmine_user,))
+                notifications_from_source = cursor.fetchall()
+
+                if not notifications_from_source:
+                    # Это нормальное состояние, если нет новых уведомлений
+                    return
+
+                # logger.info(f"Найдено {len(notifications_from_source)} непрочитанных Redmine уведомлений для пользователя {user_id}")
+
+                new_notifications_count = 0
+                for row in notifications_from_source:
+                    try:
+                        # Проверяем, существует ли уже такое уведомление в локальной базе
+                        exists = db.session.query(RedmineNotification).filter_by(
+                            user_id=user_id,
+                            source_notification_id=row['id']
+                        ).first()
+
+                        if not exists:
+                            # Создаем URL для задачи Redmine
+                            issue_url = f"http://helpdesk.teztour.com/issues/{row['redmine_issue_id']}"
+
+                            group_name_value = row.get('group_name')
+                            is_group = bool(group_name_value and group_name_value.strip()) if group_name_value else False
+
+                            new_notification = RedmineNotification(
+                                user_id=user_id,
+                                redmine_issue_id=row['redmine_issue_id'],
+                                issue_subject=row['issue_subject'],
+                                issue_url=issue_url,
+                                is_group_notification=is_group,
+                                group_name=group_name_value,
+                                created_at=row['created_at'],
+                                source_notification_id=row['id']
+                            )
+                            db.session.add(new_notification)
+                            new_notifications_count += 1
+
+                    except Exception as e:
+                        logger.error(f"Ошибка при обработке Redmine уведомления (source_id: {row.get('id', 'N/A')}): {e}")
+                        db.session.rollback()
+
+                if new_notifications_count > 0:
+                    db.session.commit()
+                    logger.info(f"Сохранено {new_notifications_count} новых Redmine уведомлений в локальную базу для user_id {user_id}.")
+
+        except Exception as e:
+            logger.error(f"Критическая ошибка в _fetch_and_save_redmine_notifications для user_id {user_id}: {e}", exc_info=True)
+            if 'db' in locals() and db.session.is_active:
+                db.session.rollback()
+        finally:
+            if source_connection:
+                source_connection.close()
 
     def _process_status_notifications(self, connection, user_email: str, user_id: int, request_id: uuid.UUID) -> int:
         """Обработка уведомлений об изменении статуса"""
@@ -520,15 +622,104 @@ class NotificationService:
     def get_user_notifications(self, user_id: int) -> Dict:
         """Получение всех уведомлений пользователя"""
         try:
-            status_notifications = db.session.query(Notifications).filter_by(
+            # Сначала обрабатываем новые Redmine уведомления
+            self._fetch_and_save_redmine_notifications(user_id)
+
+            status_notifications = Notifications.query.filter_by(
+                user_id=user_id
+            ).order_by(Notifications.date_created.desc()).all()  # type: ignore
+
+            comment_notifications = NotificationsAddNotes.query.filter_by(
+                user_id=user_id
+            ).order_by(NotificationsAddNotes.date_created.desc()).all()  # type: ignore
+
+            # ИСПРАВЛЕНО: Для виджета получаем "горячие" уведомления напрямую из MySQL Redmine
+            redmine_notifications = self.get_redmine_notifications(user_id)
+
+            # Преобразуем SQLAlchemy объекты в словари для JSON сериализации
+            status_data = []
+            for notification in status_notifications:
+                status_data.append({
+                    'id': notification.id,
+                    'issue_id': notification.issue_id,
+                    'old_status': notification.old_status,
+                    'new_status': notification.new_status,
+                    'date_created': notification.date_created.isoformat() if notification.date_created else None,
+                    'user_id': notification.user_id
+                })
+
+            comment_data = []
+            for notification in comment_notifications:
+                comment_data.append({
+                    'id': notification.id,
+                    'issue_id': notification.issue_id,
+                    'author': notification.author,
+                    'notes': notification.notes,
+                    'date_created': notification.date_created.isoformat() if notification.date_created else None,
+                    'user_id': notification.user_id
+                })
+
+            total_count = len(status_data) + len(comment_data) + len(redmine_notifications)
+
+            return {
+                'status_notifications': status_data,
+                'comment_notifications': comment_data,
+                'redmine_notifications': redmine_notifications,
+                'total_count': total_count
+            }
+
+        except SQLAlchemyError as e:
+            logger.error(f"Ошибка при получении уведомлений пользователя {user_id}: {e}")
+            return {'status_notifications': [], 'comment_notifications': [], 'redmine_notifications': [], 'total_count': 0}
+        except Exception as e:
+            logger.error(f"Общая ошибка при получении уведомлений пользователя {user_id}: {e}")
+            return {'status_notifications': [], 'comment_notifications': [], 'redmine_notifications': [], 'total_count': 0}
+
+    def get_local_redmine_notifications(self, user_id: int) -> List[Dict]:
+        """Получает Redmine уведомления из локальной таблицы redmine_notifications (для страницы уведомлений)"""
+        try:
+            redmine_notifications = RedmineNotification.query.filter_by(
+                user_id=user_id
+            ).order_by(RedmineNotification.created_at.desc()).all()
+
+            redmine_data = []
+            for notification in redmine_notifications:
+
+
+                redmine_data.append({
+                    'id': notification.id,
+                    'redmine_issue_id': notification.redmine_issue_id,
+                    'issue_subject': notification.issue_subject,
+                    'issue_url': notification.issue_url,
+                    'created_at': notification.created_at.isoformat(),
+                    'is_group_notification': notification.is_group_notification,
+                    'group_name': notification.group_name
+                })
+
+            return redmine_data
+
+        except Exception as e:
+            logger.error(f"Ошибка при получении локальных Redmine уведомлений для user_id={user_id}: {e}", exc_info=True)
+            return []
+
+    def get_notifications_for_page(self, user_id: int) -> Dict:
+        """Получение уведомлений для страницы /notifications (из локальной базы blog.db)"""
+        try:
+            # ИСПРАВЛЕНИЕ: Сначала обновляем локальную базу данными из Redmine
+            self._fetch_and_save_redmine_notifications(user_id)
+
+            status_notifications = Notifications.query.filter_by(
                 user_id=user_id
             ).order_by(Notifications.date_created.desc()).all()
 
-            comment_notifications = db.session.query(NotificationsAddNotes).filter_by(
+            comment_notifications = NotificationsAddNotes.query.filter_by(
                 user_id=user_id
             ).order_by(NotificationsAddNotes.date_created.desc()).all()
 
-            # Преобразуем SQLAlchemy объекты в словари для JSON сериализации
+            # Для страницы уведомлений получаем сохраненные Redmine уведомления из локальной таблицы
+            redmine_notifications = self.get_local_redmine_notifications(user_id)
+
+            # Преобразуем SQLAlchemy объекты в словари
             status_data = []
             for notification in status_notifications:
                 status_data.append({
@@ -554,49 +745,238 @@ class NotificationService:
             return {
                 'status_notifications': status_data,
                 'comment_notifications': comment_data,
-                'total_count': len(status_data) + len(comment_data)
+                'redmine_notifications': redmine_notifications,
+                'total_count': len(status_data) + len(comment_data) + len(redmine_notifications)
             }
 
-        except SQLAlchemyError as e:
-            logger.error(f"Ошибка при получении уведомлений пользователя {user_id}: {e}")
-            return {'status_notifications': [], 'comment_notifications': [], 'total_count': 0}
         except Exception as e:
-            logger.error(f"Общая ошибка при получении уведомлений пользователя {user_id}: {e}")
-            return {'status_notifications': [], 'comment_notifications': [], 'total_count': 0}
+            logger.error(f"Ошибка при получении уведомлений для страницы user_id={user_id}: {e}")
+            return {'status_notifications': [], 'comment_notifications': [], 'redmine_notifications': [], 'total_count': 0}
+
+    def get_redmine_notifications(self, user_id: int) -> List[Dict]:
+        """Получает непрочитанные уведомления Redmine для пользователя."""
+        user = User.query.get(user_id)
+        if not user or not user.id_redmine_user:
+            return []
+
+        connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
+        if not connection:
+            logger.error(f"Не удалось получить соединение с Redmine DB для пользователя {user_id}")
+            return []
+
+        cursor = None
+        try:
+            cursor = connection.cursor(pymysql.cursors.DictCursor)
+            query = """
+                SELECT id, redmine_issue_id, issue_subject, issue_description, created_at, group_name
+                FROM u_redmine_notifications
+                WHERE user_id = %s AND is_read = 0
+                ORDER BY created_at DESC
+                LIMIT 20
+            """
+            cursor.execute(query, (user.id_redmine_user,))
+            notifications = cursor.fetchall()
+
+            if not notifications:
+                return []
+
+            redmine_data = []
+            for item in notifications:
+                created_at = item.get('created_at')
+                redmine_data.append({
+                    'id': item.get('id'),
+                    'redmine_issue_id': item.get('redmine_issue_id'),
+                    'issue_subject': item.get('issue_subject'),
+                    'issue_description': item.get('issue_description'),
+                    'created_at': created_at.isoformat() if created_at else None,
+                    'issue_url': f"http://helpdesk.teztour.com/issues/{item.get('redmine_issue_id')}",
+                    'is_group_notification': bool(item.get('group_name') and str(item.get('group_name')).strip()) if item.get('group_name') else False,
+                    'group_name': item.get('group_name')  # ИСПРАВЛЕНО: Добавляем само имя группы
+                })
+            return redmine_data
+        except Exception as e:
+            logger.error(f"Ошибка при получении Redmine уведомлений для user_id={user_id}: {e}", exc_info=True)
+            return []
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
     def clear_user_notifications(self, user_id: int) -> bool:
-        """Очистка всех уведомлений пользователя"""
+        """
+        Очищает все уведомления пользователя.
+        Локальные временные уведомления и кэш Redmine удаляются из blog.db.
+        Уведомления в основной базе Redmine помечаются как прочитанные.
+        """
         try:
-            # Удаляем уведомления о статусах
-            db.session.query(Notifications).filter_by(user_id=user_id).delete()
-
-            # Удаляем уведомления о комментариях
-            db.session.query(NotificationsAddNotes).filter_by(user_id=user_id).delete()
-
+            # Шаг 1: Удаление всех локальных уведомлений из blog.db
+            Notifications.query.filter_by(user_id=user_id).delete()
+            NotificationsAddNotes.query.filter_by(user_id=user_id).delete()
+            RedmineNotification.query.filter_by(user_id=user_id).delete()
             db.session.commit()
-            logger.info(f"Очищены все уведомления для пользователя {user_id}")
-            return True
+
+            # Шаг 2: Пометка Redmine уведомлений как прочитанных в основной базе Redmine
+            user = User.query.get(user_id)
+            if not user or not user.id_redmine_user:
+                return True # Локальные очищены, Redmine не требуется
+
+            connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
+            if not connection:
+                logger.error(f"Не удалось получить соединение с Redmine DB для очистки уведомлений (user_id={user_id})")
+                return False
+
+            cursor = None
+            try:
+                cursor = connection.cursor()
+                query = "UPDATE u_redmine_notifications SET is_read = 1 WHERE user_id = %s AND is_read = 0"
+                cursor.execute(query, (user.id_redmine_user,))
+                connection.commit()
+                return True
+            except Exception as e:
+                logger.error(f"Ошибка при очистке Redmine уведомлений для user_id={user_id}: {e}", exc_info=True)
+                if connection:
+                    connection.rollback()
+                return False
+            finally:
+                if cursor:
+                    cursor.close()
+                if connection:
+                    connection.close()
 
         except SQLAlchemyError as e:
             db.session.rollback()
-            logger.error(f"Ошибка при очистке уведомлений пользователя {user_id}: {e}")
+            logger.error(f"Ошибка SQLAlchemy при очистке уведомлений: {e}", exc_info=True)
+            return False
+        except Exception as e:
+            logger.error(f"Общая ошибка при очистке уведомлений: {e}", exc_info=True)
+            return False
+
+    def clear_notifications_for_widget(self, user_id: int) -> bool:
+        """
+        Очищает уведомления для виджета.
+        Временные локальные уведомления ('Notifications', 'NotificationsAddNotes') удаляются.
+        Уведомления в основной базе Redmine помечаются как прочитанные.
+        Локальный кэш Redmine-уведомлений ('RedmineNotification') в blog.db НЕ затрагивается.
+        """
+        try:
+            # Шаг 1: Удаление временных локальных уведомлений (не из Redmine)
+            Notifications.query.filter_by(user_id=user_id).delete()
+            NotificationsAddNotes.query.filter_by(user_id=user_id).delete()
+            db.session.commit()
+
+            # Шаг 2: Пометка Redmine уведомлений как прочитанных в основной базе Redmine
+            user = User.query.get(user_id)
+            if not user or not user.id_redmine_user:
+                return True # Локальные очищены, Redmine не требуется
+
+            connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
+            if not connection:
+                logger.error(f"Не удалось получить соединение с Redmine DB для очистки уведомлений (user_id={user_id})")
+                return False
+
+            cursor = None
+            try:
+                cursor = connection.cursor()
+                query = "UPDATE u_redmine_notifications SET is_read = 1 WHERE user_id = %s AND is_read = 0"
+                cursor.execute(query, (user.id_redmine_user,))
+                connection.commit()
+                return True
+            except Exception as e:
+                logger.error(f"Ошибка при очистке Redmine уведомлений для user_id={user_id}: {e}", exc_info=True)
+                if connection:
+                    connection.rollback()
+                return False
+            finally:
+                if cursor:
+                    cursor.close()
+                if connection:
+                    connection.close()
+
+        except SQLAlchemyError as e:
+            db.session.rollback()
+            logger.error(f"Ошибка SQLAlchemy при очистке уведомлений для виджета: {e}", exc_info=True)
+            return False
+        except Exception as e:
+            logger.error(f"Общая ошибка при очистке уведомлений для виджета: {e}", exc_info=True)
+            return False
+
+    def mark_redmine_notification_as_read(self, user_id: int, notification_id: int) -> bool:
+        """Отмечает Redmine уведомление как прочитанное в MySQL базе Redmine."""
+        try:
+            user = User.query.get(user_id)
+            if not user or not user.id_redmine_user:
+                logger.warning(f"Пользователь {user_id} не является пользователем Redmine")
+                return False
+
+            connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
+            if not connection:
+                logger.error(f"Не удалось подключиться к Redmine DB для отметки уведомления {notification_id}")
+                return False
+
+            cursor = None
+            try:
+                cursor = connection.cursor()
+                # Отмечаем уведомление как прочитанное в MySQL
+                query = "UPDATE u_redmine_notifications SET is_read = 1 WHERE id = %s AND user_id = %s"
+                cursor.execute(query, (notification_id, user.id_redmine_user))
+                affected_rows = cursor.rowcount
+                connection.commit()
+
+                if affected_rows > 0:
+                    logger.info(f"Отмечено как прочитанное Redmine уведомление id={notification_id} для user_id={user_id}")
+                    return True
+                else:
+                    logger.warning(f"Redmine уведомление id={notification_id} не найдено для user_id={user_id}")
+                    return False
+
+            finally:
+                if cursor:
+                    cursor.close()
+                if connection:
+                    connection.close()
+
+        except Exception as e:
+            logger.error(f"Ошибка при отметке Redmine уведомления id={notification_id} как прочитанного для user_id={user_id}: {e}", exc_info=True)
+            return False
+
+    def delete_redmine_notification(self, notification_id: int, user_id: int) -> bool:
+        """Удаляет одно Redmine уведомление из локальной таблицы (для страницы уведомлений)."""
+        try:
+            notification = RedmineNotification.query.filter_by(
+                id=notification_id,
+                user_id=user_id
+            ).first()
+
+            if notification:
+                db.session.delete(notification)
+                db.session.commit()
+                logger.info(f"Удалено локальное Redmine уведомление id={notification_id} для user_id={user_id}")
+                return True
+            else:
+                logger.warning(f"Локальное Redmine уведомление id={notification_id} не найдено для user_id={user_id}")
+                return False
+
+        except Exception as e:
+            logger.error(f"Ошибка при удалении локального Redmine уведомления id={notification_id} для user_id={user_id}: {e}", exc_info=True)
+            db.session.rollback()
             return False
 
     def delete_notification(self, notification_id: int, notification_type: str, user_id: int) -> bool:
         """Удаление конкретного уведомления"""
         try:
             if notification_type == 'status':
-                deleted = db.session.query(Notifications).filter(
+                deleted = Notifications.query.filter(
                     and_(
-                        Notifications.issue_id == notification_id,
-                        Notifications.user_id == user_id
+                        Notifications.issue_id == notification_id,  # type: ignore
+                        Notifications.user_id == user_id  # type: ignore
                     )
                 ).delete()
             elif notification_type == 'comment':
-                deleted = db.session.query(NotificationsAddNotes).filter(
+                deleted = NotificationsAddNotes.query.filter(
                     and_(
-                        NotificationsAddNotes.issue_id == notification_id,
-                        NotificationsAddNotes.user_id == user_id
+                        NotificationsAddNotes.issue_id == notification_id,  # type: ignore
+                        NotificationsAddNotes.user_id == user_id  # type: ignore
                     )
                 ).delete()
             else:
@@ -970,7 +1350,7 @@ class BrowserPushService:
                 subscription_info=sub_info,
                 data=payload_json_string,
                 vapid_private_key=self.vapid_private_key,
-                vapid_claims=claims_to_use.copy() # Используем claims_to_use
+                vapid_claims=claims_to_use.copy() if claims_to_use else {}  # type: ignore
             )
             logger.info(f"[REQ_ID:{request_id}] [SEND_SUCCESS] webpush() вызов успешен для подписки ID {subscription.id}")
 
@@ -1140,7 +1520,7 @@ class BrowserPushService:
 _notification_service = None
 
 def get_notification_service():
-    """Получение экземпляра сервиса уведомлений с ленивой инициализацией"""
+    """Получение экземпляра сервиса уведомлений с ленивой инициацией"""
     global _notification_service
     logger.info("[get_notification_service] CALLED")
     if _notification_service is None:

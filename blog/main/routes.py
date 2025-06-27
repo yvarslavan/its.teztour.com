@@ -5,6 +5,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import sys
 import time
+import pymysql.cursors
 from datetime import datetime, timedelta, timezone, date
 from flask import (
     Blueprint,
@@ -19,7 +20,7 @@ from flask import (
     current_app
 )
 from flask_login import login_required, current_user
-from sqlalchemy import or_, desc, text
+from sqlalchemy import or_, desc, text, inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import count
 from config import get
@@ -29,9 +30,10 @@ from blog.models import Post, User, Notifications, NotificationsAddNotes, PushSu
 from blog.user.forms import AddCommentRedmine
 from blog.main.forms import IssueForm
 from blog.notification_service import (
-    notification_service,
+    get_notification_service,
     NotificationData,
-    NotificationType
+    NotificationType,
+    NotificationService
 )
 from mysql_db import (
     Issue,
@@ -59,6 +61,7 @@ from redmine import (
     generate_email_signature,
     get_count_notifications,
     get_count_notifications_add_notes,
+    execute_query
 )
 
 from erp_oracle import (
@@ -89,6 +92,49 @@ tasks_cache_optimizer = TasksCacheOptimizer()
 
 main = Blueprint("main", __name__)
 
+@main.app_template_filter('format_datetime')
+def format_datetime_filter(value):
+    """Jinja2 filter to format datetime objects or ISO strings into human-readable format."""
+    if not value:
+        return ""
+
+    try:
+        # Ensure we have a datetime object
+        if isinstance(value, str):
+            dt = datetime.fromisoformat(value)
+        else:
+            dt = value
+
+        # Ensure the datetime is naive for comparison with datetime.now()
+        if dt.tzinfo:
+            dt = dt.astimezone(None).replace(tzinfo=None)
+
+        now = datetime.now()
+        diff = now - dt
+
+        seconds = int(diff.total_seconds())
+
+        if seconds < 5:
+            return "Только что"
+        if seconds < 60:
+            return f"{seconds} сек назад"
+        if seconds < 3600: # less than an hour
+            minutes = seconds // 60
+            return f"{minutes} мин назад"
+        if seconds < 86400: # less than a day
+            hours = seconds // 3600
+            return f"{hours} ч назад"
+        if seconds < 172800: # less than 2 days
+            return "Вчера"
+
+        return dt.strftime('%d.%m.%Y')
+
+    except (ValueError, TypeError) as e:
+        # Fallback for unexpected formats
+        logger.warning(f"Could not format datetime value '{value}'. Error: {e}")
+        return str(value)
+
+
 MY_TASKS_REDIRECT = "main.my_tasks"
 
 # ИСПРАВЛЕНИЕ: Функция configure_blog_logger перенесена в blog.utils.logger для избежания циклического импорта
@@ -109,6 +155,12 @@ DB_REDMINE_DB = config.get("mysql", "database")
 DB_REDMINE_USER = config.get("mysql", "user")
 DB_REDMINE_PASSWORD = config.get("mysql", "password")
 
+# Глобальная переменная для хранения статуса подключения
+db_connection_status = {
+    'connected': False,
+    'last_check': None,
+    'error': None
+}
 
 @main.before_request
 def set_current_user():
@@ -149,15 +201,16 @@ def poll_notifications():
     try:
         from datetime import datetime
 
-        # Получаем уведомления пользователя
-        notifications_data = notification_service.get_user_notifications(current_user.id)
+        # Получаем уведомления пользователя (теперь включая Redmine)
+        notifications_data = get_notification_service().get_user_notifications(current_user.id)
 
         # Формируем ответ в ожидаемом формате
         response_data = {
             'success': True,
             'notifications': {
                 'status_notifications': notifications_data['status_notifications'],
-                'comment_notifications': notifications_data['comment_notifications']
+                'comment_notifications': notifications_data['comment_notifications'],
+                'redmine_notifications': notifications_data['redmine_notifications']  # НОВОЕ
             },
             'timestamp': datetime.now().isoformat(),
             'total_count': notifications_data['total_count']
@@ -172,7 +225,8 @@ def poll_notifications():
             'error': str(e),
             'notifications': {
                 'status_notifications': [],
-                'comment_notifications': []
+                'comment_notifications': [],
+                'redmine_notifications': []  # НОВОЕ
             },
             'timestamp': datetime.now().isoformat(),
             'total_count': 0
@@ -529,30 +583,92 @@ def notifications_widget_status():
 @main.route("/api/notifications/clear", methods=["POST"])
 @login_required
 def api_clear_notifications():
-    """API для очистки всех уведомлений пользователя (для AJAX запросов)"""
+    """API эндпоинт для очистки всех уведомлений пользователя."""
     try:
-        logger.info(f"API очистка уведомлений для пользователя: {current_user.id}")
+        # ИСПРАВЛЕНО: Используем get_notification_service() для получения синглтона
+        service = get_notification_service()
+        success = service.clear_user_notifications(current_user.id)
+        if success:
+            logger.info(f"Все уведомления для пользователя {current_user.id} успешно очищены.")
+            return jsonify({'success': True})
+        else:
+            logger.error(f"Не удалось очистить уведомления для пользователя {current_user.id} на стороне сервиса.")
+            return jsonify({'success': False, 'error': 'Не удалось выполнить операцию в базе данных Redmine'}), 500
+    except Exception as e:
+        logger.critical(f"Критическая ошибка при очистке уведомлений для пользователя {current_user.id}: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Неизвестная критическая ошибка на сервере'}), 500
 
-        success = notification_service.clear_user_notifications(current_user.id)
+
+@main.route("/api/notifications/redmine/mark-read", methods=["POST"])
+@login_required
+def api_mark_redmine_notification_read():
+    """API эндпоинт для пометки одного Redmine уведомления как прочитанного."""
+    data = request.get_json()
+    notification_id = data.get('notification_id')
+
+    if not notification_id:
+        return jsonify({'success': False, 'error': 'Отсутствует ID уведомления'}), 400
+
+    try:
+        # ИСПРАВЛЕНО: Используем NotificationService для безопасности и консистентности
+        service = get_notification_service()
+        success = service.mark_redmine_notification_as_read(current_user.id, notification_id)
 
         if success:
-            logger.info(f"Уведомления успешно очищены для пользователя: {current_user.id}")
-            return jsonify({
-                "success": True,
-                "message": "Все уведомления успешно удалены"
-            })
+            logger.info(f"Redmine уведомление #{notification_id} помечено как прочитанное для пользователя {current_user.id}")
+            return jsonify({'success': True})
         else:
-            logger.error(f"Не удалось очистить уведомления для пользователя: {current_user.id}")
-            return jsonify({
-                "success": False,
-                "message": "Ошибка при удалении уведомлений"
-            }), 500
+            logger.warning(f"Не удалось пометить как прочитанное Redmine уведомление #{notification_id} для пользователя {current_user.id}")
+            return jsonify({'success': False, 'error': 'Не удалось отметить уведомление как прочитанное'}), 500
 
     except Exception as e:
-        logger.error(f"Ошибка API очистки уведомлений для пользователя {current_user.id}: {str(e)}")
+        logger.critical(f"Критическая ошибка при пометке Redmine уведомления #{notification_id} как прочитанного: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Неизвестная ошибка на сервере'}), 500
+
+
+@main.route("/api/notifications/redmine/clear", methods=["POST"])
+@login_required
+def api_clear_redmine_notifications():
+    """API для очистки всех Redmine уведомлений пользователя"""
+    try:
+        # Получаем подключение к MySQL Redmine
+        connection = get_connection(
+            DB_REDMINE_HOST,
+            DB_REDMINE_USER,
+            DB_REDMINE_PASSWORD,
+            DB_REDMINE_DB
+        )
+
+        if not connection:
+            return jsonify({
+                "success": False,
+                "error": "Ошибка подключения к базе данных"
+            }), 500
+
+        try:
+            cursor = connection.cursor()
+            cursor.execute(
+                "UPDATE u_redmine_notifications SET is_read = 1 WHERE user_id = %s",
+                (current_user.id,)
+            )
+            connection.commit()
+            affected_rows = cursor.rowcount
+            cursor.close()
+
+            logger.info(f"Очищено {affected_rows} Redmine уведомлений для пользователя {current_user.id}")
+            return jsonify({
+                "success": True,
+                "message": f"Очищено {affected_rows} уведомлений Redmine"
+            })
+
+        finally:
+            connection.close()
+
+    except Exception as e:
+        logger.error(f"Ошибка очистки Redmine уведомлений: {e}")
         return jsonify({
             "success": False,
-            "message": f"Ошибка при удалении уведомлений: {str(e)}"
+            "error": str(e)
         }), 500
 
 
@@ -862,13 +978,15 @@ def new_issue():
             )
 
         if redmine_connector.is_user_authenticated():
-            author_id = redmine_connector.get_current_user("current")
+            author_result = redmine_connector.get_current_user("current")
+            # Извлекаем объект пользователя из кортежа (success, user_object)
+            author_id = author_result[1] if isinstance(author_result, tuple) and author_result[0] else author_result
             # Если это пользователь Redmine cоздаем заявку в Redmine от имени (Автора) этого пользователя Redmine
             success_create_issue = redmine_connector.create_issue(
                 subject=subject,
                 description=description_with_signature,
                 project_id=1,  # Входящие (Москва)
-                author_id=author_id.id,
+                author_id=author_id.id,  # type: ignore
                 easy_email_to=current_user.email,
                 file_path=temp_file_path,
             )
@@ -878,7 +996,10 @@ def new_issue():
                 return redirect(url_for("main.my_issues"))
             if temp_file_path is not None:
                 # Удаляем этот временный сохраненый файл
-                os.remove(temp_file_path)
+                if isinstance(temp_file_path, list) and temp_file_path:
+                    os.remove(temp_file_path[0])  # type: ignore
+                else:
+                    os.remove(temp_file_path)  # type: ignore
         else:
             # Если это не пользователь Redmine, авторизуемся в Redmine по api ключу как Аноним
             redmine_connector = RedmineConnector(
@@ -898,7 +1019,10 @@ def new_issue():
                 return redirect(url_for("main.my_issues"))
             if temp_file_path is not None:
                 # Удаляем этот временный сохраненный файл
-                os.remove(temp_file_path)
+                if isinstance(temp_file_path, list) and temp_file_path:
+                    os.remove(temp_file_path[0])  # type: ignore
+                else:
+                    os.remove(temp_file_path)  # type: ignore
 
     return render_template("create_issue.html", title="Новая заявка", form=form)
 
@@ -906,19 +1030,20 @@ def new_issue():
 @main.route("/notifications", methods=["GET"])
 @login_required
 def my_notifications():
-    # Используем улучшенный сервис уведомлений
-    notifications_data = notification_service.get_user_notifications(current_user.id)
+    # ИСПРАВЛЕНО: Используем метод для страницы уведомлений (локальная база blog.db)
+    notifications_data = get_notification_service().get_notifications_for_page(current_user.id)
 
     if notifications_data['total_count'] > 0:
         return render_template(
             "notifications.html",
-            title="Уведомления",  # Добавляем title
+            title="Уведомления",
             combined_notifications={
                 'notifications_data': notifications_data['status_notifications'],
-                'notifications_add_notes_data': notifications_data['comment_notifications']
+                'notifications_add_notes_data': notifications_data['comment_notifications'],
+                'redmine_notifications_data': notifications_data['redmine_notifications']  # Из локальной базы
             }
         )
-    return render_template("notifications.html", title="Уведомления", combined_notifications={}) # Добавляем title
+    return render_template("notifications.html", title="Уведомления", combined_notifications={})
 
 
 @main.route("/clear-notifications", methods=["POST"])
@@ -927,7 +1052,7 @@ def clear_notifications():
     """Удаляем уведомления после нажатия кнопки 'Очистить уведомления'"""
     print(f"[DEBUG] clear_notifications вызван для пользователя: {current_user.id}")
     try:
-        success = notification_service.clear_user_notifications(current_user.id)
+        success = get_notification_service().clear_user_notifications(current_user.id)
 
         if success:
             flash("Уведомления успешно удалены", "success")
@@ -992,6 +1117,25 @@ def delete_notification_add_notes(notification_id):
     except Exception as e:
         db.session.rollback()
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
+        return redirect(url_for("main.my_notifications"))
+
+
+@main.route("/delete_notification_redmine/<int:notification_id>", methods=["POST"])
+@login_required
+def delete_notification_redmine(notification_id):
+    """Удаление уведомления Redmine после нажатия на иконку корзинки"""
+    try:
+        success = get_notification_service().delete_redmine_notification(notification_id, current_user.id)
+
+        if success:
+            flash("Уведомление Redmine успешно удалено", "success")
+        else:
+            flash("Уведомление Redmine не найдено", "error")
+
+        return redirect(url_for("main.my_notifications"))
+
+    except Exception as e:
+        flash(f"Ошибка при удалении уведомления Redmine: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
 
@@ -1240,7 +1384,7 @@ def get_request_types():
         logger.error(f"Error in get_request_types: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        if "session" in locals():
+        if session is not None:
             session.close()
 
 
@@ -1248,6 +1392,9 @@ def get_request_types():
 def get_tracker_ids():
     session = get_quality_connection()
     try:
+        if session is None:
+            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
         trackers = (
             session.query(Tracker.id, Tracker.name)
             .filter(Tracker.default_status_id == 22)
@@ -1268,7 +1415,8 @@ def get_tracker_ids():
 
         return jsonify(tracker_map)
     finally:
-        session.close()
+        if session is not None:
+            session.close()
 
 
 @main.route("/get-classification-report", methods=["POST"])
@@ -1287,7 +1435,7 @@ def get_classification_report():
 
         # Получаем низкоуровневое соединение MySQL
         connection = session.connection().connection
-        cursor = connection.cursor(dictionary=True)
+        cursor = connection.cursor()
 
         # Выполняем процедуру и сразу получаем результаты
         cursor.callproc("Classific", (date_from, date_to))
@@ -1542,31 +1690,33 @@ def get_resorts_report():
         connection = session.connection().connection
 
         # Используем курсор для вызова процедуры
-        with connection.cursor(dictionary=True) as cursor:
+        cursor = connection.cursor()
             # Вызываем хранимую процедуру resorts с параметрами
-            cursor.callproc("resorts", (date_from, date_to))
+        cursor.callproc("resorts", (date_from, date_to))
 
             # Получаем результаты
-            for result in cursor.stored_results():
-                resorts_data = []
-                for row in result.fetchall():
-                    resort = {
-                        "name": row["ResortName"],
-                        "complaints": row["JalobaIssueResort_out"],
-                        "gratitude": row["GrateIssueResort_out"],
-                        "questions": row["QuestionIssueResort_out"],
-                        "suggestions": row["OfferIssueResort_out"],
-                    }
-                    resorts_data.append(resort)
+        for result in cursor.stored_results():
+            resorts_data = []
+            for row in result.fetchall():
+                resort = {
+                    "name": row["ResortName"],
+                    "complaints": row["JalobaIssueResort_out"],
+                    "gratitude": row["GrateIssueResort_out"],
+                    "questions": row["QuestionIssueResort_out"],
+                    "suggestions": row["OfferIssueResort_out"],
+                }
+                resorts_data.append(resort)
 
-                if not resorts_data:
-                    return jsonify({"error": "Нет данных за указанный период"}), 404
+            if not resorts_data:
+                return jsonify({"error": "Нет данных за указанный период"}), 404
 
-                # Очищаем временную таблицу с помощью процедуры del_u_Resorts
-                cursor.callproc("del_u_Resorts")
-                connection.commit()
+            # Очищаем временную таблицу с помощью процедуры del_u_Resorts
+            cursor.callproc("del_u_Resorts")
+            connection.commit()
 
-                return jsonify(resorts_data)
+            return jsonify(resorts_data)
+
+        return jsonify({"error": "Нет данных от хранимой процедуры"}), 404
 
     except Exception as e:
         logger.error(f"Ошибка при получении данных: {str(e)}")
@@ -1599,45 +1749,45 @@ def get_resort_types_data():
 
         try:
             connection = session.connection().connection
-            with connection.cursor(dictionary=True) as cursor:
-                cursor.callproc(
-                    "up_TypesRequests_ITS", (date_from, date_to, tracker_id)
-                )
+            cursor = connection.cursor()
+            cursor.callproc(
+                "up_TypesRequests_ITS", (date_from, date_to, tracker_id)
+            )
 
-                results = []
-                for result in cursor.stored_results():
-                    data = result.fetchall()
-                    logger.info(f"Получено записей: {len(data)}")
+            results = []
+            for result in cursor.stored_results():
+                data = result.fetchall()
+                logger.info(f"Получено записей: {len(data)}")
 
-                    for row in data:
-                        try:
-                            processed_row = {}
-                            for key, value in row.items():
-                                try:
-                                    if key == "resort_name":
-                                        processed_row[key] = value if value else ""
-                                    else:
-                                        processed_row[key] = (
-                                            0 if value is None else int(value)
-                                        )
-                                except ValueError as ve:
-                                    logger.error(
-                                        f"Ошибка преобразования значения: key={key}, value={value}, error={str(ve)}"
+                for row in data:
+                    try:
+                        processed_row = {}
+                        for key, value in row.items():
+                            try:
+                                if key == "resort_name":
+                                    processed_row[key] = value if value else ""
+                                else:
+                                    processed_row[key] = (
+                                        0 if value is None else int(value)
                                     )
-                                    processed_row[key] = 0
-                            results.append(processed_row)
-                        except Exception as row_error:
-                            logger.error(
-                                f"Ошибка обработки строки: {str(row_error)}, row={row}"
-                            )
-                            continue
+                            except ValueError as ve:
+                                logger.error(
+                                    f"Ошибка преобразования значения: key={key}, value={value}, error={str(ve)}"
+                                )
+                                processed_row[key] = 0
+                        results.append(processed_row)
+                    except Exception as row_error:
+                        logger.error(
+                            f"Ошибка обработки строки: {str(row_error)}, row={row}"
+                        )
+                        continue
 
-                if not results:
-                    logger.warning("Нет данных в результате выполнения процедуры")
-                    return jsonify({"error": "Нет данных за указанный период"}), 404
+            if not results:
+                logger.warning("Нет данных в результате выполнения процедуры")
+                return jsonify({"error": "Нет данных за указанный период"}), 404
 
-                logger.info(f"Успешно обработано записей: {len(results)}")
-                return jsonify(results)
+            logger.info(f"Успешно обработано записей: {len(results)}")
+            return jsonify(results)
 
         except Exception as e:
             logger.error(f"Ошибка при выполнении процедуры: {str(e)}")
@@ -1681,7 +1831,7 @@ def get_issues():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -1735,7 +1885,7 @@ def get_issues_by_type():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -1789,7 +1939,7 @@ def get_issues_by_resort():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -1843,7 +1993,7 @@ def get_issues_by_employee():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -1897,7 +2047,7 @@ def get_issues_by_status():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -1951,7 +2101,7 @@ def get_issues_by_priority():
             """
 
             result = session.execute(
-                query,
+                text(query),
                 {
                     "date_from": date_from,
                     "date_to": date_to,
@@ -2021,7 +2171,7 @@ def get_issues_by_category():
             print(f"Final SQL query: {query}")
             print(f"Parameters: {params}")
 
-            result = session.execute(query, params)
+            result = session.execute(text(query), params)
             all_results = result.fetchall()
             print(f"Number of results: {len(all_results)}")
 
@@ -2320,3 +2470,30 @@ def api_toggle_notification_widget():
             "success": False,
             "error": str(e)
         }), 500
+
+@main.route("/api/notifications/widget/clear", methods=["POST"])
+@login_required
+def api_clear_widget_notifications():
+    """API эндпоинт для очистки уведомлений в виджете."""
+    try:
+        service = get_notification_service()
+        success = service.clear_notifications_for_widget(current_user.id)
+        if success:
+            logger.info(f"Уведомления в виджете для пользователя {current_user.id} успешно очищены.")
+            return jsonify({'success': True})
+        else:
+            logger.error(f"Не удалось очистить уведомления в виджете для пользователя {current_user.id} на стороне сервиса.")
+            return jsonify({'success': False, 'error': 'Не удалось выполнить операцию в базе данных Redmine'}), 500
+    except Exception as e:
+        logger.critical(f"Критическая ошибка при очистке уведомлений в виджете для пользователя {current_user.id}: {e}", exc_info=True)
+        return jsonify({'success': False, 'error': 'Неизвестная критическая ошибка на сервере'}), 500
+
+@main.route('/api/notifications/count', methods=['GET'])
+@login_required
+def get_notifications_count_api():
+    try:
+        count = get_total_notification_count(current_user)
+        return jsonify({"count": count})
+    except Exception as e:
+        logger.error(f"Error in get_notifications_count_api: {str(e)}")
+        return jsonify({"count": 0, "error": str(e)}), 500

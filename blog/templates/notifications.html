@@ -20,9 +20,9 @@
                     </div>
                     <div class="title-content">
                         <h1 class="page-title">Уведомления</h1>
-                        <p class="page-subtitle">Все события по вашим заявкам</p>
+                        <p class="page-subtitle">Все события по вашим заявкам и задачам</p>
                     </div>
-                    {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data %}
+                    {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
                     <div class="header-actions">
                         <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -30,10 +30,6 @@
                                 <span class="btn-content">
                                     <i class="fas fa-trash-alt"></i>
                                     <span class="btn-text">Очистить все</span>
-                                </span>
-                                <span class="btn-spinner" style="display: none;">
-                                    <i class="fas fa-spinner fa-spin"></i>
-                                    <span class="btn-text">Удаление...</span>
                                 </span>
                             </button>
                         </form>
@@ -45,8 +41,57 @@
 
         <!-- Notifications Content -->
         <div class="notifications-content">
-            {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data %}
+            {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
                 <div class="notifications-grid">
+
+                    <!-- Redmine Notifications -->
+                    {% for notification in combined_notifications.redmine_notifications_data %}
+                    <article class="notification-card redmine-task-card">
+                        <div class="card-header">
+                            <div class="notification-type">
+                                <div class="type-icon redmine-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="type-info">
+                                    <span class="type-title">
+                                        {% if notification.is_group_notification %}
+                                            Задача для группы
+                                        {% else %}
+                                            Новая задача
+                                        {% endif %}
+                                    </span>
+                                    <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
+                                </div>
+                            </div>
+                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="card-content">
+                             <a href="{{ notification.issue_url }}" class="issue-link" target="_blank">
+                                <div class="notification-message">
+                                    <p>
+                                        {% if notification.is_group_notification %}
+                                            В вашу группу <strong>{{ notification.group_name }}</strong> поступила задача
+                                        {% else %}
+                                            <i class="fas fa-star" style="color: #f59e0b;"></i> Вы назначены исполнителем по задаче
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="notification-subject">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    </article>
+                    {% endfor %}
+
+                    <!-- Status Change Notifications -->
                     {% for notification in combined_notifications.notifications_data %}
                     <article class="notification-card status-change-card">
                         <div class="card-header">
@@ -56,7 +101,7 @@
                                 </div>
                                 <div class="type-info">
                                     <span class="type-title">Изменение статуса</span>
-                                    <time class="notification-time">{{ notification.date_created }}</time>
+                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
                             <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
@@ -66,7 +111,6 @@
                                 </button>
                             </form>
                         </div>
-
                         <div class="card-content">
                             <div class="notification-message">
                                 <p>Статус заявки
@@ -81,14 +125,11 @@
                                     <span class="status-new">{{ notification.new_status }}</span>
                                 </div>
                             </div>
-                            <div class="notification-subject">
-                                <i class="fas fa-tag"></i>
-                                <span>{{ notification.old_subj }}</span>
-                            </div>
                         </div>
                     </article>
                     {% endfor %}
 
+                    <!-- Comment Notifications -->
                     {% for notification in combined_notifications.notifications_add_notes_data %}
                     <article class="notification-card comment-card">
                         <div class="card-header">
@@ -98,7 +139,7 @@
                                 </div>
                                 <div class="type-info">
                                     <span class="type-title">Новый комментарий</span>
-                                    <time class="notification-time">{{ notification.date_created }}</time>
+                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
                             <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
@@ -119,21 +160,12 @@
                                 </p>
                             </div>
                             <div class="comment-preview">
-                                {% if notification.notes | length > 150 %}
-                                    <div class="comment-text" data-full-text="{{ notification.notes | e }}" data-short-text="{{ notification.notes[:150] | e }}">
-                                        {{ notification.notes[:150] | safe }}...
-                                        <button class="read-more-btn" onclick="toggleComment(event, this)">
-                                            <span>Читать далее</span>
-                                            <i class="fas fa-chevron-down"></i>
-                                        </button>
-                                    </div>
-                                {% else %}
-                                    <div class="comment-text">{{ notification.notes | safe }}</div>
-                                {% endif %}
+                                {{ notification.notes | safe }}
                             </div>
                         </div>
                     </article>
                     {% endfor %}
+
                 </div>
             {% else %}
                 <div class="empty-state">
@@ -142,7 +174,7 @@
                         <div class="empty-icon-glow"></div>
                     </div>
                     <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
-                    <p class="empty-subtitle">Все новые события по вашим заявкам будут отображаться здесь</p>
+                    <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
                 </div>
             {% endif %}
         </div>
@@ -852,249 +884,71 @@
             padding: var(--spacing-md);
         }
     }
+
+    .notification-card.redmine-task-card {
+        border-left: 5px solid var(--warning);
+    }
+    .type-icon.redmine-icon {
+        background: linear-gradient(135deg, var(--warning), #f9c55d);
+    }
+    .notification-card .issue-link {
+        text-decoration: none;
+        color: var(--primary-700);
+        font-weight: 600;
+        transition: color var(--transition-fast);
+    }
+    .notification-card .issue-link:hover {
+        color: var(--primary-500);
+        text-decoration: underline;
+    }
+    .card-content a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Toggle comment text
-    window.toggleComment = function(event, button) {
-        event.preventDefault();
-        const commentText = button.closest('.comment-text');
-        const fullText = commentText.dataset.fullText;
-        const shortText = commentText.dataset.shortText;
-
-        if (button.querySelector('span').textContent === 'Читать далее') {
-            commentText.innerHTML = fullText +
-                '<button class="read-more-btn" onclick="toggleComment(event, this)">' +
-                '<span>Скрыть</span><i class="fas fa-chevron-up"></i></button>';
-        } else {
-            commentText.innerHTML = shortText + '...' +
-                '<button class="read-more-btn" onclick="toggleComment(event, this)">' +
-                '<span>Читать далее</span><i class="fas fa-chevron-down"></i></button>';
-        }
-    };
-
-    // Handle delete buttons with animation
-    document.querySelectorAll('.delete-btn').forEach(function(button) {
-        button.addEventListener('click', function(event) {
-            event.preventDefault();
+    // Ajax-отправка форм удаления
+    const deleteForms = document.querySelectorAll('.delete-form');
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
             const card = this.closest('.notification-card');
-            const form = this.closest('form');
-
-            // Add removing animation
-            card.classList.add('removing');
-
-            // Submit form after animation with FormData
-            setTimeout(() => {
-                const formData = new FormData(form);
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
-                })
-                .then(response => {
-                    if (response.ok) {
-                        // Обновляем счетчик уведомлений в хедере
-                        updateNotificationCount();
-                        // Перезагружаем страницу
-                        window.location.reload();
-                    } else {
-                        console.error('Ошибка HTTP:', response.status);
-                        // Fallback - обычная отправка формы
-                        form.submit();
-                    }
-                })
-                .catch(error => {
-                    console.error('Ошибка:', error);
-                    // Fallback - обычная отправка формы
-                    form.submit();
-                });
-            }, 500);
-        });
-    });
-
-    // Handle clear all button
-    const clearAllBtn = document.getElementById('clearAllBtn');
-    if (clearAllBtn) {
-        clearAllBtn.addEventListener('click', function(event) {
-            event.preventDefault();
-            const cards = document.querySelectorAll('.notification-card');
-            const form = this.closest('form');
-            const btnContent = this.querySelector('.btn-content');
-            const btnSpinner = this.querySelector('.btn-spinner');
-
-            console.log('Clear all button clicked');
-            console.log('Form action:', form.action);
-            console.log('Number of cards:', cards.length);
-
-            // Показываем спиннер и блокируем кнопку
-            btnContent.style.display = 'none';
-            btnSpinner.style.display = 'flex';
-            this.disabled = true;
-
-            // Animate cards with stagger effect
-            cards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.classList.add('removing');
-                }, index * 50); // Уменьшил задержку для более быстрой анимации
+            const formData = new FormData(this);
+            const bodyData = {};
+            // Преобразуем formData в JSON
+            formData.forEach((value, key) => {
+                if (key !== 'csrf_token') {
+                   bodyData[key] = value;
+                }
             });
 
-            // Submit form after all animations with FormData
-            setTimeout(() => {
-                const formData = new FormData(form);
-                console.log('Sending request to:', form.action);
-                console.log('FormData entries:', [...formData.entries()]);
-
-                fetch(form.action, {
-                    method: 'POST',
-                    body: formData,
-                    credentials: 'same-origin'
-                })
-                .then(response => {
-                    console.log('Response status:', response.status);
-                    console.log('Response ok:', response.ok);
-                    console.log('Response headers:', [...response.headers.entries()]);
-
-                    // Читаем текст ответа для диагностики
-                    return response.text().then(text => {
-                        console.log('Response text length:', text.length);
-                        console.log('Response text (first 200 chars):', text.substring(0, 200));
-
-                        if (response.ok) {
-                            console.log('Request successful, updating notification count');
-                            // Обновляем счетчик уведомлений в хедере
-                            updateNotificationCount();
-                            console.log('About to reload page...');
-                            // Перезагружаем страницу
-                            window.location.reload();
-                        } else {
-                            console.error('Ошибка HTTP:', response.status);
-                            console.error('Response text:', text);
-                            console.log('Falling back to form submit');
-                            // Восстанавливаем кнопку при ошибке
-                            btnContent.style.display = 'flex';
-                            btnSpinner.style.display = 'none';
-                            this.disabled = false;
-                            // Fallback - обычная отправка формы
-                            form.submit();
-                        }
-                    });
-                })
-                .catch(error => {
-                    console.error('Ошибка fetch:', error);
-                    console.log('Falling back to form submit due to error');
-                    // Восстанавливаем кнопку при ошибке
-                    btnContent.style.display = 'flex';
-                    btnSpinner.style.display = 'none';
-                    this.disabled = false;
-                    // Fallback - обычная отправка формы
-                    form.submit();
-                });
-            }, Math.min(cards.length * 50 + 300, 1000)); // Максимум 1 секунда ожидания
-        });
-    }
-
-    // Функция для обновления счетчика уведомлений
-    function updateNotificationCount() {
-        console.log('updateNotificationCount called');
-        fetch("{{ url_for('main.get_notification_count') }}", {
-            method: 'GET',
-            credentials: 'same-origin'
-        })
-        .then(response => {
-            console.log('Notification count response status:', response.status);
-            return response.json();
-        })
-        .then(data => {
-            console.log('Notification count data:', data);
-            let notificationBadge = document.getElementById('notification-badge');
-
-            if (data.count > 0) {
-                console.log('Setting badge count to:', data.count);
-                // Если счетчик не существует, создаем его
-                if (!notificationBadge) {
-                    const navIconWrapper = document.querySelector('.notification-link .nav-icon-wrapper');
-                    if (navIconWrapper) {
-                        const newBadge = document.createElement('span');
-                        newBadge.className = 'notification-badge';
-                        newBadge.id = 'notification-badge';
-                        newBadge.textContent = data.count;
-                        navIconWrapper.appendChild(newBadge);
-                        console.log('Created new notification badge');
-                    }
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': formData.get('csrf_token')
+                },
+                body: JSON.stringify(bodyData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    card.style.transition = 'all 0.4s ease';
+                    card.style.transform = 'scale(0.95)';
+                    card.style.opacity = '0';
+                    setTimeout(() => card.remove(), 400);
                 } else {
-                    // Обновляем существующий счетчик
-                    notificationBadge.textContent = data.count;
-                    notificationBadge.style.display = 'inline-flex';
-                    console.log('Updated existing notification badge');
+                    alert('Ошибка: ' + data.error);
                 }
-            } else {
-                console.log('Removing notification badge (count is 0)');
-                // Полностью удаляем элемент счетчика
-                if (notificationBadge) {
-                    notificationBadge.remove();
-                    console.log('Notification badge removed');
-                }
-            }
-        })
-        .catch(error => {
-            console.error('Ошибка при обновлении счетчика уведомлений:', error);
-            // При ошибке удаляем счетчик
-            const notificationBadge = document.getElementById('notification-badge');
-            if (notificationBadge) {
-                notificationBadge.remove();
-            }
+            })
+            .catch(error => console.error('Error:', error));
         });
-    }
-
-    // Add entrance animations with stagger
-    const cards = document.querySelectorAll('.notification-card');
-    cards.forEach((card, index) => {
-        card.style.animationDelay = `${index * 0.1}s`;
     });
-
-    // Service Worker Message Listener for real-time updates
-    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.onmessage = function(event) {
-            console.log("[NotificationsPage] Message from SW:", event.data);
-            if (event.data && event.data.type === 'PUSH_RECEIVED') {
-                console.log("[NotificationsPage] PUSH_RECEIVED from SW:", event.data);
-                // Здесь можно добавить более сложную логику обновления DOM,
-                // но для начала просто перезагрузим страницу, чтобы показать новые уведомления.
-                // Это самый простой способ обеспечить актуальность.
-
-                // Показываем toast-уведомление о новом событии
-                if (window.showToast) {
-                    let toastMessage = event.data.title || 'Новое уведомление!';
-                    if (event.data.options && event.data.options.body) {
-                        toastMessage += `\n${event.data.options.body.substring(0, 50)}...`;
-                    }
-                    window.showToast(toastMessage, 'info', {
-                        // Можно добавить действие для перехода по URL из уведомления
-                        // action: { text: 'Посмотреть', url: event.data.url }
-                    });
-                }
-
-                // Воспроизводим звук, если он есть в данных
-                if (event.data.options && event.data.options.data && event.data.options.data.soundUrl) {
-                    const audio = new Audio(event.data.options.data.soundUrl);
-                    audio.play().catch(e => console.warn("[NotificationsPage] Error playing sound:", e));
-                }
-
-                // Просто перезагружаем страницу для обновления списка
-                // В более сложном варианте можно было бы сделать AJAX-запрос
-                // и динамически добавить карточку уведомления.
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000); // Небольшая задержка, чтобы пользователь мог увидеть toast
-            }
-        };
-    } else {
-        console.log("[NotificationsPage] ℹ️ Service Worker не активен - real-time обновления через push недоступны (обычный режим работы)");
-    }
 });
 </script>
 {% endblock %}
