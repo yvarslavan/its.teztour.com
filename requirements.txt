@@ -96,3 +96,4 @@ WTForms==3.0.1
 xmltodict==0.14.2
 yarl==1.9.4
 zipp==3.21.0
+python-json-logger==3.3.0 

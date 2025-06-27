@@ -109,6 +109,32 @@ class NotificationsAddNotes(db.Model):
         self.source_id = source_id
 
 
+class RedmineNotification(db.Model):
+    """Модель для хранения уведомлений из Redmine"""
+    __tablename__ = "redmine_notifications"
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False)
+    redmine_issue_id = db.Column(db.Integer, nullable=False)
+    issue_subject = db.Column(db.Text, nullable=False)
+    issue_url = db.Column(db.Text, nullable=False)
+    is_group_notification = db.Column(db.Boolean, nullable=False, default=False)
+    group_name = db.Column(db.Text, nullable=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    source_notification_id = db.Column(db.Integer, nullable=False)
+
+    # Связь с пользователем
+    user = db.relationship("User", backref="redmine_notifications")
+
+    # Ограничение уникальности для предотвращения дубликатов
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'source_notification_id', name='_user_source_uc'),
+    )
+
+    def __repr__(self):
+        return f"<RedmineNotification id={self.id} user_id={self.user_id} issue_id={self.redmine_issue_id}>"
+
+
 class PushSubscription(db.Model):
     """Модель для хранения подписок на браузерные пуш-уведомления"""
     __tablename__ = "push_subscriptions"
