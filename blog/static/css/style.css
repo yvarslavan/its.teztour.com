@@ -1956,3 +1956,149 @@ td {
     min-height: 60vh; /* Уменьшаем с обычной высоты до 60% от высоты экрана */
     padding: 20px 0; /* Уменьшаем вертикальные отступы */
 }
+
+.card.task-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+/* Mobile Menu Styles */
+.menu-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1040; /* Lower than menu, but higher than content */
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.menu-overlay.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.mobile-menu {
+    position: fixed;
+    top: 0;
+    right: -300px; /* Start off-screen */
+    width: 300px;
+    height: 100%;
+    background-color: #fff;
+    z-index: 1050; /* Higher than overlay */
+    box-shadow: -2px 0 15px rgba(0,0,0,0.2);
+    transition: right 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+
+.mobile-menu.open {
+    right: 0; /* Slide in */
+}
+
+.mobile-menu-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.mobile-menu-header h4 {
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+.close-menu-btn {
+    background: none;
+    border: none;
+    font-size: 2rem;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0;
+}
+
+.mobile-menu-links {
+    list-style: none;
+    padding: 20px 0;
+    margin: 0;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.mobile-menu-links li a {
+    display: block;
+    padding: 12px 20px;
+    text-decoration: none;
+    color: #343a40;
+    font-size: 1rem;
+    transition: background-color 0.2s ease;
+}
+
+.mobile-menu-links li a:hover {
+    background-color: #f1f1f1;
+    border-radius: 5px;
+}
+
+/* === FIX: Force Icon Colors in Modern Header === */
+/*
+ * Эти правила имеют более высокий приоритет (специфичность) за счет указания родителя .nav-link.
+ * Это гарантирует, что цвета иконок не будут переопределены другими, более общими стилями.
+ * !important используется как дополнительная гарантия.
+*/
+.modern-header .nav-link .wiki-icon { color: #10b981 !important; }
+.modern-header .nav-link .tasks-icon { color: #3b82f6 !important; }
+.modern-header .nav-link .issues-icon { color: #8b5cf6 !important; }
+.modern-header .nav-link .other-icon { color: #f59e0b !important; }
+.modern-header .nav-link .notification-icon { color: #fbbf24 !important; }
+
+/* === Colorful Icons for Wiki Dropdown === */
+/* Принудительно окрашиваем иконки внутри выпадающего меню Wiki */
+.modern-header #wikiDropdown + .dropdown-menu .dropdown-header i,
+.modern-header #wikiDropdown + .dropdown-menu .dropdown-item i {
+    color: var(--header-primary-light) !important; /* Используем акцентный цвет заголовка */
+    opacity: 1 !important; /* Полная непрозрачность для яркости */
+}
+
+/* Индивидуальные цвета, если нужно различать иконки */
+.modern-header #wikiDropdown + .dropdown-menu .dropdown-item i.fa-question-circle { color: #3b82f6 !important; }
+.modern-header #wikiDropdown + .dropdown-menu .dropdown-item i.fa-newspaper       { color: #f59e0b !important; }
+.modern-header #wikiDropdown + .dropdown-menu .dropdown-item i.fa-plus-circle    { color: #10b981 !important; }
+
+/* === Colorful Icons for Other Dropdown === */
+/* Принудительно окрашиваем иконки внутри выпадающего меню "Прочее" */
+.modern-header #otherDropdown + .dropdown-menu .dropdown-header i,
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i {
+    color: var(--header-accent) !important; /* Базовый акцентный цвет */
+    opacity: 1 !important;
+}
+
+/* Индивидуальные цвета для конкретных пунктов */
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i.fa-users            { color: #ef4444 !important; }
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i.fa-phone-alt        { color: #10b981 !important; }
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i.fa-chart-line       { color: #f59e0b !important; }
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i.fa-chart-bar        { color: #3b82f6 !important; }
+.modern-header #otherDropdown + .dropdown-menu .dropdown-item i.fa-clipboard-check  { color: #8b5cf6 !important; }
+
+/* === Colorful Icon for "Мои заявки" (Tasks Dropdown) === */
+.modern-header #tasksDropdown + .dropdown-menu .dropdown-item i.fa-tasks {
+    color: #3b82f6 !important; /* Синий цвет в стиле раздела Заявки */
+    opacity: 1 !important;
+}
+
+/* === Colorful Icons for Tasks "Задачи" Dropdown === */
+.modern-header #issuesDropdownMenu + .dropdown-menu .dropdown-header i,
+.modern-header #issuesDropdownMenu + .dropdown-menu .dropdown-item i {
+    color: #8b5cf6 !important; /* Фиолетовый акцент для раздела Задачи */
+    opacity: 1 !important;
+}
+/* Индивидуальный цвет для пункта "Новая задача" */
+.modern-header #issuesDropdownMenu + .dropdown-menu .dropdown-item i.fa-plus-circle {
+    color: #10b981 !important; /* Зелёный для действия создания */
+}
+
+.modern-header .nav-link .fa-book-open { color: #10b981 !important; }

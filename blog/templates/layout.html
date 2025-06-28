@@ -17,6 +17,7 @@
             <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
             <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
             <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-menu.css') }}">
 
             <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
             {% block title %}
@@ -348,11 +349,12 @@
                     }
 
                     /* Icon Colors for Font Awesome (will be gradually replaced) */
-                    .wiki-icon { color: #10b981; }
-                    .tasks-icon { color: #3b82f6; } /* This is for Заявки */
-                    .issues-icon { color: #8b5cf6; } /* Example: Violet for Задачи */
-                    .other-icon { color: #f59e0b; }
-                    .notification-icon { color: #fbbf24; }
+                    /* FIX: Increased specificity and added !important to ensure colors are applied */
+                    .nav-link .wiki-icon { color: #10b981 !important; }
+                    .nav-link .tasks-icon { color: #3b82f6 !important; }
+                    .nav-link .issues-icon { color: #8b5cf6 !important; }
+                    .nav-link .other-icon { color: #f59e0b !important; }
+                    .nav-link .notification-icon { color: #fbbf24 !important; }
 
                     /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
                     .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
@@ -823,43 +825,23 @@
                             <li class="nav-item dropdown">
                                         <a class="nav-link dropdown-toggle" href="#" id="issuesDropdownMenu" role="button" data-bs-toggle="dropdown">
                                             <div class="nav-icon-wrapper">
-                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; margin-right: 0.5rem;">
-                                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V17C5 18.1046 5.89543 19 7 19H17C18.1046 19 19 18.1046 19 17V12" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <path d="M9 5V7C9 8.10457 8.10457 9 7 9H5" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <path d="M14 14L16 16L20 12" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <rect x="7" y="11" width="4" height="2" rx="1" fill="#26C6DA"/>
-                                                    <rect x="7" y="14" width="4" height="2" rx="1" fill="#26C6DA"/>
-                                                </svg>
+                                                <i class="fas fa-clipboard-list nav-icon issues-icon"></i>
                                                 <span class="nav-text">Задачи</span>
                                                 <i class="fas fa-chevron-down dropdown-arrow"></i>
                                             </div>
                                         </a>
                                         <ul class="dropdown-menu modern-dropdown" aria-labelledby="issuesDropdownMenu">
                                             <li class="dropdown-header">
-                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="width: 16px; height: 16px; margin-right: 0.5rem;">
-                                                    <path d="M9 5H7C5.89543 5 5 5.89543 5 7V17C5 18.1046 5.89543 19 7 19H17C18.1046 19 19 18.1046 19 17V12" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <path d="M9 5V7C9 8.10457 8.10457 9 7 9H5" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <path d="M14 14L16 16L20 12" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                    <rect x="7" y="11" width="4" height="2" rx="1" fill="#26C6DA"/>
-                                                    <rect x="7" y="14" width="4" height="2" rx="1" fill="#26C6DA"/>
-                                                </svg>
+                                                <i class="fas fa-clipboard-list"></i>
                                                 <span>Управление задачами</span>
                                             </li>
                                     <li><a class="dropdown-item" href="{{ url_for('tasks.my_tasks_page') }}">
-                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                  <path d="M8 6H20M8 12H20M8 18H20" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                  <path d="M4 6H4.01M4 12H4.01M4 18H4.01" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                </svg>
+                                                <i class="fas fa-clipboard-list"></i>
                                                 <span>Мои задачи</span>
                                     </a></li>
                                             <li class="dropdown-divider"></li>
                                             <li><a class="dropdown-item new-issue" href="#"> {# ЗАМЕНИТЬ # на актуальный url_for для "Новая задача" #}
-                                                <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                  <path d="M14 2H6C4.89543 2 4 2.89543 4 4V20C4 21.1046 4.89543 22 6 22H18C19.1046 22 20 21.1046 20 20V8L14 2Z" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                  <path d="M14 2V8H20" stroke="#00798C" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                  <path d="M12 11V17" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                  <path d="M9 14H15" stroke="#FF6B35" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                                </svg>
+                                                <i class="fas fa-plus-circle"></i>
                                                 <span>Новая задача</span>
                                     </a></li>
                                 </ul>
@@ -993,6 +975,18 @@
                     </div>
                 </header>
 
+                <!-- Mobile Menu Panel -->
+                <div class="mobile-menu-overlay"></div>
+                <nav class="mobile-menu-panel" id="mobile-menu-panel" aria-hidden="true" role="dialog">
+                    <div class="mobile-menu-header">
+                        <h2 class="mobile-menu-title">Меню</h2>
+                        <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Закрыть меню">&times;</button>
+                    </div>
+                    <ul class="mobile-menu-links">
+                        <!-- Ссылки будут скопированы сюда с помощью JavaScript -->
+                    </ul>
+                </nav>
+
                 <!-- Modern Header Styles -->
                     <style>
                     /* Import Modern Fonts */
@@ -1000,7 +994,6 @@
 
                     /* Header CSS Variables */
                     :root {
-                        /* TEZ TOUR Brand Colors */
                         --header-primary: #00798C;
                         --header-primary-dark: #005f73;
                         --header-primary-light: #26c6da;
@@ -1008,15 +1001,11 @@
                         --header-success: #10b981;
                         --header-warning: #f59e0b;
                         --header-error: #ef4444;
-
-                        /* Header Surface Colors */
                         --header-bg: rgba(255, 255, 255, 0.95);
                         --header-glass: rgba(255, 255, 255, 0.1);
                         --header-text: #1f2937;
                         --header-text-light: #6b7280;
                         --header-border: rgba(255, 255, 255, 0.2);
-
-                        /* Header Effects */
                         --header-shadow: 0 8px 32px rgba(0, 121, 140, 0.1);
                         --header-blur: 20px;
                         --header-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1144,7 +1133,7 @@
                     .logo-text {
                         display: flex;
                         flex-direction: column;
-                        line-height: 1.2; /* Увеличим немного межстрочный интервал для контейнера */
+                        line-height: 1.2;
                     }
 
                     .logo-main {
@@ -1159,7 +1148,7 @@
 
                     .logo-sub {
                         font-family: 'Inter', sans-serif;
-                        font-size: 0.72rem; /* Чуть-чуть увеличили обратно */
+                        font-size: 0.72rem;
                         font-weight: 500;
                         color: rgba(255, 255, 255, 0.85);
                         letter-spacing: 0.05em;
@@ -1243,37 +1232,62 @@
                         z-index: 2;
                     }
 
-                    /* Style for SVG icons in nav */
+                    /* === CORRECTED ICON STYLES === */
                     .nav-icon-wrapper svg {
-                        width: 20px; /* Adjust as needed */
-                        height: 20px; /* Adjust as needed */
-                        vertical-align: middle;
-                        flex-shrink: 0; /* Prevent shrinking if text is long */
-                    }
-
-                    /* Icon Colors for Font Awesome (will be gradually replaced) */
-                    .wiki-icon { color: #10b981; }
-                    .tasks-icon { color: #3b82f6; } /* This is for Заявки */
-                    .issues-icon { color: #8b5cf6; } /* Example: Violet for Задачи */
-                    .other-icon { color: #f59e0b; }
-                    .notification-icon { color: #fbbf24; }
-
-                    /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
-                    .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
-                        width: 20px;  /* Default width */
-                        height: 20px; /* Default height */
+                        width: 20px;
+                        height: 20px;
                         vertical-align: middle;
                         flex-shrink: 0;
-                        display: inline-block; /* Ensure it behaves like an icon */
                     }
 
-                    /* Ensure Font Awesome icons still have their space if not replaced yet */
+                    /* Increased specificity to ensure colors are applied */
+                    .nav-link .wiki-icon { color: #10b981 !important; }
+                    .nav-link .tasks-icon { color: #3b82f6 !important; }
+                    .nav-link .issues-icon { color: #8b5cf6 !important; }
+                    .nav-link .other-icon { color: #f59e0b !important; }
+                    .nav-link .notification-icon { color: #fbbf24 !important; }
+
+                    .nav-icon-wrapper .nav-icon-svg {
+                        width: 20px;
+                        height: 20px;
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                        display: inline-block;
+                    }
+
                     .nav-icon-wrapper .nav-icon {
-                         width: 20px; /* Consistent width with SVG */
-                         text-align: center; /* Center icon if it's narrower */
-                                        }
+                         width: 20px;
+                         text-align: center;
+                    }
 
+                    /* Notification Badge */
+                    .nav-icon-wrapper .notification-badge,
+                    #notification-badge {
+                        background: #ef4444 !important;
+                        color: white !important;
+                        font-size: 0.75rem !important;
+                        font-weight: 700 !important;
+                        padding: 0.2rem 0.5rem !important;
+                        border-radius: 12px !important;
+                        min-width: 20px !important;
+                        height: 20px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
+                        margin-left: 0.5rem !important;
+                        flex-shrink: 0 !important;
+                        animation: notificationPulse 2s infinite !important;
+                        border: 2px solid white !important;
+                        position: relative !important;
+                        z-index: 9999 !important;
+                    }
 
+                    @keyframes notificationPulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+                        }
                         50% {
                             transform: scale(1.05);
                             box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
@@ -1899,5 +1913,114 @@
                 {% include '_modern_notifications_widget.html' %}
             {% endif %}
 
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    // --- Элементы DOM ---
+                    const menuToggle = document.querySelector('.mobile-menu-toggle');
+                    const menuPanel = document.querySelector('.mobile-menu-panel');
+                    const menuOverlay = document.querySelector('.mobile-menu-overlay');
+                    const closeButton = document.querySelector('.mobile-menu-close');
+
+                    // Проверка наличия всех ключевых элементов
+                    if (!menuToggle || !menuPanel || !menuOverlay || !closeButton) {
+                        console.error('Mobile menu components are missing. The menu will not be initialized.');
+                        return;
+                    }
+
+                    const mainNav = document.querySelector('.main-navigation .nav-menu');
+                    const mobileLinksContainer = menuPanel.querySelector('.mobile-menu-links');
+
+                    /**
+                     * Копирует навигационные ссылки из десктопного меню в мобильное.
+                     */
+                    function cloneNavLinks() {
+                        if (!mainNav || !mobileLinksContainer) return;
+
+                        mobileLinksContainer.innerHTML = '';
+
+                        const navItems = mainNav.querySelectorAll(':scope > .nav-item');
+
+                        navItems.forEach(item => {
+                            const link = item.querySelector(':scope > .nav-link:not(.dropdown-toggle)');
+                            const dropdown = item.querySelector('.dropdown-menu');
+
+                            if (link) {
+                                const newLi = document.createElement('li');
+                                const newLink = document.createElement('a');
+                                newLink.href = link.href;
+                                // Используем innerHTML, чтобы скопировать и иконки, и текст
+                                newLink.innerHTML = link.querySelector('.nav-icon-wrapper').innerHTML;
+
+                                if (link.classList.contains('logout-item')) newLink.classList.add('logout-link');
+
+                                newLi.appendChild(newLink);
+                                mobileLinksContainer.appendChild(newLi);
+                            }
+
+                            if (dropdown) {
+                                const dropdownLinks = dropdown.querySelectorAll('.dropdown-item');
+                                dropdownLinks.forEach(dLink => {
+                                    // Пропускаем разделители
+                                    if (dLink.classList.contains('dropdown-divider')) return;
+
+                                    const newLi = document.createElement('li');
+                                    const newLink = document.createElement('a');
+                                    newLink.href = dLink.href;
+                                    newLink.innerHTML = dLink.innerHTML;
+
+                                    if (dLink.classList.contains('new-task')) newLink.classList.add('new-task-link');
+                                    if (dLink.classList.contains('logout-item')) newLink.classList.add('logout-link');
+
+                                    newLi.appendChild(newLink);
+                                    mobileLinksContainer.appendChild(newLi);
+                                });
+                            }
+                        });
+                    }
+
+                    function openMenu() {
+                        menuPanel.classList.add('open');
+                        menuOverlay.classList.add('open');
+                        menuToggle.classList.add('active');
+                        document.body.classList.add('mobile-menu-active');
+                        menuToggle.setAttribute('aria-expanded', 'true');
+                        menuPanel.setAttribute('aria-hidden', 'false');
+                        // Устанавливаем фокус на кнопку закрытия для доступности
+                        closeButton.focus();
+                    }
+
+                    function closeMenu() {
+                        menuPanel.classList.remove('open');
+                        menuOverlay.classList.remove('open');
+                        menuToggle.classList.remove('active');
+                        document.body.classList.remove('mobile-menu-active');
+                        menuToggle.setAttribute('aria-expanded', 'false');
+                        menuPanel.setAttribute('aria-hidden', 'true');
+                        // Возвращаем фокус на кнопку-гамбургер
+                        menuToggle.focus();
+                    }
+
+                    menuToggle.addEventListener('click', () => {
+                        if (menuPanel.classList.contains('open')) {
+                            closeMenu();
+                        } else {
+                            // Пересобираем ссылки перед открытием, чтобы они были актуальны
+                            cloneNavLinks();
+                            openMenu();
+                        }
+                    });
+
+                    closeButton.addEventListener('click', closeMenu);
+                    menuOverlay.addEventListener('click', closeMenu);
+
+                    document.addEventListener('keydown', (event) => {
+                        if (event.key === 'Escape' && menuPanel.classList.contains('open')) {
+                            closeMenu();
+                        }
+                    });
+
+                    console.log('Mobile menu initialized successfully.');
+                });
+            </script>
         </body>
 </html>
