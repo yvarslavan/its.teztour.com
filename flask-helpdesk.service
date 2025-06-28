@@ -10,12 +10,19 @@ WorkingDirectory=/var/www/flask_helpdesk
 Environment=PATH=/var/www/flask_helpdesk/venv/bin
 Environment=FLASK_ENV=production
 Environment=PYTHONPATH=/var/www/flask_helpdesk
-ExecStart=/var/www/flask_helpdesk/venv/bin/python wsgi.py
+ExecStart=/var/www/flask_helpdesk/venv/bin/gunicorn \
+          --workers 3 --threads 2 --timeout 120 \
+          --bind unix:/run/gunicorn/gunicorn.sock \
+          wsgi:app
 ExecReload=/bin/kill -s HUP $MAINPID
 Restart=always
 RestartSec=3
 StandardOutput=journal
 StandardError=journal
+
+# Директория для сокета создаём на старте, если ещё нет
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
 
 [Install]
 WantedBy=multi-user.target
