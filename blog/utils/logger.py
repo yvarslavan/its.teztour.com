@@ -2,7 +2,13 @@ import logging
 import sys
 import os
 from logging.handlers import RotatingFileHandler
-from python_json_logger.json import JsonFormatter
+# Поддержка разных имён пакета: python_json_logger (fork) и python-json-logger (оригинал)
+try:
+    from python_json_logger.json import JsonFormatter  # наш предпочтительный форк
+except ModuleNotFoundError:
+    # fallback на официальный пакет python-json-logger, который устанавливается как 'pythonjsonlogger'
+    from pythonjsonlogger import jsonlogger as _jsonlogger  # type: ignore
+    JsonFormatter = _jsonlogger.JsonFormatter
 from config import get
 
 def configure_blog_logger():
