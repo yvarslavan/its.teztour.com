@@ -698,7 +698,7 @@ post_deploy_verification:
         fi
       "
 
-      # Проверка сокета и HTTP health-чека выполняется на целевом сервере,
+      # Проверяем сокета и HTTP health-чека выполняется на целевом сервере,
       # иначе в контейнере runner'а файла сокета не будет.
       ssh $DEPLOY_USER@$DEPLOY_SERVER "
         echo '🔍 Проверка сокета и HTTP health-чека...'
@@ -710,11 +710,13 @@ post_deploy_verification:
           exit 1
         fi
 
-        # Проверяем локальный HTTP ‑endpoint на сервере (gunicorn ⇄ nginx)
-        if curl -sf http://127.0.0.1/ >/dev/null; then
-          echo '✅ HTTP endpoint / ответил 200'
+        # Проверяем локальный HTTP-endpoint и принимаем коды 2xx/3xx
+        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/ || echo "000")
+
+        if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+          echo "✅ HTTP endpoint / ответил $HTTP_CODE"
         else
-          echo '❌ HTTP endpoint / не отвечает'
+          echo "❌ HTTP endpoint / вернул код $HTTP_CODE"
           exit 1
         fi
       "
