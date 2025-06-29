@@ -522,11 +522,11 @@ deploy_to_server:
         sudo systemctl enable $SERVICE_NAME
 
         # Обновляем конфиг Nginx и перезагружаем, чтобы использовать актуальный SOCKET_PATH
-        if [ -f "$DEPLOY_PATH/flask-helpdesk.nginx.conf" ]; then
+        if [ -f \"${DEPLOY_PATH}/flask-helpdesk.nginx.conf\" ]; then
           echo '🌐 Обновляем конфиг Nginx...'
           sudo cp $DEPLOY_PATH/flask-helpdesk.nginx.conf /etc/nginx/vhosts.d/flask-helpdesk.conf
           # Заменяем переменную SOCKET_PATH, если она отличается
-          sudo sed -i "s#proxy_pass .*;#proxy_pass http://unix:${SOCKET_PATH};#" /etc/nginx/vhosts.d/flask-helpdesk.conf
+          sudo sed -i \"s#proxy_pass .*;#proxy_pass http://unix:${SOCKET_PATH};#\" /etc/nginx/vhosts.d/flask-helpdesk.conf
           sudo nginx -t && sudo systemctl reload nginx
           echo '✅ Nginx конфиг применён'
         else
