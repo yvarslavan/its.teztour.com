@@ -70,7 +70,7 @@ build_deployment_package:
     - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
     - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
     - echo "📦 Полное содержимое архива deployment_package.tar.gz:"
-    - tar -tvf deployment_package.tar.gz
+    - tar -tvf deployment_package.tar.gz | head -n 50
     - echo "✅ Пакет для деплоя создан deployment_package.tar.gz"
     - echo "📏 Размер пакета $(du -h deployment_package.tar.gz | cut -f1)"
   artifacts:
@@ -398,7 +398,7 @@ deploy_to_server:
           # Синхронизируем файлы в рабочую директорию, ИСКЛЮЧАЯ БАЗУ ДАННЫХ
           # Ключ --delete удаляет старые файлы, которых нет в новой версии
           echo 'Синхронизация файлов с сохранением blog/db...'
-          sudo rsync -av --exclude 'blog/db' --delete \$RELEASE_DIR/ $DEPLOY_PATH/
+          sudo rsync -a --exclude 'blog/db' --delete \$RELEASE_DIR/ $DEPLOY_PATH/
 
           # Очищаем временные файлы
           echo 'Очистка временных файлов...'
@@ -414,13 +414,13 @@ deploy_to_server:
           echo '---'
           cd $DEPLOY_PATH
           echo 'Содержимое директории:'
-          sudo ls -la
+          sudo ls -la | head -n 30
           echo '---'
-          echo 'Начало файла mysql_db.py (первые 40 строк):'
-          sudo head -n 40 mysql_db.py
+          echo 'Начало файла mysql_db.py (первые 20 строк):'
+          sudo head -n 20 mysql_db.py
           echo '---'
-          echo 'Содержимое файла config.ini:'
-          sudo cat config.ini
+          echo 'Первые 20 строк config.ini:'
+          sudo head -n 20 config.ini
           echo '---'
         "
         # >>> КОНЕЦ БЛОКА ДИАГНОСТИКИ <<<
@@ -499,7 +499,7 @@ deploy_to_server:
 
         # Удаляем старое venv если есть
         if [ -d 'venv' ]; then
-          sudo rm -rf venv
+          sudo rm -rf venv > /dev/null 2>&1
         fi
 
         # Создаем новое venv
@@ -507,8 +507,7 @@ deploy_to_server:
         sudo chown -R www-data:www-data venv/
 
         # Активируем и устанавливаем зависимости
-        sudo -u www-data venv/bin/pip install --upgrade pip
-        sudo -u www-data venv/bin/pip install -r requirements.txt
+        sudo -u www-data venv/bin/pip install -r requirements.txt --quiet
 
         echo '✅ Python окружение настроено'
       "
@@ -550,9 +549,9 @@ deploy_to_server:
         else
           echo '❌ Ошибка запуска сервиса'
           echo '📋 Статус сервиса:'
-          sudo systemctl status $SERVICE_NAME --no-pager
+          sudo systemctl status $SERVICE_NAME --no-pager | head -n 30
           echo '📋 Последние логи сервиса:'
-          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager
+          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager | head -n 50
           echo '📋 Проверка файла wsgi.py:'
           if [ -f '$DEPLOY_PATH/wsgi.py' ]; then
             echo '✅ wsgi.py найден'
