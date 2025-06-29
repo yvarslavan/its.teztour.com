@@ -711,7 +711,9 @@ post_deploy_verification:
         fi
 
         # Проверяем локальный HTTP-endpoint и принимаем коды 2xx/3xx
-        HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1/ || echo "000")
+        # Используем одинарные кавычки, чтобы не прерывать внешнюю строку и убираем переводы строк
+        HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/ 2>/dev/null || echo '000')
+        HTTP_CODE=$(echo "$HTTP_CODE" | tr -d '\r\n')
 
         if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
           echo "✅ HTTP endpoint / ответил $HTTP_CODE"
