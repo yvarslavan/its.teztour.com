@@ -61,7 +61,8 @@ from redmine import (
     generate_email_signature,
     get_count_notifications,
     get_count_notifications_add_notes,
-    execute_query
+    execute_query,
+    generate_optimized_property_names,
 )
 
 from erp_oracle import (
@@ -740,6 +741,12 @@ def simple_api_test():
 @main.route("/get-my-issues", methods=["GET"])
 @login_required
 def get_my_issues():
+    # Проверяем параметр кеширования
+    use_cached = request.args.get('cached', '0') == '1'
+
+    if use_cached:
+        # Возвращаем сигнал клиенту использовать кеш
+        return jsonify({"use_cached_data": True})
     with Session() as session:
         conn = get_connection(
             DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB
@@ -834,62 +841,93 @@ def task_detail_redirect(task_id):
 @main.route("/my-issues/<int:issue_id>", methods=["GET", "POST"])
 @login_required
 def issue(issue_id):
-    """Вывод истории заявки"""
+    """Оптимизированный вывод истории заявки с минимальными подключениями к БД"""
     form = AddCommentRedmine()
-    # Эти переменные redmine_login_admin, redmine_password_admin, redmine_api_key
-    # определяются глобально в этом файле при чтении config.ini
-    global redmine_login_admin, redmine_password_admin, redmine_api_key
 
+    # === ЭТАП 1: Подключения к внешним системам ===
+    logger.info(f"Загрузка заявки #{issue_id} для пользователя {current_user.id}")
+    start_time = time.time()
+
+    # Подключение к Oracle (для получения пароля пользователя)
     oracle_connect_instance = connect_oracle(
         db_host, db_port, db_service_name, db_user_name, db_password
     )
 
     user_password_erp = get_user_erp_password(oracle_connect_instance, current_user.username)
     if not oracle_connect_instance or not user_password_erp:
-        flash(
-            "Не удалось подключиться к базе данных Oracle или получить пароль пользователя для Redmine.",
-            "error",
-        )
+        flash("Не удалось подключиться к базе данных Oracle или получить пароль пользователя для Redmine.", "error")
         return redirect(url_for("main.my_issues"))
 
-    # Используем get_redmine_connector из blog.tasks.utils для текущего пользователя
-    # user_password_erp может быть кортежем, get_redmine_connector должен это обработать или ожидать строку
-    # В utils.py get_redmine_connector -> create_redmine_connector ожидает строку пароля.
+    # Получаем пароль пользователя
     actual_user_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
 
+    # === ЭТАП 2: Создание Redmine коннектора ===
     redmine_connector_user = get_redmine_connector(current_user, actual_user_password)
 
     if not redmine_connector_user or not hasattr(redmine_connector_user, 'redmine'):
         flash("Не удалось создать пользовательский коннектор Redmine.", "error")
-        current_app.logger.error(f"Не удалось создать redmine_connector_user для {current_user.username} в функции issue.")
+        current_app.logger.error(f"Не удалось создать redmine_connector_user для {current_user.username}")
         return redirect(url_for("main.my_issues"))
 
-    issue_history = None
-    attachment_list = []
+    # === ЭТАП 3: Загрузка данных заявки ===
     issue_detail_obj = None
+    attachment_list = []
+    issue_history = None
 
-    # Загружаем данные задачи
     try:
-        issue_detail_obj = redmine_connector_user.redmine.issue.get(issue_id, include=['attachments', 'journals'])
+        # Загружаем основные данные задачи
+        issue_detail_obj = redmine_connector_user.redmine.issue.get(
+            issue_id,
+            include=['attachments', 'journals']
+        )
+
         # Получаем вложения
         if hasattr(issue_detail_obj, 'attachments'):
             attachment_list = issue_detail_obj.attachments
+
+        # Получаем историю изменений
+        issue_history = redmine_connector_user.get_issue_history(issue_id)
+
     except Exception as e:
         current_app.logger.error(f"Ошибка при загрузке задачи #{issue_id}: {e}")
         flash(f"Не удалось загрузить задачу #{issue_id}.", "error")
         return redirect(url_for("main.my_issues"))
 
-    try:
-        issue_history = redmine_connector_user.get_issue_history(issue_id)
-    except Exception as e:
-        current_app.logger.error(f"Ошибка при загрузке истории для задачи #{issue_id}: {e}")
-        flash(f"Не удалось загрузить историю изменений для задачи #{issue_id}. Попробуйте обновить страницу позже.", "warning")
+    # === ЭТАП 4: КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ - Предзагрузка данных для истории ===
+    property_descriptions = {}
+    redmine_connection = None
 
-    # Используем redmine_connector_user для добавления комментария
+    if issue_history:
+        try:
+            # Создаем ОДНО соединение для всех операций с БД
+            redmine_connection = get_connection(
+                DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB
+            )
+
+            if redmine_connection:
+                # Используем оптимизированную функцию для пакетной загрузки
+                property_descriptions = generate_optimized_property_names(
+                    redmine_connection, issue_history
+                )
+                logger.info(f"Предзагружено {len(property_descriptions)} описаний изменений")
+            else:
+                logger.warning("Не удалось создать соединение с Redmine DB для оптимизации")
+
+        except Exception as e:
+            logger.error(f"Ошибка при предзагрузке данных для истории: {e}")
+        finally:
+            if redmine_connection:
+                redmine_connection.close()
+
+    # === ЭТАП 5: Обработка формы комментария ===
     if form.validate_on_submit() and handle_comment_submission(
         form, issue_id, redmine_connector_user
     ):
         return redirect(url_for("main.issue", issue_id=issue_id))
+
+    # === ЭТАП 6: Рендеринг шаблона с предзагруженными данными ===
+    end_time = time.time()
+    logger.info(f"Заявка #{issue_id} загружена за {end_time - start_time:.2f} сек")
 
     return render_template(
         "issue.html",
@@ -900,12 +938,15 @@ def issue(issue_id):
         form=form,
         clear_comment=True,
         convert_datetime_msk_format=convert_datetime_msk_format,
-        get_property_name=get_property_name,
-        get_status_name_from_id=get_status_name_from_id,
-        get_project_name_from_id=get_project_name_from_id,
-        get_user_full_name_from_id=get_user_full_name_from_id,
-        get_priority_name_from_id=get_priority_name_from_id,
-        get_connection=get_connection,
+        # КРИТИЧНО: Передаем предзагруженные данные вместо функций
+        property_descriptions=property_descriptions,
+        # НЕ передаем функции get_property_name и другие!
+        # get_property_name=get_property_name,  # УДАЛИТЬ ЭТУ СТРОКУ!
+        # get_status_name_from_id=get_status_name_from_id,  # УДАЛИТЬ!
+        # get_project_name_from_id=get_project_name_from_id,  # УДАЛИТЬ!
+        # get_user_full_name_from_id=get_user_full_name_from_id,  # УДАЛИТЬ!
+        # get_priority_name_from_id=get_priority_name_from_id,  # УДАЛИТЬ!
+        # get_connection=get_connection,  # УДАЛИТЬ!
     )
 
 
@@ -2497,3 +2538,21 @@ def get_notifications_count_api():
     except Exception as e:
         logger.error(f"Error in get_notifications_count_api: {str(e)}")
         return jsonify({"count": 0, "error": str(e)}), 500
+
+class IssueTemplateHelper:
+    def __init__(self):
+        self.connection = None
+        self.cache = {}
+
+    def get_connection(self):
+        if not self.connection:
+            self.connection = get_connection(
+                DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB
+            )
+        return self.connection
+
+    def get_cached_property_name(self, property_name, prop_key, old_value, new_value):
+        cache_key = f"{property_name}:{prop_key}:{old_value}:{new_value}"
+        if cache_key not in self.cache:
+            self.cache[cache_key] = get_property_name(property_name, prop_key, old_value, new_value)
+        return self.cache[cache_key]
