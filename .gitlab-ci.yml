@@ -70,7 +70,7 @@ build_deployment_package:
     - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
     - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
     - echo "📦 Полное содержимое архива deployment_package.tar.gz:"
-    - tar -tvf deployment_package.tar.gz | head -n 50
+    - tar -tvf deployment_package.tar.gz | head -n 50 || true
     - echo "✅ Пакет для деплоя создан deployment_package.tar.gz"
     - echo "📏 Размер пакета $(du -h deployment_package.tar.gz | cut -f1)"
   artifacts:
@@ -414,13 +414,13 @@ deploy_to_server:
           echo '---'
           cd $DEPLOY_PATH
           echo 'Содержимое директории:'
-          sudo ls -la | head -n 30
+          sudo ls -la | head -n 30 || true
           echo '---'
           echo 'Начало файла mysql_db.py (первые 20 строк):'
-          sudo head -n 20 mysql_db.py
+          sudo head -n 20 mysql_db.py || true
           echo '---'
           echo 'Первые 20 строк config.ini:'
-          sudo head -n 20 config.ini
+          sudo head -n 20 config.ini || true
           echo '---'
         "
         # >>> КОНЕЦ БЛОКА ДИАГНОСТИКИ <<<
@@ -549,9 +549,9 @@ deploy_to_server:
         else
           echo '❌ Ошибка запуска сервиса'
           echo '📋 Статус сервиса:'
-          sudo systemctl status $SERVICE_NAME --no-pager | head -n 30
+          sudo systemctl status $SERVICE_NAME --no-pager | head -n 30 || true
           echo '📋 Последние логи сервиса:'
-          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager | head -n 50
+          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager | head -n 50 || true
           echo '📋 Проверка файла wsgi.py:'
           if [ -f '$DEPLOY_PATH/wsgi.py' ]; then
             echo '✅ wsgi.py найден'
