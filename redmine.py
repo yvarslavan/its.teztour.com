@@ -3,6 +3,7 @@ import tempfile
 from datetime import timedelta, datetime
 from configparser import ConfigParser
 import logging
+import functools
 import time
 from builtins import Exception
 from urllib.parse import urlparse
@@ -23,6 +24,7 @@ from blog import db
 import uuid
 # ИСПРАВЛЕНИЕ: Убираем импорт notification_service отсюда, чтобы избежать циклического импорта
 # from blog.notification_service import notification_service, NotificationData, NotificationType, WebPushException
+from typing import List, Dict, Set, Optional, Any
 
 
 # Настройка базовой конфигурации логирования
@@ -1252,3 +1254,317 @@ def fetch_redmine_raw_updates(redmine_instance, last_run_timestamp: datetime):
     except Exception as e:
         logger.error(f"Неожиданная ошибка в fetch_redmine_raw_updates: {e}", exc_info=True)
         return []
+def monitor_performance(operation_name):
+    """Декоратор для мониторинга производительности функций"""
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            start_time = time.time()
+            try:
+                result = func(*args, **kwargs)
+                end_time = time.time()
+                elapsed = end_time - start_time
+
+                if elapsed > 1.0:  # Логируем только медленные операции
+                    logger.warning(f"PERFORMANCE: {operation_name} took {elapsed:.2f}s")
+                else:
+                    logger.info(f"PERFORMANCE: {operation_name} took {elapsed:.3f}s")
+
+                return result
+            except Exception as e:
+                end_time = time.time()
+                logger.error(f"PERFORMANCE ERROR: {operation_name} failed after {end_time - start_time:.2f}s: {e}")
+                raise
+        return wrapper
+    return decorator
+
+# Применение к функциям
+@monitor_performance("get_multiple_user_names")
+def get_multiple_user_names(connection, user_ids):
+    """
+    Пакетная загрузка имен пользователей по списку ID
+
+    Args:
+        connection: Соединение с БД MySQL
+        user_ids: Список ID пользователей
+
+    Returns:
+        dict: Словарь {user_id: full_name}
+    """
+    if not user_ids or not connection:
+        return {}
+
+    # Удаляем дубликаты и None значения
+    clean_ids = list(set(filter(None, user_ids)))
+    if not clean_ids:
+        return {}
+
+    # Создаем плейсхолдеры для параметризованного запроса
+    placeholders = ','.join(['%s'] * len(clean_ids))
+    sql = f"""
+        SELECT id, CONCAT(IFNULL(lastname, ''), ' ', IFNULL(firstname, '')) AS full_name
+        FROM users
+        WHERE id IN ({placeholders})
+    """
+
+    cursor = None
+    result = {}
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql, clean_ids)
+        for row in cursor:
+            result[row["id"]] = row["full_name"].strip()
+        logger.info(f"Загружено {len(result)} имен пользователей из {len(clean_ids)} запрошенных")
+        return result
+    except pymysql.Error as e:
+        logger.error(f"Ошибка при пакетной загрузке имен пользователей: {e}")
+        return {}
+    finally:
+        if cursor:
+            cursor.close()
+
+
+def get_multiple_project_names(connection, project_ids):
+    """
+    Пакетная загрузка названий проектов по списку ID
+
+    Args:
+        connection: Соединение с БД MySQL
+        project_ids: Список ID проектов
+
+    Returns:
+        dict: Словарь {project_id: name}
+    """
+    if not project_ids or not connection:
+        return {}
+
+    clean_ids = list(set(filter(None, project_ids)))
+    if not clean_ids:
+        return {}
+
+    placeholders = ','.join(['%s'] * len(clean_ids))
+    sql = f"SELECT id, IFNULL(name,'') as name FROM projects WHERE id IN ({placeholders})"
+
+    cursor = None
+    result = {}
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql, clean_ids)
+        for row in cursor:
+            result[row["id"]] = row["name"]
+        logger.info(f"Загружено {len(result)} названий проектов из {len(clean_ids)} запрошенных")
+        return result
+    except pymysql.Error as e:
+        logger.error(f"Ошибка при пакетной загрузке названий проектов: {e}")
+        return {}
+    finally:
+        if cursor:
+            cursor.close()
+
+
+def get_multiple_status_names(connection, status_ids):
+    """
+    Пакетная загрузка названий статусов по списку ID
+
+    Args:
+        connection: Соединение с БД MySQL
+        status_ids: Список ID статусов
+
+    Returns:
+        dict: Словарь {status_id: name}
+    """
+    if not status_ids or not connection:
+        return {}
+
+    clean_ids = list(set(filter(None, status_ids)))
+    if not clean_ids:
+        return {}
+
+    placeholders = ','.join(['%s'] * len(clean_ids))
+    sql = f"SELECT id, IFNULL(name,'') as name FROM u_statuses WHERE id IN ({placeholders})"
+
+    cursor = None
+    result = {}
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql, clean_ids)
+        for row in cursor:
+            result[row["id"]] = row["name"]
+        logger.info(f"Загружено {len(result)} названий статусов из {len(clean_ids)} запрошенных")
+        return result
+    except pymysql.Error as e:
+        logger.error(f"Ошибка при пакетной загрузке названий статусов: {e}")
+        return {}
+    finally:
+        if cursor:
+            cursor.close()
+
+
+def get_multiple_priority_names(connection, priority_ids):
+    """
+    Пакетная загрузка названий приоритетов по списку ID
+
+    Args:
+        connection: Соединение с БД MySQL
+        priority_ids: Список ID приоритетов
+
+    Returns:
+        dict: Словарь {priority_id: name}
+    """
+    if not priority_ids or not connection:
+        return {}
+
+    clean_ids = list(set(filter(None, priority_ids)))
+    if not clean_ids:
+        return {}
+
+    placeholders = ','.join(['%s'] * len(clean_ids))
+    sql = f"SELECT id, IFNULL(name,'') as name FROM u_Priority WHERE id IN ({placeholders})"
+
+    cursor = None
+    result = {}
+    try:
+        cursor = connection.cursor()
+        cursor.execute(sql, clean_ids)
+        for row in cursor:
+            result[row["id"]] = row["name"]
+        logger.info(f"Загружено {len(result)} названий приоритетов из {len(clean_ids)} запрошенных")
+        return result
+    except pymysql.Error as e:
+        logger.error(f"Ошибка при пакетной загрузке названий приоритетов: {e}")
+        return {}
+    finally:
+        if cursor:
+            cursor.close()
+
+
+def generate_optimized_property_names(connection, issue_history):
+    """
+    Оптимизированная генерация описаний изменений для истории заявки.
+    Использует пакетную загрузку вместо множественных запросов к БД.
+
+    Args:
+        connection: Соединение с БД MySQL
+        issue_history: История изменений заявки
+
+    Returns:
+        dict: Словарь с предгенерированными описаниями изменений
+        Ключ: "{property}:{name}:{old_value}:{new_value}"
+        Значение: HTML-описание изменения
+    """
+    if not issue_history or not connection:
+        return {}
+
+    # Собираем все уникальные ID для пакетной загрузки
+    user_ids = set()
+    project_ids = set()
+    status_ids = set()
+    priority_ids = set()
+
+    # Проходим по всей истории и собираем ID
+    for journal_entry in issue_history:
+        if hasattr(journal_entry, 'details'):
+            for detail in journal_entry.details:
+                prop_name = detail.get('name', '')
+                old_value = detail.get('old_value')
+                new_value = detail.get('new_value')
+
+                if prop_name == 'assigned_to_id':
+                    if old_value: user_ids.add(int(old_value))
+                    if new_value: user_ids.add(int(new_value))
+                elif prop_name == 'project_id':
+                    if old_value: project_ids.add(int(old_value))
+                    if new_value: project_ids.add(int(new_value))
+                elif prop_name == 'status_id':
+                    if old_value: status_ids.add(int(old_value))
+                    if new_value: status_ids.add(int(new_value))
+                elif prop_name == 'priority_id':
+                    if old_value: priority_ids.add(int(old_value))
+                    if new_value: priority_ids.add(int(new_value))
+
+    # Пакетная загрузка всех данных одним запросом к БД
+    logger.info(f"Начинаем пакетную загрузку: users={len(user_ids)}, projects={len(project_ids)}, statuses={len(status_ids)}, priorities={len(priority_ids)}")
+
+    user_names = get_multiple_user_names(connection, list(user_ids))
+    project_names = get_multiple_project_names(connection, list(project_ids))
+    status_names = get_multiple_status_names(connection, list(status_ids))
+    priority_names = get_multiple_priority_names(connection, list(priority_ids))
+
+    # Генерируем описания изменений
+    property_descriptions = {}
+
+    for journal_entry in issue_history:
+        if hasattr(journal_entry, 'details'):
+            for detail in journal_entry.details:
+                property_name = detail.get('property', 'attr')
+                prop_key = detail.get('name', '')
+                old_value = detail.get('old_value')
+                new_value = detail.get('new_value')
+
+                # Создаем уникальный ключ для кеширования
+                cache_key = f"{property_name}:{prop_key}:{old_value}:{new_value}"
+
+                if cache_key in property_descriptions:
+                    continue  # Уже обработано
+
+                # Генерируем описание на основе предзагруженных данных
+                result = None
+
+                if prop_key == "project_id":
+                    project_from = project_names.get(int(old_value) if old_value else None, 'None')
+                    project_to = project_names.get(int(new_value) if new_value else None, 'None')
+                    result = f"Параметр&nbsp;<b>Проект</b>&nbsp;изменился&nbsp;c&nbsp;<b>{project_from}</b>&nbsp;на&nbsp;<b>{project_to}</b>"
+
+                elif prop_key == "assigned_to_id":
+                    assigned_from = user_names.get(int(old_value) if old_value else None, 'None')
+                    assigned_to = user_names.get(int(new_value) if new_value else None, 'None')
+                    result = f"Параметр&nbsp;<b>Назначена</b>&nbsp;изменился&nbsp;c&nbsp;<b>{assigned_from}</b>&nbsp;на&nbsp;<b>{assigned_to}</b>"
+
+                elif prop_key == "status_id":
+                    status_from = status_names.get(int(old_value) if old_value else None, 'Неизвестно')
+                    status_to = status_names.get(int(new_value) if new_value else None, 'Неизвестно')
+                    result = f"Параметр&nbsp;<b>Статус</b>&nbsp;изменился&nbsp;c&nbsp;<b>{status_from}</b>&nbsp;на&nbsp;<b>{status_to}</b>"
+
+                elif prop_key == "priority_id":
+                    priority_from = priority_names.get(int(old_value) if old_value else None, 'Неизвестно')
+                    priority_to = priority_names.get(int(new_value) if new_value else None, 'Неизвестно')
+                    result = f"Параметр&nbsp;<b>Приоритет</b>&nbsp;изменился&nbsp;c&nbsp;<b>{priority_from}</b>&nbsp;на&nbsp;<b>{priority_to}</b>"
+
+                elif prop_key == "subject":
+                    result = f"Параметр&nbsp;<b>Тема</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_value}</b>&nbsp;на&nbsp;<b>{new_value}</b>"
+
+                elif prop_key == "easy_helpdesk_need_reaction":
+                    old_reaction = 'Да' if old_value == '1' else 'Нет'
+                    new_reaction = 'Да' if new_value == '1' else 'Нет'
+                    result = f"Параметр&nbsp;<b>Нужна&nbsp;реакция?</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_reaction}</b>&nbsp;на&nbsp;<b>{new_reaction}</b>"
+
+                elif prop_key == "done_ratio":
+                    result = f"Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_value}%</b>&nbsp;на&nbsp;<b>{new_value}%</b>"
+
+                elif prop_key == "16":  # Кастомное поле "Что нового"
+                    if old_value and not new_value:
+                        old_text = "Да" if str(old_value) != "0" else "Нет"
+                        result = f"Значение&nbsp;<b>{old_text}</b>&nbsp;параметра&nbsp;<b>Что&nbsp;нового</b>&nbsp;удалено"
+                    elif not old_value and new_value:
+                        new_text = "Да" if str(new_value) != "0" else "Нет"
+                        result = f"Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;на&nbsp;<b>{new_text}</b>"
+                    else:
+                        old_text = "Да" if old_value and str(old_value) != "0" else "Нет"
+                        new_text = "Да" if new_value and str(new_value) != "0" else "Нет"
+                        result = f"Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_text}</b>&nbsp;на&nbsp;<b>{new_text}</b>"
+
+                elif property_name == "attachment":
+                    result = f"Файл&nbsp;<b>{new_value}</b>&nbsp;добавлен"
+
+                elif property_name == "relation" and prop_key == "relates":
+                    result = f"Задача&nbsp;связана&nbsp;с&nbsp;задачей&nbsp;<b>#{new_value}</b>"
+
+                elif prop_key == "subtask" and property_name == "relation" and new_value:
+                    result = f"Добавлена&nbsp;подзадача&nbsp;<b>#{new_value}</b>"
+
+                # Сохраняем результат в кеш
+                if result:
+                    property_descriptions[cache_key] = result
+
+    logger.info(f"Сгенерировано {len(property_descriptions)} описаний изменений")
+    return property_descriptions

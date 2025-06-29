@@ -30,7 +30,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="/my-issues" class="action-button secondary">
+        <a href="#" onclick="goBackToListOptimized(); return false;" class="action-button secondary">
           <i class="fas fa-arrow-left"></i>
           <span>Назад к списку</span>
         </a>
@@ -418,7 +418,13 @@
                       {% for detail in journal_entry.details %}
                         {% set old_value = detail.get('old_value') %}
                         {% set new_value = detail.get('new_value') %}
-                        {% set property_name_html = get_property_name(detail['property'], detail['name'], old_value, new_value) %}
+
+                        {# Создаем ключ для поиска предзагруженного описания #}
+                        {% set cache_key = detail['property'] + ':' + detail['name'] + ':' + (old_value|string if old_value else '') + ':' + (new_value|string if new_value else '') %}
+
+                        {# Получаем предзагруженное описание #}
+                        {% set property_name_html = property_descriptions.get(cache_key) %}
+
                         {% if property_name_html %}
                           <div class="change-item">
                             <i class="fas fa-arrow-right"></i>
@@ -1619,5 +1625,51 @@
       descriptionSection.previousElementSibling.classList.add('expanded');
     }
   });
+
+  /**
+   * Оптимизированный переход назад к списку заявок
+   * Использует sessionStorage для кеширования данных и состояния таблицы
+   */
+  function goBackToListOptimized() {
+    const cacheKey = 'my_issues_data_v2';
+    const stateKey = 'my_issues_table_state_v2';
+    const cacheTimeKey = 'my_issues_cache_time_v2';
+    const cacheExpiry = 10 * 60 * 1000; // 10 минут в миллисекундах
+
+    try {
+      // Сохраняем информацию о текущей заявке для восстановления позиции
+      const currentIssueId = window.location.pathname.match(/\/my-issues\/(\d+)/)?.[1];
+      if (currentIssueId) {
+        sessionStorage.setItem('return_from_issue_id', currentIssueId);
+      }
+
+      const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
+      const now = Date.now();
+
+      if (cacheTimestamp && (now - parseInt(cacheTimestamp)) < cacheExpiry) {
+        // Кеш актуален - быстрый переход с сохранением состояния
+        console.log('🚀 Быстрый переход: используем кешированные данные');
+
+        // Добавляем параметр для указания использования кеша
+        const urlParams = new URLSearchParams();
+        urlParams.set('cached', '1');
+        urlParams.set('from_issue', currentIssueId || '');
+
+        window.location.href = `/my-issues?${urlParams.toString()}`;
+      } else {
+        // Кеш устарел - обычный переход с очисткой старого состояния
+        console.log('🔄 Кеш истек, загружаем свежие данные');
+        sessionStorage.removeItem(cacheKey);
+        sessionStorage.removeItem(stateKey);
+        sessionStorage.removeItem(cacheTimeKey);
+
+        window.location.href = '/my-issues';
+      }
+    } catch (error) {
+      console.error('❌ Ошибка при работе с кешем:', error);
+      // Fallback - обычный переход
+      window.location.href = '/my-issues';
+    }
+  }
 </script>
 {% endblock %}
