@@ -698,30 +698,26 @@ post_deploy_verification:
         fi
       "
 
-      # Проверка доступности приложения (если указан порт)
-      if [ -n "$APP_PORT" ]; then
-        echo "🌐 Проверка доступности приложения на порту $APP_PORT..."
-        if curl -f -s "http://$DEPLOY_SERVER:$APP_PORT" >/dev/null; then
-          echo "✅ Приложение доступно"
+      # Проверка сокета и HTTP health-чека выполняется на целевом сервере,
+      # иначе в контейнере runner'а файла сокета не будет.
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔍 Проверка сокета и HTTP health-чека...'
+
+        if [ -S '${SOCKET_PATH}' ]; then
+          echo '✅ Socket найден: ${SOCKET_PATH}'
         else
-          echo "⚠️ Приложение недоступно или еще запускается"
+          echo '❌ Socket не найден: ${SOCKET_PATH}'
+          exit 1
         fi
-      fi
 
-      echo '🔍 Проверка сокета и HTTP health-чека...'
-      if [ -S "${SOCKET_PATH}" ]; then
-        echo '✅ Socket найден: ${SOCKET_PATH}'
-      else
-        echo '❌ Socket не найден: ${SOCKET_PATH}'
-        exit 1
-      fi
-
-      if curl -sf http://127.0.0.1/ >/dev/null; then
-        echo '✅ HTTP endpoint / ответил 200'
-      else
-        echo '❌ HTTP endpoint / не отвечает'
-        exit 1
-      fi
+        # Проверяем локальный HTTP ‑endpoint на сервере (gunicorn ⇄ nginx)
+        if curl -sf http://127.0.0.1/ >/dev/null; then
+          echo '✅ HTTP endpoint / ответил 200'
+        else
+          echo '❌ HTTP endpoint / не отвечает'
+          exit 1
+        fi
+      "
 
       echo "🎉 Пост-деплой верификация завершена успешно!"
   rules:
