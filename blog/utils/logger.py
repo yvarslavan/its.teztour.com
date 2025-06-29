@@ -11,6 +11,40 @@ except ModuleNotFoundError:
     JsonFormatter = _jsonlogger.JsonFormatter
 from config import get
 
+# Попытка использовать потокобезопасный обработчик, если доступен
+try:
+    from concurrent_log_handler import ConcurrentRotatingFileHandler as _SafeHandler  # type: ignore
+except ModuleNotFoundError:
+    # Фоллбэк — собственная обёртка над RotatingFileHandler, игнорирующая PermissionError на Windows
+    class _SafeHandler(RotatingFileHandler):
+        """RotatingFileHandler, устойчивый к PermissionError во время rotate() (Windows)."""
+
+        def rotate(self, source, dest):  # type: ignore[override]
+            try:
+                super().rotate(source, dest)
+            except PermissionError as e:
+                # Файл используется другим процессом — пытаемся аккуратно скопировать и очистить
+                import shutil, logging, tempfile, os
+
+                logging.getLogger('blog').warning(
+                    f"[SafeRotatingFileHandler] PermissionError during rotate({source}→{dest}): {e}; applying fallback copy+truncate"
+                )
+
+                try:
+                    # Если дестинация существует и занята, создаём временное имя
+                    if os.path.exists(dest):
+                        tmp_dest = dest + ".tmp"
+                        shutil.move(dest, tmp_dest)
+
+                    shutil.copy2(source, dest)
+                    # Транкатируем оригинал
+                    with open(source, "w", encoding="utf-8"):
+                        pass
+                except Exception as inner_exc:
+                    logging.getLogger('blog').error(
+                        f"[SafeRotatingFileHandler] Fallback rotation failed: {inner_exc}"
+                    )
+
 def configure_blog_logger():
     """Конфигурирует логгер для всего пакета 'blog'."""
     log_level_str = get("logging", "level", "INFO").upper()
@@ -32,7 +66,7 @@ def configure_blog_logger():
 
             os.makedirs(log_dir, exist_ok=True)
 
-            file_handler = RotatingFileHandler(
+            file_handler = _SafeHandler(
                 log_file_path,
                 maxBytes=1024 * 1024 * 5,  # 5 MBP
                 backupCount=3,
