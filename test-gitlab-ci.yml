@@ -1,0 +1,13 @@
+validate_syntax:
+  stage: validate
+  tags:
+    - linux
+    - docker
+    - shell
+  script:
+    - echo "🔍 Проверка синтаксиса Python..."
+    - python3 -m py_compile app.py || python -m py_compile app.py
+    - echo "✅ Синтаксис корректен"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
