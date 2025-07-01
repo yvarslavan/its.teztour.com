@@ -1,0 +1,845 @@
+stages:
+  - validate
+  - test
+  - build
+  - pre-deploy
+  - deploy
+  - post-deploy
+  - rollback
+
+variables:
+  DEPLOY_PATH: "/var/www/flask_helpdesk"
+  SERVICE_NAME: "flask-helpdesk"
+  BACKUP_PATH: "/var/backups/flask_helpdesk"
+  SOCKET_PATH: "/run/gunicorn/gunicorn.sock"
+  PYTHON_VERSION: "3.11"
+  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  AFTER_SCRIPT_IGNORE_ERRORS: false
+
+cache:
+  paths:
+    - .cache/pip/
+
+# ============ ЭТАП 1: ВАЛИДАЦИЯ ============
+validate_syntax:
+  stage: validate
+  image: python:3.9-slim
+  script:
+    - echo "🔍 Проверка синтаксиса Python..."
+    - python -m py_compile app.py
+    - echo "✅ Синтаксис корректен"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+
+# ============ ЭТАП 2: ТЕСТИРОВАНИЕ ============
+run_tests:
+  stage: test
+  image: python:3.9-slim
+  before_script:
+    - apt-get update -qq && apt-get install -y -qq git
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
+  script:
+    - echo "🧪 Запуск тестов..."
+    - python -m pytest tests/ -v || echo "⚠️ Тесты не найдены или завершились с ошибками"
+    - echo "✅ Тестирование завершено"
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+  allow_failure: true
+
+# ============ ЭТАП 3: СБОРКА ============
+build_deployment_package:
+  stage: build
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache tar gzip
+  script:
+    - echo "📦 Создание пакета для деплоя..."
+    - mkdir -p deployment_package
+    - cp -r blog/ deployment_package/ || echo "⚠️ Директория blog не найдена"
+    - cp -r static/ deployment_package/ || echo "⚠️ Директория static не найдена"
+    - cp -r templates/ deployment_package/ || echo "⚠️ Директория templates не найдена"
+    - cp -r migrations/ deployment_package/ || echo "⚠️ Директория migrations не найдена"
+    - cp app.py deployment_package/ || echo "⚠️ Файл app.py не найден"
+    - cp requirements.txt deployment_package/ || echo "⚠️ Файл requirements.txt не найден"
+    - cp flask-helpdesk.service deployment_package/ || echo "⚠️ Файл flask-helpdesk.service не найден"
+    - cp flask-helpdesk.nginx.conf deployment_package/ || echo "⚠️ Файл flask-helpdesk.nginx.conf не найден"
+    - cp config.ini deployment_package/ || echo "⚠️ Файл config.ini не найден"
+    - cp *.py deployment_package/ || echo "⚠️ Дополнительные .py файлы не найдены"
+    - cd deployment_package && tar -czf ../deployment_package.tar.gz . && cd ..
+    - echo "📦 Полное содержимое архива deployment_package.tar.gz:"
+    - tar -tvf deployment_package.tar.gz | head -n 50 || true
+    - echo "✅ Пакет для деплоя создан deployment_package.tar.gz"
+    - echo "📏 Размер пакета $(du -h deployment_package.tar.gz | cut -f1)"
+  artifacts:
+    paths:
+      - deployment_package.tar.gz
+      - deployment_package/
+    expire_in: 1 day
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+
+# ============ ЭТАП 4: ПРЕДВАРИТЕЛЬНЫЕ ПРОВЕРКИ ============
+pre_deploy_checks:
+  stage: pre-deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+  script:
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем проверки"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные деплоя установлены"
+
+      # Настраиваем SSH с правильными правами доступа
+      eval $(ssh-agent -s)
+
+      # Настройка SSH ключа
+      echo "🔐 Настройка SSH ключа с правильными правами..."
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "📁 SSH_PRIVATE_KEY содержит путь к файлу: $SSH_PRIVATE_KEY"
+
+        # Показываем информацию о файле
+        echo "🔍 Информация о файле ключа:"
+        echo "   Размер: $(wc -c < "$SSH_PRIVATE_KEY") байт"
+        echo "   Строк: $(wc -l < "$SSH_PRIVATE_KEY")"
+        echo "   Первые 2 строки:"
+        head -n 2 "$SSH_PRIVATE_KEY" | cat -A
+        echo "   Последние 2 строки:"
+        tail -n 2 "$SSH_PRIVATE_KEY" | cat -A
+
+        # Создаем исправленную версию ключа
+        echo "🔧 Исправление формата SSH ключа..."
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Более агрессивная очистка ключа
+        cat "$SSH_PRIVATE_KEY" | \
+          sed 's/\$$//g' | \
+          sed 's/\r//g' | \
+          sed 's/[[:space:]]*$//' | \
+          sed '/^$/d' | \
+          awk '/^-----BEGIN/{p=1} p{print} /^-----END/{p=0}' > "$SSH_KEY_CONTENT"
+
+        # Устанавливаем правильные права доступа
+        chmod 600 "$SSH_KEY_CONTENT"
+
+        # Проверяем валидность ключа
+        if ssh-keygen -l -f "$SSH_KEY_CONTENT" >/dev/null 2>&1; then
+          echo "✅ SSH ключ исправлен и валиден"
+        else
+          echo "❌ SSH ключ все еще невалиден, пробуем base64 декодирование..."
+          if cat "$SSH_PRIVATE_KEY" | base64 -d > "$SSH_KEY_CONTENT" 2>/dev/null; then
+            chmod 600 "$SSH_KEY_CONTENT"
+            if ssh-keygen -l -f "$SSH_KEY_CONTENT" >/dev/null 2>&1; then
+              echo "✅ SSH ключ успешно декодирован из base64"
+            else
+              echo "❌ Ключ невалиден даже после base64 декодирования"
+              exit 1
+            fi
+          else
+            echo "❌ Base64 декодирование не удалось"
+            exit 1
+          fi
+        fi
+      else
+        echo "📝 SSH_PRIVATE_KEY содержит содержимое ключа"
+        # Создаем временный файл для SSH ключа с правильными правами
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Проверяем, начинается ли с -----BEGIN (обычный ключ) или это base64
+        if echo "$SSH_PRIVATE_KEY" | head -c 10 | grep -q "^-----BEGIN"; then
+          echo "🔑 Обычный SSH ключ"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_CONTENT"
+        else
+          echo "🔐 Base64 кодированный SSH ключ, декодируем"
+          echo "$SSH_PRIVATE_KEY" | base64 -d > "$SSH_KEY_CONTENT"
+        fi
+
+        chmod 600 "$SSH_KEY_CONTENT"
+      fi
+
+      # Добавляем ключ в SSH агент
+      if ! ssh-add "$SSH_KEY_CONTENT"; then
+        echo "❌ Не удалось добавить SSH ключ в агент"
+        # Удаляем временный файл только если мы его создали
+        if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+          rm -f "$SSH_KEY_CONTENT"
+        fi
+        exit 1
+      fi
+
+      # Удаляем временный файл для безопасности (только если мы его создали)
+      if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+        rm -f "$SSH_KEY_CONTENT"
+      fi
+
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🚀 Начинаем деплой на сервер..."
+
+      echo "🔍 Предварительные проверки сервера..."
+
+      # Проверка SSH подключения
+      if ! ssh $DEPLOY_USER@$DEPLOY_SERVER "echo 'SSH соединение OK'"; then
+        echo "❌ Ошибка SSH подключения"
+        exit 1
+      fi
+
+      # Проверка свободного места и очистка если нужно
+      echo "🔍 Проверка свободного места..."
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        df -h ${DEPLOY_PATH:-/var/www/flask_helpdesk}
+        AVAILABLE_SPACE=\$(df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}')
+        echo \"Доступно: \$((\$AVAILABLE_SPACE / 1024)) MB\"
+
+        if [ \"\$AVAILABLE_SPACE\" -lt 512000 ]; then
+          echo '⚠️ Мало свободного места, выполняем очистку...'
+
+          # Очищаем старые логи
+          sudo journalctl --vacuum-time=7d
+
+          # Очищаем старые бэкапы (оставляем только 3 последних)
+          if [ -d '/var/backups/flask_helpdesk' ]; then
+            cd /var/backups/flask_helpdesk
+            sudo ls -t backup_* 2>/dev/null | tail -n +4 | sudo xargs rm -rf || true
+            echo 'Старые бэкапы очищены'
+          fi
+
+          # Очищаем кеш apt
+          sudo apt-get clean
+
+          # Проверяем место после очистки
+          AVAILABLE_SPACE_AFTER=\$(df ${DEPLOY_PATH:-/var/www/flask_helpdesk} | awk 'NR==2 {print \$4}')
+          echo \"После очистки доступно: \$((\$AVAILABLE_SPACE_AFTER / 1024)) MB\"
+
+          if [ \"\$AVAILABLE_SPACE_AFTER\" -lt 256000 ]; then
+            echo '❌ Критически мало места даже после очистки'
+            df -h
+            exit 1
+          fi
+        fi
+
+        echo '✅ Свободного места достаточно'
+      "
+
+      # Проверка прав доступа
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        DEPLOY_PATH_CHECK=\${DEPLOY_PATH:-/var/www/flask_helpdesk}
+
+        if [ ! -w \"\$DEPLOY_PATH_CHECK\" ]; then
+          echo '❌ Нет прав записи в \$DEPLOY_PATH_CHECK'
+          echo '🔧 Попытка автоматического исправления прав...'
+
+          # Создаем директорию если её нет
+          sudo mkdir -p \$DEPLOY_PATH_CHECK
+
+          # Исправляем права доступа
+          sudo chown -R www-data:www-data \$DEPLOY_PATH_CHECK
+          sudo chmod -R 755 \$DEPLOY_PATH_CHECK
+          sudo chmod g+w \$DEPLOY_PATH_CHECK
+          sudo usermod -aG www-data $DEPLOY_USER
+
+          # Дополнительное исправление для деплоя
+          sudo chmod 775 \$DEPLOY_PATH_CHECK
+          sudo chown $DEPLOY_USER:www-data \$DEPLOY_PATH_CHECK
+
+          # Повторная проверка
+          if [ ! -w \"\$DEPLOY_PATH_CHECK\" ]; then
+            echo '❌ Автоматическое исправление не помогло'
+            echo '📋 Выполните на сервере:'
+            echo '   sudo chmod 775 \$DEPLOY_PATH_CHECK'
+            echo '   sudo chown $DEPLOY_USER:www-data \$DEPLOY_PATH_CHECK'
+            exit 1
+          else
+            echo '✅ Права доступа исправлены автоматически'
+          fi
+        else
+          echo '✅ Права доступа корректны'
+        fi
+      "
+
+      echo "✅ Все предварительные проверки пройдены"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: always
+
+# ============ ЭТАП 5: ДЕПЛОЙ ============
+deploy_to_server:
+  stage: deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client rsync
+  script:
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения для деплоя..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем деплой"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные деплоя установлены"
+
+      # Настраиваем SSH с правильными правами доступа
+      eval $(ssh-agent -s)
+
+      # Настройка SSH ключа
+      echo "🔐 Настройка SSH ключа с правильными правами..."
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "📁 SSH_PRIVATE_KEY содержит путь к файлу: $SSH_PRIVATE_KEY"
+
+        # Создаем исправленную версию ключа
+        echo "🔧 Исправление формата SSH ключа..."
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Убираем символы $ в конце строк и другие проблемы с форматированием
+        cat "$SSH_PRIVATE_KEY" | sed 's/\$$//g' | tr -d '\r' | sed '/^$/d' > "$SSH_KEY_CONTENT"
+
+        # Устанавливаем правильные права доступа
+        chmod 600 "$SSH_KEY_CONTENT"
+
+        echo "✅ SSH ключ исправлен и готов к использованию"
+      else
+        echo "📝 SSH_PRIVATE_KEY содержит содержимое ключа"
+        # Создаем временный файл для SSH ключа с правильными правами
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Проверяем, начинается ли с -----BEGIN (обычный ключ) или это base64
+        if echo "$SSH_PRIVATE_KEY" | head -c 10 | grep -q "^-----BEGIN"; then
+          echo "🔑 Обычный SSH ключ"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_CONTENT"
+        else
+          echo "🔐 Base64 кодированный SSH ключ, декодируем"
+          echo "$SSH_PRIVATE_KEY" | base64 -d > "$SSH_KEY_CONTENT"
+        fi
+
+        chmod 600 "$SSH_KEY_CONTENT"
+      fi
+
+      # Добавляем ключ в SSH агент
+      if ! ssh-add "$SSH_KEY_CONTENT"; then
+        echo "❌ Не удалось добавить SSH ключ в агент"
+        # Удаляем временный файл только если мы его создали
+        if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+          rm -f "$SSH_KEY_CONTENT"
+        fi
+        exit 1
+      fi
+
+      # Удаляем временный файл для безопасности (только если мы его создали)
+      if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+        rm -f "$SSH_KEY_CONTENT"
+      fi
+
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🚀 Начинаем деплой на сервер..."
+
+      # Устанавливаем переменные по умолчанию
+      DEPLOY_PATH=${DEPLOY_PATH:-/var/www/flask_helpdesk}
+      BACKUP_PATH=${BACKUP_PATH:-/var/backups/flask_helpdesk}
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      # Очищаем старые бэкапы (оставляем только 3 последних)
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🧹 Удаляем старые бэкапы в $BACKUP_PATH...'
+        if [ -d '$BACKUP_PATH' ]; then
+          sudo ls -t $BACKUP_PATH/backup_* 2>/dev/null | tail -n +4 | sudo xargs rm -rf || true
+        fi
+      "
+
+      # Создаем бэкап существующего проекта
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '💾 Создаем бэкап...'
+        if [ -d '$DEPLOY_PATH' ]; then
+          sudo mkdir -p $BACKUP_PATH
+          sudo cp -r $DEPLOY_PATH $BACKUP_PATH/backup_\$(date +%Y%m%d_%H%M%S)
+          echo '✅ Бэкап создан'
+        fi
+      "
+
+      # Останавливаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⏹️ Останавливаем сервис...'
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          sudo systemctl stop $SERVICE_NAME
+          echo '✅ Сервис остановлен'
+        else
+          echo 'ℹ️ Сервис уже остановлен'
+        fi
+      "
+
+      # Подготавливаем директории
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Подготовка директорий...'
+        sudo mkdir -p $DEPLOY_PATH
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo chmod -R 755 $DEPLOY_PATH
+      "
+
+      # Синхронизируем файлы
+      echo '📁 Синхронизируем файлы...'
+      if [ -f "deployment_package.tar.gz" ]; then
+        echo '🗜️ Передаём архив и распаковываем потоково, без сохранения во временный файл'
+
+        # Передаём tar.gz по ssh на stdin, распаковываем во временную папку и синхронизируем
+        cat deployment_package.tar.gz | ssh $DEPLOY_USER@$DEPLOY_SERVER '
+          set -e
+          RELEASE_DIR=$(mktemp -d)
+          echo "Распаковка архива во временную директорию $RELEASE_DIR ..."
+          sudo tar -xzf - -C "$RELEASE_DIR"
+
+          echo "Синхронизируем файлы в $DEPLOY_PATH (исключаем blog/db)..."
+          sudo rsync -a --no-devices --no-specials \
+            --exclude "blog/db" \
+            --exclude "sys/**" --exclude "proc/**" --exclude "dev/**" \
+            --delete "$RELEASE_DIR/" "$DEPLOY_PATH/"
+
+          echo "Очистка временных файлов..."
+          sudo rm -rf "$RELEASE_DIR"
+        '
+
+        echo '✅ Архив передан и синхронизирован (stream mode)'
+      else
+        echo '📁 Используем обычную синхронизацию'
+        rsync -avz --no-devices --no-specials \
+          --exclude "sys/**" --exclude "proc/**" --exclude "dev/**" \
+          --delete deployment_package/ $DEPLOY_USER@$DEPLOY_SERVER:$DEPLOY_PATH/
+      fi
+
+      # Исправляем права после синхронизации
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔧 Исправляем права доступа...'
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+        sudo find $DEPLOY_PATH -type d -exec chmod 755 {} \;
+        sudo find $DEPLOY_PATH -type f -exec chmod 644 {} \;
+        sudo chmod +x $DEPLOY_PATH/app.py
+      "
+
+      # Создаем файл конфигурации для продакшена
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⚙️ Создаем конфигурацию для продакшена...'
+        cd $DEPLOY_PATH
+        # Удаляем старый файл, чтобы гарантировать свежую конфигурацию
+        sudo rm -f .env.production
+
+        echo '# Для Linux продакшн' | sudo tee .env.production > /dev/null
+        echo 'FLASK_ENV=production' | sudo tee -a .env.production > /dev/null
+        echo 'FLASK_APP=wsgi.py' | sudo tee -a .env.production > /dev/null
+        echo 'ORACLE_CLIENT_PATH=/opt/oracle/instantclient' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_DATABASE_URI=sqlite:///blog/db/blog.db?timeout=30' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_TRACK_MODIFICATIONS=True' | sudo tee -a .env.production > /dev/null
+
+        # Подключения Oracle
+        echo 'SQLALCHEMY_DATABASE_URI_ORACLE_CRM=oracle+oracledb://crm:sunzHa@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+        echo 'SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES=oracle+oracledb://sales:sunzHa1@10.7.23.4:1521/ENIS' | sudo tee -a .env.production > /dev/null
+
+        # Конфигурация MySQL для Redmine
+        echo 'MYSQL_HOST=helpdesk.teztour.com' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_DATABASE=redmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_USER=easyredmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_PASSWORD=QhAKtwCLGW' | sudo tee -a .env.production > /dev/null
+
+        # Конфигурация MySQL для Quality
+        echo 'MYSQL_QUALITY_HOST=quality.teztour.com' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_DATABASE=redmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_USER=easyredmine' | sudo tee -a .env.production > /dev/null
+        echo 'MYSQL_QUALITY_PASSWORD=QhAKtwCLGW' | sudo tee -a .env.production > /dev/null
+
+        sudo chown www-data:www-data .env.production
+        sudo chmod 600 .env.production
+        echo '✅ Файл .env.production создан/обновлен'
+
+        # Создаем директорию для базы данных
+        sudo mkdir -p $DEPLOY_PATH/blog/db
+        sudo chown -R www-data:www-data $DEPLOY_PATH/blog/db
+        sudo chmod -R 755 $DEPLOY_PATH/blog/db
+        echo '✅ Директория для базы данных создана'
+      "
+
+      # Инициализируем базу данных если необходимо
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🗄️ Проверяем базу данных...'
+        cd $DEPLOY_PATH
+        if [ ! -f 'blog/db/blog.db' ]; then
+          echo 'Создаем новую базу данных...'
+          sudo -u www-data $DEPLOY_PATH/venv/bin/python -c 'from blog import create_app; from blog.models import db; app = create_app(); app.app_context().push(); db.create_all(); print(\"База данных создана успешно\")' || echo 'Ошибка создания базы данных (возможно уже существует)'
+          echo '✅ База данных инициализирована'
+        else
+          echo 'ℹ️ База данных уже существует'
+        fi
+      "
+
+      # Пересоздаем виртуальное окружение
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🐍 Настраиваем Python окружение...'
+        cd $DEPLOY_PATH
+
+        # Удаляем старое venv если есть
+        if [ -d 'venv' ]; then
+          sudo rm -rf venv > /dev/null 2>&1
+        fi
+
+        # Создаем новое venv
+        sudo python3 -m venv venv --prompt flask_helpdesk
+        sudo chown -R www-data:www-data venv/
+
+        # Активируем и устанавливаем зависимости
+        sudo -u www-data venv/bin/pip install -r requirements.txt --quiet
+
+        echo '✅ Python окружение настроено'
+      "
+
+      # Настраиваем systemd сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⚙️ Настраиваем systemd сервис...'
+
+        # Копируем service файл
+        sudo cp $DEPLOY_PATH/flask-helpdesk.service /etc/systemd/system/
+        sudo systemctl daemon-reload
+        sudo systemctl enable $SERVICE_NAME
+
+        # Обновляем конфиг Nginx и перезагружаем, чтобы использовать актуальный SOCKET_PATH
+        if [ -f \"${DEPLOY_PATH}/flask-helpdesk.nginx.conf\" ]; then
+          echo '🌐 Обновляем конфиг Nginx...'
+          sudo cp $DEPLOY_PATH/flask-helpdesk.nginx.conf /etc/nginx/vhosts.d/flask-helpdesk.conf
+          # Заменяем переменную SOCKET_PATH, если она отличается
+          sudo sed -i \"s#proxy_pass .*;#proxy_pass http://unix:${SOCKET_PATH};#\" /etc/nginx/vhosts.d/flask-helpdesk.conf
+          sudo nginx -t && sudo systemctl reload nginx
+          echo '✅ Nginx конфиг применён'
+        else
+          echo '⚠️ Nginx конфиг не найден в деплой пакете, пропускаем'
+        fi
+
+        echo '✅ Systemd сервис настроен'
+      "
+
+      # Запускаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '▶️ Запускаем сервис...'
+        sudo systemctl start $SERVICE_NAME
+
+        # Ждем запуска
+        sleep 5
+
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Сервис запущен успешно'
+        else
+          echo '❌ Ошибка запуска сервиса'
+          echo '📋 Статус сервиса:'
+          sudo systemctl status $SERVICE_NAME --no-pager | head -n 30 || true
+          echo '📋 Последние логи сервиса:'
+          sudo journalctl -u $SERVICE_NAME -n 20 --no-pager | head -n 50 || true
+          echo '📋 Проверка файла wsgi.py:'
+          if [ -f '$DEPLOY_PATH/wsgi.py' ]; then
+            echo '✅ wsgi.py найден'
+            head -10 '$DEPLOY_PATH/wsgi.py'
+          else
+            echo '❌ wsgi.py не найден'
+            echo '📁 Содержимое директории:'
+            ls -la '$DEPLOY_PATH/'
+          fi
+          echo '📋 Проверка файла config.ini:'
+          if [ -f '$DEPLOY_PATH/config.ini' ]; then
+            echo '✅ config.ini найден'
+            echo 'Секции в config.ini:'
+            grep '^\[' '$DEPLOY_PATH/config.ini'
+          else
+            echo '❌ config.ini не найден'
+          fi
+          echo '📋 Проверка виртуального окружения:'
+          if [ -f '$DEPLOY_PATH/venv/bin/python' ]; then
+            echo '✅ Python в venv найден'
+            sudo -u www-data '$DEPLOY_PATH/venv/bin/python' --version
+          else
+            echo '❌ Python в venv не найден'
+          fi
+          echo '📋 Попытка ручного запуска:'
+          cd '$DEPLOY_PATH'
+          sudo -u www-data timeout 10s '$DEPLOY_PATH/venv/bin/python' wsgi.py || echo 'Ручной запуск завершился с ошибкой'
+          exit 1
+        fi
+      "
+
+      echo "🎉 Деплой завершен успешно!"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: always
+
+# ============ ЭТАП 6: ПОСТ-ДЕПЛОЙ ПРОВЕРКИ ============
+post_deploy_verification:
+  stage: post-deploy
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client curl
+  script:
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔍 Проверка переменных окружения для верификации..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "ℹ️ Переменные деплоя не настроены - пропускаем верификацию"
+        echo "✅ Для настройки добавьте SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER в GitLab CI/CD Settings"
+        exit 0
+      fi
+
+      echo "✅ Все переменные верификации установлены"
+
+      # Настраиваем SSH с правильными правами доступа
+      eval $(ssh-agent -s)
+
+      # Настройка SSH ключа
+      echo "🔐 Настройка SSH ключа с правильными правами..."
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "📁 SSH_PRIVATE_KEY содержит путь к файлу: $SSH_PRIVATE_KEY"
+
+        # Создаем исправленную версию ключа
+        echo "🔧 Исправление формата SSH ключа..."
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Убираем символы $ в конце строк и другие проблемы с форматированием
+        cat "$SSH_PRIVATE_KEY" | sed 's/\$$//g' | tr -d '\r' | sed '/^$/d' > "$SSH_KEY_CONTENT"
+
+        # Устанавливаем правильные права доступа
+        chmod 600 "$SSH_KEY_CONTENT"
+
+        echo "✅ SSH ключ исправлен и готов к использованию"
+      else
+        echo "📝 SSH_PRIVATE_KEY содержит содержимое ключа"
+        # Создаем временный файл для SSH ключа с правильными правами
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Проверяем, начинается ли с -----BEGIN (обычный ключ) или это base64
+        if echo "$SSH_PRIVATE_KEY" | head -c 10 | grep -q "^-----BEGIN"; then
+          echo "🔑 Обычный SSH ключ"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_CONTENT"
+        else
+          echo "🔐 Base64 кодированный SSH ключ, декодируем"
+          echo "$SSH_PRIVATE_KEY" | base64 -d > "$SSH_KEY_CONTENT"
+        fi
+
+        chmod 600 "$SSH_KEY_CONTENT"
+      fi
+
+      # Добавляем ключ в SSH агент
+      if ! ssh-add "$SSH_KEY_CONTENT"; then
+        echo "❌ Не удалось добавить SSH ключ в агент"
+        # Удаляем временный файл только если мы его создали
+        if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+          rm -f "$SSH_KEY_CONTENT"
+        fi
+        exit 1
+      fi
+
+      # Удаляем временный файл для безопасности (только если мы его создали)
+      if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+        rm -f "$SSH_KEY_CONTENT"
+      fi
+
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      echo "🔍 Пост-деплой верификация..."
+
+      # Устанавливаем переменные по умолчанию
+      DEPLOY_PATH=${DEPLOY_PATH:-/var/www/flask_helpdesk}
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      # Проверка статуса сервиса
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔍 Проверка статуса сервиса...'
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Сервис работает'
+          sudo systemctl status $SERVICE_NAME --no-pager
+        else
+          echo '❌ Сервис не работает'
+          sudo systemctl status $SERVICE_NAME --no-pager
+          exit 1
+        fi
+      "
+
+      # Проверка файлов
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '📁 Проверка файлов деплоя...'
+        if [ -f '$DEPLOY_PATH/app.py' ]; then
+          echo '✅ Основной файл приложения найден'
+        else
+          echo '❌ Основной файл приложения не найден'
+          exit 1
+        fi
+
+        if [ -d '$DEPLOY_PATH/venv' ]; then
+          echo '✅ Виртуальное окружение создано'
+        else
+          echo '❌ Виртуальное окружение не найдено'
+          exit 1
+        fi
+      "
+
+      # Проверяем сокета и HTTP health-чека выполняется на целевом сервере,
+      # иначе в контейнере runner'а файла сокета не будет.
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔍 Проверка сокета и HTTP health-чека...'
+
+        if [ -S '${SOCKET_PATH}' ]; then
+          echo '✅ Socket найден: ${SOCKET_PATH}'
+        else
+          echo '❌ Socket не найден: ${SOCKET_PATH}'
+          exit 1
+        fi
+
+        # Проверяем локальный HTTP-endpoint и принимаем коды 2xx/3xx
+        # Используем одинарные кавычки, чтобы не прерывать внешнюю строку и убираем переводы строк
+        HTTP_CODE=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1/ 2>/dev/null || echo '000')
+        HTTP_CODE=$(echo "$HTTP_CODE" | tr -d '\r\n')
+
+        if [ "$HTTP_CODE" -ge 200 ] && [ "$HTTP_CODE" -lt 400 ]; then
+          echo "✅ HTTP endpoint / ответил $HTTP_CODE"
+        else
+          echo "❌ HTTP endpoint / вернул код $HTTP_CODE"
+          exit 1
+        fi
+      "
+
+      echo "🎉 Пост-деплой верификация завершена успешно!"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: always
+
+# ============ ЭТАП 7: ОТКАТ (РУЧНОЙ) ============
+rollback_deployment:
+  stage: rollback
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+  script:
+    - |
+      # Проверяем наличие необходимых переменных
+      echo "🔄 Подготовка к откату деплоя..."
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "❌ Переменные деплоя не настроены"
+        exit 1
+      fi
+
+      # Настраиваем SSH с правильными правами доступа
+      eval $(ssh-agent -s)
+
+      # Настройка SSH ключа
+      echo "🔐 Настройка SSH ключа с правильными правами..."
+      if [ -f "$SSH_PRIVATE_KEY" ]; then
+        echo "📁 SSH_PRIVATE_KEY содержит путь к файлу: $SSH_PRIVATE_KEY"
+
+        # Создаем исправленную версию ключа
+        echo "🔧 Исправление формата SSH ключа..."
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Убираем символы $ в конце строк и другие проблемы с форматированием
+        cat "$SSH_PRIVATE_KEY" | sed 's/\$$//g' | tr -d '\r' | sed '/^$/d' > "$SSH_KEY_CONTENT"
+
+        # Устанавливаем правильные права доступа
+        chmod 600 "$SSH_KEY_CONTENT"
+
+        echo "✅ SSH ключ исправлен и готов к использованию"
+      else
+        echo "📝 SSH_PRIVATE_KEY содержит содержимое ключа"
+        # Создаем временный файл для SSH ключа с правильными правами
+        SSH_KEY_CONTENT=$(mktemp)
+
+        # Проверяем, начинается ли с -----BEGIN (обычный ключ) или это base64
+        if echo "$SSH_PRIVATE_KEY" | head -c 10 | grep -q "^-----BEGIN"; then
+          echo "🔑 Обычный SSH ключ"
+          printf '%s\n' "$SSH_PRIVATE_KEY" > "$SSH_KEY_CONTENT"
+        else
+          echo "🔐 Base64 кодированный SSH ключ, декодируем"
+          echo "$SSH_PRIVATE_KEY" | base64 -d > "$SSH_KEY_CONTENT"
+        fi
+
+        chmod 600 "$SSH_KEY_CONTENT"
+      fi
+
+      # Добавляем ключ в SSH агент
+      if ! ssh-add "$SSH_KEY_CONTENT"; then
+        echo "❌ Не удалось добавить SSH ключ в агент"
+        # Удаляем временный файл только если мы его создали
+        if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+          rm -f "$SSH_KEY_CONTENT"
+        fi
+        exit 1
+      fi
+
+      # Удаляем временный файл для безопасности (только если мы его создали)
+      if [ "$SSH_KEY_CONTENT" != "$SSH_PRIVATE_KEY" ]; then
+        rm -f "$SSH_KEY_CONTENT"
+      fi
+
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+      ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+
+      # Устанавливаем переменные по умолчанию
+      DEPLOY_PATH=${DEPLOY_PATH:-/var/www/flask_helpdesk}
+      BACKUP_PATH=${BACKUP_PATH:-/var/backups/flask_helpdesk}
+      SERVICE_NAME=${SERVICE_NAME:-flask-helpdesk}
+
+      echo "🔄 Выполняем откат к предыдущей версии..."
+
+      # Останавливаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '⏹️ Останавливаем сервис...'
+        sudo systemctl stop $SERVICE_NAME
+      "
+
+      # Ищем последний бэкап и восстанавливаем
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '🔍 Поиск последнего бэкапа...'
+        LATEST_BACKUP=\$(ls -t $BACKUP_PATH/backup_* 2>/dev/null | head -1)
+
+        if [ -z \"\$LATEST_BACKUP\" ]; then
+          echo '❌ Бэкапы не найдены'
+          exit 1
+        fi
+
+        echo \"📦 Найден бэкап: \$LATEST_BACKUP\"
+        echo '🔄 Восстанавливаем из бэкапа...'
+
+        sudo rm -rf $DEPLOY_PATH/*
+        sudo cp -r \$LATEST_BACKUP/* $DEPLOY_PATH/
+        sudo chown -R www-data:www-data $DEPLOY_PATH
+
+        echo '✅ Файлы восстановлены'
+      "
+
+      # Запускаем сервис
+      ssh $DEPLOY_USER@$DEPLOY_SERVER "
+        echo '▶️ Запускаем сервис...'
+        sudo systemctl start $SERVICE_NAME
+
+        sleep 5
+
+        if sudo systemctl is-active --quiet $SERVICE_NAME; then
+          echo '✅ Откат завершен успешно'
+        else
+          echo '❌ Ошибка при запуске после отката'
+          sudo systemctl status $SERVICE_NAME
+          exit 1
+        fi
+      "
+
+      echo "🎉 Откат завершен успешно!"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+      when: manual
+      allow_failure: false
