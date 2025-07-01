@@ -397,6 +397,18 @@
     border-radius: 4px;
     font-size: 11px;
 }
+
+/* Выделение активной страницы пагинации */
+.dataTables_paginate .paginate_button.active-page {
+  background: #22c55e !important; /* зелёный */
+  color: #ffffff !important;
+  border: 1px solid #16a34a !important;
+}
+
+/* Подсветка строки при возврате */
+tr.return-selected {
+  background: rgba(34, 197, 94, 0.20) !important;
+}
 </style>
 
 <!-- Селектор стилей для демонстрации (можно удалить в продакшене) -->
@@ -512,5 +524,34 @@ if (document.readyState === 'loading') {
 } else {
     setTimeout(initializeMyTasksPage, 200);
 }
+</script>
+
+<script>
+$(document).ready(function() {
+    // ... существующий код и инициализация таблицы ...
+
+    // После инициализации DataTable
+    $(document).on('datatables-initialized', function() {
+        const returnId = sessionStorage.getItem('return_from_task_id');
+        if (returnId) {
+            // Найти строку с нужным ID
+            const $row = $("#tasksTable tbody tr").filter(function() {
+                return $(this).find('.task-id-link').text().replace('#','') == returnId;
+            });
+            if ($row.length) {
+                $row.addClass('highlight-return');
+                // Плавно прокрутить
+                $('html, body').animate({
+                    scrollTop: $row.offset().top - 100
+                }, 800);
+                // Убрать выделение через 3 секунды
+                setTimeout(function() {
+                    $row.removeClass('highlight-return');
+                }, 3000);
+            }
+            sessionStorage.removeItem('return_from_task_id');
+        }
+    });
+});
 </script>
 {% endblock %}

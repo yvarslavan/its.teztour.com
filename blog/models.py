@@ -78,6 +78,7 @@ class Notifications(db.Model):
     new_status = db.Column(db.Text)
     old_subj = db.Column(db.Text)
     date_created = db.Column(db.DateTime)
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
 
     def __init__(
         self, user_id, issue_id, old_status, new_status, old_subj, date_created
@@ -88,6 +89,7 @@ class Notifications(db.Model):
         self.new_status = new_status
         self.old_subj = old_subj
         self.date_created = date_created
+        self.is_read = False
 
 class NotificationsAddNotes(db.Model):
     __tablename__ = "notifications_add_notes"
@@ -99,6 +101,7 @@ class NotificationsAddNotes(db.Model):
     notes = db.Column(db.Text)
     date_created = db.Column(db.DateTime)
     source_id = db.Column(db.Integer)
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
 
     def __init__(self, user_id, issue_id, author, notes, date_created, source_id):
         self.user_id = user_id
@@ -107,6 +110,7 @@ class NotificationsAddNotes(db.Model):
         self.notes = notes
         self.date_created = date_created
         self.source_id = source_id
+        self.is_read = False
 
 
 class RedmineNotification(db.Model):

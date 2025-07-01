@@ -1031,7 +1031,8 @@ try {
                             title: `Статус изменен: #${n.issue_id}`,
                             description: `Старый статус: ${n.old_status}, Новый статус: ${n.new_status}`,
                             time: this.formatTime(n.date_created),
-                            icon: 'fas fa-exchange-alt'
+                            icon: 'fas fa-exchange-alt',
+                            issue_id: n.issue_id
                         });
                     });
                 }
@@ -1040,11 +1041,12 @@ try {
                     notifications.comment_notifications.forEach(n => {
                         this.notifications.push({
                             id: `comment_${n.id}`,
-                            type: 'new-comment',
+                            type: 'comment',
                             title: `Новый комментарий: #${n.issue_id}`,
                             description: this.truncate(n.notes, 100),
                             time: this.formatTime(n.date_created),
                             icon: 'fas fa-comment',
+                            issue_id: n.issue_id,
                             raw: n
                         });
                     });
@@ -1086,6 +1088,9 @@ try {
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка обработки уведомлений:', error);
             }
+
+            // Инициализируем обработчики кнопок после рендеринга
+            this.initActionButtons();
         }
 
         renderNotifications() {
@@ -1112,10 +1117,20 @@ try {
                                 <div class="notification-time">${notification.time}</div>
                                 ${notification.type === 'redmine-task' ? `
                                 <div class="notification-actions">
-                                    <button class="notification-action-btn mark-read-btn" data-id="${notification.id}">
+                                    <button class="notification-action-btn mark-read-btn" data-id="${notification.id}" data-type="redmine-task">
                                         <i class="fas fa-check-circle"></i>Прочитано
                                     </button>
                                     <a href="${notification.url}" target="_blank" class="notification-action-btn redmine-link-btn">
+                                        <i class="fas fa-external-link-alt"></i>Открыть в Redmine
+                                    </a>
+                                </div>
+                                ` : ''}
+                                ${(notification.type === 'status-change' || notification.type === 'comment') && notification.issue_id ? `
+                                <div class="notification-actions">
+                                    <button class="notification-action-btn mark-read-btn" data-id="${notification.id}" data-type="${notification.type}">
+                                        <i class="fas fa-check-circle"></i>Прочитано
+                                    </button>
+                                    <a href="http://helpdesk.teztour.com/issues/${notification.issue_id}" target="_blank" class="notification-action-btn redmine-link-btn">
                                         <i class="fas fa-external-link-alt"></i>Открыть в Redmine
                                     </a>
                                 </div>
@@ -1129,6 +1144,115 @@ try {
                 if (this.list) {
                     this.list.innerHTML = '<div class="error-state">Ошибка загрузки уведомлений</div>';
                 }
+            }
+
+            // Инициализируем обработчики кнопок после рендеринга
+            this.initActionButtons();
+        }
+
+        initActionButtons() {
+            try {
+                // Удаляем старые обработчики
+                const oldButtons = this.list.querySelectorAll('.mark-read-btn');
+                oldButtons.forEach(btn => {
+                    btn.replaceWith(btn.cloneNode(true));
+                });
+
+                // Добавляем новые обработчики
+                const markReadButtons = this.list.querySelectorAll('.mark-read-btn');
+                markReadButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const notificationId = button.getAttribute('data-id');
+                        const notificationType = button.getAttribute('data-type');
+                        const notificationItem = button.closest('.notification-item');
+
+                        console.log(`[ModernWidget] Кнопка "Прочитано" нажата для: ${notificationId}, тип: ${notificationType}`);
+
+                        // Визуальная обратная связь
+                        const originalContent = button.innerHTML;
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
+                        button.disabled = true;
+
+                        // Определяем API и данные на основе типа
+                        let apiUrl;
+                        let requestData;
+
+                        if (notificationType === 'redmine-task') {
+                            apiUrl = '/api/notifications/redmine/mark-read';
+                            requestData = { notification_id: notificationId.replace('redmine_', '') };
+                        } else {
+                            apiUrl = '/api/notifications/mark-read';
+                            requestData = { notification_id: notificationId, notification_type: notificationType };
+                        }
+
+                        console.log(`[ModernWidget] Отправка запроса на ${apiUrl} с данными:`, requestData);
+
+                        fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                            },
+                            body: JSON.stringify(requestData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log(`[ModernWidget] ✅ Уведомление ${notificationId} отмечено как прочитанное на сервере`);
+
+                                // Визуальная обратная связь об успехе
+                                button.innerHTML = '<i class="fas fa-check"></i>Прочитано';
+                                button.style.background = '#10b981';
+                                button.style.color = 'white';
+                                button.style.borderColor = '#10b981';
+
+                                setTimeout(() => {
+                                    if (notificationItem) {
+                                        notificationItem.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                                        notificationItem.style.opacity = '0';
+                                        notificationItem.style.transform = 'scale(0.95)';
+
+                                        setTimeout(() => {
+                                            // Удаляем уведомление из массива
+                                            this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                                            this.renderNotifications();
+                                            this.updateBadge(this.notifications.length);
+
+                                            // Обновляем глобальный счётчик
+                                            try {
+                                                if (window.refreshNotificationBadge) {
+                                                    window.refreshNotificationBadge(this.notifications.length);
+                                                }
+                                            } catch (err) {
+                                                console.warn('[ModernWidget] Cannot refresh global badge:', err);
+                                            }
+                                        }, 400);
+                                    }
+                                }, 1000);
+                            } else {
+                                console.error(`[ModernWidget] ❌ Ошибка отметки уведомления: ${data.error}`);
+                                // Возвращаем кнопку в исходное состояние
+                                button.innerHTML = originalContent;
+                                button.disabled = false;
+                                alert(`Не удалось отметить уведомление как прочитанное: ${data.error}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error(`[ModernWidget] ❌ Ошибка запроса отметки уведомления:`, error);
+                            // Возвращаем кнопку в исходное состояние
+                            button.innerHTML = originalContent;
+                            button.disabled = false;
+                            alert('Произошла ошибка при отправке запроса. Попробуйте ещё раз.');
+                        });
+                    });
+                });
+
+                console.log(`[ModernWidget] ✅ Инициализированы обработчики для ${markReadButtons.length} кнопок "Прочитано"`);
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка инициализации кнопок:', error);
             }
         }
 
@@ -1168,6 +1292,7 @@ try {
                     }
                 }
 
+                /* === Синхронизируем глобальный бейдж в шапке === */
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка обновления badge:', error);
             }

@@ -169,10 +169,52 @@ def set_current_user():
 
 
 def get_total_notification_count(user):
-    """Подсчет общего количества уведомлений для пользователя"""
+    """Подсчет общего количества уведомлений для пользователя.
+
+    Теперь используем NotificationService для получения полного
+    количества, включая Redmine-уведомления. Если по какой-то причине
+    сервис недоступен, gracefully откатываемся к старой логике с двумя
+    локальными таблицами, чтобы не сломать функциональность.
+    """
+
     if user is None:
         return 0
-    return get_count_notifications(user.id) + get_count_notifications_add_notes(user.id)
+
+    try:
+        service = get_notification_service()
+        data = service.get_user_notifications(user.id)
+        # Требуемое поле total_count уже агрегирует все типы уведомлений.
+        return data.get('total_count', 0)
+    except Exception as e:
+        # Логируем предупреждение и возвращаем подсчёт по старой схеме
+        logger.warning(
+            "Не удалось получить total_count из NotificationService: %s. "
+            "Fallback к get_count_notifications().", str(e)
+        )
+        return get_count_notifications(user.id) + get_count_notifications_add_notes(user.id)
+
+
+def get_total_notification_count_for_page(user):
+    """Подсчет общего количества уведомлений для страницы /notifications (включая прочитанные)"""
+    if user is None:
+        return 0
+
+    try:
+        service = get_notification_service()
+        data = service.get_notifications_for_page(user.id)
+        # Возвращаем total_count который включает все уведомления (и прочитанные, и непрочитанные)
+        return data.get('total_count', 0)
+    except Exception as e:
+        logger.warning(
+            "Не удалось получить total_count для страницы из NotificationService: %s. "
+            "Fallback к прямому подсчёту.", str(e)
+        )
+        # Fallback: считаем все уведомления напрямую из базы
+        from blog.models import Notifications, NotificationsAddNotes, RedmineNotification
+        status_count = Notifications.query.filter_by(user_id=user.id).count()
+        comment_count = NotificationsAddNotes.query.filter_by(user_id=user.id).count()
+        redmine_count = RedmineNotification.query.filter_by(user_id=user.id).count()
+        return status_count + comment_count + redmine_count
 
 
 # Использование в контекстном процессоре
@@ -181,7 +223,15 @@ def inject_notification_count():
     count = get_total_notification_count(
         g.current_user if hasattr(g, "current_user") else None
     )
-    return dict(count_notifications=count)
+
+    # Для страницы /notifications добавляем счётчик всех уведомлений
+    page_count = 0
+    if request.endpoint == 'main.my_notifications':
+        page_count = get_total_notification_count_for_page(
+            g.current_user if hasattr(g, "current_user") else None
+        )
+
+    return dict(count_notifications=count, count_notifications_page=page_count)
 
 
 @main.route("/get-notification-count", methods=["GET"])
@@ -603,28 +653,91 @@ def api_clear_notifications():
 @main.route("/api/notifications/redmine/mark-read", methods=["POST"])
 @login_required
 def api_mark_redmine_notification_read():
-    """API эндпоинт для пометки одного Redmine уведомления как прочитанного."""
-    data = request.get_json()
-    notification_id = data.get('notification_id')
-
-    if not notification_id:
-        return jsonify({'success': False, 'error': 'Отсутствует ID уведомления'}), 400
-
+    """API для отметки Redmine уведомления как прочитанного"""
     try:
-        # ИСПРАВЛЕНО: Используем NotificationService для безопасности и консистентности
-        service = get_notification_service()
-        success = service.mark_redmine_notification_as_read(current_user.id, notification_id)
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+
+        if not notification_id:
+            return jsonify({'success': False, 'error': 'notification_id is required'})
+
+        # Используем NotificationService для отметки как прочитанного
+        success = get_notification_service().mark_redmine_notification_as_read(current_user.id, notification_id)
 
         if success:
-            logger.info(f"Redmine уведомление #{notification_id} помечено как прочитанное для пользователя {current_user.id}")
-            return jsonify({'success': True})
+            return jsonify({'success': True, 'message': 'Уведомление отмечено как прочитанное'})
         else:
-            logger.warning(f"Не удалось пометить как прочитанное Redmine уведомление #{notification_id} для пользователя {current_user.id}")
-            return jsonify({'success': False, 'error': 'Не удалось отметить уведомление как прочитанное'}), 500
+            return jsonify({'success': False, 'error': 'Уведомление не найдено или уже прочитано'})
 
     except Exception as e:
-        logger.critical(f"Критическая ошибка при пометке Redmine уведомления #{notification_id} как прочитанного: {e}", exc_info=True)
-        return jsonify({'success': False, 'error': 'Неизвестная ошибка на сервере'}), 500
+        current_app.logger.error(f"Ошибка при отметке Redmine уведомления как прочитанного: {str(e)}")
+        return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'})
+
+
+@main.route("/api/notifications/mark-read", methods=["POST"])
+@login_required
+def api_mark_notification_read():
+    """API для отметки уведомлений заявок как прочитанных"""
+    try:
+        data = request.get_json()
+        notification_id = data.get('notification_id')
+        notification_type = data.get('notification_type')
+
+        if not notification_id or not notification_type:
+            return jsonify({'success': False, 'error': 'notification_id and notification_type are required'})
+
+        # Извлекаем реальный ID из составного ID (например, "status_123" -> 123)
+        if '_' in str(notification_id):
+            real_id = str(notification_id).split('_')[1]
+        else:
+            real_id = notification_id
+
+        try:
+            real_id = int(real_id)
+        except ValueError:
+            return jsonify({'success': False, 'error': 'Invalid notification_id format'})
+
+        if notification_type == 'status-change':
+            # Отмечаем уведомление об изменении статуса как прочитанное
+            notification = Notifications.query.filter_by(
+                id=real_id,
+                user_id=current_user.id
+            ).first()
+
+            if not notification:
+                # Попытка найти без user_id (на случай рассинхронизации)
+                notification = Notifications.query.filter_by(id=real_id).first()
+
+            if notification and (notification.is_read is None or notification.is_read is False):
+                notification.is_read = True
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Уведомление об изменении статуса отмечено как прочитанное'})
+            else:
+                return jsonify({'success': False, 'error': 'Уведомление не найдено или уже прочитано'})
+
+        elif notification_type == 'comment':
+            # Отмечаем уведомление о комментарии как прочитанное
+            notification = NotificationsAddNotes.query.filter_by(
+                id=real_id,
+                user_id=current_user.id
+            ).first()
+
+            if not notification:
+                notification = NotificationsAddNotes.query.filter_by(id=real_id).first()
+
+            if notification and (notification.is_read is None or notification.is_read is False):
+                notification.is_read = True
+                db.session.commit()
+                return jsonify({'success': True, 'message': 'Уведомление о комментарии отмечено как прочитанное'})
+            else:
+                return jsonify({'success': False, 'error': 'Уведомление не найдено или уже прочитано'})
+        else:
+            return jsonify({'success': False, 'error': 'Неподдерживаемый тип уведомления'})
+
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Ошибка при отметке уведомления как прочитанного: {str(e)}")
+        return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'})
 
 
 @main.route("/api/notifications/redmine/clear", methods=["POST"])
@@ -1096,12 +1209,18 @@ def clear_notifications():
         success = get_notification_service().clear_user_notifications(current_user.id)
 
         if success:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=True, message="Уведомления успешно удалены")
             flash("Уведомления успешно удалены", "success")
         else:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=False, error="Ошибка при удалении уведомлений")
             flash("Ошибка при удалении уведомлений", "error")
 
     except Exception as e:
         print(f"[DEBUG] Ошибка при удалении: {str(e)}")
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=str(e))
         flash(f"Ошибка при удалении уведомлений: {str(e)}", "error")
         logger.error(f"Ошибка при удалении всех уведомлений: {str(e)}")
 
@@ -1113,7 +1232,12 @@ def clear_notifications():
 @main.route("/delete_notification_status/<int:notification_id>", methods=["POST"])
 @login_required
 def delete_notification_status(notification_id):
-    """Удаление уведомления об измнении статуса после нажатия на иконку корзинки"""
+    print(f"[DEBUG] delete_notification_status called with ID: {notification_id}")
+    print(f"[DEBUG] User ID: {current_user.id}")
+    print(f"[DEBUG] Request headers: {dict(request.headers)}")
+    print(f"[DEBUG] Request form data: {dict(request.form)}")
+    print(f"[DEBUG] Is AJAX request: {request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+
     try:
         notification = Notifications.query.filter_by(
             id=notification_id,
@@ -1123,14 +1247,20 @@ def delete_notification_status(notification_id):
         if notification:
             db.session.delete(notification)
             db.session.commit()
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=True)
             flash("Уведомление успешно удалено", "success")
         else:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=False, error="Уведомление не найдено")
             flash("Уведомление не найдено", "error")
 
         return redirect(url_for("main.my_notifications"))
 
     except Exception as e:
         db.session.rollback()
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=str(e))
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
@@ -1139,7 +1269,12 @@ def delete_notification_status(notification_id):
 @main.route("/delete_notification_add_notes/<int:notification_id>", methods=["POST"])
 @login_required
 def delete_notification_add_notes(notification_id):
-    """Удаление уведомления о добавлении комментария после нажатия на иконку корзинки"""
+    print(f"[DEBUG] delete_notification_add_notes called with ID: {notification_id}")
+    print(f"[DEBUG] User ID: {current_user.id}")
+    print(f"[DEBUG] Request headers: {dict(request.headers)}")
+    print(f"[DEBUG] Request form data: {dict(request.form)}")
+    print(f"[DEBUG] Is AJAX request: {request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+
     try:
         notification = NotificationsAddNotes.query.filter_by(
             id=notification_id,
@@ -1149,14 +1284,20 @@ def delete_notification_add_notes(notification_id):
         if notification:
             db.session.delete(notification)
             db.session.commit()
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=True)
             flash("Уведомление успешно удалено", "success")
         else:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=False, error="Уведомление не найдено")
             flash("Уведомление не найдено", "error")
 
         return redirect(url_for("main.my_notifications"))
 
     except Exception as e:
         db.session.rollback()
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=str(e))
         flash(f"Ошибка при удалении уведомления: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 
@@ -1164,18 +1305,29 @@ def delete_notification_add_notes(notification_id):
 @main.route("/delete_notification_redmine/<int:notification_id>", methods=["POST"])
 @login_required
 def delete_notification_redmine(notification_id):
-    """Удаление уведомления Redmine после нажатия на иконку корзинки"""
+    print(f"[DEBUG] delete_notification_redmine called with ID: {notification_id}")
+    print(f"[DEBUG] User ID: {current_user.id}")
+    print(f"[DEBUG] Request headers: {dict(request.headers)}")
+    print(f"[DEBUG] Request form data: {dict(request.form)}")
+    print(f"[DEBUG] Is AJAX request: {request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest'}")
+
     try:
         success = get_notification_service().delete_redmine_notification(notification_id, current_user.id)
 
         if success:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=True)
             flash("Уведомление Redmine успешно удалено", "success")
         else:
+            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return jsonify(success=False, error="Уведомление Redmine не найдено")
             flash("Уведомление Redmine не найдено", "error")
 
         return redirect(url_for("main.my_notifications"))
 
     except Exception as e:
+        if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=False, error=str(e))
         flash(f"Ошибка при удалении уведомления Redmine: {str(e)}", "error")
         return redirect(url_for("main.my_notifications"))
 

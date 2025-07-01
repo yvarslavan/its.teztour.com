@@ -70,13 +70,13 @@ def get_connection(host, user_name, password, name, max_attempts=3):
                 charset="utf8mb4",
                 cursorclass=pymysql.cursors.DictCursor,
             )
-            print("Соединение с базой данных установлено")
+            logger.info("Соединение с базой данных установлено")
             return connection
         except pymysql.Error as e:
-            print(f"Ошибка при установлении соединения с базой данных: {e}")
+            logger.error(f"Ошибка при установлении соединения с базой данных: {e}")
             attempts += 1
             if attempts < max_attempts:
-                print(
+                logger.warning(
                     f"Повторная попытка подключения через 3 секунды (попытка {attempts + 1} из {max_attempts})..."
                 )
                 time.sleep(3)
@@ -85,7 +85,7 @@ def get_connection(host, user_name, password, name, max_attempts=3):
                 "Неизвестная ошибка при подключении к базе данных", exc_info=True
             )
             break  # или можете выбрать продолжить попытки, если считаете это целесообразным
-    print(
+    logger.error(
         f"Не удалось установить соединение с базой данных после {max_attempts} попыток"
     )
     return None

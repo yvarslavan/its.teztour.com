@@ -16,7 +16,7 @@ class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-key-flask-helpdesk-2024-fixed'
     SESSION_TYPE = 'filesystem'
     # SQLite соединение
-    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(db_dir, "blog.db")}'
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{os.path.join(db_dir, "blog.db")}?timeout=20'
 
     # Проверяем наличие переменных и устанавливаем безопасные значения для разработки,
     # чтобы избежать ошибок при импорте модулей
