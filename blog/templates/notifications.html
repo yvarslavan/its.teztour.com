@@ -63,7 +63,7 @@
                                     <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
+                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="redmine" data-id="{{ notification.id }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -104,7 +104,7 @@
                                     <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
+                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="status" data-id="{{ notification.id }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -125,6 +125,7 @@
                                     <span class="status-new">{{ notification.new_status }}</span>
                                 </div>
                             </div>
+
                         </div>
                     </article>
                     {% endfor %}
@@ -142,7 +143,7 @@
                                     <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
+                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="add_notes" data-id="{{ notification.id }}">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -162,6 +163,7 @@
                             <div class="comment-preview">
                                 {{ notification.notes | safe }}
                             </div>
+
                         </div>
                     </article>
                     {% endfor %}
@@ -906,49 +908,447 @@
         color: inherit;
         display: block;
     }
+
+    /* === Стили для кнопок действий === */
+    .notification-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .notification-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-md);
+        background: var(--surface-0);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        white-space: nowrap;
+    }
+
+    .notification-action-btn:hover {
+        background: var(--primary-50);
+        color: var(--primary-600);
+        border-color: var(--primary-300);
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-1);
+    }
+
+    .notification-action-btn i {
+        font-size: 0.75rem;
+    }
+
+    .mark-read-btn:hover {
+        background: var(--success-bg);
+        color: var(--success);
+        border-color: var(--success);
+    }
+
+    .redmine-link-btn:hover {
+        background: var(--info-bg);
+        color: var(--info);
+        border-color: var(--info);
+    }
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Ajax-отправка форм удаления
     const deleteForms = document.querySelectorAll('.delete-form');
+
     deleteForms.forEach(form => {
         form.addEventListener('submit', function(e) {
             e.preventDefault();
+
             const card = this.closest('.notification-card');
             const formData = new FormData(this);
-            const bodyData = {};
-            // Преобразуем formData в JSON
-            formData.forEach((value, key) => {
-                if (key !== 'csrf_token') {
-                   bodyData[key] = value;
+            const deleteBtn = this.querySelector('.delete-btn');
+            let csrfToken = formData.get('csrf_token');
+
+            // Если токен не найден в форме, попробуем получить из meta тега
+            if (!csrfToken) {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken) {
+                    csrfToken = metaToken.getAttribute('content');
                 }
-            });
+            }
+
+            // Отладочная информация
+            console.log('CSRF Token from form:', formData.get('csrf_token'));
+            console.log('CSRF Token final:', csrfToken);
+            console.log('Form action:', this.action);
+            console.log('Form data entries:', [...formData.entries()]);
+
+            // Показываем индикатор загрузки
+            const originalIcon = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            deleteBtn.disabled = true;
 
             fetch(this.action, {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': formData.get('csrf_token')
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
                 },
-                body: JSON.stringify(bodyData)
+                body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    card.style.transition = 'all 0.4s ease';
-                    card.style.transform = 'scale(0.95)';
-                    card.style.opacity = '0';
-                    setTimeout(() => card.remove(), 400);
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return response.json();
                 } else {
-                    alert('Ошибка: ' + data.error);
+                    // Fallback: если не JSON, считаем что успешно
+                    return { success: true };
                 }
             })
-            .catch(error => console.error('Error:', error));
+            .then(data => {
+                if (data && data.success) {
+                    // Показываем уведомление об успешном удалении
+                    showNotification('Уведомление успешно удалено', 'success');
+
+                    /* === Синхронизируем глобальный бейдж === */
+                    try {
+                        const badgeEl = document.getElementById('notification-badge');
+                        const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
+                        const current = isNaN(raw) ? 0 : raw;
+                        const newCount = Math.max(0, current - 1);
+                        if (window.refreshNotificationBadge) {
+                            window.refreshNotificationBadge(newCount);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot refresh notification badge:', err);
+                    }
+
+                    // Добавляем класс для анимации удаления
+                    card.classList.add('removing');
+
+                    // Удаляем карточку после завершения анимации
+                    setTimeout(() => {
+                        card.remove();
+
+                        // Проверяем, есть ли еще уведомления
+                        const remainingCards = document.querySelectorAll('.notification-card');
+                        if (remainingCards.length === 0) {
+                            // Если уведомлений больше нет, показываем пустое состояние
+                            const notificationsGrid = document.querySelector('.notifications-grid');
+                            if (notificationsGrid) {
+                                notificationsGrid.innerHTML = `
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="fas fa-bell-slash"></i>
+                                            <div class="empty-icon-glow"></div>
+                                        </div>
+                                        <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+                                        <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
+                                    </div>
+                                `;
+                            }
+
+                            /* === Обновляем глобальный бейдж до 0 === */
+                            try {
+                                if (window.refreshNotificationBadge) {
+                                    window.refreshNotificationBadge(0);
+                                }
+                            } catch (err) {
+                                console.warn('Cannot refresh notification badge after clear:', err);
+                            }
+
+                            // Скрываем кнопку "Очистить все"
+                            const clearAllBtn = document.getElementById('clearAllBtn');
+                            if (clearAllBtn) {
+                                clearAllBtn.closest('.header-actions').style.display = 'none';
+                            }
+                        }
+                    }, 500);
+
+                } else if (data && data.error) {
+                    // Восстанавливаем кнопку и показываем ошибку
+                    deleteBtn.innerHTML = originalIcon;
+                    deleteBtn.disabled = false;
+
+                    // Показываем более красивое уведомление об ошибке
+                    showNotification('Ошибка: ' + data.error, 'error');
+                } else {
+                    throw new Error('Неожиданный ответ сервера');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления уведомления:', error);
+
+                // Восстанавливаем кнопку
+                deleteBtn.innerHTML = originalIcon;
+                deleteBtn.disabled = false;
+
+                showNotification('Произошла ошибка при удалении уведомления. Попробуйте еще раз.', 'error');
+            });
         });
     });
+
+    // === Обработчик кнопок "Прочитано" ===
+    const markReadButtons = document.querySelectorAll('.mark-read-btn');
+
+    markReadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            const card = this.closest('.notification-card');
+
+            // Визуальная обратная связь
+            const originalContent = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
+            this.disabled = true;
+
+            // Здесь можно добавить AJAX-запрос для отметки как прочитанное
+            // Пока просто скрываем карточку
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check"></i>Прочитано';
+                this.style.background = 'var(--success-bg)';
+                this.style.color = 'var(--success)';
+                this.style.borderColor = 'var(--success)';
+
+                // Через секунду скрываем карточку
+                setTimeout(() => {
+                    card.classList.add('removing');
+                    setTimeout(() => {
+                        card.remove();
+
+                        // Обновляем счётчик
+                        try {
+                            const badgeEl = document.getElementById('notification-badge');
+                            const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
+                            const current = isNaN(raw) ? 0 : raw;
+                            const newCount = Math.max(0, current - 1);
+                            if (window.refreshNotificationBadge) {
+                                window.refreshNotificationBadge(newCount);
+                            }
+                        } catch (err) {
+                            console.warn('Cannot refresh notification badge:', err);
+                        }
+                    }, 500);
+                }, 1000);
+            }, 800);
+        });
+    });
+
+    // Функция для показа красивых уведомлений
+    function showNotification(message, type = 'info') {
+        // Удаляем существующие уведомления
+        const existingNotifications = document.querySelectorAll('.toast-notification');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Создаем новое уведомление
+        const notification = document.createElement('div');
+        notification.className = `toast-notification toast-${type}`;
+
+        const iconMap = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+
+        notification.innerHTML = `
+            <div class="toast-content">
+                <i class="${iconMap[type]} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        // Добавляем стили для уведомления
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                .toast-notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease-out;
+                    border-left: 4px solid #3b82f6;
+                    max-width: 400px;
+                }
+
+                .toast-error {
+                    border-left-color: #ef4444;
+                }
+
+                .toast-success {
+                    border-left-color: #10b981;
+                }
+
+                .toast-warning {
+                    border-left-color: #f59e0b;
+                }
+
+                .toast-info .toast-icon {
+                    color: #3b82f6;
+                }
+
+                .toast-message {
+                    flex: 1;
+                    font-size: 14px;
+                    line-height: 1.4;
+                    color: #374151;
+                }
+
+                .toast-close {
+                    background: none;
+                    border: none;
+                    color: #9ca3af;
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                }
+
+                .toast-close:hover {
+                    background: #f3f4f6;
+                    color: #374151;
+                }
+
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notification);
+
+        // Автоматически удаляем уведомление через 5 секунд
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+                 }, 5000);
+     }
+
+    // Обработчик для кнопки "Очистить все"
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        const clearForm = clearAllBtn.closest('.clear-form');
+        clearForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!confirm('Вы уверены, что хотите удалить ВСЕ уведомления? Это действие нельзя отменить.')) {
+                return;
+            }
+
+            const originalContent = clearAllBtn.innerHTML;
+            clearAllBtn.disabled = true;
+            clearAllBtn.innerHTML = '<span class="btn-content"><i class="fas fa-spinner fa-spin"></i><span class="btn-text">Удаление...</span></span>';
+
+            const formData = new FormData(this);
+            const csrfToken = formData.get('csrf_token');
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return response.json();
+                } else {
+                    // Fallback: если не JSON, считаем что успешно
+                    return { success: true };
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    showNotification('✅ Все уведомления успешно удалены!', 'success');
+
+                    // Анимированно удаляем все карточки
+                    const cards = document.querySelectorAll('.notification-card');
+                    cards.forEach((card, index) => {
+                        setTimeout(() => {
+                            card.classList.add('removing');
+                            setTimeout(() => card.remove(), 500);
+                        }, index * 100); // Задержка для красивой анимации
+                    });
+
+                    /* === Обновляем глобальный бейдж до 0 === */
+                    try {
+                        if (window.refreshNotificationBadge) {
+                            window.refreshNotificationBadge(0);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot refresh notification badge after clear:', err);
+                    }
+
+                    // Показываем пустое состояние после удаления всех карточек
+                    setTimeout(() => {
+                        const notificationsGrid = document.querySelector('.notifications-grid');
+                        if (notificationsGrid) {
+                            notificationsGrid.innerHTML = `
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-bell-slash"></i>
+                                        <div class="empty-icon-glow"></div>
+                                    </div>
+                                    <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+                                    <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
+                                </div>
+                            `;
+                        }
+
+                        // Скрываем кнопку "Очистить все"
+                        clearAllBtn.closest('.header-actions').style.display = 'none';
+                    }, cards.length * 100 + 500);
+
+                } else if (data && data.error) {
+                    clearAllBtn.innerHTML = originalContent;
+                    clearAllBtn.disabled = false;
+                    showNotification('Ошибка: ' + data.error, 'error');
+                } else {
+                    throw new Error('Неожиданный ответ сервера');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления всех уведомлений:', error);
+                clearAllBtn.innerHTML = originalContent;
+                clearAllBtn.disabled = false;
+                showNotification('Произошла ошибка при удалении уведомлений. Попробуйте еще раз.', 'error');
+            });
+        });
+    }
 });
 </script>
 {% endblock %}

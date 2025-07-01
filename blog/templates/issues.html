@@ -870,22 +870,30 @@
   .table-footer {
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     padding: var(--spacing-lg);
     background: var(--surface-1);
     border-top: 1px solid var(--border-light);
     gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    min-height: 60px;
   }
 
   .table-info {
     color: var(--text-secondary);
     font-size: 0.875rem;
+    flex: 0 0 auto;
+    min-width: 200px;
   }
 
   .table-pagination {
     display: flex;
     align-items: center;
-    gap: var(--spacing-sm);
+    justify-content: center;
+    gap: var(--spacing-xs);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* DataTables Custom Styles */
@@ -986,6 +994,22 @@
     }
   }
 
+  /* Промежуточные экраны планшетов */
+  @media (max-width: 992px) {
+    .dataTables_paginate .paginate_button {
+      min-width: 34px;
+      height: 34px;
+      font-size: 0.8rem;
+      padding: 5px 7px;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 5px 9px;
+      font-size: 0.75rem;
+    }
+  }
+
   @media (max-width: 768px) {
     .page-title {
       font-size: 1.5rem;
@@ -1018,6 +1042,33 @@
       flex-direction: column;
       text-align: center;
       gap: var(--spacing-md);
+      align-items: center;
+      padding: var(--spacing-md);
+    }
+
+    .table-info {
+      order: 2;
+      min-width: auto;
+      text-align: center;
+    }
+
+    .table-pagination {
+      order: 1;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .dataTables_paginate .paginate_button {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+      padding: 4px 6px;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 4px 8px;
+      font-size: 0.7rem;
     }
 
     /* Mobile Table Adjustments */
@@ -1056,6 +1107,34 @@
     .issues-table td {
       padding: var(--spacing-md);
       font-size: 0.8rem;
+    }
+
+    /* Компактная пагинация для очень маленьких экранов */
+    .dataTables_paginate {
+      gap: 2px;
+    }
+
+    .dataTables_paginate .paginate_button {
+      min-width: 28px;
+      height: 28px;
+      font-size: 0.7rem;
+      padding: 2px 4px;
+      margin: 0;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 2px 6px;
+      font-size: 0.65rem;
+    }
+
+    .dataTables_paginate .ellipsis {
+      padding: 0 4px;
+      font-size: 0.7rem;
+    }
+
+    .table-footer {
+      padding: var(--spacing-sm);
     }
   }
 
@@ -1111,50 +1190,63 @@
   }
   }
 
-  /* Стили для пагинации DataTables */
+  /* Оптимизированные стили для пагинации DataTables */
   .dataTables_paginate {
     display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .dataTables_paginate .paginate_button {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 40px;
-    height: 40px;
+    min-width: 36px;
+    height: 36px;
+    padding: 6px 8px;
+    margin: 1px;
     border: 1px solid var(--border-light, #e2e8f0);
     background: var(--surface-0, #ffffff);
     color: var(--text-primary, #0f172a);
-    border-radius: 8px;
+    border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
     background: var(--surface-2, #f1f5f9);
     border-color: var(--primary-300, #64b5f6);
+    transform: translateY(-1px);
   }
 
   .dataTables_paginate .paginate_button.current {
     background: var(--primary-500, #2196f3);
     color: white;
     border-color: var(--primary-500, #2196f3);
+    font-weight: 600;
   }
 
   .dataTables_paginate .paginate_button.disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    transform: none;
   }
 
   .dataTables_paginate .ellipsis {
-    padding: 0 8px;
+    padding: 0 6px;
     color: var(--text-muted, #64748b);
     font-weight: 500;
+    flex-shrink: 0;
   }
 
   /* Стили для информации о записях */
@@ -1240,19 +1332,22 @@
     float: none !important;
     text-align: center;
     margin-top: 0 !important;
+    width: 100%;
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button {
     float: none !important;
     display: inline-flex !important;
-    margin-left: 2px;
-    margin-right: 2px;
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
   .dataTables_wrapper .dataTables_paginate .paginate_button.next {
-    width: auto;
-    padding: 8px 12px;
+    min-width: auto;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   /* Принудительное отображение пагинации */
@@ -1261,11 +1356,16 @@
     display: flex !important;
     align-items: center;
     justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
   }
 
   .table-pagination .dataTables_paginate {
     display: flex !important;
     visibility: visible !important;
+    width: 100%;
+    max-width: 100%;
   }
 
   /* === Responsive Table Header Color === */
@@ -1303,6 +1403,28 @@
     border-bottom-color: #3730a3 !important;
   }
   /* === END === */
+
+  .issue-subject-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--primary-700);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s, background 0.2s;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+  }
+  .issue-subject-link:hover {
+    color: var(--primary-900);
+    background: var(--primary-50);
+    text-decoration: underline;
+  }
+  .issue-subject-link i {
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
 </style>
 {% endblock %}
 
@@ -1537,7 +1659,10 @@ $(document).ready(function() {
                             <span title="${new Date(issue.updated_on).toLocaleString('ru-RU')}">${formatDate(issue.updated_on)}</span>
                         </td>
                         <td>
-                            <div class="issue-subject" title="${issue.subject}">${issue.subject}</div>
+                            <a href="/my-issues/${issue.id}" class="issue-subject-link issue-subject" title="${issue.subject}">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>${issue.subject}</span>
+                            </a>
                         </td>
                         <td>
                             <div class="status-cell">

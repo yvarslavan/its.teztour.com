@@ -20,6 +20,8 @@ const MyTasksApp = {
     state: {
         isInitialized: false,
         dataTable: null,
+        isReturn: false,          // Возврат со страницы детали?
+        showSpinnerFirstLoad: true, // Нужно ли показывать спиннер при первой загрузке
         filtersLoaded: false,
         statisticsLoaded: false,
         currentFilters: {
@@ -38,7 +40,14 @@ const MyTasksApp = {
             return;
         }
 
-        this.showLoadingSpinner();
+        // Определяем, вернулся ли пользователь со страницы детали
+        this.state.isReturn = sessionStorage.getItem('return_from_task_id') !== null;
+        this.state.showSpinnerFirstLoad = !this.state.isReturn; // если возврат — спиннер не нужен
+
+        if (this.state.showSpinnerFirstLoad) {
+            this.showLoadingSpinner();
+        }
+
         this.initializeDataTable();
         this.loadFilters();
         this.loadStatistics();
@@ -320,13 +329,56 @@ const MyTasksApp = {
             }
         };
 
+        /*
+         * ⬅️ Восстановление страницы пагинации ещё до создания DataTable.
+         */
+        const savedPage = sessionStorage.getItem('return_from_task_page');
+        if (savedPage !== null) {
+            dataTableConfig.displayStart = parseInt(savedPage, 10) * this.config.defaultPageSize;
+            dataTableConfig.processing = !this.state.isReturn;
+        }
+
         // Инициализируем DataTable
         try {
-            this.state.dataTable = $('#' + this.config.tableId).DataTable(dataTableConfig);
+            this.state.dataTable = $(tableElement).DataTable(dataTableConfig);
             console.log('✅ DataTable создана успешно');
         } catch (error) {
             console.error('❌ Ошибка создания DataTable:', error);
             this.showError('Ошибка инициализации таблицы');
+        }
+
+        // После каждого draw управляем состоянием (подсветка строки + пагинация)
+        $(tableElement).on('draw.dt', () => {
+            this.highlightReturnRow();
+            this.highlightPagination();
+            // После первого draw окончательно скрываем спиннер
+            if (this.state.showSpinnerFirstLoad) {
+                this.hideLoadingSpinner();
+                this.state.showSpinnerFirstLoad = false; // больше не показываем
+            }
+        });
+
+        // Перехватываем клики по ссылкам задач, чтобы сохранить контекст (ID и страница)
+        $(tableElement).on('click', '.task-id-link, .task-title', (e) => {
+            const taskId = $(e.currentTarget).closest('tr').find('.task-id-number').text().replace('#','');
+            sessionStorage.setItem('return_from_task_id', taskId);
+            // Сохраняем текущую страницу DataTable
+            const currentPage = this.state.dataTable.page();
+            sessionStorage.setItem('return_from_task_page', currentPage);
+        });
+
+        // Скрываем спиннер, когда данные получены, если он был показан
+        $(tableElement).on('xhr.dt', () => {
+            if (this.state.showSpinnerFirstLoad) {
+                this.hideLoadingSpinner();
+            }
+        });
+
+        if (this.state.showSpinnerFirstLoad) {
+            this.hideLoadingSpinner();
+            sessionStorage.removeItem('return_from_task_id');
+            // также очищаем сохранённый номер страницы, т.к. уже вернулись
+            sessionStorage.removeItem('return_from_task_page');
         }
     },
 
@@ -1095,6 +1147,50 @@ const MyTasksApp = {
             "'": '&#039;'
         };
         return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
+    },
+
+    // Подсветка строки при возврате
+    highlightReturnRow: function() {
+        const returnId = sessionStorage.getItem('return_from_task_id');
+        if (!returnId) return;
+
+        const tableApi = this.state.dataTable;
+        if (!tableApi) return;
+
+        const $row = $(tableApi.rows({ page: 'current' }).nodes()).filter(function() {
+            return $(this).find('.task-id-number').text().replace('#','') === returnId;
+        });
+
+        if ($row.length) {
+            // Убираем прошлое выделение, если было
+            $(tableApi.rows().nodes()).removeClass('return-selected');
+
+            $row.addClass('return-selected');
+            // Скроллим к строке плавно
+            $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+            // Очищаем ключ, но подсветка останется до следующего выбора
+            sessionStorage.removeItem('return_from_task_id');
+        }
+    },
+
+    // Выделяем активную страницу пагинации доп.классом и автопрокручиваем номер
+    highlightPagination: function() {
+        const tableApi = this.state.dataTable;
+        if (!tableApi) return;
+
+        const currentPage = tableApi.page();
+        const $paginateContainer = $('.dataTables_paginate');
+        if (!$paginateContainer.length) return;
+
+        $paginateContainer.find('.paginate_button').removeClass('active-page');
+        $paginateContainer.find('.paginate_button').each(function() {
+            const pageNum = parseInt($(this).text(), 10) - 1; // zero-based
+            if (pageNum === currentPage) {
+                $(this).addClass('active-page');
+                // При необходимости прокручиваем контейнер, если кнопка вышла за пределы видимости
+                this.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+            }
+        });
     }
 };
 

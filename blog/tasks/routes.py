@@ -28,6 +28,10 @@ from redmine import (
     get_property_name,
     get_connection,
     convert_datetime_msk_format,
+    get_multiple_user_names,
+    get_multiple_project_names,
+    get_multiple_status_names,
+    get_multiple_priority_names,
     db_redmine_host,
     db_redmine_user_name,
     db_redmine_password,
@@ -37,6 +41,89 @@ from redmine import (
 # Импорты для нового маршрута
 from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_paginated_optimized, task_to_dict, create_redmine_connector # Исправлен относительный импорт
 from redminelib.exceptions import ResourceNotFoundError # Для обработки ошибок Redmine
+
+def collect_ids_from_task_history(task):
+    """Собирает все ID из истории изменений задачи для пакетной загрузки"""
+    user_ids = set()
+    project_ids = set()
+    status_ids = set()
+    priority_ids = set()
+
+    # Добавляем ID из основной задачи
+    if hasattr(task, 'assigned_to') and task.assigned_to:
+        user_ids.add(task.assigned_to.id)
+    if hasattr(task, 'author') and task.author:
+        user_ids.add(task.author.id)
+    if hasattr(task, 'status') and task.status:
+        status_ids.add(task.status.id)
+    if hasattr(task, 'priority') and task.priority:
+        priority_ids.add(task.priority.id)
+    if hasattr(task, 'project') and task.project:
+        project_ids.add(task.project.id)
+
+    # Собираем ID из истории изменений
+    for journal in task.journals:
+        for detail in journal.details:
+            try:
+                field_name = getattr(detail, 'name', '') or (detail.get('name') if isinstance(detail, dict) else '')
+                old_value = getattr(detail, 'old_value', None)
+                new_value = getattr(detail, 'new_value', None)
+                if old_value is None and isinstance(detail, dict):
+                    old_value = detail.get('old_value')
+                if new_value is None and isinstance(detail, dict):
+                    new_value = detail.get('new_value')
+            except Exception as collect_err:
+                current_app.logger.debug(f"[collect_ids_from_task_history] Ошибка разбора detail: {collect_err}")
+                continue
+
+            if field_name == 'assigned_to_id':
+                if old_value and str(old_value).isdigit():
+                    user_ids.add(int(old_value))
+                if new_value and str(new_value).isdigit():
+                    user_ids.add(int(new_value))
+
+            elif field_name == 'project_id':
+                if old_value and str(old_value).isdigit():
+                    project_ids.add(int(old_value))
+                if new_value and str(new_value).isdigit():
+                    project_ids.add(int(new_value))
+
+            elif field_name == 'status_id':
+                if old_value and str(old_value).isdigit():
+                    status_ids.add(int(old_value))
+                if new_value and str(new_value).isdigit():
+                    status_ids.add(int(new_value))
+
+            elif field_name == 'priority_id':
+                if old_value and str(old_value).isdigit():
+                    priority_ids.add(int(old_value))
+                if new_value and str(new_value).isdigit():
+                    priority_ids.add(int(new_value))
+
+    return {
+        'user_ids': list(user_ids),
+        'project_ids': list(project_ids),
+        'status_ids': list(status_ids),
+        'priority_ids': list(priority_ids)
+    }
+
+def format_boolean_field(value, field_name):
+    """Форматирование булевых полей для шаблона"""
+    # Приводим value к строке для унифицированной проверки
+    str_value = str(value).strip().lower() if value is not None else ''
+
+    truthy_values = {'1', 'true', 'yes', 'да'}
+    falsy_values = {'0', 'false', 'no', 'нет', ''}
+
+    if field_name == 'easy_helpdesk_need_reaction':
+        # Для этого поля значение '1' означает Да, любое другое — Нет
+        return 'Да' if str_value == '1' else 'Нет'
+    elif field_name == '16':
+        # Поле '16' (кастом Redmine) хранит '0' как Нет, всё остальное как Да
+        return 'Нет' if str_value in falsy_values else 'Да'
+    else:
+        # Универсальная логика для прочих boolean-полей
+        return 'Да' if str_value in truthy_values else 'Нет'
 
 # Создаем Blueprint 'tasks'
 # url_prefix='/tasks' означает, что все маршруты здесь будут начинаться с /tasks
@@ -73,76 +160,157 @@ def my_tasks_page():
 @login_required
 @weekend_performance_optimizer
 def task_detail(task_id):
-    """
-    Детализация задачи Redmine (оптимизированная версия)
+    """Оптимизированная версия страницы деталей задачи"""
+    import time
+    start_time = time.time()
+    current_app.logger.info(f"🚀 [PERFORMANCE] Загрузка задачи {task_id} - начало")
 
-    Поскольку пользователь уже авторизован и получил список задач,
-    используем упрощенную аутентификацию через API ключ для повышения производительности.
-    """
     if not current_user.is_redmine_user:
         flash("У вас нет доступа к этой функциональности.", "warning")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
 
     try:
-        # Оптимизированный подход: используем API ключ вместо повторной аутентификации
-        # Если пользователь получил список задач, то доступ к Redmine уже проверен
-        redmine_conn_obj = RedmineConnector(
-            url=get('redmine', 'url'),
-            username=None,  # Не нужен для API ключа
-            password=None,  # Не нужен для API ключа
-            api_key=get('redmine', 'api_key')  # Используем общий API ключ
+        # Получаем коннектор Redmine (без изменений)
+        redmine_conn_obj = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
         )
 
-        if not hasattr(redmine_conn_obj, 'redmine') or not redmine_conn_obj.redmine:
-            current_app.logger.error(f"RedmineConnector не смог инициализироваться для task_detail (API key).")
-            flash("Ошибка инициализации Redmine API коннектора.", "error")
+        if not redmine_conn_obj or not hasattr(redmine_conn_obj, 'redmine'):
+            flash("Не удалось подключиться к Redmine.", "error")
             return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
 
-        # Получаем детали задачи
+        # Получаем детали задачи (без изменений)
         task = redmine_conn_obj.redmine.issue.get(
             task_id,
             include=['status', 'priority', 'project', 'tracker', 'author', 'assigned_to', 'journals', 'done_ratio', 'attachments', 'relations', 'watchers', 'changesets']
         )
 
-        # Получаем все статусы для создания словаря ID -> название
+        # 🔧 Приводим old_value/new_value к строкам для безопасности шаблона
+        try:
+            for j in getattr(task, 'journals', []):
+                for d in getattr(j, 'details', []):
+                    if hasattr(d, 'old_value') and d.old_value is not None:
+                        d.old_value = str(d.old_value)
+                    if hasattr(d, 'new_value') and d.new_value is not None:
+                        d.new_value = str(d.new_value)
+        except Exception as journal_cast_err:
+            current_app.logger.debug(f"[task_detail] Ошибка приведения типов journal details: {journal_cast_err}")
+
+        # ✅ НОВОЕ: Собираем все ID для пакетной загрузки
+        ids_data = collect_ids_from_task_history(task)
+        current_app.logger.info(f"🔍 [PERFORMANCE] Собрано ID: users={len(ids_data['user_ids'])}, statuses={len(ids_data['status_ids'])}, projects={len(ids_data['project_ids'])}, priorities={len(ids_data['priority_ids'])}")
+
+        # ✅ НОВОЕ: Создаем ОДНО соединение для всех запросов
+        connection = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+
+        if not connection:
+            current_app.logger.error("❌ [PERFORMANCE] Не удалось создать соединение с MySQL")
+            flash("Ошибка соединения с базой данных.", "error")
+            return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
+
+        # ✅ НОВОЕ: Пакетная загрузка всех данных
+        try:
+            user_names = get_multiple_user_names(connection, ids_data['user_ids'])
+            project_names = get_multiple_project_names(connection, ids_data['project_ids'])
+            status_names = get_multiple_status_names(connection, ids_data['status_ids'])
+            priority_names = get_multiple_priority_names(connection, ids_data['priority_ids'])
+
+            current_app.logger.info(f"✅ [PERFORMANCE] Загружено данных: users={len(user_names)}, projects={len(project_names)}, statuses={len(status_names)}, priorities={len(priority_names)}")
+
+        finally:
+            # ✅ ВАЖНО: Закрываем соединение
+            connection.close()
+            current_app.logger.info("🔒 [PERFORMANCE] Соединение с MySQL закрыто")
+
+        # Получаем все статусы для создания словаря ID -> название (без изменений)
         status_mapping = {}
         try:
             redmine_statuses = redmine_conn_obj.redmine.issue_status.all()
             for status in redmine_statuses:
                 status_mapping[status.id] = status.name
             current_app.logger.info(f"✅ Получено {len(status_mapping)} статусов для преобразования")
-            current_app.logger.info(f"🎯 Статус задачи {task_id}: ID={task.status.id}, raw_name='{task.status.name}', mapped_name='{status_mapping.get(task.status.id, 'НЕ НАЙДЕН')}'")
         except Exception as status_error:
             current_app.logger.error(f"❌ Не удалось получить статусы: {status_error}")
             status_mapping = {}
 
-        current_app.logger.info(f"Задача {task_id} успешно получена для пользователя {current_user.email}")
+        # Время выполнения
+        execution_time = time.time() - start_time
+        current_app.logger.info(f"🚀 [PERFORMANCE] Задача {task_id} загружена за {execution_time:.3f}с")
+
+        # ✅ НОВОЕ: Оптимизированная функция описания изменений без дополнительных подключений к БД
+        def get_property_name_fast(property_name, prop_key, old_value, value):
+            def _val_to_text(val_dict, v):
+                if v is None:
+                    return 'None'
+                if isinstance(v, str) and v.isdigit():
+                    v_int = int(v)
+                elif isinstance(v, int):
+                    v_int = v
+                else:
+                    return v
+                return val_dict.get(v_int, v)
+
+            if prop_key == 'project_id':
+                from_txt = _val_to_text(project_names, old_value)
+                to_txt = _val_to_text(project_names, value)
+                return f"Параметр&nbsp;<b>Проект</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif prop_key == 'assigned_to_id':
+                from_txt = _val_to_text(user_names, old_value)
+                to_txt = _val_to_text(user_names, value)
+                return f"Параметр&nbsp;<b>Исполнитель</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif prop_key == 'status_id':
+                from_txt = _val_to_text(status_names, old_value)
+                to_txt = _val_to_text(status_names, value)
+                return f"Параметр&nbsp;<b>Статус</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif prop_key == 'priority_id':
+                from_txt = _val_to_text(priority_names, old_value)
+                to_txt = _val_to_text(priority_names, value)
+                return f"Параметр&nbsp;<b>Приоритет</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif prop_key == 'subject':
+                return f"Параметр&nbsp;<b>Тема</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_value}</b>&nbsp;на&nbsp;<b>{value}</b>"
+            elif prop_key == 'easy_helpdesk_need_reaction':
+                from_txt = 'Да' if str(old_value) == '1' else 'Нет'
+                to_txt = 'Да' if str(value) == '1' else 'Нет'
+                return f"Параметр&nbsp;<b>Нужна&nbsp;реакция?</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif prop_key == 'done_ratio':
+                return f"Параметр&nbsp;<b>Готовность</b>&nbsp;изменился&nbsp;c&nbsp;<b>{old_value}%</b>&nbsp;на&nbsp;<b>{value}%</b>"
+            elif prop_key == '16':
+                from_txt = 'Да' if old_value and str(old_value) != '0' else 'Нет'
+                to_txt = 'Да' if value and str(value) != '0' else 'Нет'
+                return f"Параметр&nbsp;<b>Что&nbsp;нового</b>&nbsp;изменился&nbsp;c&nbsp;<b>{from_txt}</b>&nbsp;на&nbsp;<b>{to_txt}</b>"
+            elif property_name == 'attachment':
+                return f"Файл&nbsp;<b>{value}</b>&nbsp;добавлен"
+            elif property_name == 'relation' and prop_key == 'relates':
+                return f"Задача&nbsp;связана&nbsp;с&nbsp;задачей&nbsp;<b>#{value}</b>"
+            return None
+
+        # ✅ НОВОЕ: Передаем словари данных вместо функций и оптимизированный helper
+        return render_template("task_detail.html",
+                             task=task,
+                             title=f"Задача #{task.id}",
+                             count_notifications=0,
+                             status_mapping=status_mapping,
+                             # ✅ Новые данные для оптимизированного шаблона
+                             user_names=user_names,
+                             project_names=project_names,
+                             status_names=status_names,
+                             priority_names=priority_names,
+                             # ✅ Оставляем только helper для форматирования
+                             convert_datetime_msk_format=convert_datetime_msk_format,
+                             format_boolean_field=format_boolean_field,
+                             get_property_name=get_property_name_fast)
 
     except ResourceNotFoundError:
-        current_app.logger.warning(f"Задача с ID {task_id} не найдена в Redmine (task_detail).")
+        current_app.logger.warning(f"Задача с ID {task_id} не найдена в Redmine")
         flash(f"Задача #{task_id} не найдена.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
     except Exception as e:
-        current_app.logger.error(f"Ошибка при получении задачи {task_id} в task_detail: {str(e)}. Traceback: {traceback.format_exc()}")
+        import traceback
+        current_app.logger.error(f"[task_detail] Ошибка при получении задачи {task_id}: {e}. Trace: {traceback.format_exc()}")
         flash("Произошла ошибка при загрузке данных задачи.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
-
-    return render_template("task_detail.html",
-                         task=task,
-                         title=f"Задача #{task.id}",
-                         count_notifications=0,
-                         status_mapping=status_mapping,
-                         convert_datetime_msk_format=convert_datetime_msk_format,
-                         get_property_name=get_property_name,
-                         get_status_name_from_id=get_status_name_from_id,
-                         get_project_name_from_id=get_project_name_from_id,
-                         get_user_full_name_from_id=get_user_full_name_from_id,
-                         get_priority_name_from_id=get_priority_name_from_id,
-                         get_connection=get_connection,
-                         db_redmine_host=db_redmine_host,
-                         db_redmine_user_name=db_redmine_user_name,
-                         db_redmine_password=db_redmine_password,
-                         db_redmine_name=db_redmine_name)
 
 # ===== API для работы с задачами =====
 
@@ -1236,3 +1404,17 @@ def debug_search_api():
         current_app.logger.error(f"🔍 DEBUG: Критическая ошибка: {e}")
         current_app.logger.error(f"🔍 DEBUG: Traceback: {traceback.format_exc()}")
         return jsonify({"error": f"Критическая ошибка: {str(e)}"}), 500
+
+# ===== NOTIFICATION COUNT API =====
+@tasks_bp.route('/notifications-count', methods=['GET'])
+@login_required
+def get_tasks_notification_count():
+    """Возвращает количество непрочитанных уведомлений (задач) для текущего пользователя"""
+    try:
+        # Можно переиспользовать существующую логику helpdesk-уведомлений
+        from redmine import get_count_notifications
+        count = get_count_notifications(current_user.id)
+        return jsonify({'count': count})
+    except Exception as e:
+        current_app.logger.error(f'[tasks.notifications-count] error: {e}')
+        return jsonify({'count': 0}), 500

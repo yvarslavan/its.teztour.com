@@ -35,46 +35,61 @@
 
                         // Здесь ваш скрипт
                         $(document).ready(function() {
-                            // Функция для отправки AJAX запроса и обновления счетчика уведомлений
-                            function updateNotificationCount() {
-                                $.ajax({
-                                    url: "{{ url_for('main.get_notification_count') }}",
-                                    type: 'GET',
-                                    success: function(data) {
-                                        let notificationBadge = $('#notification-badge');
-
-                                        if (data.count > 0) {
-                                            // Если счетчик не существует, создаем его
-                                            if (notificationBadge.length === 0) {
-                                                $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + data.count + '</span>');
-                                            } else {
-                                                // Обновляем существующий счетчик
-                                                notificationBadge.text(data.count).show();
-                                            }
-                                        } else {
-                                            // Полностью удаляем элемент счетчика
-                                            if (notificationBadge.length > 0) {
-                                                notificationBadge.remove();
-                                            }
-                                        }
-                                    },
-                                    error: function(xhr, status, error) {
-                                        console.error('Ошибка при получении количества уведомлений:', error);
-                                        // При ошибке удаляем счетчик
-                                        $('#notification-badge').remove();
-                                        if (xhr.status === 401) {
-                                            // Если пользователь не авторизован, можно перенаправить на страницу входа
-                                            window.location.href = "{{ url_for('users.login') }}";
-                                        }
+                            /* === Общая функция обновления бейджа === */
+                            function refreshNotificationBadge(count) {
+                                const badgeSel = '#notification-badge';
+                                if (count > 0) {
+                                    if ($(badgeSel).length === 0) {
+                                        $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
+                                    } else {
+                                        $(badgeSel).text(count).show();
                                     }
-                                });
+                                } else {
+                                    $(badgeSel).remove();
+                                }
                             }
 
-                            // Вызываем функцию обновления количества уведомлений с интервалом
-                            setInterval(updateNotificationCount, 30000); // Например, каждые 30 секунд
+                            window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
 
-                            // Начальное обновление счетчика уведомлений
+                                        // AJAX-пуллинг
+            function updateNotificationCount() {
+                // На странице /notifications не обновляем бейдж автоматически
+                if (window.location.pathname === '/notifications') {
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ url_for('main.get_notification_count') }}",
+                    type: 'GET',
+                    success: function(data) {
+                        refreshNotificationBadge(data.count);
+                    },
+                    error: function(xhr) {
+                        console.error('Ошибка при получении количества уведомлений');
+                        $('#notification-badge').remove();
+                    }
+                });
+            }
+
+                            setInterval(updateNotificationCount, 30000);
                             updateNotificationCount();
+
+                            /* === Листенер для пуш-виджета === */
+                            window.addEventListener('newNotification', function(e) {
+                                // e.detail.count может содержать новый total, если нет – прибавляем 1
+                                const current = parseInt($('#notification-badge').text() || '0', 10);
+                                const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
+                                refreshNotificationBadge(newCount);
+                            });
+
+                                        /* === Специальная логика для страницы /notifications === */
+            if (window.location.pathname === '/notifications') {
+                // На странице уведомлений показываем количество всех уведомлений (включая прочитанные)
+                const pageCount = {{ count_notifications_page if count_notifications_page else 0 }};
+                refreshNotificationBadge(pageCount);
+            }
+
+                            /* ==== Tasks Notification badge (удалено: используем общий) ==== */
                         });
 
 
