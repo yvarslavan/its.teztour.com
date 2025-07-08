@@ -44,9 +44,14 @@ const MyTasksApp = {
         this.state.isReturn = sessionStorage.getItem('return_from_task_id') !== null;
         this.state.showSpinnerFirstLoad = !this.state.isReturn; // если возврат — спиннер не нужен
 
-        if (this.state.showSpinnerFirstLoad) {
-            this.showLoadingSpinner();
-        }
+        console.log('🔄 Логика спиннера:', {
+            isReturn: this.state.isReturn,
+            showSpinnerFirstLoad: this.state.showSpinnerFirstLoad,
+            returnId: sessionStorage.getItem('return_from_task_id')
+        });
+
+        // Спиннер уже управляется ранним скриптом в template
+        // Здесь только логируем состояние
 
         this.initializeDataTable();
         this.loadFilters();
@@ -61,7 +66,10 @@ const MyTasksApp = {
     showLoadingSpinner: function() {
         const spinner = document.getElementById(this.config.loadingSpinnerId);
         if (spinner) {
-            spinner.style.display = 'flex';
+            console.log('🟢 Показываем спиннер');
+            spinner.classList.add('show');
+        } else {
+            console.warn('⚠️ Спиннер не найден:', this.config.loadingSpinnerId);
         }
     },
 
@@ -69,7 +77,10 @@ const MyTasksApp = {
     hideLoadingSpinner: function() {
         const spinner = document.getElementById(this.config.loadingSpinnerId);
         if (spinner) {
-            spinner.style.display = 'none';
+            console.log('🔴 Скрываем спиннер');
+            spinner.classList.remove('show');
+        } else {
+            console.warn('⚠️ Спиннер не найден:', this.config.loadingSpinnerId);
         }
     },
 
@@ -313,11 +324,12 @@ const MyTasksApp = {
                 }
             },
             drawCallback: () => {
-                this.hideLoadingSpinner();
                 console.log('✅ DataTable перерисована');
             },
             initComplete: () => {
                 console.log('✅ DataTable инициализирована');
+
+                // Скрываем спиннер после полной инициализации
                 this.hideLoadingSpinner();
 
                 // Настраиваем плейсхолдер для поиска
@@ -344,18 +356,14 @@ const MyTasksApp = {
             console.log('✅ DataTable создана успешно');
         } catch (error) {
             console.error('❌ Ошибка создания DataTable:', error);
+            this.hideLoadingSpinner();
             this.showError('Ошибка инициализации таблицы');
         }
 
         // После каждого draw управляем состоянием (подсветка строки + пагинация)
         $(tableElement).on('draw.dt', () => {
-            this.highlightReturnRow();
+            this.highlightReturnRow(); // Восстанавливаем подсветку при возврате
             this.highlightPagination();
-            // После первого draw окончательно скрываем спиннер
-            if (this.state.showSpinnerFirstLoad) {
-                this.hideLoadingSpinner();
-                this.state.showSpinnerFirstLoad = false; // больше не показываем
-            }
         });
 
         // Перехватываем клики по ссылкам задач, чтобы сохранить контекст (ID и страница)
@@ -366,20 +374,6 @@ const MyTasksApp = {
             const currentPage = this.state.dataTable.page();
             sessionStorage.setItem('return_from_task_page', currentPage);
         });
-
-        // Скрываем спиннер, когда данные получены, если он был показан
-        $(tableElement).on('xhr.dt', () => {
-            if (this.state.showSpinnerFirstLoad) {
-                this.hideLoadingSpinner();
-            }
-        });
-
-        if (this.state.showSpinnerFirstLoad) {
-            this.hideLoadingSpinner();
-            sessionStorage.removeItem('return_from_task_id');
-            // также очищаем сохранённый номер страницы, т.к. уже вернулись
-            sessionStorage.removeItem('return_from_task_page');
-        }
     },
 
     // Загрузка фильтров
@@ -837,14 +831,55 @@ const MyTasksApp = {
         }
     },
 
+    // Функция для экранирования HTML
     escapeHtml: function(text) {
         if (!text) return '';
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+        const map = {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#039;'
+        };
+        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
     },
 
-        formatDate: function(dateString) {
+    // Подсветка строки при возврате (без автоматической прокрутки)
+    highlightReturnRow: function() {
+        const returnId = sessionStorage.getItem('return_from_task_id');
+
+        if (!returnId || returnId.trim() === '' || isNaN(returnId)) {
+            return;
+        }
+
+        const tableApi = this.state.dataTable;
+        if (!tableApi) {
+            return;
+        }
+
+        // Ищем строку с нужным ID
+        const $row = $(tableApi.rows({ page: 'current' }).nodes()).filter(function() {
+            const $this = $(this);
+            const idFromNumber = $this.find('.task-id-number').text().replace('#','');
+            const idFromLink = $this.find('.task-id-link').text().replace('#','');
+            const idFromAny = $this.find('[class*="task-id"]').text().replace('#','');
+
+            return idFromNumber === returnId || idFromLink === returnId || idFromAny === returnId;
+        });
+
+        if ($row.length && $row.is(':visible')) {
+            // Убираем прошлое выделение
+            $(tableApi.rows().nodes()).removeClass('return-selected');
+
+            // Добавляем класс
+            $row.addClass('return-selected');
+
+            // Очищаем ключ после подсветки
+            sessionStorage.removeItem('return_from_task_id');
+        }
+    },
+
+    formatDate: function(dateString) {
         if (!dateString) return '-';
 
         try {
@@ -881,7 +916,7 @@ const MyTasksApp = {
         }
     },
 
-        // Форматирование даты и времени для поля "Обновлена"
+    // Форматирование даты и времени для поля "Обновлена"
     formatDateTime: function(dateString) {
         if (!dateString) return '-';
 
@@ -943,7 +978,7 @@ const MyTasksApp = {
         }
     },
 
-        getStatusInfo: function(statusName) {
+    getStatusInfo: function(statusName) {
         if (!statusName) {
             return {
                 class: 'status-default',
@@ -1136,43 +1171,6 @@ const MyTasksApp = {
         }
     },
 
-    // Функция для экранирования HTML
-    escapeHtml: function(text) {
-        if (!text) return '';
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
-    },
-
-    // Подсветка строки при возврате
-    highlightReturnRow: function() {
-        const returnId = sessionStorage.getItem('return_from_task_id');
-        if (!returnId) return;
-
-        const tableApi = this.state.dataTable;
-        if (!tableApi) return;
-
-        const $row = $(tableApi.rows({ page: 'current' }).nodes()).filter(function() {
-            return $(this).find('.task-id-number').text().replace('#','') === returnId;
-        });
-
-        if ($row.length) {
-            // Убираем прошлое выделение, если было
-            $(tableApi.rows().nodes()).removeClass('return-selected');
-
-            $row.addClass('return-selected');
-            // Скроллим к строке плавно
-            $row[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Очищаем ключ, но подсветка останется до следующего выбора
-            sessionStorage.removeItem('return_from_task_id');
-        }
-    },
-
     // Выделяем активную страницу пагинации доп.классом и автопрокручиваем номер
     highlightPagination: function() {
         const tableApi = this.state.dataTable;
@@ -1187,8 +1185,6 @@ const MyTasksApp = {
             const pageNum = parseInt($(this).text(), 10) - 1; // zero-based
             if (pageNum === currentPage) {
                 $(this).addClass('active-page');
-                // При необходимости прокручиваем контейнер, если кнопка вышла за пределы видимости
-                this.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
             }
         });
     }

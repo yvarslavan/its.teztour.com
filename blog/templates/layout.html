@@ -36,22 +36,24 @@
                         // Здесь ваш скрипт
                         $(document).ready(function() {
                             /* === Общая функция обновления бейджа === */
-                            function refreshNotificationBadge(count) {
-                                const badgeSel = '#notification-badge';
-                                if (count > 0) {
-                                    if ($(badgeSel).length === 0) {
-                                        $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
-                                    } else {
-                                        $(badgeSel).text(count).show();
-                                    }
-                                } else {
-                                    $(badgeSel).remove();
-                                }
-                            }
+                                                                function refreshNotificationBadge(count) {
+                const badgeSel = '#notification-badge';
+                const currentBadge = $(badgeSel);
+
+                if (count > 0) {
+                    if (currentBadge.length === 0) {
+                        $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
+                    } else {
+                        currentBadge.text(count).show();
+                    }
+                } else {
+                    currentBadge.remove();
+                }
+            }
 
                             window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
 
-                                        // AJAX-пуллинг
+                                                    // AJAX-пуллинг
             function updateNotificationCount() {
                 // На странице /notifications не обновляем бейдж автоматически
                 if (window.location.pathname === '/notifications') {
@@ -71,16 +73,16 @@
                 });
             }
 
-                            setInterval(updateNotificationCount, 30000);
-                            updateNotificationCount();
+                                                    setInterval(updateNotificationCount, 30000);
+            updateNotificationCount();
 
-                            /* === Листенер для пуш-виджета === */
-                            window.addEventListener('newNotification', function(e) {
-                                // e.detail.count может содержать новый total, если нет – прибавляем 1
-                                const current = parseInt($('#notification-badge').text() || '0', 10);
-                                const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
-                                refreshNotificationBadge(newCount);
-                            });
+                                        /* === Листенер для пуш-виджета === */
+            window.addEventListener('newNotification', function(e) {
+                // e.detail.count может содержать новый total, если нет – прибавляем 1
+                const current = parseInt($('#notification-badge').text() || '0', 10);
+                const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
+                refreshNotificationBadge(newCount);
+            });
 
                                         /* === Специальная логика для страницы /notifications === */
             if (window.location.pathname === '/notifications') {
