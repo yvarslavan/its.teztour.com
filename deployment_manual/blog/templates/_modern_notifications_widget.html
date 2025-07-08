@@ -1,0 +1,1663 @@
+<!-- Modern Notifications Widget -->
+<!-- ЭКСТРЕННОЕ ОТКЛЮЧЕНИЕ: раскомментируйте строку ниже если виджет блокирует сайт -->
+<!-- <script>console.log('🚨 ВИДЖЕТ УВЕДОМЛЕНИЙ ЭКСТРЕННО ОТКЛЮЧЕН'); if(true) throw new Error('Widget disabled');</script> -->
+
+<div id="modern-notifications-widget" class="modern-notifications-widget initial-hidden">
+    <div class="notifications-header">
+        <div class="header-content">
+            <div class="header-icon">
+                <i class="fas fa-bell" id="notification-bell-icon"></i>
+                <span class="notification-badge" id="notification-count-badge">0</span>
+            </div>
+            <div class="header-text">
+                <h3 class="header-title">Уведомления</h3>
+                <p class="header-subtitle" id="notification-subtitle">Нет новых уведомлений</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="action-btn minimize-btn" id="minimize-notifications" title="Свернуть">
+                <i class="fas fa-chevron-up"></i>
+            </button>
+            <button class="action-btn settings-btn" id="notification-settings" title="Настройки">
+                <i class="fas fa-cog"></i>
+            </button>
+            <button class="action-btn close-btn" id="close-notifications" title="Закрыть виджет">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="notifications-body" id="notifications-body">
+        <div class="notifications-list" id="notifications-list">
+            <!-- Динамически заполняется -->
+            <div class="empty-state" id="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <p class="empty-text">Все уведомления прочитаны</p>
+                <small class="empty-subtitle">Новые уведомления появятся здесь</small>
+            </div>
+        </div>
+
+        <div class="notifications-footer">
+            <button class="footer-btn view-all-btn" id="view-all-notifications">
+                <i class="fas fa-list"></i>
+                <span>Показать все</span>
+            </button>
+            <button class="footer-btn clear-btn" id="clear-notifications-modern">
+                <i class="fas fa-check-double"></i>
+                <span>Очистить</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Floating button to restore widget when closed -->
+<div id="notifications-restore-btn" class="notifications-restore-btn" style="display: none;">
+    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений">
+        <i class="fas fa-bell"></i>
+    </button>
+</div>
+
+<style>
+/* Modern Notifications Widget Styles */
+.modern-notifications-widget {
+    position: fixed !important;
+    top: 120px !important; /* Значительно увеличиваем отступ сверху */
+    right: 20px !important;
+    width: 420px; /* ИЗМЕНЕНО: Ширина виджета увеличена для размещения кнопок */
+    max-height: 600px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 20px;
+    box-shadow:
+        0 20px 40px rgba(0, 0, 0, 0.1),
+        0 8px 16px rgba(0, 0, 0, 0.05),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    z-index: 999999 !important; /* Максимальный z-index с !important */
+    display: flex;
+    flex-direction: column;
+    pointer-events: auto; /* Обеспечиваем интерактивность */
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideInFromRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ИСПРАВЛЕНИЕ: Добавляем класс для скрытия виджета при первичной загрузке */
+.modern-notifications-widget.initial-hidden {
+    display: none !important;
+}
+
+@keyframes slideInFromRight {
+    from {
+        transform: translateX(100%) scale(0.9);
+        opacity: 0;
+    }
+    50% {
+        transform: translateX(20%) scale(1.02);
+        opacity: 0.8;
+    }
+    to {
+        transform: translateX(0) scale(1);
+        opacity: 1;
+    }
+}
+
+.modern-notifications-widget.minimized {
+    max-height: 80px;
+    overflow: hidden;
+}
+
+.modern-notifications-widget.minimized .notifications-body {
+    opacity: 0;
+    transform: translateY(-10px);
+    pointer-events: none;
+}
+
+.modern-notifications-widget.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+.modern-notifications-widget.closed {
+    display: none;
+}
+
+/* Header */
+.notifications-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
+    border-radius: 20px 20px 0 0;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.header-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    border-radius: 14px;
+    color: white;
+    font-size: 20px;
+    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3); }
+    50% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5); }
+}
+
+.notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 20px;
+    height: 20px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid white;
+    animation: bounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+.header-text {
+    flex: 1;
+}
+
+.header-title {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    background: linear-gradient(135deg, #1f2937, #4f46e5);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.header-subtitle {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0;
+    font-weight: 500;
+}
+
+.header-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.action-btn {
+    width: 36px;
+    height: 36px;
+    border: none;
+    border-radius: 10px;
+    background: rgba(0, 0, 0, 0.05);
+    color: #6b7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 14px;
+}
+
+.action-btn:hover {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+    transform: translateY(-1px);
+}
+
+.close-btn:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+/* Body */
+.notifications-body {
+    display: flex;
+    flex-direction: column;
+    max-height: 500px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.notifications-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
+}
+
+.notifications-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.notifications-list::-webkit-scrollbar-thumb {
+    background: rgba(99, 102, 241, 0.3);
+    border-radius: 3px;
+}
+
+/* Notification Item */
+.notification-item {
+    padding: 16px;
+    margin-bottom: 8px;
+    background: rgba(255, 255, 255, 0.7);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    border-radius: 14px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideInFromBottom {
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.notification-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.notification-item.status-change {
+    border-left: 4px solid #10b981;
+}
+
+.notification-item.comment-added {
+    border-left: 4px solid #3b82f6;
+}
+
+.notification-item.redmine-task {
+    border-left: 4px solid #f97316;
+}
+
+.notification-item.redmine-task:hover {
+    background: rgba(249, 115, 22, 0.05);
+}
+
+.notification-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.notification-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.notification-icon.status-change {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.notification-icon.comment-added {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.notification-icon.redmine-task {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+    color: white;
+}
+
+.notification-text {
+    flex: 1;
+}
+
+.notification-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 4px 0;
+    line-height: 1.4;
+}
+
+.notification-description {
+    font-size: 12px;
+    color: #6b7280;
+    margin: 0 0 6px 0;
+    line-height: 1.4;
+}
+
+.notification-time {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+/* УЛУЧШЕНО: Стили для кнопок действий в уведомлении */
+.notification-actions {
+    display: flex;
+    /* ИЗМЕНЕНО: flex-wrap убран, чтобы кнопки были в одну линию */
+    gap: 8px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.notification-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 12px;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    white-space: nowrap;
+}
+
+.notification-action-btn:hover {
+    transform: translateY(-2px); /* Более заметный сдвиг */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Добавлена тень при наведении */
+}
+
+.notification-action-btn i {
+    margin-right: 6px; /* Увеличен отступ */
+}
+
+/* ИЗМЕНЕНО: Кнопка "Открыть в Redmine" теперь синяя, в стиле Redmine */
+.redmine-link-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb); /* Синий градиент */
+    color: white !important;
+    border-color: #1d4ed8;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.redmine-link-btn:hover {
+    background: linear-gradient(135deg, #60a5fa, #3b82f6);
+    color: white !important;
+    border-color: #2563eb;
+}
+
+/* Кнопка "Прочитано" - вторичное действие */
+.mark-read-btn {
+    background-color: #f3f4f6; /* Светло-серый фон */
+    color: #4b5563; /* Темно-серый текст */
+    border: 1px solid #e5e7eb; /* Тонкая серая рамка */
+}
+.mark-read-btn:hover {
+    background-color: #e5e7eb; /* Более темный фон при наведении */
+    border-color: #d1d5db;
+    color: #1f2937;
+}
+
+.mark-read-btn i {
+    color: #3b82f6; /* Синяя иконка для акцента */
+}
+
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9ca3af;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-text {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0 0 8px 0;
+}
+
+.empty-subtitle {
+    font-size: 13px;
+    margin: 0;
+}
+
+/* Footer */
+.notifications-footer {
+    display: flex;
+    flex-direction: row; /* ИСПРАВЛЕНО: горизонтальная ориентация кнопок */
+    justify-content: center; /* ИСПРАВЛЕНО: центрирование кнопок по горизонтали */
+    align-items: center; /* ИСПРАВЛЕНО: центрирование кнопок по вертикали */
+    padding: 8px 20px; /* ИСПРАВЛЕНО: минимальный padding для максимального центрирования */
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    gap: 12px; /* ИСПРАВЛЕНО: увеличен gap между кнопками */
+    background: rgba(248, 250, 252, 0.8); /* ДОБАВЛЕНО: фон для footer */
+    border-radius: 0 0 20px 20px; /* ИСПРАВЛЕНО: скругленные углы снизу */
+    backdrop-filter: blur(10px); /* ДОБАВЛЕНО: размытие фона */
+    margin: 0; /* ДОБАВЛЕНО: убираем возможные отступы */
+    box-sizing: border-box; /* ДОБАВЛЕНО: правильный расчет размеров */
+    min-height: 72px; /* ДОБАВЛЕНО: минимальная высота footer для стабильности */
+}
+
+.footer-btn {
+    flex: 1;
+    padding: 10px 12px; /* ИСПРАВЛЕНО: уменьшен padding для лучшего размещения */
+    border: none;
+    border-radius: 10px; /* ИСПРАВЛЕНО: уменьшен border-radius */
+    font-size: 12px; /* ИСПРАВЛЕНО: уменьшен размер шрифта */
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* ИСПРАВЛЕНО: уменьшен gap между иконкой и текстом */
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 36px; /* ДОБАВЛЕНО: минимальная высота кнопки */
+    max-width: 100%; /* ДОБАВЛЕНО: ограничение ширины */
+    box-sizing: border-box; /* ДОБАВЛЕНО: правильный расчет размеров */
+    white-space: nowrap; /* ДОБАВЛЕНО: предотвращение переноса текста */
+    overflow: hidden; /* ДОБАВЛЕНО: скрытие переполнения */
+    text-overflow: ellipsis; /* ДОБАВЛЕНО: многоточие при переполнении */
+}
+.footer-btn span {
+    opacity: 1 !important;
+    visibility: visible !important;
+    color: inherit; /* Наследуем цвет (синий или красный) от родительской кнопки */
+}
+
+.view-all-btn {
+    background: rgba(99, 102, 241, 0.1);
+    color: #6366f1;
+}
+
+.view-all-btn:hover {
+    background: rgba(99, 102, 241, 0.2);
+    transform: translateY(-1px);
+}
+
+.clear-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.clear-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .modern-notifications-widget {
+        width: calc(100vw - 40px) !important;
+        right: 20px !important;
+        left: 20px !important;
+        top: 110px !important; /* Увеличенный отступ на мобильных */
+        max-height: calc(100vh - 130px) !important; /* Ограничиваем высоту на мобильных */
+    }
+
+    /* ДОБАВЛЕНО: Адаптивные стили для footer на мобильных */
+    .notifications-footer {
+        padding: 6px 16px; /* ИСПРАВЛЕНО: минимальный padding для центрирования на мобильных */
+        gap: 8px; /* Уменьшенный gap на мобильных */
+        min-height: 60px; /* ДОБАВЛЕНО: уменьшенная минимальная высота на мобильных */
+    }
+
+    .footer-btn {
+        padding: 8px 10px; /* Еще более компактный padding */
+        font-size: 11px; /* Уменьшенный шрифт на мобильных */
+        min-height: 32px; /* Уменьшенная высота кнопки */
+        gap: 4px; /* Уменьшенный gap между иконкой и текстом */
+    }
+
+    .footer-btn span {
+        display: none; /* ДОБАВЛЕНО: скрываем текст на очень маленьких экранах, оставляем только иконки */
+    }
+
+    .footer-btn i {
+        font-size: 14px; /* Увеличиваем иконки когда текст скрыт */
+    }
+}
+
+@media (max-width: 768px) {
+    .modern-notifications-widget {
+        top: 115px !important; /* Увеличенное значение для планшетов */
+        max-height: calc(100vh - 135px) !important;
+    }
+
+    /* ДОБАВЛЕНО: Адаптивные стили для footer на планшетах */
+    .notifications-footer {
+        padding: 7px 18px; /* ИСПРАВЛЕНО: минимальный padding для центрирования на планшетах */
+        gap: 10px; /* Промежуточный gap для планшетов */
+        min-height: 66px; /* ДОБАВЛЕНО: промежуточная минимальная высота для планшетов */
+    }
+
+    .footer-btn {
+        padding: 9px 11px; /* Промежуточный padding для планшетов */
+        font-size: 12px; /* Промежуточный размер шрифта */
+        min-height: 34px; /* Промежуточная высота кнопки */
+        gap: 5px; /* Промежуточный gap */
+    }
+}
+
+/* Для больших экранов можно увеличить отступ */
+@media (min-width: 1200px) {
+    .modern-notifications-widget {
+        top: 130px !important; /* Больший отступ на больших экранах */
+    }
+}
+
+/* Dark theme */
+@media (prefers-color-scheme: dark) {
+    .modern-notifications-widget {
+        background: rgba(30, 30, 30, 0.95);
+        border-color: rgba(255, 255, 255, 0.1);
+        color: #ffffff;
+    }
+
+    .notification-item {
+        background: rgba(45, 45, 45, 0.7);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    /* ДОБАВЛЕНО: Стили для footer в темной теме */
+    .notifications-footer {
+        background: rgba(20, 20, 20, 0.8);
+        border-top-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .footer-btn {
+        color: #ffffff;
+    }
+
+    .view-all-btn {
+        background: rgba(99, 102, 241, 0.2);
+        color: #a5b4fc;
+    }
+
+    .view-all-btn:hover {
+        background: rgba(99, 102, 241, 0.3);
+    }
+
+    .clear-btn {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+    }
+
+    .clear-btn:hover {
+        background: rgba(239, 68, 68, 0.3);
+    }
+}
+
+/* Floating Restore Button */
+.notifications-restore-btn {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 999998 !important; /* Максимальный z-index для кнопки восстановления */
+}
+
+.notifications-restore-btn button {
+    width: 56px;
+    height: 56px;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.notifications-restore-btn button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+}
+
+.notifications-restore-btn button:active {
+    transform: translateY(0);
+}
+
+/* Анимация колокольчика при новых уведомлениях */
+@keyframes bellShake {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+    20%, 40%, 60%, 80% { transform: rotate(10deg); }
+}
+
+/* Стили для колокольчика с уведомлениями */
+.header-icon .fas.fa-bell.has-notifications {
+    color: #ff6b6b;
+    filter: drop-shadow(0 0 8px rgba(255, 107, 107, 0.6));
+}
+
+/* Улучшенные стили для badge */
+.notification-badge {
+    animation: badgePulse 2s ease-in-out infinite;
+}
+
+@keyframes badgePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+</style>
+
+<script>
+// ИСПРАВЛЕНИЕ: Добавляем глобальный try-catch для предотвращения блокировки UI
+try {
+    console.log('[ModernWidget] 🚀 Инициализация виджета уведомлений...');
+
+    class ModernNotificationsWidget {
+        constructor() {
+            try {
+                this.widget = document.getElementById('modern-notifications-widget');
+                this.list = document.getElementById('notifications-list');
+                this.badge = document.getElementById('notification-count-badge');
+                this.subtitle = document.getElementById('notification-subtitle');
+                this.notifications = [];
+                this.isMinimized = false;
+
+                const missingElements = [];
+                if (!this.widget) missingElements.push('modern-notifications-widget');
+                if (!this.list) missingElements.push('notifications-list');
+                if (!this.badge) missingElements.push('notification-count-badge');
+                if (!this.subtitle) missingElements.push('notification-subtitle');
+
+                if (missingElements.length > 0) {
+                    console.warn('[ModernWidget] ⚠️ Не найдены элементы:', missingElements.join(', '));
+                    console.warn('[ModernWidget] ⚠️ Виджет может не работать корректно');
+
+                    if (!this.widget) {
+                        console.error('[ModernWidget] ❌ Критическая ошибка: основной элемент виджета не найден');
+                        return;
+                    }
+                }
+
+                this.loadWidgetState();
+                this.bindEvents();
+                this.startPolling();
+
+                console.log('[ModernWidget] ✅ Инициализация завершена');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в конструкторе:', error);
+                if (this.widget) {
+                    this.widget.style.display = 'none';
+                }
+            }
+        }
+
+        bindEvents() {
+            try {
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('#close-notifications')) {
+                        console.log('[ModernWidget] 🔘 Клик по кнопке закрытия виджета');
+                        this.closeWidget();
+                        return;
+                    }
+
+                    if (e.target.closest('#minimize-notifications')) {
+                        console.log('[ModernWidget] 📏 Клик по кнопке минимизации');
+                        this.toggleMinimize();
+                        return;
+                    }
+
+                    if (e.target.closest('#clear-notifications-modern')) {
+                        console.log('[ModernWidget] 🧹 Клик по кнопке очистки уведомлений');
+                        this.clearNotifications();
+                        return;
+                    }
+
+                    const markReadButton = e.target.closest('.mark-read-btn');
+                    if (markReadButton) {
+                        e.preventDefault();
+                        const notificationId = markReadButton.getAttribute('data-id');
+                        if (notificationId && notificationId.startsWith('redmine_')) {
+                            const redmineId = notificationId.replace('redmine_', '');
+                            console.log(`[ModernWidget] ✅ Клик по кнопке "Прочитано" для Redmine ID: ${redmineId}`);
+                            this.markRedmineNotificationAsRead(redmineId);
+                        }
+                        return;
+                    }
+
+                    if (e.target.closest('#view-all-notifications')) {
+                        console.log('[ModernWidget] 📋 Переход к странице всех уведомлений');
+                        window.location.href = '/notifications';
+                        return;
+                    }
+
+                    if (e.target.closest('#notification-settings')) {
+                        console.log('[ModernWidget] ⚙️ Переход к настройкам уведомлений');
+                        this.openNotificationSettings();
+                        return;
+                    }
+                });
+
+                document.addEventListener('dblclick', (e) => {
+                    if (e.target.closest('.header-icon')) {
+                        console.log('[ModernWidget] 🔊 Тестирование звука по двойному клику');
+                        this.playNotificationSound();
+                    }
+                });
+
+                console.log('[ModernWidget] ✅ События привязаны через делегирование');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка привязки событий:', error);
+            }
+        }
+
+        toggleMinimize() {
+            try {
+                this.isMinimized = !this.isMinimized;
+                this.widget.classList.toggle('minimized', this.isMinimized);
+
+                const icon = document.querySelector('#minimize-notifications i');
+                if (icon) {
+                    icon.className = this.isMinimized ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+                }
+
+                localStorage.setItem('notificationsMinimized', this.isMinimized);
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в toggleMinimize:', error);
+            }
+        }
+
+        closeWidget() {
+            try {
+                console.log('[ModernWidget] 🔘 Закрытие виджета...');
+                this.widget.classList.add('hidden');
+                this.widget.style.transform = 'translateX(100%)';
+                this.widget.style.opacity = '0';
+
+                setTimeout(() => {
+                    this.widget.classList.add('closed');
+                    this.widget.style.display = 'none';
+                    localStorage.setItem('notificationsWidgetClosed', 'true');
+                    this.showRestoreButton();
+                    console.log('[ModernWidget] ✅ Виджет закрыт, показана кнопка восстановления');
+                }, 300);
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в closeWidget:', error);
+            }
+        }
+
+        showWidget() {
+            try {
+                console.log('[ModernWidget] 🔔 Показ виджета...');
+
+                this.widget.classList.remove('closed', 'hidden', 'initial-hidden');
+                this.widget.style.display = 'flex';
+                this.widget.style.visibility = 'visible';
+                this.widget.style.opacity = '1';
+                this.widget.style.transform = 'translateX(0)';
+
+                localStorage.setItem('notificationsWidgetClosed', 'false');
+                this.hideRestoreButton();
+
+                this.widget.style.animation = 'slideInFromRight 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
+
+                setTimeout(() => {
+                    this.widget.style.animation = '';
+                }, 600);
+
+                this.updateNotifications();
+
+                console.log('[ModernWidget] ✅ Виджет развернут и обновлен');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в showWidget:', error);
+            }
+        }
+
+        showRestoreButton() {
+            try {
+                const restoreBtn = document.getElementById('notifications-restore-btn');
+                if (restoreBtn) {
+                    restoreBtn.style.display = 'block';
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в showRestoreButton:', error);
+            }
+        }
+
+        hideRestoreButton() {
+            try {
+                const restoreBtn = document.getElementById('notifications-restore-btn');
+                if (restoreBtn) {
+                    restoreBtn.style.display = 'none';
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в hideRestoreButton:', error);
+            }
+        }
+
+        loadWidgetState() {
+            try {
+                const isClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
+                const isMinimized = localStorage.getItem('notificationsMinimized') === 'true';
+                const isDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+
+                console.log('[ModernWidget] 🔧 Загрузка состояния виджета:', { isClosed, isMinimized, isDisabled });
+
+                if (isDisabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен, скрываем полностью включая кнопку восстановления');
+                    this.widget.style.display = 'none';
+                    this.widget.classList.add('closed', 'initial-hidden');
+                    this.hideRestoreButton();
+                    return;
+                }
+
+                this.widget.classList.remove('initial-hidden');
+                this.adjustWidgetPosition();
+
+                if (isClosed) {
+                    this.widget.classList.add('closed');
+                    this.widget.style.display = 'none';
+                    this.widget.style.visibility = 'hidden';
+                    this.widget.style.opacity = '0';
+                    this.showRestoreButton();
+                    console.log('[ModernWidget] Виджет закрыт, показываем кнопку восстановления');
+                    return;
+                }
+
+                this.widget.style.display = 'flex';
+                this.widget.style.visibility = 'visible';
+                this.widget.style.opacity = '1';
+                this.widget.classList.remove('hidden', 'closed');
+                this.hideRestoreButton();
+
+                if (isMinimized) {
+                    this.isMinimized = true;
+                    this.widget.classList.add('minimized');
+                    const icon = document.querySelector('#minimize-notifications i');
+                    if (icon) icon.className = 'fas fa-chevron-down';
+                }
+
+                console.log('[ModernWidget] ✅ Виджет инициализирован и показан');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Критическая ошибка в loadWidgetState:', error);
+
+                const isDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                if (isDisabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен, не показываем при ошибке');
+                    this.widget.style.display = 'none';
+                    this.hideRestoreButton();
+                    return;
+                }
+
+                this.widget.classList.remove('initial-hidden');
+                this.widget.style.display = 'flex';
+                this.widget.style.visibility = 'visible';
+                this.widget.style.opacity = '1';
+            }
+        }
+
+        adjustWidgetPosition() {
+            try {
+                const header = document.querySelector('nav, header, .navbar, .nav, .header');
+                if (header) {
+                    const headerHeight = header.offsetHeight;
+                    const topOffset = Math.max(headerHeight + 40, 120);
+                    this.widget.style.setProperty('top', `${topOffset}px`, 'important');
+                    console.log(`[ModernWidget] Adjusted position: ${topOffset}px (header height: ${headerHeight}px)`);
+                } else {
+                    this.widget.style.setProperty('top', '120px', 'important');
+                    console.log(`[ModernWidget] Header not found, using safe offset: 120px`);
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в adjustWidgetPosition:', error);
+                this.widget.style.setProperty('top', '120px', 'important');
+            }
+        }
+
+        forcePosition() {
+            try {
+                this.widget.style.setProperty('position', 'fixed', 'important');
+                this.widget.style.setProperty('z-index', '999999', 'important');
+                this.widget.style.setProperty('right', '20px', 'important');
+
+                const rect = this.widget.getBoundingClientRect();
+                console.log(`[ModernWidget] Position check:`, {
+                    top: rect.top,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    left: rect.left,
+                    visible: rect.top >= 0 && rect.left >= 0
+                });
+
+                if (rect.top < 60) {
+                    this.widget.style.setProperty('top', '120px', 'important');
+                    console.log(`[ModernWidget] Widget was hidden, forced to 120px`);
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в forcePosition:', error);
+            }
+        }
+
+        async startPolling() {
+            try {
+                setInterval(() => this.updateNotifications(), 30000);
+                this.updateNotifications();
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в startPolling:', error);
+            }
+        }
+
+        async updateNotifications() {
+            try {
+                const isWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                if (isWidgetDisabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен, пропускаем обновление уведомлений');
+                    return;
+                }
+
+                console.log('[ModernWidget] 🔄 Запрос обновления уведомлений...');
+                const response = await fetch('/api/notifications/poll');
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log(`[ModernWidget] 📡 Получены данные с сервера:`, data);
+
+                    this.processNotifications(data.notifications);
+                    const localCount = this.notifications.length;
+                    const serverCount = data.total_count || 0;
+                    const displayCount = Math.max(localCount, serverCount);
+
+                    console.log(`[ModernWidget] 🔢 Счетчики: локальный=${localCount}, сервер=${serverCount}, отображаем=${displayCount}`);
+                    this.updateBadge(displayCount);
+                } else {
+                    console.warn('[ModernWidget] ⚠️ Сервер вернул ошибку:', data.error || 'Неизвестная ошибка');
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка получения уведомлений:', error);
+            }
+        }
+
+        processNotifications(notifications) {
+            try {
+                this.notifications = [];
+                const hasNewNotifications = (notifications.status_notifications && notifications.status_notifications.length > 0) ||
+                                          (notifications.comment_notifications && notifications.comment_notifications.length > 0) ||
+                                          (notifications.redmine_notifications && notifications.redmine_notifications.length > 0);
+
+                const isWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
+                const isWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+
+                if (hasNewNotifications && !isWidgetDisabled) {
+                    if (isWidgetClosed || this.widget.classList.contains('initial-hidden')) {
+                        console.log('[ModernWidget] 🔔 Есть новые уведомления, показываем виджет');
+                        this.showWidget();
+                    }
+                } else if (!hasNewNotifications) {
+                    console.log('[ModernWidget] 📭 Нет новых уведомлений, сохраняем текущее состояние виджета');
+                }
+
+                if (notifications.status_notifications) {
+                    notifications.status_notifications.forEach(n => {
+                        this.notifications.push({
+                            id: `status_${n.id}`,
+                            type: 'status-change',
+                            title: `Статус изменен: #${n.issue_id}`,
+                            description: `Старый статус: ${n.old_status}, Новый статус: ${n.new_status}`,
+                            time: this.formatTime(n.date_created),
+                            icon: 'fas fa-exchange-alt',
+                            issue_id: n.issue_id
+                        });
+                    });
+                }
+
+                if (notifications.comment_notifications) {
+                    notifications.comment_notifications.forEach(n => {
+                        this.notifications.push({
+                            id: `comment_${n.id}`,
+                            type: 'comment',
+                            title: `Новый комментарий: #${n.issue_id}`,
+                            description: this.truncate(n.notes, 100),
+                            time: this.formatTime(n.date_created),
+                            icon: 'fas fa-comment',
+                            issue_id: n.issue_id,
+                            raw: n
+                        });
+                    });
+                }
+
+                if (notifications.redmine_notifications) {
+                    notifications.redmine_notifications.forEach(n => {
+                        const descriptionDetails = n.issue_description ? ` — ${this.truncate(n.issue_description.replace(/<.*?>/g, ''), 70)}` : '';
+                        const isGroupNotification = !!n.is_group_notification;
+                        const title = isGroupNotification ? `✅ Задача для группы: ${n.group_name || 'Без имени'}` : `🔥 Вам назначена задача`;
+
+                        this.notifications.push({
+                            id: `redmine_${n.id}`,
+                            type: 'redmine-task',
+                            title: title,
+                            description: `<b>#${n.redmine_issue_id}</b>: ${n.issue_subject}${descriptionDetails}`,
+                            time: this.formatTime(n.created_at),
+                            icon: 'fas fa-tasks',
+                            url: n.issue_url,
+                            group_name: n.group_name
+                        });
+                    });
+                }
+
+                const incomingIds = this.notifications.map(n => n.id);
+                const seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
+                const newNotificationIds = incomingIds.filter(id => !seenIds.includes(id));
+
+                if (newNotificationIds.length > 0) {
+                    console.log('[ModernWidget] 🎶 Обнаружены новые уведомления, воспроизводим звук. ID:', newNotificationIds);
+                    this.playNotificationSound();
+                    const updatedSeenIds = [...seenIds, ...newNotificationIds];
+                    localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
+                }
+
+                this.renderNotifications();
+                this.updateBadge(this.notifications.length);
+                console.log(`[ModernWidget] 📊 Обработано уведомлений: ${this.notifications.length}`);
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка обработки уведомлений:', error);
+            }
+
+            // Инициализируем обработчики кнопок после рендеринга
+            this.initActionButtons();
+        }
+
+        renderNotifications() {
+            try {
+                if (this.notifications.length === 0) {
+                    this.list.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="fas fa-inbox"></i></div>
+                            <p class="empty-text">Все уведомления прочитаны</p>
+                            <small class="empty-subtitle">Новые уведомления появятся здесь</small>
+                        </div>
+                    `;
+                    return;
+                }
+                this.list.innerHTML = this.notifications.map(notification => {
+                    console.log('[ModernWidget] Notification data:', notification); // Для отладки
+                    return `
+                    <div class="notification-item ${notification.type}" data-id="${notification.id}">
+                        <div class="notification-content">
+                            <div class="notification-icon ${notification.type}"><i class="${notification.icon}"></i></div>
+                            <div class="notification-text">
+                                <div class="notification-title">${notification.title}</div>
+                                <div class="notification-description">${notification.description}</div>
+                                <div class="notification-time">${notification.time}</div>
+                                ${notification.type === 'redmine-task' ? `
+                                <div class="notification-actions">
+                                    <button class="notification-action-btn mark-read-btn" data-id="${notification.id}" data-type="redmine-task">
+                                        <i class="fas fa-check-circle"></i>Прочитано
+                                    </button>
+                                    <a href="${notification.url}" target="_blank" class="notification-action-btn redmine-link-btn">
+                                        <i class="fas fa-external-link-alt"></i>Открыть в Redmine
+                                    </a>
+                                </div>
+                                ` : ''}
+                                ${(notification.type === 'status-change' || notification.type === 'comment') && notification.issue_id ? `
+                                <div class="notification-actions">
+                                    <button class="notification-action-btn mark-read-btn" data-id="${notification.id}" data-type="${notification.type}">
+                                        <i class="fas fa-check-circle"></i>Прочитано
+                                    </button>
+                                    <a href="http://helpdesk.teztour.com/issues/${notification.issue_id}" target="_blank" class="notification-action-btn redmine-link-btn">
+                                        <i class="fas fa-external-link-alt"></i>Открыть в Redmine
+                                    </a>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `}).join('');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка рендеринга уведомлений:', error);
+                if (this.list) {
+                    this.list.innerHTML = '<div class="error-state">Ошибка загрузки уведомлений</div>';
+                }
+            }
+
+            // Инициализируем обработчики кнопок после рендеринга
+            this.initActionButtons();
+        }
+
+        initActionButtons() {
+            try {
+                // Удаляем старые обработчики
+                const oldButtons = this.list.querySelectorAll('.mark-read-btn');
+                oldButtons.forEach(btn => {
+                    btn.replaceWith(btn.cloneNode(true));
+                });
+
+                // Добавляем новые обработчики
+                const markReadButtons = this.list.querySelectorAll('.mark-read-btn');
+                markReadButtons.forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        const notificationId = button.getAttribute('data-id');
+                        const notificationType = button.getAttribute('data-type');
+                        const notificationItem = button.closest('.notification-item');
+
+                        console.log(`[ModernWidget] Кнопка "Прочитано" нажата для: ${notificationId}, тип: ${notificationType}`);
+
+                        // Визуальная обратная связь
+                        const originalContent = button.innerHTML;
+                        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
+                        button.disabled = true;
+
+                        // Определяем API и данные на основе типа
+                        let apiUrl;
+                        let requestData;
+
+                        if (notificationType === 'redmine-task') {
+                            apiUrl = '/api/notifications/redmine/mark-read';
+                            requestData = { notification_id: notificationId.replace('redmine_', '') };
+                        } else {
+                            apiUrl = '/api/notifications/mark-read';
+                            requestData = { notification_id: notificationId, notification_type: notificationType };
+                        }
+
+                        console.log(`[ModernWidget] Отправка запроса на ${apiUrl} с данными:`, requestData);
+
+                        fetch(apiUrl, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                            },
+                            body: JSON.stringify(requestData)
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                console.log(`[ModernWidget] ✅ Уведомление ${notificationId} отмечено как прочитанное на сервере`);
+
+                                // Визуальная обратная связь об успехе
+                                button.innerHTML = '<i class="fas fa-check"></i>Прочитано';
+                                button.style.background = '#10b981';
+                                button.style.color = 'white';
+                                button.style.borderColor = '#10b981';
+
+                                setTimeout(() => {
+                                    if (notificationItem) {
+                                        notificationItem.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                                        notificationItem.style.opacity = '0';
+                                        notificationItem.style.transform = 'scale(0.95)';
+
+                                        setTimeout(() => {
+                                            // Удаляем уведомление из массива
+                                            this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                                            this.renderNotifications();
+                                            this.updateBadge(this.notifications.length);
+
+                                            // Обновляем глобальный счётчик
+                                            try {
+                                                if (window.refreshNotificationBadge) {
+                                                    window.refreshNotificationBadge(this.notifications.length);
+                                                }
+                                            } catch (err) {
+                                                console.warn('[ModernWidget] Cannot refresh global badge:', err);
+                                            }
+                                        }, 400);
+                                    }
+                                }, 1000);
+                            } else {
+                                console.error(`[ModernWidget] ❌ Ошибка отметки уведомления: ${data.error}`);
+                                // Возвращаем кнопку в исходное состояние
+                                button.innerHTML = originalContent;
+                                button.disabled = false;
+                                alert(`Не удалось отметить уведомление как прочитанное: ${data.error}`);
+                            }
+                        })
+                        .catch(error => {
+                            console.error(`[ModernWidget] ❌ Ошибка запроса отметки уведомления:`, error);
+                            // Возвращаем кнопку в исходное состояние
+                            button.innerHTML = originalContent;
+                            button.disabled = false;
+                            alert('Произошла ошибка при отправке запроса. Попробуйте ещё раз.');
+                        });
+                    });
+                });
+
+                console.log(`[ModernWidget] ✅ Инициализированы обработчики для ${markReadButtons.length} кнопок "Прочитано"`);
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка инициализации кнопок:', error);
+            }
+        }
+
+        updateBadge(count) {
+            try {
+                console.log(`[ModernWidget] 🔢 Обновление счетчика: ${count}`);
+
+                if (!this.badge) this.badge = document.getElementById('notification-count-badge');
+                if (!this.subtitle) this.subtitle = document.getElementById('notification-subtitle');
+
+                if (this.badge) {
+                    this.badge.textContent = count;
+                    this.badge.style.display = count > 0 ? 'flex' : 'none';
+                    console.log(`[ModernWidget] ✅ Badge обновлен: ${count}, видимость: ${count > 0 ? 'показан' : 'скрыт'}`);
+                } else {
+                    console.warn('[ModernWidget] ⚠️ Элемент badge (notification-count-badge) не найден');
+                }
+
+                if (this.subtitle) {
+                    const text = count > 0 ? `${count} новых уведомлений` : 'Нет новых уведомлений';
+                    this.subtitle.textContent = text;
+                    console.log(`[ModernWidget] ✅ Subtitle обновлен: "${text}"`);
+                } else {
+                    console.warn('[ModernWidget] ⚠️ Элемент subtitle (notification-subtitle) не найден');
+                }
+
+                const bellIcon = document.getElementById('notification-bell-icon');
+                if (bellIcon) {
+                    if (count > 0) {
+                        bellIcon.classList.add('has-notifications');
+                        bellIcon.style.animation = 'bellShake 0.5s ease-in-out';
+                        setTimeout(() => {
+                            bellIcon.style.animation = '';
+                        }, 500);
+                    } else {
+                        bellIcon.classList.remove('has-notifications');
+                    }
+                }
+
+                /* === Синхронизируем глобальный бейдж в шапке === */
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка обновления badge:', error);
+            }
+        }
+
+        formatTime(dateString) {
+            try {
+                if (!dateString) return 'Только что';
+                const date = new Date(dateString);
+                const now = new Date();
+                const diff = now - date;
+
+                if (diff < 60000) return 'Только что';
+                if (diff < 3600000) return `${Math.floor(diff / 60000)} мин назад`;
+                if (diff < 86400000) return `${Math.floor(diff / 3600000)} ч назад`;
+
+                return date.toLocaleDateString('ru-RU');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка форматирования времени:', error);
+                return 'Только что';
+            }
+        }
+
+        truncate(text, length) {
+            if (!text || typeof text !== 'string') {
+                return '';
+            }
+            if (text.length <= length) {
+                return text;
+            }
+            return text.substring(0, length).trim() + '...';
+        }
+
+        playNotificationSound() {
+            try {
+                const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+                if (soundDisabled) {
+                    console.log('[ModernWidget] 🔇 Звук уведомлений отключен, пропускаем воспроизведение');
+                    return;
+                }
+
+                const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
+                audio.volume = 0.5;
+                audio.play().catch(e => {
+                    console.warn('[ModernWidget] Не удалось воспроизвести звук:', e);
+                    if (e.name === 'NotAllowedError') {
+                        console.log('[ModernWidget] Звук заблокирован браузером. Ожидание взаимодействия пользователя...');
+                        const playOnClick = () => {
+                            audio.play().catch(console.warn);
+                            document.removeEventListener('click', playOnClick);
+                        };
+                        document.addEventListener('click', playOnClick, { once: true });
+                    }
+                });
+                console.log('[ModernWidget] 🔊 Воспроизводим звук уведомления');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка создания аудио элемента:', error);
+            }
+        }
+
+        openNotificationSettings() {
+            try {
+                console.log('[ModernWidget] ⚙️ Открытие страницы настроек уведомлений...');
+                const settingsUrl = '/notifications-polling';
+                const settingsBtn = document.getElementById('notification-settings');
+                if (settingsBtn) {
+                    settingsBtn.style.transform = 'scale(0.95)';
+                    settingsBtn.style.opacity = '0.7';
+                    setTimeout(() => {
+                        settingsBtn.style.transform = 'scale(1)';
+                        settingsBtn.style.opacity = '1';
+                    }, 150);
+                }
+                window.location.href = settingsUrl;
+                console.log('[ModernWidget] ✅ Редирект на страницу настроек выполнен');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка при открытии настроек:', error);
+                alert('Не удалось открыть страницу настроек. Попробуйте перейти по ссылке /notifications-polling вручную.');
+            }
+        }
+
+        async clearNotifications() {
+            try {
+                if (!confirm('Очистить все уведомления? Это действие нельзя отменить.')) return;
+
+                console.log('[ModernWidget] 🧹 Отправка запроса на очистку всех уведомлений (из виджета)...');
+                const response = await fetch('/api/notifications/widget/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                    }
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log('[ModernWidget] ✅ Уведомления успешно очищены на сервере.');
+                    this.notifications = [];
+                    this.renderNotifications();
+                    this.updateBadge(0);
+                    localStorage.removeItem('seenNotificationIds');
+                    console.log('[ModernWidget] 🗑️ Список просмотренных уведомлений очищен.');
+                    this.widget.style.transform = 'scale(1.02)';
+                    setTimeout(() => {
+                        this.widget.style.transform = 'scale(1)';
+                    }, 200);
+                } else {
+                    console.error('[ModernWidget] ❌ Ошибка при очистке уведомлений:', data.error);
+                    alert(`Не удалось очистить уведомления: ${data.error || 'Неизвестная ошибка'}`);
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Критическая ошибка при очистке уведомлений:', error);
+                alert('Произошла ошибка при отправке запроса на очистку уведомлений.');
+            }
+        }
+
+        async markRedmineNotificationAsRead(notificationId) {
+            try {
+                const response = await fetch('/api/notifications/redmine/mark-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
+                    },
+                    body: JSON.stringify({ notification_id: notificationId })
+                });
+                const data = await response.json();
+
+                if (data.success) {
+                    console.log(`[ModernWidget] ✅ Redmine уведомление ${notificationId} отмечено как прочитанное`);
+                    const itemToRemove = this.list.querySelector(`.notification-item[data-id="redmine_${notificationId}"]`);
+                    if (itemToRemove) {
+                        itemToRemove.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
+                        itemToRemove.style.opacity = '0';
+                        itemToRemove.style.transform = 'scale(0.95)';
+                        setTimeout(() => {
+                            this.notifications = this.notifications.filter(n => n.id !== `redmine_${notificationId}`);
+                            this.renderNotifications();
+                            this.updateBadge(this.notifications.length);
+                        }, 400);
+                    } else {
+                        this.notifications = this.notifications.filter(n => n.id !== `redmine_${notificationId}`);
+                        this.renderNotifications();
+                        this.updateBadge(this.notifications.length);
+                    }
+                } else {
+                    console.error('[ModernWidget] ❌ Ошибка отметки Redmine уведомления как прочитанного:', data.error || 'Неизвестная ошибка');
+                    alert(`Не удалось отметить уведомление как прочитанное: ${data.error || 'Серверная ошибка'}`);
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка отметки Redmine уведомления как прочитанного:', error);
+                alert('Произошла критическая ошибка при отметке уведомления как прочитанного.');
+            }
+        }
+    }
+
+    let notificationsWidget = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+        try {
+            if (document.body.classList.contains('logged-in')) {
+                initializeWidgetWithUserPreferences();
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка в DOMContentLoaded:', error);
+        }
+    });
+
+    async function initializeWidgetWithUserPreferences() {
+        try {
+            const localWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+            console.log('[ModernWidget] 🔧 Проверка localStorage настроек:', { widgetDisabled: localWidgetDisabled });
+
+            if (localWidgetDisabled) {
+                console.log('[ModernWidget] 🔕 Виджет отключен в localStorage, пропускаем инициализацию');
+                const widget = document.getElementById('modern-notifications-widget');
+                if (widget) {
+                    widget.style.display = 'none';
+                    widget.classList.add('closed');
+                }
+                const restoreBtn = document.getElementById('notifications-restore-btn');
+                if (restoreBtn) {
+                    restoreBtn.style.display = 'none';
+                    console.log('[ModernWidget] 🔕 Кнопка восстановления скрыта при отключенном виджете');
+                }
+                return;
+            }
+
+            const response = await fetch('/api/notifications/widget/status');
+            const data = await response.json();
+
+            if (data.success && !data.enabled) {
+                console.log('[ModernWidget] Виджет отключен в настройках пользователя, пропускаем инициализацию');
+                localStorage.setItem('notificationsWidgetDisabled', 'true');
+                const widget = document.getElementById('modern-notifications-widget');
+                if (widget) {
+                    widget.style.display = 'none';
+                    widget.classList.add('closed');
+                }
+                return;
+            }
+
+            localStorage.setItem('notificationsWidgetDisabled', 'false');
+            initializeWidget();
+
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка проверки настроек пользователя:', error);
+            const localWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+            if (localWidgetDisabled) {
+                console.log('[ModernWidget] 🔕 Виджет отключен локально, не инициализируем при ошибке сервера');
+                const widget = document.getElementById('modern-notifications-widget');
+                if (widget) widget.style.display = 'none';
+                const restoreBtn = document.getElementById('notifications-restore-btn');
+                if (restoreBtn) {
+                    restoreBtn.style.display = 'none';
+                    console.log('[ModernWidget] 🔕 Кнопка восстановления скрыта при ошибке (виджет отключен)');
+                }
+                return;
+            }
+
+            localStorage.setItem('notificationsWidgetDisabled', 'false');
+            initializeWidget();
+        }
+    }
+
+    function initializeWidget() {
+        try {
+            setTimeout(() => {
+                try {
+                    const widget = document.getElementById('modern-notifications-widget');
+                    const list = document.getElementById('notifications-list');
+                    const badge = document.getElementById('notification-count-badge');
+
+                    if (!widget || !list || !badge) {
+                        console.warn('[ModernWidget] ⚠️ Не все элементы найдены при инициализации, повторная попытка через 1 секунду');
+                        if (widget) {
+                            widget.classList.remove('initial-hidden');
+                            widget.style.display = 'flex';
+                        }
+                        setTimeout(initializeWidget, 1000);
+                        return;
+                    }
+
+                    notificationsWidget = new ModernNotificationsWidget();
+                    window.notificationsWidget = notificationsWidget;
+                    window.testNotificationSound = () => {
+                        console.log('🔊 Тестирование звука уведомления...');
+                        notificationsWidget.playNotificationSound();
+                    };
+
+                    console.log('🎵 Для тестирования звука используйте: testNotificationSound() или двойной клик по иконке виджета');
+                    console.log('[ModernWidget] ✅ Виджет успешно инициализирован с задержкой');
+
+                } catch (error) {
+                    console.error('[ModernWidget] ❌ Ошибка при повторной инициализации:', error);
+                    const widget = document.getElementById('modern-notifications-widget');
+                    if (widget) {
+                        widget.classList.remove('initial-hidden');
+                        widget.style.display = 'flex';
+                    }
+                }
+            }, 100);
+
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Критическая ошибка инициализации виджета:', error);
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                widget.classList.remove('initial-hidden');
+                widget.style.display = 'flex';
+            }
+        }
+    }
+
+    window.showNotificationsWidget = () => {
+        try {
+            if (notificationsWidget) notificationsWidget.showWidget();
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка в showNotificationsWidget:', error);
+        }
+    };
+
+    window.hideNotificationsWidget = () => {
+        try {
+            if (notificationsWidget) notificationsWidget.closeWidget();
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка в hideNotificationsWidget:', error);
+        }
+    };
+
+    window.playNotificationSound = () => {
+        try {
+            const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+            if (soundDisabled) {
+                console.log('[Global] 🔇 Звук уведомлений отключен глобально, пропускаем воспроизведение');
+                return;
+            }
+            if (notificationsWidget) {
+                notificationsWidget.playNotificationSound();
+            } else {
+                try {
+                    const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
+                    audio.volume = 0.5;
+                    audio.play().catch(console.warn);
+                    console.log('[Global] 🔊 Воспроизводим звук уведомления (fallback)');
+                } catch (error) {
+                    console.error('[Global] Ошибка воспроизведения звука:', error);
+                }
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка в playNotificationSound:', error);
+        }
+    };
+
+    window.modernNotificationsWidget = {
+        refreshNotifications: () => {
+            try {
+                if (notificationsWidget) notificationsWidget.updateNotifications();
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в refreshNotifications:', error);
+            }
+        }
+    };
+
+    window.emergencyShowWidget = () => {
+        try {
+            console.log('[ModernWidget] 🚨 Экстренное восстановление виджета...');
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                widget.classList.remove('initial-hidden', 'hidden', 'closed');
+                widget.style.display = 'flex';
+                widget.style.visibility = 'visible';
+                widget.style.opacity = '1';
+                widget.style.position = 'fixed';
+                widget.style.top = '120px';
+                widget.style.right = '20px';
+                widget.style.zIndex = '999999';
+
+                localStorage.setItem('notificationsWidgetClosed', 'false');
+                localStorage.setItem('notificationsWidgetDisabled', 'false');
+
+                console.log('[ModernWidget] ✅ Виджет экстренно восстановлен');
+
+                if (!window.notificationsWidget) {
+                    console.log('[ModernWidget] 🔄 Переинициализация виджета...');
+                    initializeWidget();
+                }
+            } else {
+                console.error('[ModernWidget] ❌ Элемент виджета не найден в DOM');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка экстренного восстановления:', error);
+        }
+    };
+
+    console.log('[ModernWidget] 🛠️ Для экстренного восстановления виджета используйте: emergencyShowWidget()');
+
+} catch (globalError) {
+    console.error('[ModernWidget] 🚨 КРИТИЧЕСКАЯ ОШИБКА ВИДЖЕТА УВЕДОМЛЕНИЙ:', globalError);
+
+    const widget = document.getElementById('modern-notifications-widget');
+    if (widget) {
+        widget.classList.remove('initial-hidden');
+        widget.style.display = 'none';
+    }
+
+    console.log('[ModernWidget] ⚠️ Виджет уведомлений отключен из-за ошибки. Остальной сайт должен работать нормально.');
+}
+</script>

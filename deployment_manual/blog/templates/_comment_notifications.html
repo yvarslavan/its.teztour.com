@@ -1,0 +1,28 @@
+{% if notifications %}
+    <div class="notifications-container">
+        {% for notification in notifications %}
+            <div class="notification-item" id="notification-{{ notification.id }}">
+                <div class="notification-header">
+                    <span class="notification-title">
+                        Задача <a href="https://quality.teztour.com/issues/{{ notification.journalized_id }}"
+                                target="_blank"
+                                class="issue-link">#{{ notification.journalized_id }}</a>:
+                        {{ notification.subject }}
+                    </span>
+                    <span class="notification-date">
+                        {{ notification.created_on }}
+                    </span>
+                </div>
+                <div class="notification-content">
+                    {{ notification.notes | safe }}
+                </div>
+                <div class="notification-actions">
+                    <button class="mark-read-btn btn btn-sm btn-success"
+                            data-id="{{ notification.id }}">
+                        <i class="fas fa-check"></i> Отметить как прочитанное
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}

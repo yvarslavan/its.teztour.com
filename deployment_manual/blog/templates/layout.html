@@ -1,0 +1,2041 @@
+<!DOCTYPE html>
+<html lang="ru">
+    <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="csrf-token" content="{{ csrf_token() }}">
+
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/media_css.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/tez_hero_modern.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/notifications_polling_redesign.css') }}">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/redmine_widget.css') }}">
+            <link rel="icon" href="{{ url_for('static', filename='favicon/favicon.ico') }}">
+            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+            <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+            <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.min.css">
+            <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.1/css/all.min.css" rel="stylesheet">
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-menu.css') }}">
+
+            <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.3/dist/sweetalert2.all.min.js"></script>
+            {% block title %}
+              <title>
+                {% if title %}
+                  {{ title }} - TEZ Navigator
+                {% else %}
+                  TEZ Navigator — навигатор по заявкам и задачам
+                {% endif %}
+              </title>
+            {% endblock title %}
+
+            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.js"></script>
+                <script>
+
+                        // Здесь ваш скрипт
+                        $(document).ready(function() {
+                            /* === Общая функция обновления бейджа === */
+                            function refreshNotificationBadge(count) {
+                                const badgeSel = '#notification-badge';
+                                if (count > 0) {
+                                    if ($(badgeSel).length === 0) {
+                                        $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
+                                    } else {
+                                        $(badgeSel).text(count).show();
+                                    }
+                                } else {
+                                    $(badgeSel).remove();
+                                }
+                            }
+
+                            window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
+
+                                        // AJAX-пуллинг
+            function updateNotificationCount() {
+                // На странице /notifications не обновляем бейдж автоматически
+                if (window.location.pathname === '/notifications') {
+                    return;
+                }
+
+                $.ajax({
+                    url: "{{ url_for('main.get_notification_count') }}",
+                    type: 'GET',
+                    success: function(data) {
+                        refreshNotificationBadge(data.count);
+                    },
+                    error: function(xhr) {
+                        console.error('Ошибка при получении количества уведомлений');
+                        $('#notification-badge').remove();
+                    }
+                });
+            }
+
+                            setInterval(updateNotificationCount, 30000);
+                            updateNotificationCount();
+
+                            /* === Листенер для пуш-виджета === */
+                            window.addEventListener('newNotification', function(e) {
+                                // e.detail.count может содержать новый total, если нет – прибавляем 1
+                                const current = parseInt($('#notification-badge').text() || '0', 10);
+                                const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
+                                refreshNotificationBadge(newCount);
+                            });
+
+                                        /* === Специальная логика для страницы /notifications === */
+            if (window.location.pathname === '/notifications') {
+                // На странице уведомлений показываем количество всех уведомлений (включая прочитанные)
+                const pageCount = {{ count_notifications_page if count_notifications_page else 0 }};
+                refreshNotificationBadge(pageCount);
+            }
+
+                            /* ==== Tasks Notification badge (удалено: используем общий) ==== */
+                        });
+
+
+
+
+                                                    $(document).ready(function() {
+                                // Удаляем все стандартные flash-сообщения
+                                $('.alert').remove();
+
+                                var flashMessages = JSON.parse('{{ get_flashed_messages(with_categories=true) | tojson | safe }}');
+                                if (flashMessages.length > 0) {
+                                    flashMessages.forEach(function(flash) {
+                                        var category = flash[0];
+                                        var message = flash[1];
+
+                                        var icon = 'info';
+                                        if (category === 'success') icon = 'success';
+                                        if (category === 'error') icon = 'error';
+                                        if (category === 'warning') icon = 'warning';
+
+                                        Swal.fire({
+                                            icon: icon,
+                                            title: category.charAt(0).toUpperCase() + category.slice(1),
+                                            text: message,
+                                            timer: 5000,
+                                            showConfirmButton: false,
+                                            toast: true,
+                                            position: 'top-end',
+                                            timerProgressBar: true
+                                        });
+                                    });
+                                }
+                            });
+
+                </script>
+
+                <style>
+                    /* Глобальный класс для избежания перекрытия контента хедером */
+                    .content-with-header-offset {
+                        margin-top: 120px !important;
+                        padding-top: 20px;
+                    }
+
+                    @media (max-width: 768px) {
+                        .content-with-header-offset {
+                            margin-top: 100px !important;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        .content-with-header-offset {
+                            margin-top: 90px !important;
+                        }
+                    }
+
+                    @media (min-width: 1200px) {
+                        .content-with-header-offset {
+                            margin-top: 140px !important;
+                        }
+                    }
+
+                    .sidebar {
+                        position: fixed;
+                        top: 0;
+                        right: -400px;
+                        width: 400px;
+                        height: 100vh;
+                        background: #fff;
+                        box-shadow: -2px 0 5px rgba(0,0,0,0.2);
+                        transition: right 0.3s ease;
+                        z-index: 10001 !important;
+                        overflow-y: auto;
+                        padding: 20px;
+                    }
+
+                    .sidebar.active {
+                        right: 0;
+                    }
+
+                    .sidebar-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 20px;
+                    }
+
+                    .close-sidebar {
+                        background: none;
+                        border: none;
+                        font-size: 24px;
+                        cursor: pointer;
+                        padding: 5px 10px;
+                    }
+
+                    .close-sidebar:hover {
+                        color: #dc3545;
+                    }
+
+                    .notification-item {
+                        border-bottom: 1px solid #eee;
+                        padding: 10px 0;
+                    }
+
+                    .notification-header {
+                        margin-bottom: 10px;
+                    }
+
+                    .notification-title {
+                        font-weight: bold;
+                    }
+
+                    .notification-date {
+                        color: #666;
+                        font-size: 0.9em;
+                    }
+
+                    .notification-content {
+                        color: #333;
+                    }
+
+                    .sidebar .sidebar-header {
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 15px 20px;
+                        border-bottom: 1px solid #e9ecef;
+                        background: #f8f9fa;
+                    }
+
+                    .sidebar .header-content {
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                    }
+
+                    .sidebar .header-content i {
+                        color: #007bff;
+                        font-size: 1.2em;
+                    }
+
+                    .sidebar .header-content h3 {
+                        margin: 0;
+                        font-size: 1.2em;
+                        font-weight: 500;
+                        color: #2c3e50;
+                    }
+
+                    .sidebar .close-sidebar {
+                        background: none;
+                        border: none;
+                        font-size: 1.5em;
+                        color: #6c757d;
+                        cursor: pointer;
+                        padding: 0;
+                        transition: color 0.2s;
+                    }
+
+                    .sidebar .close-sidebar:hover {
+                        color: #dc3545;
+                    }
+
+                    .no-notifications {
+                        text-align: center;
+                        padding: 20px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 10px;
+                    }
+
+                    .no-notifications img {
+                        width: 50px;
+                        height: 50px;
+                        margin-bottom: 15px;
+                    }
+
+                    .no-notifications h4 {
+                        color: #333;
+                        margin-bottom: 10px;
+                    }
+
+                    .no-notifications p {
+                        color: #666;
+                        margin: 0;
+                    }
+
+                    /* Стили для пункта меню Уведомления в хедере */
+                    .nav-notification-link .notification-icon {
+                        display: flex;
+                        align-items: center; /* Для выравнивания иконки, текста и бейджа по центру */
+                    }
+
+                    .nav-notification-link .notification-counter {
+                        font-size: 1.1rem; /* Немного увеличим шрифт текста "Уведомления" */
+                        font-weight: 500;  /* Сделаем чуть жирнее */
+                        margin-left: 5px;  /* Небольшой отступ от иконки */
+                        color: #ffffff; /* Сделаем текст белым для лучшего контраста на темном фоне хедера */
+                        transition: color 0.2s ease-in-out;
+                    }
+
+                    .nav-notification-link:hover .notification-counter {
+                        color: #f0f0f0; /* Легкое изменение цвета при наведении */
+                    }
+
+                    .nav-notification-badge {
+                        font-size: 0.8rem !important;    /* Увеличим шрифт в бейдже, !important если нужно перебить стиль Bootstrap */
+                        padding: 0.3em 0.6em !important; /* Увеличим padding для размера самого бейджа */
+                        background-color: #ff4136 !important; /* Ярко-красный, более насыщенный */
+                        color: white !important;
+                        border-radius: 10px !important; /* Более скругленный */
+                        margin-left: 8px !important;   /* Чуть больше отступ слева */
+                        font-weight: bold;
+                        box-shadow: 0 0 5px rgba(255, 65, 54, 0.7); /* Легкое свечение для акцента */
+                    }
+
+                    .nav-item.active .nav-notification-link .notification-counter,
+                    .nav-item .nav-notification-link.active .notification-counter { /* Пример для активной ссылки */
+                        font-weight: bold; /* Еще жирнее, если ссылка активна */
+                    }
+                    /* Конец стилей для пункта меню Уведомления */
+
+                    /* Специальное выравнивание для уведомлений */
+                    .notification-link .nav-icon-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        flex-wrap: nowrap;
+                        justify-content: flex-start;
+                    }
+
+                    /* Принудительное выравнивание для уведомлений */
+                    .nav-item .notification-link {
+                        display: flex !important;
+                        align-items: center !important;
+                        white-space: nowrap !important;
+                    }
+
+                    .nav-item .notification-link .nav-icon-wrapper {
+                        display: flex !important;
+                        align-items: center !important;
+                        gap: 0.5rem !important;
+                        flex-direction: row !important;
+                        flex-wrap: nowrap !important;
+                    }
+
+                    .nav-item .notification-link .nav-text {
+                        display: inline-block !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+
+                    .nav-item .notification-link .notification-badge {
+                        display: inline-flex !important;
+                        margin-left: 0.5rem !important;
+                        vertical-align: middle !important;
+                    }
+
+                    .nav-icon-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        position: relative;
+                        z-index: 2;
+                    }
+
+                    /* Style for SVG icons in nav */
+                    .nav-icon-wrapper svg {
+                        width: 20px; /* Adjust as needed */
+                        height: 20px; /* Adjust as needed */
+                        vertical-align: middle;
+                        flex-shrink: 0; /* Prevent shrinking if text is long */
+                    }
+
+                    /* Icon Colors for Font Awesome (will be gradually replaced) */
+                    /* FIX: Increased specificity and added !important to ensure colors are applied */
+                    .nav-link .wiki-icon { color: #10b981 !important; }
+                    .nav-link .tasks-icon { color: #3b82f6 !important; }
+                    .nav-link .issues-icon { color: #8b5cf6 !important; }
+                    .nav-link .other-icon { color: #f59e0b !important; }
+                    .nav-link .notification-icon { color: #fbbf24 !important; }
+
+                    /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
+                    .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
+                        width: 20px;  /* Default width */
+                        height: 20px; /* Default height */
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                        display: inline-block; /* Ensure it behaves like an icon */
+                    }
+
+                    /* Ensure Font Awesome icons still have their space if not replaced yet */
+                    .nav-icon-wrapper .nav-icon {
+                         width: 20px; /* Consistent width with SVG */
+                         text-align: center; /* Center icon if it's narrower */
+                    }
+
+                    /* Notification Badge - полностью новый стиль для хедера */
+                    .nav-icon-wrapper .notification-badge,
+                    #notification-badge {
+                        background: #ef4444 !important;
+                        color: white !important;
+                        font-size: 0.75rem !important;
+                        font-weight: 700 !important;
+                        padding: 0.2rem 0.5rem !important;
+                        border-radius: 12px !important;
+                        min-width: 20px !important;
+                        height: 20px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
+                        margin-left: 0.5rem !important;
+                        flex-shrink: 0 !important;
+                        animation: notificationPulse 2s infinite !important;
+                        border: 2px solid white !important;
+                        position: relative !important;
+                        z-index: 9999 !important;
+                    }
+
+                    @keyframes notificationPulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+                        }
+                        50% {
+                            transform: scale(1.05);
+                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+                        }
+                    }
+
+                    /* Modern Dropdown Styles */
+                    .modern-dropdown {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: var(--header-radius);
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                        padding: 0.5rem 0;
+                        margin-top: 0.5rem;
+                        min-width: 250px;
+                        animation: dropdownSlideIn 0.3s ease-out;
+                    }
+
+                    @keyframes dropdownSlideIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(-10px) scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+
+                    .dropdown-header {
+                        padding: 0.75rem 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        margin: -0.5rem -0rem 0.5rem 0;
+                        border-radius: var(--header-radius) var(--header-radius) 0 0;
+                    }
+
+                    .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: var(--header-text);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.875rem;
+                        transition: var(--header-transition);
+                        border: none;
+                        background: none;
+                        width: 100%;
+                    }
+
+                    .dropdown-item:hover {
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        transform: translateX(4px);
+                    }
+
+                    .dropdown-item i {
+                        width: 16px;
+                        text-align: center;
+                        opacity: 0.8;
+                    }
+
+                    .dropdown-item .nav-icon-svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    .dropdown-divider {
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, rgba(0, 121, 140, 0.2), transparent);
+                        margin: 0.5rem 1rem;
+                        border: none;
+                    }
+
+                    /* User Profile Dropdown */
+                    .modern-header .user-profile {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.25rem;
+                    }
+
+                    .modern-header .user-avatar {
+                        position: relative;
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+
+                    .modern-header .avatar-img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        border-radius: 50% !important;
+                        object-fit: cover !important;
+                        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+                        transition: var(--header-transition) !important;
+                    }
+
+                    .modern-header .user-link:hover .avatar-img {
+                        border-color: white !important;
+                        transform: scale(1.05) !important;
+                    }
+
+                    .modern-header .online-indicator {
+                        position: absolute;
+                        bottom: 2px;
+                        right: 2px;
+                        width: 12px;
+                        height: 12px;
+                        background: var(--header-success);
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        animation: pulseOnline 2s infinite;
+                    }
+
+                    @keyframes pulseOnline {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.2); }
+                    }
+
+                    .modern-header .user-info {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        line-height: 1.2;
+                    }
+
+                    .modern-header .user-name {
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-role {
+                        font-size: 0.75rem;
+                        color: rgba(255, 255, 255, 0.7);
+                        font-weight: 400;
+                    }
+
+                    /* User Dropdown Menu */
+                    .modern-header .user-dropdown-menu {
+                        min-width: 300px;
+                        right: 0;
+                        left: auto;
+                    }
+
+                    .modern-header .user-header {
+                        padding: 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        margin: -0.5rem 0 0.5rem 0;
+                    }
+
+                    .modern-header .user-avatar-large {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        border: 3px solid rgba(255, 255, 255, 0.3);
+                    }
+
+                    .modern-header .user-avatar-large img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .modern-header .user-details {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                    }
+
+                    .modern-header .user-full-name {
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-email {
+                        font-size: 0.8rem;
+                        color: rgba(255, 255, 255, 0.8);
+                        opacity: 0.9;
+                    }
+
+                    /* Special Button Styles */
+                    .nav-link.login-btn {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.login-btn:hover {
+                        background: linear-gradient(135deg, #059669, #047857);
+                        transform: translateY(-2px);
+                    }
+
+                    .nav-link.register-btn {
+                        background: linear-gradient(135deg, var(--header-accent), #ea580c);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.register-btn:hover {
+                        background: linear-gradient(135deg, #ea580c, #dc2626);
+                        transform: translateY(-2px);
+                    }
+
+                    .new-task {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        color: white !important;
+                        margin: 0.25rem 0.5rem;
+                        border-radius: 8px;
+                    }
+
+                    .logout-item {
+                        color: var(--header-error) !important;
+                    }
+
+                    .logout-item:hover {
+                        background: linear-gradient(135deg, var(--header-error), #dc2626) !important;
+                        color: white !important;
+                    }
+
+                    /* Mobile Menu Toggle */
+                    .mobile-menu-toggle {
+                        display: none;
+                        flex-direction: column;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        gap: 0.25rem;
+                        z-index: 10;
+                    }
+
+                    .hamburger-line {
+                        width: 25px;
+                        height: 3px;
+                        background: white;
+                        border-radius: 2px;
+                        transition: var(--header-transition);
+                    }
+
+                    /* Responsive Design */
+                    @media (max-width: 1200px) {
+                        .header-container {
+                            padding: 0 1.5rem;
+                        }
+
+                        .nav-text {
+                            display: none;
+                        }
+
+                        .nav-icon-wrapper {
+                            gap: 0;
+                        }
+
+                        .user-info {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 968px) {
+                        .main-navigation {
+                            display: none;
+                        }
+
+                        .mobile-menu-toggle {
+                            display: flex;
+                        }
+
+                        .header-container {
+                            padding: 0 1rem;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        .logo-wrapper {
+                            gap: 0.5rem;
+                        }
+
+                        .logo-icon {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 1.2rem;
+                            border-radius: 10px;
+                        }
+
+                        .logo-text {
+                            display: none;
+                        }
+
+                        .header-container {
+                            padding: 0 0.75rem;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        .logo-icon {
+                            width: 36px;
+                            height: 36px;
+                            font-size: 1rem;
+                            border-radius: 8px;
+                        }
+                    }
+
+                    /* Content Offset */
+                    .content {
+                        padding-top: 70px;
+                    }
+
+                    /* Remove old styles */
+                    .header {
+                        display: none;
+                        }
+                    </style>
+
+    </head>
+        <body class="{% if current_user.is_authenticated %}logged-in{% endif %}">
+            <div class="wrapper">
+                {% block menu %}
+                <header class="modern-header">
+                    <div class="header-container">
+                        <!-- Logo Section -->
+                        <div class="logo-section">
+                            <a href="/" class="logo-link">
+                                <div class="logo-wrapper">
+                                    <div class="logo-icon">
+                                        <i class="fas fa-tasks"></i>
+                                        <div class="logo-icon-glow"></div>
+                                    </div>
+                                    <div class="logo-text">
+                                        <span class="logo-main">TEZ Navigator</span>
+                                        <span class="logo-sub">навигатор по заявкам и задачам</span>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Navigation Menu -->
+                        <nav class="main-navigation">
+                            <ul class="nav-menu">
+                        {% if current_user.is_authenticated %}
+                                    <!-- Notifications -->
+                            <li class="nav-item">
+                                <a class="nav-link notification-link" href="{{ url_for('main.my_notifications') }}">
+                                    <div class="nav-icon-wrapper">
+                                        <i class="fas fa-bell nav-icon notification-icon"></i>
+                                        <span class="nav-text">Уведомления</span>
+                                        {% if count_notifications > 0 %}
+                                        <span class="notification-badge" id="notification-badge">{{ count_notifications }}</span>
+                                        {% endif %}
+                                    </div>
+                                </a>
+                            </li>
+
+                                    <!-- Wiki Dropdown -->
+                            <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="wikiDropdown" role="button" data-bs-toggle="dropdown">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-book-open nav-icon wiki-icon"></i>
+                                                <span class="nav-text">Wiki</span>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown" aria-labelledby="wikiDropdown">
+                                            <li class="dropdown-header">
+                                                <i class="fas fa-book-open"></i>
+                                                <span>База знаний</span>
+                                            </li>
+                                    <li><a class="dropdown-item" href="{{ url_for('main.home') }}">
+                                                <i class="fas fa-question-circle"></i>
+                                                <span>FAQ</span>
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('main.blog') }}">
+                                                <i class="fas fa-newspaper"></i>
+                                                <span>Статьи</span>
+                                    </a></li>
+                                            <li class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('post.new_post') }}">
+                                                <i class="fas fa-plus-circle"></i>
+                                                <span>Новая статья</span>
+                                    </a></li>
+                                </ul>
+                            </li>
+
+                                    <!-- Tasks Dropdown -->
+                            <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="tasksDropdown" role="button" data-bs-toggle="dropdown">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-ticket-alt nav-icon tasks-icon"></i>
+                                                <span class="nav-text">Заявки</span>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown" aria-labelledby="tasksDropdown">
+                                            <li class="dropdown-header">
+                                                <i class="fas fa-ticket-alt"></i>
+                                                <span>Управление заявками</span>
+                                            </li>
+                                    <li><a class="dropdown-item" href="{{ url_for('main.my_issues') }}">
+                                                <i class="fas fa-tasks"></i>
+                                                <span>Мои заявки</span>
+                                    </a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item new-task" href="{{ url_for('main.new_issue') }}">
+                                                <i class="fas fa-plus-circle"></i>
+                                                <span>Новая заявка</span>
+                                    </a></li>
+                                </ul>
+                            </li>
+
+                        {% if current_user.is_authenticated and current_user.is_redmine_user %}
+                            <!-- New Tasks (Задачи) Dropdown -->
+                            <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="issuesDropdownMenu" role="button" data-bs-toggle="dropdown">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-clipboard-list nav-icon issues-icon"></i>
+                                                <span class="nav-text">Задачи</span>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown" aria-labelledby="issuesDropdownMenu">
+                                            <li class="dropdown-header">
+                                                <i class="fas fa-clipboard-list"></i>
+                                                <span>Управление задачами</span>
+                                            </li>
+                                    <li><a class="dropdown-item" href="{{ url_for('tasks.my_tasks_page') }}">
+                                                <i class="fas fa-clipboard-list"></i>
+                                                <span>Мои задачи</span>
+                                    </a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item new-issue" href="#"> {# ЗАМЕНИТЬ # на актуальный url_for для "Новая задача" #}
+                                                <i class="fas fa-plus-circle"></i>
+                                                <span>Новая задача</span>
+                                    </a></li>
+                                </ul>
+                            </li>
+                        {% endif %}
+
+                                    <!-- Other Dropdown -->
+                            <li class="nav-item dropdown">
+                                        <a class="nav-link dropdown-toggle" href="#" id="otherDropdown" role="button" data-bs-toggle="dropdown">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-th nav-icon other-icon"></i>
+                                                <span class="nav-text">Прочее</span>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown" aria-labelledby="otherDropdown">
+                                            <li class="dropdown-header">
+                                                <i class="fas fa-th"></i>
+                                                <span>Дополнительно</span>
+                                            </li>
+                                            <li><a class="dropdown-item" href="{{ url_for('users.all_users') }}">
+                                                <i class="fas fa-users"></i>
+                                                <span>Контакты</span>
+                                            </a></li>
+                                            {% if current_user.can_access_contact_center_moscow %}
+                                            <li><a class="dropdown-item" href="{{ url_for('calls.contact_center_moscow') }}">
+                                                <i class="fas fa-phone-alt"></i>
+                                                <span>Контакт-центр Москва</span>
+                                            </a></li>
+                                            {% endif %}
+                                            <li class="dropdown-submenu">
+                                                <a class="dropdown-item submenu-toggle" href="#" id="reportsDropdown">
+                                                    <i class="fas fa-chart-line"></i>
+                                                    <span>Отчеты</span>
+                                                    <i class="fas fa-chevron-right submenu-arrow"></i>
+                                                </a>
+                                                <ul class="dropdown-menu submenu-dropdown">
+                                                    <li><a class="dropdown-item" href="{{ url_for('main.reports') }}">
+                                                        <i class="fas fa-chart-bar"></i>
+                                                        <span>Общая статистика</span>
+                                            </a></li>
+                                            {% if current_user.can_access_quality_control %}
+                                            <li><a class="dropdown-item" href="{{ url_for('main.quality_control') }}">
+                                                        <i class="fas fa-clipboard-check"></i>
+                                                        <span>Контроль качества</span>
+                                            </a></li>
+                                            {% endif %}
+                                        </ul>
+                                    </li>
+                                        </ul>
+                            </li>
+
+                                    <!-- User Profile Dropdown -->
+                                    <li class="nav-item dropdown user-dropdown">
+                                        <a class="nav-link dropdown-toggle user-link" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                            <div class="user-profile">
+                                                <div class="user-avatar">
+                                    <img src="{{ url_for('static', filename='profile_pics/' + current_user.username + '/account_img/' + current_user.image_file) }}"
+                                                         alt="user_avatar" class="avatar-img">
+                                                    <div class="online-indicator"></div>
+                                                </div>
+                                                <div class="user-info">
+                                                    <span class="user-name">
+                                        {% set names = current_user.full_name.split() %}
+                                        {{ names[0] }} {{ names[1][:1] }}.{{ names[-1][:1] }}.
+                                    </span>
+                                                    <span class="user-role">{{ current_user.position[:20] + '...' if current_user.position and current_user.position|length > 20 else current_user.position or 'Пользователь' }}</span>
+                                                </div>
+                                                <i class="fas fa-chevron-down dropdown-arrow"></i>
+                                            </div>
+                                        </a>
+                                        <ul class="dropdown-menu modern-dropdown user-dropdown-menu" aria-labelledby="userDropdown">
+                                            <li class="dropdown-header user-header">
+                                                <div class="user-avatar-large">
+                                                    <img src="{{ url_for('static', filename='profile_pics/' + current_user.username + '/account_img/' + current_user.image_file) }}"
+                                                         alt="user_avatar">
+                                                </div>
+                                                <div class="user-details">
+                                                    <span class="user-full-name">{{ current_user.full_name or current_user.username }}</span>
+                                                    <span class="user-email">{{ current_user.email }}</span>
+                                                </div>
+                                            </li>
+                                            <li class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('users.account') }}">
+                                                <i class="fas fa-user-cog"></i>
+                                                <span>Мой профиль</span>
+                                    </a></li>
+                                            <li class="dropdown-divider"></li>
+                                            <li><a class="dropdown-item logout-item" href="{{ url_for('users.logout') }}">
+                                                <i class="fas fa-sign-out-alt"></i>
+                                                <span>Выйти</span>
+                                    </a></li>
+                                </ul>
+                            </li>
+                        {% else %}
+                                    <!-- Guest Menu -->
+                                    <li class="nav-item">
+                                        <a class="nav-link" href="{{ url_for('main.home') }}">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-book-open nav-icon"></i>
+                                                <span class="nav-text">Wiki</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link login-btn" href="{{ url_for('users.login') }}">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-sign-in-alt nav-icon"></i>
+                                                <span class="nav-text">Вход</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link register-btn" href="{{ url_for('users.register') }}">
+                                            <div class="nav-icon-wrapper">
+                                                <i class="fas fa-user-plus nav-icon"></i>
+                                                <span class="nav-text">Регистрация</span>
+                                            </div>
+                                        </a>
+                                    </li>
+                        {% endif %}
+                    </ul>
+                        </nav>
+
+                        <!-- Mobile Menu Toggle -->
+                        <div class="mobile-menu-toggle">
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                            <span class="hamburger-line"></span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Mobile Menu Panel -->
+                <div class="mobile-menu-overlay"></div>
+                <nav class="mobile-menu-panel" id="mobile-menu-panel" aria-hidden="true" role="dialog">
+                    <div class="mobile-menu-header">
+                        <h2 class="mobile-menu-title">Меню</h2>
+                        <button class="mobile-menu-close" id="mobile-menu-close" aria-label="Закрыть меню">&times;</button>
+                    </div>
+                    <ul class="mobile-menu-links">
+                        <!-- Ссылки будут скопированы сюда с помощью JavaScript -->
+                    </ul>
+                </nav>
+
+                <!-- Modern Header Styles -->
+                    <style>
+                    /* Import Modern Fonts */
+                    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
+                    /* Header CSS Variables */
+                    :root {
+                        --header-primary: #00798C;
+                        --header-primary-dark: #005f73;
+                        --header-primary-light: #26c6da;
+                        --header-accent: #ff6b35;
+                        --header-success: #10b981;
+                        --header-warning: #f59e0b;
+                        --header-error: #ef4444;
+                        --header-bg: rgba(255, 255, 255, 0.95);
+                        --header-glass: rgba(255, 255, 255, 0.1);
+                        --header-text: #1f2937;
+                        --header-text-light: #6b7280;
+                        --header-border: rgba(255, 255, 255, 0.2);
+                        --header-shadow: 0 8px 32px rgba(0, 121, 140, 0.1);
+                        --header-blur: 20px;
+                        --header-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                        --header-radius: 16px;
+                    }
+
+                    /* Modern Header Base */
+                    .modern-header {
+                        position: fixed;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        z-index: 1000;
+                        background: linear-gradient(135deg, var(--header-primary) 0%, var(--header-primary-dark) 100%);
+                        backdrop-filter: blur(var(--header-blur));
+                        -webkit-backdrop-filter: blur(var(--header-blur));
+                        box-shadow: var(--header-shadow);
+                        border-bottom: 1px solid var(--header-border);
+                        padding: 0;
+                        height: auto;
+                        min-height: 70px;
+                        animation: slideDownHeader 0.6s ease-out;
+                    }
+
+                    @keyframes slideDownHeader {
+                        from {
+                            opacity: 0;
+                            transform: translateY(-100%);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0);
+                        }
+                    }
+
+                    .header-container {
+                        width: 100%;
+                        margin: 0;
+                        display: flex;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding: 0 2rem;
+                        height: 70px;
+                        position: relative;
+                    }
+
+                    /* Logo Section */
+                    .logo-section {
+                        display: flex;
+                        align-items: center;
+                        z-index: 10;
+                        margin-right: auto;
+                    }
+
+                    .logo-link {
+                        text-decoration: none;
+                        transition: var(--header-transition);
+                    }
+
+                    .logo-link:hover {
+                        transform: scale(1.02);
+                    }
+
+                    .logo-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                    }
+
+                    .logo-icon {
+                        position: relative;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        width: 50px;
+                        height: 50px;
+                        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
+                        border: 2px solid rgba(255, 255, 255, 0.3);
+                        border-radius: 14px;
+                        color: white;
+                        font-size: 1.5rem;
+                        transition: var(--header-transition);
+                        backdrop-filter: blur(10px);
+                        -webkit-backdrop-filter: blur(10px);
+                        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+                    }
+
+                    .logo-icon-glow {
+                        position: absolute;
+                        top: 50%;
+                        left: 50%;
+                        width: 120%;
+                        height: 120%;
+                        background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
+                        border-radius: 50%;
+                        transform: translate(-50%, -50%);
+                        opacity: 0;
+                        transition: var(--header-transition);
+                        animation: logoGlow 3s ease-in-out infinite;
+                    }
+
+                    @keyframes logoGlow {
+                        0%, 100% {
+                            transform: translate(-50%, -50%) scale(1);
+                            opacity: 0.3;
+                        }
+                        50% {
+                            transform: translate(-50%, -50%) scale(1.1);
+                            opacity: 0.6;
+                        }
+                    }
+
+                    .logo-link:hover .logo-icon {
+                        transform: scale(1.05) rotate(5deg);
+                        background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.2));
+                        border-color: rgba(255, 255, 255, 0.5);
+                        box-shadow: 0 6px 25px rgba(0, 0, 0, 0.15);
+                    }
+
+                    .logo-link:hover .logo-icon-glow {
+                        opacity: 0.8;
+                        transform: translate(-50%, -50%) scale(1.2);
+                    }
+
+                    .logo-text {
+                        display: flex;
+                        flex-direction: column;
+                        line-height: 1.2;
+                    }
+
+                    .logo-main {
+                        font-family: 'Inter', sans-serif;
+                        font-size: 1.4rem;
+                        font-weight: 800;
+                        color: white;
+                        letter-spacing: -0.025em;
+                        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                        transition: var(--header-transition);
+                    }
+
+                    .logo-sub {
+                        font-family: 'Inter', sans-serif;
+                        font-size: 0.72rem;
+                        font-weight: 500;
+                        color: rgba(255, 255, 255, 0.85);
+                        letter-spacing: 0.05em;
+                        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+                        transition: var(--header-transition);
+                        margin-top: 2px;
+                    }
+
+                    .logo-link:hover .logo-main {
+                        color: rgba(255, 255, 255, 1);
+                        text-shadow: 0 3px 6px rgba(0, 0, 0, 0.2);
+                    }
+
+                    .logo-link:hover .logo-sub {
+                        color: rgba(255, 255, 255, 1);
+                        letter-spacing: 0.2em;
+                    }
+
+                    /* Navigation Menu */
+                    .main-navigation {
+                        display: flex;
+                        justify-content: flex-end;
+                        margin-left: auto;
+                    }
+
+                    .nav-menu {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        list-style: none;
+                        margin: 0;
+                        padding: 0;
+                    }
+
+                    .nav-item {
+                        position: relative;
+                    }
+
+                    .nav-link {
+                        display: flex;
+                        align-items: center;
+                        padding: 0.75rem 1rem;
+                        text-decoration: none;
+                        color: white;
+                        font-weight: 500;
+                        font-size: 0.9rem;
+                        border-radius: 12px;
+                        transition: var(--header-transition);
+                        position: relative;
+                        overflow: hidden;
+                    }
+
+                    .nav-link::before {
+                        content: '';
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        right: 0;
+                        bottom: 0;
+                        background: rgba(255, 255, 255, 0.1);
+                        border-radius: 12px;
+                        opacity: 0;
+                        transition: var(--header-transition);
+                    }
+
+                    .nav-link:hover::before {
+                        opacity: 1;
+                    }
+
+                    .nav-link:hover {
+                        color: white;
+                        transform: translateY(-2px);
+                        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    }
+
+                    .nav-icon-wrapper {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        position: relative;
+                        z-index: 2;
+                    }
+
+                    /* === CORRECTED ICON STYLES === */
+                    .nav-icon-wrapper svg {
+                        width: 20px;
+                        height: 20px;
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                    }
+
+                    /* Increased specificity to ensure colors are applied */
+                    .nav-link .wiki-icon { color: #10b981 !important; }
+                    .nav-link .tasks-icon { color: #3b82f6 !important; }
+                    .nav-link .issues-icon { color: #8b5cf6 !important; }
+                    .nav-link .other-icon { color: #f59e0b !important; }
+                    .nav-link .notification-icon { color: #fbbf24 !important; }
+
+                    .nav-icon-wrapper .nav-icon-svg {
+                        width: 20px;
+                        height: 20px;
+                        vertical-align: middle;
+                        flex-shrink: 0;
+                        display: inline-block;
+                    }
+
+                    .nav-icon-wrapper .nav-icon {
+                         width: 20px;
+                         text-align: center;
+                    }
+
+                    /* Notification Badge */
+                    .nav-icon-wrapper .notification-badge,
+                    #notification-badge {
+                        background: #ef4444 !important;
+                        color: white !important;
+                        font-size: 0.75rem !important;
+                        font-weight: 700 !important;
+                        padding: 0.2rem 0.5rem !important;
+                        border-radius: 12px !important;
+                        min-width: 20px !important;
+                        height: 20px !important;
+                        display: inline-flex !important;
+                        align-items: center !important;
+                        justify-content: center !important;
+                        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4) !important;
+                        margin-left: 0.5rem !important;
+                        flex-shrink: 0 !important;
+                        animation: notificationPulse 2s infinite !important;
+                        border: 2px solid white !important;
+                        position: relative !important;
+                        z-index: 9999 !important;
+                    }
+
+                    @keyframes notificationPulse {
+                        0%, 100% {
+                            transform: scale(1);
+                            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+                        }
+                        50% {
+                            transform: scale(1.05);
+                            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.6);
+                        }
+                    }
+
+                    /* Modern Dropdown Styles */
+                    .modern-dropdown {
+                        background: rgba(255, 255, 255, 0.95);
+                        backdrop-filter: blur(20px);
+                        -webkit-backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255, 255, 255, 0.2);
+                        border-radius: var(--header-radius);
+                        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+                        padding: 0.5rem 0;
+                        margin-top: 0.5rem;
+                        min-width: 250px;
+                        animation: dropdownSlideIn 0.3s ease-out;
+                    }
+
+                    @keyframes dropdownSlideIn {
+                        from {
+                            opacity: 0;
+                            transform: translateY(-10px) scale(0.95);
+                        }
+                        to {
+                            opacity: 1;
+                            transform: translateY(0) scale(1);
+                        }
+                    }
+
+                    .dropdown-header {
+                        padding: 0.75rem 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        display: flex;
+                        align-items: center;
+                        gap: 0.5rem;
+                        margin: -0.5rem -0rem 0.5rem 0;
+                        border-radius: var(--header-radius) var(--header-radius) 0 0;
+                    }
+
+                    .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.75rem 1rem;
+                        color: var(--header-text);
+                        text-decoration: none;
+                        font-weight: 500;
+                        font-size: 0.875rem;
+                        transition: var(--header-transition);
+                        border: none;
+                        background: none;
+                        width: 100%;
+                    }
+
+                    .dropdown-item:hover {
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        color: white;
+                        transform: translateX(4px);
+                    }
+
+                    .dropdown-item i {
+                        width: 16px;
+                        text-align: center;
+                        opacity: 0.8;
+                    }
+
+                    .dropdown-item .nav-icon-svg {
+                        width: 16px;
+                        height: 16px;
+                    }
+
+                    .dropdown-divider {
+                        height: 1px;
+                        background: linear-gradient(90deg, transparent, rgba(0, 121, 140, 0.2), transparent);
+                        margin: 0.5rem 1rem;
+                        border: none;
+                    }
+
+                    /* User Profile Dropdown */
+                    .modern-header .user-profile {
+                        display: flex;
+                        align-items: center;
+                        gap: 0.75rem;
+                        padding: 0.25rem;
+                    }
+
+                    .modern-header .user-avatar {
+                        position: relative;
+                        width: 40px !important;
+                        height: 40px !important;
+                    }
+
+                    .modern-header .avatar-img {
+                        width: 100% !important;
+                        height: 100% !important;
+                        border-radius: 50% !important;
+                        object-fit: cover !important;
+                        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+                        transition: var(--header-transition) !important;
+                    }
+
+                    .modern-header .user-link:hover .avatar-img {
+                        border-color: white !important;
+                        transform: scale(1.05) !important;
+                    }
+
+                    .modern-header .online-indicator {
+                        position: absolute;
+                        bottom: 2px;
+                        right: 2px;
+                        width: 12px;
+                        height: 12px;
+                        background: var(--header-success);
+                        border: 2px solid white;
+                        border-radius: 50%;
+                        animation: pulseOnline 2s infinite;
+                    }
+
+                    @keyframes pulseOnline {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.2); }
+                    }
+
+                    .modern-header .user-info {
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        line-height: 1.2;
+                    }
+
+                    .modern-header .user-name {
+                        font-weight: 600;
+                        font-size: 0.875rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-role {
+                        font-size: 0.75rem;
+                        color: rgba(255, 255, 255, 0.7);
+                        font-weight: 400;
+                    }
+
+                    /* User Dropdown Menu */
+                    .modern-header .user-dropdown-menu {
+                        min-width: 300px;
+                        right: 0;
+                        left: auto;
+                    }
+
+                    .modern-header .user-header {
+                        padding: 1rem;
+                        background: linear-gradient(135deg, var(--header-primary), var(--header-primary-light));
+                        display: flex;
+                        align-items: center;
+                        gap: 1rem;
+                        margin: -0.5rem 0 0.5rem 0;
+                    }
+
+                    .modern-header .user-avatar-large {
+                        width: 50px;
+                        height: 50px;
+                        border-radius: 50%;
+                        overflow: hidden;
+                        border: 3px solid rgba(255, 255, 255, 0.3);
+                    }
+
+                    .modern-header .user-avatar-large img {
+                        width: 100%;
+                        height: 100%;
+                        object-fit: cover;
+                    }
+
+                    .modern-header .user-details {
+                        display: flex;
+                        flex-direction: column;
+                        gap: 0.25rem;
+                    }
+
+                    .modern-header .user-full-name {
+                        font-weight: 600;
+                        font-size: 0.95rem;
+                        color: white;
+                    }
+
+                    .modern-header .user-email {
+                        font-size: 0.8rem;
+                        color: rgba(255, 255, 255, 0.8);
+                        opacity: 0.9;
+                    }
+
+                    /* Special Button Styles */
+                    .nav-link.login-btn {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.login-btn:hover {
+                        background: linear-gradient(135deg, #059669, #047857);
+                        transform: translateY(-2px);
+                    }
+
+                    .nav-link.register-btn {
+                        background: linear-gradient(135deg, var(--header-accent), #ea580c);
+                        border-radius: 12px;
+                        font-weight: 600;
+                    }
+
+                    .nav-link.register-btn:hover {
+                        background: linear-gradient(135deg, #ea580c, #dc2626);
+                        transform: translateY(-2px);
+                    }
+
+                    .new-task {
+                        background: linear-gradient(135deg, var(--header-success), #059669);
+                        color: white !important;
+                        margin: 0.25rem 0.5rem;
+                        border-radius: 8px;
+                    }
+
+                    .logout-item {
+                        color: var(--header-error) !important;
+                    }
+
+                    .logout-item:hover {
+                        background: linear-gradient(135deg, var(--header-error), #dc2626) !important;
+                        color: white !important;
+                    }
+
+                    /* Mobile Menu Toggle */
+                    .mobile-menu-toggle {
+                        display: none;
+                        flex-direction: column;
+                        cursor: pointer;
+                        padding: 0.5rem;
+                        gap: 0.25rem;
+                        z-index: 10;
+                    }
+
+                    .hamburger-line {
+                        width: 25px;
+                        height: 3px;
+                        background: white;
+                        border-radius: 2px;
+                        transition: var(--header-transition);
+                    }
+
+                    /* Responsive Design */
+                    @media (max-width: 1200px) {
+                        .header-container {
+                            padding: 0 1.5rem;
+                        }
+
+                        .nav-text {
+                            display: none;
+                        }
+
+                        .nav-icon-wrapper {
+                            gap: 0;
+                        }
+
+                        .user-info {
+                            display: none;
+                        }
+                    }
+
+                    @media (max-width: 968px) {
+                        .main-navigation {
+                            display: none;
+                        }
+
+                        .mobile-menu-toggle {
+                            display: flex;
+                        }
+
+                        .header-container {
+                            padding: 0 1rem;
+                        }
+                    }
+
+                    @media (max-width: 576px) {
+                        .logo-wrapper {
+                            gap: 0.5rem;
+                        }
+
+                        .logo-icon {
+                            width: 40px;
+                            height: 40px;
+                            font-size: 1.2rem;
+                            border-radius: 10px;
+                        }
+
+                        .logo-text {
+                            display: none;
+                        }
+
+                        .header-container {
+                            padding: 0 0.75rem;
+                        }
+                    }
+
+                    @media (max-width: 480px) {
+                        .logo-icon {
+                            width: 36px;
+                            height: 36px;
+                            font-size: 1rem;
+                            border-radius: 8px;
+                        }
+                    }
+
+                    /* Content Offset */
+                    .content {
+                        padding-top: 70px;
+                    }
+
+                    /* Remove old styles */
+                    .header {
+                        display: none;
+                        }
+                    </style>
+                {% endblock menu %}
+                <div class="content">
+                        <main role="main" class="main-section">
+                            <div class="row">
+                                <div class="col">
+
+                                    {% block content %}{% endblock content %}
+                                </div>
+                            </div>
+                                <!-- Блок для вывода содержимого страницы -->
+                            {% block main_page %}{% endblock %}
+
+                        </main>
+
+                </div>
+            </div>
+                <!-- Option 1: Bootstrap Bundle with Popper -->
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+
+                {% block scripts %}{% endblock %}
+                {% block styles %}{% endblock %}
+
+                <!-- Блок футера -->
+            {% if request.path == '/' and request.endpoint != 'users.register' %}
+                <div class="footer-bottom-panel">
+                    <div class="left-logo-side">
+                        <img src="https://r.tez-tour.com/portal/images/main/logo-white.png" title="TEZ TOUR" class="footer-logo">
+                        <br>
+                        2024 - 2025 © TEZ Navigator
+                        <br>
+                        <a href="mailto:help@tez-tour.com">help@tez-tour.com</a>
+                        <br>
+                    </div>
+                </div>
+            {% endif %}
+
+            <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+
+            <!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
+            <!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->
+            <!--
+            <script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+            -->
+
+            <!-- Подключение модуля интерактивной статистики -->
+            <!-- Модуль statistics_interactive.js удален, функционал перенесен в шаблоны -->
+
+            <!-- Обработчик сообщений от Service Worker -->
+            <script>
+                // Обработчик сообщений от Service Worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('message', function(event) {
+                        console.log('[Main] Сообщение от Service Worker:', event.data);
+
+                        const data = event.data;
+
+                        if (data.type === 'PLAY_SOUND') {
+                            try {
+                                console.log('[Main] Попытка воспроизведения звука:', data.soundUrl);
+
+                                // Создаем новый элемент Audio
+                                const audio = new Audio(data.soundUrl);
+
+                                // Настраиваем параметры
+                                audio.volume = 0.7;
+                                audio.preload = 'auto';
+
+                                // Добавляем обработчики событий
+                                audio.addEventListener('play', () => {
+                                    console.log('[Main] Звук начал воспроизводиться');
+                                });
+
+                                audio.addEventListener('ended', () => {
+                                    console.log('[Main] Звук закончил воспроизводиться');
+                                });
+
+                                audio.addEventListener('error', (error) => {
+                                    console.error('[Main] Ошибка воспроизведения звука:', error);
+                                });
+
+                                // Воспроизводим звук
+                                audio.play().catch(error => {
+                                    console.warn('[Main] Не удалось воспроизвести звук:', error);
+                                    // Пробуем воспроизвести звук после взаимодействия пользователя
+                                    document.addEventListener('click', function playOnClick() {
+                                        audio.play().catch(console.error);
+                                        document.removeEventListener('click', playOnClick);
+                                    }, { once: true });
+                                });
+                            } catch (error) {
+                                console.error('[Main] Ошибка создания аудио элемента:', error);
+                            }
+                        }
+                    });
+                }
+            </script>
+
+            {% include '_new_issues_sidebar.html' %}
+            {% if current_user.is_authenticated and current_user.can_access_quality_control and request.endpoint == 'main.quality_control' %}
+                {% include '_comment_notifications.html' %}
+            {% endif %}
+
+            <script>
+                // 📡 Polling система уведомлений (альтернатива FCM)
+                let lastPollingTimestamp = null;
+                let lastNotificationCount = 0;
+                let lastNotificationIds = new Set();
+
+                function pollNotifications() {
+                    // Проверяем, авторизован ли пользователь
+                    if (!document.body.classList.contains('logged-in')) {
+                        return;
+                    }
+
+                    $.ajax({
+                        url: "{{ url_for('main.poll_notifications') }}",
+                        type: 'GET',
+                        success: function(response) {
+                            if (response.success) {
+                                const notifications = response.notifications;
+                                const currentTimestamp = response.timestamp;
+                                const currentTotalCount = response.total_count;
+
+                                // Собираем текущие ID уведомлений
+                                const currentNotificationIds = new Set();
+                                notifications.status_notifications.forEach(n => currentNotificationIds.add('status_' + n.id));
+                                notifications.comment_notifications.forEach(n => currentNotificationIds.add('comment_' + n.id));
+
+                                // Проверяем только при первичной инициализации
+                                if (lastPollingTimestamp === null) {
+                                    // Первый запуск - запоминаем текущее состояние без показа уведомлений
+                                    lastNotificationCount = currentTotalCount;
+                                    lastNotificationIds = new Set(currentNotificationIds);
+                                    console.log(`[Polling] Инициализация: ${currentTotalCount} существующих уведомлений`);
+                                } else {
+                                    // Ищем новые уведомления (которых не было в прошлый раз)
+                                    const newNotifications = {
+                                        status_notifications: notifications.status_notifications.filter(n =>
+                                            !lastNotificationIds.has('status_' + n.id)
+                                        ),
+                                        comment_notifications: notifications.comment_notifications.filter(n =>
+                                            !lastNotificationIds.has('comment_' + n.id)
+                                        )
+                                    };
+
+                                    const newCount = newNotifications.status_notifications.length +
+                                                   newNotifications.comment_notifications.length;
+
+                                    if (newCount > 0) {
+                                        // Показываем уведомление только о новых сообщениях
+                                        showPollingNotification(newNotifications);
+                                        console.log(`[Polling] Найдено ${newCount} новых уведомлений`);
+                                    } else {
+                                        console.log(`[Polling] Новых уведомлений нет (всего: ${currentTotalCount})`);
+                                    }
+
+                                    // Обновляем состояние
+                                    lastNotificationIds = new Set(currentNotificationIds);
+                                }
+
+                                lastPollingTimestamp = currentTimestamp;
+                                lastNotificationCount = currentTotalCount;
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('[Polling] Ошибка:', error);
+                        }
+                    });
+                }
+
+                                                function showPollingNotification(notifications) {
+                    // Проверяем, не закрыт ли современный виджет
+                    const isModernWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
+
+                    // Если современный виджет активен (не закрыт), воспроизводим звук и обновляем виджет
+                    if (!isModernWidgetClosed) {
+                        console.log('[Polling] Современный виджет активен, воспроизводим звук и обновляем виджет');
+
+                        // Воспроизводим звук для современного виджета
+                        if (typeof window.playNotificationSound === 'function') {
+                            window.playNotificationSound();
+                        }
+
+                        // Обновляем современный виджет
+                        if (typeof window.modernNotificationsWidget !== 'undefined' &&
+                            typeof window.modernNotificationsWidget.refreshNotifications === 'function') {
+                            window.modernNotificationsWidget.refreshNotifications();
+                        }
+
+                        return;
+                    }
+
+                    // Если виджет закрыт (режим колокольчика), автоматически разворачиваем его
+                    console.log('[Polling] Виджет закрыт, автоматически разворачиваем современный виджет');
+
+                    // Включаем современный виджет автоматически
+                    if (typeof showNotificationsWidget === 'function') {
+                        showNotificationsWidget();
+
+                        // Воспроизводим звук уведомления
+                        if (typeof window.playNotificationSound === 'function') {
+                            window.playNotificationSound();
+                        }
+
+                        // Обновляем виджет с новыми уведомлениями
+                        setTimeout(() => {
+                            if (typeof window.modernNotificationsWidget !== 'undefined' &&
+                                typeof window.modernNotificationsWidget.refreshNotifications === 'function') {
+                                window.modernNotificationsWidget.refreshNotifications();
+                            }
+                        }, 300); // Небольшая задержка для анимации разворачивания
+
+                        // УДАЛЕНО: Лишнее уведомление о разворачивании виджета
+                        // Пользователь должен видеть только само уведомление, а не уведомление о разворачивании
+                    } else {
+                        // Fallback если функция showNotificationsWidget недоступна
+                        console.warn('[Polling] Функция showNotificationsWidget недоступна, используем legacy уведомление');
+
+                        const statusCount = notifications.status_notifications.length;
+                        const commentCount = notifications.comment_notifications.length;
+                        let message = '📬 Новые уведомления:\n';
+                        if (statusCount > 0) message += `📊 Изменения статусов: ${statusCount}\n`;
+                        if (commentCount > 0) message += `💬 Новые комментарии: ${commentCount}\n`;
+
+                        Swal.fire({
+                            icon: 'info',
+                            title: '📡 Новые уведомления',
+                            text: message,
+                            position: 'top-end',
+                            showConfirmButton: true,
+                            confirmButtonText: '📋 Показать уведомления',
+                            timer: 6000,
+                            timerProgressBar: true,
+                            toast: true
+                        }).then((result) => {
+                            if (result.isConfirmed) {
+                                window.location.href = "{{ url_for('main.my_notifications') }}";
+                            }
+                        });
+
+                        // Воспроизводим звук
+                        try {
+                            const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
+                            audio.volume = 0.5;
+                            audio.play().catch(console.warn);
+                        } catch (e) {
+                            console.warn('[Polling] Не удалось воспроизвести звук:', e);
+                        }
+                    }
+                }
+
+                function checkConnection() {
+                    // Проверяем, авторизован ли пользователь
+                    if (document.body.classList.contains('logged-in')) {
+                        $.ajax({
+                            url: "{{ url_for('main.check_connection') }}",
+                            type: 'GET',
+                            success: function(response) {
+                                if (!response.connected) {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Потеряно соединение',
+                                        text: 'Потеряно соединение с базой данных. Проверьте активность VPN-подключения через Cisco AnyConnect и убедитесь, что оно работает корректно. Если проблема сохраняется, перезапустите VPN-клиент или приложение и проверьте настройки сети.',
+                                        position: 'top',
+                                        showConfirmButton: false,
+                                        timer: 10000,
+                                        timerProgressBar: true,
+                                        toast: true,
+                                        didOpen: (toast) => {
+                                            toast.addEventListener('mouseenter', Swal.stopTimer)
+                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                        }
+                                    });
+                                }
+                            }
+                        });
+                    }
+                }
+
+                // Запускаем polling уведомлений каждые 30 секунд
+                setInterval(pollNotifications, 30000);
+
+                // Проверяем соединение каждые 30 секунд
+                setInterval(checkConnection, 30000);
+
+                // Начальные проверки при загрузке страницы
+                pollNotifications();
+                checkConnection();
+
+                console.log('[Polling] 📡 Система автоматических уведомлений запущена (интервал: 30 сек)');
+            </script>
+
+            <!-- Modern Notifications Widget -->
+            {% if current_user.is_authenticated %}
+                {% include '_modern_notifications_widget.html' %}
+            {% endif %}
+
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    // --- Элементы DOM ---
+                    const menuToggle = document.querySelector('.mobile-menu-toggle');
+                    const menuPanel = document.querySelector('.mobile-menu-panel');
+                    const menuOverlay = document.querySelector('.mobile-menu-overlay');
+                    const closeButton = document.querySelector('.mobile-menu-close');
+
+                    // Проверка наличия всех ключевых элементов
+                    if (!menuToggle || !menuPanel || !menuOverlay || !closeButton) {
+                        console.error('Mobile menu components are missing. The menu will not be initialized.');
+                        return;
+                    }
+
+                    const mainNav = document.querySelector('.main-navigation .nav-menu');
+                    const mobileLinksContainer = menuPanel.querySelector('.mobile-menu-links');
+
+                    /**
+                     * Копирует навигационные ссылки из десктопного меню в мобильное.
+                     */
+                    function cloneNavLinks() {
+                        if (!mainNav || !mobileLinksContainer) return;
+
+                        mobileLinksContainer.innerHTML = '';
+
+                        const navItems = mainNav.querySelectorAll(':scope > .nav-item');
+
+                        navItems.forEach(item => {
+                            const link = item.querySelector(':scope > .nav-link:not(.dropdown-toggle)');
+                            const dropdown = item.querySelector('.dropdown-menu');
+
+                            if (link) {
+                                const newLi = document.createElement('li');
+                                const newLink = document.createElement('a');
+                                newLink.href = link.href;
+                                // Используем innerHTML, чтобы скопировать и иконки, и текст
+                                newLink.innerHTML = link.querySelector('.nav-icon-wrapper').innerHTML;
+
+                                if (link.classList.contains('logout-item')) newLink.classList.add('logout-link');
+
+                                newLi.appendChild(newLink);
+                                mobileLinksContainer.appendChild(newLi);
+                            }
+
+                            if (dropdown) {
+                                const dropdownLinks = dropdown.querySelectorAll('.dropdown-item');
+                                dropdownLinks.forEach(dLink => {
+                                    // Пропускаем разделители
+                                    if (dLink.classList.contains('dropdown-divider')) return;
+
+                                    const newLi = document.createElement('li');
+                                    const newLink = document.createElement('a');
+                                    newLink.href = dLink.href;
+                                    newLink.innerHTML = dLink.innerHTML;
+
+                                    if (dLink.classList.contains('new-task')) newLink.classList.add('new-task-link');
+                                    if (dLink.classList.contains('logout-item')) newLink.classList.add('logout-link');
+
+                                    newLi.appendChild(newLink);
+                                    mobileLinksContainer.appendChild(newLi);
+                                });
+                            }
+                        });
+                    }
+
+                    function openMenu() {
+                        menuPanel.classList.add('open');
+                        menuOverlay.classList.add('open');
+                        menuToggle.classList.add('active');
+                        document.body.classList.add('mobile-menu-active');
+                        menuToggle.setAttribute('aria-expanded', 'true');
+                        menuPanel.setAttribute('aria-hidden', 'false');
+                        // Устанавливаем фокус на кнопку закрытия для доступности
+                        closeButton.focus();
+                    }
+
+                    function closeMenu() {
+                        menuPanel.classList.remove('open');
+                        menuOverlay.classList.remove('open');
+                        menuToggle.classList.remove('active');
+                        document.body.classList.remove('mobile-menu-active');
+                        menuToggle.setAttribute('aria-expanded', 'false');
+                        menuPanel.setAttribute('aria-hidden', 'true');
+                        // Возвращаем фокус на кнопку-гамбургер
+                        menuToggle.focus();
+                    }
+
+                    menuToggle.addEventListener('click', () => {
+                        if (menuPanel.classList.contains('open')) {
+                            closeMenu();
+                        } else {
+                            // Пересобираем ссылки перед открытием, чтобы они были актуальны
+                            cloneNavLinks();
+                            openMenu();
+                        }
+                    });
+
+                    closeButton.addEventListener('click', closeMenu);
+                    menuOverlay.addEventListener('click', closeMenu);
+
+                    document.addEventListener('keydown', (event) => {
+                        if (event.key === 'Escape' && menuPanel.classList.contains('open')) {
+                            closeMenu();
+                        }
+                    });
+
+                    console.log('Mobile menu initialized successfully.');
+                });
+            </script>
+        </body>
+</html>

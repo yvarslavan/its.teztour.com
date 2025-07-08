@@ -1,0 +1,26 @@
+{% if issues %}
+    <div class="notifications-container">
+        {% for issue in issues %}
+            <div class="notification-item">
+                <div class="notification-header">
+                    <span class="notification-title">
+                        Обращение <a href="https://quality.teztour.com/issues/{{ issue.id }}"
+                                   target="_blank"
+                                   class="issue-link">#{{ issue.id }}</a>:
+                        {{ issue.subject }}
+                    </span>
+                    <span class="notification-date">
+                        {{ issue.created_on.strftime('%d.%m.%Y %H:%M') if issue.created_on else 'Неизвестно' }}
+                    </span>
+                </div>
+                <div class="notification-content">
+                    {{ issue.description | safe if issue.description else '' }}
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <div class="no-notifications">
+        Нет новых обращений
+    </div>
+{% endif %}

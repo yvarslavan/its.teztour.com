@@ -179,6 +179,29 @@ class PushSubscription(db.Model):
         return f"PushSubscription(user_id={self.user_id}, endpoint={self.endpoint[:50]}..., active={self.is_active})"
 
 
+# УДАЛЕНО: Oracle-модели AgencyPhone и CallInfo
+# Эти таблицы существуют только в Oracle базе данных,
+# к ним обращаемся напрямую через SQL запросы
+
+
+class ChatMessage(db.Model):
+    __tablename__ = 'chat_messages'
+
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    message_id = db.Column(db.String, unique=True, nullable=False)
+    from_jid = db.Column(db.String, nullable=False)
+    to_jid = db.Column(db.String, nullable=False)
+    body = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
+    type = db.Column(db.String, nullable=False)
+    status = db.Column(db.String, default='unread')
+    contact_name = db.Column(db.String)
+    contact_status = db.Column(db.String)
+    is_archived = db.Column(db.Boolean, default=False)
+
+    def __repr__(self):
+        return f"<ChatMessage {self.message_id}>"
+
 class AgencyPhone(db.Model):
     """Модель для хранения информации о телефонах агентств"""
     __tablename__ = "T_AGENCY_PHONE"
@@ -205,26 +228,6 @@ class CallInfo(db.Model):
     region = db.Column("REGION", db.String(3), index=True)
     agency_manager = db.Column("AGENCY_MANAGER", db.String(50), index=True)
     agency_name = db.Column("AGENCY_NAME", db.String(255), index=True)
-
-
-class ChatMessage(db.Model):
-    __tablename__ = 'chat_messages'
-
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    message_id = db.Column(db.String, unique=True, nullable=False)
-    from_jid = db.Column(db.String, nullable=False)
-    to_jid = db.Column(db.String, nullable=False)
-    body = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=db.func.current_timestamp())
-    type = db.Column(db.String, nullable=False)
-    status = db.Column(db.String, default='unread')
-    contact_name = db.Column(db.String)
-    contact_status = db.Column(db.String)
-    is_archived = db.Column(db.Boolean, default=False)
-
-    def __repr__(self):
-        return f"<ChatMessage {self.message_id}>"
-
 
 class Journal(QualityBase):
     __tablename__ = "journals"

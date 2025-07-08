@@ -1,0 +1,234 @@
+/**
+ * detailed_breakdown.css - v1.2
+ * Стили для детальной разбивки по статусам
+ */
+
+/* Контейнер для детальной разбивки */
+.detailed-status-breakdown {
+    margin-top: 20px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background-color: #fff;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+/* Заголовок раздела с кнопкой */
+.breakdown-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    border-bottom: 1px solid #e5e7eb;
+    background-color: #f9fafb;
+}
+
+.breakdown-section-header h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0;
+}
+
+/* Кнопка разворачивания разбивки */
+.expand-breakdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.expand-breakdown-btn:hover {
+    background: #f0f9ff;
+    border-color: #3b82f6;
+    box-shadow: 0 2px 5px rgba(59, 130, 246, 0.15);
+}
+
+.expand-breakdown-btn i {
+    transition: transform 0.3s ease;
+}
+
+/* Контейнер для содержимого разбивки */
+.detailed-breakdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease;
+}
+
+.detailed-breakdown-content.expanded {
+    max-height: 1000px;
+    padding: 20px;
+}
+
+/* Сетка элементов статусов */
+.status-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+}
+
+/* Стили для элементов статусов */
+.status-item {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 16px;
+    border-radius: 10px;
+    background: #fff;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    border-left: 4px solid #ccc;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.status-count {
+    font-size: 22px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 4px;
+}
+
+.status-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #6b7280;
+}
+
+.status-badge {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background-color: #ccc;
+}
+
+/* Уведомление об отсутствии данных */
+.no-data {
+    grid-column: 1 / -1;
+    padding: 16px;
+    text-align: center;
+    font-size: 16px;
+    color: #6b7280;
+    background: #f9fafb;
+    border-radius: 8px;
+    border: 1px dashed #e5e7eb;
+}
+
+/* Стили для разных типов статусов */
+.status-item.status-new {
+    border-left-color: #ff9800;
+}
+.status-item.status-new .status-badge {
+    background-color: #ff9800;
+}
+
+.status-item.status-closed {
+    border-left-color: #4caf50;
+}
+.status-item.status-closed .status-badge {
+    background-color: #4caf50;
+}
+
+.status-item.status-redirected {
+    border-left-color: #9c27b0;
+}
+.status-item.status-redirected .status-badge {
+    background-color: #9c27b0;
+}
+
+.status-item.status-executed {
+    border-left-color: #2196f3;
+}
+.status-item.status-executed .status-badge {
+    background-color: #2196f3;
+}
+
+.status-item.status-testing {
+    border-left-color: #03a9f4;
+}
+.status-item.status-testing .status-badge {
+    background-color: #03a9f4;
+}
+
+.status-item.status-paused {
+    border-left-color: #ff5722;
+}
+.status-item.status-paused .status-badge {
+    background-color: #ff5722;
+}
+
+.status-item.status-progress {
+    border-left-color: #3f51b5;
+}
+.status-item.status-progress .status-badge {
+    background-color: #3f51b5;
+}
+
+.status-item.status-coordination {
+    border-left-color: #e91e63;
+}
+.status-item.status-coordination .status-badge {
+    background-color: #e91e63;
+}
+
+.status-item.status-specification {
+    border-left-color: #795548;
+}
+.status-item.status-specification .status-badge {
+    background-color: #795548;
+}
+
+.status-item.status-other {
+    border-left-color: #607d8b;
+}
+.status-item.status-other .status-badge {
+    background-color: #607d8b;
+}
+
+/* Адаптивная верстка для мобильных */
+@media (max-width: 768px) {
+    .status-items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 12px;
+    }
+
+    .status-item {
+        padding: 12px;
+    }
+
+    .status-count {
+        font-size: 18px;
+    }
+
+    .status-name {
+        font-size: 12px;
+    }
+}
+
+/* Анимация для выделения новых статусов */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(59, 130, 246, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
+    }
+}

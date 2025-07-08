@@ -1,0 +1,371 @@
+/**
+ * fix_filter_buttons.css - v1.6
+ * Исправленные стили для кнопок фильтров
+ */
+
+/* ===================================================
+   ИСПРАВЛЕНИЯ ДЛЯ КНОПОК ОЧИСТКИ ФИЛЬТРОВ
+   =================================================== */
+
+/* Контейнер фильтра */
+.filter-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+/* Селект фильтра */
+.filter-container select {
+  width: 100%;
+  padding: 8px 30px 8px 12px !important; /* Место для кнопки очистки */
+  border-radius: 6px !important;
+  border: 1px solid #d1d5db !important;
+  background-color: #fff !important;
+  font-size: 14px !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+}
+
+.filter-container select:hover {
+  border-color: #9ca3af !important;
+}
+
+.filter-container select:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Кнопка очистки фильтра */
+.filter-clear-btn {
+  position: absolute !important;
+  right: 28px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  background: #ef4444 !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 50% !important;
+  width: 18px !important;
+  height: 18px !important;
+  display: none !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  z-index: 100 !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-size: 10px !important;
+  line-height: 1 !important;
+  text-align: center !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.filter-clear-btn:hover {
+  background: #dc2626 !important;
+  transform: translateY(-50%) scale(1.1) !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15) !important;
+}
+
+.filter-clear-btn:active {
+  transform: translateY(-50%) scale(0.95) !important;
+}
+
+.filter-clear-btn i {
+  font-size: 10px !important;
+  line-height: 1 !important;
+  display: inline-block !important;
+}
+
+/* Показываем кнопку очистки, когда фильтр имеет значение */
+.filter-container.has-value .filter-clear-btn,
+.filter-clear-btn.show {
+  display: flex !important;
+}
+
+/* Анимация при очистке фильтра */
+@keyframes clear-effect {
+  0% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-50%) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-50%) scale(1);
+    opacity: 1;
+  }
+}
+
+.filter-clear-btn:active {
+  animation: clear-effect 0.3s ease;
+}
+
+/* Эффект очистки фильтра */
+.filter-clear-effect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 6px;
+  pointer-events: none;
+  animation: filter-clear-pulse 0.5s ease-out forwards;
+  z-index: 5;
+}
+
+@keyframes filter-clear-pulse {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/* Улучшенная панель фильтров */
+.filters-section {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 16px;
+}
+
+.filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.filter-item {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.filter-label i {
+  color: #6b7280;
+}
+
+/* Поиск */
+.search-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.search-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 6px;
+}
+
+.search-container input {
+  width: 100%;
+  padding: 8px 12px !important;
+  border-radius: 6px !important;
+  border: 1px solid #d1d5db !important;
+  background-color: #fff !important;
+  font-size: 14px !important;
+  color: #374151 !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05) !important;
+  transition: all 0.2s ease !important;
+}
+
+.search-container input:hover {
+  border-color: #9ca3af !important;
+}
+
+.search-container input:focus {
+  outline: none !important;
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.3) !important;
+}
+
+/* Результаты фильтрации */
+.filter-results-section {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.results-badge-bright {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 6px;
+  padding: 8px 12px;
+  color: #0369a1;
+}
+
+.results-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #0ea5e9;
+  color: white;
+  border-radius: 50%;
+}
+
+.results-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.results-count {
+  font-weight: 700;
+  margin: 0 4px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+  .filter-clear-btn {
+    width: 16px !important;
+    height: 16px !important;
+    right: 26px !important;
+  }
+
+  .filter-clear-btn i {
+    font-size: 8px !important;
+  }
+
+  .filter-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .filter-item {
+    width: 100%;
+  }
+}
+
+/* Специфичные стили для каждой кнопки с высоким весом селектора */
+#clear-status-filter,
+#clear-project-filter,
+#clear-priority-filter {
+  z-index: 100 !important;
+  position: absolute !important;
+  right: 28px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  display: none !important;
+  width: 18px !important;
+  height: 18px !important;
+  background-color: #ef4444 !important;
+  color: white !important;
+  border-radius: 50% !important;
+  text-align: center !important;
+  line-height: 18px !important;
+  padding: 0 !important;
+  font-size: 10px !important;
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+#clear-status-filter.show,
+#clear-project-filter.show,
+#clear-priority-filter.show {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+/* Принудительно заменяем текст на иконку */
+#clear-status-filter:empty:before,
+#clear-project-filter:empty:before,
+#clear-priority-filter:empty:before {
+  content: "\f00d" !important;
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+  display: inline-block !important;
+  font-size: 10px !important;
+}
+
+/* Принудительно заменяем текст на иконку, если есть содержимое */
+#clear-status-filter,
+#clear-project-filter,
+#clear-priority-filter {
+  font-size: 0 !important;
+}
+
+#clear-status-filter:before,
+#clear-project-filter:before,
+#clear-priority-filter:before {
+  content: "\f00d" !important;
+  font-family: 'Font Awesome 5 Free' !important;
+  font-weight: 900 !important;
+  display: inline-block !important;
+  font-size: 10px !important;
+  color: white !important;
+}
+
+/* Оверрайд для контейнеров */
+#statusFilterContainer,
+#projectFilterContainer,
+#priorityFilterContainer {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+/* Исправление для селектов */
+#status-filter,
+#project-filter,
+#priority-filter {
+  padding-right: 40px !important;
+}
+
+/* Дополнительный стиль для подсветки активных фильтров */
+.has-value:before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: #3b82f6;
+  border-radius: 3px 0 0 3px;
+  z-index: 1;
+}
+
+/* Стиль для фиксации проблемы с наложением */
+.filter-clear-btn i {
+  pointer-events: none !important;
+}

@@ -1,0 +1,1075 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container-fluid create-issue-wrapper">
+    <div class="row min-vh-100">
+        <!-- Левая информационная панель -->
+        <div class="col-lg-4 d-none d-lg-block info-panel">
+            <div class="info-content">
+                <div class="info-header">
+                    <i class="fas fa-ticket-alt"></i>
+                    <h2>Создание заявки</h2>
+                    <p class="header-subtitle">Опишите вашу проблему или запрос</p>
+                </div>
+
+                <div class="tips-section">
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <i class="fas fa-lightbulb"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Описание проблемы</h4>
+                            <p>Опишите проблему максимально подробно для быстрого решения</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <i class="fas fa-paperclip"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Прикрепите файлы</h4>
+                            <p>Добавьте скриншоты или документы для лучшего понимания</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Быстрая обработка</h4>
+                            <p>Мы ответим на вашу заявку в течение рабочего дня</p>
+                        </div>
+                    </div>
+
+                    <div class="tip-item">
+                        <div class="tip-icon">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="tip-content">
+                            <h4>Уведомления</h4>
+                            <p>Получайте обновления по статусу заявки на email</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Контактная информация -->
+                <div class="contact-info">
+                    <div class="contact-item">
+                        <i class="fas fa-headset"></i>
+                        <div>
+                            <h5>Техподдержка</h5>
+                            <p>Пн-Пт: 10:00 - 19:00</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая панель с формой -->
+        <div class="col-lg-8 form-panel">
+            <div class="form-container">
+                <!-- Хлебные крошки -->
+                <nav class="breadcrumb-nav">
+                    <a href="{{ url_for('main.my_issues') }}" class="breadcrumb-link">
+                        <i class="fas fa-list"></i> Мои заявки
+                    </a>
+                    <i class="fas fa-chevron-right"></i>
+                    <span class="breadcrumb-current">Новая заявка</span>
+                </nav>
+
+                <!-- Заголовок секции -->
+                <div class="section-header">
+                    <div class="header-content">
+                        <div class="header-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <div class="header-text">
+                            <h1>Создать новую заявку</h1>
+                            <p class="section-subtitle">Опишите вашу проблему или запрос, и наша команда поможет вам</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Форма создания заявки -->
+                <form action="" method="POST" enctype="multipart/form-data" class="modern-issue-form">
+                    {{ form.hidden_tag() }}
+
+                    <!-- Поле темы заявки -->
+                    <div class="form-group-modern">
+                        <label for="{{ form.subject.id }}" class="form-label-modern">
+                            <i class="fas fa-heading"></i>
+                            {{ form.subject.label.text }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.subject(class="form-control-modern", placeholder="Кратко опишите суть проблемы или запроса...", maxlength="200", id="subjectInput") }}
+                        <div class="field-feedback">
+                            <div class="char-counter">
+                                <span id="subject-counter">0</span>/200
+                            </div>
+                            <div class="field-tips">
+                                <i class="fas fa-info-circle"></i>
+                                Используйте понятные формулировки
+                            </div>
+                        </div>
+                        {% for error in form.subject.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Поле описания -->
+                    <div class="form-group-modern">
+                        <label for="{{ form.description.id }}" class="form-label-modern">
+                            <i class="fas fa-align-left"></i>
+                            {{ form.description.label.text }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.description(class="form-control-modern description-textarea", placeholder="Подробно опишите проблему: что произошло, какие действия вы выполняли, какого результата ожидали...", rows="8", id="descriptionInput") }}
+                        <div class="field-feedback">
+                            <div class="char-counter">
+                                <span id="description-counter">0</span> символов
+                            </div>
+                            <div class="field-tips">
+                                <i class="fas fa-info-circle"></i>
+                                Чем подробнее описание, тем быстрее решение
+                            </div>
+                        </div>
+                        {% for error in form.description.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Поле загрузки файлов -->
+                    <div class="form-group-modern">
+                        <label class="form-label-modern">
+                            <i class="fas fa-paperclip"></i>
+                            Прикрепить файлы
+                            <span class="optional">(необязательно)</span>
+                        </label>
+
+                        <div class="file-upload-area" id="fileUploadArea">
+                            {{ form.upload_files(class="file-input", id="fileInput", accept=".png,.pdf,.jpg,.jpeg,.doc,.docx,.xls,.xlsx") }}
+                            <div class="file-upload-content">
+                                <div class="upload-icon">
+                                    <i class="fas fa-cloud-upload-alt"></i>
+                                </div>
+                                <h4>Перетащите файлы сюда или нажмите для выбора</h4>
+                                <p>Добавьте скриншоты, документы или другие файлы</p>
+                                <div class="upload-formats">
+                                    <span class="format-badge">PNG</span>
+                                    <span class="format-badge">JPG</span>
+                                    <span class="format-badge">PDF</span>
+                                    <span class="format-badge">DOC</span>
+                                    <span class="format-badge">XLS</span>
+                                </div>
+                                <span class="upload-hint">Максимум 10MB на файл</span>
+                            </div>
+                            <div class="files-preview" id="filesPreview"></div>
+                        </div>
+                        {% for error in form.upload_files.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="form-actions">
+                        <div class="secondary-actions">
+                            <a href="{{ url_for('main.my_issues') }}" class="btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Назад к заявкам
+                            </a>
+                        </div>
+                        <div class="primary-actions">
+                            <button type="submit" class="btn-primary" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                Создать заявку
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Основной контейнер */
+    .create-issue-wrapper {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    /* Левая информационная панель */
+    .info-panel {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        position: sticky;
+        top: 0;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    .info-content {
+        padding: 2rem;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+    }
+
+    .info-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+        animation: fadeInLeft 0.8s ease;
+    }
+
+    .info-header i {
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        color: #4fc3f7;
+    }
+
+    .info-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+    }
+
+    .header-subtitle {
+        font-size: 1rem;
+        opacity: 0.9;
+        margin: 0;
+    }
+
+    .tips-section {
+        margin-bottom: 3rem;
+    }
+
+    .tip-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        color: white;
+        opacity: 0;
+        animation: fadeInLeft 0.8s ease forwards;
+        padding: 1rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+        transition: all 0.3s ease;
+    }
+
+    .tip-item:hover {
+        background: rgba(255, 255, 255, 0.15);
+        transform: translateY(-2px);
+    }
+
+    .tip-item:nth-child(1) { animation-delay: 0.2s; }
+    .tip-item:nth-child(2) { animation-delay: 0.4s; }
+    .tip-item:nth-child(3) { animation-delay: 0.6s; }
+    .tip-item:nth-child(4) { animation-delay: 0.8s; }
+
+    .tip-icon {
+        width: 40px;
+        height: 40px;
+        background: rgba(79, 195, 247, 0.2);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        border: 1px solid rgba(79, 195, 247, 0.3);
+    }
+
+    .tip-icon i {
+        font-size: 1.2rem;
+        color: #4fc3f7;
+    }
+
+    .tip-content h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+    }
+
+    .tip-content p {
+        font-size: 0.85rem;
+        opacity: 0.8;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    /* Контактная информация */
+    .contact-info {
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        padding-top: 2rem;
+        margin-top: auto;
+    }
+
+    .contact-item {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        color: white;
+        padding: 1rem;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(5px);
+    }
+
+    .contact-item i {
+        font-size: 1.5rem;
+        color: #4fc3f7;
+    }
+
+    .contact-item h5 {
+        margin: 0 0 0.25rem 0;
+        font-weight: 600;
+        font-size: 0.95rem;
+    }
+
+    .contact-item p {
+        margin: 0;
+        font-size: 0.8rem;
+        opacity: 0.8;
+    }
+
+    /* Правая панель с формой */
+    .form-panel {
+        background: white;
+        min-height: 100vh;
+    }
+
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem;
+        animation: slideInRight 0.8s ease;
+    }
+
+    /* Хлебные крошки */
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 2rem;
+        font-size: 0.9rem;
+        animation: fadeInUp 0.8s ease;
+        animation-delay: 0.1s;
+        animation-fill-mode: both;
+    }
+
+    .breadcrumb-link {
+        color: #4285f4;
+        text-decoration: none;
+        transition: color 0.3s;
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-weight: 500;
+    }
+
+    .breadcrumb-link:hover {
+        color: #3367d6;
+    }
+
+    .breadcrumb-nav i {
+        color: #9ca3af;
+        font-size: 0.7rem;
+    }
+
+    .breadcrumb-current {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    /* Заголовок секции */
+    .section-header {
+        margin-bottom: 3rem;
+        animation: fadeInUp 0.8s ease;
+        animation-delay: 0.2s;
+        animation-fill-mode: both;
+    }
+
+    .header-content {
+        display: flex;
+        align-items: flex-start;
+        gap: 1.5rem;
+    }
+
+    .header-icon {
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #4285f4 0%, #667eea 100%);
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 8px 25px rgba(66, 133, 244, 0.3);
+    }
+
+    .header-icon i {
+        font-size: 1.5rem;
+        color: white;
+    }
+
+    .header-text h1 {
+        font-size: 2.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, #4285f4 0%, #667eea 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        margin-bottom: 0.5rem;
+        line-height: 1.2;
+    }
+
+    .section-subtitle {
+        font-size: 1.1rem;
+        color: #6b7280;
+        margin: 0;
+        line-height: 1.5;
+    }
+
+    /* Стили формы */
+    .modern-issue-form {
+        animation: fadeInUp 0.8s ease;
+        animation-delay: 0.4s;
+        animation-fill-mode: both;
+    }
+
+    .form-group-modern {
+        margin-bottom: 2rem;
+    }
+
+    .form-label-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        font-size: 1rem;
+        color: #374151;
+        margin-bottom: 0.75rem;
+    }
+
+    .form-label-modern i {
+        color: #4285f4;
+        font-size: 0.9rem;
+    }
+
+    .required {
+        color: #ef4444;
+        font-weight: 700;
+    }
+
+    .optional {
+        color: #6b7280;
+        font-weight: 400;
+        font-size: 0.9rem;
+    }
+
+    .form-control-modern {
+        width: 100%;
+        padding: 1rem 1.25rem;
+        border: 2px solid #e1e5e9;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+        color: #374151;
+        font-family: inherit;
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #4285f4;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(66, 133, 244, 0.1);
+    }
+
+    .description-textarea {
+        min-height: 200px;
+        resize: vertical;
+        line-height: 1.6;
+    }
+
+    .field-feedback {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+        font-size: 0.9rem;
+    }
+
+    .char-counter {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .field-tips {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #4285f4;
+        font-size: 0.85rem;
+    }
+
+    /* Загрузка файлов */
+    .file-upload-area {
+        position: relative;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2.5rem 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        background: #f9fafb;
+        cursor: pointer;
+    }
+
+    .file-upload-area:hover {
+        border-color: #4285f4;
+        background: rgba(66, 133, 244, 0.05);
+    }
+
+    .file-upload-area.dragover {
+        border-color: #4285f4;
+        background: rgba(66, 133, 244, 0.1);
+        transform: scale(1.02);
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    .upload-icon {
+        font-size: 3rem;
+        color: #4285f4;
+        margin-bottom: 1rem;
+    }
+
+    .file-upload-content h4 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-upload-content p {
+        color: #6b7280;
+        margin-bottom: 1rem;
+    }
+
+    .upload-formats {
+        display: flex;
+        justify-content: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .format-badge {
+        padding: 0.25rem 0.5rem;
+        background: #e5e7eb;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: #374151;
+    }
+
+    .upload-hint {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+
+    .files-preview {
+        margin-top: 1rem;
+        display: none;
+    }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.75rem;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 0.5rem;
+    }
+
+    .file-icon {
+        width: 32px;
+        height: 32px;
+        background: #f3f4f6;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #6b7280;
+    }
+
+    .file-info {
+        flex: 1;
+    }
+
+    .file-name {
+        font-weight: 500;
+        color: #374151;
+        font-size: 0.9rem;
+    }
+
+    .file-size {
+        font-size: 0.8rem;
+        color: #6b7280;
+    }
+
+    .remove-file {
+        color: #ef4444;
+        cursor: pointer;
+        padding: 0.25rem;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .remove-file:hover {
+        background: #fef2f2;
+    }
+
+    /* Сообщения об ошибках */
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #ef4444;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 8px;
+        border-left: 3px solid #ef4444;
+    }
+
+    /* Кнопки действий */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3rem;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .secondary-actions, .primary-actions {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-secondary, .btn-primary {
+        padding: 0.875rem 1.75rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+        color: #374151;
+        transform: translateY(-1px);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #4285f4 0%, #667eea 100%);
+        color: white;
+        position: relative;
+        box-shadow: 0 4px 12px rgba(66, 133, 244, 0.3);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(66, 133, 244, 0.4);
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    /* Анимации */
+    @keyframes fadeInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes slideInRight {
+        from {
+            opacity: 0;
+            transform: translateX(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* Адаптивные стили */
+    @media (max-width: 991.98px) {
+        .create-issue-wrapper {
+            background: white;
+        }
+
+        .form-container {
+            padding: 1rem;
+        }
+
+        .header-content {
+            flex-direction: column;
+            text-align: center;
+            gap: 1rem;
+        }
+
+        .header-text h1 {
+            font-size: 2rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .secondary-actions, .primary-actions {
+            width: 100%;
+            justify-content: stretch;
+        }
+
+        .btn-secondary, .btn-primary {
+            flex: 1;
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-container {
+            padding: 0.5rem;
+        }
+
+        .header-text h1 {
+            font-size: 1.5rem;
+        }
+
+        .breadcrumb-nav {
+            justify-content: center;
+            text-align: center;
+        }
+
+        .field-feedback {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 0.5rem;
+        }
+
+        .upload-formats {
+            justify-content: flex-start;
+        }
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы
+    const subjectInput = document.getElementById('subjectInput');
+    const descriptionInput = document.getElementById('descriptionInput');
+    const fileInput = document.getElementById('fileInput');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const filesPreview = document.getElementById('filesPreview');
+    const submitBtn = document.getElementById('submitBtn');
+    const subjectCounter = document.getElementById('subject-counter');
+    const descriptionCounter = document.getElementById('description-counter');
+
+    let selectedFiles = [];
+
+    // Инициализация: если есть уже выбранные файлы, добавляем их в selectedFiles
+    if (fileInput && fileInput.files && fileInput.files.length > 0) {
+        for (let file of fileInput.files) {
+            selectedFiles.push(file);
+        }
+        updateFilesPreview();
+    }
+
+    // Счетчики символов
+    if (subjectInput && subjectCounter) {
+        subjectInput.addEventListener('input', function() {
+            subjectCounter.textContent = this.value.length;
+        });
+    }
+
+    if (descriptionInput && descriptionCounter) {
+        descriptionInput.addEventListener('input', function() {
+            descriptionCounter.textContent = this.value.length;
+        });
+    }
+
+    // Функционал загрузки файлов
+    if (fileUploadArea && fileInput) {
+        // Клик по области загрузки
+        fileUploadArea.addEventListener('click', function(e) {
+            if (e.target !== fileInput && !e.target.closest('.file-item')) {
+                fileInput.click();
+            }
+        });
+
+        // Drag and drop
+        fileUploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            this.classList.add('dragover');
+        });
+
+        fileUploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+        });
+
+        fileUploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            this.classList.remove('dragover');
+
+            const files = e.dataTransfer.files;
+            handleFileSelection(files);
+        });
+
+        // Изменение файла через input
+        fileInput.addEventListener('change', function() {
+            // При выборе через input заменяем все файлы, а не добавляем
+            selectedFiles = [];
+            handleFileSelection(this.files);
+        });
+
+        function handleFileSelection(files) {
+            const allowedExtensions = ['png', 'pdf', 'jpg', 'jpeg', 'doc', 'docx', 'xls', 'xlsx'];
+
+            for (let file of files) {
+                const extension = file.name.split('.').pop().toLowerCase();
+
+                if (allowedExtensions.indexOf(extension) === -1) {
+                    showNotification(`Недопустимый формат файла: ${file.name}`, 'error');
+                    continue;
+                }
+
+                if (file.size > 10 * 1024 * 1024) { // 10MB
+                    showNotification(`Файл слишком большой: ${file.name}`, 'error');
+                    continue;
+                }
+
+                selectedFiles.push(file);
+            }
+
+            updateFilesPreview();
+            updateFileInput();
+        }
+
+        function updateFilesPreview() {
+            if (selectedFiles.length === 0) {
+                filesPreview.style.display = 'none';
+                return;
+            }
+
+            filesPreview.style.display = 'block';
+            filesPreview.innerHTML = '';
+
+            selectedFiles.forEach((file, index) => {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-item';
+
+                const icon = getFileIcon(file.name);
+                const size = formatFileSize(file.size);
+
+                fileItem.innerHTML = `
+                    <div class="file-icon">
+                        <i class="fas ${icon}"></i>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-size">${size}</div>
+                    </div>
+                    <div class="remove-file" onclick="removeFile(${index})">
+                        <i class="fas fa-times"></i>
+                    </div>
+                `;
+
+                filesPreview.appendChild(fileItem);
+            });
+        }
+
+        window.removeFile = function(index) {
+            selectedFiles.splice(index, 1);
+            updateFilesPreview();
+            updateFileInput();
+        };
+
+        function updateFileInput() {
+            if (selectedFiles.length === 0) {
+                fileInput.value = '';
+                return;
+            }
+
+            const dt = new DataTransfer();
+            selectedFiles.forEach(file => dt.items.add(file));
+            fileInput.files = dt.files;
+
+            // Отладочная информация
+            console.log('Updated fileInput.files:', fileInput.files.length, 'files');
+        }
+
+        function getFileIcon(fileName) {
+            const extension = fileName.split('.').pop().toLowerCase();
+            switch (extension) {
+                case 'pdf': return 'fa-file-pdf';
+                case 'doc':
+                case 'docx': return 'fa-file-word';
+                case 'xls':
+                case 'xlsx': return 'fa-file-excel';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'fa-file-image';
+                default: return 'fa-file';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+    }
+
+    // Валидация формы перед отправкой
+    const form = document.querySelector('.modern-issue-form');
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            const hasSubject = subjectInput && subjectInput.value.trim().length > 0;
+            const hasDescription = descriptionInput && descriptionInput.value.trim().length > 0;
+
+            // Отладочная информация о файлах
+            console.log('Form submission - fileInput.files:', fileInput.files.length);
+            console.log('Form submission - selectedFiles:', selectedFiles.length);
+
+            if (!hasSubject || !hasDescription) {
+                e.preventDefault();
+
+                if (!hasSubject) {
+                    subjectInput.focus();
+                    subjectInput.style.borderColor = '#ef4444';
+                }
+                if (!hasDescription) {
+                    descriptionInput.style.borderColor = '#ef4444';
+                }
+
+                showNotification('Пожалуйста, заполните все обязательные поля', 'error');
+                return false;
+            }
+
+            // Показываем индикатор загрузки
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Создание заявки...';
+            submitBtn.disabled = true;
+        });
+    }
+
+    // Функция показа уведомлений
+    function showNotification(message, type = 'info') {
+        const notification = document.createElement('div');
+        notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show position-fixed`;
+        notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+        notification.innerHTML = `
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+
+    // Убираем красную рамку при вводе текста
+    if (subjectInput) {
+        subjectInput.addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    }
+
+    if (descriptionInput) {
+        descriptionInput.addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    }
+});
+</script>
+{% endblock styles%}

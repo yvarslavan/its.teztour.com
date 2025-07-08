@@ -1,0 +1,1354 @@
+{% extends 'layout.html' %}
+{% block content %}
+<div class="notifications-page-wrapper">
+    <!-- Background Elements -->
+    <div class="background-shapes">
+        <div class="shape shape-1"></div>
+        <div class="shape shape-2"></div>
+        <div class="shape shape-3"></div>
+        <div class="shape shape-4"></div>
+    </div>
+
+    <div class="container notifications-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <div class="header-content">
+                <div class="title-section">
+                    <div class="icon-wrapper">
+                        <i class="fas fa-bell"></i>
+                        <div class="icon-glow"></div>
+                    </div>
+                    <div class="title-content">
+                        <h1 class="page-title">Уведомления</h1>
+                        <p class="page-subtitle">Все события по вашим заявкам и задачам</p>
+                    </div>
+                    {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
+                    <div class="header-actions">
+                        <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-form">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                            <button type="submit" class="clear-all-btn" id="clearAllBtn">
+                                <span class="btn-content">
+                                    <i class="fas fa-trash-alt"></i>
+                                    <span class="btn-text">Очистить все</span>
+                                </span>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Notifications Content -->
+        <div class="notifications-content">
+            {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
+                <div class="notifications-grid">
+
+                    <!-- Redmine Notifications -->
+                    {% for notification in combined_notifications.redmine_notifications_data %}
+                    <article class="notification-card redmine-task-card">
+                        <div class="card-header">
+                            <div class="notification-type">
+                                <div class="type-icon redmine-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div class="type-info">
+                                    <span class="type-title">
+                                        {% if notification.is_group_notification %}
+                                            Задача для группы
+                                        {% else %}
+                                            Новая задача
+                                        {% endif %}
+                                    </span>
+                                    <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
+                                </div>
+                            </div>
+                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="redmine" data-id="{{ notification.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="card-content">
+                             <a href="{{ notification.issue_url }}" class="issue-link" target="_blank">
+                                <div class="notification-message">
+                                    <p>
+                                        {% if notification.is_group_notification %}
+                                            В вашу группу <strong>{{ notification.group_name }}</strong> поступила задача
+                                        {% else %}
+                                            <i class="fas fa-star" style="color: #f59e0b;"></i> Вы назначены исполнителем по задаче
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                <div class="notification-subject">
+                                    <i class="fas fa-hashtag"></i>
+                                    <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
+                                </div>
+                            </a>
+                        </div>
+                    </article>
+                    {% endfor %}
+
+                    <!-- Status Change Notifications -->
+                    {% for notification in combined_notifications.notifications_data %}
+                    <article class="notification-card status-change-card">
+                        <div class="card-header">
+                            <div class="notification-type">
+                                <div class="type-icon status-icon">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </div>
+                                <div class="type-info">
+                                    <span class="type-title">Изменение статуса</span>
+                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
+                                </div>
+                            </div>
+                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="status" data-id="{{ notification.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+                        <div class="card-content">
+                            <div class="notification-message">
+                                <p>Статус заявки
+                                    <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
+                                        #{{ notification.issue_id }}
+                                    </a>
+                                    изменился
+                                </p>
+                                <div class="status-change">
+                                    <span class="status-old">{{ notification.old_status }}</span>
+                                    <i class="fas fa-arrow-right status-arrow"></i>
+                                    <span class="status-new">{{ notification.new_status }}</span>
+                                </div>
+                            </div>
+
+                        </div>
+                    </article>
+                    {% endfor %}
+
+                    <!-- Comment Notifications -->
+                    {% for notification in combined_notifications.notifications_add_notes_data %}
+                    <article class="notification-card comment-card">
+                        <div class="card-header">
+                            <div class="notification-type">
+                                <div class="type-icon comment-icon">
+                                    <i class="fas fa-comment"></i>
+                                </div>
+                                <div class="type-info">
+                                    <span class="type-title">Новый комментарий</span>
+                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
+                                </div>
+                            </div>
+                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="add_notes" data-id="{{ notification.id }}">
+                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <div class="card-content">
+                            <div class="notification-message">
+                                <p>В заявку
+                                    <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
+                                        #{{ notification.issue_id }}
+                                    </a>
+                                    добавлен новый комментарий
+                                </p>
+                            </div>
+                            <div class="comment-preview">
+                                {{ notification.notes | safe }}
+                            </div>
+
+                        </div>
+                    </article>
+                    {% endfor %}
+
+                </div>
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-bell-slash"></i>
+                        <div class="empty-icon-glow"></div>
+                    </div>
+                    <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+                    <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+    /* Import Modern Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+
+    /* CSS Custom Properties */
+    .notifications-page-wrapper {
+        /* TEZ TOUR Brand Colors */
+        --primary-50: #e0f7fa;
+        --primary-100: #b2ebf2;
+        --primary-200: #80deea;
+        --primary-300: #4dd0e1;
+        --primary-400: #26c6da;
+        --primary-500: #00798C;
+        --primary-600: #00696a;
+        --primary-700: #005f73;
+        --primary-800: #003440;
+        --primary-900: #001f26;
+
+        /* Status Colors */
+        --success: #10b981;
+        --success-bg: #ecfdf5;
+        --error: #ef4444;
+        --error-bg: #fef2f2;
+        --warning: #f59e0b;
+        --warning-bg: #fef3c7;
+        --info: #3b82f6;
+        --info-bg: #eff6ff;
+        --comment: #8b5cf6;
+        --comment-bg: #f3e8ff;
+
+        /* Surface Colors */
+        --surface-0: #ffffff;
+        --surface-1: #f8fafc;
+        --surface-2: #f1f5f9;
+        --surface-3: #e2e8f0;
+        --surface-glass: rgba(255, 255, 255, 0.95);
+        --surface-card: rgba(255, 255, 255, 0.9);
+
+        /* Text Colors */
+        --text-primary: #0f172a;
+        --text-secondary: #475569;
+        --text-muted: #64748b;
+        --text-disabled: #94a3b8;
+        --text-on-primary: #ffffff;
+
+        /* Border & Effects */
+        --border-light: #e2e8f0;
+        --border-medium: #cbd5e1;
+        --border-focus: var(--primary-500);
+
+        /* Shadows */
+        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
+        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
+
+        /* Spacing */
+        --spacing-xs: 0.25rem;
+        --spacing-sm: 0.5rem;
+        --spacing-md: 1rem;
+        --spacing-lg: 1.5rem;
+        --spacing-xl: 2rem;
+        --spacing-xxl: 3rem;
+
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-xxl: 24px;
+
+        /* Transitions */
+        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+        /* Typography */
+        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
+    }
+
+    /* Base Styles */
+    .notifications-page-wrapper {
+        font-family: var(--font-family-primary);
+        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
+        min-height: 100vh;
+        padding: var(--spacing-xl) 0;
+        position: relative;
+        overflow: hidden;
+    }
+
+    /* Background Shapes */
+    .background-shapes {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+    }
+
+    .shape {
+        position: absolute;
+        background: rgba(0, 121, 140, 0.05);
+        border-radius: 50%;
+        animation: float 15s ease-in-out infinite;
+    }
+
+    .shape-1 {
+        width: 400px;
+        height: 400px;
+        top: 10%;
+        left: -10%;
+        animation-delay: 0s;
+    }
+
+    .shape-2 {
+        width: 300px;
+        height: 300px;
+        top: 60%;
+        right: -5%;
+        animation-delay: 5s;
+    }
+
+    .shape-3 {
+        width: 250px;
+        height: 250px;
+        bottom: 10%;
+        left: 20%;
+        animation-delay: 10s;
+    }
+
+    .shape-4 {
+        width: 200px;
+        height: 200px;
+        top: 30%;
+        right: 15%;
+        animation-delay: 15s;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-30px) rotate(5deg); }
+        66% { transform: translateY(15px) rotate(-5deg); }
+    }
+
+    /* Container */
+    .notifications-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+        padding: 0 var(--spacing-lg);
+    }
+
+    /* Page Header */
+    .page-header {
+        background: var(--surface-glass);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xxl);
+        box-shadow: var(--shadow-header);
+        padding: var(--spacing-xl) var(--spacing-xxl);
+        margin-bottom: var(--spacing-xxl);
+        animation: slideDown 0.8s ease-out;
+    }
+
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .header-content {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xl);
+        flex-wrap: wrap;
+    }
+
+    .title-section {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-lg);
+        flex: 1;
+    }
+
+    .icon-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #fbbf24, #f59e0b);
+        border-radius: var(--radius-xl);
+        color: var(--text-on-primary);
+        font-size: 1.75rem;
+        box-shadow: var(--shadow-2);
+        z-index: 2;
+    }
+
+    .icon-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: pulse 3s ease-in-out infinite;
+        z-index: 1;
+    }
+
+    @keyframes pulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
+        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
+    }
+
+    .title-content {
+        flex: 1;
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-xs);
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+    }
+
+    .page-subtitle {
+        font-size: 1.125rem;
+        color: var(--text-secondary);
+        margin: 0;
+        font-weight: 400;
+    }
+
+    .header-actions {
+        display: flex;
+        align-items: center;
+    }
+
+    .clear-all-btn {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md) var(--spacing-lg);
+        background: linear-gradient(135deg, var(--error), #dc2626);
+        border: none;
+        border-radius: var(--radius-lg);
+        color: var(--text-on-primary);
+        font-weight: 600;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-1);
+        position: relative;
+        min-width: 140px;
+        justify-content: center;
+    }
+
+    .clear-all-btn:hover:not(:disabled) {
+        background: linear-gradient(135deg, #dc2626, #b91c1c);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }
+
+    .clear-all-btn:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+
+    .btn-content,
+    .btn-spinner {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+    }
+
+    .btn-spinner .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* Notifications Content */
+    .notifications-content {
+        animation: fadeInUp 0.8s ease-out 0.2s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .notifications-grid {
+        display: grid;
+        gap: var(--spacing-lg);
+    }
+
+    /* Notification Cards */
+    .notification-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        transition: all var(--transition-normal);
+        animation: slideInCard 0.6s ease-out;
+    }
+
+    @keyframes slideInCard {
+        from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+    }
+
+    .notification-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-3);
+    }
+
+    .status-change-card {
+        border-left: 4px solid var(--info);
+    }
+
+    .comment-card {
+        border-left: 4px solid var(--comment);
+    }
+
+    /* Card Header */
+    .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-lg) var(--spacing-xl);
+        background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .status-change-card .card-header {
+        background: linear-gradient(135deg, var(--info-bg), var(--surface-1));
+    }
+
+    .comment-card .card-header {
+        background: linear-gradient(135deg, var(--comment-bg), var(--surface-1));
+    }
+
+    .notification-type {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .type-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 45px;
+        height: 45px;
+        border-radius: var(--radius-lg);
+        font-size: 1.25rem;
+        box-shadow: var(--shadow-1);
+    }
+
+    .status-icon {
+        background: linear-gradient(135deg, var(--info), #2563eb);
+        color: white;
+    }
+
+    .comment-icon {
+        background: linear-gradient(135deg, var(--comment), #7c3aed);
+        color: white;
+    }
+
+    .type-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .type-title {
+        font-size: 1.125rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .notification-time {
+        font-size: 0.875rem;
+        color: var(--text-muted);
+        font-family: var(--font-family-mono);
+    }
+
+    .delete-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        background: none;
+        border: none;
+        border-radius: var(--radius-lg);
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+
+    .delete-btn:hover {
+        background: var(--error-bg);
+        color: var(--error);
+        transform: scale(1.1);
+    }
+
+    /* Card Content */
+    .card-content {
+        padding: var(--spacing-xl);
+    }
+
+    .notification-message {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .notification-message p {
+        font-size: 1rem;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+        line-height: 1.6;
+    }
+
+    .issue-link {
+        color: var(--primary-500);
+        text-decoration: none;
+        font-weight: 600;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        background: var(--primary-50);
+        border-radius: var(--radius-sm);
+        transition: all var(--transition-normal);
+    }
+
+    .issue-link:hover {
+        color: var(--primary-700);
+        background: var(--primary-100);
+        text-decoration: none;
+    }
+
+    .status-change {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        margin-top: var(--spacing-md);
+    }
+
+    .status-old {
+        padding: var(--spacing-xs) var(--spacing-md);
+        background: var(--surface-3);
+        color: var(--text-muted);
+        border-radius: var(--radius-md);
+        text-decoration: line-through;
+        font-weight: 500;
+    }
+
+    .status-arrow {
+        color: var(--text-muted);
+        font-size: 0.875rem;
+    }
+
+    .status-new {
+        padding: var(--spacing-xs) var(--spacing-md);
+        background: var(--success-bg);
+        color: var(--success);
+        border-radius: var(--radius-md);
+        font-weight: 600;
+    }
+
+    .notification-subject {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-md);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        border-left: 3px solid var(--primary-300);
+    }
+
+    .notification-subject i {
+        color: var(--primary-500);
+    }
+
+    /* Comment Preview */
+    .comment-preview {
+        margin-top: var(--spacing-lg);
+    }
+
+    .comment-text {
+        padding: var(--spacing-lg);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        border-left: 3px solid var(--comment);
+        line-height: 1.6;
+        color: var(--text-primary);
+        position: relative;
+    }
+
+    .read-more-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        margin-top: var(--spacing-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        background: var(--comment-bg);
+        color: var(--comment);
+        border: none;
+        border-radius: var(--radius-md);
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+    }
+
+    .read-more-btn:hover {
+        background: var(--comment);
+        color: white;
+        transform: translateY(-1px);
+    }
+
+    /* Empty State */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: var(--spacing-xxl) var(--spacing-xl);
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xxl);
+        box-shadow: var(--shadow-card);
+        text-align: center;
+        animation: fadeIn 0.8s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+    }
+
+    .empty-icon {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 120px;
+        height: 120px;
+        background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
+        border-radius: 50%;
+        margin-bottom: var(--spacing-xl);
+        font-size: 3rem;
+        color: var(--text-muted);
+    }
+
+    .empty-icon-glow {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 130%;
+        height: 130%;
+        background: radial-gradient(circle, rgba(100, 116, 139, 0.2) 0%, transparent 70%);
+        border-radius: 50%;
+        transform: translate(-50%, -50%);
+        animation: emptyPulse 4s ease-in-out infinite;
+    }
+
+    @keyframes emptyPulse {
+        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
+        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+    }
+
+    .empty-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .empty-subtitle {
+        font-size: 1rem;
+        color: var(--text-secondary);
+        margin: 0;
+        max-width: 400px;
+    }
+
+    /* Animations for removal */
+    .notification-card.removing {
+        animation: slideOutRight 0.5s ease-in forwards;
+    }
+
+    @keyframes slideOutRight {
+        from {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+        }
+        to {
+            opacity: 0;
+            transform: translateX(100px) scale(0.8);
+        }
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .notifications-container {
+            padding: 0 var(--spacing-md);
+        }
+
+        .page-header {
+            padding: var(--spacing-lg) var(--spacing-xl);
+        }
+
+        .header-content {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-lg);
+        }
+
+        .title-section {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-md);
+        }
+
+        .page-title {
+            font-size: 2rem;
+        }
+
+        .card-header {
+            padding: var(--spacing-md) var(--spacing-lg);
+        }
+
+        .card-content {
+            padding: var(--spacing-lg);
+        }
+
+        .status-change {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .page-title {
+            font-size: 1.75rem;
+        }
+
+        .icon-wrapper {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .card-header {
+            padding: var(--spacing-md);
+        }
+
+        .card-content {
+            padding: var(--spacing-md);
+        }
+    }
+
+    .notification-card.redmine-task-card {
+        border-left: 5px solid var(--warning);
+    }
+    .type-icon.redmine-icon {
+        background: linear-gradient(135deg, var(--warning), #f9c55d);
+    }
+    .notification-card .issue-link {
+        text-decoration: none;
+        color: var(--primary-700);
+        font-weight: 600;
+        transition: color var(--transition-fast);
+    }
+    .notification-card .issue-link:hover {
+        color: var(--primary-500);
+        text-decoration: underline;
+    }
+    .card-content a {
+        text-decoration: none;
+        color: inherit;
+        display: block;
+    }
+
+    /* === Стили для кнопок действий === */
+    .notification-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-lg);
+        padding-top: var(--spacing-md);
+        border-top: 1px solid var(--border-light);
+    }
+
+    .notification-action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: var(--spacing-sm) var(--spacing-md);
+        border: 1px solid var(--border-medium);
+        border-radius: var(--radius-md);
+        background: var(--surface-0);
+        color: var(--text-secondary);
+        text-decoration: none;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all var(--transition-normal);
+        white-space: nowrap;
+    }
+
+    .notification-action-btn:hover {
+        background: var(--primary-50);
+        color: var(--primary-600);
+        border-color: var(--primary-300);
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-1);
+    }
+
+    .notification-action-btn i {
+        font-size: 0.75rem;
+    }
+
+    .mark-read-btn:hover {
+        background: var(--success-bg);
+        color: var(--success);
+        border-color: var(--success);
+    }
+
+    .redmine-link-btn:hover {
+        background: var(--info-bg);
+        color: var(--info);
+        border-color: var(--info);
+    }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteForms = document.querySelectorAll('.delete-form');
+
+    deleteForms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const card = this.closest('.notification-card');
+            const formData = new FormData(this);
+            const deleteBtn = this.querySelector('.delete-btn');
+            let csrfToken = formData.get('csrf_token');
+
+            // Если токен не найден в форме, попробуем получить из meta тега
+            if (!csrfToken) {
+                const metaToken = document.querySelector('meta[name="csrf-token"]');
+                if (metaToken) {
+                    csrfToken = metaToken.getAttribute('content');
+                }
+            }
+
+            // Отладочная информация
+            console.log('CSRF Token from form:', formData.get('csrf_token'));
+            console.log('CSRF Token final:', csrfToken);
+            console.log('Form action:', this.action);
+            console.log('Form data entries:', [...formData.entries()]);
+
+            // Показываем индикатор загрузки
+            const originalIcon = deleteBtn.innerHTML;
+            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            deleteBtn.disabled = true;
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return response.json();
+                } else {
+                    // Fallback: если не JSON, считаем что успешно
+                    return { success: true };
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    // Показываем уведомление об успешном удалении
+                    showNotification('Уведомление успешно удалено', 'success');
+
+                    /* === Синхронизируем глобальный бейдж === */
+                    try {
+                        const badgeEl = document.getElementById('notification-badge');
+                        const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
+                        const current = isNaN(raw) ? 0 : raw;
+                        const newCount = Math.max(0, current - 1);
+                        if (window.refreshNotificationBadge) {
+                            window.refreshNotificationBadge(newCount);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot refresh notification badge:', err);
+                    }
+
+                    // Добавляем класс для анимации удаления
+                    card.classList.add('removing');
+
+                    // Удаляем карточку после завершения анимации
+                    setTimeout(() => {
+                        card.remove();
+
+                        // Проверяем, есть ли еще уведомления
+                        const remainingCards = document.querySelectorAll('.notification-card');
+                        if (remainingCards.length === 0) {
+                            // Если уведомлений больше нет, показываем пустое состояние
+                            const notificationsGrid = document.querySelector('.notifications-grid');
+                            if (notificationsGrid) {
+                                notificationsGrid.innerHTML = `
+                                    <div class="empty-state">
+                                        <div class="empty-icon">
+                                            <i class="fas fa-bell-slash"></i>
+                                            <div class="empty-icon-glow"></div>
+                                        </div>
+                                        <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+                                        <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
+                                    </div>
+                                `;
+                            }
+
+                            /* === Обновляем глобальный бейдж до 0 === */
+                            try {
+                                if (window.refreshNotificationBadge) {
+                                    window.refreshNotificationBadge(0);
+                                }
+                            } catch (err) {
+                                console.warn('Cannot refresh notification badge after clear:', err);
+                            }
+
+                            // Скрываем кнопку "Очистить все"
+                            const clearAllBtn = document.getElementById('clearAllBtn');
+                            if (clearAllBtn) {
+                                clearAllBtn.closest('.header-actions').style.display = 'none';
+                            }
+                        }
+                    }, 500);
+
+                } else if (data && data.error) {
+                    // Восстанавливаем кнопку и показываем ошибку
+                    deleteBtn.innerHTML = originalIcon;
+                    deleteBtn.disabled = false;
+
+                    // Показываем более красивое уведомление об ошибке
+                    showNotification('Ошибка: ' + data.error, 'error');
+                } else {
+                    throw new Error('Неожиданный ответ сервера');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления уведомления:', error);
+
+                // Восстанавливаем кнопку
+                deleteBtn.innerHTML = originalIcon;
+                deleteBtn.disabled = false;
+
+                showNotification('Произошла ошибка при удалении уведомления. Попробуйте еще раз.', 'error');
+            });
+        });
+    });
+
+    // === Обработчик кнопок "Прочитано" ===
+    const markReadButtons = document.querySelectorAll('.mark-read-btn');
+
+    markReadButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const notificationId = this.getAttribute('data-id');
+            const card = this.closest('.notification-card');
+
+            // Визуальная обратная связь
+            const originalContent = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
+            this.disabled = true;
+
+            // Здесь можно добавить AJAX-запрос для отметки как прочитанное
+            // Пока просто скрываем карточку
+            setTimeout(() => {
+                this.innerHTML = '<i class="fas fa-check"></i>Прочитано';
+                this.style.background = 'var(--success-bg)';
+                this.style.color = 'var(--success)';
+                this.style.borderColor = 'var(--success)';
+
+                // Через секунду скрываем карточку
+                setTimeout(() => {
+                    card.classList.add('removing');
+                    setTimeout(() => {
+                        card.remove();
+
+                        // Обновляем счётчик
+                        try {
+                            const badgeEl = document.getElementById('notification-badge');
+                            const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
+                            const current = isNaN(raw) ? 0 : raw;
+                            const newCount = Math.max(0, current - 1);
+                            if (window.refreshNotificationBadge) {
+                                window.refreshNotificationBadge(newCount);
+                            }
+                        } catch (err) {
+                            console.warn('Cannot refresh notification badge:', err);
+                        }
+                    }, 500);
+                }, 1000);
+            }, 800);
+        });
+    });
+
+    // Функция для показа красивых уведомлений
+    function showNotification(message, type = 'info') {
+        // Удаляем существующие уведомления
+        const existingNotifications = document.querySelectorAll('.toast-notification');
+        existingNotifications.forEach(notification => notification.remove());
+
+        // Создаем новое уведомление
+        const notification = document.createElement('div');
+        notification.className = `toast-notification toast-${type}`;
+
+        const iconMap = {
+            success: 'fas fa-check-circle',
+            error: 'fas fa-exclamation-circle',
+            warning: 'fas fa-exclamation-triangle',
+            info: 'fas fa-info-circle'
+        };
+
+        notification.innerHTML = `
+            <div class="toast-content">
+                <i class="${iconMap[type]} toast-icon"></i>
+                <span class="toast-message">${message}</span>
+                <button class="toast-close" onclick="this.parentElement.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+
+        // Добавляем стили для уведомления
+        if (!document.getElementById('toast-styles')) {
+            const style = document.createElement('style');
+            style.id = 'toast-styles';
+            style.textContent = `
+                .toast-notification {
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: white;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+                    z-index: 10000;
+                    animation: slideInRight 0.3s ease-out;
+                    border-left: 4px solid #3b82f6;
+                    max-width: 400px;
+                }
+
+                .toast-error {
+                    border-left-color: #ef4444;
+                }
+
+                .toast-success {
+                    border-left-color: #10b981;
+                }
+
+                .toast-warning {
+                    border-left-color: #f59e0b;
+                }
+
+                .toast-info .toast-icon {
+                    color: #3b82f6;
+                }
+
+                .toast-message {
+                    flex: 1;
+                    font-size: 14px;
+                    line-height: 1.4;
+                    color: #374151;
+                }
+
+                .toast-close {
+                    background: none;
+                    border: none;
+                    color: #9ca3af;
+                    cursor: pointer;
+                    padding: 4px;
+                    border-radius: 4px;
+                    transition: all 0.2s;
+                }
+
+                .toast-close:hover {
+                    background: #f3f4f6;
+                    color: #374151;
+                }
+
+                @keyframes slideInRight {
+                    from {
+                        transform: translateX(100%);
+                        opacity: 0;
+                    }
+                    to {
+                        transform: translateX(0);
+                        opacity: 1;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+
+        document.body.appendChild(notification);
+
+        // Автоматически удаляем уведомление через 5 секунд
+        setTimeout(() => {
+            if (notification.parentElement) {
+                notification.style.animation = 'slideInRight 0.3s ease-out reverse';
+                setTimeout(() => notification.remove(), 300);
+            }
+                 }, 5000);
+     }
+
+    // Обработчик для кнопки "Очистить все"
+    const clearAllBtn = document.getElementById('clearAllBtn');
+    if (clearAllBtn) {
+        const clearForm = clearAllBtn.closest('.clear-form');
+        clearForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            if (!confirm('Вы уверены, что хотите удалить ВСЕ уведомления? Это действие нельзя отменить.')) {
+                return;
+            }
+
+            const originalContent = clearAllBtn.innerHTML;
+            clearAllBtn.disabled = true;
+            clearAllBtn.innerHTML = '<span class="btn-content"><i class="fas fa-spinner fa-spin"></i><span class="btn-text">Удаление...</span></span>';
+
+            const formData = new FormData(this);
+            const csrfToken = formData.get('csrf_token');
+
+            fetch(this.action, {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const contentType = response.headers.get('content-type');
+                if (contentType && contentType.indexOf('application/json') !== -1) {
+                    return response.json();
+                } else {
+                    // Fallback: если не JSON, считаем что успешно
+                    return { success: true };
+                }
+            })
+            .then(data => {
+                if (data && data.success) {
+                    showNotification('✅ Все уведомления успешно удалены!', 'success');
+
+                    // Анимированно удаляем все карточки
+                    const cards = document.querySelectorAll('.notification-card');
+                    cards.forEach((card, index) => {
+                        setTimeout(() => {
+                            card.classList.add('removing');
+                            setTimeout(() => card.remove(), 500);
+                        }, index * 100); // Задержка для красивой анимации
+                    });
+
+                    /* === Обновляем глобальный бейдж до 0 === */
+                    try {
+                        if (window.refreshNotificationBadge) {
+                            window.refreshNotificationBadge(0);
+                        }
+                    } catch (err) {
+                        console.warn('Cannot refresh notification badge after clear:', err);
+                    }
+
+                    // Показываем пустое состояние после удаления всех карточек
+                    setTimeout(() => {
+                        const notificationsGrid = document.querySelector('.notifications-grid');
+                        if (notificationsGrid) {
+                            notificationsGrid.innerHTML = `
+                                <div class="empty-state">
+                                    <div class="empty-icon">
+                                        <i class="fas fa-bell-slash"></i>
+                                        <div class="empty-icon-glow"></div>
+                                    </div>
+                                    <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+                                    <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
+                                </div>
+                            `;
+                        }
+
+                        // Скрываем кнопку "Очистить все"
+                        clearAllBtn.closest('.header-actions').style.display = 'none';
+                    }, cards.length * 100 + 500);
+
+                } else if (data && data.error) {
+                    clearAllBtn.innerHTML = originalContent;
+                    clearAllBtn.disabled = false;
+                    showNotification('Ошибка: ' + data.error, 'error');
+                } else {
+                    throw new Error('Неожиданный ответ сервера');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка удаления всех уведомлений:', error);
+                clearAllBtn.innerHTML = originalContent;
+                clearAllBtn.disabled = false;
+                showNotification('Произошла ошибка при удалении уведомлений. Попробуйте еще раз.', 'error');
+            });
+        });
+    }
+});
+</script>
+{% endblock %}

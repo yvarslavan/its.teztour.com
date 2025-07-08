@@ -1,0 +1,1886 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+<div class="issues-page-container">
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-icon">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h3>Загрузка заявок...</h3>
+      <p>Подключение к системе HelpDesk</p>
+    </div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-ticket-alt"></i>
+    </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
+          <p class="page-subtitle">Управление и отслеживание ваших обращений в техническую поддержку</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://helpdesk.teztour.com" target="_blank" class="action-button secondary">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Перейти в Helpdesk</span>
+        </a>
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-plus"></i>
+          <span>Создать заявку</span>
+    </a>
+  </div>
+    </div>
+  </header>
+
+  <!-- Statistics Dashboard -->
+  <section class="stats-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-icon">
+          <i class="fas fa-list-alt"></i>
+    </div>
+        <div class="stat-content">
+          <span class="stat-value" id="totalIssues">-</span>
+          <span class="stat-label">Всего заявок</span>
+    </div>
+  </div>
+      <div class="stat-card open">
+        <div class="stat-icon">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="openIssues">-</span>
+          <span class="stat-label">Открытых</span>
+        </div>
+      </div>
+      <div class="stat-card progress">
+        <div class="stat-icon">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="inProgressIssues">-</span>
+          <span class="stat-label">В работе</span>
+        </div>
+      </div>
+      <div class="stat-card closed">
+        <div class="stat-icon">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="stat-content">
+          <span class="stat-value" id="closedIssues">-</span>
+          <span class="stat-label">Закрытых</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Panel -->
+  <section class="controls-panel">
+    <div class="controls-content">
+      <div class="filters-section">
+        <div class="filter-group">
+          <div class="filter-item">
+            <label class="filter-label">
+              <i class="fas fa-filter"></i>
+              Статус заявки
+            </label>
+            <div id="statusFilterContainer" class="filter-container">
+              <!-- Динамически заполняется JavaScript -->
+    </div>
+    </div>
+    </div>
+        <div class="search-section">
+          <label class="search-label">
+            <i class="fas fa-search"></i>
+            Быстрый поиск
+          </label>
+          <div id="searchBoxContainer" class="search-container">
+            <!-- Динамически заполняется JavaScript -->
+    </div>
+  </div>
+      </div>
+      <div class="display-options">
+        <div class="display-item">
+          <label class="display-label">Показать:</label>
+          <div id="lengthContainer" class="length-container">
+            <!-- Динамически заполняется JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Issues Table -->
+  <section class="issues-section">
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table id="issue" class="issues-table">
+    <thead>
+        <tr>
+              <th class="column-id">
+                <div class="column-header">
+                  <i class="fas fa-hashtag"></i>
+                  <span>ID</span>
+                </div>
+              </th>
+              <th class="column-date">
+                <div class="column-header">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>Обновлено</span>
+                </div>
+              </th>
+              <th class="column-subject">
+                <div class="column-header">
+                  <i class="fas fa-envelope"></i>
+                  <span>Тема заявки</span>
+                </div>
+              </th>
+              <th class="column-status">
+                <div class="column-header">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Статус</span>
+                </div>
+              </th>
+        </tr>
+    </thead>
+    <tbody id="table-body">
+            <!-- Динамически заполняется JavaScript -->
+    </tbody>
+  </table>
+      </div>
+    </div>
+
+    <!-- Table Footer with Info and Pagination -->
+    <div class="table-footer">
+      <div class="table-info">
+        <div id="infoContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+      <div class="table-pagination">
+        <div id="paginationContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock main_page %}
+
+{% block styles %}
+<style>
+  /* Import Modern Fonts */
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+
+  /* CSS Custom Properties */
+  :root {
+    /* Primary Color Palette */
+    --primary-50: #e3f2fd;
+    --primary-100: #bbdefb;
+    --primary-200: #90caf9;
+    --primary-300: #64b5f6;
+    --primary-400: #42a5f5;
+    --primary-500: #2196f3;
+    --primary-600: #1e88e5;
+    --primary-700: #1976d2;
+    --primary-800: #1565c0;
+    --primary-900: #0d47a1;
+
+    /* Secondary Color Palette */
+    --secondary-50: #e8f5e8;
+    --secondary-100: #c8e6c9;
+    --secondary-200: #a5d6a7;
+    --secondary-300: #81c784;
+    --secondary-400: #66bb6a;
+    --secondary-500: #4caf50;
+    --secondary-600: #43a047;
+    --secondary-700: #388e3c;
+    --secondary-800: #2e7d32;
+    --secondary-900: #1b5e20;
+
+    /* Status Colors */
+    --status-open: #2196f3;
+    --status-open-bg: #e3f2fd;
+    --status-progress: #ff9800;
+    --status-progress-bg: #fff3e0;
+    --status-closed: #4caf50;
+    --status-closed-bg: #e8f5e8;
+    --status-clarification: #9c27b0;
+    --status-clarification-bg: #f3e5f5;
+    --status-approval: #607d8b;
+    --status-approval-bg: #eceff1;
+    --status-rejected: #f44336;
+    --status-rejected-bg: #ffebee;
+
+    /* Surface Colors */
+    --surface-0: #ffffff;
+    --surface-1: #f8f9fa;
+    --surface-2: #e9ecef;
+    --surface-3: #dee2e6;
+    --surface-4: #ced4da;
+    --surface-5: #adb5bd;
+
+    /* Text Colors */
+    --text-primary: #212529;
+    --text-secondary: #6c757d;
+    --text-muted: #868e96;
+    --text-disabled: #adb5bd;
+    --text-on-primary: #ffffff;
+    --text-on-surface: #212529;
+
+    /* Border & Divider */
+    --border-light: #e9ecef;
+    --border-medium: #dee2e6;
+    --border-dark: #adb5bd;
+    --divider: #e9ecef;
+
+    /* Shadows */
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    --shadow-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
+    --shadow-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+    /* Spacing System */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-xxl: 3rem;      /* 48px */
+    --spacing-xxxl: 4rem;     /* 64px */
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Typography */
+    --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --font-family-secondary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+    /* Container Widths */
+    --container-max-width: 1400px;
+    --container-padding: var(--spacing-lg);
+
+    /* === Table Header Background Color Customization === */
+    --table-header-bg: #e9f5ff; /* основной фон */
+    --table-header-bg-mobile: #d0eaff; /* фон для мобильных */
+    --table-header-text: #0d47a1;
+    /* === End Customization Section === */
+  }
+
+  /* Base Styles */
+  .issues-page-container {
+    max-width: var(--container-max-width);
+    margin: 0 auto;
+    padding: var(--container-padding);
+    font-family: var(--font-family-primary);
+    line-height: 1.6;
+    color: var(--text-primary);
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+  }
+
+  /* Loading Overlay */
+  .loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .loading-content {
+    text-align: center;
+    color: var(--text-primary);
+    background: var(--surface-0);
+    padding: var(--spacing-xl);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+    border: 1px solid var(--border-light);
+  }
+
+  .spinner-icon {
+    font-size: 4rem;
+    color: var(--primary-600);
+    margin-bottom: var(--spacing-lg);
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loading-content h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+  }
+
+  .loading-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  /* Page Header */
+  .page-header {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-700), var(--secondary-500));
+  }
+
+  .header-content {
+    padding: var(--spacing-xl);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--spacing-lg);
+  }
+
+  .header-main {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex: 1;
+  }
+
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 64px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+    color: var(--text-on-primary);
+    border-radius: var(--radius-xl);
+    font-size: 1.75rem;
+    box-shadow: var(--shadow-2);
+  }
+
+  .header-text {
+    flex: 1;
+  }
+
+  .page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+    letter-spacing: -0.025em;
+  }
+
+  .page-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: var(--spacing-md);
+    align-items: center;
+  }
+
+  .action-button {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-normal);
+    border: none;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+
+  .action-button.primary {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-2);
+  }
+
+  .action-button.primary:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+    color: var(--text-on-primary);
+    text-decoration: none;
+  }
+
+  .action-button.secondary {
+    background: var(--surface-1);
+    color: var(--text-primary);
+    border: 1px solid var(--border-medium);
+  }
+
+  .action-button.secondary:hover {
+    background: var(--surface-2);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  /* Statistics Dashboard */
+  .stats-dashboard {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--spacing-lg);
+    align-items: stretch;
+  }
+
+  .stat-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-2);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    transition: all var(--transition-normal);
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+    min-height: 100px;
+    height: 100%;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 100px;
+    height: 100px;
+    background: linear-gradient(135deg, currentColor 0%, transparent 70%);
+    opacity: 0.05;
+    border-radius: 50%;
+    transform: translate(30px, -30px);
+  }
+
+  .stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-3);
+  }
+
+  .stat-card.total {
+    border-left-color: var(--primary-500);
+    color: var(--primary-500);
+  }
+
+  .stat-card.open {
+    border-left-color: var(--status-open);
+    color: var(--status-open);
+  }
+
+  .stat-card.progress {
+    border-left-color: var(--status-progress);
+    color: var(--status-progress);
+  }
+
+  .stat-card.closed {
+    border-left-color: var(--status-closed);
+    color: var(--status-closed);
+  }
+
+  .stat-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: currentColor;
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    opacity: 0.9;
+    flex-shrink: 0;
+  }
+
+  .stat-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    flex: 1;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+  }
+
+  /* Controls Panel */
+  .controls-panel {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+  }
+
+  .controls-content {
+    padding: var(--spacing-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+  }
+
+  .filters-section {
+    display: flex;
+    gap: var(--spacing-xl);
+    align-items: flex-end;
+    flex: 1;
+  }
+
+  .filter-group {
+    display: flex;
+    gap: var(--spacing-lg);
+    align-items: flex-end;
+  }
+
+  .filter-item,
+  .search-section,
+  .display-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .filter-label,
+  .search-label,
+  .display-label {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  .filter-container select,
+  .search-container input,
+  .length-container select {
+    min-width: 200px;
+    padding: var(--spacing-md);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast);
+  }
+
+  .filter-container select:focus,
+  .search-container input:focus,
+  .length-container select:focus {
+    outline: none;
+    border-color: var(--primary-500);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  .search-container input {
+    min-width: 300px;
+  }
+
+  .search-container input::placeholder {
+    color: var(--text-muted);
+  }
+
+  .display-options {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  .length-container select {
+    min-width: 120px;
+  }
+
+  /* Issues Section */
+  .issues-section {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  /* Table Container */
+  .table-container {
+    overflow: hidden;
+  }
+
+  .table-wrapper {
+    overflow-x: auto;
+    position: relative;
+  }
+
+  /* Issues Table */
+  .issues-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    background: var(--surface-0);
+    font-size: 0.875rem;
+  }
+
+  .issues-table thead {
+    background: var(--table-header-bg);
+  }
+
+  .issues-table th {
+    font-size: 0.75rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: var(--table-header-text);
+    border-bottom: 2px solid var(--primary-200);
+  }
+
+  /* Скругляем углы первой и последней ячейки */
+  .issues-table th:first-child {
+    border-top-left-radius: var(--radius-lg);
+  }
+  .issues-table th:last-child {
+    border-top-right-radius: var(--radius-lg);
+  }
+
+  /* Уточняем цвет иконок в шапке */
+  .column-header i {
+    color: var(--primary-600);
+  }
+
+  .issues-table td {
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    vertical-align: middle;
+    color: var(--text-primary);
+  }
+
+  .issues-table tbody tr {
+    transition: all var(--transition-fast);
+    background: var(--surface-0);
+  }
+
+  .issues-table tbody tr:hover {
+    background: var(--surface-1);
+    transform: translateX(4px);
+    box-shadow: inset 4px 0 0 var(--primary-500);
+  }
+
+  /* Column Specific Styles */
+  .column-id {
+    width: 120px;
+  }
+
+  .column-date {
+    width: 140px;
+  }
+
+  .column-subject {
+    width: auto;
+    min-width: 300px;
+  }
+
+  .column-status {
+    width: 180px;
+  }
+
+  /* Issue ID Link */
+  .issue-id-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--primary-600);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-sm);
+  }
+
+  .issue-id-link:hover {
+    color: var(--primary-700);
+    background: var(--primary-50);
+    text-decoration: none;
+    transform: translateX(2px);
+  }
+
+  .issue-id-link i {
+    font-size: 0.75rem;
+    opacity: 0.7;
+  }
+
+  /* Issue Subject */
+  .issue-subject {
+    font-weight: 500;
+    line-height: 1.4;
+    color: var(--text-primary);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* Status Styles */
+  .status-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    white-space: nowrap;
+    border: 1px solid transparent;
+  }
+
+  .status-icon {
+    font-size: 0.875rem;
+  }
+
+  /* Status Color Variants */
+  .status-open .status-badge {
+    background: var(--status-open-bg);
+    color: var(--status-open);
+    border-color: var(--status-open);
+  }
+
+  .status-progress .status-badge {
+    background: var(--status-progress-bg);
+    color: var(--status-progress);
+    border-color: var(--status-progress);
+  }
+
+  .status-closed .status-badge {
+    background: var(--status-closed-bg);
+    color: var(--status-closed);
+    border-color: var(--status-closed);
+  }
+
+  .status-clarification .status-badge {
+    background: var(--status-clarification-bg);
+    color: var(--status-clarification);
+    border-color: var(--status-clarification);
+  }
+
+  .status-approval .status-badge {
+    background: var(--status-approval-bg);
+    color: var(--status-approval);
+    border-color: var(--status-approval);
+  }
+
+  .status-rejected .status-badge {
+    background: var(--status-rejected-bg);
+    color: var(--status-rejected);
+    border-color: var(--status-rejected);
+  }
+
+  /* Row Status Colors */
+  .status-open {
+    border-left: 3px solid var(--status-open);
+  }
+
+  .status-progress {
+    border-left: 3px solid var(--status-progress);
+  }
+
+  .status-closed {
+    border-left: 3px solid var(--status-closed);
+  }
+
+  .status-clarification {
+    border-left: 3px solid var(--status-clarification);
+  }
+
+  .status-approval {
+    border-left: 3px solid var(--status-approval);
+  }
+
+  .status-rejected {
+    border-left: 3px solid var(--status-rejected);
+  }
+
+  /* Table Footer */
+  .table-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-top: 1px solid var(--border-light);
+    gap: var(--spacing-lg);
+    flex-wrap: wrap;
+    min-height: 60px;
+  }
+
+  .table-info {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    flex: 0 0 auto;
+    min-width: 200px;
+  }
+
+  .table-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-xs);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  /* DataTables Custom Styles */
+  .dataTables_wrapper {
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: var(--spacing-xs) var(--spacing-md);
+    margin: 0 2px;
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-0);
+    color: var(--text-primary);
+    text-decoration: none;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--primary-50);
+    border-color: var(--primary-500);
+    color: var(--primary-700);
+    transform: translateY(-1px);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500);
+    border-color: var(--primary-500);
+    color: var(--text-on-primary);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .ellipsis {
+    padding: 0 8px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+  }
+
+  /* Empty State */
+  .empty-state {
+    text-align: center;
+    padding: var(--spacing-xxxl);
+    color: var(--text-secondary);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    opacity: 0.5;
+  }
+
+  .empty-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+  }
+
+  .empty-state p {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1024px) {
+    .issues-page-container {
+      padding: var(--spacing-md);
+    }
+
+    .header-content {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-xl);
+    }
+
+    .controls-content {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-lg);
+    }
+
+    .filters-section {
+      flex-direction: column;
+      gap: var(--spacing-lg);
+    }
+
+    .filter-group {
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+  }
+
+  /* Промежуточные экраны планшетов */
+  @media (max-width: 992px) {
+    .dataTables_paginate .paginate_button {
+      min-width: 34px;
+      height: 34px;
+      font-size: 0.8rem;
+      padding: 5px 7px;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 5px 9px;
+      font-size: 0.75rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 1.5rem;
+    }
+
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-md);
+    }
+
+    .stat-card {
+      padding: var(--spacing-md);
+    }
+
+    .stat-value {
+      font-size: 1.5rem;
+    }
+
+    .header-actions {
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .action-button {
+      justify-content: center;
+      width: 100%;
+    }
+
+    .table-footer {
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-md);
+      align-items: center;
+      padding: var(--spacing-md);
+    }
+
+    .table-info {
+      order: 2;
+      min-width: auto;
+      text-align: center;
+    }
+
+    .table-pagination {
+      order: 1;
+      width: 100%;
+      justify-content: center;
+    }
+
+    .dataTables_paginate .paginate_button {
+      min-width: 32px;
+      height: 32px;
+      font-size: 0.75rem;
+      padding: 4px 6px;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 4px 8px;
+      font-size: 0.7rem;
+    }
+
+    /* Mobile Table Adjustments */
+    .column-subject {
+      max-width: 200px;
+    }
+
+    .issue-subject {
+      max-width: 180px;
+    }
+
+    .filter-container select,
+    .search-container input,
+    .length-container select {
+      min-width: 100%;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .header-icon {
+      width: 48px;
+      height: 48px;
+      font-size: 1.25rem;
+    }
+
+    .column-id,
+    .column-date {
+      width: auto;
+    }
+
+    .issues-table th,
+    .issues-table td {
+      padding: var(--spacing-md);
+      font-size: 0.8rem;
+    }
+
+    /* Компактная пагинация для очень маленьких экранов */
+    .dataTables_paginate {
+      gap: 2px;
+    }
+
+    .dataTables_paginate .paginate_button {
+      min-width: 28px;
+      height: 28px;
+      font-size: 0.7rem;
+      padding: 2px 4px;
+      margin: 0;
+    }
+
+    .dataTables_paginate .paginate_button.previous,
+    .dataTables_paginate .paginate_button.next {
+      padding: 2px 6px;
+      font-size: 0.65rem;
+    }
+
+    .dataTables_paginate .ellipsis {
+      padding: 0 4px;
+      font-size: 0.7rem;
+    }
+
+    .table-footer {
+      padding: var(--spacing-sm);
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .loading-overlay,
+    .header-actions,
+    .controls-panel,
+    .table-footer {
+      display: none !important;
+    }
+
+    .issues-page-container {
+      background: white !important;
+    }
+
+    .page-header,
+    .issues-section {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+    }
+  }
+
+  /* Accessibility Improvements */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Focus States */
+  .action-button:focus,
+  .filter-container select:focus,
+  .search-container input:focus,
+  .length-container select:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 2px;
+  }
+
+  .issue-id-link:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: 1px;
+  }
+
+  /* High Contrast Mode */
+  @media (prefers-contrast: high) {
+    :root {
+      --border-light: #000000;
+      --border-medium: #000000;
+      --text-secondary: #000000;
+  }
+  }
+
+  /* Оптимизированные стили для пагинации DataTables */
+  .dataTables_paginate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .dataTables_paginate .paginate_button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 36px;
+    height: 36px;
+    padding: 6px 8px;
+    margin: 1px;
+    border: 1px solid var(--border-light, #e2e8f0);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    font-size: 0.8rem;
+    font-weight: 500;
+    text-decoration: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
+    background: var(--surface-2, #f1f5f9);
+    border-color: var(--primary-300, #64b5f6);
+    transform: translateY(-1px);
+  }
+
+  .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500, #2196f3);
+    color: white;
+    border-color: var(--primary-500, #2196f3);
+    font-weight: 600;
+  }
+
+  .dataTables_paginate .paginate_button.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .dataTables_paginate .ellipsis {
+    padding: 0 6px;
+    color: var(--text-muted, #64748b);
+    font-weight: 500;
+    flex-shrink: 0;
+  }
+
+  /* Стили для информации о записях */
+  .dataTables_info {
+    color: var(--text-secondary, #475569);
+    font-size: 0.875rem;
+  }
+
+  /* Стили для селектора количества записей */
+  .dataTables_length select {
+    padding: 8px 12px;
+    border: 2px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    min-width: 80px;
+  }
+
+  .dataTables_length select:focus {
+    outline: none;
+    border-color: var(--primary-500, #2196f3);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  /* Стили для поиска */
+  .dataTables_filter input {
+    padding: 12px 16px;
+    border: 2px solid var(--border-light, #e2e8f0);
+    border-radius: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--surface-0, #ffffff);
+    color: var(--text-primary, #0f172a);
+    min-width: 250px;
+  }
+
+  .dataTables_filter input:focus {
+    outline: none;
+    border-color: var(--primary-500, #2196f3);
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+  }
+
+  /* CSS анимации для появления строк таблицы */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  /* Стили для подсветки возвращаемых строк */
+  .highlight-return {
+    background-color: #e3f2fd !important;
+    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
+    transition: all 0.8s ease;
+  }
+
+  .highlight-return td {
+    border-left: 4px solid #2196f3 !important;
+  }
+
+  @keyframes fadeHighlight {
+    0% { background-color: #e3f2fd; }
+    100% { background-color: transparent; }
+  }
+
+  .highlight-return.fade-out {
+    animation: fadeHighlight 2s ease-out forwards;
+  }
+
+  /* Дополнительные стили для пагинации */
+  .dataTables_wrapper .dataTables_paginate {
+    float: none !important;
+    text-align: center;
+    margin-top: 0 !important;
+    width: 100%;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    float: none !important;
+    display: inline-flex !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
+  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
+    min-width: auto;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Принудительное отображение пагинации */
+  .table-pagination {
+    min-height: 50px;
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .table-pagination .dataTables_paginate {
+    display: flex !important;
+    visibility: visible !important;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* === Responsive Table Header Color === */
+  @media (max-width: 600px) {
+    .issues-table thead {
+      background: var(--table-header-bg-mobile);
+    }
+  }
+  /* === End Responsive Table Header Color === */
+
+  /* === Стили шапки таблицы как на /tasks/my-tasks === */
+  .issues-table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #6b73ff 50%, #9644ff 75%, #667eea 100%) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+    padding: 1.25rem 1rem !important;
+    border-bottom: 4px solid #4f46e5 !important;
+    border-right: 1px solid rgba(255,255,255,0.2) !important;
+    position: relative !important;
+    vertical-align: middle !important;
+    transition: all 0.4s cubic-bezier(0.4,0,0.2,1) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 12px rgba(102,126,234,0.25) !important;
+  }
+  .issues-table thead th:last-child {
+    border-right: none !important;
+  }
+  .issues-table thead th:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 25%, #5b21b6 50%, #7c3aed 75%, #5a67d8 100%) !important;
+    color: #f8fafc !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 24px rgba(102,126,234,0.4), 0 4px 16px rgba(139,92,246,0.3) !important;
+    border-bottom-color: #3730a3 !important;
+  }
+  /* === END === */
+
+  .issue-subject-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: var(--primary-700);
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s, background 0.2s;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+  }
+  .issue-subject-link:hover {
+    color: var(--primary-900);
+    background: var(--primary-50);
+    text-decoration: underline;
+  }
+  .issue-subject-link i {
+    font-size: 0.8em;
+    opacity: 0.7;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+$(document).ready(function() {
+    // Показываем спиннер перед отправкой запроса
+    $('#loading-spinner').show();
+
+    // Функция для определения стиля статуса
+    function getStatusStyle(statusName) {
+        let style = {
+            trClass: 'status-default',
+            iconClass: 'fas fa-question-circle',
+            tooltip: statusName,
+            statusTextClass: ''
+        };
+        const normalizedStatus = String(statusName).toLowerCase();
+
+        if (normalizedStatus.includes('закрыта') || normalizedStatus.includes('closed') || normalizedStatus.includes('resolved')) {
+            style.trClass = 'status-closed';
+            style.iconClass = 'fas fa-check-circle';
+            style.tooltip = 'Заявка успешно выполнена и закрыта';
+        } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
+            style.trClass = 'status-progress';
+            style.iconClass = 'fas fa-clock';
+            style.tooltip = 'Заявка находится в процессе выполнения';
+        } else if (normalizedStatus.includes('запрошено уточнение') || normalizedStatus.includes('clarification')) {
+            style.trClass = 'status-clarification';
+            style.iconClass = 'fas fa-exclamation-circle';
+            style.tooltip = 'Требуется ваше уточнение для продолжения работы';
+        } else if (normalizedStatus.includes('на согласовании') || normalizedStatus.includes('approval')) {
+            style.trClass = 'status-approval';
+            style.iconClass = 'fas fa-user-clock';
+            style.tooltip = 'Заявка ожидает согласования';
+        } else if (normalizedStatus.includes('отклонена') || normalizedStatus.includes('rejected')) {
+            style.trClass = 'status-rejected';
+            style.iconClass = 'fas fa-times-circle';
+            style.tooltip = 'Заявка была отклонена';
+        } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
+            style.trClass = 'status-open';
+            style.iconClass = 'fas fa-folder-open';
+            style.tooltip = 'Заявка зарегистрирована и ожидает обработки';
+        }
+        return style;
+    }
+
+    // Функция форматирования даты
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) {
+            return 'Нет даты';
+        }
+        return date.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    }
+
+    // Функция инициализации данных таблицы с поддержкой кеша
+    function initializeTableData() {
+        const cacheKey = 'my_issues_data_v2';
+        const stateKey = 'my_issues_table_state_v2';
+        const cacheTimeKey = 'my_issues_cache_time_v2';
+        const cacheExpiry = 10 * 60 * 1000; // 10 минут
+
+        // Проверяем URL параметры
+        const urlParams = new URLSearchParams(window.location.search);
+        const useCached = urlParams.get('cached') === '1';
+        const fromIssueId = urlParams.get('from_issue');
+
+        // Попытка использовать кеш
+        if (useCached) {
+            const cachedData = sessionStorage.getItem(cacheKey);
+            const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
+            const cachedState = sessionStorage.getItem(stateKey);
+
+            if (cachedData && cacheTimestamp &&
+                (Date.now() - parseInt(cacheTimestamp)) < cacheExpiry) {
+                try {
+                    const response = JSON.parse(cachedData);
+                    const tableState = cachedState ? JSON.parse(cachedState) : null;
+
+                    console.log('📚 Используем кешированные данные');
+                    processTableData(response, tableState, fromIssueId);
+
+                    // Очищаем URL от параметров кеша
+                    window.history.replaceState({}, '', '/my-issues');
+                    return;
+                } catch (error) {
+                    console.warn('⚠️ Ошибка при использовании кеша:', error);
+                }
+            }
+        }
+
+        // Загрузка данных с сервера
+        console.log('🌐 Загружаем данные с сервера');
+        loadDataFromServer();
+    }
+
+    // AJAX запрос для получения данных с сервера
+    function loadDataFromServer() {
+        $.ajax({
+            url: '/get-my-issues',
+            method: 'GET',
+            crossDomain: true,
+            xhrFields: {
+                withCredentials: true
+            },
+            success: function(response) {
+                // Кешируем полученные данные
+                const cacheKey = 'my_issues_data_v2';
+                const cacheTimeKey = 'my_issues_cache_time_v2';
+
+                try {
+                    sessionStorage.setItem(cacheKey, JSON.stringify(response));
+                    sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+                    console.log('💾 Данные сохранены в кеш');
+                } catch (error) {
+                    console.warn('⚠️ Не удалось сохранить в кеш:', error);
+                }
+
+                // Обрабатываем данные
+                processTableData(response);
+            },
+            error: function(xhr, status, error) {
+                console.error('Error:', error);
+                $('#table-body').html(`
+                    <tr>
+                        <td colspan="4" class="empty-state">
+                            <i class="fas fa-exclamation-triangle" style="color: var(--status-rejected);"></i>
+                            <h3>Ошибка загрузки данных</h3>
+                            <p>Не удалось подключиться к системе HelpDesk</p>
+                            <button onclick="location.reload()" class="action-button primary">
+                                <i class="fas fa-refresh"></i>
+                                <span>Попробовать снова</span>
+                            </button>
+                        </td>
+                    </tr>
+                `);
+            },
+            complete: function() {
+                // Скрываем спиннер после завершения запроса
+                $('#loading-spinner').hide();
+            }
+        });
+    }
+
+    // Функция анимации чисел
+    function animateNumber(element, finalNumber) {
+        let currentNumber = 0;
+        const increment = finalNumber / 30; // 30 шагов анимации
+        const timer = setInterval(function() {
+            currentNumber += increment;
+            if (currentNumber >= finalNumber) {
+                currentNumber = finalNumber;
+                clearInterval(timer);
+            }
+            element.text(Math.floor(currentNumber));
+        }, 50);
+    }
+
+    // Функция обработки данных таблицы (общая для кеша и сервера)
+    function processTableData(response, savedState, fromIssueId) {
+        // Создаем фильтр статусов
+        let statusFilter = '<select id="status-filter" class="form-control">' +
+                         '<option value="">Все статусы</option>';
+
+        response.statuses.forEach(function(status) {
+            statusFilter += `<option value="${status.name}">${status.name}</option>`;
+        });
+
+        statusFilter += '</select>';
+        $('#statusFilterContainer').html(statusFilter);
+
+        // Подсчет и отображение статистики
+        let stats = {
+            total: response.issues.length,
+            open: 0,
+            inProgress: 0,
+            closed: 0
+        };
+
+        response.issues.forEach(function(issue) {
+            const normalizedStatus = String(issue.status_name).toLowerCase();
+            if (normalizedStatus.includes('закрыта') || normalizedStatus.includes('closed') || normalizedStatus.includes('resolved')) {
+                stats.closed++;
+            } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
+                stats.inProgress++;
+            } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
+                stats.open++;
+            }
+        });
+
+        // Обновляем статистику с анимацией
+        animateNumber($('#totalIssues'), stats.total);
+        animateNumber($('#openIssues'), stats.open);
+        animateNumber($('#inProgressIssues'), stats.inProgress);
+        animateNumber($('#closedIssues'), stats.closed);
+
+        // Заполняем таблицу данными
+        if (response.issues.length === 0) {
+            $('#table-body').html(`
+                <tr>
+                    <td colspan="4" class="empty-state">
+                        <i class="fas fa-inbox"></i>
+                        <h3>Заявки не найдены</h3>
+                        <p>У вас пока нет заявок в системе</p>
+                        <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
+                            <i class="fas fa-plus"></i>
+                            <span>Создать первую заявку</span>
+                        </a>
+                    </td>
+                </tr>
+            `);
+        } else {
+            let tableBody = '';
+            response.issues.forEach(function(issue) {
+                let statusInfo = getStatusStyle(issue.status_name);
+                tableBody += `
+                    <tr class="${statusInfo.trClass}">
+                        <td>
+                            <a href="/my-issues/${issue.id}" class="issue-id-link" title="Посмотреть детали заявки">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>#${issue.id}</span>
+                            </a>
+                        </td>
+                        <td data-sort="${issue.updated_on}">
+                            <span title="${new Date(issue.updated_on).toLocaleString('ru-RU')}">${formatDate(issue.updated_on)}</span>
+                        </td>
+                        <td>
+                            <a href="/my-issues/${issue.id}" class="issue-subject-link issue-subject" title="${issue.subject}">
+                                <i class="fas fa-external-link-alt"></i>
+                                <span>${issue.subject}</span>
+                            </a>
+                        </td>
+                        <td>
+                            <div class="status-cell">
+                                <div class="status-badge" title="${statusInfo.tooltip}">
+                                    <i class="${statusInfo.iconClass} status-icon"></i>
+                                    <span>${issue.status_name}</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            $('#table-body').html(tableBody);
+        }
+
+        // Инициализируем DataTables
+        let table = $('#issue').DataTable({
+            "language": {
+                "url": "/static/js/datatables/Russian.json"
+            },
+            "order": [[1, 'desc']],
+            "pageLength": 10,
+            "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
+            "pagingType": "full_numbers",
+            "columnDefs": [{
+                "targets": 1,
+                "type": "date",
+                "render": function(data, type, row) {
+                    if (type === 'display' || type === 'filter') {
+                        return formatDate(data);
+                    }
+                    return data;
+                }
+            }],
+            "dom": '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
+            "drawCallback": function(settings) {
+                // Добавляем анимацию появления строк
+                $('#table-body tr').each(function(index) {
+                    $(this).css('animation-delay', (index * 50) + 'ms');
+                    $(this).addClass('fade-in');
+                });
+            },
+            "initComplete": function () {
+                // Перемещаем элементы управления
+                $('.dataTables_filter').detach().appendTo('#searchBoxContainer');
+                $('#searchBoxContainer label').contents().filter(function(){
+                    return this.nodeType === 3;
+                }).remove();
+                $('#searchBoxContainer input[type="search"]').attr("placeholder", "Поиск по заявкам...");
+
+                $('.dataTables_length').detach().appendTo('#lengthContainer');
+                $('#lengthContainer label').contents().filter(function(){
+                    return this.nodeType === 3;
+                }).remove();
+
+                $('.dataTables_info').detach().appendTo('#infoContainer');
+                $('.dataTables_paginate').detach().appendTo('#paginationContainer');
+
+                // Принудительно показываем пагинацию
+                $('.dataTables_paginate').show();
+
+                // Отладочная информация
+                console.log('DataTables инициализирована');
+                console.log('Количество записей:', this.api().data().length);
+                console.log('Пагинация найдена:', $('.dataTables_paginate').length);
+
+                // Дополнительная проверка через небольшую задержку
+                setTimeout(function() {
+                    if ($('.dataTables_paginate').length === 0) {
+                        console.log('Пагинация не найдена, создаем вручную');
+                        $('#paginationContainer').html('<div class="dataTables_paginate paging_full_numbers"><span class="paginate_button previous disabled">Предыдущая</span><span class="paginate_button current">1</span><span class="paginate_button next disabled">Следующая</span></div>');
+                    }
+                    $('.dataTables_paginate').show();
+                }, 100);
+            },
+            "paging": true,
+            "info": true,
+            "searching": true,
+            "ordering": true
+        });
+
+        // Добавляем обработчик изменения фильтра статусов
+        $('#status-filter').on('change', function() {
+            let selectedStatus = $(this).val();
+            table.column(3).search(selectedStatus).draw();
+            saveTableState(table);
+        });
+
+        // Восстанавливаем состояние таблицы, если есть сохраненное
+        if (savedState) {
+            console.log('🔄 Восстанавливаем состояние таблицы:', savedState);
+            restoreTableState(table, savedState);
+        }
+
+        // Автоскролл к заявке, от которой вернулись (если указана)
+        if (fromIssueId) {
+            setTimeout(() => {
+                scrollToIssue(fromIssueId);
+            }, 500);
+        }
+
+        // Настройка автосохранения состояния при взаимодействии с таблицей
+        setupAutoSaveState(table);
+
+        // Скрываем спиннер после успешной обработки данных (при кешированном или серверном ответе)
+        $('#loading-spinner').hide();
+    }
+
+    // Функция сохранения состояния таблицы
+    function saveTableState(table) {
+        if (!table) return;
+
+        const stateKey = 'my_issues_table_state_v2';
+        const state = {
+            page: table.page(),
+            pageLength: table.page.len(),
+            order: table.order(),
+            search: table.search(),
+            statusFilter: $('#status-filter').val(),
+            timestamp: Date.now()
+        };
+
+        try {
+            sessionStorage.setItem(stateKey, JSON.stringify(state));
+            console.log('💾 Состояние таблицы сохранено');
+        } catch (error) {
+            console.warn('⚠️ Не удалось сохранить состояние таблицы:', error);
+        }
+    }
+
+    // Функция восстановления состояния таблицы
+    function restoreTableState(table, savedState) {
+        if (!table || !savedState) return;
+
+        try {
+            // Восстанавливаем фильтр статуса
+            if (savedState.statusFilter) {
+                $('#status-filter').val(savedState.statusFilter);
+                table.column(3).search(savedState.statusFilter);
+            }
+
+            // Восстанавливаем поиск
+            if (savedState.search) {
+                table.search(savedState.search);
+            }
+
+            // Восстанавливаем сортировку
+            if (savedState.order) {
+                table.order(savedState.order);
+            }
+
+            // Восстанавливаем размер страницы
+            if (savedState.pageLength) {
+                table.page.len(savedState.pageLength);
+            }
+
+            // Восстанавливаем номер страницы и перерисовываем
+            if (savedState.page !== undefined) {
+                table.page(savedState.page).draw(false);
+            } else {
+                table.draw(false);
+            }
+
+            console.log('✅ Состояние таблицы восстановлено');
+        } catch (error) {
+            console.warn('⚠️ Ошибка при восстановлении состояния:', error);
+            table.draw();
+        }
+    }
+
+    // Функция настройки автосохранения состояния
+    function setupAutoSaveState(table) {
+        if (!table) return;
+
+        // Сохраняем состояние при изменении страницы
+        table.on('page.dt', function() {
+            setTimeout(() => saveTableState(table), 100);
+        });
+
+        // Сохраняем состояние при изменении длины страницы
+        table.on('length.dt', function() {
+            setTimeout(() => saveTableState(table), 100);
+        });
+
+        // Сохраняем состояние при поиске
+        table.on('search.dt', function() {
+            setTimeout(() => saveTableState(table), 100);
+        });
+
+        // Сохраняем состояние при сортировке
+        table.on('order.dt', function() {
+            setTimeout(() => saveTableState(table), 100);
+        });
+    }
+
+    // Функция автоскролла к определенной заявке
+    function scrollToIssue(issueId) {
+        const issueLink = $(`a[href="/my-issues/${issueId}"]`);
+        if (issueLink.length > 0) {
+            // Плавный скролл к строке с подсветкой
+            const row = issueLink.closest('tr');
+            row.addClass('highlight-return');
+
+            $('html, body').animate({
+                scrollTop: row.offset().top - 100
+            }, 800, function() {
+                // Убираем подсветку через 3 секунды
+                setTimeout(() => {
+                    row.removeClass('highlight-return');
+                }, 3000);
+            });
+
+            console.log(`🎯 Скролл к заявке #${issueId}`);
+        }
+    }
+
+    // Запускаем инициализацию таблицы
+    initializeTableData();
+});
+</script>
+{% endblock %}

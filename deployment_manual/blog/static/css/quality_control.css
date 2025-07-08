@@ -1,0 +1,385 @@
+/* Основной контейнер */
+.quality-control-wrapper {
+    margin-top: -65px;
+    margin-bottom: 15px;
+    background: #fff;
+    height: calc(100vh - 70px);
+    display: flex;
+    flex-direction: column;
+    border-radius: 6px;
+    box-shadow: 0 0 0 1px #dee2e6;
+}
+
+/* Стили для навигационных вкладок */
+.nav-tabs {
+    padding: 8px 15px 0;
+    margin: 0;
+    background: #fff;
+    border: none;
+}
+
+.nav-tabs .nav-item {
+    margin-bottom: 0;
+}
+
+.nav-tabs .nav-link {
+    padding: 8px 16px;
+    color: #6c757d;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-bottom-color: transparent;
+    border-radius: 6px 6px 0 0;
+    margin-right: 4px;
+}
+
+.nav-tabs .nav-link.active {
+    color: #007bff;
+    background: #fff;
+    border-color: #dee2e6;
+    border-bottom-color: #fff;
+}
+
+/* Контейнер содержимого вкладки */
+.tab-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.tab-pane {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Контейнер для всего содержимого */
+.quality-control-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 250px);
+    padding: 20px;
+}
+
+/* Секция фильтров */
+.filters-section {
+    flex: 0 0 auto;
+    margin-bottom: 20px;
+}
+
+/* Стили для прогресс бара */
+.progress-wrapper {
+    margin: 20px 0;
+}
+
+.progress {
+    height: 4px;
+    background-color: #e2e8f0;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 100%;
+    background-color: #3b82f6;
+    transition: width 0.3s ease;
+}
+
+.progress-bar-striped {
+    background-image: linear-gradient(45deg,
+            rgba(255, 255, 255, 0.15) 25%,
+            transparent 25%,
+            transparent 50%,
+            rgba(255, 255, 255, 0.15) 50%,
+            rgba(255, 255, 255, 0.15) 75%,
+            transparent 75%,
+            transparent);
+    background-size: 1rem 1rem;
+}
+
+.progress-bar-animated {
+    animation: progress-bar-stripes 1s linear infinite;
+}
+
+@keyframes progress-bar-stripes {
+    from {
+        background-position: 1rem 0;
+    }
+
+    to {
+        background-position: 0 0;
+    }
+}
+
+/* Контейнер таблицы */
+.table-wrapper {
+    flex: 1;
+    min-height: 0;
+    /* Важно для работы прокрутки во flex-контейнере */
+    position: relative;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    margin-bottom: 40px;
+}
+
+/* Контейнер с прокруткой */
+.table-scroll {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+}
+
+/* Таблица */
+.table {
+    margin: 0;
+    width: 100%;
+}
+
+/* Заголовки таблицы */
+.table thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+    padding: 12px 16px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+/* Ячейки таблицы */
+.table tbody td {
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Стили для строк при наведении */
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Стили для кнопок */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: 36px;
+    min-width: 120px;
+    padding: 0 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: none;
+}
+
+.btn-primary {
+    background: #3b82f6;
+}
+
+.btn-primary:hover {
+    background: #2563eb;
+}
+
+.btn-success {
+    background: #10b981;
+}
+
+.btn-success:hover {
+    background: #059669;
+}
+
+/* Стили для форм */
+.form-control,
+.form-select {
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Анимации */
+.tab-pane.fade {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.3s ease;
+}
+
+.tab-pane.fade.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Стили для счетчика записей */
+.results-counter {
+    margin: 0 0 20px 0;
+    padding: 12px 16px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    color: #475569;
+}
+
+.counter-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.95rem;
+}
+
+.counter-content i {
+    color: #3b82f6;
+    font-size: 1.1rem;
+}
+
+.counter-content strong {
+    color: #1e40af;
+    font-weight: 600;
+}
+
+.classification-table {
+    margin-top: 20px;
+}
+
+.classification-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    text-align: center;
+}
+
+.classification-table td {
+    text-align: center;
+}
+
+.classification-table tfoot tr {
+    font-weight: bold;
+}
+
+.unclassified-info {
+    background-color: #f8f9fa;
+    padding: 15px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+}
+
+.unclassified-info span {
+    font-size: 1.1em;
+    color: #000;
+}
+
+/* Добавляем стиль для значений */
+.unclassified-info .value {
+    color: #dc3545;
+}
+
+/* Контейнер таблицы */
+.table-responsive {
+    position: relative;
+    max-height: 600px;
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+}
+
+/* Базовые стили для таблицы в отчете "Статистика объектов по курортам" */
+#resortTypesTable {
+    width: 100%;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+#resortTypesTable thead th {
+    background-color: #f8f9fa;
+    padding: 12px;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    text-align: center;
+}
+
+/* Выравнивание первой колонки (Курорт) по левому краю */
+#resortTypesTable th:first-child,
+#resortTypesTable td:first-child {
+    text-align: left;
+    padding-left: 15px;
+}
+
+#resortTypesTable tbody td {
+    padding: 10px;
+    border-bottom: 1px solid #dee2e6;
+    text-align: center;
+}
+
+#resortTypesTable tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+.resort-types-table-wrapper {
+    margin-top: 20px;
+    border: 1px solid #dee2e6;
+}
+
+/* Стили для скроллбара */
+.resort-types-table-wrapper::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.resort-types-table-wrapper::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 5px;
+}
+
+.resort-types-table-wrapper::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 5px;
+    border: 3px solid #f1f1f1;
+}
+
+.resort-types-table-wrapper::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.resort-link {
+    color: #0d6efd;
+    text-decoration: none;
+}
+
+.resort-link:hover {
+    text-decoration: underline;
+    color: #0a58ca;
+}
+
+.chart-container {
+    position: relative;
+    margin-top: 50px;
+    /* Увеличиваем отступ сверху */
+    margin-bottom: 50px;
+    padding: 20px;
+    clear: both;
+    /* Обеспечивает, что контейнер не перекрывается с элементами выше */
+    border-top: 1px solid #dee2e6;
+    /* Добавляем разделительную линию */
+    padding-top: 40px;
+    /* Дополнительный отступ от линии до графика */
+}
+
+/* Стили для контейнера графика */
+#classificationChartContainer {
+    margin-top: 80px;  /* Значительный отступ сверху */
+    padding-top: 30px;
+    border-top: 2px solid #dee2e6;
+    height: 400px;  /* Фиксированная высота для графика */
+    width: 100%;
+    position: relative;
+    clear: both;
+}
