@@ -679,6 +679,98 @@
   background-color: var(--tasks-email-bg-hover);
 }
 
+/* === ПОДСВЕТКА СТРОКИ ПРИ ВОЗВРАТЕ === */
+/* Используем более специфичные селекторы для увеличения приоритета */
+#tasksTable tbody tr.return-selected,
+.dataTable tbody tr.return-selected,
+table.dataTable tbody tr.return-selected {
+  background-color: var(--tasks-warning-light) !important;
+  border-left: 4px solid var(--tasks-warning) !important;
+  animation: highlightFadeIn 0.6s ease-out !important;
+  position: relative !important;
+}
+
+#tasksTable tbody tr.return-selected::before,
+.dataTable tbody tr.return-selected::before,
+table.dataTable tbody tr.return-selected::before {
+  content: "" !important;
+  position: absolute !important;
+  left: 0 !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  width: 4px !important;
+  background: linear-gradient(
+    to bottom,
+    var(--tasks-warning),
+    var(--tasks-warning-hover),
+    var(--tasks-warning)
+  ) !important;
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.4) !important;
+}
+
+#tasksTable tbody tr.return-selected:hover,
+.dataTable tbody tr.return-selected:hover,
+table.dataTable tbody tr.return-selected:hover {
+  background-color: var(--tasks-warning-light) !important;
+  transform: translateX(2px) !important;
+  transition: var(--tasks-transition-transform) !important;
+}
+
+/* Переопределяем любые стили DataTable */
+#tasksTable tbody tr.return-selected td,
+.dataTable tbody tr.return-selected td,
+table.dataTable tbody tr.return-selected td {
+  background-color: transparent !important;
+}
+
+/* Анимация появления подсветки */
+@keyframes highlightFadeIn {
+  0% {
+    background-color: var(--tasks-warning-hover) !important;
+    transform: scale(1.02) !important;
+  }
+  50% {
+    background-color: var(--tasks-warning) !important;
+    transform: scale(1.01) !important;
+  }
+  100% {
+    background-color: var(--tasks-warning-light) !important;
+    transform: scale(1) !important;
+  }
+}
+
+/* Темная тема для подсветки */
+@media (prefers-color-scheme: dark) {
+  #tasksTable tbody tr.return-selected,
+  .dataTable tbody tr.return-selected,
+  table.dataTable tbody tr.return-selected {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    border-left-color: var(--tasks-warning) !important;
+  }
+
+  #tasksTable tbody tr.return-selected:hover,
+  .dataTable tbody tr.return-selected:hover,
+  table.dataTable tbody tr.return-selected:hover {
+    background-color: rgba(245, 158, 11, 0.25) !important;
+  }
+}
+
+/* Уменьшенная анимация для пользователей с ограниченными возможностями */
+@media (prefers-reduced-motion: reduce) {
+  #tasksTable tbody tr.return-selected,
+  .dataTable tbody tr.return-selected,
+  table.dataTable tbody tr.return-selected {
+    animation: none !important;
+  }
+
+  @keyframes highlightFadeIn {
+    0%, 100% {
+      background-color: var(--tasks-warning-light) !important;
+      transform: scale(1) !important;
+    }
+  }
+}
+
 /**
  * Отладочные стили (только в development)
  */

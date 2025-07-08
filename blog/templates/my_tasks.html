@@ -12,6 +12,33 @@
     </div>
 </div>
 
+<script>
+// Инициализация состояния спиннера еще до загрузки MyTasksApp
+(function() {
+    const isReturn = sessionStorage.getItem('return_from_task_id') !== null;
+    const spinner = document.getElementById('loading-spinner');
+
+    console.log('🔄 Раннее определение состояния спиннера:', {
+        isReturn: isReturn,
+        returnId: sessionStorage.getItem('return_from_task_id')
+    });
+
+    if (isReturn) {
+        // При возврате оставляем спиннер скрытым
+        console.log('🔴 Возврат: спиннер остается скрытым');
+        if (spinner) {
+            spinner.classList.remove('show');
+        }
+    } else {
+        // При первой загрузке показываем спиннер
+        console.log('🟢 Первая загрузка: показываем спиннер');
+        if (spinner) {
+            spinner.classList.add('show');
+        }
+    }
+})();
+</script>
+
 <!-- Заголовок страницы -->
 <header class="page-header">
     <div class="header-content">
@@ -407,7 +434,8 @@
 
 /* Подсветка строки при возврате */
 tr.return-selected {
-  background: rgba(34, 197, 94, 0.20) !important;
+  background: rgba(249, 115, 22, 0.25) !important;
+  border-left: 4px solid #f97316 !important;
 }
 </style>
 
@@ -468,10 +496,6 @@ if (typeof jQuery === 'undefined') {
 // Функция инициализации с проверкой зависимостей
 function initializeMyTasksPage() {
     console.log('🚀 Инициализация страницы "Мои задачи"');
-    console.log('🔍 Проверка зависимостей...');
-    console.log('jQuery доступен:', typeof $ !== 'undefined');
-    console.log('DataTables доступен:', typeof $.fn.DataTable !== 'undefined');
-    console.log('MyTasksApp доступен:', typeof MyTasksApp !== 'undefined');
 
     if (typeof $ === 'undefined') {
         console.error('❌ jQuery не загружен');
@@ -485,45 +509,47 @@ function initializeMyTasksPage() {
         return;
     }
 
-    if (typeof MyTasksApp !== 'undefined') {
-        // Добавляем небольшую задержку для полной загрузки всех зависимостей
-        setTimeout(function() {
-            MyTasksApp.init();
-        }, 100);
+    if (typeof MyTasksApp === 'undefined') {
+        console.error('❌ MyTasksApp не загружен');
+        showError('MyTasksApp не загружен. Перезагрузите страницу.');
+        return;
+    }
+
+    // Очищаем sessionStorage только если это не возврат от детализации
+    // Проверяем, есть ли в URL параметр, указывающий на возврат
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReturnFromTask = urlParams.has('return') || document.referrer.includes('/tasks/');
+
+    if (!isReturnFromTask) {
+        // Это первоначальная загрузка - очищаем sessionStorage
+        sessionStorage.removeItem('return_from_task_id');
+        sessionStorage.removeItem('return_from_task_page');
+        console.log('🧹 Очищен sessionStorage (первоначальная загрузка)');
     } else {
-        console.error('❌ MyTasksApp не найден');
-        showError('Не удалось загрузить приложение задач.');
+        console.log('🔄 Возврат от детализации - сохраняем sessionStorage для подсветки');
     }
+
+    // Инициализация приложения
+    MyTasksApp.init();
 }
 
-// Функция показа ошибки
+// Функция для показа ошибок
 function showError(message) {
-    const loadingElement = document.getElementById('loading-overlay');
-    const errorElement = document.getElementById('error-state');
-    const errorMessageElement = document.getElementById('error-message');
-
-    if (loadingElement) loadingElement.style.display = 'none';
-
-    if (errorElement && errorMessageElement) {
-        errorMessageElement.textContent = message;
-        errorElement.style.display = 'block';
+    if (typeof showNotification === 'function') {
+        showNotification(message, 'error');
+    } else {
+        alert(message);
     }
 }
 
-// Инициализация при загрузке DOM
-document.addEventListener('DOMContentLoaded', function() {
-    // Даем время на загрузку всех скриптов
-    setTimeout(initializeMyTasksPage, 200);
-});
+$(document).ready(function() {
+    console.log('📄 DOM готов');
 
-// Резервная инициализация для случая если DOM уже загружен
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function() {
-        setTimeout(initializeMyTasksPage, 200);
-    });
-} else {
-    setTimeout(initializeMyTasksPage, 200);
-}
+    // Небольшая задержка для загрузки всех зависимостей
+    setTimeout(function() {
+        initializeMyTasksPage();
+    }, 100);
+});
 </script>
 
 <script>
@@ -533,17 +559,17 @@ $(document).ready(function() {
     // После инициализации DataTable
     $(document).on('datatables-initialized', function() {
         const returnId = sessionStorage.getItem('return_from_task_id');
-        if (returnId) {
+        if (returnId && returnId.trim() !== '' && !isNaN(returnId)) {
             // Найти строку с нужным ID
             const $row = $("#tasksTable tbody tr").filter(function() {
                 return $(this).find('.task-id-link').text().replace('#','') == returnId;
             });
-            if ($row.length) {
+            if ($row.length && $row.is(':visible')) {
                 $row.addClass('highlight-return');
-                // Плавно прокрутить
-                $('html, body').animate({
-                    scrollTop: $row.offset().top - 100
-                }, 800);
+                // ОТКЛЮЧЕНО: Автоматическая прокрутка к строке
+                // $('html, body').animate({
+                //     scrollTop: $row.offset().top - 100
+                // }, 800);
                 // Убрать выделение через 3 секунды
                 setTimeout(function() {
                     $row.removeClass('highlight-return');

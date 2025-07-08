@@ -220,16 +220,14 @@ def get_total_notification_count_for_page(user):
 # Использование в контекстном процессоре
 @main.context_processor
 def inject_notification_count():
-    count = get_total_notification_count(
-        g.current_user if hasattr(g, "current_user") else None
-    )
+    # ИЗМЕНЕНО: Теперь везде показываем все уведомления для согласованности
+    user = g.current_user if hasattr(g, "current_user") else None
+    count = get_total_notification_count_for_page(user)
 
-    # Для страницы /notifications добавляем счётчик всех уведомлений
+    # Для страницы /notifications тот же счётчик
     page_count = 0
     if request.endpoint == 'main.my_notifications':
-        page_count = get_total_notification_count_for_page(
-            g.current_user if hasattr(g, "current_user") else None
-        )
+        page_count = count  # Используем тот же счетчик
 
     return dict(count_notifications=count, count_notifications_page=page_count)
 
@@ -238,7 +236,9 @@ def inject_notification_count():
 @login_required
 def get_notification_count():
     try:
-        count = get_total_notification_count(current_user)
+        # ИЗМЕНЕНО: Используем get_total_notification_count_for_page для показа всех уведомлений
+        # чтобы красный счетчик был согласован со страницей /notifications
+        count = get_total_notification_count_for_page(current_user)
         return jsonify({"count": count})
     except Exception as e:
         logger.error(f"Error in get_notification_count: {str(e)}")
