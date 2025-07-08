@@ -1,0 +1,294 @@
+/**
+ * card_breakdown_styles.css - v1.0
+ * Стили для детализации карточек и кнопки "Развернуть все"
+ */
+
+/* Стили для глобальной кнопки "Развернуть все" */
+.global-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 16px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    color: #3b82f6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.global-toggle-btn:hover {
+    background: #f0f9ff;
+    border-color: #3b82f6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.2);
+}
+
+.global-toggle-btn.expanded-state {
+    background: #3b82f6;
+    color: white;
+}
+
+.global-toggle-btn.expanded-state:hover {
+    background: #2563eb;
+}
+
+.global-toggle-btn i {
+    transition: transform 0.3s ease;
+}
+
+.global-toggle-btn.expanded-state i {
+    transform: rotate(180deg);
+}
+
+/* Стили для кнопки переключения карточки */
+.card-toggle-btn {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.875rem;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+    color: #3b82f6;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 28px;
+    min-height: 28px;
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.card-toggle-btn:hover {
+    background: #3b82f6;
+    color: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.card-toggle-btn i {
+    transition: transform 0.3s ease;
+    display: inline-block;
+}
+
+.card-toggle-btn.expanded i {
+    transform: rotate(180deg);
+}
+
+/* Стили для детализации карточки */
+.card-breakdown {
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-top: 1px solid rgba(226, 232, 240, 0.5);
+    margin-top: 0.75rem;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.card-breakdown.collapsed {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+    margin-top: 0;
+    border-top: none;
+    transform: translateY(-10px);
+    pointer-events: none;
+    visibility: hidden;
+}
+
+.card-breakdown.expanded {
+    max-height: 150px;
+    opacity: 1;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+    transform: translateY(0);
+    overflow-y: auto;
+    pointer-events: auto;
+    visibility: visible;
+}
+
+/* Стили для списка статусов в детализации */
+.breakdown-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.breakdown-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    border-bottom: 1px dashed rgba(226, 232, 240, 0.7);
+    font-size: 13px;
+}
+
+.breakdown-item:last-child {
+    border-bottom: none;
+}
+
+.status-name {
+    color: #475569;
+    font-weight: 500;
+}
+
+.status-count {
+    background: #e2e8f0;
+    color: #334155;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    min-width: 24px;
+    text-align: center;
+}
+
+.empty-message {
+    color: #94a3b8;
+    font-style: italic;
+    font-size: 13px;
+    text-align: center;
+    margin: 0;
+    padding: 8px 0;
+}
+
+/* Стили для заголовка детальной разбивки */
+.breakdown-section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.breakdown-section-header h3 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #334155;
+    margin: 0;
+}
+
+.expand-breakdown-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #64748b;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.expand-breakdown-btn:hover {
+    background: #f1f5f9;
+    color: #334155;
+}
+
+.expand-breakdown-btn i {
+    transition: transform 0.3s ease;
+}
+
+.expand-breakdown-btn.expanded i {
+    transform: rotate(180deg);
+}
+
+/* Стили для детальной разбивки по статусам */
+.detailed-breakdown-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.detailed-breakdown-content.expanded {
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.status-items-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.status-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.status-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.status-item-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.status-item-name {
+    font-weight: 600;
+    color: #334155;
+    font-size: 14px;
+}
+
+.status-item-count {
+    background: #e2e8f0;
+    color: #334155;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.status-item-bar {
+    height: 6px;
+    background: #f1f5f9;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.status-item-progress {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    border-radius: 3px;
+}
+
+/* Адаптивные стили */
+@media (max-width: 768px) {
+    .status-items-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    }
+
+    .card-breakdown.expanded {
+        max-height: 200px;
+    }
+
+    .global-toggle-btn {
+        font-size: 12px;
+        padding: 6px 12px;
+    }
+
+    .card-toggle-btn {
+        min-width: 24px;
+        min-height: 24px;
+        padding: 6px;
+    }
+}

@@ -1,0 +1,557 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Основной спинер загрузки -->
+<div id="loading-spinner" class="loading-overlay">
+    <div class="loading-content">
+        <div class="spinner-icon">
+            <i class="fas fa-cog fa-spin"></i>
+        </div>
+        <h3>Загрузка задач...</h3>
+        <p>Подключение к системе Redmine и получение данных</p>
+    </div>
+</div>
+
+<!-- Заголовок страницы -->
+<header class="page-header">
+    <div class="header-content">
+        <div class="header-main">
+            <div class="header-icon">
+                <i class="fas fa-tasks"></i>
+            </div>
+            <div class="header-text">
+                <h1 class="page-title">Мои задачи в Redmine</h1>
+                <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <a href="https://helpdesk.teztour.com" class="action-button secondary" target="_blank">
+                <i class="fas fa-external-link-alt"></i>
+                <span>Перейти в Redmine</span>
+            </a>
+            <a href="{{ url_for('main.my_issues') }}" class="action-button primary">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Мои заявки</span>
+            </a>
+        </div>
+    </div>
+</header>
+
+<!-- Панель статистики (Status Breakdown Dashboard) -->
+<section class="status-breakdown-dashboard">
+    <div class="breakdown-header">
+        <div class="breakdown-title">
+            <i class="fas fa-chart-pie"></i>
+            <h2>Разбивка по статусам</h2>
+        </div>
+        <div class="breakdown-summary">
+            <span class="summary-value" id="total-tasks-summary">-</span>
+            <span class="summary-label">всего задач</span>
+            <button class="global-toggle-btn" id="globalToggleBtn">
+                <i class="fas fa-expand-alt"></i>
+                <span>Развернуть все</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="status-breakdown-grid">
+        <!-- Всего задач -->
+        <div class="status-card" data-type="total">
+            <div class="card-header">
+                <div class="card-icon total">
+                    <i class="fas fa-tasks"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Всего задач</h3>
+                    <span class="card-value" id="total-tasks">-</span>
+                </div>
+            </div>
+            <div class="card-description">
+                <p>Общее количество назначенных задач</p>
+            </div>
+            <button class="toggle-details-btn" data-target="total-details">
+                <i class="fas fa-chevron-down"></i>
+                <span>Детализация</span>
+            </button>
+            <div class="card-details" id="total-details" style="display: none;">
+                <div class="details-content" id="total-details-content">
+                    <div class="detail-item">
+                        <span class="detail-label">Открытые:</span>
+                        <span class="detail-value" id="total-open">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">В работе:</span>
+                        <span class="detail-value" id="total-in-progress">-</span>
+                    </div>
+                    <div class="detail-item">
+                        <span class="detail-label">Завершённые:</span>
+                        <span class="detail-value" id="total-completed">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- В работе -->
+        <div class="status-card" data-type="in-progress">
+            <div class="card-header">
+                <div class="card-icon paused">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="card-title">
+                    <h3>В работе</h3>
+                    <span class="card-value" id="in-progress-tasks">-</span>
+                </div>
+            </div>
+            <div class="card-description">
+                <p>В процессе выполнения, на согласовании, тестировании</p>
+            </div>
+            <button class="toggle-details-btn" data-target="in-progress-details">
+                <i class="fas fa-chevron-down"></i>
+                <span>Детализация</span>
+            </button>
+            <div class="card-details" id="in-progress-details" style="display: none;">
+                <div class="details-content" id="in-progress-details-content">
+                    <!-- Динамически заполняется JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Открытые задачи -->
+        <div class="status-card" data-type="open">
+            <div class="card-header">
+                <div class="card-icon open">
+                    <i class="fas fa-folder-open"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Открытые задачи</h3>
+                    <span class="card-value" id="open-tasks">-</span>
+                </div>
+            </div>
+            <div class="card-description">
+                <p>Новые и ожидающие выполнения</p>
+            </div>
+            <button class="toggle-details-btn" data-target="open-details">
+                <i class="fas fa-chevron-down"></i>
+                <span>Детализация</span>
+            </button>
+            <div class="card-details" id="open-details" style="display: none;">
+                <div class="details-content" id="open-details-content">
+                    <!-- Динамически заполняется JavaScript -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Завершённые задачи -->
+        <div class="status-card" data-type="completed">
+            <div class="card-header">
+                <div class="card-icon closed">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="card-title">
+                    <h3>Завершённые</h3>
+                    <span class="card-value" id="completed-tasks">-</span>
+                </div>
+            </div>
+            <div class="card-description">
+                <p>Фактически закрытые задачи</p>
+            </div>
+            <button class="toggle-details-btn" data-target="completed-details">
+                <i class="fas fa-chevron-down"></i>
+                <span>Детализация</span>
+            </button>
+            <div class="card-details" id="completed-details" style="display: none;">
+                <div class="details-content" id="completed-details-content">
+                    <!-- Динамически заполняется JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Панель фильтров -->
+<div class="filters-section">
+    <div class="filter-container">
+        <label class="filter-label">Статус:</label>
+        <select id="status-filter" class="filter-select">
+            <option value="">Все статусы</option>
+        </select>
+        <button class="clear-filter-btn" id="clear-status-filter" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="filter-container">
+        <label class="filter-label">Проект:</label>
+        <select id="project-filter" class="filter-select">
+            <option value="">Все проекты</option>
+        </select>
+        <button class="clear-filter-btn" id="clear-project-filter" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+
+    <div class="filter-container">
+        <label class="filter-label">Приоритет:</label>
+        <select id="priority-filter" class="filter-select">
+            <option value="">Все приоритеты</option>
+        </select>
+        <button class="clear-filter-btn" id="clear-priority-filter" style="display: none;">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+</div>
+
+<!-- Таблица задач -->
+<div class="table-container">
+    <div class="table-header">
+        <h3 class="table-title">
+            <i class="fas fa-tasks"></i>
+            Список задач
+        </h3>
+    </div>
+    <div class="table-wrapper">
+        <table id="tasksTable" class="display modern-datatable-redesigned">
+            <thead>
+                <tr>
+                    <th data-column="id" class="col-id">
+                        <div class="th-content">
+                            <i class="fas fa-hashtag"></i>
+                            <span>ID</span>
+                        </div>
+                    </th>
+                    <th data-column="easy_email_to" class="col-email">
+                        <div class="th-content">
+                            <i class="fas fa-envelope"></i>
+                            <span>Email отправителя</span>
+                        </div>
+                    </th>
+                    <th data-column="subject" class="col-subject">
+                        <div class="th-content">
+                            <i class="fas fa-file-text"></i>
+                            <span>Тема задачи</span>
+                        </div>
+                    </th>
+                    <th data-column="status" class="col-status">
+                        <div class="th-content">
+                            <i class="fas fa-flag"></i>
+                            <span>Статус</span>
+                        </div>
+                    </th>
+                    <th data-column="priority" class="col-priority">
+                        <div class="th-content">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span>Приоритет</span>
+                        </div>
+                    </th>
+                    <th data-column="created_on" class="col-created">
+                        <div class="th-content">
+                            <i class="fas fa-calendar-plus"></i>
+                            <span>Создана</span>
+                        </div>
+                    </th>
+                    <th data-column="updated_on" class="col-updated">
+                        <div class="th-content">
+                            <i class="fas fa-calendar-check"></i>
+                            <span>Обновлена</span>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Данные загружаются динамически -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Индикатор обработки DataTables -->
+<div class="dt-processing" style="display: none;">
+    <div class="processing-content">
+        <i class="fas fa-spinner fa-spin"></i>
+        <span>Обработка...</span>
+    </div>
+</div>
+
+<!-- Состояние пустого списка -->
+<div class="empty-state" id="empty-state" style="display: none;">
+    <i class="fas fa-inbox empty-icon"></i>
+    <h3>Задач не найдено</h3>
+    <p>По вашим критериям поиска задачи не найдены</p>
+    <button class="btn btn-secondary" id="reset-filters-btn">Сбросить фильтры</button>
+</div>
+
+<!-- Состояние ошибки -->
+<div class="error-state" id="error-state" style="display: none;">
+    <i class="fas fa-exclamation-triangle error-icon"></i>
+    <h3>Ошибка загрузки данных</h3>
+    <p id="error-message">Не удалось подключиться к системе Redmine</p>
+    <button class="btn btn-primary" id="retry-btn">Попробовать снова</button>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
+
+<!-- Кастомные CSS для страницы -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_enhanced.css') }}?v={{ cache_buster or '1' }}">
+<!-- Современный редизайн шапки таблицы DataTables -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_table_header_redesign.css') }}?v={{ cache_buster or '1' }}">
+
+<!-- Улучшенные стили для email-ссылок -->
+<style>
+/* Вариант 1: Современный Tech-стиль */
+.email-link {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: #4f46e5 !important;
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    position: relative;
+    letter-spacing: 0.02em;
+}
+
+/* Убираем дублирующуюся иконку - используем только FontAwesome иконку из HTML */
+
+.email-link:hover {
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff !important;
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+    border-color: #4f46e5;
+}
+
+.email-link:active {
+    transform: translateY(-1px) scale(1.01);
+}
+
+.email-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+    color: #ffffff !important;
+}
+
+/* Стили для FontAwesome иконки в email-контейнере */
+.email-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.email-container .fa-envelope {
+    flex-shrink: 0;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.email-container:hover .fa-envelope {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+/* Альтернативный стиль для компактного отображения */
+.email-link.compact {
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 6px;
+    background: #f0f9ff;
+    border: 1px solid #0ea5e9;
+    color: #0ea5e9 !important;
+}
+
+.email-link.compact:hover {
+    background: #0ea5e9;
+    color: #ffffff !important;
+}
+
+/* Дополнительные утилиты для быстрого переключения стилей */
+.email-style-selector {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 8px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    font-size: 12px;
+}
+
+.email-style-selector select {
+    padding: 4px 8px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    font-size: 11px;
+}
+
+/* Выделение активной страницы пагинации */
+.dataTables_paginate .paginate_button.active-page {
+  background: #22c55e !important; /* зелёный */
+  color: #ffffff !important;
+  border: 1px solid #16a34a !important;
+}
+
+/* Подсветка строки при возврате */
+tr.return-selected {
+  background: rgba(34, 197, 94, 0.20) !important;
+}
+</style>
+
+<!-- Селектор стилей для демонстрации (можно удалить в продакшене) -->
+<div class="email-style-selector" style="display: none;">
+    <label>Email стиль:</label>
+    <select id="emailStyleSelector">
+        <option value="">Tech (по умолчанию)</option>
+        <option value="minimal">Минималистичный</option>
+        <option value="glass">Glassmorphism</option>
+        <option value="neomorphic">Неоморфизм</option>
+    </select>
+</div>
+
+<script>
+// Функция переключения стилей email-ссылок (для демонстрации)
+function switchEmailStyle(newStyle) {
+    const emailLinks = document.querySelectorAll('.email-link');
+    emailLinks.forEach(link => {
+        // Удаляем все классы стилей
+        link.classList.remove('minimal', 'glass', 'neomorphic');
+        // Добавляем новый стиль если указан
+        if (newStyle) {
+            link.classList.add(newStyle);
+        }
+    });
+}
+
+// Обработчик для селектора стилей
+document.addEventListener('DOMContentLoaded', function() {
+    const selector = document.getElementById('emailStyleSelector');
+    if (selector) {
+        selector.addEventListener('change', function() {
+            switchEmailStyle(this.value);
+        });
+    }
+});
+</script>
+
+<!-- Проверяем наличие jQuery и загружаем если нужно -->
+<script>
+if (typeof jQuery === 'undefined') {
+    document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"><\/script>');
+}
+</script>
+
+<!-- DataTables JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
+
+<!-- Кастомные JS для страницы -->
+<script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster or '1' }}"></script>
+<script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster or '1' }}"></script>
+
+<script>
+// Функция инициализации с проверкой зависимостей
+function initializeMyTasksPage() {
+    console.log('🚀 Инициализация страницы "Мои задачи"');
+    console.log('🔍 Проверка зависимостей...');
+    console.log('jQuery доступен:', typeof $ !== 'undefined');
+    console.log('DataTables доступен:', typeof $.fn.DataTable !== 'undefined');
+    console.log('MyTasksApp доступен:', typeof MyTasksApp !== 'undefined');
+
+    if (typeof $ === 'undefined') {
+        console.error('❌ jQuery не загружен');
+        showError('jQuery не загружен. Перезагрузите страницу.');
+        return;
+    }
+
+    if (typeof $.fn.DataTable === 'undefined') {
+        console.error('❌ DataTables не загружен');
+        showError('DataTables не загружен. Перезагрузите страницу.');
+        return;
+    }
+
+    if (typeof MyTasksApp !== 'undefined') {
+        // Добавляем небольшую задержку для полной загрузки всех зависимостей
+        setTimeout(function() {
+            MyTasksApp.init();
+        }, 100);
+    } else {
+        console.error('❌ MyTasksApp не найден');
+        showError('Не удалось загрузить приложение задач.');
+    }
+}
+
+// Функция показа ошибки
+function showError(message) {
+    const loadingElement = document.getElementById('loading-overlay');
+    const errorElement = document.getElementById('error-state');
+    const errorMessageElement = document.getElementById('error-message');
+
+    if (loadingElement) loadingElement.style.display = 'none';
+
+    if (errorElement && errorMessageElement) {
+        errorMessageElement.textContent = message;
+        errorElement.style.display = 'block';
+    }
+}
+
+// Инициализация при загрузке DOM
+document.addEventListener('DOMContentLoaded', function() {
+    // Даем время на загрузку всех скриптов
+    setTimeout(initializeMyTasksPage, 200);
+});
+
+// Резервная инициализация для случая если DOM уже загружен
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(initializeMyTasksPage, 200);
+    });
+} else {
+    setTimeout(initializeMyTasksPage, 200);
+}
+</script>
+
+<script>
+$(document).ready(function() {
+    // ... существующий код и инициализация таблицы ...
+
+    // После инициализации DataTable
+    $(document).on('datatables-initialized', function() {
+        const returnId = sessionStorage.getItem('return_from_task_id');
+        if (returnId) {
+            // Найти строку с нужным ID
+            const $row = $("#tasksTable tbody tr").filter(function() {
+                return $(this).find('.task-id-link').text().replace('#','') == returnId;
+            });
+            if ($row.length) {
+                $row.addClass('highlight-return');
+                // Плавно прокрутить
+                $('html, body').animate({
+                    scrollTop: $row.offset().top - 100
+                }, 800);
+                // Убрать выделение через 3 секунды
+                setTimeout(function() {
+                    $row.removeClass('highlight-return');
+                }, 3000);
+            }
+            sessionStorage.removeItem('return_from_task_id');
+        }
+    });
+});
+</script>
+{% endblock %}

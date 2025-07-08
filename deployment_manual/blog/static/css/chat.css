@@ -1,0 +1,1793 @@
+/* Подключаем шрифт Roboto */
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+
+.modal-dialog.modal-lg {
+    max-width: 1200px;
+    width: 90%;
+    margin: 30px auto;
+}
+
+.modal-content {
+    height: 90vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    min-height: 400px;
+    resize: both;
+    overflow: auto;
+    max-height: 90vh;
+    max-width: 90vw;
+}
+
+.modal-body {
+    flex: 1;
+    padding: 15px;
+    display: flex;
+    overflow: hidden;
+    height: calc(100% - 60px);
+}
+
+.modal-body .row {
+    height: 100%;
+    margin: 0;
+    width: 100%;
+}
+
+.col-md-4 {
+    height: 100%;
+    padding-right: 15px;
+}
+
+.roster-container {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #dee2e6;
+    padding: 15px;
+}
+
+#rosterList {
+    flex: 1;
+    overflow-y: auto;
+    margin-top: 10px;
+    border-top: 1px solid #dee2e6;
+}
+
+#rosterList::-webkit-scrollbar {
+    width: 8px;
+}
+
+#rosterList::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+#rosterList::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+#rosterList::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+.chat-container {
+    flex: 1;
+    overflow-y: auto;
+    height: calc(100% - 50px);
+    position: relative;
+}
+
+.message-container {
+    height: 100%;
+    overflow-y: auto;
+    padding: 10px;
+    display: none;
+}
+
+.chat-container::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-container::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chat-container::-webkit-scrollbar-thumb {
+    background: #007bff;
+    border-radius: 3px;
+    transition: background-color 0.3s;
+}
+
+.chat-container::-webkit-scrollbar-thumb:hover {
+    background: #0056b3;
+}
+
+.chat-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(to bottom,
+            rgba(255, 255, 255, 0.8),
+            rgba(248, 249, 250, 0.8));
+    z-index: -1;
+    border-radius: 10px;
+}
+
+.message-date-separator {
+    text-align: center;
+    margin: 20px 0;
+    position: relative;
+}
+
+.message-date-separator::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    width: 100%;
+    height: 1px;
+    background: #dee2e6;
+}
+
+.col-md-8 {
+    display: flex;
+    flex-direction: column;
+    padding: 15px;
+    height: 100%;
+}
+
+.contact-item {
+    position: relative;
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.contact-item:hover {
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.contact-item.active {
+    background-color: rgba(0, 123, 255, 0.1);
+    border-left: none;
+}
+
+.contact-item.has-new-message {
+    position: relative;
+    background: linear-gradient(to right, rgba(0, 123, 255, 0.05), rgba(0, 123, 255, 0.1));
+}
+
+.contact-item.has-new-message::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 3px;
+    background: linear-gradient(45deg, #2196F3, #00BCD4);
+    animation: borderPulse 1.5s ease-in-out infinite;
+}
+
+.contact-item.has-new-message .contact-name {
+    color: #1976D2;
+    font-weight: 600;
+}
+
+.contact-item.has-new-message::after {
+    content: '1';
+    /* Можно динамически менять через JavaScript */
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: linear-gradient(135deg, #FF4B4B, #FF7676);
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(255, 75, 75, 0.3);
+    animation: badgePulse 1.5s ease-in-out infinite;
+}
+
+@keyframes borderPulse {
+    0% {
+        opacity: 0.6;
+        box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+    }
+
+    50% {
+        opacity: 1;
+        box-shadow: 0 0 15px rgba(33, 150, 243, 0.6);
+    }
+
+    100% {
+        opacity: 0.6;
+        box-shadow: 0 0 5px rgba(33, 150, 243, 0.3);
+    }
+}
+
+@keyframes badgePulse {
+    0% {
+        transform: translateY(-50%) scale(1);
+        box-shadow: 0 2px 5px rgba(255, 75, 75, 0.3);
+    }
+
+    50% {
+        transform: translateY(-50%) scale(1.1);
+        box-shadow: 0 4px 10px rgba(255, 75, 75, 0.4);
+    }
+
+    100% {
+        transform: translateY(-50%) scale(1);
+        box-shadow: 0 2px 5px rgba(255, 75, 75, 0.3);
+    }
+}
+
+.contact-info {
+    margin-left: 8px;
+    flex: 1;
+}
+
+.contact-name {
+    font-family: 'Roboto', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    /* Medium */
+    color: #333;
+    text-transform: capitalize;
+    /* Только первая буква заглавная */
+    margin-bottom: 2px;
+    line-height: 1.3;
+}
+
+.contact-status-text {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    color: #666;
+    font-weight: 400;
+    text-transform: lowercase;
+    /* Все буквы строчные */
+}
+
+.contact-status {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.roster-stats {
+    padding: 8px 12px;
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 10px;
+    background-color: #f8f9fa;
+}
+
+.roster-stats small {
+    display: block;
+    color: #6c757d;
+}
+
+#rosterLoadingIndicator {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 4px;
+}
+
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+.contact-info-panel {
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    padding: 15px;
+    border: 1px solid #dee2e6;
+    margin-bottom: 15px;
+}
+
+.contact-details h6 {
+    margin-bottom: 8px;
+}
+
+.contact-details small {
+    color: #6c757d;
+}
+
+.message {
+    margin: 8px 15px;
+    max-width: 75%;
+    display: flex;
+    flex-direction: column;
+}
+
+.message-received {
+    margin-right: auto;
+    max-width: 75%;
+}
+
+
+
+.message-received .message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.message-received .message-author {
+    font-size: 0.9em;
+    font-weight: 500;
+    color: #495057;
+}
+
+.message-received .message-time {
+    font-size: 0.75em;
+    color: #666;
+    margin-left: auto;
+}
+
+.message-received .message-text {
+    word-wrap: break-word;
+    line-height: 1.4;
+}
+
+.message-sent {
+    margin-left: auto;
+    align-items: flex-end;
+}
+
+.message-wrapper {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin: 16px 8px;
+    padding: 12px;
+    max-width: 95%;
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    word-wrap: break-word;
+}
+
+.message-received .message-wrapper {
+    background-color: #99eca4;
+    /* Светло-серый фон для получаемых сообщений */
+    border-left: 3px solid #d3d3d5;
+    /* Добавьте левую границу для выделения */
+    padding: 8px 12px;
+    /* Добавьте внутренние отступы */
+    border-radius: 8px;
+    /* Скруглите углы */
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    /* Добавьте небольшую тень для объемности */
+    margin-bottom: 4px;
+    /* Добавьте нижний отступ */
+}
+
+.message-received .message-content {
+    color: #2c3e50;
+}
+
+
+.message-sent .message-wrapper {
+    background-color: #0d6efd;
+    border: 1px solid #0b5ed7;
+    margin-left: auto;
+    margin-right: 0;
+}
+
+.message-sent .message-content {
+    color: #ffffff;
+}
+
+.message-sent .message-time {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.message-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 4px;
+}
+
+.message-author {
+    font-weight: 500;
+    margin-bottom: 4px;
+}
+
+.message-time {
+    display: inline-block;
+    /* Убедитесь, что элемент не скрыт */
+    visibility: visible;
+    /* Убедитесь, что элемент видим */
+    color: #606060;
+    /* Установите контрастный цвет текста */
+    font-size: 0.85em;
+    /* Уменьшите размер шрифта для времени */
+    margin-left: 10px;
+    /* Добавьте отступ слева для отделения времени от текста сообщения */
+}
+
+
+.message-text {
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    font-size: 14px;
+    padding: 0 2px;
+}
+
+
+.message-sent .message-text {
+    color: #ffffff;
+}
+
+.message-sent .message-author {
+    color: #ffffff;
+}
+
+.message-wrapper:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+}
+
+.roster-stats-fixed {
+    background-color: #f8f9fa;
+    padding: 8px;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    border: 1px solid #e9ecef;
+}
+
+.stats-total {
+    color: #6c757d;
+    /* Серый цвет */
+    font-weight: 600;
+}
+
+.stats-online {
+    color: #28a745;
+    /* Зеленый цвет */
+    font-weight: 600;
+}
+
+.stats-offline {
+    color: #dc3545;
+    /* Красный цвет */
+    font-weight: 600;
+}
+
+/* Анимация при обновлении статистики */
+@keyframes stats-update {
+    0% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+
+    100% {
+        transform: scale(1);
+    }
+}
+
+.roster-stats-fixed small span {
+    display: inline-block;
+    padding: 2px 5px;
+    border-radius: 3px;
+}
+
+.roster-stats-fixed small span:hover {
+    background-color: #e9ecef;
+    transition: background-color 0.3s ease;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    gap: 1rem;
+}
+
+.search-container {
+    width: 300px;
+}
+
+.search-container .input-group-text {
+    background-color: white;
+    border-left: none;
+    cursor: pointer;
+}
+
+.search-container .input-group-text:hover {
+    color: #0d6efd;
+}
+
+.clear-search {
+    display: none;
+}
+
+.clear-search.visible {
+    display: flex;
+}
+
+#messageForm {
+    margin-top: auto;
+    padding: 15px;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+    border-radius: 0 0 10px 10px;
+}
+
+#messageInput {
+    flex: 1;
+    border: 2px solid #e9ecef;
+    border-radius: 20px;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    min-height: 45px;
+    max-height: 150px;
+    resize: vertical;
+    background-color: #ffffff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+#messageInput:focus {
+    border-color: #007bff;
+    box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    outline: none;
+}
+
+/* Стилизация области растягивания */
+#messageInput::-webkit-resizer {
+    border-width: 8px;
+    border-style: solid;
+    border-color: transparent #007bff #007bff transparent;
+    background-color: #ffffff;
+    border-radius: 0 0 20px 0;
+}
+
+/* Контейнер для формы сообщения */
+.message-form-container {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    padding: 5px;
+    position: relative;
+}
+
+/* Обертка для поля ввода */
+.message-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+}
+
+/* Стили для кнопки отправки */
+.btn-send {
+    background: linear-gradient(135deg, #00B09B, #96C93D);
+    border: none;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0, 176, 155, 0.2);
+    margin-bottom: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.btn-send i {
+    color: white;
+    font-size: 16px;
+    transform: translateX(1px);
+    /* Небольшое смещение иконки вправо */
+}
+
+.btn-send:hover {
+    transform: scale(1.05) rotate(5deg);
+    box-shadow: 0 4px 12px rgba(0, 176, 155, 0.3);
+}
+
+.btn-send:active {
+    transform: scale(0.95);
+}
+
+.btn-send:disabled {
+    background: linear-gradient(135deg, #ccc, #ddd);
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+.contact-item.has-new-message .contact-status {
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+
+.modal-backdrop {
+    z-index: 1040 !important;
+}
+
+.modal {
+    z-index: 1050 !important;
+}
+
+body.modal-open {
+    overflow: hidden;
+    padding-right: 0 !important;
+}
+
+
+
+
+.modal-title-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.current-user-name {
+    background: linear-gradient(45deg, #f3f4f6, #ffffff);
+    border-left: 3px solid #007bff;
+    color: #4a5568;
+    font-size: 0.95em;
+    font-weight: 500;
+    padding: 4px 12px 4px 24px;
+    border-radius: 0 4px 4px 0;
+    position: relative;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+}
+
+.current-user-name:before {
+    content: '•';
+    position: absolute;
+    left: 10px;
+    color: #007bff;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.4;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.current-user-name:hover {
+    transform: translateX(3px);
+    background: linear-gradient(45deg, #e9ecef, #f8f9fa);
+}
+
+.minimize-button {
+    background-color: #007bff;
+    /* Синий цвет фона */
+    color: white;
+    /* Белый текст */
+    border: none;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 16px;
+    border-radius: 5px;
+}
+
+.chat-minimized-indicator {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    z-index: 1051;
+    /* Выше, чем модальное окно */
+    display: none;
+    /* Скрыто по умолчанию */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    border-radius: 50px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+    padding: 8px 15px;
+    font-size: 14px;
+    transition: background-color 0.3s;
+}
+
+.chat-minimized-indicator:hover {
+    background-color: #0056b3;
+}
+
+.chat-minimized-indicator button {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.disabled-link {
+    pointer-events: none;
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.chat-logo {
+    height: 30px;
+    margin-right: 10px;
+    vertical-align: middle;
+}
+
+
+.modal-title {
+    margin: 0 10px;
+}
+
+.chat-minimized-logo {
+    height: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+}
+
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.contact-status-indicator {
+    display: flex;
+    align-items: center;
+    padding: 5px 10px;
+    background-color: #f8f9fa;
+    border-radius: 15px;
+    margin-bottom: 10px;
+}
+
+
+
+.typing-indicator {
+    display: flex;
+    padding: 8px;
+    gap: 3px;
+}
+
+.typing-indicator span {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background-color: #6c757d;
+    animation: typing 1s infinite;
+}
+
+
+
+
+
+
+/* Анимация для новых сообщений */
+@keyframes messagePopIn {
+    0% {
+        transform: scale(0.95);
+        opacity: 0;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.message.new {
+    animation: messagePopIn 0.3s ease-out forwards;
+}
+
+
+.contact-details {
+    padding: 15px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.contact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-size: 0.9em;
+    margin-left: 10px;
+}
+
+.status-badge.status-online {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.status-badge.status-away {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #858509;
+}
+
+.status-badge.status-dnd {
+    background-color: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+.status-badge.status-offline {
+    background-color: rgba(108, 117, 125, 0.1);
+    color: #6c757d;
+}
+
+.status-badge i {
+    font-size: 0.8em;
+    margin-right: 4px;
+}
+
+.info-row {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    gap: 10px;
+}
+
+.info-row i {
+    width: 20px;
+    color: #666;
+    text-align: center;
+}
+
+.info-row span {
+    color: #333;
+}
+
+.resize-handle {
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    width: 20px;
+    height: 20px;
+    cursor: se-resize;
+    background: linear-gradient(135deg, transparent 50%, #007bff 50%);
+    border-radius: 0 0 4px 0;
+    opacity: 0.7;
+    transition: opacity 0.2s;
+}
+
+.resize-handle:hover {
+    opacity: 1;
+}
+
+.status-dnd {
+    background-color: #dc3545;
+    color: white;
+}
+
+
+.status-indicator.status-dnd {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #dc3545;
+    margin-right: 5px;
+}
+
+.status-xa {
+    background-color: #ffc107;
+    color: white;
+}
+
+.status-badge.status-xa {
+    background-color: rgba(255, 193, 7, 0.1);
+    color: #ffc107;
+}
+
+.status-indicator.status-xa {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #ffc107;
+    margin-right: 5px;
+}
+
+.status-chat {
+    background-color: #28a745;
+    color: white;
+}
+
+.status-badge.status-chat {
+    background-color: rgba(40, 167, 69, 0.1);
+    color: #28a745;
+}
+
+.status-indicator.status-chat {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #28a745;
+    margin-right: 5px;
+}
+
+.status-indicator-offline {
+    background-color: #6c757d !important;
+    color: #6c757d !important;
+}
+
+.contact-status.status-offline {
+    background-color: #6c757d;
+}
+
+
+.status-indicator.status-offline {
+    background-color: #6c757d;
+}
+
+.status-dropdown {
+    position: relative;
+    margin-left: 15px;
+}
+
+.status-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+    cursor: pointer;
+    min-width: 140px;
+}
+
+.status-toggle:hover {
+    background: #f6f8fa;
+}
+
+
+
+.status-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 4px;
+    background: #ffffff;
+    border: 1px solid #e1e4e8;
+    border-radius: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    min-width: 180px;
+}
+
+.status-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.status-item:hover {
+    background: #f6f8fa;
+}
+
+.status-text {
+    color: #24292e;
+    font-size: 14px;
+}
+
+.status-toggle i {
+    margin-left: auto;
+    color: #6a737d;
+    font-size: 12px;
+}
+
+
+
+
+
+
+#messageInput:disabled {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+
+.btn-send:not(:disabled):hover {
+    background-color: #0056b3;
+    transform: scale(1.05);
+}
+
+
+/* Стили для уведомлений */
+.chat-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 8px;
+    background: #fff;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1100;
+    animation: slideIn 0.3s ease-out;
+}
+
+.chat-notification.error {
+    background-color: #dc3545;
+    color: white;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.contact-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+    margin-bottom: 10px;
+}
+
+.contact-tab {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px 4px 0 0;
+    margin-right: 4px;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.2s ease;
+    font-size: 12px;
+    line-height: 1;
+    min-height: 24px;
+}
+
+.contact-tab.active {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.contact-tab.active[data-status="online"] {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.contact-tab.active[data-status="away"] {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+.contact-tab.active[data-status="dnd"] {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.contact-tab.active[data-status="xa"] {
+    background-color: rgba(108, 117, 125, 0.1);
+}
+
+.contact-tab.active[data-status="offline"] {
+    background-color: rgba(222, 226, 230, 0.3);
+}
+
+.contact-tab .contact-header {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.contact-tab .status-dot {
+    width: 6px;
+    height: 6px;
+    margin: 0;
+}
+
+.contact-tab .contact-name {
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+}
+
+.contact-tab .close-tab {
+    font-size: 14px;
+    padding: 0 2px;
+    margin-left: 4px;
+    line-height: 1;
+}
+
+.contact-tab .close-tab:hover {
+    color: #dc3545;
+}
+
+
+.message:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+
+/* Анимация появления новых сообщений */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+
+.message-status i {
+    font-size: 14px;
+}
+
+.status-sent {
+    color: #bbb;
+}
+
+.status-delivered {
+    color: #90caf9;
+}
+
+.status-read {
+    color: #4caf50;
+}
+
+.message-date-divider {
+    display: flex;
+    align-items: center;
+    margin: 20px 0;
+    color: #666;
+    font-size: 12px;
+}
+
+.message-date-divider::before,
+.message-date-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: #e1e4e8;
+    margin: 0 10px;
+}
+
+.attachment-preview {
+    margin-top: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.attachment-icon {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #fff;
+    border-radius: 4px;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.attachment-info {
+    flex: 1;
+    font-size: 12px;
+}
+
+.message-quote {
+    margin-bottom: 8px;
+    padding: 8px;
+    background: rgba(0, 0, 0, 0.03);
+    border-left: 3px solid #007bff;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.quote-author {
+    font-weight: 500;
+    color: #007bff;
+    margin-bottom: 4px;
+}
+
+.quote-text {
+    color: #666;
+}
+
+
+
+
+.message-tick {
+    font-size: 12px;
+}
+
+/* Анимация для новых сообщений */
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+
+.message-sent .message-status {
+    color: #40916c;
+}
+
+
+/* Состояния сттуса сообщения */
+.status-sent .message-tick {
+    color: #888;
+}
+
+.status-delivered .message-tick {
+    color: #b3ed9e;
+}
+
+.status-read .message-tick {
+    color: #4caf50;
+    opacity: 1;
+}
+
+
+.message-wrapper.message-sent {
+    flex-direction: row-reverse;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.message-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+
+
+.message-status {
+    margin-top: 4px;
+    font-size: 12px;
+    color: rgba(0, 0, 0, 0.5);
+}
+
+
+
+/* Общие стили для контента сообщений */
+.message-content {
+    flex: 1;
+    min-width: 0;
+    padding: 0 2px;
+}
+
+/* Индикатор новых сообщений */
+.contact-tab.has-new-message {
+    animation: tabBlink 1s infinite;
+    position: relative;
+}
+
+.contact-tab.has-new-message::after {
+    content: '';
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 8px;
+    height: 8px;
+    background-color: #dc3545;
+    /* Красный цвет вмесо зеленого */
+    border-radius: 50%;
+    animation: pulse 1s infinite;
+}
+
+/* Анимация мигания для вкладки */
+@keyframes tabBlink {
+    0% {
+        background-color: #f8f9fa;
+    }
+
+    50% {
+        background-color: #35dc72;
+        /* Красный цвет вместо зеленого */
+        border-color: #095025;
+        /* Боле темный оттенок красного для границы */
+        color: #ffffff;
+        /* Белый текс для контраста */
+    }
+
+    100% {
+        background-color: #f8f9fa;
+    }
+}
+
+/* Анимация пульсации индикатора */
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.5);
+        opacity: 0.7;
+        box-shadow: 0 0 10px rgba(220, 53, 69, 0.5);
+        /* Красное свечение */
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Стили для закрытия вкладки */
+.close-tab {
+    margin-left: 8px;
+    font-size: 18px;
+    line-height: 1;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 0 4px;
+}
+
+.close-tab:hover {
+    color: #dc3545;
+}
+
+/* Контейнер для вкладок */
+#contactTabs {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 4px 4px 0 4px;
+    border-bottom: 1px solid #dee2e6;
+    background: #f8f9fa;
+    min-height: 29px;
+}
+
+
+/* Анимация мигания для статуса */
+@keyframes statusBlink {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+
+/* Добавляем стили для контента вкладки */
+.contact-tab .tab-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+
+/* Стили для текста статуса во вкладке */
+.contact-tab .contact-status-text {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+
+
+
+
+/* Стили для конкретных статусов */
+.status-online {
+    background-color: #28a745;
+}
+
+.status-offline {
+    background-color: #dee2e6;
+}
+
+/* Определяем переменные с цветами по умолчаню в корневом элементе */
+:root {
+    --status-online-color: #28a745;
+    --status-away-color: #ffc107;
+    --status-dnd-color: #dc3545;
+    --status-xa-color: #6c757d;
+    --status-offline-color: #dee2e6;
+    --status-chat-color: #28a745;
+}
+
+
+/* Обновляем стили для индикаторов */
+.status-indicator.status-online {
+    background-color: var(--status-online-color);
+}
+
+.status-indicator.status-away {
+    background-color: var(--status-away-color);
+}
+
+
+@keyframes highlightContact {
+    0% {
+        background-color: rgba(13, 110, 253, 0.3);
+    }
+
+    100% {
+        background-color: rgba(13, 110, 253, 0.1);
+    }
+}
+
+/* Улучшаем анимацию мигания статуса */
+@keyframes statusBlink {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.2);
+        opacity: 0.8;
+        box-shadow: 0 0 5px #007bff;
+    }
+
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+.contact-highlight {
+    animation: highlightContact 1s ease-out;
+}
+
+@keyframes highlightContact {
+    0% {
+        background-color: rgba(0, 123, 255, 0.2);
+    }
+
+    100% {
+        background-color: transparent;
+    }
+}
+
+@keyframes statusBlink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.has-new-message .contact-status {
+    animation: statusBlink 1s infinite;
+}
+
+.message-bell {
+    color: #cdd22e;
+    font-size: 14px;
+    animation: bellRing 1s infinite;
+}
+
+
+@keyframes bellRing {
+    0% {
+        transform: rotate(0);
+    }
+
+    20% {
+        transform: rotate(15deg);
+    }
+
+    40% {
+        transform: rotate(-15deg);
+    }
+
+    60% {
+        transform: rotate(7deg);
+    }
+
+    80% {
+        transform: rotate(-7deg);
+    }
+
+    100% {
+        transform: rotate(0);
+    }
+}
+
+.unread-counter {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: #ff4444;
+    color: white;
+    border-radius: 50%;
+    min-width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 0 4px;
+}
+
+
+/* Обновляем эффект при наведении на сообщение */
+.message-received .message-wrapper:hover {
+    background-color: #f8f9fa;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    border-color: #dee2e6;
+}
+
+
+/* Добавляем стили для вкладок с разными статусами */
+.contact-tab[data-status="online"] {
+    background-color: rgba(39, 212, 166, 0.902);
+    /* Легкий зеленый для онлайн */
+}
+
+
+.contact-tab[data-status="dnd"] {
+    background-color: rgba(220, 53, 69, 0.1);
+    /* Легкий красный для не беспокоить */
+}
+
+.contact-tab[data-status="xa"] {
+    background-color: rgba(108, 117, 125, 0.1);
+    /* Легкий серый для длительного отсутствия */
+}
+
+.contact-tab[data-status="offline"] {
+    background-color: rgba(222, 226, 230, 0.3);
+    /* Очень легкий серый для оффлайн */
+}
+
+
+.contact-tab.active[data-status="away"],
+.contact-tab.active[data-status="auto-away"],
+.contact-tab.active[data-status="auto"] {
+    background-color: rgba(255, 193, 7, 0.2);
+}
+
+
+.connection-lost-notification {
+    background-color: #ff4444;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+
+
+/* Единственное определение стилей для статусов */
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.status-dot.status-away,
+.status-dot.status-auto-away,
+.status-dot[class*="auto"],
+.status-dot[class*="away"],
+[class*="status-dot"][class*="away"],
+[class*="status-dot"][class*="auto"],
+.status-dot[class*="auto status"],
+.status-dot[class*="estado automático"] {
+    background-color: #ffc107 !important;  /* желтый */
+}
+
+/* Определяем цвета для всех статусов с повышенной специфичностью */
+.status-dot.status-online {
+    background-color: #28a745 !important;  /* зеленый */
+}
+
+/* Все варианты статуса "away" */
+.status-dot.status-auto-away,
+.status-dot[class*="auto"],
+.status-dot[class*="away"],
+[class*="status-dot"][class*="away"],
+[class*="status-dot"][class*="auto"],
+.status-dot[class*="auto status"],
+.status-dot[class*="estado automático"] {
+    background-color: #ffc107 !important;  /* желтый */
+}
+
+/* Статус "Не беспокоить" */
+.status-dot.status-dnd,
+div[class*="status-dot"] [class*="dnd"] {
+    background-color: #dc3545 !important;  /* красный */
+}
+
+/* Статус "Ушел надолго" */
+.status-dot.status-xa,
+div[class*="status-dot"] [class*="xa"] {
+    background-color: #6c757d !important;  /* серый */
+}
+
+/* Статус "Не в сети" */
+.status-dot.status-offline,
+div[class*="status-dot"] [class*="offline"] {
+    background-color: #dee2e6 !important;  /* светло-серый */
+}
+
+.connection-error {
+    text-align: center;
+    padding: 20px;
+    color: #721c24;
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 10px;
+}
+
+.connection-error i {
+    font-size: 24px;
+    margin-bottom: 10px;
+    color: #dc3545;
+}
+
+.connection-error button {
+    margin-top: 10px;
+}
+
+.connection-error button i {
+    font-size: 14px;
+    margin-right: 5px;
+    color: inherit;
+}
+/* Добавляем стили для новых статусов */
+.status-invisible {
+    background-color: #808080;
+}
+
+.status-chat {
+    background-color: #32CD32;
+}
+
+.status-xa {
+    background-color: #FFA500;
+}
+
+/* Обновляем существующие стили */
+.status-online {
+    background-color: #00FF00;
+}
+
+.status-away {
+    background-color: #FFD700;
+}
+
+.status-dnd {
+    background-color: #FF0000;
+}
+
+.status-offline {
+    background-color: #808080;
+}
+
+/* Стили для точек статуса */
+.status-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 8px;
+}

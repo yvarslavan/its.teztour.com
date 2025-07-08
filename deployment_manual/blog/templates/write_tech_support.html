@@ -1,0 +1,2211 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="support-guide-container">
+    <!-- Hero Section -->
+    <header class="guide-hero">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <i class="fas fa-headset"></i>
+            </div>
+            <h1 class="hero-title">Руководство по работе с технической поддержкой TEZ TOUR</h1>
+            <p class="hero-subtitle">Данное руководство поможет вам получить максимально быструю и качественную помощь от наших специалистов</p>
+            <div class="hero-badge">
+                <span class="badge-text">Версия 2.1</span>
+                <span class="badge-date">от 01.05.2025</span>
+            </div>
+        </div>
+        <div class="hero-decoration">
+            <div class="decoration-circle decoration-1"></div>
+            <div class="decoration-circle decoration-2"></div>
+            <div class="decoration-circle decoration-3"></div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="guide-content">
+
+        <!-- Introduction Card -->
+        <section class="content-card introduction-card">
+            <div class="card-header">
+                <i class="fas fa-info-circle"></i>
+                <h2>Добро пожаловать в службу технической поддержки!</h2>
+            </div>
+            <div class="card-content">
+                <p class="intro-text">Правильно оформленное обращение — это основа эффективного решения любой проблемы.</p>
+		<div class="center">
+                    <img src="/static/profile_pics/y.varslavan/post_images/support_picture.jpg" alt="Support process overview" class="intro-image">
+		</div>
+            </div>
+        </section>
+
+        <!-- When to Contact Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-bullseye"></i>
+                <h2>Когда обращаться в техподдержку</h2>
+            </div>
+            <div class="card-content">
+                <div class="two-columns">
+                    <div class="column">
+                        <h3 class="column-title positive">✅ Обращайтесь к нам при:</h3>
+                        <ul class="styled-list positive-list">
+                            <li><strong>Технических сбоях</strong> в работе систем и программ</li>
+                            <li><strong>Ошибках программного обеспечения</strong> с кодами или сообщениями</li>
+                            <li><strong>Проблемах доступа</strong> к системам и аккаунтам</li>
+                            <li><strong>Необходимости подключения</strong> новых функций или модулей</li>
+                            <li><strong>Вопросах по настройке</strong> оборудования или ПО</li>
+                        </ul>
+                    </div>
+                    <div class="column">
+                        <h3 class="column-title negative">❌ Не направляйте в техподдержку:</h3>
+                        <ul class="styled-list negative-list">
+                            <li>Обучающие вопросы (используйте Wiki или корпоративные курсы)</li>
+                            <li>Административные вопросы (HR, финансы, логистика)</li>
+                            <li>Бизнес-процессы, не связанные с IT-системами</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Methods Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-envelope"></i>
+                <h2>Способы обращения</h2>
+            </div>
+            <div class="card-content">
+                <div class="contact-methods">
+
+                    <!-- Email Method -->
+                    <div class="method-card primary-method">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <div class="method-info">
+                                <h3>Email-обращение</h3>
+                                <span class="method-badge recommended">Рекомендуется</span>
+                                <p class="method-address">help@tez-tour.com</p>
+                            </div>
+                        </div>
+                        <div class="method-benefits">
+                            <h4>Преимущества:</h4>
+                            <ul>
+                                <li>Подробное описание проблемы</li>
+                                <li>Возможность приложить документы и скриншоты</li>
+                                <li>Автоматическое создание тикета с уникальным номером</li>
+                                <li>Полная история переписки</li>
+                            </ul>
+                        </div>
+			<div class="center">
+                            <img src="/static/profile_pics/y.varslavan/post_images/email_helpdesk.png" alt="Автоматическое уведомление о создании заявки" class="method-image">
+                            <p class="image-caption">Пример автоматического уведомления о создании вашей заявки в HelpDesk системе</p>
+                        </div>
+            </div>
+
+                    <!-- Personal Account Method -->
+                    <div class="method-card">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-user-cog"></i>
+                            </div>
+                            <div class="method-info">
+                                <h3>Личный кабинет сотрудника</h3>
+                                <p class="method-path">Задачи → Новая задача</p>
+                            </div>
+                        </div>
+                        <div class="method-benefits">
+                            <h4>Преимущества:</h4>
+                            <ul>
+                                <li>Автоматическая привязка к вашему профилю</li>
+                                <li>Уведомления в системе</li>
+                                <li>Отслеживание статуса в реальном времени</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Phone Method -->
+                    <div class="method-card emergency-method">
+                        <div class="method-header">
+                            <div class="method-icon">
+                                <i class="fas fa-phone-alt"></i>
+                            </div>
+                            <div class="method-info">
+                                <h3>Телефонная линия</h3>
+                                <span class="method-badge emergency">Экстренные случаи</span>
+                                <p class="method-phone">+7 (495) 775-10-09</p>
+                                <p class="method-hours">10:00-19:00, пн-пт</p>
+                            </div>
+                        </div>
+                        <div class="method-benefits">
+                            <h4>Используйте только для:</h4>
+                            <ul>
+                                <li>Критичных сбоев, блокирующих работу</li>
+                                <li>Вопросов информационной безопасности</li>
+                                <li>Аварийных ситуаций</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Request Formatting Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-edit"></i>
+                <h2>Правила оформления обращения</h2>
+            </div>
+            <div class="card-content">
+
+                <!-- Subject Guidelines -->
+                <div class="subsection">
+                    <h3 class="subsection-title">
+                        <i class="fas fa-heading"></i>
+                        Тема письма (обязательно!)
+                    </h3>
+                    <div class="format-box">
+                        <div class="format-label">Формат:</div>
+                        <code class="format-example">[Система] - Краткое описание проблемы</code>
+                    </div>
+
+                    <div class="examples-grid">
+                        <div class="example-section good-examples">
+                            <h4>✅ Примеры правильных тем:</h4>
+                            <ul class="example-list">
+                                <li><code>[ERP] - Ошибка при сохранении договора клиента</code></li>
+                                <li><code>[Сайт] - Не загружаются изображения туров</code></li>
+                                <li><code>[Email] - Не приходят письма от клиентов</code></li>
+                                <li><code>[1С] - Зависание при формировании отчета</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="example-section bad-examples">
+                            <h4>❌ Примеры неправильных тем:</h4>
+                            <ul class="example-list">
+                                <li><code>СРОЧНО!!! НЕ РАБОТАЕТ!!!</code></li>
+                                <li><code>Помогите</code></li>
+                                <li><code>Вопрос по системе</code></li>
+                                <li><code>Re: Re: Re: Старая переписка</code></li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Body Structure -->
+                <div class="subsection">
+                    <h3 class="subsection-title">
+                        <i class="fas fa-list-ol"></i>
+                        Структура письма
+                    </h3>
+
+                    <div class="email-structure">
+                        <div class="structure-step">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <h4>Краткое описание проблемы</h4>
+                                <div class="code-block">
+                                    <code>Проблема: Не открывается модуль "Бронирование" в системе ERP</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="structure-step">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h4>Подробное описание ситуации</h4>
+                                <div class="code-block">
+                                    <code>Описание: При попытке открыть модуль "Бронирование" через главное меню,
+система зависает на 30-40 секунд, после чего появляется ошибка
+"Таймаут подключения к базе данных (Error Code: 2006)"</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="structure-step">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h4>Шаги воспроизведения</h4>
+                                <div class="code-block">
+                                    <code>Шаги для воспроизведения:
+1. Войти в систему ERP под своим логином
+2. В главном меню выбрать "Операции" → "Бронирование"
+3. Нажать на любой тур из списка
+4. Система зависает и выдает ошибку</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="structure-step">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h4>Дополнительная информация</h4>
+                                <div class="code-block">
+                                    <code>Время начала проблемы: 14:30, 15.11.2024
+Количество пострадавших: все сотрудники отдела продаж (5 человек)
+Браузер: Chrome 118.0.5993.70
+Операционная система: Windows 10</code>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="structure-step">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h4>Контактные данные</h4>
+                                <div class="code-block">
+                                    <code>ФИО: Иванов Петр Сергеевич
+Должность: Менеджер по продажам
+Телефон: +7 (495) 775-10-09 или 1400
+Email: p.ivanov@tez-tour.com
+Отдел: Продажи, 2-й этаж, кабинет 204</code>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Screenshots Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-camera"></i>
+                <h2>Приложение документов</h2>
+            </div>
+            <div class="card-content">
+                <div class="screenshot-guidelines">
+                    <div class="guideline-item">
+                        <h3>📸 Скриншоты (обязательно при ошибках)</h3>
+                        <ul>
+                            <li><strong>Формат:</strong> PNG, JPG (до 10 МБ каждый)</li>
+                            <li><strong>Содержание:</strong> Полный экран с видимой ошибкой</li>
+                            <li><strong>Количество:</strong> 2-3 снимка с разных этапов проблемы</li>
+                        </ul>
+                    </div>
+
+                    <div class="guideline-item">
+                        <h3>📋 Логи и диагностика</h3>
+                        <p>При технических сбоях приложите:</p>
+                        <ul>
+                            <li>Логи программы (если доступны)</li>
+                            <li>Скриншот диспетчера задач</li>
+                            <li>Информацию о системе (Win+R → msinfo32)</li>
+                        </ul>
+                    </div>
+
+                    <div class="tools-section">
+                        <h3>🔧 Удобные инструменты</h3>
+
+                        <div class="tool-recommendation">
+                            <div class="tool-badge recommended">Рекомендуется</div>
+                            <h4>Скриншотер</h4>
+                            <ul>
+                                <li>Автоматическая загрузка на корпоративный сервер</li>
+                                <li>Генерация прямых ссылок для вставки в письмо</li>
+                                <li>Возможность добавления стрелок и выделений</li>
+                            </ul>
+                            <div class="info-box">
+                                <i class="fas fa-info-circle"></i>
+                                <span>Можно использовать удобную программу <a href="https://skrinshoter.ru/" target="_blank">Скриншотер</a>. С её помощью картинку можно загружать на сервер и давать кому нужно ссылку.</span>
+                            </div>
+                        </div>
+
+                        <div class="standard-tools">
+                            <h4>Стандартные инструменты:</h4>
+                            <ul>
+                                <li><strong>Windows:</strong> Win+Shift+S (Snipping Tool)</li>
+                                <li><strong>Mac:</strong> Cmd+Shift+4</li>
+                                <li><strong>Расширения браузера:</strong> Lightshot, Awesome Screenshot</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SLA Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-clock"></i>
+                <h2>Время обработки обращений</h2>
+            </div>
+            <div class="card-content">
+                <h3>Приоритеты заявок</h3>
+                <div class="sla-table-container">
+                    <table class="sla-table">
+                        <thead>
+                            <tr>
+                                <th>Приоритет</th>
+                                <th>SLA</th>
+                                <th>Примеры</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="priority-critical">
+                                <td><span class="priority-badge critical">Критический</span></td>
+                                <td><strong>1 час</strong></td>
+                                <td>Полный сбой системы, недоступность сервисов</td>
+                            </tr>
+                            <tr class="priority-high">
+                                <td><span class="priority-badge high">Высокий</span></td>
+                                <td><strong>4 часа</strong></td>
+                                <td>Ошибки, блокирующие работу пользователя</td>
+                            </tr>
+                            <tr class="priority-medium">
+                                <td><span class="priority-badge medium">Средний</span></td>
+                                <td><strong>1 рабочий день</strong></td>
+                                <td>Частичные сбои, неудобства в работе</td>
+                            </tr>
+                            <tr class="priority-low">
+                                <td><span class="priority-badge low">Низкий</span></td>
+                                <td><strong>3 рабочих дня</strong></td>
+                                <td>Косметические проблемы, улучшения</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="notifications-section">
+                    <h3>Автоматические уведомления</h3>
+                    <p>Вы получите email-уведомления при:</p>
+                    <div class="notification-list">
+                        <div class="notification-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Создании заявки (с номером тикета)</span>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-user"></i>
+                            <span>Назначении исполнителя</span>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-comment"></i>
+                            <span>Запросе дополнительной информации</span>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Решении проблемы</span>
+                        </div>
+                        <div class="notification-item">
+                            <i class="fas fa-lock"></i>
+                            <span>Закрытии заявки</span>
+                        </div>
+                    </div>
+
+			<div class="center">
+                        <a href="/static/profile_pics/y.varslavan/post_images/Notification.png" target="_blank">
+                            <img src="/static/profile_pics/y.varslavan/post_images/Notification.png" alt="Автоматическое уведомление о изменении исполнителя заявки" class="notification-image">
+				</a>
+                        <p class="image-caption">Пример автоматического уведомления о назначении исполнителя по заявке в HelpDesk системе</p>
+			</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recommendations Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-lightbulb"></i>
+                <h2>Рекомендации для быстрого решения</h2>
+            </div>
+            <div class="card-content">
+                <div class="recommendations-grid">
+                    <div class="recommendation-section positive">
+                        <h3>✅ Что ускоряет решение:</h3>
+                        <ul class="recommendation-list">
+                            <li><strong>Точная тема письма</strong> — попадание к нужному специалисту с первого раза</li>
+                            <li><strong>Подробное описание</strong> — экономия времени на уточнения</li>
+                            <li><strong>Скриншоты ошибок</strong> — визуальное понимание проблемы</li>
+                            <li><strong>Быстрые ответы</strong> на уточняющие вопросы</li>
+                            <li><strong>Тестирование решения</strong> и подтверждение результата</li>
+                        </ul>
+                    </div>
+
+                    <div class="recommendation-section negative">
+                        <h3>❌ Что замедляет решение:</h3>
+                        <ul class="recommendation-list">
+                            <li>Неинформативные темы письма</li>
+                            <li>Эмоциональные обращения без фактической информации</li>
+                            <li>Дублирование заявок по одной проблеме</li>
+                            <li>Игнорирование уточняющих вопросов</li>
+                            <li>Отсутствие технических деталей</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Interaction Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-handshake"></i>
+                <h2>Взаимодействие со специалистами</h2>
+            </div>
+            <div class="card-content">
+                <div class="interaction-guidelines">
+                    <div class="guideline-block">
+                        <h3>Если специалист задает вопросы:</h3>
+                        <ul>
+                            <li><strong>Отвечайте в той же цепочке писем</strong> (не создавайте новые тикеты)</li>
+                            <li><strong>Будьте максимально конкретны</strong> в ответах</li>
+                            <li><strong>Предоставляйте доступ</strong> к системе при необходимости</li>
+                        </ul>
+                    </div>
+
+                    <div class="remote-help-section">
+                        <h3>Удаленная помощь:</h3>
+
+                        <div class="remote-tools">
+                            <h4>Программы для подключения:</h4>
+                            <div class="tool-cards">
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-desktop"></i>
+                                    </div>
+                                    <h5>TeamViewer</h5>
+                                    <span class="tool-label">Корпоративная лицензия</span>
+                                </div>
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fas fa-bolt"></i>
+                                    </div>
+                                    <h5>AnyDesk</h5>
+                                    <span class="tool-label">Быстрое подключение</span>
+                                </div>
+                                <div class="tool-card">
+                                    <div class="tool-icon">
+                                        <i class="fab fa-chrome"></i>
+                                    </div>
+                                    <h5>Chrome Remote Desktop</h5>
+                                    <span class="tool-label">Через браузер</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-requirements">
+                            <div class="warning-box">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <div class="warning-content">
+                                    <h4>Требования безопасности:</h4>
+                                    <ul>
+                                        <li>Подключение только по официальному запросу</li>
+                                        <li>Закрытие конфиденциальных документов перед сеансом</li>
+                                        <li>Контроль действий специалиста</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quality Assessment Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-star"></i>
+                <h2>Оценка качества</h2>
+            </div>
+            <div class="card-content">
+                <div class="quality-assessment">
+                    <h3>После решения проблемы:</h3>
+                    <ol class="assessment-steps">
+                        <li><strong>Протестируйте решение</strong> в рабочих условиях</li>
+                        <li><strong>Подтвердите успешность</strong> исправления</li>
+                        <li><strong>Оцените работу</strong> через форму обратной связи</li>
+                        <li><strong>Предложите улучшения</strong> при необходимости</li>
+                    </ol>
+
+                    <div class="feedback-form-info">
+                        <h3>Форма оценки включает:</h3>
+                        <div class="rating-items">
+                            <div class="rating-item">
+                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                                <span>Скорость реагирования (1-5 звезд)</span>
+                            </div>
+                            <div class="rating-item">
+                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                                <span>Качество решения (1-5 звезд)</span>
+                            </div>
+                            <div class="rating-item">
+                                <div class="stars">⭐⭐⭐⭐⭐</div>
+                                <span>Профессионализм специалиста (1-5 звезд)</span>
+                            </div>
+                            <div class="rating-item">
+                                <div class="comment-icon">💬</div>
+                                <span>Дополнительные комментарии</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="feedback-section">
+                        <p>Для Вашего удобства, мы разработали <a href="https://helpdesk.teztour.com/Contact/" target="_blank">форму обратной связи</a> которая позволит нам накапливать данные по наиболее часто встречающимся вопросам, отзывам и пожеланиям.</p>
+
+			<div class="center">
+                            <a href="/static/profile_pics/y.varslavan/post_images/Contact.png" target="_blank">
+                                <img src="/static/profile_pics/y.varslavan/post_images/Contact.png" alt="Форма обратной связи" class="feedback-image">
+				</a>
+                            <p class="image-caption">Форма обратной связи</p>
+			</div>
+
+                        <p>Контактную форму можно вызвать в любой момент, ссылка на неё будет находиться в поступившем вам почтовом уведомлении о закрытии вашего обращения в виде смайлов эмоций.</p>
+
+			<div class="center">
+                            <a href="/static/profile_pics/y.varslavan/post_images/CallContactForm.png" target="_blank">
+                                <img src="/static/profile_pics/y.varslavan/post_images/CallContactForm.png" alt="Автоматическое уведомление о закрытии заявки" class="feedback-image">
+				</a>
+                            <p class="image-caption">Автоматическое уведомление о закрытии заявки</p>
+			</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Emergency Section -->
+        <section class="content-card emergency-card">
+            <div class="card-header">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h2>Экстренные ситуации</h2>
+            </div>
+            <div class="card-content">
+                <div class="emergency-content">
+                    <div class="emergency-call">
+                        <h3>🚨 Немедленно звоните по телефону при:</h3>
+                        <ul class="emergency-list">
+                            <li><strong>Угрозах безопасности</strong> (подозрительные письма, взлом)</li>
+                            <li><strong>Полном отказе критичных систем</strong> (ERP, сайт бронирования)</li>
+                            <li><strong>Потере данных</strong> или подозрении на их повреждение</li>
+                            <li><strong>Сетевых атаках</strong> или подозрительной активности</li>
+                        </ul>
+                    </div>
+
+                    <div class="after-hours">
+                        <h3>В нерабочее время:</h3>
+                        <div class="after-hours-info">
+                            <div class="info-item">
+                                <i class="fas fa-phone"></i>
+                                <span><strong>Дежурная служба:</strong> +7 (495) 775-10-09</span>
+		</div>
+                            <div class="info-item">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span><strong>Только критичные инциденты</strong></span>
+    </div>
+                            <div class="info-item">
+                                <i class="fas fa-envelope"></i>
+                                <span><strong>Подтверждение письмом</strong> на следующий день</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Resources Section -->
+        <section class="content-card">
+            <div class="card-header">
+                <i class="fas fa-book"></i>
+                <h2>Полезные ресурсы</h2>
+            </div>
+            <div class="card-content">
+                <div class="resources-section">
+                    <div class="resource-category">
+                        <h3>📚 База знаний:</h3>
+                        <ul class="resource-list">
+                            <li><strong>Wiki-портал:</strong> Инструкции и руководства пользователя</li>
+                            <li><strong>FAQ:</strong> Ответы на часто задаваемые вопросы</li>
+                            <li><strong>Видеоуроки:</strong> Обучающие материалы по системам</li>
+                        </ul>
+                    </div>
+
+                    <div class="self-help">
+                        <h3>🔧 Самостоятельное решение:</h3>
+                        <ol class="self-help-steps">
+                            <li><strong>Проверьте Wiki</strong> — возможно, решение уже описано</li>
+                            <li><strong>Перезагрузите приложение/браузер</strong></li>
+                            <li><strong>Обновите страницу</strong> (Ctrl+F5)</li>
+                            <li><strong>Проверьте интернет-соединение</strong></li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Final Message -->
+        <section class="content-card final-message">
+            <div class="card-content">
+                <div class="final-content">
+                    <div class="quote-section">
+                        <div class="quote-icon">💡</div>
+                        <h2>Помните главное</h2>
+                        <blockquote>
+                            <strong>Качественное обращение = Быстрое решение</strong>
+                        </blockquote>
+                        <p>Чем больше информации вы предоставите в первом обращении, тем быстрее наши специалисты смогут помочь вам решить проблему.</p>
+                    </div>
+
+                    <div class="closing-message">
+                        <h3>🎯 Мы работаем для вас!</h3>
+                        <p>Ваша продуктивность — наша главная цель.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="guide-footer">
+        <div class="footer-content">
+            <div class="footer-info">
+                <p><strong>Служба технической поддержки TEZ TOUR</strong></p>
+                <p>Версия документа: 2.1 от 24.05.2025</p>
+            </div>
+            <div class="footer-contact">
+                <a href="mailto:help@tez-tour.com" class="contact-button">
+                    <i class="fas fa-envelope"></i>
+                    Написать в поддержку
+                </a>
+            </div>
+        </div>
+    </footer>
+</div>
+{% endblock content %}
+
+{% block styles %}
+<style>
+    /* Import Modern Fonts */
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+    /* CSS Custom Properties */
+    :root {
+        /* Color System */
+        --primary-color: #1976d2;
+        --primary-dark: #0d47a1;
+        --primary-light: #42a5f5;
+        --secondary-color: #388e3c;
+        --secondary-dark: #2e7d32;
+        --accent-blue: #2196f3;
+        --accent-green: #4caf50;
+        --accent-orange: #ff9800;
+        --accent-red: #f44336;
+
+        /* Semantic Colors */
+        --success-color: #4caf50;
+        --warning-color: #ff9800;
+        --error-color: #f44336;
+        --info-color: #2196f3;
+
+        /* Surface Colors */
+        --surface-color: #ffffff;
+        --surface-variant: #f8f9fa;
+        --background-color: #fafafa;
+        --card-background: #ffffff;
+        --overlay-color: rgba(0, 0, 0, 0.6);
+
+        /* Text Colors */
+        --text-primary: #212121;
+        --text-secondary: #757575;
+        --text-disabled: #bdbdbd;
+        --text-on-primary: #ffffff;
+        --text-on-surface: #212121;
+
+        /* Border Colors */
+        --border-color: #e0e0e0;
+        --border-light: #f0f0f0;
+        --border-focus: var(--primary-color);
+
+        /* Shadows */
+        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        --shadow-4: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        --shadow-8: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
+
+        /* Spacing System */
+        --spacing-xs: 0.5rem;
+        --spacing-sm: 1rem;
+        --spacing-md: 1.5rem;
+        --spacing-lg: 2rem;
+        --spacing-xl: 3rem;
+        --spacing-xxl: 4rem;
+
+        /* Border Radius */
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+        --radius-xl: 16px;
+        --radius-xxl: 24px;
+
+        /* Transitions */
+        --transition-fast: 0.15s ease-out;
+        --transition-normal: 0.3s ease-out;
+        --transition-slow: 0.5s ease-out;
+
+        /* Typography */
+        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        --font-family-mono: 'JetBrains Mono', 'Fira Code', 'Monaco', 'Consolas', monospace;
+
+        /* Container Widths */
+        --container-max-width: 1200px;
+        --content-max-width: 800px;
+    }
+
+    /* Reset and Base Styles */
+    .support-guide-container * {
+        box-sizing: border-box;
+    }
+
+    .support-guide-container {
+        font-family: var(--font-family-primary);
+        line-height: 1.6;
+        color: var(--text-primary);
+        background: var(--background-color);
+        min-height: 100vh;
+    margin: 0;
+    padding: 0;
+}
+
+    /* Hero Section */
+    .guide-hero {
+        position: relative;
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 50%, var(--accent-blue) 100%);
+        color: var(--text-on-primary);
+        padding: var(--spacing-xxl) var(--spacing-lg);
+        text-align: center;
+        overflow: hidden;
+        border-radius: 0 0 var(--radius-xxl) var(--radius-xxl);
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: var(--content-max-width);
+        margin: 0 auto;
+    }
+
+    .hero-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 50%;
+        margin-bottom: var(--spacing-lg);
+        backdrop-filter: blur(10px);
+        animation: heroIconFloat 6s ease-in-out infinite;
+    }
+
+    .hero-icon i {
+        font-size: 2rem;
+        color: var(--text-on-primary);
+    }
+
+    @keyframes heroIconFloat {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 4vw, 3rem);
+        font-weight: 800;
+        margin: 0 0 var(--spacing-md) 0;
+        line-height: 1.2;
+        letter-spacing: -0.02em;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .hero-subtitle {
+        font-size: clamp(1.1rem, 2.5vw, 1.3rem);
+        font-weight: 400;
+        margin: 0 0 var(--spacing-lg) 0;
+        opacity: 0.9;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        background: rgba(255, 255, 255, 0.15);
+        padding: var(--spacing-xs) var(--spacing-md);
+        border-radius: var(--radius-xl);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .badge-text {
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .badge-date {
+        font-size: 0.85rem;
+        opacity: 0.8;
+    }
+
+    /* Hero Decoration */
+    .hero-decoration {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        z-index: 1;
+    }
+
+    .decoration-circle {
+        position: absolute;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        animation: decorationFloat 20s ease-in-out infinite;
+    }
+
+    .decoration-1 {
+        width: 200px;
+        height: 200px;
+        top: 10%;
+        left: 10%;
+        animation-delay: 0s;
+    }
+
+    .decoration-2 {
+        width: 150px;
+        height: 150px;
+        top: 60%;
+        right: 15%;
+        animation-delay: 7s;
+    }
+
+    .decoration-3 {
+        width: 100px;
+        height: 100px;
+        bottom: 20%;
+        left: 60%;
+        animation-delay: 14s;
+    }
+
+    @keyframes decorationFloat {
+        0%, 100% { transform: translateY(0px) translateX(0px) rotate(0deg); }
+        33% { transform: translateY(-40px) translateX(30px) rotate(120deg); }
+        66% { transform: translateY(20px) translateX(-20px) rotate(240deg); }
+    }
+
+    /* Main Content */
+    .guide-content {
+        max-width: var(--container-max-width);
+        margin: 0 auto;
+        padding: 0 var(--spacing-lg);
+    }
+
+    /* Content Cards */
+    .content-card {
+        background: var(--card-background);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-2);
+        margin-bottom: var(--spacing-xl);
+        overflow: hidden;
+        border: 1px solid var(--border-light);
+        transition: all var(--transition-normal);
+    }
+
+    .content-card:hover {
+        box-shadow: var(--shadow-4);
+        transform: translateY(-2px);
+    }
+
+    .card-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-lg);
+        background: linear-gradient(135deg, var(--surface-variant) 0%, var(--surface-color) 100%);
+        border-bottom: 1px solid var(--border-light);
+    }
+
+    .card-header i {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        border-radius: var(--radius-lg);
+        font-size: 1.2rem;
+    }
+
+    .card-header h2 {
+        font-size: 1.5rem;
+    font-weight: 700;
+        margin: 0;
+        color: var(--text-primary);
+        letter-spacing: -0.01em;
+    }
+
+    .card-content {
+        padding: var(--spacing-lg);
+    }
+
+    /* Introduction Card */
+    .introduction-card .card-header {
+        background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-color) 100%);
+        color: var(--text-on-primary);
+    }
+
+    .introduction-card .card-header i {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .introduction-card .card-header h2 {
+        color: var(--text-on-primary);
+    }
+
+    .intro-text {
+        font-size: 1.1rem;
+        font-weight: 500;
+        text-align: center;
+        margin-bottom: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .intro-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-2);
+        transition: transform var(--transition-normal);
+    }
+
+    .intro-image:hover {
+        transform: scale(1.02);
+    }
+
+    /* Two Column Layout */
+    .two-columns {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+        margin-top: var(--spacing-lg);
+    }
+
+    .column-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+    }
+
+    .column-title.positive {
+        color: var(--success-color);
+    }
+
+    .column-title.negative {
+        color: var(--error-color);
+    }
+
+    .styled-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .styled-list li {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
+        border-radius: var(--radius-md);
+        transition: all var(--transition-fast);
+        position: relative;
+        padding-left: var(--spacing-xl);
+    }
+
+    .styled-list li::before {
+        position: absolute;
+        left: var(--spacing-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: bold;
+    font-size: 1.1em;
+    }
+
+    .positive-list li {
+        background: rgba(76, 175, 80, 0.1);
+        border-left: 4px solid var(--success-color);
+    }
+
+    .positive-list li::before {
+        content: "✓";
+        color: var(--success-color);
+    }
+
+    .negative-list li {
+        background: rgba(244, 67, 54, 0.1);
+        border-left: 4px solid var(--error-color);
+    }
+
+    .negative-list li::before {
+        content: "×";
+        color: var(--error-color);
+    }
+
+    /* Contact Methods */
+    .contact-methods {
+        display: grid;
+        gap: var(--spacing-lg);
+    }
+
+    .method-card {
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        transition: all var(--transition-normal);
+        background: var(--surface-color);
+    }
+
+    .method-card:hover {
+        box-shadow: var(--shadow-2);
+        transform: translateY(-2px);
+    }
+
+    .primary-method {
+        background: linear-gradient(135deg, rgba(25, 118, 210, 0.05) 0%, rgba(66, 165, 245, 0.05) 100%);
+        border-color: var(--primary-light);
+    }
+
+    .emergency-method {
+        background: linear-gradient(135deg, rgba(244, 67, 54, 0.05) 0%, rgba(255, 152, 0, 0.05) 100%);
+        border-color: var(--warning-color);
+    }
+
+    .method-header {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-md);
+    }
+
+    .method-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 50px;
+        height: 50px;
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        border-radius: var(--radius-lg);
+        font-size: 1.3rem;
+        flex-shrink: 0;
+    }
+
+    .emergency-method .method-icon {
+        background: var(--warning-color);
+    }
+
+    .method-info h3 {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: 0 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+    }
+
+    .method-badge {
+        display: inline-flex;
+        padding: 2px 8px;
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .method-badge.recommended {
+        background: var(--success-color);
+        color: var(--text-on-primary);
+    }
+
+    .method-badge.emergency {
+        background: var(--warning-color);
+        color: var(--text-on-primary);
+    }
+
+    .method-address, .method-path, .method-phone, .method-hours {
+        font-family: var(--font-family-mono);
+        font-weight: 500;
+        color: var(--text-secondary);
+        margin: var(--spacing-xs) 0;
+    }
+
+    .method-benefits h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: var(--spacing-md) 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+    }
+
+    .method-benefits ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .method-benefits li {
+        padding: var(--spacing-xs) 0;
+        position: relative;
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .method-benefits li::before {
+        content: "•";
+        color: var(--primary-color);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+
+    .method-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-1);
+    }
+
+    /* Subsections */
+    .subsection {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .subsection-title {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .subsection-title i {
+        color: var(--primary-color);
+    }
+
+    /* Format Examples */
+    .format-box {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-md);
+        background: var(--surface-variant);
+        border-radius: var(--radius-md);
+        margin-bottom: var(--spacing-lg);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .format-label {
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .format-example {
+        font-family: var(--font-family-mono);
+        background: var(--surface-color);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-color);
+        font-weight: 500;
+    }
+
+    /* Examples Grid */
+    .examples-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-lg);
+    }
+
+    .example-section {
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-color);
+    }
+
+    .good-examples {
+        background: rgba(76, 175, 80, 0.05);
+        border-color: var(--success-color);
+    }
+
+    .bad-examples {
+        background: rgba(244, 67, 54, 0.05);
+        border-color: var(--error-color);
+    }
+
+    .example-section h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 var(--spacing-sm) 0;
+    }
+
+    .good-examples h4 {
+        color: var(--success-color);
+    }
+
+    .bad-examples h4 {
+        color: var(--error-color);
+    }
+
+    .example-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .example-list li {
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .example-list code {
+        font-family: var(--font-family-mono);
+        background: var(--surface-color);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--border-light);
+        display: block;
+        font-size: 0.9rem;
+    }
+
+    /* Email Structure */
+    .email-structure {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .structure-step {
+        display: flex;
+        gap: var(--spacing-md);
+        align-items: flex-start;
+    }
+
+    .step-number {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        border-radius: 50%;
+        font-weight: 600;
+        flex-shrink: 0;
+    }
+
+    .step-content {
+        flex: 1;
+    }
+
+    .step-content h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 var(--spacing-sm) 0;
+        color: var(--text-primary);
+    }
+
+    .code-block {
+        background: var(--surface-variant);
+        border: 1px solid var(--border-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-sm);
+    }
+
+    .code-block code {
+        font-family: var(--font-family-mono);
+        font-size: 0.9rem;
+        line-height: 1.5;
+        color: var(--text-primary);
+        white-space: pre-line;
+    }
+
+    /* Screenshot Guidelines */
+    .screenshot-guidelines {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .guideline-item h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .guideline-item ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .guideline-item li {
+        padding: var(--spacing-xs) 0;
+        position: relative;
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .guideline-item li::before {
+        content: "•";
+        color: var(--primary-color);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+
+    /* Tools Section */
+    .tools-section {
+        background: var(--surface-variant);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        margin-top: var(--spacing-lg);
+    }
+
+    .tool-recommendation {
+        position: relative;
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .tool-badge {
+        position: absolute;
+        top: -10px;
+        right: var(--spacing-md);
+        background: var(--success-color);
+        color: var(--text-on-primary);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .info-box {
+        display: flex;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+        background: rgba(33, 150, 243, 0.1);
+        border: 1px solid var(--info-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+
+    .info-box i {
+        color: var(--info-color);
+        margin-top: 2px;
+    }
+
+    .info-box a {
+        color: var(--primary-color);
+    text-decoration: none;
+        font-weight: 500;
+}
+
+    .info-box a:hover {
+    text-decoration: underline;
+    }
+
+    /* SLA Table */
+    .sla-table-container {
+        overflow-x: auto;
+        margin: var(--spacing-lg) 0;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+    }
+
+    .sla-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--surface-color);
+        font-size: 0.9rem;
+    }
+
+    .sla-table th {
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        padding: var(--spacing-md);
+        text-align: left;
+        font-weight: 600;
+        border: none;
+    }
+
+    .sla-table th:first-child {
+        border-top-left-radius: var(--radius-lg);
+    }
+
+    .sla-table th:last-child {
+        border-top-right-radius: var(--radius-lg);
+    }
+
+    .sla-table td {
+        padding: var(--spacing-md);
+        border-bottom: 1px solid var(--border-light);
+        vertical-align: middle;
+    }
+
+    .sla-table tr:last-child td:first-child {
+        border-bottom-left-radius: var(--radius-lg);
+    }
+
+    .sla-table tr:last-child td:last-child {
+        border-bottom-right-radius: var(--radius-lg);
+    }
+
+    .sla-table tr:last-child td {
+        border-bottom: none;
+    }
+
+    .priority-badge {
+        display: inline-flex;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        border-radius: var(--radius-sm);
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .priority-badge.critical {
+        background: var(--error-color);
+        color: var(--text-on-primary);
+    }
+
+    .priority-badge.high {
+        background: var(--warning-color);
+        color: var(--text-on-primary);
+    }
+
+    .priority-badge.medium {
+        background: var(--info-color);
+        color: var(--text-on-primary);
+    }
+
+    .priority-badge.low {
+        background: var(--text-secondary);
+        color: var(--text-on-primary);
+    }
+
+    /* Notifications */
+    .notifications-section {
+        margin-top: var(--spacing-xl);
+    }
+
+    .notification-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        margin: var(--spacing-md) 0;
+    }
+
+    .notification-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        background: var(--surface-variant);
+        border-radius: var(--radius-md);
+        border-left: 4px solid var(--primary-color);
+    }
+
+    .notification-item i {
+        color: var(--primary-color);
+        width: 20px;
+    text-align: center;
+}
+
+    .notification-image {
+    max-width: 100%;
+    height: auto;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-2);
+        transition: transform var(--transition-normal);
+    }
+
+    .notification-image:hover {
+        transform: scale(1.02);
+    }
+
+    /* Recommendations */
+    .recommendations-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-xl);
+        margin-top: var(--spacing-lg);
+    }
+
+    .recommendation-section {
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--border-color);
+    }
+
+    .recommendation-section.positive {
+        background: rgba(76, 175, 80, 0.05);
+        border-color: var(--success-color);
+    }
+
+    .recommendation-section.negative {
+        background: rgba(244, 67, 54, 0.05);
+        border-color: var(--error-color);
+    }
+
+    .recommendation-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .recommendation-section.positive h3 {
+        color: var(--success-color);
+    }
+
+    .recommendation-section.negative h3 {
+        color: var(--error-color);
+    }
+
+    .recommendation-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .recommendation-list li {
+        padding: var(--spacing-xs) 0;
+        position: relative;
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .positive .recommendation-list li::before {
+        content: "✓";
+        color: var(--success-color);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+
+    .negative .recommendation-list li::before {
+        content: "×";
+        color: var(--error-color);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+
+    /* Interaction Guidelines */
+    .interaction-guidelines {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xl);
+    }
+
+    .guideline-block h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .remote-help-section {
+        background: var(--surface-variant);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+    }
+
+    .remote-tools h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .tool-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-md);
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .tool-card {
+        background: var(--surface-color);
+        padding: var(--spacing-md);
+        border-radius: var(--radius-md);
+    text-align: center;
+        border: 1px solid var(--border-light);
+        transition: all var(--transition-normal);
+    }
+
+    .tool-card:hover {
+        box-shadow: var(--shadow-2);
+        transform: translateY(-2px);
+    }
+
+    .tool-card .tool-icon {
+    display: flex;
+    align-items: center;
+        justify-content: center;
+        width: 40px;
+        height: 40px;
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        border-radius: var(--radius-md);
+        margin: 0 auto var(--spacing-sm);
+        font-size: 1.2rem;
+    }
+
+    .tool-card h5 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 var(--spacing-xs) 0;
+        color: var(--text-primary);
+    }
+
+    .tool-label {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+    }
+
+    /* Warning Box */
+    .warning-box {
+        display: flex;
+        gap: var(--spacing-md);
+        background: rgba(255, 152, 0, 0.1);
+        border: 1px solid var(--warning-color);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-md);
+        margin-top: var(--spacing-md);
+    }
+
+    .warning-box i {
+        color: var(--warning-color);
+        font-size: 1.2rem;
+        margin-top: 2px;
+    flex-shrink: 0;
+    }
+
+    .warning-content h4 {
+        font-size: 1rem;
+        font-weight: 600;
+        margin: 0 0 var(--spacing-sm) 0;
+        color: var(--warning-color);
+    }
+
+    .warning-content ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .warning-content li {
+        padding: var(--spacing-xs) 0;
+        position: relative;
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .warning-content li::before {
+        content: "•";
+        color: var(--warning-color);
+        position: absolute;
+        left: 0;
+        font-weight: bold;
+    }
+
+    /* Quality Assessment */
+    .quality-assessment {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .assessment-steps {
+        padding-left: var(--spacing-lg);
+        margin: var(--spacing-md) 0;
+    }
+
+    .assessment-steps li {
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+    }
+
+    .feedback-form-info {
+        background: var(--surface-variant);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+    }
+
+    .rating-items {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        margin-top: var(--spacing-md);
+    }
+
+    .rating-item {
+    display: flex;
+    align-items: center;
+        gap: var(--spacing-md);
+        padding: var(--spacing-sm);
+        background: var(--surface-color);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .stars {
+        font-size: 1.1rem;
+        color: var(--warning-color);
+    }
+
+    .comment-icon {
+        font-size: 1.2rem;
+    }
+
+    .feedback-section {
+        margin-top: var(--spacing-lg);
+    }
+
+    .feedback-image {
+        max-width: 100%;
+        height: auto;
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-2);
+        transition: transform var(--transition-normal);
+    }
+
+    .feedback-image:hover {
+        transform: scale(1.02);
+    }
+
+    /* Emergency Card */
+    .emergency-card .card-header {
+        background: linear-gradient(135deg, var(--warning-color) 0%, var(--error-color) 100%);
+        color: var(--text-on-primary);
+    }
+
+    .emergency-card .card-header i {
+        background: rgba(255, 255, 255, 0.2);
+    }
+
+    .emergency-card .card-header h2 {
+        color: var(--text-on-primary);
+    }
+
+    .emergency-content {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .emergency-call h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--error-color);
+    }
+
+    .emergency-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .emergency-list li {
+        padding: var(--spacing-sm);
+        margin-bottom: var(--spacing-xs);
+        background: rgba(244, 67, 54, 0.1);
+        border-radius: var(--radius-md);
+        border-left: 4px solid var(--error-color);
+        position: relative;
+        padding-left: var(--spacing-xl);
+    }
+
+    .emergency-list li::before {
+        content: "⚠";
+        color: var(--error-color);
+        position: absolute;
+        left: var(--spacing-sm);
+        top: 50%;
+        transform: translateY(-50%);
+        font-weight: bold;
+    }
+
+    .after-hours {
+        background: var(--surface-variant);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+    }
+
+    .after-hours h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .after-hours-info {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+    }
+
+    .info-item {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        background: var(--surface-color);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--border-light);
+    }
+
+    .info-item i {
+        color: var(--primary-color);
+        width: 20px;
+        text-align: center;
+    }
+
+    /* Resources Section */
+    .resources-section {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-lg);
+    }
+
+    .resource-category h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .resource-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .resource-list li {
+        padding: var(--spacing-sm) 0;
+        position: relative;
+        padding-left: var(--spacing-lg);
+        color: var(--text-secondary);
+    }
+
+    .resource-list li::before {
+        content: "📖";
+        position: absolute;
+        left: 0;
+    }
+
+    .self-help {
+        background: var(--surface-variant);
+        padding: var(--spacing-lg);
+        border-radius: var(--radius-lg);
+    }
+
+    .self-help h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-primary);
+    }
+
+    .self-help-steps {
+        padding-left: var(--spacing-lg);
+        margin: var(--spacing-md) 0;
+    }
+
+    .self-help-steps li {
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-secondary);
+    }
+
+    /* Final Message */
+    .final-message {
+        background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-light) 100%);
+        color: var(--text-on-primary);
+        border: none;
+    }
+
+    .final-content {
+        text-align: center;
+    }
+
+    .quote-section {
+        margin-bottom: var(--spacing-xl);
+    }
+
+    .quote-icon {
+        font-size: 3rem;
+        margin-bottom: var(--spacing-md);
+    }
+
+    .quote-section h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin-bottom: var(--spacing-md);
+        color: var(--text-on-primary);
+    }
+
+    .quote-section blockquote {
+        font-size: 1.3rem;
+        font-weight: 600;
+        margin: var(--spacing-lg) 0;
+        padding: var(--spacing-lg);
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-lg);
+        border-left: 4px solid var(--text-on-primary);
+    }
+
+    .quote-section p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        max-width: 600px;
+        margin: 0 auto;
+    }
+
+    .closing-message h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: var(--spacing-sm);
+        color: var(--text-on-primary);
+    }
+
+    .closing-message p {
+        font-size: 1.1rem;
+        color: rgba(255, 255, 255, 0.9);
+        margin: 0;
+    }
+
+    /* Footer */
+    .guide-footer {
+        background: var(--text-primary);
+        color: var(--text-on-primary);
+        padding: var(--spacing-xl) var(--spacing-lg);
+        margin-top: var(--spacing-xxl);
+    }
+
+    .guide-footer .footer-content {
+        max-width: var(--container-max-width);
+        margin: 0 auto;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-lg);
+    }
+
+    .footer-info p {
+        margin: 0;
+        font-size: 0.9rem;
+    }
+
+    .footer-info p:first-child {
+        font-weight: 600;
+        margin-bottom: var(--spacing-xs);
+    }
+
+    .contact-button {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background: var(--primary-color);
+        color: var(--text-on-primary);
+        padding: var(--spacing-sm) var(--spacing-lg);
+        border-radius: var(--radius-lg);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all var(--transition-normal);
+        box-shadow: var(--shadow-2);
+    }
+
+    .contact-button:hover {
+        background: var(--primary-light);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-4);
+    }
+
+    /* Utility Classes */
+    .center {
+        text-align: center;
+        margin: var(--spacing-lg) 0;
+    }
+
+    .image-caption {
+        font-size: 0.85rem;
+        color: var(--text-secondary);
+        text-align: center;
+        margin-top: var(--spacing-sm);
+        font-style: italic;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .guide-hero {
+            padding: var(--spacing-xl) var(--spacing-md);
+        }
+
+        .hero-icon {
+            width: 60px;
+            height: 60px;
+        }
+
+        .hero-icon i {
+            font-size: 1.5rem;
+        }
+
+        .guide-content {
+            padding: 0 var(--spacing-md);
+        }
+
+        .card-header {
+            padding: var(--spacing-md);
+        }
+
+        .card-content {
+            padding: var(--spacing-md);
+        }
+
+        .two-columns,
+        .examples-grid,
+        .recommendations-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-md);
+        }
+
+        .tool-cards {
+            grid-template-columns: 1fr;
+        }
+
+        .guide-footer .footer-content {
+            flex-direction: column;
+            text-align: center;
+            gap: var(--spacing-md);
+        }
+
+        .decoration-circle {
+            display: none;
+        }
+
+        .sla-table {
+            font-size: 0.8rem;
+        }
+
+        .sla-table th,
+        .sla-table td {
+            padding: var(--spacing-sm);
+        }
+    }
+
+    @media (max-width: 480px) {
+        .card-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--spacing-sm);
+            text-align: center;
+        }
+
+        .card-header i {
+            align-self: center;
+        }
+
+        .method-header {
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .structure-step {
+            flex-direction: column;
+            gap: var(--spacing-sm);
+        }
+
+        .step-number {
+            align-self: flex-start;
+        }
+
+        .contact-button {
+            width: 100%;
+    justify-content: center;
+        }
+    }
+
+    /* Print Styles */
+    @media print {
+        .hero-decoration,
+        .decoration-circle,
+        .contact-button {
+            display: none;
+        }
+
+        .guide-hero {
+            background: var(--text-primary) !important;
+            color: white !important;
+        }
+
+        .content-card {
+            box-shadow: none;
+    border: 1px solid #ccc;
+            break-inside: avoid;
+        }
+
+        .final-message {
+            background: #f5f5f5 !important;
+            color: var(--text-primary) !important;
+        }
+    }
+
+    /* Dark Mode Support */
+    @media (prefers-color-scheme: dark) {
+        :root {
+            --surface-color: #1e1e1e;
+            --surface-variant: #2d2d2d;
+            --background-color: #121212;
+            --card-background: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #b3b3b3;
+            --border-color: #404040;
+            --border-light: #333333;
+        }
+    }
+
+    /* Accessibility Improvements */
+    @media (prefers-reduced-motion: reduce) {
+        * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+        }
+    }
+
+    /* Focus States */
+    .content-card:focus-within {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
+    .method-card:focus-within,
+    .tool-card:focus-within {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+
+    a:focus {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+    }
+</style>
+{% endblock styles %}

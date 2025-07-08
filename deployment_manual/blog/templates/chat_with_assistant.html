@@ -1,0 +1,52 @@
+{% extends 'layout.html' %}
+{% block styles %}
+    <style>
+        body {
+            background: navajowhite;
+            background-size: cover;
+            font-family: 'Trebuchet MS', sans-serif; 
+        }
+        .container {
+            display: inline-block;
+        }
+        .typed-out {
+            overflow: hidden;
+            border-right: .15em solid orange;
+            white-space: nowrap;
+            animation: typing 3s steps(20, end) forwards;
+            font-size: 1.6rem;
+            width: 0;
+        }
+        @keyframes typing {
+            from { width: 0 }
+            to { width: 100% }
+        }
+    </style>
+{% endblock %}
+{% block content %}
+    <h1>Чат с ассистентом</h1>
+    <div id="chat-container">
+        <form action="{{ url_for('users.ask_assistant') }}" method="POST">
+            <div class="mb-3">
+                <label for="user-input" class="form-label">Ваш вопрос:</label>
+                <textarea id="user-input" name="user_message" class="form-control" placeholder="Enter your question" rows="4"></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary">Отправить</button>
+        </form>
+        <div id="assistant-response">
+            {% for message in chat_history %}
+                {% if message.role == "user" %}
+                    <p><strong>Вы:</strong> {{ message.content }}</p>
+                {% elif message.role == "assistant" %}
+                    <div class="assistant-response">
+                        <p><strong>Ассистент:</strong></p>
+                        <div class="container">
+                            <div class="typed-out">{{ message.content }}</div>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+{% endblock %}
+

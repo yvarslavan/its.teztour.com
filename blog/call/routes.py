@@ -7,7 +7,6 @@ import sys
 import os
 from contextlib import contextmanager
 from typing import Dict, Any, List, Optional, Literal, Union
-from sqlalchemy.sql import func
 from sqlalchemy import (
     select,
     MetaData,
@@ -18,6 +17,7 @@ from sqlalchemy import (
     Column,
     Integer,
     DateTime,
+    func,
 )
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.exc import IntegrityError
@@ -33,7 +33,7 @@ from flask import (
     Flask,
 )
 import requests
-from lxml import etree
+from lxml import etree  # type: ignore
 from blog.models import AgencyPhone, CallInfo
 
 from flask_cors import CORS
@@ -134,7 +134,7 @@ MYSQL_CONFIG = {
     "db": "tez_tour_cc",
     "port": 3306,
     "charset": "utf8mb4",
-    "cursorclass": pymysql.cursors.DictCursor,  # Добавляем это
+    "cursorclass": DictCursor,  # Добавляем это
 }
 
 
@@ -349,7 +349,8 @@ def handle_newcall(curator: str, ag_id: str, ani: str, tel: int):
 def get_pk_record():
     try:
         with session_scope() as db_session:
-            max_id = db_session.query(func.max(CallInfo.id)).scalar()
+            stmt = select(func.max(CallInfo.id))  # pylint: disable=not-callable
+            max_id = db_session.execute(stmt).scalar()
             return max_id if max_id is not None else 0
     except Exception as e:
         logger.error("Error getting max call info ID: %s", {str(e)})
@@ -400,12 +401,12 @@ def get_last_calls(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
 
         # Используем текущий код только если таблица инициализирована
         duration_in_seconds = (
-            call_info_table.time_end - call_info_table.time_begin
+            call_info_table.c.time_end - call_info_table.c.time_begin
         ) * 86400
 
         # Преобразование длительности в минуты и секунды
         duration_expression = case(
-            [
+            [  # type: ignore
                 (
                     duration_in_seconds < 60,
                     func.to_char(func.trunc(duration_in_seconds)) + " seconds",
@@ -420,25 +421,24 @@ def get_last_calls(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
         ).label("call_duration")
         query = (
             select(
-                [
-                    call_info_table.time_begin,
-                    call_info_table.time_end,
-                    call_info_table.phone_number,
-                    call_info_table.currator,
-                    call_info_table.theme,
-                    call_info_table.region,
-                    call_info_table.agency_manager,
-                    call_info_table.agency_id,
-                    call_info_table.agency_name,
-                    duration_expression,
-                ]
+                call_info_table.c.time_begin,
+                call_info_table.c.time_end,
+                call_info_table.c.phone_number,
+                call_info_table.c.currator,
+                call_info_table.c.theme,
+                call_info_table.c.region,
+                call_info_table.c.agency_manager,
+                call_info_table.c.agency_id,
+                call_info_table.c.agency_name,
+                duration_expression,
             )
-            .where(call_info_table.agency_id == agency_id)
-            .order_by(desc(call_info_table.call_info_id))
+            .where(call_info_table.c.agency_id == agency_id)
+            .order_by(desc(call_info_table.c.call_info_id))
             .limit(limit)
         )
-        result = engine_sales_schema.execute(query).fetchall()
-        return [dict(row) for row in result]
+        with engine_sales_schema.connect() as connection:
+            result = connection.execute(query).fetchall()
+            return [dict(row) for row in result]
     except Exception as e:
         logger.error(f"Ошибка при получении истории звонков: {str(e)}")
         # Используем прямой SQL запрос как резервный вариант
@@ -721,7 +721,8 @@ def session_scope():
 
 def get_max_call_info_id(db_session):
     try:
-        max_id = db_session.query(func.max(CallInfo.id)).scalar()
+        stmt = select(func.max(CallInfo.id))  # pylint: disable=not-callable
+        max_id = db_session.execute(stmt).scalar()
         return max_id if max_id is not None else 0
     except Exception as e:
         logger.error("Error getting max call info ID: %s", {str(e)})
@@ -783,12 +784,14 @@ def record_stat_to_db(
 
 def write_end_call(pk_record, sales_schema):
     try:
-        update_stmt = (
-            call_info_table.update()
-            .where(call_info_table.call_info_id == pk_record)
-            .values(time_end=func.sysdate)
-        )
-        sales_schema.execute(update_stmt)
+        if call_info_table is not None:
+            update_stmt = (
+                call_info_table.update()
+                .where(call_info_table.c.call_info_id == pk_record)
+                .values(time_end=func.sysdate)
+            )
+            with sales_schema.connect() as connection:
+                connection.execute(update_stmt)
     except Exception as e:
         logger.error("Error updating end call: %s", e)
     return 0
@@ -812,11 +815,11 @@ def update_call_theme():
         # Прямой SQL запрос без использования ORM
         with engine_sales_schema.connect() as connection:
             # Формируем SQL запрос напрямую к таблице
-            sql = """
+            sql = text("""
             UPDATE T_CALL_INFO
             SET THEME = :theme
             WHERE CALL_INFO_ID = :pk_record
-            """
+            """)
             result = connection.execute(sql, {"theme": theme, "pk_record": pk_record})
             affected_rows = result.rowcount
 
@@ -974,7 +977,7 @@ def contact_center_moscow(ani=None, agent_id=None):
 
     if connection:
         try:
-            with connection.cursor() as cursor:
+            with connection.cursor(DictCursor) as cursor:
                 # Получаем звонки за текущие сутки
                 # Добавляем cls.result и CASE для call_result_text
                 query = """
@@ -1140,7 +1143,7 @@ def get_moscow_calls():
             )
 
         try:
-            with connection.cursor() as cursor:
+            with connection.cursor(DictCursor) as cursor:
                 # Используем date_filter_sql в запросе
                 query = f"""
                 SELECT
@@ -1266,7 +1269,7 @@ def get_call_agency_data(pp_id):
             )
 
         try:
-            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            with connection.cursor(DictCursor) as cursor:
                 # Исправленный запрос с правильным JOIN для операторов
                 agency_query = """
                 SELECT
@@ -1431,7 +1434,7 @@ def get_client_card_by_call(call_id):
         if connection:
             try:
                 with connection.cursor(
-                    pymysql.cursors.DictCursor
+                    DictCursor
                 ) as cursor:  # Используем DictCursor для удобства
                     # Запрос изменен для поиска по call_id
                     query = """
@@ -1497,7 +1500,7 @@ def get_call_stats():
         connection = get_db_connection()
         if connection:
             try:
-                with connection.cursor() as cursor:
+                with connection.cursor(DictCursor) as cursor:
                     # Запрос для подсчета общего количества звонков за сутки
                     count_query = """
                     SELECT COUNT(*) as total_calls
@@ -2030,6 +2033,8 @@ def finesse_agent_state():
         except Exception as e:
             logger.error(f"Ошибка при изменении статуса агента: {str(e)}")
             return jsonify({"success": False, "error": str(e)}), 500
+    else:
+        return jsonify({"error": "Method Not Allowed"}), 405
 
 
 @calls.route("/finesse/agents/status", methods=["GET"])
@@ -2758,7 +2763,7 @@ def get_moscow_operator_stats():
             )
 
         try:
-            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            with connection.cursor(DictCursor) as cursor:
                 query = f"""
                 SELECT
                     op.name AS operator_name,
@@ -2819,7 +2824,7 @@ def get_moscow_calls_monthly_stats():
             )
 
         try:
-            with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            with connection.cursor(DictCursor) as cursor:
                 query = """
                 SELECT
                     YEAR(datetime) AS year,
@@ -2868,7 +2873,7 @@ def get_agencies():
         )
 
     try:
-        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+        with connection.cursor(DictCursor) as cursor:
             base_query = """
                 SELECT
                     ag.id AS ID_TR,
@@ -2978,7 +2983,7 @@ def get_agency_details(agency_id):
         return jsonify({"success": False, "error": connection_error}), 500
 
     try:
-        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+        with connection.cursor(DictCursor) as cursor:
             query = """
                 SELECT
                     ag.*,

@@ -1,0 +1,127 @@
+/**
+ * Главный SCSS файл для страницы задач
+ * Импортирует все модули в правильном порядке
+ */
+
+/* === БАЗОВЫЕ МОДУЛИ === */
+@import 'variables';        // CSS переменные и дизайн-токены
+
+/* === КОМПОНЕНТЫ === */
+@import 'loading';          // Система загрузки
+
+/* === БУДУЩИЕ МОДУЛИ === */
+// @import 'base';          // Базовые стили
+// @import 'layout';        // Структура страницы
+// @import 'header';        // Заголовок страницы
+// @import 'statistics';    // Карточки статистики
+// @import 'filters';       // Панель фильтров
+// @import 'table';         // DataTables стили
+// @import 'responsive';    // Адаптивность
+
+/**
+ * Временные стили для совместимости
+ * Будут удалены после полного рефакторинга
+ */
+
+/* Базовые стили для контейнера задач */
+.tasks-page-container {
+  max-width: var(--tasks-container-max-width);
+  margin: 0 auto;
+  padding: var(--tasks-spacing-md);
+
+  /* Обеспечиваем правильную работу новой системы загрузки */
+  .loading-overlay .loading-icon,
+  .loading-inline .loading-icon-small,
+  .dt-processing i {
+    color: var(--tasks-primary) !important;
+  }
+
+  /* Заголовок страницы */
+  .page-header {
+    padding: var(--tasks-spacing-lg) 0 var(--tasks-spacing-xl) 0;
+    margin-bottom: var(--tasks-spacing-xl);
+
+    .action-button {
+      height: var(--tasks-button-height);
+      padding: 0 var(--tasks-spacing-lg);
+      border-radius: var(--tasks-radius-md);
+      font-weight: var(--tasks-font-medium);
+      transition: var(--tasks-transition-colors), var(--tasks-transition-transform);
+      display: inline-flex;
+      align-items: center;
+      gap: var(--tasks-spacing-sm);
+      text-decoration: none;
+
+      &.primary {
+        background: var(--tasks-gradient-primary);
+        color: var(--tasks-text-inverse);
+        box-shadow: var(--tasks-shadow-primary);
+        border: 2px solid rgba(255, 255, 255, 0.1);
+
+        &:hover {
+          transform: translateY(-2px) scale(1.02);
+          box-shadow:
+            0 8px 25px 0 rgba(59, 130, 246, 0.4),
+            0 4px 15px 0 rgba(59, 130, 246, 0.3);
+        }
+
+        &:active {
+          transform: translateY(0) scale(0.98);
+        }
+      }
+
+      &.secondary {
+        background: rgba(255, 255, 255, 0.9);
+        color: var(--tasks-primary);
+        border: 2px solid rgba(59, 130, 246, 0.2);
+        backdrop-filter: var(--tasks-backdrop-blur-md);
+
+        &:hover {
+          background: rgba(255, 255, 255, 1);
+          border-color: var(--tasks-primary);
+          transform: translateY(-1px);
+          box-shadow: var(--tasks-shadow-md);
+        }
+      }
+    }
+  }
+}
+
+/* Обеспечиваем совместимость с существующими селекторами */
+.status-breakdown-dashboard,
+.filters-section,
+#tasksTable_wrapper {
+  position: relative;
+}
+
+/* Скрываем старые спинеры */
+.loading-overlay:not([data-loading-state]),
+.dt-processing:not([data-loading-state]),
+#loading-spinner:not([data-loading-state]) {
+  display: none !important;
+}
+
+/**
+ * Отладочные стили (только в development)
+ */
+@if (var(--debug-mode, 0) == 1) {
+  .tasks-page-container {
+    outline: 2px dashed var(--tasks-warning);
+
+    .loading-container {
+      outline: 1px solid var(--tasks-success);
+    }
+
+    [data-loading-state]::before {
+      content: attr(data-loading-state);
+      position: absolute;
+      top: 0;
+      left: 0;
+      background: var(--tasks-warning);
+      color: var(--tasks-text-inverse);
+      padding: 2px 6px;
+      font-size: 10px;
+      z-index: 9999;
+    }
+  }
+}
