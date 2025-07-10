@@ -51,28 +51,42 @@
 
                             window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
 
-                                        // AJAX-пуллинг
+                                        // УЛУЧШЕННЫЙ AJAX-пуллинг с частыми обновлениями
             function updateNotificationCount() {
-                // На странице /notifications не обновляем бейдж автоматически
-                if (window.location.pathname === '/notifications') {
-                    return;
-                }
+                console.log('[NotificationBadge] 🔄 Обновление счетчика уведомлений...');
 
                 $.ajax({
                     url: "{{ url_for('main.get_notification_count') }}",
                     type: 'GET',
                     success: function(data) {
-                        refreshNotificationBadge(data.count);
+                        const currentCount = parseInt($('#notification-badge').text() || '0', 10);
+                        const newCount = data.count || 0;
+
+                        console.log(`[NotificationBadge] Получен счетчик: ${newCount} (было: ${currentCount})`);
+
+                        // Обновляем счетчик всегда, независимо от страницы
+                        refreshNotificationBadge(newCount);
+
+                        // Если появились новые уведомления, показываем уведомление
+                        if (newCount > currentCount && currentCount >= 0) {
+                            console.log(`[NotificationBadge] 🔔 Новые уведомления: +${newCount - currentCount}`);
+
+                            // Dispatch event для других компонентов
+                            window.dispatchEvent(new CustomEvent('newNotification', {
+                                detail: { count: newCount, difference: newCount - currentCount }
+                            }));
+                        }
                     },
                     error: function(xhr) {
-                        console.error('Ошибка при получении количества уведомлений');
-                        $('#notification-badge').remove();
+                        console.error('[NotificationBadge] ❌ Ошибка при получении количества уведомлений:', xhr);
+                        // Не удаляем badge при ошибке, просто логируем
                     }
                 });
             }
 
-                            setInterval(updateNotificationCount, 30000);
-                            updateNotificationCount();
+                            // ИСПРАВЛЕНО: Уменьшили интервал до 10 секунд для быстрого отклика
+            setInterval(updateNotificationCount, 10000);
+            updateNotificationCount();
 
                             /* === Листенер для пуш-виджета === */
                             window.addEventListener('newNotification', function(e) {

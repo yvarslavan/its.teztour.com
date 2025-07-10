@@ -101,8 +101,13 @@ class NotificationData:
         }
 
     def get_hash(self) -> str:
-        """Получение хеша для дедупликации"""
-        content = f"{self.user_id}:{self.issue_id}:{self.notification_type.value}:{self.message}"
+        """Получение хеша для дедупликации (исправлено для предотвращения дублирования)"""
+        # ИСПРАВЛЕНО: Используем source_id если есть, иначе комбинацию стабильных полей
+        if self.source_id:
+            content = f"{self.user_id}:{self.issue_id}:{self.notification_type.value}:{self.source_id}"
+        else:
+            # Для уведомлений без source_id используем стабильные поля без message
+            content = f"{self.user_id}:{self.issue_id}:{self.notification_type.value}:{self.created_at}"
         return hashlib.md5(content.encode()).hexdigest()
 
 

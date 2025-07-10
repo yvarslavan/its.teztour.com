@@ -369,6 +369,48 @@
     margin: var(--spacing-lg) 0;
   }
 
+  /* Изоляция стилей статьи */
+  .article-scoped {
+    position: relative;
+    isolation: isolate;
+  }
+
+  /* Стили для кастомного body внутри статьи */
+  .article-scoped .custom-body {
+    /* Наследуем стили от родительского контейнера */
+    font-family: inherit;
+    line-height: inherit;
+    color: inherit;
+    background: none;
+    margin: 0;
+    padding: 0;
+    min-height: auto;
+  }
+
+  /* Защита кнопок от переопределения стилями статьи */
+  .action-buttons {
+    position: relative;
+    z-index: 9999;
+  }
+
+  .action-buttons .btn-action {
+    position: relative;
+    z-index: 10000;
+    margin: 0 !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    box-sizing: border-box !important;
+  }
+
+  .btn-edit {
+    background: linear-gradient(135deg, var(--success-color) 0%, #059669 100%) !important;
+    color: white !important;
+  }
+
+  .btn-delete {
+    background: linear-gradient(135deg, var(--error-color) 0%, #dc2626 100%) !important;
+    color: white !important;
+  }
+
   /* Article Footer */
   .article-footer {
     padding: var(--spacing-xl) var(--spacing-2xl);
@@ -629,7 +671,12 @@
       <!-- Article Content -->
       <div class="article-content">
         <div class="content">
-          {{ post.content | safe }}
+          {% set sanitized_content = post.content | replace('* {', '.article-scoped * {') | replace('body {', '.article-scoped .custom-body {') %}
+          <div class="article-scoped">
+            <div class="custom-body">
+              {{ sanitized_content | safe }}
+            </div>
+          </div>
         </div>
       </div>
 
