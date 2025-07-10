@@ -1898,39 +1898,124 @@
                     }
                 }
 
+                // Флаг для предотвращения множественных уведомлений о потере соединения
+                let connectionLost = false;
+                let lastConnectionCheck = 0;
+
                 function checkConnection() {
                     // Проверяем, авторизован ли пользователь
-                    if (document.body.classList.contains('logged-in')) {
-                        $.ajax({
-                            url: "{{ url_for('main.check_connection') }}",
-                            type: 'GET',
-                            success: function(response) {
-                                if (!response.connected) {
+                    if (!document.body.classList.contains('logged-in')) {
+                        return;
+                    }
+
+                    const now = Date.now();
+                    // Ограничиваем частоту проверок до раза в 10 секунд
+                    if (now - lastConnectionCheck < 10000) {
+                        return;
+                    }
+                    lastConnectionCheck = now;
+
+                    $.ajax({
+                        url: "{{ url_for('main.check_connection') }}",
+                        type: 'GET',
+                        timeout: 8000, // 8 секунд timeout
+                        success: function(response) {
+                            // Соединение восстановлено
+                            if (connectionLost) {
+                                connectionLost = false;
+                                console.log('[VPN_CHECK] ✅ Соединение восстановлено');
+
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '✅ Соединение восстановлено',
+                                    text: 'Доступ к системе восстановлен. Система работает нормально.',
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 4000,
+                                    timerProgressBar: true,
+                                    toast: true
+                                });
+                            }
+
+                            // Проверяем ответ от сервера
+                            if (!response.connected) {
+                                // Проблема с базой данных, но VPN работает
+                                if (!connectionLost) {
+                                    connectionLost = true;
+                                    console.log('[VPN_CHECK] ⚠️ Проблема с базой данных');
+
                                     Swal.fire({
                                         icon: 'warning',
-                                        title: 'Потеряно соединение',
-                                        text: 'Потеряно соединение с базой данных. Проверьте активность VPN-подключения через Cisco AnyConnect и убедитесь, что оно работает корректно. Если проблема сохраняется, перезапустите VPN-клиент или приложение и проверьте настройки сети.',
+                                        title: '⚠️ Проблема с базой данных',
+                                        text: 'Потеряно соединение с базой данных. Проверьте активность VPN-подключения через Cisco AnyConnect.',
                                         position: 'top',
-                                        showConfirmButton: false,
-                                        timer: 10000,
-                                        timerProgressBar: true,
-                                        toast: true,
-                                        didOpen: (toast) => {
-                                            toast.addEventListener('mouseenter', Swal.stopTimer)
-                                            toast.addEventListener('mouseleave', Swal.resumeTimer)
+                                        showConfirmButton: true,
+                                        confirmButtonText: '🔄 Перезагрузить страницу',
+                                        allowOutsideClick: false,
+                                        allowEscapeKey: false,
+                                        timer: 15000,
+                                        timerProgressBar: true
+                                    }).then((result) => {
+                                        if (result.isConfirmed) {
+                                            window.location.reload();
                                         }
                                     });
                                 }
                             }
-                        });
-                    }
+                        },
+                        error: function(xhr, status, error) {
+                            // Полная потеря соединения (VPN отключен)
+                            if (!connectionLost) {
+                                connectionLost = true;
+                                console.log('[VPN_CHECK] 🚨 VPN соединение потеряно');
+
+                                let errorMessage = '';
+                                let errorTitle = '';
+
+                                if (status === 'timeout') {
+                                    errorTitle = '🚨 Превышено время ожидания';
+                                    errorMessage = 'Сервер не отвечает. Проверьте VPN соединение Cisco AnyConnect.';
+                                } else if (xhr.status === 0) {
+                                    errorTitle = '🚨 VPN соединение потеряно';
+                                    errorMessage = 'Нет доступа к серверу. Cisco AnyConnect VPN отключен или неактивен. Перезапустите VPN и обновите страницу.';
+                                } else {
+                                    errorTitle = '🚨 Ошибка соединения';
+                                    errorMessage = `Ошибка ${xhr.status}: ${error}. Проверьте VPN соединение.`;
+                                }
+
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: errorTitle,
+                                    html: `<div style="text-align: left;">${errorMessage}<br><br>
+                                          <strong>Что делать:</strong><br>
+                                          1. Проверьте статус Cisco AnyConnect<br>
+                                          2. Переподключите VPN если нужно<br>
+                                          3. Обновите страницу после подключения</div>`,
+                                    position: 'center',
+                                    showConfirmButton: true,
+                                    confirmButtonText: '🔄 Перезагрузить страницу',
+                                    showCancelButton: true,
+                                    cancelButtonText: '❌ Закрыть',
+                                    allowOutsideClick: false,
+                                    allowEscapeKey: false,
+                                    customClass: {
+                                        popup: 'connection-error-popup'
+                                    }
+                                }).then((result) => {
+                                    if (result.isConfirmed) {
+                                        window.location.reload();
+                                    }
+                                });
+                            }
+                        }
+                    });
                 }
 
                 // Запускаем polling уведомлений каждые 30 секунд
                 setInterval(pollNotifications, 30000);
 
-                // Проверяем соединение каждые 30 секунд
-                setInterval(checkConnection, 30000);
+                // Проверяем соединение каждые 15 секунд (быстрее для VPN)
+                setInterval(checkConnection, 15000);
 
                 // Начальные проверки при загрузке страницы
                 pollNotifications();
