@@ -248,6 +248,8 @@ def create_app():
                     app.logger.info(f"Job '{job_id}' added to scheduler.")
                 else:
                     app.logger.info(f"Job '{job_id}' already exists in scheduler.")
+
+
             except Exception as e_scheduler_init:
                 app.logger.error(f"Error initializing or starting scheduler: {e_scheduler_init}", exc_info=True)
     else:

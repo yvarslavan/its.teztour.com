@@ -3,6 +3,7 @@
 """
 import logging
 import time
+import socket
 from datetime import datetime, timedelta
 from mysql_db import execute_quality_query_safe, execute_main_query_safe, db_manager
 from sqlalchemy import text
