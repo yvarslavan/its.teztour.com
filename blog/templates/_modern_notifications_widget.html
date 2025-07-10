@@ -1105,7 +1105,39 @@ try {
                     `;
                     return;
                 }
-                this.list.innerHTML = this.notifications.map(notification => {
+
+                // ИСПРАВЛЕНО: Сортировка уведомлений по времени (самые новые вверху)
+                const sortedNotifications = [...this.notifications].sort((a, b) => {
+                    // Получаем времена для сортировки
+                    const getTimestamp = (notification) => {
+                        if (notification.raw && notification.raw.date_created) {
+                            return new Date(notification.raw.date_created).getTime();
+                        }
+                        // Парсим время из строки "X мин назад" или "X ч назад"
+                        const timeStr = notification.time;
+                        if (timeStr === 'Только что') return Date.now();
+                        if (timeStr.includes('мин назад')) {
+                            const minutes = parseInt(timeStr.match(/\d+/)[0]);
+                            return Date.now() - (minutes * 60 * 1000);
+                        }
+                        if (timeStr.includes('ч назад')) {
+                            const hours = parseInt(timeStr.match(/\d+/)[0]);
+                            return Date.now() - (hours * 60 * 60 * 1000);
+                        }
+                        // Если дата в формате DD.MM.YYYY
+                        const dateParts = timeStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
+                        if (dateParts) {
+                            return new Date(dateParts[3], dateParts[2] - 1, dateParts[1]).getTime();
+                        }
+                        return Date.now(); // Fallback
+                    };
+
+                    return getTimestamp(b) - getTimestamp(a); // Сортировка по убыванию (новые первыми)
+                });
+
+                console.log('[ModernWidget] 🔄 Уведомления отсортированы по времени (новые сверху)');
+
+                this.list.innerHTML = sortedNotifications.map(notification => {
                     console.log('[ModernWidget] Notification data:', notification); // Для отладки
                     return `
                     <div class="notification-item ${notification.type}" data-id="${notification.id}">
@@ -1216,19 +1248,13 @@ try {
                                         notificationItem.style.transform = 'scale(0.95)';
 
                                         setTimeout(() => {
-                                            // Удаляем уведомление из массива
-                                            this.notifications = this.notifications.filter(n => n.id !== notificationId);
-                                            this.renderNotifications();
-                                            this.updateBadge(this.notifications.length);
+                                                                        // Удаляем уведомление из массива
+                            this.notifications = this.notifications.filter(n => n.id !== notificationId);
+                            this.renderNotifications();
+                            this.updateBadge(this.notifications.length);
 
-                                            // Обновляем глобальный счётчик
-                                            try {
-                                                if (window.refreshNotificationBadge) {
-                                                    window.refreshNotificationBadge(this.notifications.length);
-                                                }
-                                            } catch (err) {
-                                                console.warn('[ModernWidget] Cannot refresh global badge:', err);
-                                            }
+                            // ИСПРАВЛЕНО: Виджет больше не обновляет глобальный счетчик
+                            // Глобальный счетчик и виджет теперь работают независимо
                                         }, 400);
                                     }
                                 }, 1000);
@@ -1376,36 +1402,28 @@ try {
 
         async clearNotifications() {
             try {
-                if (!confirm('Очистить все уведомления? Это действие нельзя отменить.')) return;
+                if (!confirm('Очистить все уведомления в виджете? Они останутся в базе данных.')) return;
 
-                console.log('[ModernWidget] 🧹 Отправка запроса на очистку всех уведомлений (из виджета)...');
-                const response = await fetch('/api/notifications/widget/clear', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
-                    }
-                });
-                const data = await response.json();
+                console.log('[ModernWidget] 🧹 Локальная очистка виджета (без удаления из базы данных)...');
 
-                if (data.success) {
-                    console.log('[ModernWidget] ✅ Уведомления успешно очищены на сервере.');
-                    this.notifications = [];
-                    this.renderNotifications();
-                    this.updateBadge(0);
-                    localStorage.removeItem('seenNotificationIds');
-                    console.log('[ModernWidget] 🗑️ Список просмотренных уведомлений очищен.');
-                    this.widget.style.transform = 'scale(1.02)';
-                    setTimeout(() => {
-                        this.widget.style.transform = 'scale(1)';
-                    }, 200);
-                } else {
-                    console.error('[ModernWidget] ❌ Ошибка при очистке уведомлений:', data.error);
-                    alert(`Не удалось очистить уведомления: ${data.error || 'Неизвестная ошибка'}`);
-                }
+                // ИСПРАВЛЕНО: Виджет теперь очищает только локальные данные, НЕ базу данных
+                this.notifications = [];
+                this.renderNotifications();
+                this.updateBadge(0);
+                localStorage.removeItem('seenNotificationIds');
+
+                console.log('[ModernWidget] ✅ Виджет очищен локально. Данные в базе остались неизмененными.');
+                console.log('[ModernWidget] 🗑️ Список просмотренных уведомлений очищен.');
+
+                // Визуальная обратная связь
+                this.widget.style.transform = 'scale(1.02)';
+                setTimeout(() => {
+                    this.widget.style.transform = 'scale(1)';
+                }, 200);
+
             } catch (error) {
-                console.error('[ModernWidget] ❌ Критическая ошибка при очистке уведомлений:', error);
-                alert('Произошла ошибка при отправке запроса на очистку уведомлений.');
+                console.error('[ModernWidget] ❌ Ошибка при локальной очистке виджета:', error);
+                alert('Произошла ошибка при очистке виджета.');
             }
         }
 
