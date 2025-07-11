@@ -992,6 +992,17 @@ def test_search_enhanced():
     except FileNotFoundError:
         return "Файл test_search_enhanced.html не найден", 404
 
+@tasks_bp.route("/test-status-api")
+@login_required
+def test_status_api():
+    """Тестовая страница для API изменения статуса"""
+    try:
+        with open('test_status_api.html', 'r', encoding='utf-8') as f:
+            content = f.read()
+        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
+    except FileNotFoundError:
+        return "Файл test_status_api.html не найден", 404
+
 def get_my_tasks_statuses_localized():
     """API для получения локализованных статусов задач из таблицы u_statuses
 

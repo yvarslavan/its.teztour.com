@@ -133,7 +133,7 @@ def create_app():
     from blog.models import load_user
     login_manager.user_loader(load_user)
 
-    # Инициализируем CSRF защиту
+            # Инициализируем CSRF защиту
     csrf.init_app(app)
 
     # Настройка CORS - универсальная для всех сред

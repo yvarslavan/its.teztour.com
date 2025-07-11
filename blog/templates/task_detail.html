@@ -1,6 +1,308 @@
 {% extends 'layout.html' %}
 
 {% block main_page %}
+
+<!-- CSS для функционала изменения статуса -->
+<style>
+/* Контейнер для изменения статуса */
+.task-status-changer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+/* Отображение текущего статуса */
+.current-status {
+    margin-bottom: 15px;
+}
+
+.current-status .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Улучшенные бейджи статусов */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    line-height: 1.4;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    border: 1px solid rgba(206, 212, 218, 0.5);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.status-badge:hover::before {
+    left: 100%;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Цветные стили для разных статусов */
+.status-badge.status-1,
+.status-badge.status-7,
+.status-badge.status-13,
+.status-badge.status-17 {
+    background: linear-gradient(135deg, #d1ecf1 0%, #b8daff 100%);
+    color: #0c5460;
+    border-color: rgba(190, 229, 235, 0.6);
+    box-shadow:
+        0 2px 8px rgba(12, 84, 96, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-2,
+.status-badge.status-8,
+.status-badge.status-15,
+.status-badge.status-18 {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border-color: rgba(255, 234, 167, 0.6);
+    box-shadow:
+        0 2px 8px rgba(133, 100, 4, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-3 {
+    background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+    color: #004085;
+    border-color: rgba(184, 218, 255, 0.6);
+    box-shadow:
+        0 2px 8px rgba(0, 64, 133, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-4,
+.status-badge.status-14 {
+    background: linear-gradient(135deg, #f8d7da 0%, #ffcdd2 100%);
+    color: #721c24;
+    border-color: rgba(245, 198, 203, 0.6);
+    box-shadow:
+        0 2px 8px rgba(114, 28, 36, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-5,
+.status-badge.status-16 {
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    color: #00695c;
+    border-color: rgba(178, 223, 219, 0.6);
+    box-shadow:
+        0 2px 8px rgba(0, 105, 92, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-6 {
+    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+    color: #383d41;
+    border-color: rgba(214, 216, 219, 0.6);
+    box-shadow:
+        0 2px 8px rgba(56, 61, 65, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-9 {
+    background: linear-gradient(135deg, #ffccbc 0%, #ff8a65 100%);
+    color: #d84315;
+    border-color: rgba(255, 138, 101, 0.6);
+    box-shadow:
+        0 2px 8px rgba(216, 67, 21, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-10,
+.status-badge.status-19 {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border-color: rgba(225, 190, 231, 0.6);
+    box-shadow:
+        0 2px 8px rgba(123, 31, 162, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Добавляем иконку для статуса */
+.status-badge::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+    animation: statusPulse 2s infinite ease-in-out;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Улучшения для темной темы */
+[data-theme="dark"] .status-badge {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    color: #f3f4f6;
+    border-color: rgba(75, 85, 99, 0.5);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Форма изменения статуса */
+.status-change-form {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+}
+
+.status-change-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Селект для выбора статуса */
+#new-status-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Кнопка изменения статуса */
+#change-status-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+#change-status-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#change-status-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #6c757d;
+}
+
+/* Поле комментария */
+#status-comment {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    width: 100%;
+    min-height: 80px;
+    resize: vertical;
+}
+
+/* Анимация загрузки */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Уведомления */
+.alert {
+    border-radius: 6px;
+    margin-bottom: 15px;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border: 1px solid #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border: 1px solid #f5c6cb;
+    color: #721c24;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .task-status-changer {
+        padding: 10px;
+    }
+
+    #change-status-btn {
+        width: 100%;
+        margin-top: 10px;
+    }
+}
+
+.loading-placeholder {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #6c757d;
+    font-size: 0.875rem;
+}
+
+.section-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.status-management {
+    display: block;
+}
+
+.status-management .detail-content {
+    width: 100%;
+}
+</style>
+
 <div class="modern-task-detail">
   <!-- Floating Action Button -->
   <div class="fab-container">
@@ -157,6 +459,31 @@
                 </div>
               </div>
               {% endif %}
+            </div>
+          </div>
+
+          <!-- Status Change Section -->
+          <div class="detail-section">
+            <h3 class="section-title">
+              <i class="fas fa-sync-alt"></i>
+              Управление статусом
+            </h3>
+            <div class="detail-items">
+              <div class="detail-item status-management">
+                <div class="detail-icon">
+                  <i class="fas fa-flag"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Статус задачи</span>
+                  <div id="task-status-container">
+                    <!-- Здесь будет вставлен функционал изменения статуса через JavaScript -->
+                    <div class="loading-placeholder">
+                      <i class="fas fa-spinner fa-spin"></i>
+                      <span>Загрузка...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -524,9 +851,25 @@
 /* FAB */
 .fab-container {
   position: fixed;
-  bottom: 2rem;
-  right: 2rem;
+  bottom: 7rem; /* Точно на 5rem выше кнопки уведомлений (2rem + 5rem = 7rem) */
+  right: 2rem; /* Выравниваем по вертикали с кнопкой уведомлений */
   z-index: 1000;
+  transition: all 0.3s ease;
+}
+
+/* Адаптивность для fab-container */
+@media (max-width: 768px) {
+  .fab-container {
+    right: 2rem;
+    bottom: 7rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .fab-container {
+    right: 2rem;
+    bottom: 7rem;
+  }
 }
 
 .fab {
@@ -1703,5 +2046,319 @@ function goBackToTasksList(taskId) {
     sessionStorage.setItem('return_from_task_id', taskId);
     window.location.href = '/tasks/my-tasks';
 }
+
+// ===== ФУНКЦИОНАЛ ИЗМЕНЕНИЯ СТАТУСА ЗАДАЧИ =====
+
+/**
+ * Класс для управления изменением статуса задачи
+ */
+class TaskStatusChanger {
+    constructor(taskId) {
+        this.taskId = taskId;
+        this.currentStatusId = null;
+        this.isLoading = false;
+        this.init();
+    }
+
+    /**
+     * Инициализация компонента
+     */
+    init() {
+        this.loadAvailableStatuses();
+        this.bindEvents();
+    }
+
+    /**
+     * Загрузка доступных статусов для задачи
+     */
+    async loadAvailableStatuses() {
+        try {
+            this.showLoading(true);
+
+            const response = await fetch(`/tasks/api/task/${this.taskId}/statuses`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.currentStatusId = data.current_status.id;
+                this.renderStatusSelector(data.current_status, data.available_statuses);
+            } else {
+                this.showError('Не удалось загрузить доступные статусы: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Ошибка загрузки статусов:', error);
+            this.showError('Ошибка загрузки статусов. Попробуйте обновить страницу.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    /**
+     * Отрисовка селектора статуса
+     */
+    renderStatusSelector(currentStatus, availableStatuses) {
+        const statusContainer = document.getElementById('task-status-container');
+        if (!statusContainer) {
+            console.error('Контейнер для статуса не найден');
+            return;
+        }
+
+        // Создаем HTML для изменения статуса
+        const statusHTML = `
+            <div class="task-status-changer">
+                <div class="current-status">
+                    <label class="form-label">Текущий статус:</label>
+                    <span class="status-badge status-${currentStatus.id}" id="current-status-display">
+                        ${currentStatus.name}
+                    </span>
+                </div>
+
+                <div class="status-change-form">
+                    <label class="form-label">Изменить статус:</label>
+                    <select id="new-status-select">
+                        <option value="">Выберите новый статус</option>
+                        ${availableStatuses.map(status =>
+                            `<option value="${status.id}">${status.name}</option>`
+                        ).join('')}
+                    </select>
+
+                    <button type="button" id="change-status-btn" disabled>
+                        <i class="fas fa-sync-alt"></i> Изменить статус
+                    </button>
+
+                    <label class="form-label" style="margin-top: 15px;">Комментарий (необязательно):</label>
+                    <textarea id="status-comment" placeholder="Добавьте комментарий к изменению статуса..."></textarea>
+                </div>
+            </div>
+        `;
+
+        statusContainer.innerHTML = statusHTML;
+    }
+
+    /**
+     * Привязка событий
+     */
+    bindEvents() {
+        // Используем делегирование событий, так как элементы создаются динамически
+        document.addEventListener('change', (e) => {
+            if (e.target.id === 'new-status-select') {
+                this.handleStatusSelectChange(e);
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (e.target.id === 'change-status-btn') {
+                this.handleStatusChange(e);
+            }
+        });
+    }
+
+    /**
+     * Обработка изменения выбора статуса
+     */
+    handleStatusSelectChange(event) {
+        const newStatusId = event.target.value;
+        const changeButton = document.getElementById('change-status-btn');
+
+        if (changeButton) {
+            changeButton.disabled = !newStatusId || newStatusId === this.currentStatusId.toString();
+        }
+    }
+
+    /**
+     * Обработка изменения статуса
+     */
+    async handleStatusChange(event) {
+        if (this.isLoading) return;
+
+        const newStatusSelect = document.getElementById('new-status-select');
+        const commentField = document.getElementById('status-comment');
+
+        if (!newStatusSelect || !newStatusSelect.value) {
+            this.showError('Выберите новый статус');
+            return;
+        }
+
+        const newStatusId = parseInt(newStatusSelect.value);
+        const comment = commentField ? commentField.value.trim() : '';
+
+        // Подтверждение изменения
+        const selectedStatusText = newStatusSelect.options[newStatusSelect.selectedIndex].text;
+        const confirmMessage = `Вы действительно хотите изменить статус задачи на "${selectedStatusText}"?`;
+
+        if (!confirm(confirmMessage)) {
+            return;
+        }
+
+        try {
+            this.showLoading(true);
+
+            const response = await fetch(`/tasks/api/task/${this.taskId}/status`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    status_id: newStatusId,
+                    comment: comment
+                })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                this.showSuccess(data.message);
+                this.updateCurrentStatus(data.new_status_id, data.new_status_name);
+                this.resetForm();
+
+                // Обновляем страницу через 2 секунды для отображения изменений
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
+            } else {
+                this.showError('Ошибка изменения статуса: ' + data.error);
+            }
+        } catch (error) {
+            console.error('Ошибка изменения статуса:', error);
+            this.showError('Произошла ошибка при изменении статуса. Попробуйте еще раз.');
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    /**
+     * Обновление отображения текущего статуса
+     */
+    updateCurrentStatus(newStatusId, newStatusName) {
+        const currentStatusDisplay = document.getElementById('current-status-display');
+        if (currentStatusDisplay) {
+            currentStatusDisplay.textContent = newStatusName;
+            currentStatusDisplay.className = `status-badge status-${newStatusId}`;
+        }
+
+        this.currentStatusId = newStatusId;
+    }
+
+    /**
+     * Сброс формы
+     */
+    resetForm() {
+        const newStatusSelect = document.getElementById('new-status-select');
+        const commentField = document.getElementById('status-comment');
+        const changeButton = document.getElementById('change-status-btn');
+
+        if (newStatusSelect) newStatusSelect.value = '';
+        if (commentField) commentField.value = '';
+        if (changeButton) changeButton.disabled = true;
+    }
+
+    /**
+     * Показать индикатор загрузки
+     */
+    showLoading(show) {
+        this.isLoading = show;
+        const changeButton = document.getElementById('change-status-btn');
+        const newStatusSelect = document.getElementById('new-status-select');
+
+        if (changeButton) {
+            if (show) {
+                changeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Изменение...';
+                changeButton.disabled = true;
+            } else {
+                changeButton.innerHTML = '<i class="fas fa-sync-alt"></i> Изменить статус';
+                changeButton.disabled = !newStatusSelect || !newStatusSelect.value;
+            }
+        }
+
+        if (newStatusSelect) {
+            newStatusSelect.disabled = show;
+        }
+    }
+
+    /**
+     * Показать сообщение об ошибке
+     */
+    showError(message) {
+        // Используем существующий механизм уведомлений
+        if (typeof showNotification === 'function') {
+            showNotification(message, 'error');
+        } else {
+            this.showAlert(message, 'danger');
+        }
+    }
+
+    /**
+     * Показать сообщение об успехе
+     */
+    showSuccess(message) {
+        if (typeof showNotification === 'function') {
+            showNotification(message, 'success');
+        } else {
+            this.showAlert(message, 'success');
+        }
+    }
+
+    /**
+     * Показать alert уведомление
+     */
+    showAlert(message, type) {
+        const alertHTML = `
+            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
+            </div>
+        `;
+
+        const container = document.getElementById('task-status-container');
+        if (container) {
+            const alertElement = document.createElement('div');
+            alertElement.innerHTML = alertHTML;
+            container.insertBefore(alertElement.firstElementChild, container.firstChild);
+
+            // Автоматически скрыть через 5 секунд
+            setTimeout(() => {
+                const alert = container.querySelector('.alert');
+                if (alert) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+    }
+}
+
+/**
+ * Получение ID задачи из URL
+ */
+function getTaskIdFromUrl() {
+    // Предполагаем URL вида: /tasks/my-tasks/123
+    const pathParts = window.location.pathname.split('/');
+    const taskIdIndex = pathParts.findIndex(part => part === 'my-tasks') + 1;
+
+    if (taskIdIndex > 0 && taskIdIndex < pathParts.length) {
+        const taskId = parseInt(pathParts[taskIdIndex]);
+        return isNaN(taskId) ? null : taskId;
+    }
+
+    return null;
+}
+
+// Инициализация функционала изменения статуса
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализируем функционал после загрузки базового функционала
+    setTimeout(function() {
+        const taskId = getTaskIdFromUrl();
+
+        if (taskId) {
+            window.taskStatusChanger = new TaskStatusChanger(taskId);
+        }
+    }, 1000); // Задержка для загрузки основного функционала
+});
 </script>
 {% endblock %}

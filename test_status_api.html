@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест API изменения статуса</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .section { margin-bottom: 30px; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        button { padding: 10px 15px; margin: 5px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        .result { margin-top: 15px; padding: 10px; background: #f8f9fa; border-radius: 4px; white-space: pre-wrap; }
+        input, select { padding: 8px; margin: 5px; border: 1px solid #ddd; border-radius: 4px; }
+        .error { background: #f8d7da; color: #721c24; }
+        .success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Тест API изменения статуса задач</h1>
+
+        <!-- Тест получения статусов -->
+        <div class="section">
+            <h3>1. Получение доступных статусов</h3>
+            <p>Введите ID задачи для получения доступных статусов:</p>
+            <input type="number" id="taskIdForStatuses" placeholder="ID задачи (например, 258367)" value="258367">
+            <button onclick="getTaskStatuses()">Получить статусы</button>
+            <div id="statusesResult" class="result"></div>
+        </div>
+
+        <!-- Тест изменения статуса -->
+        <div class="section">
+            <h3>2. Изменение статуса задачи</h3>
+            <p>Заполните данные для изменения статуса:</p>
+            <input type="number" id="taskIdForUpdate" placeholder="ID задачи" value="258367">
+            <select id="newStatusId">
+                <option value="">Сначала загрузите статусы выше</option>
+            </select>
+            <textarea id="statusComment" placeholder="Комментарий (необязательно)" rows="3" style="width: 100%; margin-top: 10px;"></textarea>
+            <br>
+            <button onclick="updateTaskStatus()">Изменить статус</button>
+            <div id="updateResult" class="result"></div>
+        </div>
+
+        <!-- Информация о текущем пользователе -->
+        <div class="section">
+            <h3>3. Информация для отладки</h3>
+            <button onclick="checkAuth()">Проверить авторизацию</button>
+            <div id="authResult" class="result"></div>
+        </div>
+    </div>
+
+    <script>
+        // Функция для получения доступных статусов
+        async function getTaskStatuses() {
+            const taskId = document.getElementById('taskIdForStatuses').value;
+            const resultDiv = document.getElementById('statusesResult');
+
+            if (!taskId) {
+                resultDiv.textContent = 'Введите ID задачи';
+                resultDiv.className = 'result error';
+                return;
+            }
+
+            try {
+                resultDiv.textContent = 'Загрузка...';
+                resultDiv.className = 'result';
+
+                const response = await fetch(`/tasks/api/task/${taskId}/statuses`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+
+                    // Заполняем select для изменения статуса
+                    const select = document.getElementById('newStatusId');
+                    select.innerHTML = '<option value="">Выберите новый статус</option>';
+
+                    data.available_statuses.forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status.id;
+                        option.textContent = `${status.name} (ID: ${status.id})`;
+                        select.appendChild(option);
+                    });
+
+                    // Заполняем ID задачи для обновления
+                    document.getElementById('taskIdForUpdate').value = taskId;
+
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `Ошибка: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Ошибка сети: ${error.message}`;
+            }
+        }
+
+        // Функция для изменения статуса
+        async function updateTaskStatus() {
+            const taskId = document.getElementById('taskIdForUpdate').value;
+            const newStatusId = document.getElementById('newStatusId').value;
+            const comment = document.getElementById('statusComment').value;
+            const resultDiv = document.getElementById('updateResult');
+
+            if (!taskId || !newStatusId) {
+                resultDiv.textContent = 'Заполните ID задачи и выберите новый статус';
+                resultDiv.className = 'result error';
+                return;
+            }
+
+            // Подтверждение
+            if (!confirm(`Изменить статус задачи ${taskId} на статус ${newStatusId}?`)) {
+                return;
+            }
+
+            try {
+                resultDiv.textContent = 'Изменение статуса...';
+                resultDiv.className = 'result';
+
+                const response = await fetch(`/tasks/api/task/${taskId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        status_id: parseInt(newStatusId),
+                        comment: comment.trim()
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `Ошибка: ${data.error}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Ошибка сети: ${error.message}`;
+            }
+        }
+
+        // Функция для проверки авторизации
+        async function checkAuth() {
+            const resultDiv = document.getElementById('authResult');
+
+            try {
+                resultDiv.textContent = 'Проверка...';
+                resultDiv.className = 'result';
+
+                // Пробуем получить статусы для несуществующей задачи, чтобы проверить авторизацию
+                const response = await fetch('/tasks/api/task/1/statuses', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                const text = await response.text();
+
+                if (response.status === 403) {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = 'Нет доступа к API (пользователь не авторизован или не является пользователем Redmine)';
+                } else if (response.status === 200 || response.status === 500) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = 'Авторизация OK. API доступен.';
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `HTTP ${response.status}: ${text}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Ошибка сети: ${error.message}`;
+            }
+        }
+
+        // Проверяем авторизацию при загрузке страницы
+        window.onload = function() {
+            checkAuth();
+        };
+    </script>
+</body>
+</html>
