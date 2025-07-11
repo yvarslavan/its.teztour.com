@@ -621,9 +621,24 @@
 /* Floating Restore Button */
 .notifications-restore-btn {
     position: fixed !important;
-    bottom: 20px !important;
-    right: 20px !important;
+    bottom: 2rem !important; /* Синхронизируем с fab-container */
+    right: 2rem !important;
     z-index: 999998 !important; /* Максимальный z-index для кнопки восстановления */
+}
+
+/* Адаптивность для notifications-restore-btn (синхронизация с fab-container) */
+@media (max-width: 768px) {
+  .notifications-restore-btn {
+    right: 2rem !important;
+    bottom: 2rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .notifications-restore-btn {
+    right: 2rem !important;
+    bottom: 2rem !important;
+  }
 }
 
 .notifications-restore-btn button {

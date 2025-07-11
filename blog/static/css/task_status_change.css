@@ -1,0 +1,402 @@
+/**
+ * CSS стили для функционала изменения статуса задачи
+ */
+
+/* Контейнер для изменения статуса */
+.task-status-changer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+/* Отображение текущего статуса */
+.current-status {
+    margin-bottom: 15px;
+}
+
+.current-status .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+/* Улучшенные бейджи статусов */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    line-height: 1.4;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    border: 1px solid rgba(206, 212, 218, 0.5);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.status-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.status-badge:hover::before {
+    left: 100%;
+}
+
+.status-badge:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Цветные стили для разных статусов */
+.status-badge.status-1,
+.status-badge.status-7,
+.status-badge.status-13,
+.status-badge.status-17 {
+    background: linear-gradient(135deg, #d1ecf1 0%, #b8daff 100%);
+    color: #0c5460;
+    border-color: rgba(190, 229, 235, 0.6);
+    box-shadow:
+        0 2px 8px rgba(12, 84, 96, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-2,
+.status-badge.status-8,
+.status-badge.status-15,
+.status-badge.status-18 {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border-color: rgba(255, 234, 167, 0.6);
+    box-shadow:
+        0 2px 8px rgba(133, 100, 4, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-3 {
+    background: linear-gradient(135deg, #cce5ff 0%, #b8daff 100%);
+    color: #004085;
+    border-color: rgba(184, 218, 255, 0.6);
+    box-shadow:
+        0 2px 8px rgba(0, 64, 133, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-4,
+.status-badge.status-14 {
+    background: linear-gradient(135deg, #f8d7da 0%, #ffcdd2 100%);
+    color: #721c24;
+    border-color: rgba(245, 198, 203, 0.6);
+    box-shadow:
+        0 2px 8px rgba(114, 28, 36, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-5,
+.status-badge.status-16 {
+    background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+    color: #00695c;
+    border-color: rgba(178, 223, 219, 0.6);
+    box-shadow:
+        0 2px 8px rgba(0, 105, 92, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-6 {
+    background: linear-gradient(135deg, #e2e3e5 0%, #d6d8db 100%);
+    color: #383d41;
+    border-color: rgba(214, 216, 219, 0.6);
+    box-shadow:
+        0 2px 8px rgba(56, 61, 65, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-9 {
+    background: linear-gradient(135deg, #ffccbc 0%, #ff8a65 100%);
+    color: #d84315;
+    border-color: rgba(255, 138, 101, 0.6);
+    box-shadow:
+        0 2px 8px rgba(216, 67, 21, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.status-badge.status-10,
+.status-badge.status-19 {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    color: #7b1fa2;
+    border-color: rgba(225, 190, 231, 0.6);
+    box-shadow:
+        0 2px 8px rgba(123, 31, 162, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Добавляем иконку для статуса */
+.status-badge::after {
+    content: '';
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    opacity: 0.7;
+    animation: statusPulse 2s infinite ease-in-out;
+}
+
+@keyframes statusPulse {
+    0%, 100% { opacity: 0.7; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.1); }
+}
+
+/* Форма изменения статуса */
+.status-change-form {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+}
+
+.status-change-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+/* Селект для выбора статуса */
+#new-status-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#new-status-select:focus {
+    border-color: #0d6efd;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+/* Кнопка изменения статуса */
+#change-status-btn {
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.15s ease-in-out;
+    white-space: nowrap;
+}
+
+#change-status-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+#change-status-btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Поле комментария */
+#status-comment {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    resize: vertical;
+    min-height: 80px;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+#status-comment:focus {
+    border-color: #0d6efd;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+}
+
+#status-comment::placeholder {
+    color: #6c757d;
+    opacity: 1;
+}
+
+/* Анимация загрузки */
+.fa-spinner {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Уведомления */
+.alert {
+    border-radius: 6px;
+    margin-bottom: 15px;
+    padding: 12px 16px;
+    font-size: 0.875rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    border-color: #c3e6cb;
+    color: #155724;
+}
+
+.alert-danger {
+    background-color: #f8d7da;
+    border-color: #f5c6cb;
+    color: #721c24;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .task-status-changer {
+        padding: 15px;
+    }
+
+    .status-change-form .row {
+        margin-bottom: 10px;
+    }
+
+    .status-change-form .col-md-6 {
+        margin-bottom: 10px;
+    }
+
+    #change-status-btn {
+        width: 100%;
+    }
+}
+
+/* Дополнительные улучшения интерфейса */
+.task-status-changer .form-label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.task-status-changer .row {
+    align-items: end;
+}
+
+/* Эффекты при наведении */
+.task-status-changer:hover {
+    background-color: #f1f3f4;
+    transition: background-color 0.2s ease;
+}
+
+/* Стили для успешного изменения */
+.status-changed {
+    background-color: #d4edda !important;
+    border-color: #c3e6cb !important;
+}
+
+.status-changed .current-status {
+    color: #155724;
+}
+
+/* Индикатор загрузки для всей формы */
+.task-status-changer.loading {
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+.task-status-changer.loading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 20px;
+    height: 20px;
+    margin: -10px 0 0 -10px;
+    border: 2px solid #f3f3f3;
+    border-top: 2px solid #0d6efd;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Стили для иконок */
+.fas {
+    margin-right: 5px;
+}
+
+/* Улучшенные стили для мобильных устройств */
+@media (max-width: 576px) {
+    .task-status-changer {
+        margin-left: -15px;
+        margin-right: -15px;
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 4px 8px;
+    }
+
+    #new-status-select,
+    #status-comment {
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+}
+
+/* Темная тема (если поддерживается) */
+@media (prefers-color-scheme: dark) {
+    .task-status-changer {
+        background-color: #343a40;
+        border-color: #495057;
+        color: #f8f9fa;
+    }
+
+    .current-status .form-label,
+    .status-change-form .form-label {
+        color: #f8f9fa;
+    }
+
+    #new-status-select,
+    #status-comment {
+        background-color: #495057;
+        border-color: #6c757d;
+        color: #f8f9fa;
+    }
+
+    #new-status-select:focus,
+    #status-comment:focus {
+        background-color: #495057;
+        border-color: #0d6efd;
+        color: #f8f9fa;
+    }
+}
+
+/* Улучшения для темной темы */
+[data-theme="dark"] .status-badge {
+    background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
+    color: #f3f4f6;
+    border-color: rgba(75, 85, 99, 0.5);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .status-badge:hover {
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.15);
+}
