@@ -880,38 +880,13 @@ class NotificationService:
             logger.info(f"[CLEAR_WIDGET] Удалено локальных уведомлений: {deleted_status} статусов, {deleted_comments} комментариев.")
 
             # Шаг 2: Пометка Redmine уведомлений как прочитанных в основной базе Redmine
-            user = User.query.get(user_id)
-            if not user or not user.id_redmine_user:
-                logger.warning(f"[CLEAR_WIDGET] Пользователь {user_id} не является пользователем Redmine. Очистка Redmine не требуется.")
-                return True # Локальные очищены, Redmine не требуется
-
-            logger.info(f"[CLEAR_WIDGET] Пользователь {user_id} является пользователем Redmine (id_redmine_user={user.id_redmine_user}). Подключение к Redmine DB...")
-            connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
-            if not connection:
-                logger.error(f"[CLEAR_WIDGET] Не удалось получить соединение с Redmine DB для очистки уведомлений (user_id={user_id})")
+            redmine_success = self._mark_redmine_notifications_as_read(user_id)
+            if not redmine_success:
+                logger.error(f"[CLEAR_WIDGET] Не удалось отметить Redmine уведомления как прочитанные для user_id={user_id}")
                 return False
 
-            cursor = None
-            try:
-                cursor = connection.cursor()
-                query = "UPDATE u_redmine_notifications SET is_read = 1 WHERE user_id = %s AND is_read = 0"
-                logger.info(f"[CLEAR_WIDGET] Выполнение запроса: {query} с user_id={user.id_redmine_user}")
-                cursor.execute(query, (user.id_redmine_user,))
-                affected_rows = cursor.rowcount
-                connection.commit()
-                logger.info(f"[CLEAR_WIDGET] Запрос успешно выполнен. Затронуто строк: {affected_rows}")
-                return True
-            except Exception as e:
-                logger.error(f"[CLEAR_WIDGET] Ошибка при выполнении SQL-запроса для user_id={user.id_redmine_user}: {e}", exc_info=True)
-                if connection:
-                    connection.rollback()
-                return False
-            finally:
-                if cursor:
-                    cursor.close()
-                if connection:
-                    connection.close()
-                    logger.info("[CLEAR_WIDGET] Соединение с Redmine DB закрыто.")
+            logger.info(f"[CLEAR_WIDGET] Успешно завершена очистка для user_id={user_id}")
+            return True
 
         except SQLAlchemyError as e:
             db.session.rollback()
@@ -959,6 +934,65 @@ class NotificationService:
         except Exception as e:
             logger.error(f"Ошибка при отметке Redmine уведомления id={notification_id} как прочитанного для user_id={user_id}: {e}", exc_info=True)
             return False
+
+    def mark_all_notifications_as_read(self, user_id: int) -> bool:
+        """Отмечает все уведомления пользователя как прочитанные (для кнопки Очистить в виджете)."""
+        try:
+            # Отмечаем локальные уведомления как прочитанные (НЕ удаляем!)
+            status_notifications = Notifications.query.filter_by(user_id=user_id).filter(
+                or_(Notifications.is_read == None, Notifications.is_read == False)  # type: ignore
+            ).all()
+
+            for notification in status_notifications:
+                notification.is_read = True
+
+            comment_notifications = NotificationsAddNotes.query.filter_by(user_id=user_id).filter(
+                or_(NotificationsAddNotes.is_read == None, NotificationsAddNotes.is_read == False)  # type: ignore
+            ).all()
+
+            for notification in comment_notifications:
+                notification.is_read = True
+
+            db.session.commit()
+            logger.info(f"Отмечены как прочитанные {len(status_notifications)} статусных и {len(comment_notifications)} комментарных уведомлений для user_id={user_id}")
+
+            # Используем существующий метод для отметки Redmine уведомлений
+            return self._mark_redmine_notifications_as_read(user_id)
+
+        except Exception as e:
+            logger.error(f"Ошибка при массовой отметке уведомлений как прочитанных для user_id={user_id}: {e}", exc_info=True)
+            db.session.rollback()
+            return False
+
+    def _mark_redmine_notifications_as_read(self, user_id: int) -> bool:
+        """Вспомогательный метод для отметки Redmine уведомлений как прочитанных."""
+        user = User.query.get(user_id)
+        if not user or not user.id_redmine_user:
+            logger.info(f"Пользователь {user_id} не является пользователем Redmine, пропускаем MySQL обновление")
+            return True
+
+        connection = redmine.get_connection(DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB)
+        if not connection:
+            logger.error(f"Не удалось подключиться к Redmine DB для массовой отметки уведомлений user_id={user_id}")
+            return False
+
+        cursor = None
+        try:
+            cursor = connection.cursor()
+            # Отмечаем все непрочитанные Redmine уведомления как прочитанные
+            query = "UPDATE u_redmine_notifications SET is_read = 1 WHERE user_id = %s AND is_read = 0"
+            cursor.execute(query, (user.id_redmine_user,))
+            affected_rows = cursor.rowcount
+            connection.commit()
+
+            logger.info(f"Отмечены как прочитанные {affected_rows} Redmine уведомлений для user_id={user_id}")
+            return True
+
+        finally:
+            if cursor:
+                cursor.close()
+            if connection:
+                connection.close()
 
     def delete_redmine_notification(self, notification_id: int, user_id: int) -> bool:
         """Удаляет одно Redmine уведомление из локальной таблицы (для страницы уведомлений)."""

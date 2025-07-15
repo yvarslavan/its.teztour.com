@@ -20,6 +20,8 @@ from flask import (
     current_app
 )
 from flask_login import login_required, current_user
+from flask_wtf.csrf import CSRFProtect
+from blog import csrf
 from sqlalchemy import or_, desc, text, inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import count
@@ -671,6 +673,24 @@ def api_mark_redmine_notification_read():
 
     except Exception as e:
         current_app.logger.error(f"Ошибка при отметке Redmine уведомления как прочитанного: {str(e)}")
+        return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'})
+
+
+@main.route("/api/notifications/mark-all-read", methods=["POST"])
+@login_required
+def api_mark_all_notifications_read():
+    """API для отметки всех уведомлений как прочитанных (для кнопки Очистить в виджете)"""
+    try:
+        # Используем NotificationService для отметки всех уведомлений как прочитанных
+        success = get_notification_service().mark_all_notifications_as_read(current_user.id)
+
+        if success:
+            return jsonify({'success': True, 'message': 'Все уведомления отмечены как прочитанные'})
+        else:
+            return jsonify({'success': False, 'error': 'Ошибка при отметке уведомлений как прочитанных'})
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при отметке всех уведомлений как прочитанных: {str(e)}")
         return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'})
 
 
@@ -1613,30 +1633,63 @@ def get_tracker_ids():
 
 
 @main.route("/get-classification-report", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_classification_report():
     session = None
     connection = None
+    cursor = None
     try:
+        # Добавляем детальное логирование
+        logger.info(f"get_classification_report called by user: {current_user.username}")
+
+        # Проверяем, что запрос содержит JSON
+        if not request.is_json:
+            logger.error("Request is not JSON")
+            return jsonify({"error": "Request must be JSON"}), 400
+
         data = request.get_json()
+        if not data:
+            logger.error("No JSON data received")
+            return jsonify({"error": "No JSON data received"}), 400
+
+        logger.info(f"Request data: {data}")
+
+        # Проверяем наличие обязательных полей
+        if not data.get('dateFrom') or not data.get('dateTo'):
+            logger.error(f"Missing required fields: dateFrom={data.get('dateFrom')}, dateTo={data.get('dateTo')}")
+            return jsonify({"error": "Missing required fields: dateFrom and dateTo"}), 400
+
         date_from = f"{data.get('dateFrom')} 00:00:00"
         date_to = f"{data.get('dateTo')} 23:59:59"
 
+        logger.info(f"Formatted dates: from={date_from}, to={date_to}")
+
         session = get_quality_connection()
         if session is None:
+            logger.error("Failed to get quality database connection")
             return jsonify({"error": "Ошибка подключения к базе данных quality"}), 500
 
         # Получаем низкоуровневое соединение MySQL
         connection = session.connection().connection
         cursor = connection.cursor()
 
+        logger.info("Calling stored procedure Classific")
         # Выполняем процедуру и сразу получаем результаты
         cursor.callproc("Classific", (date_from, date_to))
 
         # Получаем результаты
+        result_found = False
         for result in cursor.stored_results():
-            data = result.fetchone()
-            if data:
+            row = result.fetchone()
+            if row:
+                result_found = True
+                logger.info("Data received from stored procedure")
+
+                # Преобразуем кортеж в словарь, используя описание столбцов
+                columns = [desc[0] for desc in result.description]
+                data = dict(zip(columns, row))
+
                 # Формируем структуру отчета
                 report_data = {
                     "classifications": [
@@ -1852,18 +1905,68 @@ def get_classification_report():
                         ),
                     },
                 }
-                cursor.close()
+
+                logger.info("Successfully created report data")
                 return jsonify(report_data)
 
-        cursor.close()
-        return jsonify({"error": "Нет данных за указанный период"}), 404
+        if not result_found:
+            logger.warning("No data returned from stored procedure")
+            return jsonify({"error": "Нет данных за указанный период"}), 404
 
     except Exception as e:
-        logger.error(f"Ошибка в get_classification_report: {str(e)}")
-        return jsonify({"error": str(e)}), 500
+        logger.error(f"Ошибка в get_classification_report: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Внутренняя ошибка сервера: {str(e)}"}), 500
+    finally:
+        # Закрываем ресурсы в правильном порядке
+        if cursor:
+            try:
+                cursor.close()
+            except:
+                pass
+        if session:
+            try:
+                session.close()
+            except:
+                pass
+
+    # Fallback return (не должен быть достигнут при нормальном выполнении)
+    return jsonify({"error": "Неожиданная ошибка выполнения"}), 500
+
+
+@main.route("/test-quality-db", methods=["GET"])
+@csrf.exempt
+@login_required
+def test_quality_db():
+    """Временная функция для тестирования подключения к базе данных quality"""
+    try:
+        session = get_quality_connection()
+        if session is None:
+            return jsonify({"error": "Не удалось получить подключение к базе данных quality"}), 500
+
+        # Простой тест подключения
+        connection = session.connection().connection
+        cursor = connection.cursor()
+
+        # Выполняем простой запрос
+        cursor.execute("SELECT 1 as test")
+        result = cursor.fetchone()
+
+        if result and result[0] == 1:
+            cursor.close()
+            session.close()
+            return jsonify({"status": "success", "message": "Подключение к базе данных quality работает"})
+        else:
+            cursor.close()
+            session.close()
+            return jsonify({"error": "Неожиданный результат запроса"}), 500
+
+    except Exception as e:
+        logger.error(f"Ошибка в test_quality_db: {str(e)}", exc_info=True)
+        return jsonify({"error": f"Ошибка тестирования базы данных: {str(e)}"}), 500
 
 
 @main.route("/get-resorts-report", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_resorts_report():
     session = None
@@ -1891,12 +1994,16 @@ def get_resorts_report():
         for result in cursor.stored_results():
             resorts_data = []
             for row in result.fetchall():
+                # Convert tuple to dictionary using column descriptions
+                columns = [desc[0] for desc in result.description]
+                data = dict(zip(columns, row))
+
                 resort = {
-                    "name": row["ResortName"],
-                    "complaints": row["JalobaIssueResort_out"],
-                    "gratitude": row["GrateIssueResort_out"],
-                    "questions": row["QuestionIssueResort_out"],
-                    "suggestions": row["OfferIssueResort_out"],
+                    "name": data.get("ResortName", ""),
+                    "complaints": data.get("JalobaIssueResort_out", 0),
+                    "gratitude": data.get("GrateIssueResort_out", 0),
+                    "questions": data.get("QuestionIssueResort_out", 0),
+                    "suggestions": data.get("OfferIssueResort_out", 0),
                 }
                 resorts_data.append(resort)
 
@@ -1920,8 +2027,10 @@ def get_resorts_report():
 
 
 @main.route("/get-resort-types-data", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_resort_types_data():
+    session = None
     try:
         data = request.get_json()
         date_from = data.get("dateFrom")
@@ -1954,8 +2063,12 @@ def get_resort_types_data():
 
                 for row in data:
                     try:
+                        # Convert tuple to dictionary using column descriptions
+                        columns = [desc[0] for desc in result.description]
+                        row_dict = dict(zip(columns, row))
+
                         processed_row = {}
-                        for key, value in row.items():
+                        for key, value in row_dict.items():
                             try:
                                 if key == "resort_name":
                                     processed_row[key] = value if value else ""
@@ -1988,9 +2101,13 @@ def get_resort_types_data():
     except Exception as e:
         logger.error(f"Общая ошибка: {str(e)}")
         return jsonify({"error": f"Ошибка при получении данных: {str(e)}"}), 500
+    finally:
+        if session:
+            session.close()
 
 
 @main.route("/get-issues", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues():
     try:
@@ -2045,6 +2162,7 @@ def get_issues():
 
 
 @main.route("/get-issues-by-type", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_type():
     try:
@@ -2099,6 +2217,7 @@ def get_issues_by_type():
 
 
 @main.route("/get-issues-by-resort", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_resort():
     try:
@@ -2153,6 +2272,7 @@ def get_issues_by_resort():
 
 
 @main.route("/get-issues-by-employee", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_employee():
     try:
@@ -2207,6 +2327,7 @@ def get_issues_by_employee():
 
 
 @main.route("/get-issues-by-status", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_status():
     try:
@@ -2261,6 +2382,7 @@ def get_issues_by_status():
 
 
 @main.route("/get-issues-by-priority", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_priority():
     try:
@@ -2315,8 +2437,10 @@ def get_issues_by_priority():
 
 
 @main.route("/get-issues-by-category", methods=["POST"])
+@csrf.exempt
 @login_required
 def get_issues_by_category():
+    session = None
     try:
         data = request.get_json()
         date_from = f"{data.get('dateFrom')} 00:00:00"
@@ -2381,6 +2505,9 @@ def get_issues_by_category():
     except Exception as e:
         print(f"General error: {str(e)}")
         return jsonify({"error": str(e)}), 500
+    finally:
+        if session:
+            session.close()
 
 
 @main.route("/get-total-issues-count")
