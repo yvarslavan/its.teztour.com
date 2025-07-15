@@ -1241,6 +1241,9 @@ function updateResortsChart(data) {
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', async function() {
     try {
+        // Тестируем подключение к базе данных quality
+        testQualityDatabase();
+
         // Загружаем tracker IDs перед инициализацией всех отчетов
         await loadTrackerIds();
 
@@ -1937,6 +1940,28 @@ document.getElementById('applyFilters').addEventListener('click', function() {
     });
 });
 
+// Функция для тестирования подключения к базе данных quality
+function testQualityDatabase() {
+    fetch('/test-quality-db', {
+        method: 'GET',
+        headers: {
+            'Accept': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.status === 'success') {
+            console.log('✅ Тест подключения к базе данных quality:', data.message);
+        } else {
+            console.error('❌ Ошибка подключения к базе данных quality:', data.error);
+        }
+    })
+    .catch(error => {
+        console.error('❌ Ошибка тестирования базы данных quality:', error);
+    });
+}
+
 // Обработчик для кнопки "Применить" в отчете "Статистика обращений по объектам"
 document.getElementById('applyClassificationFilters').addEventListener('click', loadClassificationReport);
 
@@ -1988,7 +2013,12 @@ function loadClassificationReport() {
     .then(response => {
         console.log('Получен ответ от сервера:', response.status); // Отладочный вывод
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            // Пытаемся получить детальное сообщение об ошибке
+            return response.json().then(errorData => {
+                throw new Error(`HTTP error! status: ${response.status}, message: ${errorData.error || 'Unknown error'}`);
+            }).catch(() => {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            });
         }
         return response.json();
     })
