@@ -4,7 +4,7 @@ from flask_login import UserMixin
 from sqlalchemy import text
 from mysql_db import QualityBase
 from blog.db_config import db # Импортируем db из нового файла
-
+from blog import db
 # Создаем алиас внутри модуля
 db_call = db
 
@@ -274,5 +274,3 @@ class Journal(QualityBase):
 
     def __repr__(self):
         return f"<Journal {self.id} (Issue {self.journalized_id})>"
-
-# QualityBase.metadata.reflect(quality_engine)

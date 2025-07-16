@@ -6,7 +6,29 @@ WSGI точка входа для продакшена
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import logging
 
+
+
+logging.basicConfig(
+    filename='logs/flask_debug.log',
+    level=logging.INFO,
+    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+)
+
+# Настройка логгера Flask
+flask_logger = logging.getLogger('werkzeug')
+flask_logger.setLevel(logging.INFO)
+for handler in flask_logger.handlers:
+    flask_logger.removeHandler(handler)
+file_handler = logging.FileHandler('logs/flask_debug.log')
+file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
+flask_logger.addHandler(file_handler)
+
+# Настройка логгера приложения (current_app.logger)
+app_logger = logging.getLogger()
+app_logger.setLevel(logging.INFO)
+app_logger.addHandler(file_handler)
 def setup_production_environment():
     """Настройка переменных окружения для продакшена"""
     BASE_DIR = Path(__file__).resolve().parent
@@ -48,6 +70,11 @@ environment = setup_production_environment()
 from blog import create_app
 
 app = create_app()
+
+for handler in app.logger.handlers[:]:
+    app.logger.removeHandler(handler)
+app.logger.addHandler(file_handler)
+app.logger.setLevel(logging.INFO)
 
 # Дополнительные настройки только для продакшена
 if environment == 'production':

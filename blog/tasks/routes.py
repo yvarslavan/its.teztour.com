@@ -1,6 +1,7 @@
 # blog/tasks/routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
+
 import time # Перенесен в начало файла из функций
 import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
@@ -41,6 +42,27 @@ from redmine import (
 # Импорты для нового маршрута
 from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_paginated_optimized, task_to_dict, create_redmine_connector # Исправлен относительный импорт
 from redminelib.exceptions import ResourceNotFoundError # Для обработки ошибок Redmine
+
+# Импорт формы для комментариев
+from blog.user.forms import AddCommentRedmine
+
+# Константы для анонимного пользователя (из main/routes.py)
+ANONYMOUS_USER_ID = 4  # ID анонимного пользователя в Redmine
+
+def handle_task_comment_submission(form, task_id, redmine_connector):
+    """Обработка добавления комментария к задаче.
+    Аналогично handle_comment_submission из main/routes.py"""
+    comment = form.comment.data
+    user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
+    success, message = redmine_connector.add_comment(
+        issue_id=task_id, notes=comment, user_id=user_id
+    )
+
+    if success:
+        flash("Комментарий успешно добавлен к задаче!", "success")
+        return True
+    flash(message, "danger")
+    return False
 
 def collect_ids_from_task_history(task):
     """Собирает все ID из истории изменений задачи для пакетной загрузки"""
@@ -156,18 +178,21 @@ def my_tasks_page():
     return render_template("my_tasks.html", title="Мои задачи", count_notifications=count_notifications,
                          cache_buster=cache_buster)
 
-@tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET"])
+@tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET", "POST"])
 @login_required
 @weekend_performance_optimizer
 def task_detail(task_id):
     """Оптимизированная версия страницы деталей задачи"""
-    import time
+
     start_time = time.time()
     current_app.logger.info(f"🚀 [PERFORMANCE] Загрузка задачи {task_id} - начало")
 
     if not current_user.is_redmine_user:
         flash("У вас нет доступа к этой функциональности.", "warning")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
+
+    # Инициализация формы для комментариев
+    form = AddCommentRedmine()
 
     try:
         # Получаем коннектор Redmine (без изменений)
@@ -180,6 +205,11 @@ def task_detail(task_id):
         if not redmine_conn_obj or not hasattr(redmine_conn_obj, 'redmine'):
             flash("Не удалось подключиться к Redmine.", "error")
             return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
+
+        # Обработка POST запроса для добавления комментария
+        if request.method == 'POST' and form.validate_on_submit():
+            if handle_task_comment_submission(form, task_id, redmine_conn_obj):
+                return redirect(url_for('tasks.task_detail', task_id=task_id))
 
         # Получаем детали задачи (без изменений)
         task = redmine_conn_obj.redmine.issue.get(
@@ -300,14 +330,16 @@ def task_detail(task_id):
                              # ✅ Оставляем только helper для форматирования
                              convert_datetime_msk_format=convert_datetime_msk_format,
                              format_boolean_field=format_boolean_field,
-                             get_property_name=get_property_name_fast)
+                             get_property_name=get_property_name_fast,
+                             # ✅ Добавляем форму для комментариев
+                             form=form,
+                             clear_comment=True)
 
     except ResourceNotFoundError:
         current_app.logger.warning(f"Задача с ID {task_id} не найдена в Redmine")
         flash(f"Задача #{task_id} не найдена.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
     except Exception as e:
-        import traceback
         current_app.logger.error(f"[task_detail] Ошибка при получении задачи {task_id}: {e}. Trace: {traceback.format_exc()}")
         flash("Произошла ошибка при загрузке данных задачи.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
@@ -1429,3 +1461,283 @@ def get_tasks_notification_count():
     except Exception as e:
         current_app.logger.error(f'[tasks.notifications-count] error: {e}')
         return jsonify({'count': 0}), 500
+
+# ===== API ENDPOINT ДЛЯ ДОБАВЛЕНИЯ КОММЕНТАРИЕВ =====
+
+@tasks_bp.route("/api/task/<int:task_id>/comment", methods=["POST"])
+@login_required
+def add_task_comment_api(task_id):
+    """API endpoint для добавления комментария к задаче через AJAX"""
+    try:
+        current_app.logger.info(f"[API] Получен запрос на добавление комментария к задаче {task_id}")
+        current_app.logger.info(f"[API] Request method: {request.method}")
+        current_app.logger.info(f"[API] Request content_type: {request.content_type}")
+        current_app.logger.info(f"[API] Request headers: {dict(request.headers)}")
+
+        # Простая проверка для отладки
+        if request.method != 'POST':
+            current_app.logger.error(f"[API] Неверный HTTP метод: {request.method}")
+            return jsonify({
+                'success': False,
+                'error': 'Метод не поддерживается'
+            }), 405
+
+        if not current_user.is_redmine_user:
+            current_app.logger.warning(f"[API] Пользователь {current_user.username} не является пользователем Redmine")
+            return jsonify({
+                'success': False,
+                'error': 'У вас нет доступа к этой функциональности'
+            }), 403
+
+        # Получаем данные из запроса
+        if request.is_json:
+            data = request.get_json()
+            current_app.logger.info(f"[API] Получены JSON данные: {data}")
+        else:
+            current_app.logger.error(f"[API] Запрос не содержит JSON данных. Content-Type: {request.content_type}")
+            current_app.logger.error(f"[API] Request data: {request.data}")
+            current_app.logger.error(f"[API] Request form: {request.form}")
+
+            # Попробуем получить данные другим способом
+            try:
+                if request.form and 'comment' in request.form:
+                    data = {'comment': request.form['comment']}
+                    current_app.logger.info(f"[API] Получены данные через form: {data}")
+                else:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Неверный формат данных'
+                    }), 400
+            except Exception as e:
+                current_app.logger.error(f"[API] Ошибка при получении данных: {e}")
+                return jsonify({
+                    'success': False,
+                    'error': 'Неверный формат данных'
+                }), 400
+
+        if not data or 'comment' not in data:
+            current_app.logger.error(f"[API] Отсутствует поле 'comment' в данных: {data}")
+            return jsonify({
+                'success': False,
+                'error': 'Комментарий не может быть пустым'
+            }), 400
+
+        comment = data['comment'].strip()
+        if not comment:
+            current_app.logger.error(f"[API] Пустой комментарий")
+            return jsonify({
+                'success': False,
+                'error': 'Комментарий не может быть пустым'
+            }), 400
+
+        current_app.logger.info(f"[API] Создание коннектора Redmine для пользователя {current_user.username}")
+
+        # Получаем коннектор Redmine
+        redmine_conn_obj = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_conn_obj or not hasattr(redmine_conn_obj, 'redmine'):
+            current_app.logger.error(f"[API] Не удалось создать коннектор Redmine")
+            return jsonify({
+                'success': False,
+                'error': 'Не удалось подключиться к Redmine'
+            }), 500
+
+        current_app.logger.info(f"[API] Добавление комментария к задаче {task_id}")
+
+        # Добавляем комментарий
+        user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
+        success, message = redmine_conn_obj.add_comment(
+            issue_id=task_id, notes=comment, user_id=user_id
+        )
+
+        if success:
+            current_app.logger.info(f"[API] Комментарий успешно добавлен к задаче {task_id}")
+            return jsonify({
+                'success': True,
+                'message': 'Комментарий успешно добавлен к задаче!'
+            })
+        else:
+            current_app.logger.error(f"[API] Ошибка добавления комментария: {message}")
+            return jsonify({
+                'success': False,
+                'error': message
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Исключение при добавлении комментария к задаче {task_id}: {e}")
+        current_app.logger.error(f"[API] Traceback: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': 'Произошла ошибка при добавлении комментария'
+        }), 500
+
+# ===== API ENDPOINT ДЛЯ УДАЛЕНИЯ КОММЕНТАРИЕВ =====
+
+@tasks_bp.route("/api/task/<int:task_id>/comment/<int:journal_id>/delete", methods=["DELETE"])
+@login_required
+def delete_task_comment_api(task_id, journal_id):
+    """API endpoint для удаления комментария к задаче через AJAX с прямыми SQL запросами"""
+    try:
+        current_app.logger.info(f"[API] Получен запрос на удаление комментария {journal_id} из задачи {task_id}")
+
+        if not current_user.is_redmine_user:
+            current_app.logger.warning(f"[API] Пользователь {current_user.username} не является пользователем Redmine")
+            return jsonify({
+                'success': False,
+                'error': 'У вас нет доступа к этой функциональности'
+            }), 403
+
+        # Импортируем функцию для работы с БД
+        from blog.redmine import execute_query
+
+        # Проверяем существование комментария и получаем информацию о нем
+        check_query = """
+            SELECT j.id, j.user_id, j.journalized_id, j.notes, u.login as user_login
+            FROM journals j
+            LEFT JOIN users u ON j.user_id = u.id
+            WHERE j.id = %s AND j.journalized_type = 'Issue'
+        """
+
+        success, result = execute_query(check_query, (journal_id,), fetch='one')
+
+        if not success:
+            current_app.logger.error(f"[API] Ошибка при проверке комментария {journal_id}: {result}")
+            return jsonify({'success': False, 'error': 'Ошибка при проверке комментария'}), 500
+
+        if not result:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не найден")
+            return jsonify({'success': False, 'error': 'Комментарий не найден'}), 404
+
+        # Проверяем, что комментарий принадлежит указанной задаче
+        if result['journalized_id'] != task_id:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не принадлежит задаче {task_id}")
+            return jsonify({'success': False, 'error': 'Комментарий не принадлежит этой задаче'}), 400
+
+        # Проверяем права на удаление
+        # Только автор комментария или администратор может удалять
+        is_author = result['user_id'] == current_user.id_redmine_user if hasattr(current_user, 'id_redmine_user') else False
+        is_admin = getattr(current_user, 'is_admin', False)
+
+        # Дополнительная проверка по логину пользователя
+        if not is_author and result['user_login']:
+            is_author = result['user_login'] == current_user.username
+
+        if not is_author and not is_admin:
+            current_app.logger.warning(f"[API] Пользователь {current_user.username} не имеет прав на удаление комментария {journal_id}")
+            return jsonify({'success': False, 'error': 'У вас нет прав на удаление этого комментария'}), 403
+
+        # Удаляем комментарий из базы данных
+        delete_query = "DELETE FROM journals WHERE id = %s"
+
+        success, affected_rows = execute_query(delete_query, (journal_id,), commit=True)
+
+        if not success:
+            current_app.logger.error(f"[API] Ошибка при удалении комментария {journal_id}: {affected_rows}")
+            return jsonify({'success': False, 'error': 'Ошибка при удалении комментария'}), 500
+
+        if affected_rows == 0:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не был удален (affected_rows = 0)")
+            return jsonify({'success': False, 'error': 'Комментарий не был удален'}), 500
+
+        current_app.logger.info(f"[API] Комментарий {journal_id} успешно удален пользователем {current_user.username}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Комментарий успешно удален!'
+        })
+
+    except Exception as e:
+        import traceback
+        current_app.logger.error(f"[API] Ошибка при удалении комментария {journal_id} из задачи {task_id}: {e}. Trace: {traceback.format_exc()}")
+        return jsonify({
+            'success': False,
+            'error': 'Произошла ошибка при удалении комментария'
+        }), 500
+
+@tasks_bp.route("/api/task/<int:task_id>/comment/<int:journal_id>/edit", methods=["PUT"])
+@login_required
+def edit_task_comment_api(task_id, journal_id):
+    """API endpoint для редактирования комментария к задаче через AJAX с прямыми SQL запросами"""
+    try:
+        current_app.logger.info(f"[API] Получен запрос на редактирование комментария {journal_id} в задаче {task_id}")
+
+        if not current_user.is_redmine_user:
+            return jsonify({'success': False, 'error': 'Нет доступа'}), 403
+
+        data = request.get_json()
+        if not data or 'comment' not in data:
+            return jsonify({'success': False, 'error': 'Комментарий не может быть пустым'}), 400
+
+        new_comment = data['comment'].strip()
+        if not new_comment:
+            return jsonify({'success': False, 'error': 'Комментарий не может быть пустым'}), 400
+
+        # Импортируем функцию для работы с БД
+        from blog.redmine import execute_query
+
+        # Проверяем существование комментария и получаем информацию о нем
+        check_query = """
+            SELECT j.id, j.user_id, j.journalized_id, j.notes, u.login as user_login
+            FROM journals j
+            LEFT JOIN users u ON j.user_id = u.id
+            WHERE j.id = %s AND j.journalized_type = 'Issue'
+        """
+
+        success, result = execute_query(check_query, (journal_id,), fetch='one')
+
+        if not success:
+            current_app.logger.error(f"[API] Ошибка при проверке комментария {journal_id}: {result}")
+            return jsonify({'success': False, 'error': 'Ошибка при проверке комментария'}), 500
+
+        if not result:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не найден")
+            return jsonify({'success': False, 'error': 'Комментарий не найден'}), 404
+
+        # Проверяем, что комментарий принадлежит указанной задаче
+        if result['journalized_id'] != task_id:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не принадлежит задаче {task_id}")
+            return jsonify({'success': False, 'error': 'Комментарий не принадлежит этой задаче'}), 400
+
+        # Проверяем права на редактирование
+        # Только автор комментария или администратор может редактировать
+        is_author = result['user_id'] == current_user.id_redmine_user if hasattr(current_user, 'id_redmine_user') else False
+        is_admin = getattr(current_user, 'is_admin', False)
+
+        # Дополнительная проверка по логину пользователя
+        if not is_author and result['user_login']:
+            is_author = result['user_login'] == current_user.username
+
+        if not is_author and not is_admin:
+            current_app.logger.warning(f"[API] Пользователь {current_user.username} не имеет прав на редактирование комментария {journal_id}")
+            return jsonify({'success': False, 'error': 'У вас нет прав на редактирование этого комментария'}), 403
+
+        # Обновляем комментарий в базе данных
+        update_query = "UPDATE journals SET notes = %s WHERE id = %s"
+
+        success, affected_rows = execute_query(update_query, (new_comment, journal_id), commit=True)
+
+        if not success:
+            current_app.logger.error(f"[API] Ошибка при обновлении комментария {journal_id}: {affected_rows}")
+            return jsonify({'success': False, 'error': 'Ошибка при обновлении комментария'}), 500
+
+        if affected_rows == 0:
+            current_app.logger.error(f"[API] Комментарий {journal_id} не был обновлен (affected_rows = 0)")
+            return jsonify({'success': False, 'error': 'Комментарий не был обновлен'}), 500
+
+        current_app.logger.info(f"[API] Комментарий {journal_id} успешно обновлен пользователем {current_user.username}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Комментарий успешно обновлен!',
+            'journal_id': journal_id,
+            'notes': new_comment
+        })
+
+    except Exception as e:
+        import traceback
+        current_app.logger.error(f"[API] Ошибка при редактировании комментария {journal_id} в задаче {task_id}: {e}. Trace: {traceback.format_exc()}")
+        return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'}), 500

@@ -301,6 +301,11 @@
 .status-management .detail-content {
     width: 100%;
 }
+
+.comment-actions-trigger i.fas.fa-ellipsis-v {
+  color: #6366f1 !important;
+  font-size: 1.2rem;
+}
 </style>
 
 <div class="modern-task-detail">
@@ -671,6 +676,31 @@
       </div>
 
       <div class="card-content" id="history-content">
+        <!-- Форма для добавления комментария -->
+        <div class="comment-section">
+          <button class="comment-button" onclick="toggleCommentInput()">
+            <i class="fas fa-plus-circle"></i>
+            <span>Добавить комментарий</span>
+          </button>
+          <form id="commentForm" action="" method="POST" enctype="multipart/form-data" class="comment-form">
+            {{ form.hidden_tag() }}
+            <div class="form-group">
+              {{ form.comment.label(class="form-label") }}
+              {{ form.comment(class="form-control", rows="4", placeholder="Введите ваш комментарий к задаче...") }}
+            </div>
+            <div class="form-actions">
+              <button type="button" onclick="toggleCommentInput()" class="cancel-button">
+                <i class="fas fa-times"></i>
+                <span>Отмена</span>
+              </button>
+              <button type="button" onclick="submitCommentAjax(event)" class="submit-button" id="submitBtn">
+                <i class="fas fa-paper-plane"></i>
+                <span>Отправить</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
         <div class="history-timeline">
           {% for journal in task.journals|reverse %}
           <div class="history-item" data-type="{% if journal.notes %}comments{% else %}changes{% endif %}">
@@ -784,13 +814,52 @@
               </div>
               {% endif %}
 
-              {% if journal.notes %}
-              <div class="history-comment">
+              {% set user_check = False %}
+              {% if task.assigned_to and journal.user %}
+                  {% set last_name = current_user.username.split('.')[-1]|lower %}
+                  {% if task.assigned_to.name and last_name in task.assigned_to.name|lower
+                        and journal.user.name and last_name in journal.user.name|lower %}
+                      {% set user_check = True %}
+                  {% endif %}
+              {% endif %}
+
+              {# Проверяем, что автор комментария совпадает с текущим пользователем #}
+              {% set is_comment_author = False %}
+              {% if journal.user %}
+                {% if journal.user.login and journal.user.login == current_user.username %}
+                  {% set is_comment_author = True %}
+                {% elif journal.user.name and (journal.user.name == current_user.full_name or journal.user.name|lower == current_user.username|replace('.', ' ')|replace('_', ' ')|lower) %}
+                  {% set is_comment_author = True %}
+                {% endif %}
+              {% endif %}
+
+              {% if is_task_owner and is_comment_author %}
+                {% set user_check = True %}
+              {% endif %}
+
+              <div class="history-comment" data-journal-id="{{ journal.id }}" style="position: relative;">
                 <div class="comment-content">
                   {{ journal.notes|safe }}
                 </div>
+
+                {% if journal.notes and user_check %}
+                <div class="comment-actions-dropdown">
+                  <div class="comment-actions-trigger" onclick="toggleCommentActions({{ journal.id }})">
+                    <i class="fas fa-ellipsis-v"></i>
+                  </div>
+                  <div class="comment-actions-menu" id="comment-actions-{{ journal.id }}">
+                    <div class="comment-action-item" onclick="openEditCommentModal({{ journal.id }})">
+                      <i class="fas fa-edit"></i>
+                      <span>Редактировать</span>
+                    </div>
+                    <div class="comment-action-item delete-action" onclick="deleteComment({{ journal.id }})">
+                      <i class="fas fa-trash"></i>
+                      <span>Удалить</span>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
               </div>
-              {% endif %}
             </div>
           </div>
           {% endfor %}
@@ -1634,14 +1703,243 @@
 
 .history-comment {
   padding: 1rem;
-  background: var(--bg-primary);
-  border-radius: var(--border-radius);
-  border-left: 3px solid var(--primary-color);
+  background: #ffffff;
+  border-radius: 8px;
+  border-left: 3px solid #3b82f6;
+  position: relative !important;
+  margin-bottom: 1rem;
 }
 
 .comment-content {
   line-height: 1.6;
   color: var(--text-primary);
+}
+
+/* Comment Form */
+.comment-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.comment-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.comment-button:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.comment-form {
+  display: none;
+  margin-top: 1rem;
+}
+
+.comment-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.comment-form .form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.comment-form .form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition);
+  resize: vertical;
+  min-height: 100px;
+}
+
+.comment-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+}
+
+.cancel-button,
+.submit-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.cancel-button {
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-color);
+}
+
+.cancel-button:hover {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.submit-button {
+  background: var(--success-color);
+  color: white;
+}
+
+.submit-button:hover {
+  background: var(--accent-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.submit-button:disabled {
+  background: var(--text-muted);
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.ajax-button {
+  background: var(--accent-color) !important;
+  position: relative;
+  overflow: hidden;
+}
+
+.ajax-button::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  transition: left 0.5s;
+}
+
+.ajax-button:hover::before {
+  left: 100%;
+}
+
+.ajax-button:hover {
+  background: var(--success-color) !important;
+}
+
+/* Стили для кнопки удаления комментария */
+.comment-actions {
+  position: absolute !important;
+  top: 8px !important;
+  right: 8px !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease, visibility 0.3s ease !important;
+  z-index: 999 !important;
+  visibility: hidden !important;
+}
+
+/* Показ кнопки при наведении на комментарий */
+.history-comment:hover .comment-actions {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Альтернативные стили для принудительного показа */
+.comment-actions.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Стили для мобильных устройств - всегда видны */
+@media (max-width: 768px) {
+  .comment-actions {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* Стили для сенсорных экранов - всегда видны */
+@media (hover: none) {
+  .comment-actions {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+}
+
+/* ВРЕМЕННЫЕ СТИЛИ ДЛЯ ОТЛАДКИ - УДАЛИТЬ ПОСЛЕ ТЕСТИРОВАНИЯ */
+.comment-actions.debug-visible {
+  opacity: 1 !important;
+  visibility: visible !important;
+  background: rgba(255, 0, 0, 0.1) !important;
+  border: 1px solid red !important;
+}
+
+/* Альтернативный способ показа при hover */
+.history-comment:hover .comment-actions,
+.history-comment:focus .comment-actions,
+.history-comment:focus-within .comment-actions {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.delete-comment-btn {
+  background: rgba(239, 68, 68, 0.1) !important;
+  border: 1px solid rgba(239, 68, 68, 0.2) !important;
+  color: var(--error-color) !important;
+  padding: 4px 6px !important;
+  border-radius: 6px !important;
+  font-size: 12px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  backdrop-filter: blur(8px) !important;
+}
+
+.delete-comment-btn:hover {
+  background: var(--error-color) !important;
+  color: white !important;
+  border-color: var(--error-color) !important;
+  transform: translateY(-1px) scale(1.1) !important;
+  box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3) !important;
+}
+
+.delete-comment-btn:active {
+  transform: translateY(0) scale(1) !important;
+}
+
+.delete-comment-btn i {
+  font-size: 10px !important;
 }
 
 /* Responsive */
@@ -1812,7 +2110,174 @@
   color: var(--primary-color) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
 }
+
+.comment-actions-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.comment-actions-trigger {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--border-color);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 10;
+  box-shadow: var(--shadow-sm);
+}
+.comment-actions-trigger:hover {
+  background: var(--bg-primary);
+  transform: scale(1);
+  box-shadow: var(--shadow-md);
+}
+.history-comment:hover .comment-actions-trigger {
+  opacity: 1;
+  transform: scale(1);
+}
+.comment-actions-menu {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  box-shadow: var(--shadow-lg);
+  min-width: 160px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px) scale(0.95);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 1000;
+  overflow: hidden;
+}
+.comment-actions-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+.comment-action-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.comment-action-item:hover {
+  background: var(--bg-secondary);
+  color: var(--primary-color);
+}
+.comment-action-item.delete-action:hover {
+  background: #fef2f2;
+  color: var(--error-color);
+}
+.comment-action-item i {
+  font-size: 0.875rem;
+  width: 16px;
+  text-align: center;
+}
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+.comment-actions-menu.show {
+  animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (max-width: 768px) {
+  .comment-actions-trigger {
+    width: 28px;
+    height: 28px;
+    top: 4px;
+    right: 4px;
+  }
+  .comment-actions-menu {
+    min-width: 140px;
+    right: -8px;
+  }
+  .comment-action-item {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}
 </style>
+<script>
+function toggleCommentActions(journalId) {
+  const menu = document.getElementById(`comment-actions-${journalId}`);
+  const allMenus = document.querySelectorAll('.comment-actions-menu');
+  allMenus.forEach(m => {
+    if (m !== menu) {
+      m.classList.remove('show');
+    }
+  });
+  menu.classList.toggle('show');
+}
+document.addEventListener('click', function(event) {
+  const dropdowns = document.querySelectorAll('.comment-actions-dropdown');
+  dropdowns.forEach(dropdown => {
+    if (!dropdown.contains(event.target)) {
+      const menu = dropdown.querySelector('.comment-actions-menu');
+      if (menu) {
+        menu.classList.remove('show');
+      }
+    }
+  });
+});
+async function deleteComment(journalId) {
+  if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) {
+    return;
+  }
+  try {
+    const taskId = getTaskIdFromUrl();
+    const response = await fetch(`/tasks/api/task/${taskId}/comment/${journalId}/delete`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(() => {
+          const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+          return token ? { 'X-CSRFToken': token } : {};
+        })()
+      }
+    });
+    if (!response.ok) {
+      const errorText = await response.text();
+      showNotification('Ошибка при удалении: ' + errorText, 'error');
+      return;
+    }
+    const data = await response.json();
+    if (data.success) {
+      showNotification(data.message, 'success');
+      const commentElement = document.querySelector(`[data-journal-id="${journalId}"]`);
+      if (commentElement) {
+        commentElement.closest('.history-item').remove();
+      }
+    } else {
+      showNotification(data.error || 'Ошибка при удалении комментария', 'error');
+    }
+  } catch (error) {
+    showNotification('Произошла ошибка при удалении комментария', 'error');
+  }
+}
+</script>
 
 <script>
 // Функция применения стилей для темной темы
@@ -2360,5 +2825,396 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }, 1000); // Задержка для загрузки основного функционала
 });
+
+// ===== ФУНКЦИОНАЛ КОММЕНТАРИЕВ =====
+
+/**
+ * Переключение видимости формы комментариев
+ */
+function toggleCommentInput() {
+    const commentForm = document.getElementById('commentForm');
+    const commentButton = document.querySelector('.comment-button');
+
+    if (commentForm.style.display === 'none' || commentForm.style.display === '') {
+        commentForm.style.display = 'block';
+        commentButton.style.display = 'none';
+        // Фокус на поле ввода
+        const textarea = commentForm.querySelector('textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+    } else {
+        commentForm.style.display = 'none';
+        commentButton.style.display = 'block';
+        // Очищаем поле ввода
+        const textarea = commentForm.querySelector('textarea');
+        if (textarea) {
+            textarea.value = '';
+        }
+    }
+}
+
+/**
+ * Отключение кнопки отправки для предотвращения двойного нажатия
+ */
+function disableSubmitButton() {
+    const submitBtn = document.getElementById('submitBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Отправка...</span>';
+    }
+}
+
+/**
+ * Удаление комментария
+ */
+async function deleteComment(journalId) {
+    // Подтверждение удаления
+    if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) {
+        return;
+    }
+
+    try {
+        const taskId = getTaskIdFromUrl();
+
+        console.log('Отправляем запрос на удаление комментария:', {
+            url: `/tasks/api/task/${taskId}/comment/${journalId}/delete`,
+            method: 'DELETE',
+            journalId: journalId
+        });
+
+        const response = await fetch(`/tasks/api/task/${taskId}/comment/${journalId}/delete`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                ...(() => {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    return token ? { 'X-CSRFToken': token } : {};
+                })()
+            }
+        });
+
+        console.log('Получен ответ на удаление:', response.status, response.statusText);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка HTTP при удалении:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Данные ответа при удалении:', data);
+
+        if (data.success) {
+            showNotification(data.message, 'success');
+
+            // Удаляем комментарий из DOM
+            const commentElement = document.querySelector(`[data-journal-id="${journalId}"]`);
+            if (commentElement) {
+                commentElement.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
+                commentElement.style.opacity = '0';
+                commentElement.style.transform = 'translateX(100px)';
+
+                setTimeout(() => {
+                    const historyItem = commentElement.closest('.history-item');
+                    if (historyItem) {
+                        historyItem.remove();
+                    }
+                }, 300);
+            }
+        } else {
+            showNotification(data.error, 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка удаления комментария:', error);
+        showNotification('Произошла ошибка при удалении комментария', 'error');
+    }
+}
+
+/**
+ * Отправка комментария через AJAX (альтернативный способ)
+ */
+async function submitCommentAjax(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('commentForm');
+    const textarea = form.querySelector('textarea');
+    const comment = textarea.value.trim();
+
+    if (!comment) {
+        showNotification('Комментарий не может быть пустым', 'error');
+        return;
+    }
+
+    // Отключаем кнопку отправки
+    disableSubmitButton();
+
+    try {
+        const taskId = getTaskIdFromUrl();
+
+        // Получаем CSRF токен из формы
+        const csrfToken = form.querySelector('input[name="csrf_token"]')?.value;
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        // Добавляем CSRF токен если он есть
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken;
+        }
+
+        console.log('Отправляем AJAX запрос:', {
+            url: `/tasks/api/task/${taskId}/comment`,
+            method: 'POST',
+            headers: headers,
+            body: { comment: comment }
+        });
+
+        const response = await fetch(`/tasks/api/task/${taskId}/comment`, {
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify({
+                comment: comment
+            })
+        });
+
+        console.log('Получен ответ:', response.status, response.statusText);
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Ошибка HTTP:', response.status, errorText);
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+        console.log('Данные ответа:', data);
+
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Очищаем форму и скрываем её
+            textarea.value = '';
+            toggleCommentInput();
+            // Можно перезагрузить страницу для обновления истории
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        } else {
+            showNotification(data.error, 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка отправки комментария:', error);
+        showNotification('Произошла ошибка при отправке комментария', 'error');
+    } finally {
+        // Восстанавливаем кнопку отправки
+        const submitBtn = document.getElementById('submitBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> <span>Отправить</span>';
+        }
+    }
+}
+
+/**
+ * Функция для инициализации кнопок удаления комментариев
+ */
+function initializeDeleteCommentButtons() {
+  console.log('Инициализация кнопок удаления комментариев');
+
+  // Убеждаемся, что у всех комментариев есть правильные стили
+  document.querySelectorAll('.history-comment').forEach((comment, index) => {
+    console.log(`Обрабатываем комментарий ${index + 1}:`, comment);
+
+    const actions = comment.querySelector('.comment-actions');
+    console.log(`Найдены actions для комментария ${index + 1}:`, actions);
+
+    if (actions) {
+      // Принудительно применяем стили для надежности
+      actions.style.position = 'absolute';
+      actions.style.top = '8px';
+      actions.style.right = '8px';
+      actions.style.zIndex = '999';
+      actions.style.opacity = '0';
+      actions.style.visibility = 'hidden';
+      actions.style.transition = 'opacity 0.3s ease, visibility 0.3s ease';
+
+      // Добавляем обработчики событий для показа/скрытия кнопок
+      comment.addEventListener('mouseenter', function() {
+        console.log('Наведение на комментарий:', this);
+        const actions = this.querySelector('.comment-actions');
+        if (actions) {
+          actions.style.opacity = '1';
+          actions.style.visibility = 'visible';
+          actions.classList.add('show');
+          console.log('Кнопка удаления показана');
+        }
+      });
+
+      comment.addEventListener('mouseleave', function() {
+        console.log('Мышь ушла с комментария:', this);
+        const actions = this.querySelector('.comment-actions');
+        if (actions) {
+          actions.style.opacity = '0';
+          actions.style.visibility = 'hidden';
+          actions.classList.remove('show');
+          console.log('Кнопка удаления скрыта');
+        }
+      });
+    }
+  });
+}
+
+/**
+ * Показать уведомление
+ */
+function showNotification(message, type = 'info') {
+    // Создаем уведомление
+    const notification = document.createElement('div');
+    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        max-width: 500px;
+    `;
+    notification.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Автоматически скрыть через 5 секунд
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+
+/**
+ * Скрытие формы комментариев при загрузке страницы
+ */
+document.addEventListener('DOMContentLoaded', function() {
+    const commentForm = document.getElementById('commentForm');
+    if (commentForm) {
+        commentForm.style.display = 'none';
+    }
+
+    // Очистка формы после успешной отправки
+    {% if clear_comment %}
+        const textarea = document.querySelector('#commentForm textarea');
+        if (textarea) {
+            textarea.value = '';
+        }
+    {% endif %}
+
+    // Инициализируем кнопки удаления комментариев
+    initializeDeleteCommentButtons();
+
+    // Простая проверка кнопок удаления
+    console.log('Найдено комментариев:', document.querySelectorAll('.history-comment').length);
+    console.log('Найдено кнопок удаления:', document.querySelectorAll('.comment-actions').length);
+
+    // ВРЕМЕННЫЙ ОТЛАДОЧНЫЙ КОД - УДАЛИТЬ ПОСЛЕ ТЕСТИРОВАНИЯ
+    // Делаем все кнопки видимыми для тестирования
+    setTimeout(() => {
+      document.querySelectorAll('.comment-actions').forEach((actions, index) => {
+        console.log(`Добавляем debug-visible к кнопке ${index + 1}:`, actions);
+        actions.classList.add('debug-visible');
+
+        // Также проверим, что кнопка правильно позиционирована
+        const computedStyle = window.getComputedStyle(actions);
+        console.log(`Стили кнопки ${index + 1}:`, {
+          position: computedStyle.position,
+          top: computedStyle.top,
+          right: computedStyle.right,
+          opacity: computedStyle.opacity,
+          visibility: computedStyle.visibility,
+          zIndex: computedStyle.zIndex
+        });
+      });
+    }, 1000);
+});
+
+let editingJournalId = null;
+
+function openEditCommentModal(journalId) {
+  editingJournalId = journalId;
+  // Получаем текст комментария из DOM
+  const commentBlock = document.querySelector(`.history-comment[data-journal-id="${journalId}"] .comment-content`);
+  const commentText = commentBlock ? commentBlock.innerText : '';
+  document.getElementById('editCommentTextarea').value = commentText;
+  document.getElementById('editCommentModal').style.display = 'flex';
+}
+
+function closeEditCommentModal() {
+  editingJournalId = null;
+  document.getElementById('editCommentModal').style.display = 'none';
+}
+
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Навешиваем обработчики для модального окна редактирования комментария
+  const cancelBtn = document.getElementById('cancelEditCommentBtn');
+  const closeBtn = document.getElementById('closeEditCommentModalBtn');
+  const saveBtn = document.getElementById('saveEditCommentBtn');
+
+  if (cancelBtn) cancelBtn.onclick = closeEditCommentModal;
+  if (closeBtn) closeBtn.onclick = closeEditCommentModal;
+  if (saveBtn) saveBtn.onclick = async function() {
+    const newText = document.getElementById('editCommentTextarea').value.trim();
+    if (!newText) {
+      showNotification('Комментарий не может быть пустым', 'error');
+      return;
+    }
+    try {
+      const taskId = getTaskIdFromUrl();
+      const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+      const response = await fetch(`/tasks/api/task/${taskId}/comment/${editingJournalId}/edit`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Requested-With': 'XMLHttpRequest',
+          ...(token ? { 'X-CSRFToken': token } : {})
+        },
+        body: JSON.stringify({ comment: newText })
+      });
+      if (!response.ok) {
+        const errorText = await response.text();
+        showNotification('Ошибка при сохранении: ' + errorText, 'error');
+        return;
+      }
+      const data = await response.json();
+      if (data.success) {
+        showNotification('Комментарий обновлён', 'success');
+        closeEditCommentModal();
+        setTimeout(() => window.location.reload(), 500);
+      } else {
+        showNotification(data.error || 'Ошибка при сохранении', 'error');
+      }
+    } catch (e) {
+      showNotification('Ошибка при сохранении: ' + e, 'error');
+    }
+  };
+});
 </script>
+
+<!-- Модальное окно для редактирования комментария -->
+<div id="editCommentModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; align-items:center; justify-content:center; z-index:2000; background:rgba(0,0,0,0.3);">
+  <div style="background:#fff; padding:2rem; border-radius:10px; min-width:300px; max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.2); display:flex; flex-direction:column; gap:1rem; position:relative;">
+    <button id="closeEditCommentModalBtn" style="position:absolute; top:10px; right:10px; background:none; border:none; font-size:1.5rem; color:#888; cursor:pointer;">×</button>
+    <h3 style="margin:0 0 1rem 0;">Редактировать комментарий</h3>
+    <textarea id="editCommentTextarea" style="width:100%; min-height:100px; resize:vertical; border-radius:6px; border:1px solid #ccc; padding:0.5rem;"></textarea>
+    <div style="display:flex; gap:1rem; justify-content:flex-end;">
+      <button id="cancelEditCommentBtn" type="button" style="background:#eee; border:none; border-radius:6px; padding:0.5rem 1.2rem; cursor:pointer;">Отмена</button>
+      <button id="saveEditCommentBtn" type="button" style="background:#3b82f6; color:#fff; border:none; border-radius:6px; padding:0.5rem 1.2rem; cursor:pointer;">Сохранить</button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
