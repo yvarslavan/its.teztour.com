@@ -634,13 +634,13 @@ class NotificationService:
             # Сначала получаем все уведомления пользователя, затем фильтруем в Python
             all_status_notifications = Notifications.query.filter_by(
                 user_id=user_id
-            ).order_by(Notifications.date_created.desc()).all()
+            ).order_by(Notifications.date_created.desc()).all() # type: ignore
 
             status_notifications = [n for n in all_status_notifications if n.is_read is None or n.is_read is False]
 
             all_comment_notifications = NotificationsAddNotes.query.filter_by(
                 user_id=user_id
-            ).order_by(NotificationsAddNotes.date_created.desc()).all()
+            ).order_by(NotificationsAddNotes.date_created.desc()).all() # type: ignore
 
             comment_notifications = [n for n in all_comment_notifications if n.is_read is None or n.is_read is False]
 
@@ -722,11 +722,11 @@ class NotificationService:
             # Для страницы /notifications показываем ВСЕ уведомления (и прочитанные, и непрочитанные)
             status_notifications = Notifications.query.filter_by(
                 user_id=user_id
-            ).order_by(Notifications.date_created.desc()).all()
+            ).order_by(Notifications.date_created.desc()).all() # type: ignore
 
             comment_notifications = NotificationsAddNotes.query.filter_by(
                 user_id=user_id
-            ).order_by(NotificationsAddNotes.date_created.desc()).all()
+            ).order_by(NotificationsAddNotes.date_created.desc()).all() # type: ignore
 
             # Для страницы уведомлений получаем сохраненные Redmine уведомления из локальной таблицы
             redmine_notifications = self.get_local_redmine_notifications(user_id)
