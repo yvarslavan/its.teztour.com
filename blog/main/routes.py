@@ -238,12 +238,18 @@ def inject_notification_count():
 @login_required
 def get_notification_count():
     try:
+        logger.info(f"🔄 Запрос количества уведомлений для пользователя {current_user.username}")
+
         # ИЗМЕНЕНО: Используем get_total_notification_count_for_page для показа всех уведомлений
         # чтобы красный счетчик был согласован со страницей /notifications
         count = get_total_notification_count_for_page(current_user)
+
+        logger.info(f"✅ Получено количество уведомлений: {count}")
         return jsonify({"count": count})
     except Exception as e:
-        logger.error(f"Error in get_notification_count: {str(e)}")
+        logger.error(f"❌ Ошибка в get_notification_count: {str(e)}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
         return jsonify({"count": 0, "error": str(e)}), 500
 
 
@@ -254,8 +260,12 @@ def poll_notifications():
     try:
         from datetime import datetime
 
+        logger.info(f"🔄 Запрос уведомлений для пользователя {current_user.username}")
+
         # Получаем уведомления пользователя (теперь включая Redmine)
         notifications_data = get_notification_service().get_user_notifications(current_user.id)
+
+        logger.info(f"✅ Получены уведомления: {notifications_data.get('total_count', 0)} шт.")
 
         # Формируем ответ в ожидаемом формате
         response_data = {
@@ -269,10 +279,13 @@ def poll_notifications():
             'total_count': notifications_data['total_count']
         }
 
+        logger.info(f"✅ API уведомлений успешно завершён")
         return jsonify(response_data)
 
     except Exception as e:
-        logger.error(f"Ошибка при опросе уведомлений: {e}")
+        logger.error(f"❌ Ошибка при опросе уведомлений: {e}")
+        import traceback
+        logger.error(f"❌ Traceback: {traceback.format_exc()}")
         return jsonify({
             'success': False,
             'error': str(e),

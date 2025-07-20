@@ -2,50 +2,54 @@
 <!-- ЭКСТРЕННОЕ ОТКЛЮЧЕНИЕ: раскомментируйте строку ниже если виджет блокирует сайт -->
 <!-- <script>console.log('🚨 ВИДЖЕТ УВЕДОМЛЕНИЙ ЭКСТРЕННО ОТКЛЮЧЕН'); if(true) throw new Error('Widget disabled');</script> -->
 
-<div id="modern-notifications-widget" class="modern-notifications-widget initial-hidden">
-    <div class="notifications-header">
-        <div class="header-content">
-            <div class="header-icon">
-                <i class="fas fa-bell" id="notification-bell-icon"></i>
-                <span class="notification-badge" id="notification-count-badge">0</span>
+
+
+<div id="modern-notifications-widget" class="modern-notifications-widget initial-hidden" style="position: fixed !important; top: 120px !important; right: 20px !important; width: 480px !important; min-width: 400px !important; max-width: 600px !important; max-height: 600px !important; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important; backdrop-filter: blur(20px) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 24px !important; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important; z-index: 999999 !important; display: flex !important; flex-direction: column !important; pointer-events: auto !important; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important; transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important; resize: horizontal !important; overflow: hidden !important;">
+            <div class="notifications-header" style="display: flex !important; align-items: center !important; justify-content: space-between !important; padding: 20px 24px 16px !important; border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important; background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02)) !important; border-radius: 24px 24px 0 0 !important; backdrop-filter: blur(10px) !important;">
+        <div class="header-content" style="display: flex !important; align-items: center !important; gap: 12px !important; flex: 1 !important; min-width: 0 !important;">
+            <div class="header-icon" style="position: relative !important; display: flex !important; align-items: center !important; justify-content: center !important; width: 48px !important; height: 48px !important; background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important; border-radius: 16px !important; color: white !important; font-size: 22px !important; box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4) !important; animation: pulse 2s infinite !important; flex-shrink: 0 !important;">
+                <i class="fas fa-bell" id="notification-bell-icon" style="color: white !important; font-size: 20px !important; display: block !important;"></i>
+                <span class="notification-badge" id="notification-count-badge" style="position: absolute !important; top: -6px !important; right: -6px !important; min-width: 20px !important; height: 20px !important; background: linear-gradient(135deg, #ef4444, #dc2626) !important; color: white !important; border-radius: 10px !important; font-size: 11px !important; font-weight: 600 !important; display: flex !important; align-items: center !important; justify-content: center !important; border: 2px solid white !important;">0</span>
             </div>
-            <div class="header-text">
-                <h3 class="header-title">Уведомления</h3>
-                <p class="header-subtitle" id="notification-subtitle">Нет новых уведомлений</p>
+            <div class="header-text" style="flex: 1 !important; min-width: 0 !important; overflow: hidden !important;">
+                <h3 class="header-title" style="font-size: 20px !important; font-weight: 700 !important; margin: 0 0 4px 0 !important; color: #ffffff !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important; letter-spacing: -0.02em !important;">Уведомления</h3>
+                <p class="header-subtitle" id="notification-subtitle" style="font-size: 14px !important; color: #94a3b8 !important; margin: 0 !important; font-weight: 500 !important; white-space: nowrap !important; overflow: hidden !important; text-overflow: ellipsis !important;">Нет новых уведомлений</p>
             </div>
         </div>
-        <div class="header-actions">
-            <button class="action-btn minimize-btn" id="minimize-notifications" title="Свернуть">
-                <i class="fas fa-chevron-up"></i>
+        <div class="header-actions" style="display: flex !important; gap: 6px !important; margin-left: 12px !important; flex-shrink: 0 !important;">
+            <button class="action-btn minimize-btn" id="minimize-notifications" title="Свернуть" style="width: 36px !important; height: 36px !important; border: none !important; border-radius: 10px !important; background: rgba(255, 255, 255, 0.1) !important; color: #94a3b8 !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; font-size: 14px !important; position: relative !important; z-index: 10 !important; flex-shrink: 0 !important; backdrop-filter: blur(10px) !important;">
+                <i class="fas fa-chevron-up" style="color: #94a3b8 !important; font-size: 14px !important; display: block !important;"></i>
             </button>
-            <button class="action-btn settings-btn" id="notification-settings" title="Настройки">
-                <i class="fas fa-cog"></i>
+            <button class="action-btn settings-btn" id="notification-settings" title="Настройки" style="width: 36px !important; height: 36px !important; border: none !important; border-radius: 10px !important; background: rgba(255, 255, 255, 0.1) !important; color: #94a3b8 !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; font-size: 14px !important; position: relative !important; z-index: 10 !important; flex-shrink: 0 !important; backdrop-filter: blur(10px) !important;">
+                <i class="fas fa-cog" style="color: #94a3b8 !important; font-size: 14px !important; display: block !important;"></i>
             </button>
-            <button class="action-btn close-btn" id="close-notifications" title="Закрыть виджет">
-                <i class="fas fa-times"></i>
+            <button class="action-btn close-btn" id="close-notifications" title="Закрыть виджет" style="width: 36px !important; height: 36px !important; border: none !important; border-radius: 10px !important; background: rgba(255, 255, 255, 0.1) !important; color: #94a3b8 !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; font-size: 14px !important; position: relative !important; z-index: 10 !important; flex-shrink: 0 !important; backdrop-filter: blur(10px) !important;">
+                <i class="fas fa-times" style="color: #94a3b8 !important; font-size: 14px !important; display: block !important;"></i>
             </button>
         </div>
     </div>
 
-    <div class="notifications-body" id="notifications-body">
-        <div class="notifications-list" id="notifications-list">
+    <div class="notifications-body" id="notifications-body" style="flex: 1 !important; overflow-y: auto !important; padding: 0 !important; margin: 0 !important; background: transparent !important; position: relative !important;">
+        <!-- Индикатор области растягивания -->
+        <div class="resize-handle" style="position: absolute !important; left: 0 !important; top: 0 !important; width: 10px !important; height: 100% !important; cursor: ew-resize !important; background: linear-gradient(90deg, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 50%, transparent 100%) !important; z-index: 10 !important; border-right: 1px solid rgba(255, 255, 255, 0.3) !important;"></div>
+        <div class="notifications-list" id="notifications-list" style="padding: 16px 20px !important;">
             <!-- Динамически заполняется -->
-            <div class="empty-state" id="empty-state">
-                <div class="empty-icon">
-                    <i class="fas fa-inbox"></i>
+            <div class="empty-state" id="empty-state" style="display: flex !important; flex-direction: column !important; align-items: center !important; justify-content: center !important; padding: 40px 20px !important; text-align: center !important; color: #94a3b8 !important;">
+                <div class="empty-icon" style="width: 64px !important; height: 64px !important; background: rgba(255, 255, 255, 0.05) !important; border-radius: 50% !important; display: flex !important; align-items: center !important; justify-content: center !important; margin-bottom: 16px !important; backdrop-filter: blur(10px) !important;">
+                    <i class="fas fa-inbox" style="font-size: 24px !important; color: #64748b !important;"></i>
                 </div>
-                <p class="empty-text">Все уведомления прочитаны</p>
-                <small class="empty-subtitle">Новые уведомления появятся здесь</small>
+                <p class="empty-text" style="font-size: 16px !important; font-weight: 600 !important; margin: 0 0 8px 0 !important; color: #e2e8f0 !important;">Все уведомления прочитаны</p>
+                <small class="empty-subtitle" style="font-size: 14px !important; color: #94a3b8 !important;">Новые уведомления появятся здесь</small>
             </div>
         </div>
 
-        <div class="notifications-footer">
-            <button class="footer-btn view-all-btn" id="view-all-notifications">
-                <i class="fas fa-list"></i>
+        <div class="notifications-footer" style="padding: 16px 20px !important; border-top: 1px solid rgba(255, 255, 255, 0.1) !important; background: rgba(255, 255, 255, 0.02) !important; backdrop-filter: blur(10px) !important; display: flex !important; gap: 12px !important; justify-content: space-between !important;">
+            <button class="footer-btn view-all-btn" id="view-all-notifications" style="flex: 1 !important; padding: 12px 16px !important; border: none !important; border-radius: 12px !important; background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important; color: white !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; font-size: 14px !important; font-weight: 600 !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;">
+                <i class="fas fa-list" style="font-size: 14px !important;"></i>
                 <span>Показать все</span>
             </button>
-            <button class="footer-btn clear-btn" id="clear-notifications-modern">
-                <i class="fas fa-check-double"></i>
+            <button class="footer-btn clear-btn" id="clear-notifications-modern" style="flex: 1 !important; padding: 12px 16px !important; border: none !important; border-radius: 12px !important; background: rgba(255, 255, 255, 0.1) !important; color: #94a3b8 !important; cursor: pointer !important; display: flex !important; align-items: center !important; justify-content: center !important; gap: 8px !important; font-size: 14px !important; font-weight: 600 !important; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important; backdrop-filter: blur(10px) !important;">
+                <i class="fas fa-check-double" style="font-size: 14px !important;"></i>
                 <span>Очистить</span>
             </button>
         </div>
@@ -54,7 +58,7 @@
 
 <!-- Floating button to restore widget when closed -->
 <div id="notifications-restore-btn" class="notifications-restore-btn" style="display: none;">
-    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений">
+    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений" class="restore-button">
         <i class="fas fa-bell"></i>
     </button>
 </div>
@@ -63,29 +67,35 @@
 /* Modern Notifications Widget Styles */
 .modern-notifications-widget {
     position: fixed !important;
-    top: 120px !important; /* Значительно увеличиваем отступ сверху */
+    top: 120px !important;
     right: 20px !important;
-    width: 420px; /* ИЗМЕНЕНО: Ширина виджета увеличена для размещения кнопок */
+    width: 480px;
+    min-width: 400px;
+    max-width: 600px;
     max-height: 600px;
-    background: rgba(255, 255, 255, 0.95);
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 20px;
-    box-shadow:
-        0 20px 40px rgba(0, 0, 0, 0.1),
-        0 8px 16px rgba(0, 0, 0, 0.05),
-        inset 0 1px 0 rgba(255, 255, 255, 0.5);
-    z-index: 999999 !important; /* Максимальный z-index с !important */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    z-index: 999999 !important;
     display: flex;
     flex-direction: column;
-    pointer-events: auto; /* Обеспечиваем интерактивность */
+    pointer-events: auto;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideInFromRight 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    resize: horizontal;
+    overflow: hidden;
 }
 
 /* ИСПРАВЛЕНИЕ: Добавляем класс для скрытия виджета при первичной загрузке */
 .modern-notifications-widget.initial-hidden {
+    display: none !important;
+}
+
+/* Дополнительные стили для предотвращения мигания */
+.modern-notifications-widget.closed {
     display: none !important;
 }
 
@@ -105,14 +115,27 @@
 }
 
 .modern-notifications-widget.minimized {
-    max-height: 80px;
-    overflow: hidden;
+    max-height: 70px !important;
+    overflow: hidden !important;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .modern-notifications-widget.minimized .notifications-body {
-    opacity: 0;
-    transform: translateY(-10px);
-    pointer-events: none;
+    opacity: 0 !important;
+    transform: translateY(-10px) !important;
+    pointer-events: none !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.modern-notifications-widget.minimized .notifications-footer {
+    opacity: 0 !important;
+    transform: translateY(-10px) !important;
+    pointer-events: none !important;
+    max-height: 0 !important;
+    overflow: hidden !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
 }
 
 .modern-notifications-widget.hidden {
@@ -131,15 +154,18 @@
     align-items: center;
     justify-content: space-between;
     padding: 20px 24px 16px;
-    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(168, 85, 247, 0.1));
-    border-radius: 20px 20px 0 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+    border-radius: 24px 24px 0 0;
+    backdrop-filter: blur(10px);
 }
 
 .header-content {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
 }
 
 .header-icon {
@@ -149,17 +175,33 @@
     justify-content: center;
     width: 48px;
     height: 48px;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    border-radius: 14px;
-    color: white;
-    font-size: 20px;
-    box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3);
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    border-radius: 16px;
+    color: white !important;
+    font-size: 22px;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
     animation: pulse 2s infinite;
+    flex-shrink: 0;
+}
+
+.header-icon i,
+.header-icon .fas,
+.header-icon .fa-bell {
+    color: white !important; /* Принудительно белый цвет для иконки */
+    font-size: 20px !important;
+    display: block !important;
+}
+
+/* Специфичные стили для иконки колокольчика */
+#notification-bell-icon {
+    color: white !important;
+    font-size: 20px !important;
+    display: block !important;
 }
 
 @keyframes pulse {
-    0%, 100% { box-shadow: 0 8px 16px rgba(99, 102, 241, 0.3); }
-    50% { box-shadow: 0 8px 24px rgba(99, 102, 241, 0.5); }
+    0%, 100% { box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4); }
+    50% { box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6); }
 }
 
 .notification-badge {
@@ -188,28 +230,36 @@
 
 .header-text {
     flex: 1;
+    min-width: 0;
+    overflow: hidden;
 }
 
 .header-title {
-    font-size: 18px;
+    font-size: 20px;
     font-weight: 700;
     margin: 0 0 4px 0;
-    background: linear-gradient(135deg, #1f2937, #4f46e5);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: -0.02em;
 }
 
 .header-subtitle {
-    font-size: 13px;
-    color: #6b7280;
+    font-size: 14px;
+    color: #94a3b8;
     margin: 0;
     font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .header-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    margin-left: 12px;
+    flex-shrink: 0;
 }
 
 .action-btn {
@@ -217,25 +267,62 @@
     height: 36px;
     border: none;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.05);
-    color: #6b7280;
+    background: rgba(255, 255, 255, 0.1);
+    color: #cbd5e1 !important;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 14px;
+    font-size: 14px !important;
+    position: relative;
+    z-index: 10;
+    flex-shrink: 0;
+    backdrop-filter: blur(10px);
+}
+
+.action-btn i,
+.action-btn .fas,
+.action-btn .fa-times,
+.action-btn .fa-chevron-up,
+.action-btn .fa-cog {
+    color: inherit !important; /* Наследует цвет от родителя */
+    font-size: 12px !important;
+    display: block !important;
+}
+
+/* Специфичные стили для кнопки закрытия */
+#close-notifications {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+#close-notifications i {
+    color: #6b7280 !important;
+    font-size: 12px !important;
 }
 
 .action-btn:hover {
-    background: rgba(99, 102, 241, 0.1);
-    color: #6366f1;
+    background: rgba(255, 255, 255, 0.15);
+    color: #e2e8f0 !important;
     transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .close-btn:hover {
-    background: rgba(239, 68, 68, 0.1);
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.2);
+    color: #fca5a5 !important;
+}
+
+.minimize-btn:hover {
+    background: rgba(59, 130, 246, 0.2);
+    color: #93c5fd !important;
+}
+
+.settings-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7 !important;
 }
 
 /* Body */
@@ -249,7 +336,7 @@
 .notifications-list {
     flex: 1;
     overflow-y: auto;
-    padding: 8px;
+    padding: 16px 20px;
     scrollbar-width: thin;
     scrollbar-color: rgba(99, 102, 241, 0.3) transparent;
 }
@@ -265,13 +352,14 @@
 
 /* Notification Item */
 .notification-item {
-    padding: 16px;
-    margin-bottom: 8px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    border-radius: 14px;
+    padding: 20px;
+    margin-bottom: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(10px);
 }
 
 @keyframes slideInFromBottom {
@@ -287,8 +375,9 @@
 
 .notification-item:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
-    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .notification-item.status-change {
@@ -314,29 +403,33 @@
 }
 
 .notification-icon {
-    width: 36px;
-    height: 36px;
-    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
+    font-size: 18px;
     flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .notification-icon.status-change {
     background: linear-gradient(135deg, #10b981, #059669);
     color: white;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
 }
 
 .notification-icon.comment-added {
     background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
 .notification-icon.redmine-task {
     background: linear-gradient(135deg, #f97316, #ea580c);
     color: white;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
 }
 
 .notification-text {
@@ -344,63 +437,63 @@
 }
 
 .notification-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     color: #1f2937;
-    margin: 0 0 4px 0;
-    line-height: 1.4;
+    margin: 0 0 6px 0;
+    line-height: 1.5;
 }
 
 .notification-description {
-    font-size: 12px;
-    color: #6b7280;
-    margin: 0 0 6px 0;
-    line-height: 1.4;
+    font-size: 13px;
+    color: #374151;
+    margin: 0 0 8px 0;
+    line-height: 1.5;
 }
 
 .notification-time {
-    font-size: 11px;
-    color: #9ca3af;
+    font-size: 12px;
+    color: #6b7280;
     font-weight: 500;
 }
 
 /* УЛУЧШЕНО: Стили для кнопок действий в уведомлении */
 .notification-actions {
     display: flex;
-    /* ИЗМЕНЕНО: flex-wrap убран, чтобы кнопки были в одну линию */
-    gap: 8px;
-    margin-top: 12px;
-    padding-top: 12px;
-    border-top: 1px solid rgba(0, 0, 0, 0.05);
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .notification-action-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    padding: 7px 12px;
+    padding: 10px 16px;
     border: 1px solid transparent;
-    border-radius: 10px;
-    font-size: 11px;
+    border-radius: 12px;
+    font-size: 12px;
     font-weight: 600;
     text-decoration: none;
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    backdrop-filter: blur(10px);
 }
 
 .notification-action-btn:hover {
-    transform: translateY(-2px); /* Более заметный сдвиг */
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); /* Добавлена тень при наведении */
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
 .notification-action-btn i {
-    margin-right: 6px; /* Увеличен отступ */
+    margin-right: 8px;
 }
 
 /* ИЗМЕНЕНО: Кнопка "Открыть в Redmine" теперь синяя, в стиле Redmine */
 .redmine-link-btn {
-    background: linear-gradient(135deg, #3b82f6, #2563eb); /* Синий градиент */
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
     color: white !important;
     border-color: #1d4ed8;
     box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
@@ -409,22 +502,24 @@
     background: linear-gradient(135deg, #60a5fa, #3b82f6);
     color: white !important;
     border-color: #2563eb;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
 }
 
 /* Кнопка "Прочитано" - вторичное действие */
 .mark-read-btn {
-    background-color: #f3f4f6; /* Светло-серый фон */
-    color: #4b5563; /* Темно-серый текст */
-    border: 1px solid #e5e7eb; /* Тонкая серая рамка */
+    background: rgba(16, 185, 129, 0.2);
+    color: #065f46;
+    border: 1px solid rgba(16, 185, 129, 0.4);
 }
 .mark-read-btn:hover {
-    background-color: #e5e7eb; /* Более темный фон при наведении */
-    border-color: #d1d5db;
-    color: #1f2937;
+    background: rgba(16, 185, 129, 0.3);
+    border-color: rgba(16, 185, 129, 0.5);
+    color: #047857;
 }
 
 .mark-read-btn i {
-    color: #3b82f6; /* Синяя иконка для акцента */
+    color: #10b981;
 }
 
 
@@ -576,54 +671,33 @@
     }
 }
 
-/* Dark theme */
-@media (prefers-color-scheme: dark) {
-    .modern-notifications-widget {
-        background: rgba(30, 30, 30, 0.95);
-        border-color: rgba(255, 255, 255, 0.1);
-        color: #ffffff;
-    }
 
-    .notification-item {
-        background: rgba(45, 45, 45, 0.7);
-        border-color: rgba(255, 255, 255, 0.1);
-    }
-
-    /* ДОБАВЛЕНО: Стили для footer в темной теме */
-    .notifications-footer {
-        background: rgba(20, 20, 20, 0.8);
-        border-top-color: rgba(255, 255, 255, 0.1);
-    }
-
-    .footer-btn {
-        color: #ffffff;
-    }
-
-    .view-all-btn {
-        background: rgba(99, 102, 241, 0.2);
-        color: #a5b4fc;
-    }
-
-    .view-all-btn:hover {
-        background: rgba(99, 102, 241, 0.3);
-    }
-
-    .clear-btn {
-        background: rgba(239, 68, 68, 0.2);
-        color: #fca5a5;
-    }
-
-    .clear-btn:hover {
-        background: rgba(239, 68, 68, 0.3);
-    }
-}
 
 /* Floating Restore Button */
 .notifications-restore-btn {
     position: fixed !important;
-    bottom: 2rem !important; /* Синхронизируем с fab-container */
+    bottom: 2rem !important;
     right: 2rem !important;
-    z-index: 999998 !important; /* Максимальный z-index для кнопки восстановления */
+    z-index: 999998 !important;
+    animation: restoreButtonPulse 2s ease-in-out infinite;
+    /* Принудительно убираем все возможные белые фоны */
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+}
+
+@keyframes restoreButtonPulse {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6);
+    }
 }
 
 /* Адаптивность для notifications-restore-btn (синхронизация с fab-container) */
@@ -641,29 +715,113 @@
   }
 }
 
-.notifications-restore-btn button {
-    width: 56px;
-    height: 56px;
-    border: none;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #6366f1, #a855f7);
-    color: white;
-    font-size: 20px;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.notifications-restore-btn .restore-button {
+    width: 60px !important;
+    height: 60px !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+    cursor: pointer !important;
+    box-shadow: 0 8px 24px rgba(59, 130, 246, 0.4) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    /* Принудительно убираем все возможные белые фоны */
+    background-color: transparent !important;
+    background-image: linear-gradient(135deg, #3b82f6, #8b5cf6) !important;
+    background-repeat: no-repeat !important;
+    background-position: center !important;
+    background-size: cover !important;
+    /* Убираем все возможные границы */
+    border: none !important;
+    border-width: 0 !important;
+    border-style: none !important;
+    border-color: transparent !important;
+    /* Убираем все возможные отступы */
+    padding: 0 !important;
+    margin: 0 !important;
+    /* Убираем все возможные фоны */
+    background-attachment: scroll !important;
+    background-clip: border-box !important;
+    background-origin: padding-box !important;
 }
 
-.notifications-restore-btn button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px rgba(99, 102, 241, 0.6);
+.notifications-restore-btn .restore-button i {
+    color: white !important;
+    font-size: 20px !important;
+    display: block !important;
+    /* Принудительно убираем все возможные белые фоны */
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }
 
-.notifications-restore-btn button:active {
-    transform: translateY(0);
+.notifications-restore-btn .restore-button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 12px 32px rgba(59, 130, 246, 0.6) !important;
+    background: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    background-image: linear-gradient(135deg, #2563eb, #7c3aed) !important;
+    background-color: transparent !important;
+}
+
+.notifications-restore-btn .restore-button:active {
+    transform: translateY(0) !important;
+    box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4) !important;
+    background-color: transparent !important;
+}
+
+/* Принудительно убираем белый фон у всех элементов кнопки восстановления */
+.notifications-restore-btn * {
+    background-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+}
+
+.notifications-restore-btn .restore-button * {
+    background-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+}
+
+/* Дополнительные стили для принудительного удаления белого фона */
+.notifications-restore-btn,
+.notifications-restore-btn *,
+.notifications-restore-btn .restore-button,
+.notifications-restore-btn .restore-button * {
+    background-color: transparent !important;
+    background: transparent !important;
+    background-image: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+/* Принудительно устанавливаем градиент */
+.notifications-restore-btn .restore-button {
+    background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    background-image: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    background-color: transparent !important;
+}
+
+/* Принудительно убираем белый фон у всех возможных элементов */
+button.restore-button,
+span.restore-button,
+.restore-button,
+.notifications-restore-btn button,
+.notifications-restore-btn span {
+    background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    background-image: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    background-color: transparent !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
 }
 
 /* Анимация колокольчика при новых уведомлениях */
@@ -687,6 +845,77 @@
 @keyframes badgePulse {
     0%, 100% { transform: scale(1); }
     50% { transform: scale(1.1); }
+}
+
+/* Принудительное отображение всех кнопок в заголовке */
+.header-actions .action-btn {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: 36px !important;
+    height: 36px !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.header-actions .action-btn:hover {
+    background: rgba(255, 255, 255, 0.15) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Специфичные стили для каждой кнопки */
+#minimize-notifications {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+#notification-settings {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+#close-notifications {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+/* Стили для иконок в кнопках */
+#minimize-notifications i {
+    color: #94a3b8 !important;
+    font-size: 14px !important;
+}
+
+#notification-settings i {
+    color: #94a3b8 !important;
+    font-size: 14px !important;
+}
+
+#close-notifications i {
+    color: #94a3b8 !important;
+    font-size: 14px !important;
+}
+
+/* Дополнительные стили для принудительного отображения */
+.modern-notifications-widget .header-actions {
+    display: flex !important;
+    gap: 8px !important;
+}
+
+.modern-notifications-widget .header-actions button {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
+.modern-notifications-widget .header-icon {
+    display: flex !important;
+    visibility: visible !important;
+}
+
+.modern-notifications-widget .header-icon i {
+    color: white !important;
+    font-size: 20px !important;
+    display: block !important;
 }
 </style>
 
@@ -721,7 +950,9 @@ try {
                     }
                 }
 
-                this.loadWidgetState();
+
+
+                                this.loadWidgetState();
                 this.bindEvents();
                 this.startPolling();
 
@@ -787,23 +1018,138 @@ try {
                     }
                 });
 
+                // Добавляем обработчик для растягивания виджета
+                this.addResizeHandler();
+
                 console.log('[ModernWidget] ✅ События привязаны через делегирование');
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка привязки событий:', error);
             }
         }
 
+                addResizeHandler() {
+            try {
+                if (!this.widget) {
+                    console.error('[ModernWidget] ❌ Виджет не найден для добавления обработчика растягивания');
+                    return;
+                }
+
+                let isResizing = false;
+                let startX, startWidth, startRight;
+
+                const handleMouseDown = (e) => {
+                    console.log('[ModernWidget] 🖱️ MouseDown event triggered');
+
+                    // Проверяем, что клик был в левой части виджета (область растягивания)
+                    const rect = this.widget.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+
+                    console.log('[ModernWidget] 📍 Click position:', clickX, 'Widget width:', rect.width);
+
+                    // Если клик был в левой части виджета (первые 10px)
+                    if (clickX < 10) {
+                        console.log('[ModernWidget] 🔧 Starting resize operation');
+                        isResizing = true;
+                        startX = e.clientX;
+                        startWidth = this.widget.offsetWidth;
+                        startRight = rect.right;
+                        document.addEventListener('mousemove', handleMouseMove);
+                        document.addEventListener('mouseup', handleMouseUp);
+                        e.preventDefault();
+                        e.stopPropagation();
+                        this.widget.style.cursor = 'ew-resize';
+                        this.widget.style.userSelect = 'none';
+                    }
+                };
+
+                const handleMouseMove = (e) => {
+                    if (!isResizing) return;
+
+                    console.log('[ModernWidget] 🔄 MouseMove during resize');
+                    const deltaX = startX - e.clientX;
+                    const newWidth = Math.max(400, Math.min(600, startWidth + deltaX));
+
+                    console.log('[ModernWidget] 📏 New width:', newWidth, 'Delta:', deltaX);
+
+                    // Обновляем ширину и позицию виджета
+                    this.widget.style.width = newWidth + 'px';
+                    this.widget.style.right = (window.innerWidth - startRight + deltaX) + 'px';
+                };
+
+                const handleMouseUp = () => {
+                    console.log('[ModernWidget] 🖱️ MouseUp - ending resize');
+                    isResizing = false;
+                    this.widget.style.cursor = 'default';
+                    this.widget.style.userSelect = 'auto';
+                    document.removeEventListener('mousemove', handleMouseMove);
+                    document.removeEventListener('mouseup', handleMouseUp);
+                };
+
+                // Добавляем обработчик для изменения курсора при наведении
+                const handleMouseMoveOver = (e) => {
+                    const rect = this.widget.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+
+                    if (mouseX < 10) {
+                        this.widget.style.cursor = 'ew-resize';
+                        console.log('[ModernWidget] 👆 Cursor changed to resize');
+                    } else {
+                        this.widget.style.cursor = 'default';
+                    }
+                };
+
+                // Добавляем обработчик для сброса курсора при выходе мыши
+                const handleMouseLeave = () => {
+                    this.widget.style.cursor = 'default';
+                    console.log('[ModernWidget] 👋 Mouse left widget');
+                };
+
+                // Привязываем обработчики событий
+                this.widget.addEventListener('mousedown', handleMouseDown, true);
+                this.widget.addEventListener('mousemove', handleMouseMoveOver, true);
+                this.widget.addEventListener('mouseleave', handleMouseLeave, true);
+
+                // Также добавляем обработчики на сам элемент resize-handle
+                const resizeHandle = this.widget.querySelector('.resize-handle');
+                if (resizeHandle) {
+                    resizeHandle.addEventListener('mousedown', handleMouseDown, true);
+                    resizeHandle.addEventListener('mouseover', () => {
+                        this.widget.style.cursor = 'ew-resize';
+                        console.log('[ModernWidget] 👆 Cursor changed to resize (handle)');
+                    }, true);
+                    console.log('[ModernWidget] ✅ Обработчики добавлены на resize-handle');
+                }
+
+                console.log('[ModernWidget] ✅ Обработчик растягивания добавлен с отладкой');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка добавления обработчика растягивания:', error);
+            }
+        }
+
         toggleMinimize() {
             try {
+                console.log('[ModernWidget] 📏 Переключение сворачивания виджета');
+
                 this.isMinimized = !this.isMinimized;
-                this.widget.classList.toggle('minimized', this.isMinimized);
+
+                if (this.isMinimized) {
+                    console.log('[ModernWidget] 📏 Сворачиваем виджет');
+                    this.widget.classList.add('minimized');
+                    this.widget.style.maxHeight = '70px';
+                } else {
+                    console.log('[ModernWidget] 📏 Разворачиваем виджет');
+                    this.widget.classList.remove('minimized');
+                    this.widget.style.maxHeight = '600px';
+                }
 
                 const icon = document.querySelector('#minimize-notifications i');
                 if (icon) {
                     icon.className = this.isMinimized ? 'fas fa-chevron-down' : 'fas fa-chevron-up';
+                    console.log('[ModernWidget] 📏 Иконка изменена на:', icon.className);
                 }
 
                 localStorage.setItem('notificationsMinimized', this.isMinimized);
+                console.log('[ModernWidget] ✅ Состояние сворачивания сохранено:', this.isMinimized);
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в toggleMinimize:', error);
             }
@@ -820,8 +1166,10 @@ try {
                     this.widget.classList.add('closed');
                     this.widget.style.display = 'none';
                     localStorage.setItem('notificationsWidgetClosed', 'true');
+                    // Добавляем флаг, что виджет был закрыт пользователем
+                    localStorage.setItem('notificationsWidgetClosedByUser', 'true');
                     this.showRestoreButton();
-                    console.log('[ModernWidget] ✅ Виджет закрыт, показана кнопка восстановления');
+                    console.log('[ModernWidget] ✅ Виджет закрыт пользователем, показана кнопка восстановления');
                 }, 300);
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в closeWidget:', error);
@@ -837,8 +1185,11 @@ try {
                 this.widget.style.visibility = 'visible';
                 this.widget.style.opacity = '1';
                 this.widget.style.transform = 'translateX(0)';
+                this.widget.style.width = '480px';
 
                 localStorage.setItem('notificationsWidgetClosed', 'false');
+                // Сбрасываем флаг "закрыт пользователем" при открытии виджета
+                localStorage.removeItem('notificationsWidgetClosedByUser');
                 this.hideRestoreButton();
 
                 this.widget.style.animation = 'slideInFromRight 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -860,6 +1211,12 @@ try {
                 const restoreBtn = document.getElementById('notifications-restore-btn');
                 if (restoreBtn) {
                     restoreBtn.style.display = 'block';
+                    // Принудительно исправляем стили кнопки восстановления
+                    setTimeout(() => {
+                        if (window.fixRestoreButton) {
+                            window.fixRestoreButton();
+                        }
+                    }, 100);
                 }
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в showRestoreButton:', error);
@@ -882,8 +1239,20 @@ try {
                 const isClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
                 const isMinimized = localStorage.getItem('notificationsMinimized') === 'true';
                 const isDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                const isWidgetClosedByUser = localStorage.getItem('notificationsWidgetClosedByUser') === 'true';
 
-                console.log('[ModernWidget] 🔧 Загрузка состояния виджета:', { isClosed, isMinimized, isDisabled });
+                console.log('[ModernWidget] 🔧 Загрузка состояния виджета:', { isClosed, isMinimized, isDisabled, isWidgetClosedByUser });
+
+                // Если виджет был закрыт пользователем, показываем его закрытым при инициализации
+                if (isWidgetClosedByUser) {
+                    console.log('[ModernWidget] 🔒 Виджет был закрыт пользователем - показываем закрытым при инициализации');
+                    this.widget.classList.add('closed', 'initial-hidden');
+                    this.widget.style.display = 'none';
+                    this.widget.style.visibility = 'hidden';
+                    this.widget.style.opacity = '0';
+                    this.showRestoreButton();
+                    return;
+                }
 
                 if (isDisabled) {
                     console.log('[ModernWidget] 🔕 Виджет отключен, скрываем полностью включая кнопку восстановления');
@@ -896,6 +1265,7 @@ try {
                 this.widget.classList.remove('initial-hidden');
                 this.adjustWidgetPosition();
 
+                // Если виджет был закрыт (но не пользователем), показываем его закрытым
                 if (isClosed) {
                     this.widget.classList.add('closed');
                     this.widget.style.display = 'none';
@@ -906,17 +1276,31 @@ try {
                     return;
                 }
 
+                // Если виджет не был закрыт пользователем, сбрасываем флаг при первом открытии
+                if (!isWidgetClosedByUser) {
+                    localStorage.removeItem('notificationsWidgetClosedByUser');
+                }
+
                 this.widget.style.display = 'flex';
                 this.widget.style.visibility = 'visible';
                 this.widget.style.opacity = '1';
+                this.widget.style.width = '480px';
                 this.widget.classList.remove('hidden', 'closed');
                 this.hideRestoreButton();
 
                 if (isMinimized) {
+                    console.log('[ModernWidget] 📏 Восстанавливаем свернутое состояние');
                     this.isMinimized = true;
                     this.widget.classList.add('minimized');
+                    this.widget.style.maxHeight = '70px';
                     const icon = document.querySelector('#minimize-notifications i');
-                    if (icon) icon.className = 'fas fa-chevron-down';
+                    if (icon) {
+                        icon.className = 'fas fa-chevron-down';
+                        console.log('[ModernWidget] 📏 Иконка восстановлена:', icon.className);
+                    }
+                } else {
+                    console.log('[ModernWidget] 📏 Восстанавливаем развернутое состояние');
+                    this.widget.style.maxHeight = '600px';
                 }
 
                 console.log('[ModernWidget] ✅ Виджет инициализирован и показан');
@@ -924,10 +1308,22 @@ try {
                 console.error('[ModernWidget] ❌ Критическая ошибка в loadWidgetState:', error);
 
                 const isDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                const isClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
+                const isWidgetClosedByUser = localStorage.getItem('notificationsWidgetClosedByUser') === 'true';
+
                 if (isDisabled) {
                     console.log('[ModernWidget] 🔕 Виджет отключен, не показываем при ошибке');
                     this.widget.style.display = 'none';
                     this.hideRestoreButton();
+                    return;
+                }
+
+                // Если виджет был закрыт пользователем, не показываем его при ошибке инициализации
+                if (isClosed || isWidgetClosedByUser) {
+                    console.log('[ModernWidget] 🔒 Виджет был закрыт пользователем, не показываем при ошибке инициализации');
+                    this.widget.style.display = 'none';
+                    this.widget.classList.add('closed');
+                    this.showRestoreButton();
                     return;
                 }
 
@@ -1028,11 +1424,25 @@ try {
 
                 const isWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
                 const isWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                const isWidgetClosedByUser = localStorage.getItem('notificationsWidgetClosedByUser') === 'true';
 
-                if (hasNewNotifications && !isWidgetDisabled) {
+                // Проверяем, есть ли непрочитанные уведомления в localStorage
+                const seenNotificationIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
+                const hasUnreadNotifications = this.notifications.some(n => !seenNotificationIds.includes(n.id));
+
+                                if (hasNewNotifications && !isWidgetDisabled) {
                     if (isWidgetClosed || this.widget.classList.contains('initial-hidden')) {
                         console.log('[ModernWidget] 🔔 Есть новые уведомления, показываем виджет');
                         this.showWidget();
+                        // Сбрасываем флаг "закрыт пользователем" при получении новых уведомлений
+                        localStorage.removeItem('notificationsWidgetClosedByUser');
+                    }
+                } else if (!hasNewNotifications && !hasUnreadNotifications) {
+                    console.log('[ModernWidget] 📭 Нет новых и непрочитанных уведомлений, виджет остается закрытым');
+                    // Если нет уведомлений и виджет был закрыт пользователем, не открываем его
+                    if (isWidgetClosed && isWidgetClosedByUser) {
+                        console.log('[ModernWidget] 🔒 Виджет закрыт пользователем и нет уведомлений - не открываем автоматически');
+                        return;
                     }
                 } else if (!hasNewNotifications) {
                     console.log('[ModernWidget] 📭 Нет новых уведомлений, сохраняем текущее состояние виджета');
@@ -1680,6 +2090,7 @@ try {
                 widget.style.top = '120px';
                 widget.style.right = '20px';
                 widget.style.zIndex = '999999';
+                widget.style.width = '480px';
 
                 localStorage.setItem('notificationsWidgetClosed', 'false');
                 localStorage.setItem('notificationsWidgetDisabled', 'false');
@@ -1698,7 +2109,344 @@ try {
         }
     };
 
+    // Функция для принудительного исправления стилей
+    window.fixWidgetStyles = () => {
+        try {
+            console.log('[ModernWidget] 🔧 Принудительное исправление стилей виджета...');
+
+            const widget = document.getElementById('modern-notifications-widget');
+            const bellIcon = document.getElementById('notification-bell-icon');
+            const closeBtn = document.getElementById('close-notifications');
+            const minimizeBtn = document.getElementById('minimize-notifications');
+            const settingsBtn = document.getElementById('notification-settings');
+
+            if (widget) {
+                // Принудительно показываем виджет
+                widget.style.display = 'flex';
+                widget.style.visibility = 'visible';
+                widget.style.opacity = '1';
+                widget.style.position = 'fixed';
+                widget.style.top = '120px';
+                widget.style.right = '20px';
+                widget.style.zIndex = '999999';
+                widget.style.width = '480px';
+                widget.style.maxHeight = '600px';
+                widget.style.background = 'rgba(255, 255, 255, 0.95)';
+                widget.style.backdropFilter = 'blur(20px)';
+                widget.style.border = '1px solid rgba(255, 255, 255, 0.2)';
+                widget.style.borderRadius = '20px';
+                widget.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.5)';
+                widget.style.flexDirection = 'column';
+                widget.style.pointerEvents = 'auto';
+                widget.style.fontFamily = "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif";
+                widget.style.transition = 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)';
+            }
+
+            // Принудительно устанавливаем цвет иконки колокольчика
+            if (bellIcon) {
+                bellIcon.style.color = 'white';
+                bellIcon.style.fontSize = '20px';
+                bellIcon.style.display = 'block';
+            }
+
+            // Принудительно показываем все кнопки
+            [closeBtn, minimizeBtn, settingsBtn].forEach(btn => {
+                if (btn) {
+                    btn.style.display = 'flex';
+                    btn.style.visibility = 'visible';
+                    btn.style.opacity = '1';
+                    btn.style.width = '32px';
+                    btn.style.height = '32px';
+                    btn.style.border = 'none';
+                    btn.style.borderRadius = '8px';
+                    btn.style.background = 'rgba(0, 0, 0, 0.05)';
+                    btn.style.color = '#6b7280';
+                    btn.style.cursor = 'pointer';
+                    btn.style.alignItems = 'center';
+                    btn.style.justifyContent = 'center';
+                    btn.style.transition = 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)';
+                    btn.style.fontSize = '12px';
+                    btn.style.position = 'relative';
+                    btn.style.zIndex = '10';
+
+                    // Принудительно устанавливаем цвет иконок в кнопках
+                    const icon = btn.querySelector('i');
+                    if (icon) {
+                        icon.style.color = '#6b7280';
+                        icon.style.fontSize = '12px';
+                        icon.style.display = 'block';
+                    }
+                }
+            });
+
+            // Принудительно исправляем стили кнопки восстановления
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                const restoreButton = restoreBtn.querySelector('.restore-button');
+                if (restoreButton) {
+                    restoreButton.style.width = '56px';
+                    restoreButton.style.height = '56px';
+                    restoreButton.style.border = 'none';
+                    restoreButton.style.borderRadius = '50%';
+                    restoreButton.style.background = 'linear-gradient(135deg, #6366f1, #a855f7)';
+                    restoreButton.style.color = 'white';
+                    restoreButton.style.fontSize = '20px';
+                    restoreButton.style.cursor = 'pointer';
+                    restoreButton.style.boxShadow = '0 8px 24px rgba(99, 102, 241, 0.4)';
+                    restoreButton.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                    restoreButton.style.display = 'flex';
+                    restoreButton.style.alignItems = 'center';
+                    restoreButton.style.justifyContent = 'center';
+                    restoreButton.style.outline = 'none';
+                    restoreButton.style.padding = '0';
+                    restoreButton.style.margin = '0';
+                    restoreButton.style.position = 'relative';
+                    restoreButton.style.overflow = 'hidden';
+
+                    const restoreIcon = restoreButton.querySelector('i');
+                    if (restoreIcon) {
+                        restoreIcon.style.color = 'white';
+                        restoreIcon.style.fontSize = '20px';
+                        restoreIcon.style.display = 'block';
+                        restoreIcon.style.margin = '0';
+                        restoreIcon.style.padding = '0';
+                        restoreIcon.style.lineHeight = '1';
+                        restoreIcon.style.position = 'relative';
+                        restoreIcon.style.zIndex = '2';
+                    }
+                }
+            }
+
+            console.log('[ModernWidget] ✅ Стили виджета принудительно исправлены');
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка исправления стилей:', error);
+        }
+    };
+
     console.log('[ModernWidget] 🛠️ Для экстренного восстановления виджета используйте: emergencyShowWidget()');
+    console.log('[ModernWidget] 🛠️ Для принудительного исправления стилей используйте: fixWidgetStyles()');
+    console.log('[ModernWidget] 🛠️ Для полного пересоздания кнопки восстановления используйте: fixRestoreButton()');
+    console.log('[ModernWidget] 🛠️ Для скрытия кнопки восстановления используйте: hideRestoreButton()');
+    console.log('[ModernWidget] 🛠️ Для показа кнопки восстановления используйте: showRestoreButton()');
+    console.log('[ModernWidget] 🛠️ Для показа виджета используйте: showNotificationsWidget()');
+    console.log('[ModernWidget] 🛠️ Для полного сброса стилей кнопки используйте: resetRestoreButton()');
+
+        // Автоматическое исправление стилей при загрузке страницы
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            try {
+                fixWidgetStyles();
+                fixRestoreButton();
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка автоматического исправления стилей:', error);
+            }
+        }, 2000);
+
+        // Дополнительная попытка исправления через 5 секунд
+        setTimeout(() => {
+            try {
+                fixRestoreButton();
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка дополнительного исправления кнопки:', error);
+            }
+        }, 5000);
+
+                // Принудительная очистка стилей через 10 секунд
+        setTimeout(() => {
+            try {
+                const restoreBtn = document.getElementById('notifications-restore-btn');
+                if (restoreBtn) {
+                    const button = restoreBtn.querySelector('.restore-button');
+                    if (button) {
+                        // Принудительно сбрасываем все стили
+                        button.style.cssText = `
+                            width: 56px !important;
+                            height: 56px !important;
+                            border-radius: 50% !important;
+                            background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+                            cursor: pointer !important;
+                            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                            display: flex !important;
+                            align-items: center !important;
+                            justify-content: center !important;
+                            position: relative !important;
+                            overflow: hidden !important;
+                            text-decoration: none !important;
+                            border: none !important;
+                            outline: none !important;
+                            padding: 0 !important;
+                            margin: 0 !important;
+                            background-color: transparent !important;
+                            background-image: linear-gradient(135deg, #6366f1, #a855f7) !important;
+                            background-repeat: no-repeat !important;
+                            background-position: center !important;
+                            background-size: cover !important;
+                            font-family: inherit !important;
+                            font-size: inherit !important;
+                            font-weight: inherit !important;
+                            line-height: inherit !important;
+                            color: inherit !important;
+                            text-align: inherit !important;
+                            vertical-align: inherit !important;
+                            list-style: none !important;
+                            list-style-type: none !important;
+                            list-style-image: none !important;
+                            list-style-position: outside !important;
+                            background-attachment: scroll !important;
+                            background-clip: border-box !important;
+                            background-origin: padding-box !important;
+                            border-width: 0 !important;
+                            border-style: none !important;
+                            border-color: transparent !important;
+                            padding-top: 0 !important;
+                            padding-right: 0 !important;
+                            padding-bottom: 0 !important;
+                            padding-left: 0 !important;
+                            margin-top: 0 !important;
+                            margin-right: 0 !important;
+                            margin-bottom: 0 !important;
+                            margin-left: 0 !important;
+                        `;
+
+                        const icon = button.querySelector('i');
+                        if (icon) {
+                            icon.style.cssText = `
+                                color: white !important;
+                                font-size: 20px !important;
+                                display: block !important;
+                                margin: 0 !important;
+                                padding: 0 !important;
+                                line-height: 1 !important;
+                                position: relative !important;
+                                z-index: 2 !important;
+                                background: transparent !important;
+                                border: none !important;
+                                outline: none !important;
+                            `;
+                        }
+                    }
+                }
+                console.log('[ModernWidget] ✅ Принудительная очистка стилей выполнена');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка принудительной очистки стилей:', error);
+            }
+        }, 10000);
+    });
+
+    // Функция для принудительного исправления кнопки восстановления
+    window.fixRestoreButton = () => {
+        try {
+            console.log('[ModernWidget] 🔧 Принудительное исправление кнопки восстановления...');
+
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                // Полностью пересоздаем кнопку восстановления
+                restoreBtn.innerHTML = `
+                    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений" class="restore-button">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                `;
+
+                console.log('[ModernWidget] ✅ Кнопка восстановления полностью пересоздана');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка исправления кнопки восстановления:', error);
+        }
+    };
+
+    // Глобальные функции для работы с кнопкой восстановления
+    window.hideRestoreButton = () => {
+        try {
+            console.log('[ModernWidget] 🔧 Скрытие кнопки восстановления...');
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                restoreBtn.style.display = 'none';
+                console.log('[ModernWidget] ✅ Кнопка восстановления скрыта');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка скрытия кнопки восстановления:', error);
+        }
+    };
+
+    window.showRestoreButton = () => {
+        try {
+            console.log('[ModernWidget] 🔧 Показ кнопки восстановления...');
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                restoreBtn.style.display = 'block';
+                // Принудительно исправляем стили кнопки восстановления
+                setTimeout(() => {
+                    if (window.fixRestoreButton) {
+                        window.fixRestoreButton();
+                    }
+                }, 100);
+                console.log('[ModernWidget] ✅ Кнопка восстановления показана');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка показа кнопки восстановления:', error);
+        }
+    };
+
+    // Глобальная функция для показа виджета
+    window.showNotificationsWidget = () => {
+        try {
+            console.log('[ModernWidget] 🔔 Показ виджета через глобальную функцию...');
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                widget.classList.remove('closed', 'hidden', 'initial-hidden');
+                widget.style.display = 'flex';
+                widget.style.visibility = 'visible';
+                widget.style.opacity = '1';
+                widget.style.transform = 'translateX(0)';
+                widget.style.width = '480px';
+                localStorage.setItem('notificationsWidgetClosed', 'false');
+                // Сбрасываем флаг "закрыт пользователем" при ручном открытии
+                localStorage.removeItem('notificationsWidgetClosedByUser');
+                window.hideRestoreButton();
+                console.log('[ModernWidget] ✅ Виджет показан через глобальную функцию');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка показа виджета:', error);
+        }
+    };
+
+    // Функция для полного сброса всех стилей кнопки восстановления
+    window.resetRestoreButton = () => {
+        try {
+            console.log('[ModernWidget] 🔧 Полный сброс стилей кнопки восстановления...');
+
+            const restoreBtn = document.getElementById('notifications-restore-btn');
+            if (restoreBtn) {
+                // Удаляем все существующие стили
+                const styleSheets = document.styleSheets;
+                for (let i = 0; i < styleSheets.length; i++) {
+                    try {
+                        const rules = styleSheets[i].cssRules || styleSheets[i].rules;
+                        for (let j = 0; j < rules.length; j++) {
+                            const rule = rules[j];
+                            if (rule.selectorText && rule.selectorText.includes('restore-button')) {
+                                console.log('[ModernWidget] 🔍 Найден стиль для restore-button:', rule.selectorText);
+                            }
+                        }
+                    } catch (e) {
+                        // Игнорируем ошибки доступа к стилям
+                    }
+                }
+
+                // Принудительно пересоздаем кнопку
+                restoreBtn.innerHTML = `
+                    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений" class="restore-button">
+                        <i class="fas fa-bell"></i>
+                    </button>
+                `;
+
+                console.log('[ModernWidget] ✅ Полный сброс стилей выполнен');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка полного сброса стилей:', error);
+        }
+    };
 
 } catch (globalError) {
     console.error('[ModernWidget] 🚨 КРИТИЧЕСКАЯ ОШИБКА ВИДЖЕТА УВЕДОМЛЕНИЙ:', globalError);

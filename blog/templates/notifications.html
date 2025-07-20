@@ -117,6 +117,11 @@
                                     <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
                                         #{{ notification.issue_id }}
                                     </a>
+                                    {% if notification.old_subj %}
+                                        <span class="issue-subject" style="margin-left: 0.3em;">
+                                            <b>Тема:</b> {{ notification.old_subj }}
+                                        </span>
+                                    {% endif %}
                                     изменился
                                 </p>
                                 <div class="status-change">
@@ -631,17 +636,6 @@
         padding: var(--spacing-xl);
     }
 
-    .notification-message {
-        margin-bottom: var(--spacing-lg);
-    }
-
-    .notification-message p {
-        font-size: 1rem;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-md);
-        line-height: 1.6;
-    }
-
     .issue-link {
         color: var(--primary-500);
         text-decoration: none;
@@ -958,6 +952,24 @@
         background: var(--info-bg);
         color: var(--info);
         border-color: var(--info);
+    }
+    .notification-message p {
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 0.3em;
+        margin: 0;
+    }
+    .issue-link, .issue-subject {
+        white-space: nowrap;
+        font-weight: 600;
+        font-size: 1em;
+        vertical-align: baseline;
+    }
+    .issue-subject b {
+        color: #222;
+        font-weight: 700;
+        margin-right: 0.2em;
     }
 </style>
 {% endblock %}

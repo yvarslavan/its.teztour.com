@@ -27,18 +27,14 @@ body {
     position: sticky;
     top: 0;
     width: 100%;
-    height: 70px;
-    /* Уменьшаем высоту до 120px (или любое другое значение по вашему выбору) */
+    height: 80px;
     background-color: #02222b;
-    /* Установите желаемый цвет (в этом случае синий) */
-
     display: flex;
     justify-content: space-between;
-    /* Выравнивание содержимого по горизонтали */
     align-items: center;
-    /* Выравнивание содержимого по вертикали */
-    z-index: 10000 !important; /* Увеличил z-index для header */
-    /* размещаем шапку над другими элементами */
+    z-index: 100 !important;
+    padding: 0 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .header li {
@@ -70,7 +66,7 @@ body {
     /* Выравниваем элементы вправо */
     font-family: 'Roboto', sans-serif;
     position: relative; /* Добавил для правильного позиционирования dropdown */
-    z-index: 99997 !important; /* Высокий z-index для меню */
+    z-index: 200 !important; /* Базовый z-index для меню */
 }
 
 .main_menu li {
@@ -118,30 +114,28 @@ body {
 }
 
 /* Стили для основного контента, чтобы он занимал оставшееся место */
-.content { /* Этот класс используется в layout.html для обертки <main> */
-    flex-grow: 1; /* Заставляет этот блок растягиваться */
-    display: flex; /* Для корректного центрирования login-page-wrapper */
-    flex-direction: column; /* Если внутри .content будут другие дочерние блоки */
-    /* Возможно, потребуется overflow: auto; если контент страницы может быть больше, чем .content */
-    overflow: visible !important; /* Предотвращаем обрезание dropdown */
+.content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: visible !important;
+    padding-top: 20px;
+    min-height: calc(100vh - 80px);
 }
 
 .cascade_block {
     flex: 1;
-    /* Заставляет блок заполнять доступное пространство */
     display: flex;
     flex-direction: column;
     align-items: center;
     width: 80%;
-    margin: -60px auto;
+    margin: 20px auto;
     padding: 30px;
     box-shadow: -5px 15px 20px rgba(135, 206, 250, 0.6);
     border-radius: 20px;
     background-color: #fff;
     overflow-y: auto;
-    /* Включение вертикальной прокрутки */
     max-height: calc(95vh - 170px);
-    /* Вычитаем высоту header и footer */
 }
 
 /* Стиль для заголовка меню */
@@ -607,24 +601,24 @@ td {
 .dropdown-menu {
     background-color: #f8f9fa;
     /* Серый цвет фона */
-    z-index: 99999 !important; /* Еще выше z-index */
+    z-index: 200 !important; /* z-index для dropdown меню */
     position: absolute !important; /* Гарантируем абсолютное позиционирование */
 }
 
 /* Обеспечиваем правильное позиционирование для dropdown контейнера */
 .dropdown {
     position: relative !important;
-    z-index: 99998 !important;
+    z-index: 150 !important;
 }
 
 .nav-item.dropdown {
     position: relative !important;
-    z-index: 99998 !important;
+    z-index: 150 !important;
 }
 
 /* Bootstrap dropdown стили с высоким приоритетом */
 .dropdown-menu.show {
-    z-index: 99999 !important;
+    z-index: 200 !important;
     position: absolute !important;
     display: block !important;
 }
@@ -1375,7 +1369,7 @@ td {
     top: 0;
     left: 100%;
     margin-top: -1px;
-    z-index: 99999 !important; /* Еще выше z-index для подменю */
+    z-index: 250 !important; /* z-index для подменю */
 }
 
 .dropdown-submenu:hover > .dropdown-menu {
@@ -1534,7 +1528,7 @@ td {
     background: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     transition: right 0.3s ease;
-    z-index: 10001 !important; /* Увеличил z-index выше header */
+    z-index: 300 !important; /* z-index для sidebar */
     display: flex;
     flex-direction: column;
 }
@@ -1779,7 +1773,7 @@ td {
     background: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.2);
     transition: right 0.3s ease;
-    z-index: 10001 !important; /* Увеличил z-index выше header */
+    z-index: 300 !important; /* z-index для sidebar */
     overflow-y: auto;
 }
 
@@ -1925,7 +1919,7 @@ td {
     position: absolute;
     top: 10px;
     right: 10px;
-    z-index: 1001;
+    z-index: 300;
 }
 
 /* Стили для центрирования логотипа в подвале */
@@ -1970,7 +1964,7 @@ td {
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1040; /* Lower than menu, but higher than content */
+    z-index: 400; /* z-index для мобильного оверлея */
     opacity: 0;
     visibility: hidden;
     transition: opacity 0.3s ease, visibility 0.3s ease;
@@ -1988,7 +1982,7 @@ td {
     width: 300px;
     height: 100%;
     background-color: #fff;
-    z-index: 1050; /* Higher than overlay */
+    z-index: 450; /* z-index для мобильного меню */
     box-shadow: -2px 0 15px rgba(0,0,0,0.2);
     transition: right 0.3s ease-in-out;
     display: flex;
