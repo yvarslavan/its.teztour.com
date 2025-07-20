@@ -1,7 +1,6 @@
 # blog/tasks/routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
-
 import time # Перенесен в начало файла из функций
 import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
@@ -42,27 +41,6 @@ from redmine import (
 # Импорты для нового маршрута
 from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_paginated_optimized, task_to_dict, create_redmine_connector # Исправлен относительный импорт
 from redminelib.exceptions import ResourceNotFoundError # Для обработки ошибок Redmine
-
-# Импорт формы для комментариев
-from blog.user.forms import AddCommentRedmine
-
-# Константы для анонимного пользователя (из main/routes.py)
-ANONYMOUS_USER_ID = 4  # ID анонимного пользователя в Redmine
-
-def handle_task_comment_submission(form, task_id, redmine_connector):
-    """Обработка добавления комментария к задаче.
-    Аналогично handle_comment_submission из main/routes.py"""
-    comment = form.comment.data
-    user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
-    success, message = redmine_connector.add_comment(
-        issue_id=task_id, notes=comment, user_id=user_id
-    )
-
-    if success:
-        flash("Комментарий успешно добавлен к задаче!", "success")
-        return True
-    flash(message, "danger")
-    return False
 
 def collect_ids_from_task_history(task):
     """Собирает все ID из истории изменений задачи для пакетной загрузки"""
@@ -178,21 +156,18 @@ def my_tasks_page():
     return render_template("my_tasks.html", title="Мои задачи", count_notifications=count_notifications,
                          cache_buster=cache_buster)
 
-@tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET", "POST"])
+@tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET"])
 @login_required
 @weekend_performance_optimizer
 def task_detail(task_id):
     """Оптимизированная версия страницы деталей задачи"""
-
+    import time
     start_time = time.time()
     current_app.logger.info(f"🚀 [PERFORMANCE] Загрузка задачи {task_id} - начало")
 
     if not current_user.is_redmine_user:
         flash("У вас нет доступа к этой функциональности.", "warning")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
-
-    # Инициализация формы для комментариев
-    form = AddCommentRedmine()
 
     try:
         # Получаем коннектор Redmine (без изменений)
@@ -205,11 +180,6 @@ def task_detail(task_id):
         if not redmine_conn_obj or not hasattr(redmine_conn_obj, 'redmine'):
             flash("Не удалось подключиться к Redmine.", "error")
             return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
-
-        # Обработка POST запроса для добавления комментария
-        if request.method == 'POST' and form.validate_on_submit():
-            if handle_task_comment_submission(form, task_id, redmine_conn_obj):
-                return redirect(url_for('tasks.task_detail', task_id=task_id))
 
         # Получаем детали задачи (без изменений)
         task = redmine_conn_obj.redmine.issue.get(
@@ -330,16 +300,14 @@ def task_detail(task_id):
                              # ✅ Оставляем только helper для форматирования
                              convert_datetime_msk_format=convert_datetime_msk_format,
                              format_boolean_field=format_boolean_field,
-                             get_property_name=get_property_name_fast,
-                             # ✅ Добавляем форму для комментариев
-                             form=form,
-                             clear_comment=True)
+                             get_property_name=get_property_name_fast)
 
     except ResourceNotFoundError:
         current_app.logger.warning(f"Задача с ID {task_id} не найдена в Redmine")
         flash(f"Задача #{task_id} не найдена.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
     except Exception as e:
+        import traceback
         current_app.logger.error(f"[task_detail] Ошибка при получении задачи {task_id}: {e}. Trace: {traceback.format_exc()}")
         flash("Произошла ошибка при загрузке данных задачи.", "error")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
@@ -392,7 +360,13 @@ def get_my_tasks_paginated_api():
         project_ids = request.args.getlist("project_id[]")
         priority_ids = request.args.getlist("priority_id[]")
 
-        # Создаем коннектор Redmine
+        # ОПТИМИЗАЦИЯ: Используем пароль из локальной базы данных вместо обращения к Oracle
+        # Пароль пользователя хранится в модели User
+        if not current_user.password:
+            current_app.logger.error(f"Не найден пароль в локальной БД для пользователя {current_user.username}")
+            return jsonify({"draw": draw, "error": "Ошибка аутентификации: не найден пароль пользователя", "data": [], "recordsTotal": 0, "recordsFiltered": 0}), 401
+
+        # Создаем коннектор Redmine с использованием пароля из локальной БД
         redmine_connector_instance = create_redmine_connector(
             is_redmine_user=current_user.is_redmine_user,
             user_login=current_user.username,
@@ -407,11 +381,9 @@ def get_my_tasks_paginated_api():
         redmine_user_id = current_user.id_redmine_user
         current_app.logger.info(f"🔍 [API] Используем redmine_user_id из SQLite: {redmine_user_id} для пользователя {current_user.username}")
 
-        # Получаем параметры для оптимизации загрузки
+        # Получаем параметр force_load для принудительной загрузки данных при первом запросе
         force_load = request.args.get('force_load', '0') == '1'
-        exclude_completed = request.args.get('exclude_completed', '0') == '1'
-        is_kanban_view = request.args.get('view') == 'kanban'
-        current_app.logger.info(f"🔍 [API] Параметры: force_load={force_load}, exclude_completed={exclude_completed}, is_kanban_view={is_kanban_view}")
+        current_app.logger.info(f"🔍 [API] Параметр force_load: {force_load}")
 
         issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
             redmine_connector_instance,
@@ -424,35 +396,11 @@ def get_my_tasks_paginated_api():
             status_ids=status_ids,
             project_ids=project_ids,
             priority_ids=priority_ids,
-            force_load=force_load,
-            exclude_completed=exclude_completed
+            force_load=force_load
         )
 
         # Преобразуем задачи в JSON
         tasks_data = [task_to_dict(issue) for issue in issues_list]
-
-        # Для Kanban доски применяем специальную логику для закрытых задач
-        if is_kanban_view:
-            # Разделяем задачи на активные и закрытые
-            active_tasks = []
-            closed_tasks = []
-
-            for task in tasks_data:
-                if task.get('status_name') == 'Закрыто':
-                    closed_tasks.append(task)
-                else:
-                    active_tasks.append(task)
-
-            # Для закрытых задач оставляем только последние 5
-            if closed_tasks:
-                # Сортируем по дате обновления (новые сначала)
-                closed_tasks.sort(key=lambda x: x.get('updated_on', ''), reverse=True)
-                closed_tasks = closed_tasks[:5]
-                current_app.logger.info(f"✅ Kanban: активных задач {len(active_tasks)}, закрытых (последние 5): {len(closed_tasks)}")
-
-            # Объединяем активные задачи с ограниченными закрытыми
-            tasks_data = active_tasks + closed_tasks
-            total_count = len(tasks_data)
 
         # Определяем start_time для расчета времени выполнения
         execution_time = time.time() - start_time
@@ -491,7 +439,18 @@ def get_my_tasks_statistics_optimized():
                 "closed_tasks": 0
             }), 403
 
-        # Создаем коннектор Redmine
+        # ОПТИМИЗАЦИЯ: Используем пароль из локальной базы данных вместо обращения к Oracle
+        if not current_user.password:
+            current_app.logger.error(f"Не найден пароль в локальной БД для пользователя {current_user.username}")
+            return jsonify({
+                "error": "Ошибка аутентификации: не найден пароль пользователя",
+                "total_tasks": 0,
+                "new_tasks": 0,
+                "in_progress_tasks": 0,
+                "closed_tasks": 0
+            }), 401
+
+        # Создаем коннектор Redmine с использованием пароля из локальной БД
         redmine_connector = create_redmine_connector(
             is_redmine_user=current_user.is_redmine_user,
             user_login=current_user.username,
@@ -728,7 +687,7 @@ def get_my_tasks_statistics_optimized():
         })
 
     except Exception as e:
-        current_app.logger.error(f"Ошибка в get_my_tasks_statistics_optimized: {e}")
+        logger.error(f"Ошибка в get_my_tasks_statistics_optimized: {e}")
         return jsonify({
             "error": str(e),
             "total_tasks": 0,
@@ -743,7 +702,7 @@ def get_my_tasks_filters_optimized():
     """ОПТИМИЗИРОВАННЫЙ API для получения фильтров задач с использованием прямых SQL запросов"""
     start_time = time.time()
 
-    current_app.logger.info("🚀 [PERFORMANCE] Запуск ОПТИМИЗИРОВАННОГО API фильтров...")
+    logger.info("🚀 [PERFORMANCE] Запуск ОПТИМИЗИРОВАННОГО API фильтров...")
 
     try:
         if not current_user.is_redmine_user:
@@ -779,7 +738,7 @@ def get_my_tasks_filters_optimized():
             """)
             statuses = [{"id": row["id"], "name": row["name"]} for row in cursor.fetchall()]
             status_time = time.time() - status_start
-            current_app.logger.info(f"✅ [PERFORMANCE] Статусы (локализованные) загружены за {status_time:.3f}с ({len(statuses)} записей)")
+            logger.info(f"✅ [PERFORMANCE] Статусы (локализованные) загружены за {status_time:.3f}с ({len(statuses)} записей)")
 
             # 2. БЫСТРЫЙ запрос проектов (ПРОСТОЙ СПИСОК, без иерархии для скорости)
             projects_start = time.time()
@@ -803,7 +762,7 @@ def get_my_tasks_filters_optimized():
                 })
 
             projects_time = time.time() - projects_start
-            current_app.logger.info(f"✅ [PERFORMANCE] Проекты (простой список) загружены за {projects_time:.3f}с ({len(projects)} записей)")
+            logger.info(f"✅ [PERFORMANCE] Проекты (простой список) загружены за {projects_time:.3f}с ({len(projects)} записей)")
 
             # 3. БЫСТРЫЙ запрос приоритетов на кириллице из таблицы u_Priority
             priorities_start = time.time()
@@ -821,7 +780,7 @@ def get_my_tasks_filters_optimized():
 
             # Если нет результатов (например, нет соответствия в u_Priority), используем значения из enumerations
             if not priorities:
-                current_app.logger.warning("⚠️ [PERFORMANCE] Нет данных в u_Priority, возвращаемся к enumerations")
+                logger.warning("⚠️ [PERFORMANCE] Нет данных в u_Priority, возвращаемся к enumerations")
                 cursor.execute("""
                     SELECT id, name
                     FROM enumerations
@@ -832,17 +791,17 @@ def get_my_tasks_filters_optimized():
                 priorities = [{"id": row["id"], "name": row["name"]} for row in cursor.fetchall()]
 
             priorities_time = time.time() - priorities_start
-            current_app.logger.info(f"✅ [PERFORMANCE] Приоритеты (локализованные) загружены за {priorities_time:.3f}с ({len(priorities)} записей)")
+            logger.info(f"✅ [PERFORMANCE] Приоритеты (локализованные) загружены за {priorities_time:.3f}с ({len(priorities)} записей)")
 
         except Exception as sql_error:
-            current_app.logger.error(f"❌ [PERFORMANCE] Ошибка MySQL запроса: {sql_error}")
+            logger.error(f"❌ [PERFORMANCE] Ошибка MySQL запроса: {sql_error}")
             raise sql_error
         finally:
             cursor.close()
             mysql_conn.close()
 
         total_time = time.time() - start_time
-        current_app.logger.info(f"🎯 [PERFORMANCE] ОПТИМИЗИРОВАННЫЙ API завершен за {total_time:.3f}с (статусы: {len(statuses)}, проекты: {len(projects)}, приоритеты: {len(priorities)})")
+        logger.info(f"🎯 [PERFORMANCE] ОПТИМИЗИРОВАННЫЙ API завершен за {total_time:.3f}с (статусы: {len(statuses)}, проекты: {len(projects)}, приоритеты: {len(priorities)})")
 
         return jsonify({
             "success": True,
@@ -859,9 +818,9 @@ def get_my_tasks_filters_optimized():
 
     except Exception as e:
         total_time = time.time() - start_time
-        current_app.logger.error(f"❌ [PERFORMANCE] Ошибка в оптимизированном API фильтров за {total_time:.3f}с: {e}")
+        logger.error(f"❌ [PERFORMANCE] Ошибка в оптимизированном API фильтров за {total_time:.3f}с: {e}")
         import traceback
-        current_app.logger.error(f"❌ [PERFORMANCE] Traceback: {traceback.format_exc()}")
+        logger.error(f"❌ [PERFORMANCE] Traceback: {traceback.format_exc()}")
         return jsonify({
             "error": str(e),
             "statuses": [],
@@ -1470,622 +1429,3 @@ def get_tasks_notification_count():
     except Exception as e:
         current_app.logger.error(f'[tasks.notifications-count] error: {e}')
         return jsonify({'count': 0}), 500
-
-# ===== API ENDPOINT ДЛЯ ДОБАВЛЕНИЯ КОММЕНТАРИЕВ =====
-
-@tasks_bp.route("/api/task/<int:task_id>/comment", methods=["POST"])
-@login_required
-def add_task_comment_api(task_id):
-    """API endpoint для добавления комментария к задаче через AJAX"""
-    try:
-        current_app.logger.info(f"[API] Получен запрос на добавление комментария к задаче {task_id}")
-        current_app.logger.info(f"[API] Request method: {request.method}")
-        current_app.logger.info(f"[API] Request content_type: {request.content_type}")
-        current_app.logger.info(f"[API] Request headers: {dict(request.headers)}")
-
-        # Простая проверка для отладки
-        if request.method != 'POST':
-            current_app.logger.error(f"[API] Неверный HTTP метод: {request.method}")
-            return jsonify({
-                'success': False,
-                'error': 'Метод не поддерживается'
-            }), 405
-
-        if not current_user.is_redmine_user:
-            current_app.logger.warning(f"[API] Пользователь {current_user.username} не является пользователем Redmine")
-            return jsonify({
-                'success': False,
-                'error': 'У вас нет доступа к этой функциональности'
-            }), 403
-
-        # Получаем данные из запроса
-        if request.is_json:
-            data = request.get_json()
-            current_app.logger.info(f"[API] Получены JSON данные: {data}")
-        else:
-            current_app.logger.error(f"[API] Запрос не содержит JSON данных. Content-Type: {request.content_type}")
-            current_app.logger.error(f"[API] Request data: {request.data}")
-            current_app.logger.error(f"[API] Request form: {request.form}")
-
-            # Попробуем получить данные другим способом
-            try:
-                if request.form and 'comment' in request.form:
-                    data = {'comment': request.form['comment']}
-                    current_app.logger.info(f"[API] Получены данные через form: {data}")
-                else:
-                    return jsonify({
-                        'success': False,
-                        'error': 'Неверный формат данных'
-                    }), 400
-            except Exception as e:
-                current_app.logger.error(f"[API] Ошибка при получении данных: {e}")
-                return jsonify({
-                    'success': False,
-                    'error': 'Неверный формат данных'
-                }), 400
-
-        if not data or 'comment' not in data:
-            current_app.logger.error(f"[API] Отсутствует поле 'comment' в данных: {data}")
-            return jsonify({
-                'success': False,
-                'error': 'Комментарий не может быть пустым'
-            }), 400
-
-        comment = data['comment'].strip()
-        if not comment:
-            current_app.logger.error(f"[API] Пустой комментарий")
-            return jsonify({
-                'success': False,
-                'error': 'Комментарий не может быть пустым'
-            }), 400
-
-        current_app.logger.info(f"[API] Создание коннектора Redmine для пользователя {current_user.username}")
-
-        # Получаем коннектор Redmine
-        redmine_conn_obj = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=current_user.password
-        )
-
-        if not redmine_conn_obj or not hasattr(redmine_conn_obj, 'redmine'):
-            current_app.logger.error(f"[API] Не удалось создать коннектор Redmine")
-            return jsonify({
-                'success': False,
-                'error': 'Не удалось подключиться к Redmine'
-            }), 500
-
-        current_app.logger.info(f"[API] Добавление комментария к задаче {task_id}")
-
-        # Добавляем комментарий
-        user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
-        success, message = redmine_conn_obj.add_comment(
-            issue_id=task_id, notes=comment, user_id=user_id
-        )
-
-        if success:
-            current_app.logger.info(f"[API] Комментарий успешно добавлен к задаче {task_id}")
-            return jsonify({
-                'success': True,
-                'message': 'Комментарий успешно добавлен к задаче!'
-            })
-        else:
-            current_app.logger.error(f"[API] Ошибка добавления комментария: {message}")
-            return jsonify({
-                'success': False,
-                'error': message
-            }), 500
-
-    except Exception as e:
-        current_app.logger.error(f"[API] Исключение при добавлении комментария к задаче {task_id}: {e}")
-        current_app.logger.error(f"[API] Traceback: {traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': 'Произошла ошибка при добавлении комментария'
-        }), 500
-
-# ===== API ENDPOINT ДЛЯ УДАЛЕНИЯ КОММЕНТАРИЕВ =====
-
-@tasks_bp.route("/api/task/<int:task_id>/comment/<int:journal_id>/delete", methods=["DELETE"])
-@login_required
-def delete_task_comment_api(task_id, journal_id):
-    """API endpoint для удаления комментария к задаче через AJAX с прямыми SQL запросами"""
-    try:
-        current_app.logger.info(f"[API] Получен запрос на удаление комментария {journal_id} из задачи {task_id}")
-
-        if not current_user.is_redmine_user:
-            current_app.logger.warning(f"[API] Пользователь {current_user.username} не является пользователем Redmine")
-            return jsonify({
-                'success': False,
-                'error': 'У вас нет доступа к этой функциональности'
-            }), 403
-
-        # Импортируем функцию для работы с БД
-        from blog.redmine import execute_query
-
-        # Проверяем существование комментария и получаем информацию о нем
-        check_query = """
-            SELECT j.id, j.user_id, j.journalized_id, j.notes, u.login as user_login
-            FROM journals j
-            LEFT JOIN users u ON j.user_id = u.id
-            WHERE j.id = %s AND j.journalized_type = 'Issue'
-        """
-
-        success, result = execute_query(check_query, (journal_id,), fetch='one')
-
-        if not success:
-            current_app.logger.error(f"[API] Ошибка при проверке комментария {journal_id}: {result}")
-            return jsonify({'success': False, 'error': 'Ошибка при проверке комментария'}), 500
-
-        if not result:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не найден")
-            return jsonify({'success': False, 'error': 'Комментарий не найден'}), 404
-
-        # Проверяем, что комментарий принадлежит указанной задаче
-        if result['journalized_id'] != task_id:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не принадлежит задаче {task_id}")
-            return jsonify({'success': False, 'error': 'Комментарий не принадлежит этой задаче'}), 400
-
-        # Проверяем права на удаление
-        # Только автор комментария или администратор может удалять
-        is_author = result['user_id'] == current_user.id_redmine_user if hasattr(current_user, 'id_redmine_user') else False
-        is_admin = getattr(current_user, 'is_admin', False)
-
-        # Дополнительная проверка по логину пользователя
-        if not is_author and result['user_login']:
-            is_author = result['user_login'] == current_user.username
-
-        if not is_author and not is_admin:
-            current_app.logger.warning(f"[API] Пользователь {current_user.username} не имеет прав на удаление комментария {journal_id}")
-            return jsonify({'success': False, 'error': 'У вас нет прав на удаление этого комментария'}), 403
-
-        # Удаляем комментарий из базы данных
-        delete_query = "DELETE FROM journals WHERE id = %s"
-
-        success, affected_rows = execute_query(delete_query, (journal_id,), commit=True)
-
-        if not success:
-            current_app.logger.error(f"[API] Ошибка при удалении комментария {journal_id}: {affected_rows}")
-            return jsonify({'success': False, 'error': 'Ошибка при удалении комментария'}), 500
-
-        if affected_rows == 0:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не был удален (affected_rows = 0)")
-            return jsonify({'success': False, 'error': 'Комментарий не был удален'}), 500
-
-        current_app.logger.info(f"[API] Комментарий {journal_id} успешно удален пользователем {current_user.username}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Комментарий успешно удален!'
-        })
-
-    except Exception as e:
-        import traceback
-        current_app.logger.error(f"[API] Ошибка при удалении комментария {journal_id} из задачи {task_id}: {e}. Trace: {traceback.format_exc()}")
-        return jsonify({
-            'success': False,
-            'error': 'Произошла ошибка при удалении комментария'
-        }), 500
-
-@tasks_bp.route("/api/task/<int:task_id>/comment/<int:journal_id>/edit", methods=["PUT"])
-@login_required
-def edit_task_comment_api(task_id, journal_id):
-    """API endpoint для редактирования комментария к задаче через AJAX с прямыми SQL запросами"""
-    try:
-        current_app.logger.info(f"[API] Получен запрос на редактирование комментария {journal_id} в задаче {task_id}")
-
-        if not current_user.is_redmine_user:
-            return jsonify({'success': False, 'error': 'Нет доступа'}), 403
-
-        data = request.get_json()
-        if not data or 'comment' not in data:
-            return jsonify({'success': False, 'error': 'Комментарий не может быть пустым'}), 400
-
-        new_comment = data['comment'].strip()
-        if not new_comment:
-            return jsonify({'success': False, 'error': 'Комментарий не может быть пустым'}), 400
-
-        # Импортируем функцию для работы с БД
-        from blog.redmine import execute_query
-
-        # Проверяем существование комментария и получаем информацию о нем
-        check_query = """
-            SELECT j.id, j.user_id, j.journalized_id, j.notes, u.login as user_login
-            FROM journals j
-            LEFT JOIN users u ON j.user_id = u.id
-            WHERE j.id = %s AND j.journalized_type = 'Issue'
-        """
-
-        success, result = execute_query(check_query, (journal_id,), fetch='one')
-
-        if not success:
-            current_app.logger.error(f"[API] Ошибка при проверке комментария {journal_id}: {result}")
-            return jsonify({'success': False, 'error': 'Ошибка при проверке комментария'}), 500
-
-        if not result:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не найден")
-            return jsonify({'success': False, 'error': 'Комментарий не найден'}), 404
-
-        # Проверяем, что комментарий принадлежит указанной задаче
-        if result['journalized_id'] != task_id:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не принадлежит задаче {task_id}")
-            return jsonify({'success': False, 'error': 'Комментарий не принадлежит этой задаче'}), 400
-
-        # Проверяем права на редактирование
-        # Только автор комментария или администратор может редактировать
-        is_author = result['user_id'] == current_user.id_redmine_user if hasattr(current_user, 'id_redmine_user') else False
-        is_admin = getattr(current_user, 'is_admin', False)
-
-        # Дополнительная проверка по логину пользователя
-        if not is_author and result['user_login']:
-            is_author = result['user_login'] == current_user.username
-
-        if not is_author and not is_admin:
-            current_app.logger.warning(f"[API] Пользователь {current_user.username} не имеет прав на редактирование комментария {journal_id}")
-            return jsonify({'success': False, 'error': 'У вас нет прав на редактирование этого комментария'}), 403
-
-        # Обновляем комментарий в базе данных
-        update_query = "UPDATE journals SET notes = %s WHERE id = %s"
-
-        success, affected_rows = execute_query(update_query, (new_comment, journal_id), commit=True)
-
-        if not success:
-            current_app.logger.error(f"[API] Ошибка при обновлении комментария {journal_id}: {affected_rows}")
-            return jsonify({'success': False, 'error': 'Ошибка при обновлении комментария'}), 500
-
-        if affected_rows == 0:
-            current_app.logger.error(f"[API] Комментарий {journal_id} не был обновлен (affected_rows = 0)")
-            return jsonify({'success': False, 'error': 'Комментарий не был обновлен'}), 500
-
-        current_app.logger.info(f"[API] Комментарий {journal_id} успешно обновлен пользователем {current_user.username}")
-
-        return jsonify({
-            'success': True,
-            'message': 'Комментарий успешно обновлен!',
-            'journal_id': journal_id,
-            'notes': new_comment
-        })
-
-    except Exception as e:
-        import traceback
-        current_app.logger.error(f"[API] Ошибка при редактировании комментария {journal_id} в задаче {task_id}: {e}. Trace: {traceback.format_exc()}")
-        return jsonify({'success': False, 'error': 'Внутренняя ошибка сервера'}), 500
-
-@tasks_bp.route("/get-completed-tasks", methods=["GET"])
-@login_required
-@weekend_performance_optimizer
-def get_completed_tasks():
-    """
-    API для получения 5 завершённых задач, отсортированных по убыванию даты обновления
-    """
-    current_app.logger.info(f"Запрос /tasks/get-completed-tasks для {current_user.username}")
-    start_time = time.time()
-
-    try:
-        if not current_user.is_redmine_user:
-            return jsonify({
-                "error": "Доступ запрещен",
-                "success": False,
-                "data": []
-            }), 403
-
-        # Проверяем наличие необходимых атрибутов
-        if not hasattr(current_user, 'id_redmine_user') or not current_user.id_redmine_user:
-            current_app.logger.error(f"У пользователя {current_user.username} отсутствует id_redmine_user")
-            return jsonify({
-                "error": "Ошибка: отсутствует ID пользователя Redmine",
-                "success": False,
-                "data": []
-            }), 500
-
-        # Создаем коннектор Redmine
-        try:
-            redmine_connector = create_redmine_connector(
-                is_redmine_user=current_user.is_redmine_user,
-                user_login=current_user.username,
-                password=current_user.password
-            )
-            current_app.logger.info(f"✅ Коннектор Redmine создан успешно для {current_user.username}")
-        except Exception as conn_error:
-            current_app.logger.error(f"❌ Ошибка создания коннектора Redmine: {str(conn_error)}")
-            return jsonify({
-                "error": f"Ошибка создания подключения к Redmine: {str(conn_error)}",
-                "success": False,
-                "data": []
-            }), 500
-
-        if not redmine_connector:
-            current_app.logger.error(f"❌ Коннектор Redmine не создан для {current_user.username}")
-            return jsonify({
-                "error": "Ошибка подключения к Redmine",
-                "success": False,
-                "data": []
-            }), 500
-
-        try:
-            # 🔧 ПРОСТОЙ ЗАПРОС: Получаем 5 завершённых задач, отсортированных по убыванию
-            # Получаем список всех закрытых статусов из u_statuses
-            mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
-            closed_status_ids = []
-
-            if mysql_conn:
-                try:
-                    cursor = mysql_conn.cursor()
-                    cursor.execute("""
-                        SELECT id FROM u_statuses
-                        WHERE name LIKE '%закрыт%' OR name LIKE '%отклонен%' OR name LIKE '%выполнен%'
-                        OR name LIKE '%перенаправлен%' OR name LIKE '%завершен%'
-                        ORDER BY id
-                    """)
-                    closed_status_ids = [str(row['id']) for row in cursor.fetchall()]
-                    cursor.close()
-                except Exception as e:
-                    current_app.logger.error(f"Ошибка получения закрытых статусов: {e}")
-                finally:
-                    mysql_conn.close()
-
-            # Если не удалось получить из БД, используем статический список
-            if not closed_status_ids:
-                closed_status_ids = ['5', '6', '7', '14']
-                current_app.logger.warning("⚠️ Используем статический список закрытых статусов")
-
-            current_app.logger.info(f"📋 Закрытые статусы для запроса: {closed_status_ids}")
-
-            filter_params = {
-                'assigned_to_id': current_user.id_redmine_user,
-                'status_id': '|'.join(closed_status_ids),  # Динамический список закрытых статусов
-                'sort': 'updated_on:desc',
-                'limit': 5,  # Только 5 задач
-                'include': ['status', 'priority', 'project', 'tracker', 'author', 'description', 'easy_email_to']
-            }
-
-            current_app.logger.info(f"🔧 ПРОСТОЙ ЗАПРОС: {filter_params}")
-
-                                    # Выполняем запрос к Redmine API
-            issues_page = redmine_connector.redmine.issue.filter(**filter_params)
-            issues_list = list(issues_page)
-
-            # 🔧 ДОПОЛНИТЕЛЬНАЯ СОРТИРОВКА НА PYTHON СТОРОНЕ
-            issues_list.sort(key=lambda x: x.updated_on, reverse=True)
-
-            current_app.logger.info(f"✅ Получено завершённых задач: {len(issues_list)}")
-            current_app.logger.info(f"✅ Сортировка применена")
-
-                        # Проверяем сортировку
-            if len(issues_list) >= 2:
-                first_date = issues_list[0].updated_on
-                second_date = issues_list[1].updated_on
-                if first_date >= second_date:
-                    current_app.logger.info("✅ Сортировка работает правильно")
-                else:
-                    current_app.logger.warning("⚠️ Сортировка неправильная")
-
-            # Формируем данные для ответа
-            tasks_data = []
-            for issue in issues_list:
-                task_data = {
-                    'id': issue.id,
-                    'subject': issue.subject,
-                    'status_name': issue.status.name if issue.status else 'Неизвестен',
-                    'status_id': issue.status.id if issue.status else 1,  # Добавляем status_id
-                    'priority_name': issue.priority.name if issue.priority else 'Обычный',
-                    'project_name': issue.project.name if issue.project else 'Без проекта',
-                    'assigned_to_name': issue.assigned_to.name if issue.assigned_to else 'Не назначен',
-                    'created_on': issue.created_on.isoformat() if issue.created_on else None,
-                    'updated_on': issue.updated_on.isoformat() if issue.updated_on else None,
-                    'easy_email_to': getattr(issue, 'easy_email_to', None)
-                }
-                tasks_data.append(task_data)
-
-                # Логируем каждую задачу для отладки
-                current_app.logger.info(f"📋 Завершённая задача: ID={issue.id}, Статус='{task_data['status_name']}' (ID: {task_data['status_id']})")
-
-            current_app.logger.info(f"✅ Подготовлено задач для ответа: {len(tasks_data)}")
-
-            # Проверяем финальную сортировку
-            if len(tasks_data) >= 2:
-                first_task_date = tasks_data[0]['updated_on']
-                second_task_date = tasks_data[1]['updated_on']
-                if first_task_date >= second_task_date:
-                    current_app.logger.info("✅ Финальная сортировка работает правильно")
-                else:
-                    current_app.logger.warning("⚠️ Финальная сортировка неправильная")
-
-            response_data = {
-                "success": True,
-                "data": tasks_data,
-                "total": len(tasks_data),
-                "limit": 5,
-                "offset": 0,
-                "has_more": False  # Больше нет пагинации
-            }
-
-            execution_time = time.time() - start_time
-            current_app.logger.info(
-                f"✅ Запрос /tasks/get-completed-tasks для {current_user.username} выполнен за {execution_time:.4f}с. "
-                f"Загружено: {len(tasks_data)} задач"
-            )
-
-            return jsonify(response_data)
-
-        except Exception as redmine_error:
-            current_app.logger.error(f"Ошибка получения завершённых задач для {current_user.username}: {str(redmine_error)}")
-            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-
-            # Проверяем, является ли ошибка связанной с сетью
-            error_str = str(redmine_error).lower()
-            if 'proxy' in error_str or 'connection' in error_str or 'timeout' in error_str:
-                return jsonify({
-                    "error": "Ошибка сетевого подключения к Redmine. Проверьте VPN соединение.",
-                    "success": False,
-                    "data": []
-                }), 500
-            else:
-                return jsonify({
-                    "error": f"Ошибка получения данных из Redmine: {str(redmine_error)}",
-                    "success": False,
-                    "data": []
-                }), 500
-
-    except Exception as e:
-        current_app.logger.error(f"Критическая ошибка в /tasks/get-completed-tasks для {current_user.username}: {str(e)}. Traceback: {traceback.format_exc()}")
-        return jsonify({
-            "error": f"Внутренняя ошибка сервера: {str(e)}",
-            "success": False,
-            "data": []
-        }), 500
-
-@tasks_bp.route("/api/task/<int:task_id>/status", methods=["PUT"])
-@login_required
-def update_task_status_api(task_id):
-    """API для обновления статуса задачи"""
-    try:
-        current_app.logger.info(f"🔄 Начало обновления статуса задачи #{task_id}")
-
-        if not current_user.is_redmine_user:
-            current_app.logger.error(f"❌ Пользователь {current_user.username} не является пользователем Redmine")
-            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
-
-        # Получаем данные из запроса
-        data = request.get_json()
-        current_app.logger.info(f"📋 Полученные данные: {data}")
-
-        new_status_id = data.get('status_id')
-        current_app.logger.info(f"📋 new_status_id: {new_status_id} (тип: {type(new_status_id)})")
-
-        if not new_status_id:
-            current_app.logger.error("❌ Не указан новый статус")
-            return jsonify({"success": False, "error": "Не указан новый статус"}), 400
-
-        current_app.logger.info(f"🔄 Обновление статуса задачи #{task_id} на {new_status_id} пользователем {current_user.username}")
-
-        # Создаём коннектор Redmine
-        try:
-            redmine_connector = create_redmine_connector(
-                is_redmine_user=current_user.is_redmine_user,
-                user_login=current_user.username,
-                password=current_user.password
-            )
-            current_app.logger.info(f"✅ Коннектор Redmine создан: {redmine_connector is not None}")
-        except Exception as conn_error:
-            current_app.logger.error(f"❌ Ошибка создания коннектора Redmine: {str(conn_error)}")
-            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({"success": False, "error": f"Ошибка подключения к Redmine: {str(conn_error)}"}), 500
-
-        if not redmine_connector or not hasattr(redmine_connector, 'redmine'):
-            current_app.logger.error("❌ Не удалось подключиться к Redmine")
-            return jsonify({"success": False, "error": "Не удалось подключиться к Redmine"}), 500
-
-        # Получаем задачу из Redmine
-        try:
-            current_app.logger.info(f"🔍 Получение задачи #{task_id} из Redmine...")
-            issue = redmine_connector.redmine.issue.get(task_id)
-            current_app.logger.info(f"✅ Задача #{task_id} найдена в Redmine")
-        except ResourceNotFoundError:
-            current_app.logger.error(f"❌ Задача #{task_id} не найдена в Redmine")
-            return jsonify({"success": False, "error": "Задача не найдена"}), 404
-        except Exception as get_error:
-            current_app.logger.error(f"❌ Ошибка получения задачи #{task_id}: {str(get_error)}")
-            return jsonify({"success": False, "error": f"Ошибка получения задачи: {str(get_error)}"}), 500
-
-        # Проверяем права доступа
-        if hasattr(issue, 'assigned_to') and issue.assigned_to:
-            current_app.logger.info(f"📋 Текущий назначенный пользователь: {issue.assigned_to.id}")
-            current_app.logger.info(f"📋 ID пользователя в системе: {current_user.id_redmine_user}")
-            if issue.assigned_to.id != current_user.id_redmine_user:
-                current_app.logger.error(f"❌ Нет прав для изменения задачи #{task_id}")
-                return jsonify({"success": False, "error": "Нет прав для изменения этой задачи"}), 403
-
-        # Обновляем статус задачи
-        try:
-            current_app.logger.info(f"💾 Сохранение статуса {new_status_id} для задачи #{task_id}...")
-            issue.status_id = int(new_status_id)
-            issue.save()
-            current_app.logger.info(f"✅ Статус задачи #{task_id} успешно обновлён на {new_status_id}")
-        except Exception as save_error:
-            current_app.logger.error(f"❌ Ошибка сохранения задачи #{task_id}: {str(save_error)}")
-            current_app.logger.error(f"❌ Тип ошибки: {type(save_error)}")
-            return jsonify({"success": False, "error": f"Ошибка сохранения: {str(save_error)}"}), 500
-
-        current_app.logger.info(f"✅ API успешно завершён для задачи #{task_id}")
-        return jsonify({
-            "success": True,
-            "message": f"Статус задачи #{task_id} обновлён",
-            "task_id": task_id,
-            "new_status_id": new_status_id
-        })
-
-    except Exception as e:
-        current_app.logger.error(f"❌ Критическая ошибка обновления статуса задачи #{task_id}: {str(e)}")
-        current_app.logger.error(f"❌ Тип ошибки: {type(e)}")
-        import traceback
-        current_app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
-        return jsonify({"success": False, "error": f"Ошибка обновления статуса: {str(e)}"}), 500
-
-@tasks_bp.route("/get-my-tasks-statuses", methods=["GET"])
-@login_required
-def get_my_tasks_statuses():
-    """API для получения всех статусов задач из таблицы u_statuses"""
-    try:
-        if not current_user.is_redmine_user:
-            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
-
-        current_app.logger.info(f"Запрос статусов задач для пользователя {current_user.username}")
-
-                # Получаем локализованные статусы из таблицы u_statuses
-        localized_statuses = get_my_tasks_statuses_localized()
-        current_app.logger.info(f"📋 Получено локализованных статусов: {len(localized_statuses) if localized_statuses else 0}")
-
-        if localized_statuses:
-            current_app.logger.info("📋 Локализованные статусы:")
-            for status in localized_statuses:
-                current_app.logger.info(f"  - ID: {status['id']}, Name: {status['name']}")
-
-        if not localized_statuses:
-            current_app.logger.error("❌ Не удалось получить статусы из таблицы u_statuses")
-            return jsonify({"success": False, "error": "Не удалось получить статусы"}), 500
-
-        # Определяем, какие статусы являются закрытыми по ID
-        # Примечание: если в таблице u_statuses появятся новые статусы, их нужно будет добавить сюда
-        closed_status_ids = [5, 6, 7, 14]  # Закрыта, Отклонена, Выполнена, Перенаправлена
-
-        # Логируем все полученные статусы для мониторинга новых
-        current_app.logger.info("📋 [STATUSES] Все полученные статусы:")
-        for status in localized_statuses:
-            current_app.logger.info(f"  - ID: {status['id']}, Name: '{status['name']}'")
-
-        # Проверяем, есть ли новые статусы, которые не в списке закрытых
-        new_statuses = []
-        for status in localized_statuses:
-            if status['id'] not in closed_status_ids and any(closed_word in status['name'].lower() for closed_word in ['закрыт', 'отклонен', 'выполнен', 'перенаправлен', 'завершен']):
-                new_statuses.append(status)
-
-        if new_statuses:
-            current_app.logger.warning(f"⚠️ [STATUSES] Обнаружены потенциально закрытые статусы, не в списке: {new_statuses}")
-            current_app.logger.warning(f"⚠️ [STATUSES] Рекомендуется добавить их ID в closed_status_ids")
-
-        # Преобразуем в формат с флагом is_closed
-        statuses_list = []
-        for status in localized_statuses:
-            status_id = status['id']
-            status_name = status['name']
-            is_closed = status_id in closed_status_ids
-
-            statuses_list.append({
-                'id': status['id'],
-                'name': status['name'],
-                'is_closed': is_closed
-            })
-
-            current_app.logger.info(f"  Статус: {status_name} (ID: {status['id']}, is_closed: {is_closed})")
-
-        current_app.logger.info(f"✅ Получено {len(statuses_list)} статусов из u_statuses для пользователя {current_user.username}")
-
-        return jsonify({
-            "success": True,
-            "data": statuses_list
-        })
-
-    except Exception as e:
-        current_app.logger.error(f"Ошибка получения статусов для {current_user.username}: {str(e)}")
-        return jsonify({"success": False, "error": f"Ошибка получения статусов: {str(e)}"}), 500

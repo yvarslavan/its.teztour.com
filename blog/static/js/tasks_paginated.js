@@ -2540,7 +2540,7 @@ function getStatusType(statusName) {
         return 'status-closed';
     }
     // НОВЫЕ и ОТКРЫТЫЕ статусы
-    else if (status.includes('новая') || status.includes('новый') || status.includes('new') ||
+    if (status.includes('новая') || status.includes('новый') || status.includes('new') ||
              status.includes('открыта') || status.includes('открыт') || status.includes('open')) {
         return 'status-new';
     }

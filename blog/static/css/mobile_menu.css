@@ -28,7 +28,7 @@
     border: none;
     cursor: pointer;
     padding: 0;
-    z-index: 1000002;
+    z-index: 450;
     position: relative;
 }
 
@@ -70,7 +70,7 @@
     width: 100%;
     height: 100%;
     background: var(--mobile-menu-overlay);
-    z-index: 1000000;
+    z-index: 400;
     opacity: 0;
     transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -89,7 +89,7 @@
     height: 100%;
     background: var(--mobile-menu-bg);
     box-shadow: -5px 0 25px rgba(0,0,0,0.2);
-    z-index: 1000001;
+    z-index: 450;
     display: flex;
     flex-direction: column;
     transition: var(--mobile-menu-transition);

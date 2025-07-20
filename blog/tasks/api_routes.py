@@ -21,6 +21,7 @@ from redmine import (
     db_redmine_name
 )
 
+
 # Получаем экземпляр CSRF для исключений
 from blog import csrf
 
@@ -28,6 +29,154 @@ from blog import csrf
 api_bp = Blueprint('tasks_api', __name__, url_prefix='/tasks/api')
 
 # ===== API ENDPOINTS ДЛЯ ИЗМЕНЕНИЯ СТАТУСА =====
+
+@api_bp.route("/task/<int:task_id>", methods=["GET"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def get_task_by_id(task_id):
+    """
+    API для получения задачи по ID
+    """
+    current_app.logger.info(f"[API] GET /task/{task_id} - запрос от {current_user.username}")
+    start_time = time.time()
+
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False,
+                "data": None
+            }), 403
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False,
+                "data": None
+            }), 500
+
+        try:
+            # Получаем задачу из Redmine
+            task = redmine_connector.redmine.issue.get(task_id, include=['status', 'priority', 'project', 'assigned_to'])
+
+            # Получаем локализованные названия из MySQL
+            mysql_conn = get_connection(
+                db_redmine_host,
+                db_redmine_user_name,
+                db_redmine_password,
+                db_redmine_name
+            )
+
+            task_data = {
+                "id": task.id,
+                "subject": task.subject,
+                "description": getattr(task, 'description', ''),
+                "status_id": task.status.id if hasattr(task, 'status') and task.status else None,
+                "status_name": task.status.name if hasattr(task, 'status') and task.status else "Неизвестен",
+                "priority_id": task.priority.id if hasattr(task, 'priority') and task.priority else None,
+                "priority_name": task.priority.name if hasattr(task, 'priority') and task.priority else "Неизвестен",
+                "project_id": task.project.id if hasattr(task, 'project') and task.project else None,
+                "project_name": task.project.name if hasattr(task, 'project') and task.project else "Неизвестен",
+                "assigned_to_id": task.assigned_to.id if hasattr(task, 'assigned_to') and task.assigned_to else None,
+                "assigned_to_name": task.assigned_to.name if hasattr(task, 'assigned_to') and task.assigned_to else "Неизвестен",
+                "created_on": task.created_on.isoformat() if hasattr(task, 'created_on') and task.created_on else None,
+                "updated_on": task.updated_on.isoformat() if hasattr(task, 'updated_on') and task.updated_on else None,
+                "due_date": task.due_date.isoformat() if hasattr(task, 'due_date') and task.due_date else None,
+                "done_ratio": getattr(task, 'done_ratio', 0),
+                "tracker_id": task.tracker.id if hasattr(task, 'tracker') and task.tracker else None,
+                "tracker_name": task.tracker.name if hasattr(task, 'tracker') and task.tracker else None
+            }
+
+            # Получаем локализованные названия
+            if mysql_conn:
+                cursor = mysql_conn.cursor()
+                try:
+                    # Статусы
+                    if task_data["status_id"]:
+                        try:
+                            cursor.execute("SELECT name FROM u_statuses WHERE id = %s", (task_data["status_id"],))
+                            status_row = cursor.fetchone()
+                            if status_row:
+                                task_data["status_name"] = status_row['name']
+                        except Exception as status_error:
+                            current_app.logger.warning(f"[API] Ошибка получения статуса {task_data['status_id']}: {status_error}")
+                            # Используем название из Redmine API
+                            task_data["status_name"] = task.status.name if hasattr(task, 'status') and task.status else "Неизвестен"
+
+                    # Приоритеты
+                    if task_data["priority_id"]:
+                        try:
+                            cursor.execute("SELECT name FROM enumerations WHERE id = %s AND type = 'IssuePriority'", (task_data["priority_id"],))
+                            priority_row = cursor.fetchone()
+                            if priority_row:
+                                task_data["priority_name"] = priority_row['name']
+                        except Exception as priority_error:
+                            current_app.logger.warning(f"[API] Ошибка получения приоритета {task_data['priority_id']}: {priority_error}")
+                            # Используем название из Redmine API
+                            task_data["priority_name"] = task.priority.name if hasattr(task, 'priority') and task.priority else "Неизвестен"
+
+                    # Проекты
+                    if task_data["project_id"]:
+                        try:
+                            cursor.execute("SELECT name FROM projects WHERE id = %s", (task_data["project_id"],))
+                            project_row = cursor.fetchone()
+                            if project_row:
+                                task_data["project_name"] = project_row['name']
+                        except Exception as project_error:
+                            current_app.logger.warning(f"[API] Ошибка получения проекта {task_data['project_id']}: {project_error}")
+                            # Используем название из Redmine API
+                            task_data["project_name"] = task.project.name if hasattr(task, 'project') and task.project else "Неизвестен"
+
+                    # Назначенные пользователи
+                    if task_data["assigned_to_id"]:
+                        try:
+                            cursor.execute("SELECT firstname, lastname FROM users WHERE id = %s", (task_data["assigned_to_id"],))
+                            user_row = cursor.fetchone()
+                            if user_row:
+                                task_data["assigned_to_name"] = f"{user_row['firstname']} {user_row['lastname']}".strip()
+                        except Exception as user_error:
+                            current_app.logger.warning(f"[API] Ошибка получения пользователя {task_data['assigned_to_id']}: {user_error}")
+                            # Используем название из Redmine API
+                            task_data["assigned_to_name"] = task.assigned_to.name if hasattr(task, 'assigned_to') and task.assigned_to else "Неизвестен"
+
+                finally:
+                    cursor.close()
+                    mysql_conn.close()
+
+            response_data = {
+                "success": True,
+                "data": task_data
+            }
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] GET /task/{task_id} выполнен за {execution_time:.2f}с")
+
+            return jsonify(response_data)
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка получения задачи {task_id}: {str(redmine_error)}")
+            return jsonify({
+                "error": f"Ошибка получения данных задачи: {str(redmine_error)}",
+                "success": False,
+                "data": None
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в GET /task/{task_id}: {str(e)}. Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False,
+            "data": None
+        }), 500
+
 
 @api_bp.route("/task/<int:task_id>/statuses", methods=["GET"])
 @csrf.exempt

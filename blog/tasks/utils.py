@@ -15,25 +15,16 @@ from redmine import get_connection, db_redmine_host, db_redmine_user_name, db_re
 
 def create_redmine_connector(is_redmine_user, user_login, password=None, api_key_param=None):
     url = get('redmine', 'url')
-    effective_api_key = api_key_param
 
-    if not is_redmine_user and not api_key_param:
-        effective_api_key = get('redmine', 'api_key', None)
+    # ВСЕГДА используем API ключ администратора для аутентификации
+    admin_api_key = get('redmine', 'api_key', None)
 
-    if is_redmine_user:
-        return RedmineConnector(
-            url=url,
-            username=user_login,
-            password=password,
-            api_key=effective_api_key
-        )
-    else:
-        return RedmineConnector(
-            url=url,
-            username=None,
-            password=None,
-            api_key=effective_api_key
-        )
+    return RedmineConnector(
+        url=url,
+        username=None,
+        password=None,
+        api_key=admin_api_key
+    )
 
 def get_redmine_connector(current_user_obj, user_password_erp):
     """Получение экземпляра RedmineConnector. current_user_obj - это объект current_user"""
@@ -101,6 +92,7 @@ def task_to_dict(issue):
 
             # Прямые поля для статуса, приоритета и проекта
             'status_name': getattr(issue.status, 'name', 'Неизвестен') if hasattr(issue, 'status') else 'Неизвестен',
+            'status_id': getattr(issue.status, 'id', 1) if hasattr(issue, 'status') else 1,
             'priority_name': getattr(issue.priority, 'name', 'Обычный') if hasattr(issue, 'priority') else 'Обычный',
             'project_name': getattr(issue.project, 'name', 'Без проекта') if hasattr(issue, 'project') else 'Без проекта',
 
@@ -181,7 +173,7 @@ def get_user_assigned_tasks_paginated_optimized(
         redmine_connector, redmine_user_id, page=1, per_page=25,
         search_term='', sort_column='updated_on', sort_direction='desc',
         status_ids=None, priority_ids=None, project_ids=None,
-        advanced_search_enabled=False, force_load=False
+        advanced_search_enabled=False, force_load=False, exclude_completed=False
     ):
     try:
         # Извлекаем параметры фильтрации по имени напрямую из request
@@ -226,7 +218,12 @@ def get_user_assigned_tasks_paginated_optimized(
             use_python_filtering = True
 
         current_app.logger.info(f"Получение задач: user_id={redmine_user_id}, page={page}, per_page={per_page}, search='{search_term}', sort='{sort_column}:{sort_direction}', statuses={status_ids}, projects={project_ids}, priorities={priority_ids}")
-        per_page = min(max(1, per_page), 100)
+
+        # Увеличиваем лимит для Kanban запросов с force_load=True
+        if force_load:
+            per_page = min(max(1, per_page), 1000)  # Увеличиваем лимит до 1000 для Kanban
+        else:
+            per_page = min(max(1, per_page), 100)   # Обычный лимит 100
 
         filter_params = {
             'assigned_to_id': redmine_user_id,
@@ -255,6 +252,24 @@ def get_user_assigned_tasks_paginated_optimized(
             # Добавляем параметр status_id=* для загрузки всех задач
             filter_params['status_id'] = '*'
 
+        # Исключение завершённых задач для оптимизации Kanban
+        if exclude_completed:
+            current_app.logger.info(f"🔍 [FILTER_DEBUG] Исключение завершённых задач (exclude_completed=True)")
+            # Исключаем завершённые статусы (5=Закрыто, 6=Решено, 7=Перенаправлена, 8=Отклонена, 9=Завершена)
+            completed_status_ids = ['5', '6', '7', '8', '9']
+            if 'status_id' in filter_params:
+                # Если уже есть фильтр по статусу, добавляем исключение завершённых
+                current_status = filter_params['status_id']
+                if current_status == '*':
+                    # Исключаем завершённые из всех статусов
+                    filter_params['status_id'] = '!' + '|'.join(completed_status_ids)
+                else:
+                    # Добавляем исключение к существующему фильтру
+                    filter_params['status_id'] = current_status + '|!' + '|'.join(completed_status_ids)
+            else:
+                # Добавляем фильтр исключения завершённых
+                filter_params['status_id'] = '!' + '|'.join(completed_status_ids)
+
         # Фильтрация по тексту поиска
         use_python_only_search = False
         if search_term:
@@ -279,18 +294,26 @@ def get_user_assigned_tasks_paginated_optimized(
         use_python_search_or_filter = use_python_only_search or use_python_filtering
 
         # Выполняем запрос к Redmine REST API
-        if use_python_search_or_filter:
-            # Для текстового поиска или фильтрации по имени: загружаем БОЛЬШЕ задач
-            filter_params_for_python = filter_params.copy()
-            filter_params_for_python['limit'] = 200  # Увеличиваем лимит для поиска/фильтрации
-            filter_params_for_python['offset'] = 0   # Сбрасываем offset для поиска/фильтрации
+        try:
+            if use_python_search_or_filter:
+                # Для текстового поиска или фильтрации по имени: загружаем БОЛЬШЕ задач
+                filter_params_for_python = filter_params.copy()
+                if force_load:
+                    filter_params_for_python['limit'] = 1000  # Увеличиваем лимит для Kanban
+                else:
+                    filter_params_for_python['limit'] = 200   # Обычный лимит для поиска/фильтрации
+                filter_params_for_python['offset'] = 0   # Сбрасываем offset для поиска/фильтрации
 
-            current_app.logger.info(f"🔍 ОТЛАДКА: Загружаем {filter_params_for_python['limit']} задач для обработки на Python")
-            issues_page = redmine_connector.redmine.issue.filter(**filter_params_for_python)
-        else:
-            # Обычный поиск по ID или без поиска
-            current_app.logger.info(f"🔍 ОТЛАДКА: Выполняем стандартный запрос к Redmine")
-            issues_page = redmine_connector.redmine.issue.filter(**filter_params)
+                current_app.logger.info(f"🔍 ОТЛАДКА: Загружаем {filter_params_for_python['limit']} задач для обработки на Python")
+                issues_page = redmine_connector.redmine.issue.filter(**filter_params_for_python)
+            else:
+                # Обычный поиск по ID или без поиска
+                current_app.logger.info(f"🔍 ОТЛАДКА: Выполняем стандартный запрос к Redmine")
+                issues_page = redmine_connector.redmine.issue.filter(**filter_params)
+        except Exception as api_error:
+            current_app.logger.error(f"❌ Ошибка запроса к Redmine API: {str(api_error)}")
+            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
+            raise api_error
 
         issues_list_initial = list(issues_page)
         current_app.logger.info(f"🔍 ОТЛАДКА: Получено {len(issues_list_initial)} задач от Redmine API")

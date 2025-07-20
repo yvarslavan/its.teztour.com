@@ -945,6 +945,7 @@
     text-align: center;
     padding: var(--spacing-xxxl);
     color: var(--text-secondary);
+    width: 100%;
   }
 
   .empty-state i {
@@ -963,6 +964,33 @@
   .empty-state p {
     font-size: 1rem;
     margin-bottom: var(--spacing-xl);
+  }
+
+  /* Error State */
+  .error-state {
+    text-align: center;
+    padding: var(--spacing-xxxl);
+    color: var(--status-rejected);
+    width: 100%;
+  }
+
+  .error-state i {
+    font-size: 4rem;
+    margin-bottom: var(--spacing-lg);
+    color: var(--status-rejected);
+  }
+
+  .error-state h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--status-rejected);
+  }
+
+  .error-state p {
+    font-size: 1rem;
+    margin-bottom: var(--spacing-xl);
+    color: var(--text-secondary);
   }
 
   /* Responsive Design */
@@ -1557,15 +1585,20 @@ $(document).ready(function() {
                 console.error('Error:', error);
                 $('#table-body').html(`
                     <tr>
-                        <td colspan="4" class="empty-state">
-                            <i class="fas fa-exclamation-triangle" style="color: var(--status-rejected);"></i>
-                            <h3>Ошибка загрузки данных</h3>
-                            <p>Не удалось подключиться к системе HelpDesk</p>
-                            <button onclick="location.reload()" class="action-button primary">
-                                <i class="fas fa-refresh"></i>
-                                <span>Попробовать снова</span>
-                            </button>
+                        <td></td>
+                        <td></td>
+                        <td>
+                            <div class="error-state">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                <h3>Ошибка загрузки данных</h3>
+                                <p>Не удалось подключиться к системе HelpDesk</p>
+                                <button onclick="location.reload()" class="action-button primary">
+                                    <i class="fas fa-refresh"></i>
+                                    <span>Попробовать снова</span>
+                                </button>
+                            </div>
                         </td>
+                        <td></td>
                     </tr>
                 `);
             },
@@ -1632,15 +1665,20 @@ $(document).ready(function() {
         if (response.issues.length === 0) {
             $('#table-body').html(`
                 <tr>
-                    <td colspan="4" class="empty-state">
-                        <i class="fas fa-inbox"></i>
-                        <h3>Заявки не найдены</h3>
-                        <p>У вас пока нет заявок в системе</p>
-                        <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
-                            <i class="fas fa-plus"></i>
-                            <span>Создать первую заявку</span>
-                        </a>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h3>Заявки не найдены</h3>
+                            <p>У вас пока нет заявок в системе</p>
+                            <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
+                                <i class="fas fa-plus"></i>
+                                <span>Создать первую заявку</span>
+                            </a>
+                        </div>
                     </td>
+                    <td></td>
                 </tr>
             `);
         } else {
@@ -1678,8 +1716,36 @@ $(document).ready(function() {
             $('#table-body').html(tableBody);
         }
 
-        // Инициализируем DataTables
-        let table = $('#issue').DataTable({
+                // Проверяем структуру таблицы перед инициализацией DataTables
+        const tableElement = $('#issue');
+
+        if (tableElement.length === 0) {
+            console.error('❌ Таблица с id="issue" не найдена!');
+            return;
+        }
+
+        const headerCells = tableElement.find('thead tr th').length;
+        const firstRowCells = tableElement.find('tbody tr:first-child td').length;
+
+        console.log('🔍 Проверка структуры таблицы:');
+        console.log('- Колонок в заголовке:', headerCells);
+        console.log('- Колонок в первой строке:', firstRowCells);
+
+        if (headerCells !== firstRowCells) {
+            console.error('❌ Несоответствие количества колонок в заголовке и данных!');
+            console.error('- Заголовок:', headerCells, 'колонок');
+            console.error('- Данные:', firstRowCells, 'колонок');
+        }
+
+        if (headerCells === 0) {
+            console.error('❌ Заголовок таблицы не найден!');
+            return;
+        }
+
+        // Инициализируем DataTables с обработкой ошибок
+        let table;
+        try {
+            table = $('#issue').DataTable({
             "language": {
                 "url": "/static/js/datatables/Russian.json"
             },
@@ -1687,16 +1753,35 @@ $(document).ready(function() {
             "pageLength": 10,
             "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
             "pagingType": "full_numbers",
-            "columnDefs": [{
-                "targets": 1,
-                "type": "date",
-                "render": function(data, type, row) {
-                    if (type === 'display' || type === 'filter') {
-                        return formatDate(data);
+            "columnDefs": [
+                {
+                    "targets": 0, // ID колонка
+                    "orderable": true,
+                    "searchable": true
+                },
+                {
+                    "targets": 1, // Дата колонка
+                    "type": "date",
+                    "orderable": true,
+                    "searchable": true,
+                    "render": function(data, type, row) {
+                        if (type === 'display' || type === 'filter') {
+                            return formatDate(data);
+                        }
+                        return data;
                     }
-                    return data;
+                },
+                {
+                    "targets": 2, // Тема заявки колонка
+                    "orderable": true,
+                    "searchable": true
+                },
+                {
+                    "targets": 3, // Статус колонка
+                    "orderable": true,
+                    "searchable": true
                 }
-            }],
+            ],
             "dom": '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
             "drawCallback": function(settings) {
                 // Добавляем анимацию появления строк
@@ -1727,6 +1812,7 @@ $(document).ready(function() {
                 // Отладочная информация
                 console.log('DataTables инициализирована');
                 console.log('Количество записей:', this.api().data().length);
+                console.log('Количество колонок:', this.api().columns().count());
                 console.log('Пагинация найдена:', $('.dataTables_paginate').length);
 
                 // Дополнительная проверка через небольшую задержку
@@ -1743,6 +1829,31 @@ $(document).ready(function() {
             "searching": true,
             "ordering": true
         });
+        } catch (error) {
+            console.error('❌ Ошибка инициализации DataTables:', error);
+            console.error('Детали ошибки:', error.message);
+
+            // Показываем сообщение об ошибке пользователю
+            $('#table-body').html(`
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <div class="error-state">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h3>Ошибка загрузки таблицы</h3>
+                            <p>Произошла ошибка при инициализации таблицы. Попробуйте обновить страницу.</p>
+                            <button onclick="location.reload()" class="action-button primary">
+                                <i class="fas fa-refresh"></i>
+                                <span>Обновить страницу</span>
+                            </button>
+                        </div>
+                    </td>
+                    <td></td>
+                </tr>
+            `);
+            return;
+        }
 
         // Добавляем обработчик изменения фильтра статусов
         $('#status-filter').on('change', function() {

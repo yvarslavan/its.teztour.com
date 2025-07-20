@@ -647,11 +647,11 @@
 
 
 .modal-backdrop {
-    z-index: 1040 !important;
+    z-index: 400 !important;
 }
 
 .modal {
-    z-index: 1050 !important;
+    z-index: 450 !important;
 }
 
 body.modal-open {
@@ -724,7 +724,7 @@ body.modal-open {
     position: fixed;
     bottom: 20px;
     right: 20px;
-    z-index: 1051;
+    z-index: 451;
     /* Выше, чем модальное окно */
     display: none;
     /* Скрыто по умолчанию */
@@ -1018,7 +1018,7 @@ body.modal-open {
     border: 1px solid #e1e4e8;
     border-radius: 4px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    z-index: 1000;
+    z-index: 200;
     min-width: 180px;
 }
 
@@ -1071,7 +1071,7 @@ body.modal-open {
     border-radius: 8px;
     background: #fff;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15);
-    z-index: 1100;
+    z-index: 500;
     animation: slideIn 0.3s ease-out;
 }
 

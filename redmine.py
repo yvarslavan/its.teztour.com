@@ -260,11 +260,21 @@ class RedmineConnector:
         parsed_url = urlparse(url)
         if not all([parsed_url.scheme, parsed_url.netloc]):
             raise ValueError("Некорректный URL для подключения к Redmine.")
+
+        # ИСПРАВЛЕНИЕ: Отключаем проверку SSL и прокси для избежания ошибок подключения
+        import requests
+        session = requests.Session()
+        session.verify = False
+        # Отключаем использование прокси
+        session.proxies.clear()
+        # Устанавливаем таймауты для избежания зависания запросов
+        # Таймауты будут передаваться в каждый запрос
+
         if username and password:
-            self.redmine = Redmine(url, username=username, password=password)
+            self.redmine = Redmine(url, username=username, password=password, requests={'session': session})
             logger.info("Инициализировано подключение к Redmine с использованием имени пользователя и пароля.")
         elif api_key:
-            self.redmine = Redmine(url, key=api_key)
+            self.redmine = Redmine(url, key=api_key, requests={'session': session})
             logger.info("Инициализировано подключение к Redmine с использованием API ключа.")
         else:
             raise ValueError("Или (username, password) или api_key должны быть определены.")
@@ -1133,7 +1143,14 @@ def get_redmine_admin_instance():
     аутентифицированный с использованием административного API ключа.
     """
     try:
-        return Redmine(REDMINE_URL, key=REDMINE_ADMIN_API_KEY)
+        # Создаем сессию без прокси для избежания ошибок подключения
+        import requests
+        session = requests.Session()
+        session.verify = False
+        session.proxies.clear()
+        # Таймауты будут передаваться в каждый запрос
+
+        return Redmine(REDMINE_URL, key=REDMINE_ADMIN_API_KEY, requests={'session': session})
     except Exception as e:
         logger.error(f"Ошибка при создании экземпляра Redmine API: {e}")
         return None

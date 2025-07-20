@@ -837,29 +837,31 @@
                 {% set user_check = True %}
               {% endif %}
 
-              <div class="history-comment" data-journal-id="{{ journal.id }}" style="position: relative;">
-                <div class="comment-content">
-                  {{ journal.notes|safe }}
-                </div>
+              {% if journal.notes %}
+                <div class="history-comment" data-journal-id="{{ journal.id }}" style="position: relative;">
+                  <div class="comment-content">
+                    {{ journal.notes|safe }}
+                  </div>
 
-                {% if journal.notes and user_check %}
-                <div class="comment-actions-dropdown">
-                  <div class="comment-actions-trigger" onclick="toggleCommentActions({{ journal.id }})">
-                    <i class="fas fa-ellipsis-v"></i>
-                  </div>
-                  <div class="comment-actions-menu" id="comment-actions-{{ journal.id }}">
-                    <div class="comment-action-item" onclick="openEditCommentModal({{ journal.id }})">
-                      <i class="fas fa-edit"></i>
-                      <span>Редактировать</span>
+                  {% if user_check %}
+                    <div class="comment-actions-dropdown">
+                      <div class="comment-actions-trigger" onclick="toggleCommentActions({{ journal.id }})">
+                        <i class="fas fa-ellipsis-v"></i>
+                      </div>
+                      <div class="comment-actions-menu" id="comment-actions-{{ journal.id }}">
+                        <div class="comment-action-item" onclick="openEditCommentModal({{ journal.id }})">
+                          <i class="fas fa-edit"></i>
+                          <span>Редактировать</span>
+                        </div>
+                        <div class="comment-action-item delete-action" onclick="deleteComment({{ journal.id }})">
+                          <i class="fas fa-trash"></i>
+                          <span>Удалить</span>
+                        </div>
+                      </div>
                     </div>
-                    <div class="comment-action-item delete-action" onclick="deleteComment({{ journal.id }})">
-                      <i class="fas fa-trash"></i>
-                      <span>Удалить</span>
-                    </div>
-                  </div>
+                  {% endif %}
                 </div>
-                {% endif %}
-              </div>
+              {% endif %}
             </div>
           </div>
           {% endfor %}
@@ -2217,6 +2219,14 @@
     padding: 10px 12px;
     font-size: 0.8rem;
   }
+}
+
+[data-theme="dark"] .history-comment {
+  background: #23272f !important;
+  color: #f3f4f6 !important;
+}
+[data-theme="dark"] .history-comment .comment-content {
+  color: #f3f4f6 !important;
 }
 </style>
 <script>
