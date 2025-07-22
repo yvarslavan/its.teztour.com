@@ -2517,324 +2517,24 @@ function downloadAttachment(attachmentId) {
 }
 
 function goBackToTasksList(taskId) {
-    // Сохраняем ID задачи для возврата
-    sessionStorage.setItem('return_from_task_id', taskId);
-    window.location.href = '/tasks/my-tasks';
+    // Очищаем сохраненный ID задачи, чтобы не выделять неправильную строку
+    sessionStorage.removeItem('return_from_task_id');
+
+    // Получаем сохраненный режим просмотра или используем 'list' по умолчанию
+    const savedView = sessionStorage.getItem('return_from_task_view') || 'list';
+
+    console.log(`[goBackToTasksList] 🔄 Возврат к списку задач`);
+    console.log(`[goBackToTasksList] 💾 Сохраненный режим просмотра: ${savedView}`);
+    console.log(`[goBackToTasksList] 📋 Все sessionStorage:`, Object.fromEntries(Object.entries(sessionStorage)));
+
+    // Переходим обратно с параметром режима
+    const returnUrl = `/tasks/my-tasks?view=${savedView}`;
+    console.log(`[goBackToTasksList] 🚀 Переход по URL: ${returnUrl}`);
+
+    window.location.href = returnUrl;
 }
 
-// ===== ФУНКЦИОНАЛ ИЗМЕНЕНИЯ СТАТУСА ЗАДАЧИ =====
-
-/**
- * Класс для управления изменением статуса задачи
- */
-class TaskStatusChanger {
-    constructor(taskId) {
-        this.taskId = taskId;
-        this.currentStatusId = null;
-        this.isLoading = false;
-        this.init();
-    }
-
-    /**
-     * Инициализация компонента
-     */
-    init() {
-        this.loadAvailableStatuses();
-        this.bindEvents();
-    }
-
-    /**
-     * Загрузка доступных статусов для задачи
-     */
-    async loadAvailableStatuses() {
-        try {
-            this.showLoading(true);
-
-            const response = await fetch(`/tasks/api/task/${this.taskId}/statuses`, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                }
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.currentStatusId = data.current_status.id;
-                this.renderStatusSelector(data.current_status, data.available_statuses);
-            } else {
-                this.showError('Не удалось загрузить доступные статусы: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Ошибка загрузки статусов:', error);
-            this.showError('Ошибка загрузки статусов. Попробуйте обновить страницу.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-
-    /**
-     * Отрисовка селектора статуса
-     */
-    renderStatusSelector(currentStatus, availableStatuses) {
-        const statusContainer = document.getElementById('task-status-container');
-        if (!statusContainer) {
-            console.error('Контейнер для статуса не найден');
-            return;
-        }
-
-        // Создаем HTML для изменения статуса
-        const statusHTML = `
-            <div class="task-status-changer">
-                <div class="current-status">
-                    <label class="form-label">Текущий статус:</label>
-                    <span class="status-badge status-${currentStatus.id}" id="current-status-display">
-                        ${currentStatus.name}
-                    </span>
-                </div>
-
-                <div class="status-change-form">
-                    <label class="form-label">Изменить статус:</label>
-                    <select id="new-status-select">
-                        <option value="">Выберите новый статус</option>
-                        ${availableStatuses.map(status =>
-                            `<option value="${status.id}">${status.name}</option>`
-                        ).join('')}
-                    </select>
-
-                    <button type="button" id="change-status-btn" disabled>
-                        <i class="fas fa-sync-alt"></i> Изменить статус
-                    </button>
-
-                    <label class="form-label" style="margin-top: 15px;">Комментарий (необязательно):</label>
-                    <textarea id="status-comment" placeholder="Добавьте комментарий к изменению статуса..."></textarea>
-                </div>
-            </div>
-        `;
-
-        statusContainer.innerHTML = statusHTML;
-    }
-
-    /**
-     * Привязка событий
-     */
-    bindEvents() {
-        // Используем делегирование событий, так как элементы создаются динамически
-        document.addEventListener('change', (e) => {
-            if (e.target.id === 'new-status-select') {
-                this.handleStatusSelectChange(e);
-            }
-        });
-
-        document.addEventListener('click', (e) => {
-            if (e.target.id === 'change-status-btn') {
-                this.handleStatusChange(e);
-            }
-        });
-    }
-
-    /**
-     * Обработка изменения выбора статуса
-     */
-    handleStatusSelectChange(event) {
-        const newStatusId = event.target.value;
-        const changeButton = document.getElementById('change-status-btn');
-
-        if (changeButton) {
-            changeButton.disabled = !newStatusId || newStatusId === this.currentStatusId.toString();
-        }
-    }
-
-    /**
-     * Обработка изменения статуса
-     */
-    async handleStatusChange(event) {
-        if (this.isLoading) return;
-
-        const newStatusSelect = document.getElementById('new-status-select');
-        const commentField = document.getElementById('status-comment');
-
-        if (!newStatusSelect || !newStatusSelect.value) {
-            this.showError('Выберите новый статус');
-            return;
-        }
-
-        const newStatusId = parseInt(newStatusSelect.value);
-        const comment = commentField ? commentField.value.trim() : '';
-
-        // Подтверждение изменения
-        const selectedStatusText = newStatusSelect.options[newStatusSelect.selectedIndex].text;
-        const confirmMessage = `Вы действительно хотите изменить статус задачи на "${selectedStatusText}"?`;
-
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-
-        try {
-            this.showLoading(true);
-
-            const response = await fetch(`/tasks/api/task/${this.taskId}/status`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-Requested-With': 'XMLHttpRequest'
-                },
-                body: JSON.stringify({
-                    status_id: newStatusId,
-                    comment: comment
-                })
-            });
-
-            const data = await response.json();
-
-            if (data.success) {
-                this.showSuccess(data.message);
-                this.updateCurrentStatus(data.new_status_id, data.new_status_name);
-                this.resetForm();
-
-                // Обновляем страницу через 2 секунды для отображения изменений
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                this.showError('Ошибка изменения статуса: ' + data.error);
-            }
-        } catch (error) {
-            console.error('Ошибка изменения статуса:', error);
-            this.showError('Произошла ошибка при изменении статуса. Попробуйте еще раз.');
-        } finally {
-            this.showLoading(false);
-        }
-    }
-
-    /**
-     * Обновление отображения текущего статуса
-     */
-    updateCurrentStatus(newStatusId, newStatusName) {
-        const currentStatusDisplay = document.getElementById('current-status-display');
-        if (currentStatusDisplay) {
-            currentStatusDisplay.textContent = newStatusName;
-            currentStatusDisplay.className = `status-badge status-${newStatusId}`;
-        }
-
-        this.currentStatusId = newStatusId;
-    }
-
-    /**
-     * Сброс формы
-     */
-    resetForm() {
-        const newStatusSelect = document.getElementById('new-status-select');
-        const commentField = document.getElementById('status-comment');
-        const changeButton = document.getElementById('change-status-btn');
-
-        if (newStatusSelect) newStatusSelect.value = '';
-        if (commentField) commentField.value = '';
-        if (changeButton) changeButton.disabled = true;
-    }
-
-    /**
-     * Показать индикатор загрузки
-     */
-    showLoading(show) {
-        this.isLoading = show;
-        const changeButton = document.getElementById('change-status-btn');
-        const newStatusSelect = document.getElementById('new-status-select');
-
-        if (changeButton) {
-            if (show) {
-                changeButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Изменение...';
-                changeButton.disabled = true;
-            } else {
-                changeButton.innerHTML = '<i class="fas fa-sync-alt"></i> Изменить статус';
-                changeButton.disabled = !newStatusSelect || !newStatusSelect.value;
-            }
-        }
-
-        if (newStatusSelect) {
-            newStatusSelect.disabled = show;
-        }
-    }
-
-    /**
-     * Показать сообщение об ошибке
-     */
-    showError(message) {
-        // Используем существующий механизм уведомлений
-        if (typeof showNotification === 'function') {
-            showNotification(message, 'error');
-        } else {
-            this.showAlert(message, 'danger');
-        }
-    }
-
-    /**
-     * Показать сообщение об успехе
-     */
-    showSuccess(message) {
-        if (typeof showNotification === 'function') {
-            showNotification(message, 'success');
-        } else {
-            this.showAlert(message, 'success');
-        }
-    }
-
-    /**
-     * Показать alert уведомление
-     */
-    showAlert(message, type) {
-        const alertHTML = `
-            <div class="alert alert-${type} alert-dismissible fade show" role="alert">
-                ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert">&times;</button>
-            </div>
-        `;
-
-        const container = document.getElementById('task-status-container');
-        if (container) {
-            const alertElement = document.createElement('div');
-            alertElement.innerHTML = alertHTML;
-            container.insertBefore(alertElement.firstElementChild, container.firstChild);
-
-            // Автоматически скрыть через 5 секунд
-            setTimeout(() => {
-                const alert = container.querySelector('.alert');
-                if (alert) {
-                    alert.remove();
-                }
-            }, 5000);
-        }
-    }
-}
-
-/**
- * Получение ID задачи из URL
- */
-function getTaskIdFromUrl() {
-    // Предполагаем URL вида: /tasks/my-tasks/123
-    const pathParts = window.location.pathname.split('/');
-    const taskIdIndex = pathParts.findIndex(part => part === 'my-tasks') + 1;
-
-    if (taskIdIndex > 0 && taskIdIndex < pathParts.length) {
-        const taskId = parseInt(pathParts[taskIdIndex]);
-        return isNaN(taskId) ? null : taskId;
-    }
-
-    return null;
-}
-
-// Инициализация функционала изменения статуса
-document.addEventListener('DOMContentLoaded', function() {
-    // Инициализируем функционал после загрузки базового функционала
-    setTimeout(function() {
-        const taskId = getTaskIdFromUrl();
-
-        if (taskId) {
-            window.taskStatusChanger = new TaskStatusChanger(taskId);
-        }
-    }, 1000); // Задержка для загрузки основного функционала
-});
+// Функционал изменения статуса задачи подключен из внешнего файла task_status_change.js
 
 // ===== ФУНКЦИОНАЛ КОММЕНТАРИЕВ =====
 
@@ -2875,72 +2575,7 @@ function disableSubmitButton() {
     }
 }
 
-/**
- * Удаление комментария
- */
-async function deleteComment(journalId) {
-    // Подтверждение удаления
-    if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) {
-        return;
-    }
 
-    try {
-        const taskId = getTaskIdFromUrl();
-
-        console.log('Отправляем запрос на удаление комментария:', {
-            url: `/tasks/api/task/${taskId}/comment/${journalId}/delete`,
-            method: 'DELETE',
-            journalId: journalId
-        });
-
-        const response = await fetch(`/tasks/api/task/${taskId}/comment/${journalId}/delete`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                ...(() => {
-                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                    return token ? { 'X-CSRFToken': token } : {};
-                })()
-            }
-        });
-
-        console.log('Получен ответ на удаление:', response.status, response.statusText);
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Ошибка HTTP при удалении:', response.status, errorText);
-            throw new Error(`HTTP ${response.status}: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log('Данные ответа при удалении:', data);
-
-        if (data.success) {
-            showNotification(data.message, 'success');
-
-            // Удаляем комментарий из DOM
-            const commentElement = document.querySelector(`[data-journal-id="${journalId}"]`);
-            if (commentElement) {
-                commentElement.style.transition = 'opacity 0.3s ease-out, transform 0.3s ease-out';
-                commentElement.style.opacity = '0';
-                commentElement.style.transform = 'translateX(100px)';
-
-                setTimeout(() => {
-                    const historyItem = commentElement.closest('.history-item');
-                    if (historyItem) {
-                        historyItem.remove();
-                    }
-                }, 300);
-            }
-        } else {
-            showNotification(data.error, 'error');
-        }
-    } catch (error) {
-        console.error('Ошибка удаления комментария:', error);
-        showNotification('Произошла ошибка при удалении комментария', 'error');
-    }
-}
 
 /**
  * Отправка комментария через AJAX (альтернативный способ)
@@ -3076,35 +2711,7 @@ function initializeDeleteCommentButtons() {
   });
 }
 
-/**
- * Показать уведомление
- */
-function showNotification(message, type = 'info') {
-    // Создаем уведомление
-    const notification = document.createElement('div');
-    notification.className = `alert alert-${type === 'error' ? 'danger' : type} alert-dismissible fade show`;
-    notification.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-        min-width: 300px;
-        max-width: 500px;
-    `;
-    notification.innerHTML = `
-        ${message}
-        <button type="button" class="btn-close" onclick="this.parentElement.remove()">×</button>
-    `;
 
-    document.body.appendChild(notification);
-
-    // Автоматически скрыть через 5 секунд
-    setTimeout(() => {
-        if (notification.parentElement) {
-            notification.remove();
-        }
-    }, 5000);
-}
 
 /**
  * Скрытие формы комментариев при загрузке страницы
@@ -3116,7 +2723,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Очистка формы после успешной отправки
-    {% if clear_comment %}
+    {% if clear_comment is defined and clear_comment %}
         const textarea = document.querySelector('#commentForm textarea');
         if (textarea) {
             textarea.value = '';
@@ -3226,5 +2833,8 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
   </div>
 </div>
+
+            <!-- Подключение скрипта для изменения статуса задачи -->
+            <script src="{{ url_for('static', filename='js/task_status_change.js') }}"></script>
 
 {% endblock %}

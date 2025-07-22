@@ -164,6 +164,7 @@ class TaskStatusChanger {
                     'Content-Type': 'application/json',
                     'X-Requested-With': 'XMLHttpRequest'
                 },
+                credentials: 'include',
                 body: JSON.stringify({
                     status_id: newStatusId,
                     comment: comment

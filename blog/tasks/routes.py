@@ -413,6 +413,12 @@ def get_my_tasks_paginated_api():
         is_kanban_view = request.args.get('view') == 'kanban'
         current_app.logger.info(f"🔍 [API] Параметры: force_load={force_load}, exclude_completed={exclude_completed}, is_kanban_view={is_kanban_view}")
 
+        # Оптимизация для Kanban: уменьшаем количество загружаемых задач
+        if is_kanban_view:
+            # Для Kanban загружаем меньше задач, но с лучшей оптимизацией
+            per_page = min(per_page, 500)  # Ограничиваем до 500 задач для Kanban
+            current_app.logger.info(f"🔍 [API] Kanban оптимизация: per_page={per_page}")
+
         issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
             redmine_connector_instance,
             redmine_user_id,
@@ -437,18 +443,48 @@ def get_my_tasks_paginated_api():
             active_tasks = []
             closed_tasks = []
 
+            # Отладочная информация: собираем все уникальные статусы
+            unique_statuses = set()
             for task in tasks_data:
-                if task.get('status_name') == 'Закрыто':
+                status_name = task.get('status_name', '')
+                status_id = task.get('status_id', '')
+                unique_statuses.add(f"ID:{status_id} - '{status_name}'")
+
+            current_app.logger.info(f"🔍 [KANBAN DEBUG] Все уникальные статусы в данных: {sorted(unique_statuses)}")
+
+            # Маппинг английских названий статусов из Redmine API на русские названия
+            status_mapping = {
+                'Closed': 'Закрыта',
+                'New': 'Новая',
+                'In Progress': 'В работе',
+                'Rejected': 'Отклонена',
+                'Executed': 'Выполнена',
+                'The request specification': 'Запрошено уточнение',
+                'Paused': 'Приостановлена',
+                'Tested': 'Протестирована',
+                'Redirected': 'Перенаправлена',
+                'On the coordination': 'На согласовании',
+                'Frozen': 'Заморожена',
+                'Open': 'Открыта',
+                'On testing': 'На тестировании',
+                'In queue': 'В очереди'
+            }
+
+            for task in tasks_data:
+                status_name = task.get('status_name', '')
+                status_id = task.get('status_id', '')
+
+                # Преобразуем английское название в русское
+                russian_status_name = status_mapping.get(status_name, status_name)
+
+                current_app.logger.info(f"🔍 [KANBAN DEBUG] Задача {task.get('id')}: статус '{status_name}' -> '{russian_status_name}' (ID: {status_id})")
+
+                if russian_status_name == 'Закрыта':
                     closed_tasks.append(task)
+                    current_app.logger.info(f"✅ [KANBAN DEBUG] Задача {task.get('id')} добавлена в закрытые (статус: '{russian_status_name}')")
                 else:
                     active_tasks.append(task)
-
-            # Для закрытых задач оставляем только последние 5
-            if closed_tasks:
-                # Сортируем по дате обновления (новые сначала)
-                closed_tasks.sort(key=lambda x: x.get('updated_on', ''), reverse=True)
-                closed_tasks = closed_tasks[:5]
-                current_app.logger.info(f"✅ Kanban: активных задач {len(active_tasks)}, закрытых (последние 5): {len(closed_tasks)}")
+                    current_app.logger.info(f"✅ [KANBAN DEBUG] Задача {task.get('id')} добавлена в активные (статус: '{russian_status_name}')")
 
             # Объединяем активные задачи с ограниченными закрытыми
             tasks_data = active_tasks + closed_tasks
@@ -464,7 +500,9 @@ def get_my_tasks_paginated_api():
             "draw": draw,
             "recordsTotal": total_count,
             "recordsFiltered": total_count,
-            "data": tasks_data
+            "data": tasks_data,
+            "success": True,
+            "execution_time": execution_time
         })
 
     except Exception as e:
@@ -474,7 +512,8 @@ def get_my_tasks_paginated_api():
             "error": f"Внутренняя ошибка сервера: {str(e)}",
             "data": [],
             "recordsTotal": 0,
-            "recordsFiltered": 0
+            "recordsFiltered": 0,
+            "success": False
         }), 500
 
 @tasks_bp.route("/get-my-tasks-statistics-optimized", methods=["GET"])
@@ -1065,7 +1104,7 @@ def get_my_tasks_statuses_localized():
             # Получаем локализованные статусы из таблицы u_statuses
             status_start = time.time()
             cursor.execute("""
-                SELECT DISTINCT id, name
+                SELECT id, name
                 FROM u_statuses
                 ORDER BY id, name
             """)
@@ -1779,23 +1818,13 @@ def get_completed_tasks():
             }), 500
 
         # Создаем коннектор Redmine
-        try:
-            redmine_connector = create_redmine_connector(
-                is_redmine_user=current_user.is_redmine_user,
-                user_login=current_user.username,
-                password=current_user.password
-            )
-            current_app.logger.info(f"✅ Коннектор Redmine создан успешно для {current_user.username}")
-        except Exception as conn_error:
-            current_app.logger.error(f"❌ Ошибка создания коннектора Redmine: {str(conn_error)}")
-            return jsonify({
-                "error": f"Ошибка создания подключения к Redmine: {str(conn_error)}",
-                "success": False,
-                "data": []
-            }), 500
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
 
         if not redmine_connector:
-            current_app.logger.error(f"❌ Коннектор Redmine не создан для {current_user.username}")
             return jsonify({
                 "error": "Ошибка подключения к Redmine",
                 "success": False,
@@ -1826,7 +1855,7 @@ def get_completed_tasks():
 
             # Если не удалось получить из БД, используем статический список
             if not closed_status_ids:
-                closed_status_ids = ['5', '6', '7', '14']
+                closed_status_ids = ['5', '6', '14']
                 current_app.logger.warning("⚠️ Используем статический список закрытых статусов")
 
             current_app.logger.info(f"📋 Закрытые статусы для запроса: {closed_status_ids}")
@@ -1835,7 +1864,7 @@ def get_completed_tasks():
                 'assigned_to_id': current_user.id_redmine_user,
                 'status_id': '|'.join(closed_status_ids),  # Динамический список закрытых статусов
                 'sort': 'updated_on:desc',
-                'limit': 5,  # Только 5 задач
+                'limit': 1000,  # Все закрытые задачи
                 'include': ['status', 'priority', 'project', 'tracker', 'author', 'description', 'easy_email_to']
             }
 
@@ -1895,7 +1924,7 @@ def get_completed_tasks():
                 "success": True,
                 "data": tasks_data,
                 "total": len(tasks_data),
-                "limit": 5,
+                "limit": 1000,
                 "offset": 0,
                 "has_more": False  # Больше нет пагинации
             }
@@ -1910,22 +1939,11 @@ def get_completed_tasks():
 
         except Exception as redmine_error:
             current_app.logger.error(f"Ошибка получения завершённых задач для {current_user.username}: {str(redmine_error)}")
-            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-
-            # Проверяем, является ли ошибка связанной с сетью
-            error_str = str(redmine_error).lower()
-            if 'proxy' in error_str or 'connection' in error_str or 'timeout' in error_str:
-                return jsonify({
-                    "error": "Ошибка сетевого подключения к Redmine. Проверьте VPN соединение.",
-                    "success": False,
-                    "data": []
-                }), 500
-            else:
-                return jsonify({
-                    "error": f"Ошибка получения данных из Redmine: {str(redmine_error)}",
-                    "success": False,
-                    "data": []
-                }), 500
+            return jsonify({
+                "error": f"Ошибка получения данных из Redmine: {str(redmine_error)}",
+                "success": False,
+                "data": []
+            }), 500
 
     except Exception as e:
         current_app.logger.error(f"Критическая ошибка в /tasks/get-completed-tasks для {current_user.username}: {str(e)}. Traceback: {traceback.format_exc()}")
@@ -1935,92 +1953,7 @@ def get_completed_tasks():
             "data": []
         }), 500
 
-@tasks_bp.route("/api/task/<int:task_id>/status", methods=["PUT"])
-@login_required
-def update_task_status_api(task_id):
-    """API для обновления статуса задачи"""
-    try:
-        current_app.logger.info(f"🔄 Начало обновления статуса задачи #{task_id}")
-
-        if not current_user.is_redmine_user:
-            current_app.logger.error(f"❌ Пользователь {current_user.username} не является пользователем Redmine")
-            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
-
-        # Получаем данные из запроса
-        data = request.get_json()
-        current_app.logger.info(f"📋 Полученные данные: {data}")
-
-        new_status_id = data.get('status_id')
-        current_app.logger.info(f"📋 new_status_id: {new_status_id} (тип: {type(new_status_id)})")
-
-        if not new_status_id:
-            current_app.logger.error("❌ Не указан новый статус")
-            return jsonify({"success": False, "error": "Не указан новый статус"}), 400
-
-        current_app.logger.info(f"🔄 Обновление статуса задачи #{task_id} на {new_status_id} пользователем {current_user.username}")
-
-        # Создаём коннектор Redmine
-        try:
-            redmine_connector = create_redmine_connector(
-                is_redmine_user=current_user.is_redmine_user,
-                user_login=current_user.username,
-                password=current_user.password
-            )
-            current_app.logger.info(f"✅ Коннектор Redmine создан: {redmine_connector is not None}")
-        except Exception as conn_error:
-            current_app.logger.error(f"❌ Ошибка создания коннектора Redmine: {str(conn_error)}")
-            current_app.logger.error(f"Traceback: {traceback.format_exc()}")
-            return jsonify({"success": False, "error": f"Ошибка подключения к Redmine: {str(conn_error)}"}), 500
-
-        if not redmine_connector or not hasattr(redmine_connector, 'redmine'):
-            current_app.logger.error("❌ Не удалось подключиться к Redmine")
-            return jsonify({"success": False, "error": "Не удалось подключиться к Redmine"}), 500
-
-        # Получаем задачу из Redmine
-        try:
-            current_app.logger.info(f"🔍 Получение задачи #{task_id} из Redmine...")
-            issue = redmine_connector.redmine.issue.get(task_id)
-            current_app.logger.info(f"✅ Задача #{task_id} найдена в Redmine")
-        except ResourceNotFoundError:
-            current_app.logger.error(f"❌ Задача #{task_id} не найдена в Redmine")
-            return jsonify({"success": False, "error": "Задача не найдена"}), 404
-        except Exception as get_error:
-            current_app.logger.error(f"❌ Ошибка получения задачи #{task_id}: {str(get_error)}")
-            return jsonify({"success": False, "error": f"Ошибка получения задачи: {str(get_error)}"}), 500
-
-        # Проверяем права доступа
-        if hasattr(issue, 'assigned_to') and issue.assigned_to:
-            current_app.logger.info(f"📋 Текущий назначенный пользователь: {issue.assigned_to.id}")
-            current_app.logger.info(f"📋 ID пользователя в системе: {current_user.id_redmine_user}")
-            if issue.assigned_to.id != current_user.id_redmine_user:
-                current_app.logger.error(f"❌ Нет прав для изменения задачи #{task_id}")
-                return jsonify({"success": False, "error": "Нет прав для изменения этой задачи"}), 403
-
-        # Обновляем статус задачи
-        try:
-            current_app.logger.info(f"💾 Сохранение статуса {new_status_id} для задачи #{task_id}...")
-            issue.status_id = int(new_status_id)
-            issue.save()
-            current_app.logger.info(f"✅ Статус задачи #{task_id} успешно обновлён на {new_status_id}")
-        except Exception as save_error:
-            current_app.logger.error(f"❌ Ошибка сохранения задачи #{task_id}: {str(save_error)}")
-            current_app.logger.error(f"❌ Тип ошибки: {type(save_error)}")
-            return jsonify({"success": False, "error": f"Ошибка сохранения: {str(save_error)}"}), 500
-
-        current_app.logger.info(f"✅ API успешно завершён для задачи #{task_id}")
-        return jsonify({
-            "success": True,
-            "message": f"Статус задачи #{task_id} обновлён",
-            "task_id": task_id,
-            "new_status_id": new_status_id
-        })
-
-    except Exception as e:
-        current_app.logger.error(f"❌ Критическая ошибка обновления статуса задачи #{task_id}: {str(e)}")
-        current_app.logger.error(f"❌ Тип ошибки: {type(e)}")
-        import traceback
-        current_app.logger.error(f"❌ Traceback: {traceback.format_exc()}")
-        return jsonify({"success": False, "error": f"Ошибка обновления статуса: {str(e)}"}), 500
+# Удален дублирующий маршрут - теперь используется /tasks/api/task/<id>/status из api_routes.py
 
 @tasks_bp.route("/get-my-tasks-statuses", methods=["GET"])
 @login_required
@@ -2032,7 +1965,7 @@ def get_my_tasks_statuses():
 
         current_app.logger.info(f"Запрос статусов задач для пользователя {current_user.username}")
 
-                # Получаем локализованные статусы из таблицы u_statuses
+        # Получаем локализованные статусы из таблицы u_statuses
         localized_statuses = get_my_tasks_statuses_localized()
         current_app.logger.info(f"📋 Получено локализованных статусов: {len(localized_statuses) if localized_statuses else 0}")
 
@@ -2047,7 +1980,7 @@ def get_my_tasks_statuses():
 
         # Определяем, какие статусы являются закрытыми по ID
         # Примечание: если в таблице u_statuses появятся новые статусы, их нужно будет добавить сюда
-        closed_status_ids = [5, 6, 7, 14]  # Закрыта, Отклонена, Выполнена, Перенаправлена
+        closed_status_ids = [5, 6, 14]  # Закрыта, Отклонена, Перенаправлена
 
         # Логируем все полученные статусы для мониторинга новых
         current_app.logger.info("📋 [STATUSES] Все полученные статусы:")
@@ -2089,3 +2022,281 @@ def get_my_tasks_statuses():
     except Exception as e:
         current_app.logger.error(f"Ошибка получения статусов для {current_user.username}: {str(e)}")
         return jsonify({"success": False, "error": f"Ошибка получения статусов: {str(e)}"}), 500
+
+@tasks_bp.route("/debug-statuses", methods=["GET"])
+@login_required
+def debug_statuses():
+    """Временный endpoint для отладки статусов"""
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
+
+        # Получаем статусы напрямую из базы
+        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        if not mysql_conn:
+            return jsonify({"success": False, "error": "Не удалось подключиться к базе данных"}), 500
+
+        cursor = mysql_conn.cursor()
+
+        try:
+            cursor.execute("SELECT id, name FROM u_statuses ORDER BY id")
+            statuses = [{"id": row["id"], "name": row["name"]} for row in cursor.fetchall()]
+
+            current_app.logger.info(f"🔍 [DEBUG] Найдено статусов в u_statuses: {len(statuses)}")
+            for status in statuses:
+                current_app.logger.info(f"  - ID: {status['id']}, Name: '{status['name']}'")
+
+            return jsonify({
+                "success": True,
+                "data": statuses,
+                "count": len(statuses)
+            })
+
+        finally:
+            cursor.close()
+            mysql_conn.close()
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка отладки статусов: {str(e)}")
+        return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
+
+@tasks_bp.route("/get-my-tasks-direct-sql", methods=["GET"])
+@login_required
+def get_my_tasks_direct_sql():
+    """Получение задач напрямую из базы данных через SQL запрос"""
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
+
+        # Получаем параметры
+        length = request.args.get('length', 100, type=int)
+        start = request.args.get('start', 0, type=int)
+        force_load = request.args.get('force_load', 'false').lower() == 'true'
+        view = request.args.get('view', 'table')
+        exclude_completed = request.args.get('exclude_completed', 'false').lower() == 'true'
+
+        # Подключаемся к базе данных
+        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        if not mysql_conn:
+            return jsonify({"success": False, "error": "Не удалось подключиться к базе данных"}), 500
+
+        cursor = mysql_conn.cursor()
+        try:
+            # Базовый SQL запрос
+            base_query = """
+                SELECT
+                    i.id,
+                    i.subject,
+                    i.description,
+                    i.status_id,
+                    i.assigned_to_id,
+                    i.author_id,
+                    i.priority_id,
+                    i.project_id,
+                    i.created_on,
+                    i.updated_on,
+                    i.due_date,
+                    i.done_ratio,
+                    i.closed_on,
+                    p.name as project_name,
+                    us.name as status_name,
+                    e.name as priority_name,
+                    CONCAT(ua.firstname, ' ', ua.lastname) as assigned_to_name,
+                    CONCAT(uau.firstname, ' ', uau.lastname) as author_name
+                FROM issues i
+                LEFT JOIN projects p ON i.project_id = p.id
+                LEFT JOIN u_statuses us ON i.status_id = us.id
+                LEFT JOIN enumerations e ON i.priority_id = e.id AND e.type = 'IssuePriority'
+                LEFT JOIN users ua ON i.assigned_to_id = ua.id
+                LEFT JOIN users uau ON i.author_id = uau.id
+                WHERE i.assigned_to_id = %s
+            """
+
+            # Добавляем фильтры в зависимости от параметров
+            params = [current_user.id_redmine_user]
+
+            if exclude_completed:
+                base_query += " AND i.status_id NOT IN (5, 6, 14)"  # Исключаем закрытые статусы: Закрыта, Отклонена, Перенаправлена
+
+            if view == 'kanban':
+                # Для Kanban получаем все задачи без ограничений
+                base_query += " ORDER BY i.updated_on DESC"
+            else:
+                base_query += " ORDER BY i.updated_on DESC"
+                base_query += " LIMIT %s OFFSET %s"
+                params.extend([length, start])
+
+            current_app.logger.info(f"🔍 [DIRECT SQL] Выполняем запрос: {base_query}")
+            current_app.logger.info(f"🔍 [DIRECT SQL] Параметры: {params}")
+
+            cursor.execute(base_query, params)
+            rows = cursor.fetchall()
+
+            current_app.logger.info(f"🔍 [DIRECT SQL] Получено строк из БД: {len(rows)}")
+
+            # Преобразуем результаты в формат для фронтенда
+            tasks = []
+            for row in rows:
+                # Локализуем приоритеты
+                priority_name = row['priority_name']
+                if priority_name:
+                    priority_mapping = {
+                        'Urgent': 'Срочный',
+                        'High': 'Высокий',
+                        'Normal': 'Нормальный',
+                        'Low': 'Низкий'
+                    }
+                    priority_name = priority_mapping.get(priority_name, priority_name)
+
+                task = {
+                    'id': row['id'],
+                    'subject': row['subject'],
+                    'description': row['description'],
+                    'status_id': row['status_id'],
+                    'status_name': row['status_name'],
+                    'assigned_to_id': row['assigned_to_id'],
+                    'assigned_to_name': row['assigned_to_name'],
+                    'author_id': row['author_id'],
+                    'author_name': row['author_name'],
+                    'priority_id': row['priority_id'],
+                    'priority_name': priority_name,
+                    'project_id': row['project_id'],
+                    'project_name': row['project_name'],
+                    'created_on': row['created_on'].isoformat() if row['created_on'] else None,
+                    'updated_on': row['updated_on'].isoformat() if row['updated_on'] else None,
+                    'due_date': row['due_date'].isoformat() if row['due_date'] else None,
+                    'done_ratio': row['done_ratio'],
+                    'closed_on': row['closed_on'].isoformat() if row['closed_on'] else None
+                }
+                tasks.append(task)
+
+            current_app.logger.info(f"🔍 [DIRECT SQL] Получено задач: {len(tasks)}")
+
+                        # Для Kanban группируем задачи по статусам
+            if view == 'kanban':
+                active_tasks = []
+                closed_tasks = []
+
+                # Определяем закрытые статусы по названию
+                closed_status_names = ['Закрыта', 'Отклонена', 'Перенаправлена']
+
+                # Логируем все уникальные статусы для отладки
+                unique_statuses = set(task['status_name'] for task in tasks)
+                current_app.logger.info(f"🔍 [DIRECT SQL] Уникальные статусы в данных: {unique_statuses}")
+
+                for task in tasks:
+                    if task['status_name'] in closed_status_names:
+                        closed_tasks.append(task)
+                        current_app.logger.info(f"🔍 [DIRECT SQL] Задача {task['id']} ({task['status_name']}) добавлена в закрытые")
+                    else:
+                        active_tasks.append(task)
+
+                # Показываем все закрытые задачи для Kanban
+                original_closed_count = len(closed_tasks)
+                current_app.logger.info(f"🔍 [DIRECT SQL] Найдено закрытых задач: {original_closed_count}")
+
+                # Всегда сортируем закрытые задачи по дате обновления (новые сначала)
+                closed_tasks.sort(key=lambda x: x['updated_on'] or '', reverse=True)
+
+                # Показываем все закрытые задачи без ограничений
+                current_app.logger.info(f"🔍 [DIRECT SQL] Показываем все {len(closed_tasks)} закрытых задач")
+
+                tasks = active_tasks + closed_tasks
+                current_app.logger.info(f"🔍 [DIRECT SQL] Активных задач: {len(active_tasks)}, закрытых: {len(closed_tasks)}")
+
+            return jsonify({
+                "success": True,
+                "data": tasks,
+                "recordsTotal": len(tasks),
+                "recordsFiltered": len(tasks)
+            })
+
+        finally:
+            cursor.close()
+            mysql_conn.close()
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка получения задач через SQL: {str(e)}")
+        return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
+
+@tasks_bp.route("/test-direct-sql", methods=["GET"])
+def test_direct_sql():
+    """Временный тестовый endpoint без авторизации"""
+    try:
+        # Подключаемся к базе данных
+        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        if not mysql_conn:
+            return jsonify({"success": False, "error": "Не удалось подключиться к базе данных"}), 500
+
+        cursor = mysql_conn.cursor()
+        try:
+            # Простой тестовый запрос
+            cursor.execute("SELECT COUNT(*) as count FROM issues")
+            result = cursor.fetchone()
+            count = result['count'] if result else 0
+
+            return jsonify({
+                "success": True,
+                "message": "Подключение к базе данных успешно",
+                "issues_count": count
+            })
+        finally:
+            cursor.close()
+            mysql_conn.close()
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
+
+@tasks_bp.route("/test-closed-tasks-count", methods=["GET"])
+@login_required
+def test_closed_tasks_count():
+    """Тестовый API для проверки количества задач в закрытых статусах"""
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({"error": "Доступ запрещен"}), 403
+
+        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
+        if not mysql_conn:
+            return jsonify({"error": "Ошибка подключения к БД"}), 500
+
+        cursor = mysql_conn.cursor()
+
+        # Получаем все закрытые статусы
+        cursor.execute("""
+            SELECT id, name FROM u_statuses
+            WHERE name LIKE '%закрыт%' OR name LIKE '%отклонен%' OR name LIKE '%выполнен%'
+            OR name LIKE '%перенаправлен%' OR name LIKE '%завершен%'
+        """)
+        closed_statuses = cursor.fetchall()
+
+        # Подсчитываем задачи по каждому закрытому статусу
+        status_counts = {}
+        total_closed = 0
+
+        for status in closed_statuses:
+            status_id = status['id']
+            status_name = status['name']
+
+            cursor.execute("""
+                SELECT COUNT(*) as count
+                FROM issues
+                WHERE assigned_to_id = %s AND status_id = %s
+            """, (current_user.id_redmine_user, status_id))
+
+            result = cursor.fetchone()
+            count = result['count'] if result else 0
+            status_counts[status_name] = count
+            total_closed += count
+
+        cursor.close()
+        mysql_conn.close()
+
+        return jsonify({
+            "success": True,
+            "total_closed_tasks": total_closed,
+            "status_breakdown": status_counts,
+            "closed_statuses": [{"id": s['id'], "name": s['name']} for s in closed_statuses]
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка в test_closed_tasks_count: {e}")
+        return jsonify({"error": str(e)}), 500

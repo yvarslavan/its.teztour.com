@@ -20,8 +20,8 @@
             <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-menu.css') }}">
 
             <!-- Локальные JS файлы -->
-            <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}"></script>
-            <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
+                    <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}"></script>
+<script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
             {% block title %}
               <title>
                 {% if title %}
@@ -33,84 +33,79 @@
             {% endblock title %}
 
             <!-- jQuery уже загружен выше -->
-                <script>
-
-                        // Здесь ваш скрипт
-                        $(document).ready(function() {
-                            /* === Общая функция обновления бейджа === */
-                            function refreshNotificationBadge(count) {
-                                const badgeSel = '#notification-badge';
-                                if (count > 0) {
-                                    if ($(badgeSel).length === 0) {
-                                        $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
-                                    } else {
-                                        $(badgeSel).text(count).show();
-                                    }
-                                } else {
-                                    $(badgeSel).remove();
-                                }
-                            }
-
-                            window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
-
-                                        // УЛУЧШЕННЫЙ AJAX-пуллинг с частыми обновлениями
-            function updateNotificationCount() {
-                console.log('[NotificationBadge] 🔄 Обновление счетчика уведомлений...');
-
-                $.ajax({
-                    url: "{{ url_for('main.get_notification_count') }}",
-                    type: 'GET',
-                    success: function(data) {
-                        const currentCount = parseInt($('#notification-badge').text() || '0', 10);
-                        const newCount = data.count || 0;
-
-                        console.log(`[NotificationBadge] Получен счетчик: ${newCount} (было: ${currentCount})`);
-
-                        // Обновляем счетчик всегда, независимо от страницы
-                        refreshNotificationBadge(newCount);
-
-                        // Если появились новые уведомления, показываем уведомление
-                        if (newCount > currentCount && currentCount >= 0) {
-                            console.log(`[NotificationBadge] 🔔 Новые уведомления: +${newCount - currentCount}`);
-
-                            // Dispatch event для других компонентов
-                            window.dispatchEvent(new CustomEvent('newNotification', {
-                                detail: { count: newCount, difference: newCount - currentCount }
-                            }));
+            <script>
+                /* === Общая функция обновления бейджа === */
+                function refreshNotificationBadge(count) {
+                    const badgeSel = '#notification-badge';
+                    if (count > 0) {
+                        if ($(badgeSel).length === 0) {
+                            $('.notification-link .nav-icon-wrapper').append('<span class="notification-badge" id="notification-badge">' + count + '</span>');
+                        } else {
+                            $(badgeSel).text(count).show();
                         }
-                    },
-                    error: function(xhr) {
-                        console.error('[NotificationBadge] ❌ Ошибка при получении количества уведомлений:', xhr);
-                        // Не удаляем badge при ошибке, просто логируем
+                    } else {
+                        $(badgeSel).remove();
                     }
+                }
+
+                window.refreshNotificationBadge = refreshNotificationBadge; // публично для WebPush
+
+                // УЛУЧШЕННЫЙ AJAX-пуллинг с частыми обновлениями
+                function updateNotificationCount() {
+                    console.log('[NotificationBadge] 🔄 Обновление счетчика уведомлений...');
+
+                    $.ajax({
+                        url: "{{ url_for('main.get_notification_count') }}",
+                        type: 'GET',
+                        success: function(data) {
+                            const currentCount = parseInt($('#notification-badge').text() || '0', 10);
+                            const newCount = data.count || 0;
+
+                            console.log(`[NotificationBadge] Получен счетчик: ${newCount} (было: ${currentCount})`);
+
+                            // Обновляем счетчик всегда, независимо от страницы
+                            refreshNotificationBadge(newCount);
+
+                            // Если появились новые уведомления, показываем уведомление
+                            if (newCount > currentCount && currentCount >= 0) {
+                                console.log(`[NotificationBadge] 🔔 Новые уведомления: +${newCount - currentCount}`);
+
+                                // Dispatch event для других компонентов
+                                window.dispatchEvent(new CustomEvent('newNotification', {
+                                    detail: { count: newCount, difference: newCount - currentCount }
+                                }));
+                            }
+                        },
+                        error: function(xhr) {
+                            console.error('[NotificationBadge] ❌ Ошибка при получении количества уведомлений:', xhr);
+                            // Не удаляем badge при ошибке, просто логируем
+                        }
+                    });
+                }
+
+                // ИСПРАВЛЕНО: Уменьшили интервал до 10 секунд для быстрого отклика
+                setInterval(updateNotificationCount, 10000);
+                updateNotificationCount();
+
+                /* === Листенер для пуш-виджета === */
+                window.addEventListener('newNotification', function(e) {
+                    // e.detail.count может содержать новый total, если нет – прибавляем 1
+                    const current = parseInt($('#notification-badge').text() || '0', 10);
+                    const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
+                    refreshNotificationBadge(newCount);
                 });
-            }
 
-                            // ИСПРАВЛЕНО: Уменьшили интервал до 10 секунд для быстрого отклика
-            setInterval(updateNotificationCount, 10000);
-            updateNotificationCount();
+                /* === Специальная логика для страницы /notifications === */
+                if (window.location.pathname === '/notifications') {
+                    // На странице уведомлений показываем количество всех уведомлений (включая прочитанные)
+                    const pageCount = {{ count_notifications_page if count_notifications_page is defined and count_notifications_page is not none and count_notifications_page else 0 | int }};
+                    refreshNotificationBadge(pageCount);
+                }
 
-                            /* === Листенер для пуш-виджета === */
-                            window.addEventListener('newNotification', function(e) {
-                                // e.detail.count может содержать новый total, если нет – прибавляем 1
-                                const current = parseInt($('#notification-badge').text() || '0', 10);
-                                const newCount = e.detail && e.detail.count !== undefined ? e.detail.count : current + 1;
-                                refreshNotificationBadge(newCount);
-                            });
+                /* ==== Tasks Notification badge (удалено: используем общий) ==== */
+            </script>
 
-                                        /* === Специальная логика для страницы /notifications === */
-            if (window.location.pathname === '/notifications') {
-                // На странице уведомлений показываем количество всех уведомлений (включая прочитанные)
-                const pageCount = {{ count_notifications_page if count_notifications_page else 0 }};
-                refreshNotificationBadge(pageCount);
-            }
-
-                            /* ==== Tasks Notification badge (удалено: используем общий) ==== */
-                        });
-
-
-
-
+            <script>
                                                     $(document).ready(function() {
                                 // Удаляем все стандартные flash-сообщения
                                 $('.alert').remove();
@@ -1685,7 +1680,7 @@
                 <!-- Option 1: Bootstrap Bundle with Popper -->
                 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
 
-                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+                                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
                 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
 
                 {% block scripts %}{% endblock %}
@@ -1705,12 +1700,12 @@
                 </div>
             {% endif %}
 
-            <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+            <!-- <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script> -->
 
             <!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
             <!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->
             <!--
-            <script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+                            <script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
             -->
 
             <!-- Подключение модуля интерактивной статистики -->
@@ -1839,7 +1834,7 @@
                     });
                 }
 
-                                                function showPollingNotification(notifications) {
+                function showPollingNotification(notifications) {
                     // Проверяем, не закрыт ли современный виджет
                     const isModernWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
 
@@ -1866,100 +1861,13 @@
                         return;
                     }
 
-                                        // Если виджет закрыт, проверяем есть ли новые уведомления
+                    // Если виджет закрыт, проверяем есть ли новые уведомления
                     if (hasNewNotifications) {
                         console.log('[Polling] Виджет закрыт, но есть новые уведомления - автоматически разворачиваем');
-
-                        // Включаем современный виджет автоматически только если есть новые уведомления
-                        if (typeof showNotificationsWidget === 'function') {
-                            showNotificationsWidget();
-
-                            // Сбрасываем флаг "закрыт пользователем" при получении новых уведомлений
-                            localStorage.removeItem('notificationsWidgetClosedByUser');
-
-                            // Воспроизводим звук уведомления
-                            if (typeof window.playNotificationSound === 'function') {
-                                window.playNotificationSound();
-                            }
-
-                            // Обновляем виджет с новыми уведомлениями
-                            setTimeout(() => {
-                                if (typeof window.modernNotificationsWidget !== 'undefined' &&
-                                    typeof window.modernNotificationsWidget.refreshNotifications === 'function') {
-                                    window.modernNotificationsWidget.refreshNotifications();
-                                }
-                            }, 300); // Небольшая задержка для анимации разворачивания
-                        } else {
-                            // Fallback если функция showNotificationsWidget недоступна
-                            console.warn('[Polling] Функция showNotificationsWidget недоступна, используем legacy уведомление');
-
-                            const statusCount = notifications.status_notifications.length;
-                            const commentCount = notifications.comment_notifications.length;
-                            let message = '📬 Новые уведомления:\n';
-                            if (statusCount > 0) message += `📊 Изменения статусов: ${statusCount}\n`;
-                            if (commentCount > 0) message += `💬 Новые комментарии: ${commentCount}\n`;
-
-                            Swal.fire({
-                                icon: 'info',
-                                title: '📡 Новые уведомления',
-                                text: message,
-                                position: 'top-end',
-                                showConfirmButton: true,
-                                confirmButtonText: '📋 Показать уведомления',
-                                timer: 6000,
-                                timerProgressBar: true,
-                                toast: true
-                            }).then((result) => {
-                                if (result.isConfirmed) {
-                                    window.location.href = "{{ url_for('main.my_notifications') }}";
-                                }
-                            });
-
-                            // Воспроизводим звук
-                            try {
-                                const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
-                                audio.volume = 0.5;
-                                audio.play().catch(console.warn);
-                            } catch (e) {
-                                console.warn('[Polling] Не удалось воспроизвести звук:', e);
-                            }
-                        }
-                    } else {
-                        console.log('[Polling] Виджет закрыт и нет новых уведомлений - не открываем автоматически');
-                    }
-                } else {
-                        // Fallback если функция showNotificationsWidget недоступна
-                        console.warn('[Polling] Функция showNotificationsWidget недоступна, используем legacy уведомление');
-
-                        const statusCount = notifications.status_notifications.length;
-                        const commentCount = notifications.comment_notifications.length;
-                        let message = '📬 Новые уведомления:\n';
-                        if (statusCount > 0) message += `📊 Изменения статусов: ${statusCount}\n`;
-                        if (commentCount > 0) message += `💬 Новые комментарии: ${commentCount}\n`;
-
-                        Swal.fire({
-                            icon: 'info',
-                            title: '📡 Новые уведомления',
-                            text: message,
-                            position: 'top-end',
-                            showConfirmButton: true,
-                            confirmButtonText: '📋 Показать уведомления',
-                            timer: 6000,
-                            timerProgressBar: true,
-                            toast: true
-                        }).then((result) => {
-                            if (result.isConfirmed) {
-                                window.location.href = "{{ url_for('main.my_notifications') }}";
-                            }
-                        });
-
-                        // Воспроизводим звук
-                        try {
-                            const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
-                            audio.volume = 0.5;
-                            audio.play().catch(console.warn);
-                        } catch (e) {
-                            console.warn('[Polling] Не удалось воспроизвести звук:', e);
+                        // Автоматически разворачиваем виджет при новых уведомлениях
+                        if (typeof window.modernNotificationsWidget !== 'undefined' &&
+                            typeof window.modernNotificationsWidget.showWidget === 'function') {
+                            window.modernNotificationsWidget.showWidget();
                         }
                     }
                 }

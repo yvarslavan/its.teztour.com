@@ -301,10 +301,15 @@ def update_task_status(task_id):
     API для изменения статуса задачи через Redmine REST API
     """
     current_app.logger.info(f"[API] PUT /task/{task_id}/status - запрос от {current_user.username}")
+    current_app.logger.info(f"[API] Заголовки запроса: {dict(request.headers)}")
+    current_app.logger.info(f"[API] Данные запроса: {request.get_json()}")
     start_time = time.time()
 
     try:
+        current_app.logger.info(f"[API] Проверка прав доступа: current_user.is_redmine_user = {current_user.is_redmine_user}")
+
         if not current_user.is_redmine_user:
+            current_app.logger.error(f"[API] Доступ запрещен для пользователя {current_user.username}")
             return jsonify({
                 "error": "Доступ запрещен",
                 "success": False

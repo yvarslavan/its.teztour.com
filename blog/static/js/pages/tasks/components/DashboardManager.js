@@ -20,6 +20,7 @@ class DashboardManager {
         console.log('[DashboardManager] 🚀 Инициализация менеджера дашбордов');
         this.setupEventListeners();
         this.loadDashboardData();
+        this.restoreViewFromURL();
     }
 
     setupEventListeners() {
@@ -36,24 +37,74 @@ class DashboardManager {
         this.setupKanbanDragDrop();
     }
 
+    restoreViewFromURL() {
+        // Проверяем URL параметры для восстановления режима просмотра
+        const urlParams = new URLSearchParams(window.location.search);
+        const viewParam = urlParams.get('view');
+
+        console.log(`[DashboardManager] 🔍 Проверка восстановления режима просмотра`);
+        console.log(`[DashboardManager] 📋 URL параметры:`, Object.fromEntries(urlParams.entries()));
+        console.log(`[DashboardManager] 💾 sessionStorage:`, Object.fromEntries(Object.entries(sessionStorage)));
+
+        if (viewParam && ['list', 'kanban'].includes(viewParam)) {
+            console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из URL: ${viewParam}`);
+
+            // Небольшая задержка для полной загрузки DOM
+            setTimeout(() => {
+                this.switchView(viewParam);
+            }, 100);
+        } else {
+            // Проверяем сохраненный режим в sessionStorage
+            const savedView = sessionStorage.getItem('return_from_task_view');
+            console.log(`[DashboardManager] 🔍 Сохраненный режим из sessionStorage: ${savedView}`);
+
+            if (savedView && ['list', 'kanban'].includes(savedView)) {
+                console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из sessionStorage: ${savedView}`);
+
+                setTimeout(() => {
+                    this.switchView(savedView);
+                }, 100);
+            } else {
+                console.log(`[DashboardManager] ⚠️ Режим просмотра не найден, используем 'list' по умолчанию`);
+            }
+        }
+    }
+
     switchView(view) {
         console.log(`[DashboardManager] 🔄 Переключение на вид: ${view}`);
 
         // Обновляем активную кнопку
-        document.querySelectorAll('.view-toggle-btn').forEach(btn => {
+        const allButtons = document.querySelectorAll('.view-toggle-btn');
+        console.log(`[DashboardManager] 🔍 Найдено кнопок переключения: ${allButtons.length}`);
+
+        allButtons.forEach(btn => {
             btn.classList.remove('active');
+            console.log(`[DashboardManager] 🔧 Убрана активность с кнопки: ${btn.dataset.view}`);
         });
-        document.querySelector(`[data-view="${view}"]`).classList.add('active');
+
+        const targetButton = document.querySelector(`[data-view="${view}"]`);
+        if (targetButton) {
+            targetButton.classList.add('active');
+            console.log(`[DashboardManager] ✅ Установлена активность на кнопку: ${view}`);
+        } else {
+            console.error(`[DashboardManager] ❌ Кнопка для вида не найдена: ${view}`);
+        }
 
         // Скрываем/показываем соответствующие секции
         this.toggleDashboardSections(view);
 
         this.currentView = view;
+
+        // Сохраняем режим просмотра в sessionStorage
+        sessionStorage.setItem('return_from_task_view', view);
+        console.log(`[DashboardManager] 💾 Сохранен режим просмотра: ${view}`);
     }
 
     toggleDashboardSections(view) {
+        console.log(`[DashboardManager] 🔄 Переключение секций на вид: ${view}`);
+
         const sections = {
-            'list': ['#tasks-table-container'],
+            'list': ['.table-container'],
             'kanban': ['.kanban-board'],
             'analytics': ['.analytics-dashboard'],
             'priority': ['.priority-dashboard'],
@@ -65,6 +116,9 @@ class DashboardManager {
             const element = document.querySelector(selector);
             if (element) {
                 element.style.display = 'none';
+                console.log(`[DashboardManager] 👁️ Скрыта секция: ${selector}`);
+            } else {
+                console.log(`[DashboardManager] ⚠️ Секция не найдена: ${selector}`);
             }
         });
 
@@ -73,6 +127,9 @@ class DashboardManager {
             const element = document.querySelector(selector);
             if (element) {
                 element.style.display = 'block';
+                console.log(`[DashboardManager] ✅ Показана секция: ${selector}`);
+            } else {
+                console.error(`[DashboardManager] ❌ Секция не найдена: ${selector}`);
             }
         });
     }
@@ -81,13 +138,13 @@ class DashboardManager {
         try {
             console.log('[DashboardManager] 📊 Загрузка данных для дашбордов');
 
-            // Загружаем данные для всех дашбордов
-            await Promise.all([
-                this.loadKanbanData(),
-                this.loadAnalyticsData(),
-                this.loadPriorityData(),
-                this.loadProjectsData()
-            ]);
+            // Пока отключаем загрузку несуществующих API endpoints
+            // await Promise.all([
+            //     this.loadKanbanData(),
+            //     this.loadAnalyticsData(),
+            //     this.loadPriorityData(),
+            //     this.loadProjectsData()
+            // ]);
 
         } catch (error) {
             console.error('[DashboardManager] ❌ Ошибка загрузки данных:', error);
@@ -376,5 +433,3 @@ class DashboardManager {
 document.addEventListener('DOMContentLoaded', () => {
     window.dashboardManager = new DashboardManager();
 });
-
-export default DashboardManager;
