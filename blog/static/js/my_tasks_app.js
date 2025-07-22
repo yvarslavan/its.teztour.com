@@ -295,7 +295,7 @@ const MyTasksApp = {
                 }
             ],
             language: {
-                "processing": "Обработка...",
+                "processing": "🚀 Загрузка данных...",
                 "search": "Поиск:",
                 "lengthMenu": "Показать _MENU_ записей",
                 "info": "Записи с _START_ до _END_ из _TOTAL_ записей",
@@ -373,6 +373,11 @@ const MyTasksApp = {
             // Сохраняем текущую страницу DataTable
             const currentPage = this.state.dataTable.page();
             sessionStorage.setItem('return_from_task_page', currentPage);
+
+            // Сохраняем текущий режим просмотра
+            const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+            sessionStorage.setItem('return_from_task_view', currentView);
+            console.log(`[MyTasksApp] 💾 Сохранен режим просмотра при переходе в детали: ${currentView}`);
         });
     },
 

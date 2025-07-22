@@ -92,11 +92,28 @@
 /* ИСПРАВЛЕНИЕ: Добавляем класс для скрытия виджета при первичной загрузке */
 .modern-notifications-widget.initial-hidden {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
 }
 
 /* Дополнительные стили для предотвращения мигания */
 .modern-notifications-widget.closed {
     display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+/* Дополнительная защита от мигания */
+.modern-notifications-widget.initial-hidden {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.modern-notifications-widget.show {
+    display: flex !important;
+    visibility: visible !important;
+    opacity: 1 !important;
 }
 
 @keyframes slideInFromRight {
@@ -926,6 +943,12 @@ try {
 
     class ModernNotificationsWidget {
         constructor() {
+            // Проверяем, не инициализирован ли уже виджет
+            if (window.notificationsWidgetInitialized) {
+                console.log('[ModernWidget] ⚠️ Виджет уже инициализирован, пропускаем повторную инициализацию');
+                return;
+            }
+
             try {
                 this.widget = document.getElementById('modern-notifications-widget');
                 this.list = document.getElementById('notifications-list');
@@ -957,6 +980,8 @@ try {
                 this.startPolling();
 
                 console.log('[ModernWidget] ✅ Инициализация завершена');
+                // Устанавливаем флаг инициализации
+                window.notificationsWidgetInitialized = true;
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в конструкторе:', error);
                 if (this.widget) {
@@ -1281,12 +1306,12 @@ try {
                     localStorage.removeItem('notificationsWidgetClosedByUser');
                 }
 
-                this.widget.style.display = 'flex';
-                this.widget.style.visibility = 'visible';
-                this.widget.style.opacity = '1';
-                this.widget.style.width = '480px';
-                this.widget.classList.remove('hidden', 'closed');
-                this.hideRestoreButton();
+                // По умолчанию скрываем виджет - он покажется только при наличии уведомлений
+                this.widget.classList.add('closed', 'initial-hidden');
+                this.widget.style.display = 'none';
+                this.widget.style.visibility = 'hidden';
+                this.widget.style.opacity = '0';
+                this.showRestoreButton();
 
                 if (isMinimized) {
                     console.log('[ModernWidget] 📏 Восстанавливаем свернутое состояние');
@@ -1981,7 +2006,6 @@ try {
 
     function initializeWidget() {
         try {
-            setTimeout(() => {
                 try {
                     const widget = document.getElementById('modern-notifications-widget');
                     const list = document.getElementById('notifications-list');
@@ -1997,8 +2021,11 @@ try {
                         return;
                     }
 
-                    notificationsWidget = new ModernNotificationsWidget();
-                    window.notificationsWidget = notificationsWidget;
+                    // Проверяем, не создан ли уже виджет
+                    if (!notificationsWidget) {
+                        notificationsWidget = new ModernNotificationsWidget();
+                        window.notificationsWidget = notificationsWidget;
+                    }
                     window.testNotificationSound = () => {
                         console.log('🔊 Тестирование звука уведомления...');
                         notificationsWidget.playNotificationSound();
@@ -2015,7 +2042,6 @@ try {
                         widget.style.display = 'flex';
                     }
                 }
-            }, 100);
 
         } catch (error) {
             console.error('[ModernWidget] ❌ Критическая ошибка инициализации виджета:', error);
@@ -2394,20 +2420,81 @@ try {
             console.log('[ModernWidget] 🔔 Показ виджета через глобальную функцию...');
             const widget = document.getElementById('modern-notifications-widget');
             if (widget) {
+                // Принудительно убираем все классы скрытия
                 widget.classList.remove('closed', 'hidden', 'initial-hidden');
+                widget.classList.add('show');
+
+                // Принудительно устанавливаем стили
                 widget.style.display = 'flex';
                 widget.style.visibility = 'visible';
                 widget.style.opacity = '1';
                 widget.style.transform = 'translateX(0)';
                 widget.style.width = '480px';
+                widget.style.position = 'fixed';
+                widget.style.top = '120px';
+                widget.style.right = '20px';
+                widget.style.zIndex = '999999';
+
                 localStorage.setItem('notificationsWidgetClosed', 'false');
                 // Сбрасываем флаг "закрыт пользователем" при ручном открытии
                 localStorage.removeItem('notificationsWidgetClosedByUser');
-                window.hideRestoreButton();
+
+                if (window.hideRestoreButton) {
+                    window.hideRestoreButton();
+                }
+
                 console.log('[ModernWidget] ✅ Виджет показан через глобальную функцию');
             }
         } catch (error) {
             console.error('[ModernWidget] ❌ Ошибка показа виджета:', error);
+        }
+    };
+
+    // Функция для экстренного восстановления виджета
+    window.emergencyShowWidget = () => {
+        try {
+            console.log('[ModernWidget] 🚨 ЭКСТРЕННОЕ ВОССТАНОВЛЕНИЕ ВИДЖЕТА...');
+            const widget = document.getElementById('modern-notifications-widget');
+            if (widget) {
+                // Полностью сбрасываем все стили и классы
+                widget.className = 'modern-notifications-widget show';
+                widget.style.cssText = `
+                    position: fixed !important;
+                    top: 120px !important;
+                    right: 20px !important;
+                    width: 480px !important;
+                    min-width: 400px !important;
+                    max-width: 600px !important;
+                    max-height: 600px !important;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 24px !important;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                    z-index: 999999 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    pointer-events: auto !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    resize: horizontal !important;
+                    overflow: hidden !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    transform: translateX(0) !important;
+                `;
+
+                localStorage.setItem('notificationsWidgetClosed', 'false');
+                localStorage.removeItem('notificationsWidgetClosedByUser');
+
+                if (window.hideRestoreButton) {
+                    window.hideRestoreButton();
+                }
+
+                console.log('[ModernWidget] ✅ Виджет экстренно восстановлен');
+            }
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка экстренного восстановления:', error);
         }
     };
 

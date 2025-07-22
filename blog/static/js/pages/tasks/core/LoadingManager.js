@@ -290,7 +290,7 @@ class LoadingManager {
       const isProcessing = e.detail?.processing;
 
       if (isProcessing) {
-        this.show(this.STATES.TABLE, 'Обработка данных...');
+        this.show(this.STATES.TABLE, '🚀 Загрузка данных...');
       } else {
         this.hide(this.STATES.TABLE);
       }

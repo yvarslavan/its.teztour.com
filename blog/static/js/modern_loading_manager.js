@@ -154,7 +154,7 @@
                 } else if (this.currentProgress < 60) {
                     this.updateStatus('Загрузка данных');
                 } else if (this.currentProgress < 90) {
-                    this.updateStatus('Обработка информации');
+                    this.updateStatus('🚀 Обработка информации');
                 }
             }, 100);
         },

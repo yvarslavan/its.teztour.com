@@ -513,7 +513,7 @@ def get_my_tasks_statistics_optimized():
                 status_mapping[status.id] = 'new'
                 logger.debug(f"Статус '{status.name}' классифицирован как NEW")
             # CLOSED (завершенные задачи)
-            elif any(keyword in status_name_lower for keyword in ['закрыт', 'закрыта', 'closed', 'выполнена', 'выполнен', 'отклонена', 'отклонен', 'done']):
+            elif any(keyword in status_name_lower for keyword in ['закрыт', 'закрыта', 'closed', 'отклонена', 'отклонен', 'перенаправлена', 'перенаправлен']):
                 status_mapping[status.id] = 'closed'
                 logger.debug(f"Статус '{status.name}' классифицирован как CLOSED")
             # IN_PROGRESS (все остальные - задачи в процессе работы)
