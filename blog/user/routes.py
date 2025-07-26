@@ -9,7 +9,7 @@ from apscheduler.jobstores.base import JobLookupError
 import oracledb
 import sqlalchemy
 from sqlalchemy import func, or_, text
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import pytz
 from flask import (
     Blueprint,
@@ -23,6 +23,7 @@ from flask import (
     send_file,
     jsonify,
     app,
+    Response,
 )
 import requests
 from flask_login import current_user, logout_user, login_required, login_user, AnonymousUserMixin
@@ -122,6 +123,13 @@ def register():
                 oracle_connection, form.username.data, form.password.data
             )
 
+            # Проверяем, что данные получены успешно
+            if user_erp_data is None:
+                flash("Неверные учетные данные или ошибка подключения к ERP", "error")
+                return render_template(
+                    "register.html", form=form, title="Регистрация", legend="Регистрация"
+                )
+
             # Проверяем это пользовтель Redmine ? Если да, в поле is_redmine_user пишем True и в поле id_redmine_user id_user Redmine
             user_redmine_status, user_redmine_id = check_redmine_user(user_erp_data[2])
             # email
@@ -172,14 +180,18 @@ def connect_to_database():
 
 
 def check_redmine_user(email):
-    with connect_to_database() as conn:
-        if conn is not None:
-            check_user_redmine = check_user_active_redmine(conn, email)
-            if check_user_redmine == 4:
-                return False, check_user_redmine
-            return True, check_user_redmine
+    conn = connect_to_database()
+    if conn is None:
         # Обработка ситуации, когда соединение не установлено
-        raise ConnectionError("Не удалось установить соединение с базой данных.")
+        return False, None
+
+    try:
+        check_user_redmine = check_user_active_redmine(conn, email)
+        if check_user_redmine == 4:
+            return False, check_user_redmine
+        return True, check_user_redmine
+    finally:
+        conn.close()
 
 
 @users.route("/login", methods=["GET", "POST"])
@@ -245,7 +257,7 @@ def check_and_update_password(user, provided_password):
             oracle_connection.close()
 
 
-def handle_successful_login(user: User, form: LoginForm) -> redirect:
+def handle_successful_login(user: User, form: LoginForm):
     try:
         session_maker = sessionmaker(bind=db.engine)
         local_session = session_maker()
@@ -440,10 +452,29 @@ def account():
         if "user_password_erp" in session:
             user_password_erp = session["user_password_erp"]
         else:
-            user_password_erp = None
+            # Если пароль не в сессии, попробуем получить его из Oracle
+            try:
+                oracle_connection = connect_oracle(
+                    db_host, db_port, db_service_name, db_user_name, db_password
+                )
+                if oracle_connection:
+                    user_password_erp = get_user_erp_password(oracle_connection, current_user.username)
+                    if user_password_erp:
+                        session["user_password_erp"] = user_password_erp
+                        session.modified = True
+                    oracle_connection.close()
+                else:
+                    user_password_erp = None
+            except Exception as e:
+                current_app.logger.error(f"Ошибка при получении пароля из Oracle: {e}")
+                user_password_erp = None
 
         # Получаем пользователя через текущую сессию
         user_obj = db.session.query(User).filter_by(username=current_user.username).first()
+        if user_obj is None:
+            flash("Ошибка: пользователь не найден", "error")
+            return redirect(url_for("users.login"))
+
         form = UpdateAccountForm()
 
         if request.method == "GET":
@@ -483,6 +514,7 @@ def account():
             user_obj=user_obj,  # user_obj используется в шаблоне для подписи
             current_user=current_user,  # Оставляем для обратной совместимости, если где-то используется
             user=current_user,  # Добавляем current_user как 'user'
+            user_password_erp=user_password_erp,  # Передаем пароль ERP в шаблон
             default_office=user_obj.office if user_obj else "",
             default_email=user_obj.email if user_obj else "",
             default_department=user_obj.department if user_obj else "",
@@ -588,11 +620,14 @@ def delete_user(username):
 
             flash(f"Пользователь {username} был удалён!", "info")
             return redirect(url_for(USERS_ACCOUNT_URL))
-    except sqlalchemy.exc.IntegrityError:
+    except IntegrityError:
         flash(f"У пользователя {username} есть контент!", "warning")
         return redirect(url_for(USERS_ACCOUNT_URL))
     except FileNotFoundError:
         return redirect(url_for(USERS_ACCOUNT_URL))
+
+    # Добавляем явный возврат для всех случаев
+    return redirect(url_for(USERS_ACCOUNT_URL))
 
 
 def set_last_seen_time(user, timezone_str):
@@ -668,7 +703,7 @@ def download_erp():
             mimetype="application/vnd.microsoft.portable-executable",
         )
 
-        response.headers["Content-Length"] = file_size
+        response.headers["Content-Length"] = str(file_size)
         response.headers["Content-Type"] = "application/vnd.microsoft.portable-executable"
 
         logger.info("File download initiated successfully")
@@ -733,6 +768,9 @@ def send_password():
             "Send": "Отправить мне Пароль",
         }
         response = send_request(payload)
+
+        if response is None:
+            return jsonify({"message": "Ошибка при отправке запроса"}), 500
 
         if "Ваш пароль отправлен по E-mail" in response.text:
             print("Письмо с восстановлением пароля отправлено на:", username)
@@ -885,8 +923,8 @@ def auth_status():
         'is_authenticated': current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else False,
         'user_id': current_user.id if hasattr(current_user, 'id') and current_user.is_authenticated else None,
         'session_keys': list(session.keys()) if session else [],
-        'secure_cookie': app.config.get('SESSION_COOKIE_SECURE', False),
-        'samesite_setting': app.config.get('SESSION_COOKIE_SAMESITE', None)
+        'secure_cookie': current_app.config.get('SESSION_COOKIE_SECURE', False),
+        'samesite_setting': current_app.config.get('SESSION_COOKIE_SAMESITE', None)
     })
 
 
@@ -965,8 +1003,42 @@ def system_status():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 
+@users.route("/refresh_password", methods=["POST"])
+@login_required
+def refresh_password():
+    """Обновляет пароль ERP из Oracle и возвращает его"""
+    try:
+        oracle_connection = connect_oracle(
+            db_host, db_port, db_service_name, db_user_name, db_password
+        )
+        if oracle_connection is None:
+            return jsonify({"success": False, "message": "Не удалось подключиться к Oracle"}), 500
+
+        try:
+            user_password_erp = get_user_erp_password(oracle_connection, current_user.username)
+            if user_password_erp:
+                # Обновляем пароль в сессии
+                session["user_password_erp"] = user_password_erp
+                session.modified = True
+
+                # Обновляем пароль в базе данных
+                user = User.query.filter_by(username=current_user.username).first()
+                if user:
+                    user.password = user_password_erp
+                    db.session.commit()
+
+                return jsonify({"success": True, "password": user_password_erp})
+            else:
+                return jsonify({"success": False, "message": "Пароль не найден в Oracle"}), 404
+        finally:
+            oracle_connection.close()
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при обновлении пароля: {e}")
+        return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
+
+
 @users.route("/test_xmpp_message", methods=["GET"])
 @login_required
 def test_xmpp_message():
     # Этот роут будет удален или закомментирован
-    pass
+    return "Функция недоступна", 404

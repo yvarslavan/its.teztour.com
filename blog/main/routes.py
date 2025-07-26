@@ -1100,11 +1100,17 @@ def issue(issue_id):
 
 def handle_comment_submission(form, issue_id, redmine_connector):
     """Обработка добавления комментария.
-    Если текущий пользователь является пользователем Redmine, user_id устанавливаем в None,
-    в противном случае устанавливаем в ANONYMOUS_USER_ID.
+    Для пользователей Redmine используем их ID, для остальных - анонимный ID.
     """
     comment = form.comment.data
-    user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
+
+    # Для пользователей Redmine используем их ID, для остальных - анонимный ID
+    if current_user.is_redmine_user and hasattr(current_user, 'id_redmine_user') and current_user.id_redmine_user:
+        user_id = current_user.id_redmine_user
+    else:
+        user_id = ANONYMOUS_USER_ID
+
+    current_app.logger.info(f"[handle_comment_submission] Добавление комментария с user_id: {user_id}")
     success, message = redmine_connector.add_comment(
         issue_id=issue_id, notes=comment, user_id=user_id
     )
@@ -2655,10 +2661,14 @@ def get_comment_notifications():
 
 
 @main.route("/mark-comment-read/<int:journal_id>", methods=["POST"])
+@csrf.exempt
 @login_required
 def mark_comment_read(journal_id):
     try:
-        session = QualitySession()
+        session = get_quality_connection()
+        if session is None:
+            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
         session.execute(
             text("UPDATE journals SET is_read = 1 WHERE id = :id"), {"id": journal_id}
         )
@@ -2668,14 +2678,19 @@ def mark_comment_read(journal_id):
         logger.error(f"Ошибка при отметке комментария как прочитанного: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        session.close()
+        if session:
+            session.close()
 
 
 @main.route("/mark-all-comments-read", methods=["POST"])
+@csrf.exempt
 @login_required
 def mark_all_comments_read():
     try:
-        session = QualitySession()
+        session = get_quality_connection()
+        if session is None:
+            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
         session.execute(
             text(
                 "UPDATE journals SET is_read = 1 WHERE journalized_type = 'Issue' AND is_read = 0"
@@ -2687,7 +2702,8 @@ def mark_all_comments_read():
         logger.error(f"Ошибка при отметке всех комментариев как прочитанных: {str(e)}")
         return jsonify({"error": str(e)}), 500
     finally:
-        session.close()
+        if session:
+            session.close()
 
 
 @main.route("/get-countries")

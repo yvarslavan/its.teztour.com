@@ -44,16 +44,86 @@ from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_pagi
 from redminelib.exceptions import ResourceNotFoundError # Для обработки ошибок Redmine
 
 # Импорт формы для комментариев
-from blog.user.forms import AddCommentRedmine
+from blog.user.forms import AddCommentRedmine, SendEmailForm
+
+# Импорт для отправки email
+from blog.utils.email_sender import email_sender
+
+# Импорт для работы с конфигом
+from config import get
+
+# Импорт для работы с файлами
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 # Константы для анонимного пользователя (из main/routes.py)
 ANONYMOUS_USER_ID = 4  # ID анонимного пользователя в Redmine
+
+def get_support_email():
+    """
+    Получает email службы технической поддержки из конфига
+
+    Возвращает:
+        str: Email службы технической поддержки
+    """
+    try:
+        email = get('ender_email', 'sender_email')
+        if email is None:
+            current_app.logger.warning("❌ [CONFIG] Не удалось получить sender_email из конфига, используем fallback")
+            return 'help@tez-tour.com'
+        current_app.logger.info(f"✅ [CONFIG] Получен email из конфига: {email}")
+        return email
+    except Exception as e:
+        current_app.logger.error(f"❌ [CONFIG] Ошибка при получении sender_email: {e}")
+        return 'help@tez-tour.com'  # fallback
+
+def generate_email_signature():
+    """
+    email HTML подпись службы технической поддержки TEZ TOUR
+
+    Возвращает:
+        str: HTML код email подписи
+    """
+    email_signature = """
+    <div style="font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; color: #252525; line-height: 18px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #d1cdc7;">
+        <p style="text-align: justify;">
+            <ins>
+                <small>
+                    <em>
+                        Это автоматическое сообщение. Пожалуйста, дождитесь нашего ответа и не создавайте новые заявки, отправляя письма на
+                        <a href="mailto:help@tez-tour.com" target="_blank">help@tez-tour.com</a>, так как это может увеличить время обработки вашего запроса.<br>
+                        При ответах, пожалуйста, не изменяйте тему письма.
+                    </em>
+                </small>
+            </ins>
+        </p>
+        <p>
+            Вы также можете просмотреть и обработать свои заявки, зарегистрировавшись на ресурсе
+            <a href="https://its.tez-tour.com">https://its.tez-tour.com</a> с использованием вашего аккаунта TEZ ERP.
+        </p>
+        <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #eee; font-size: 12px; color: #666;">
+            <p style="margin: 0;">
+                <strong>Международный туроператор TEZ TOUR</strong><br>
+                <a href="http://www.tez-tour.com" target="_blank">www.tez-tour.com</a>
+            </p>
+        </div>
+    </div>
+    """
+    return email_signature
 
 def handle_task_comment_submission(form, task_id, redmine_connector):
     """Обработка добавления комментария к задаче.
     Аналогично handle_comment_submission из main/routes.py"""
     comment = form.comment.data
-    user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
+
+    # Для пользователей Redmine используем их ID, для остальных - анонимный ID
+    if current_user.is_redmine_user and hasattr(current_user, 'id_redmine_user') and current_user.id_redmine_user:
+        user_id = current_user.id_redmine_user
+    else:
+        user_id = ANONYMOUS_USER_ID
+
+    current_app.logger.info(f"[handle_task_comment_submission] Добавление комментария с user_id: {user_id}")
     success, message = redmine_connector.add_comment(
         issue_id=task_id, notes=comment, user_id=user_id
     )
@@ -191,8 +261,16 @@ def task_detail(task_id):
         flash("У вас нет доступа к этой функциональности.", "warning")
         return redirect(url_for(MY_TASKS_PAGE_ENDPOINT))
 
-    # Инициализация формы для комментариев
+    # Инициализация форм
     form = AddCommentRedmine()
+    email_form = SendEmailForm()
+
+    # Генерируем HTML подпись службы технической поддержки
+    email_signature_html = generate_email_signature()
+
+    # Получаем email службы технической поддержки
+    support_email = get_support_email()
+    current_app.logger.info(f"📧 [TASK_DETAIL] support_email для задачи {task_id}: {support_email}")
 
     try:
         # Получаем коннектор Redmine (без изменений)
@@ -214,7 +292,7 @@ def task_detail(task_id):
         # Получаем детали задачи (без изменений)
         task = redmine_conn_obj.redmine.issue.get(
             task_id,
-            include=['status', 'priority', 'project', 'tracker', 'author', 'assigned_to', 'journals', 'done_ratio', 'attachments', 'relations', 'watchers', 'changesets']
+            include=['status', 'priority', 'project', 'tracker', 'author', 'assigned_to', 'journals', 'done_ratio', 'attachments', 'relations', 'watchers', 'changesets', 'start_date', 'due_date', 'closed_on', 'easy_email_to', 'easy_email_cc']
         )
 
         # 🔧 Приводим old_value/new_value к строкам для безопасности шаблона
@@ -331,8 +409,11 @@ def task_detail(task_id):
                              convert_datetime_msk_format=convert_datetime_msk_format,
                              format_boolean_field=format_boolean_field,
                              get_property_name=get_property_name_fast,
-                             # ✅ Добавляем форму для комментариев
+                             # ✅ Добавляем формы
                              form=form,
+                             email_form=email_form,
+                             email_signature_html=email_signature_html,
+                             support_email=support_email,
                              clear_comment=True)
 
     except ResourceNotFoundError:
@@ -1597,7 +1678,13 @@ def add_task_comment_api(task_id):
         current_app.logger.info(f"[API] Добавление комментария к задаче {task_id}")
 
         # Добавляем комментарий
-        user_id = None if current_user.is_redmine_user else ANONYMOUS_USER_ID
+        # Для пользователей Redmine используем их ID, для остальных - анонимный ID
+        if current_user.is_redmine_user and hasattr(current_user, 'id_redmine_user') and current_user.id_redmine_user:
+            user_id = current_user.id_redmine_user
+        else:
+            user_id = ANONYMOUS_USER_ID
+
+        current_app.logger.info(f"[API] Добавление комментария с user_id: {user_id}")
         success, message = redmine_conn_obj.add_comment(
             issue_id=task_id, notes=comment, user_id=user_id
         )
@@ -2119,7 +2206,7 @@ def get_my_tasks_direct_sql():
                 base_query += " AND i.status_id NOT IN (5, 6, 14)"  # Исключаем закрытые статусы: Закрыта, Отклонена, Перенаправлена
 
             if view == 'kanban':
-                # Для Kanban получаем все задачи без ограничений
+                # Для Kanban получаем задачи с ограничением по 10 в каждом статусе
                 base_query += " ORDER BY i.updated_on DESC"
             else:
                 base_query += " ORDER BY i.updated_on DESC"
@@ -2172,44 +2259,48 @@ def get_my_tasks_direct_sql():
 
             current_app.logger.info(f"🔍 [DIRECT SQL] Получено задач: {len(tasks)}")
 
-                        # Для Kanban группируем задачи по статусам
+                        # Для Kanban группируем задачи по статусам с ограничением по 10
             if view == 'kanban':
-                active_tasks = []
-                closed_tasks = []
-
-                # Определяем закрытые статусы по названию
-                closed_status_names = ['Закрыта', 'Отклонена', 'Перенаправлена']
-
-                # Логируем все уникальные статусы для отладки
-                unique_statuses = set(task['status_name'] for task in tasks)
-                current_app.logger.info(f"🔍 [DIRECT SQL] Уникальные статусы в данных: {unique_statuses}")
+                # Группируем задачи по статусам
+                tasks_by_status = {}
 
                 for task in tasks:
-                    if task['status_name'] in closed_status_names:
-                        closed_tasks.append(task)
-                        current_app.logger.info(f"🔍 [DIRECT SQL] Задача {task['id']} ({task['status_name']}) добавлена в закрытые")
-                    else:
-                        active_tasks.append(task)
+                    status_id = task['status_id']
+                    if status_id not in tasks_by_status:
+                        tasks_by_status[status_id] = []
+                    tasks_by_status[status_id].append(task)
 
-                # Показываем все закрытые задачи для Kanban
-                original_closed_count = len(closed_tasks)
-                current_app.logger.info(f"🔍 [DIRECT SQL] Найдено закрытых задач: {original_closed_count}")
+                # Ограничиваем до 10 задач в каждом статусе
+                limited_tasks = []
+                status_counts = {}
 
-                # Всегда сортируем закрытые задачи по дате обновления (новые сначала)
-                closed_tasks.sort(key=lambda x: x['updated_on'] or '', reverse=True)
+                for status_id, status_tasks in tasks_by_status.items():
+                    # Сортируем по дате обновления (новые сначала)
+                    status_tasks.sort(key=lambda x: x['updated_on'] or '', reverse=True)
 
-                # Показываем все закрытые задачи без ограничений
-                current_app.logger.info(f"🔍 [DIRECT SQL] Показываем все {len(closed_tasks)} закрытых задач")
+                    # Берем только первые 10 задач
+                    limited_status_tasks = status_tasks[:10]
+                    limited_tasks.extend(limited_status_tasks)
 
-                tasks = active_tasks + closed_tasks
-                current_app.logger.info(f"🔍 [DIRECT SQL] Активных задач: {len(active_tasks)}, закрытых: {len(closed_tasks)}")
+                    # Сохраняем информацию о количестве
+                    status_counts[status_id] = {
+                        'shown': len(limited_status_tasks),
+                        'total': len(status_tasks)
+                    }
 
-            return jsonify({
+                current_app.logger.info(f"🔍 [DIRECT SQL] Ограничили задачи по статусам: {status_counts}")
+                tasks = limited_tasks
+
+            response_data = {
                 "success": True,
                 "data": tasks,
-                "recordsTotal": len(tasks),
-                "recordsFiltered": len(tasks)
-            })
+            }
+
+            # Добавляем информацию о количестве задач для Kanban
+            if view == 'kanban':
+                response_data["status_counts"] = status_counts
+
+            return jsonify(response_data)
 
         finally:
             cursor.close()
@@ -2300,3 +2391,169 @@ def test_closed_tasks_count():
     except Exception as e:
         current_app.logger.error(f"Ошибка в test_closed_tasks_count: {e}")
         return jsonify({"error": str(e)}), 500
+
+@tasks_bp.route("/upload_image", methods=["POST"])
+@login_required
+def upload_image():
+    """
+    Endpoint для загрузки изображений в TinyMCE
+    """
+    try:
+        if 'file' not in request.files:
+            return jsonify({"error": "Файл не найден"}), 400
+
+        file = request.files['file']
+        if file.filename == '':
+            return jsonify({"error": "Файл не выбран"}), 400
+
+                # Проверяем тип файла
+        allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'}
+        if not file.filename or not file.filename.lower().endswith(tuple('.' + ext for ext in allowed_extensions)):
+            return jsonify({"error": "Неподдерживаемый тип файла"}), 400
+
+        # Создаем уникальное имя файла
+        filename = secure_filename(file.filename or 'image')
+        unique_filename = f"{uuid.uuid4().hex}_{filename}"
+
+        # Создаем папку для загрузок если её нет
+        upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'email_images')
+        os.makedirs(upload_folder, exist_ok=True)
+
+        # Сохраняем файл
+        file_path = os.path.join(upload_folder, unique_filename)
+        file.save(file_path)
+
+        # Возвращаем URL для TinyMCE
+        image_url = url_for('static', filename=f'uploads/email_images/{unique_filename}')
+
+        return jsonify({"location": image_url})
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при загрузке изображения: {e}")
+        return jsonify({"error": "Ошибка при загрузке файла"}), 500
+
+@tasks_bp.route("/api/task/<int:task_id>/send-email", methods=["POST"])
+@login_required
+def send_task_email_api(task_id):
+    """API для отправки email из деталей задачи"""
+    try:
+        current_app.logger.info(f"📨 [API] Получен запрос на отправку email для задачи {task_id}")
+        current_app.logger.info(f"   Пользователь: {current_user.username}")
+
+        if not current_user.is_redmine_user:
+            current_app.logger.warning(f"⚠️ [API] Доступ запрещен для пользователя {current_user.username}")
+            return jsonify({"success": False, "error": "Доступ запрещен"}), 403
+
+        # Получаем данные из FormData
+        sender = request.form.get('sender', '').strip()
+        recipient = request.form.get('recipient', '').strip()
+        subject = request.form.get('subject', '').strip()
+        message = request.form.get('message', '').strip()
+        cc = request.form.get('cc', '').strip()
+        send_email = request.form.get('send_email', 'y') == 'y'
+
+        # Получаем файлы
+        attachments = request.files.getlist('attachments')
+        current_app.logger.info(f"📎 [API] Получено файлов: {len(attachments)}")
+
+        # Валидация обязательных полей
+        current_app.logger.info(f"🔍 [API] Валидация данных для задачи {task_id}")
+        current_app.logger.info(f"   Получатель: '{recipient}'")
+        current_app.logger.info(f"   Тема: '{subject}'")
+        current_app.logger.info(f"   Сообщение: '{message[:50]}...'")
+
+        if not recipient:
+            current_app.logger.error(f"❌ [API] Email получателя отсутствует для задачи {task_id}")
+            return jsonify({"success": False, "error": "Email получателя обязателен"}), 400
+        if not subject:
+            current_app.logger.error(f"❌ [API] Тема письма отсутствует для задачи {task_id}")
+            return jsonify({"success": False, "error": "Тема письма обязательна"}), 400
+        if not message:
+            current_app.logger.error(f"❌ [API] Текст сообщения отсутствует для задачи {task_id}")
+            return jsonify({"success": False, "error": "Текст сообщения обязателен"}), 400
+
+        # Если отправка email отключена, просто возвращаем успех
+        if not send_email:
+            return jsonify({
+                "success": True,
+                "message": "Email не отправлен (отправка отключена)"
+            })
+
+                # Отправляем email
+        current_app.logger.info(f"🚀 [API] Начинаем отправку email для задачи {task_id}")
+        current_app.logger.info(f"   Получатель: {recipient}")
+        current_app.logger.info(f"   Тема: {subject}")
+        current_app.logger.info(f"   CC: {cc}")
+        current_app.logger.info(f"   email_sender объект: {email_sender}")
+        current_app.logger.info(f"   email_sender тип: {type(email_sender)}")
+
+        try:
+            # Сохраняем файлы во временную папку
+            temp_files = []
+            if attachments:
+                import tempfile
+                import os
+                temp_dir = tempfile.gettempdir()
+
+                for attachment in attachments:
+                    if attachment.filename:
+                        # Создаем уникальное имя файла
+                        import uuid
+                        file_ext = os.path.splitext(attachment.filename)[1]
+                        temp_filename = f"email_attachment_{uuid.uuid4().hex}{file_ext}"
+                        temp_path = os.path.join(temp_dir, temp_filename)
+
+                        # Сохраняем файл
+                        attachment.save(temp_path)
+                        temp_files.append(temp_path)
+                        current_app.logger.info(f"📎 [API] Сохранен файл: {attachment.filename} -> {temp_path}")
+
+            success = email_sender.send_task_email(
+                task_id=task_id,
+                recipient=recipient,
+                subject=subject,
+                message=message,
+                cc=cc if cc else None,
+                attachments=temp_files if temp_files else None,
+                reply_to=sender if sender else None
+            )
+        except Exception as e:
+            current_app.logger.error(f"❌ [API] Ошибка при вызове send_task_email: {e}")
+            current_app.logger.error(f"   Traceback: {traceback.format_exc()}")
+            raise
+
+        current_app.logger.info(f"📧 [API] Результат отправки email для задачи {task_id}: {success}")
+
+        # Очищаем временные файлы
+        if 'temp_files' in locals():
+            import os
+            for temp_file in temp_files:
+                try:
+                    if os.path.exists(temp_file):
+                        os.remove(temp_file)
+                        current_app.logger.info(f"🗑️ [API] Удален временный файл: {temp_file}")
+                except Exception as e:
+                    current_app.logger.warning(f"⚠️ [API] Не удалось удалить временный файл {temp_file}: {e}")
+
+        if success:
+            current_app.logger.info(f"✅ [API] Email успешно отправлен для задачи {task_id} на {recipient}")
+            return jsonify({
+                "success": True,
+                "message": "Email успешно отправлен"
+            })
+        else:
+            current_app.logger.error(f"❌ [API] Ошибка при отправке email для задачи {task_id}")
+            return jsonify({
+                "success": False,
+                "error": "Ошибка при отправке email"
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"💥 [API] Критическая ошибка при отправке email для задачи {task_id}: {e}")
+        current_app.logger.error(f"   Traceback: {traceback.format_exc()}")
+        current_app.logger.error(f"   Тип ошибки: {type(e).__name__}")
+        current_app.logger.error(f"   Детали ошибки: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": f"Внутренняя ошибка сервера: {str(e)}"
+        }), 500

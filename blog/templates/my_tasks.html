@@ -698,8 +698,15 @@ if (typeof jQuery === 'undefined') {
 <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
 
 <!-- Кастомные JS для страницы -->
+                        <!-- Подключение стилей подсказок и всплывающих подсказок -->
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks/kanban-tips.css') }}?v={{ cache_buster or '1753017000' }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks/kanban-tooltips.css') }}?v={{ cache_buster or '1753017000' }}">
+
         <script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster or '1753017000' }}"></script>
         <script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanOnboarding.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTooltips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
         <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
         <script src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
 

@@ -4,7 +4,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, FileField
 from wtforms.fields.simple import TextAreaField
-from wtforms.validators import DataRequired, EqualTo, Length, ValidationError
+from wtforms.validators import DataRequired, EqualTo, Length, ValidationError, Optional, Email
 from blog.models import User
 from erp_oracle import (
     verify_credentials,
@@ -124,4 +124,42 @@ class AddCommentRedmine(FlaskForm):
     comment = TextAreaField(
         label="Заметка по задаче (переписка с исполнителем):",
         validators=[DataRequired()],
+    )
+
+
+class SendEmailForm(FlaskForm):
+    """Форма для отправки email из деталей задачи"""
+    sender = StringField(
+        label="От кого:",
+        validators=[DataRequired()],
+        render_kw={"readonly": True, "placeholder": "Email отправителя"}
+    )
+    recipient = StringField(
+        label="Кому:",
+        validators=[DataRequired()],
+        render_kw={"placeholder": "Введите email получателя"}
+    )
+    subject = StringField(
+        label="Тема:",
+        validators=[DataRequired()],
+        render_kw={"placeholder": "Введите тему письма"}
+    )
+    cc = StringField(
+        label="Копия (CC):",
+        validators=[Optional()],
+        render_kw={"placeholder": "Дополнительные получатели"}
+    )
+    message = TextAreaField(
+        label="Сообщение:",
+        validators=[DataRequired()],
+        render_kw={"rows": 8, "placeholder": "Введите текст сообщения...", "id": "emailMessageField"}
+    )
+    attachments = FileField(
+        label="Вложения:",
+        validators=[Optional()],
+        render_kw={"multiple": True}
+    )
+    send_email = BooleanField(
+        label="Отправить email",
+        default=True
     )

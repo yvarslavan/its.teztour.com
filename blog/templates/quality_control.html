@@ -530,6 +530,155 @@
         position: relative; /* Если еще не позиционирован */
         z-index: 10000 !important; /* Выше, чем у родителя */
     }
+
+    /* Стили для сайдбара комментариев */
+    .comment-sidebar {
+        position: fixed;
+        top: 0;
+        right: -400px;
+        width: 400px;
+        height: 100vh;
+        background: white;
+        box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+        z-index: 10001;
+        transition: right 0.3s ease;
+        overflow-y: auto;
+    }
+
+    .comment-sidebar.active {
+        right: 0;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        border-bottom: 1px solid #dee2e6;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #f8f9fa;
+    }
+
+    .sidebar-header h5 {
+        margin: 0;
+        color: #495057;
+    }
+
+    .sidebar-controls {
+        display: flex;
+        gap: 10px;
+    }
+
+    .clear-all-btn, .close-sidebar {
+        background: none;
+        border: none;
+        padding: 8px;
+        cursor: pointer;
+        border-radius: 4px;
+        transition: background-color 0.2s;
+    }
+
+    .clear-all-btn:hover, .close-sidebar:hover {
+        background-color: #e9ecef;
+    }
+
+    .sidebar-content {
+        padding: 20px;
+    }
+
+    .notification-item {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        margin-bottom: 15px;
+        padding: 15px;
+        background: white;
+        transition: box-shadow 0.2s;
+    }
+
+    .notification-item:hover {
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 10px;
+    }
+
+    .notification-title {
+        font-weight: 500;
+        color: #495057;
+        flex: 1;
+    }
+
+    .notification-date {
+        font-size: 0.85rem;
+        color: #6c757d;
+        white-space: nowrap;
+        margin-left: 10px;
+    }
+
+    .notification-content {
+        margin-bottom: 15px;
+        color: #495057;
+        line-height: 1.5;
+    }
+
+    .notification-actions {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .mark-read-btn {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+
+    .no-notifications {
+        text-align: center;
+        color: #6c757d;
+        padding: 40px 20px;
+        font-style: italic;
+    }
+
+    .floating-comments-button {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        padding: 6px 12px;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        border-radius: 20px;
+        color: white;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 123, 255, 0.2);
+        margin-left: 10px;
+    }
+
+    .floating-comments-button:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 123, 255, 0.3);
+    }
+
+    .floating-comments-button i {
+        margin-right: 6px;
+        font-size: 0.9rem;
+    }
+
+    .floating-comments-button .badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: bold;
+        margin-left: 5px;
+    }
 </style>
 {% endblock %}
 
@@ -3575,10 +3724,7 @@ function animateNotifications() {
     });
 }
 
-// Добавить после существующего кода updateCommentNotifications
-document.querySelector('.close-sidebar').addEventListener('click', () => {
-    document.getElementById('comment-sidebar').classList.remove('active');
-});
+
 
 // Показывать сайдбар при наличии новых комментариев
 function showCommentSidebar(count) {
@@ -3589,9 +3735,7 @@ function showCommentSidebar(count) {
 
 
 
-document.getElementById('showCommentSidebar').addEventListener('click', () => {
-    document.getElementById('comment-sidebar').classList.add('active');
-});
+
 
 // Добавьте этот код после функции updateCommentNotifications
 document.addEventListener('DOMContentLoaded', function() {
@@ -3668,8 +3812,58 @@ document.addEventListener('DOMContentLoaded', function() {
         updateCommentNotifications();
     });
 
+    // Обработчик кнопки закрытия сайдбара
+    const closeSidebarBtn = document.querySelector('.close-sidebar');
+    if (closeSidebarBtn) {
+        closeSidebarBtn.addEventListener('click', () => {
+            document.getElementById('comment-sidebar').classList.remove('active');
+        });
+    }
+
     // Периодическое обновление
     setInterval(updateCommentNotifications, 30000);
+
+    // Обработчик кнопки очистки всех комментариев
+    const clearAllBtn = document.getElementById('clearAllComments');
+    if (clearAllBtn) {
+        clearAllBtn.addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите отметить все комментарии как прочитанные?')) {
+                fetch('/mark-all-comments-read', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Очищаем контейнер уведомлений
+                        document.getElementById('comment-notifications').innerHTML =
+                            '<div class="no-notifications">Нет новых комментариев</div>';
+
+                        // Обновляем бейджи
+                        const badge = document.getElementById('comment-badge');
+                        const floatingBadge = document.getElementById('floating-comment-badge');
+                        if (badge) {
+                            badge.textContent = '0';
+                            badge.style.display = 'inline-block';
+                        }
+                        if (floatingBadge) {
+                            floatingBadge.textContent = '0';
+                            floatingBadge.style.display = 'inline-block';
+                        }
+
+                        // Обновляем счетчик
+                        previousCommentCount = 0;
+                        localStorage.setItem('qualityControl_previousNewCommentsCount', '0');
+                    }
+                })
+                .catch(error => console.error('Ошибка:', error));
+            }
+        });
+    }
 });
 
 // Функция для инициализации уведомлений
@@ -3709,37 +3903,7 @@ document.addEventListener('DOMContentLoaded', function() {
     initializeNotifications();
 });
 
-// Добавляем обработчик для кнопки очистки всех комментариев
-document.getElementById('clearAllComments').addEventListener('click', function() {
-    if (confirm('Вы уверены, что хотите отметить все комментарии как прочитанные?')) {
-        fetch('/mark-all-comments-read', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            credentials: 'include'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Очищаем контейнер уведомлений
-                document.getElementById('comment-notifications').innerHTML =
-                    '<div class="no-notifications">Нет новых комментариев</div>';
 
-                // Скрываем бейджи
-                const badge = document.getElementById('comment-badge');
-                const floatingBadge = document.getElementById('floating-comment-badge');
-                if (badge) badge.style.display = 'none';
-                if (floatingBadge) floatingBadge.style.display = 'none';
-
-                // Обновляем счетчик
-                previousCommentCount = 0;
-            }
-        })
-        .catch(error => console.error('Ошибка:', error));
-    }
-});
 
 document.addEventListener('DOMContentLoaded', function() {
     // Загружаем список стран для отчета

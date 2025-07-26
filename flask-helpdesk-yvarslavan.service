@@ -1,0 +1,34 @@
+[Unit]
+Description=Flask Helpdesk Application
+After=network.target
+
+[Service]
+Type=exec
+User=yvarslavan
+Group=yvarslavan
+WorkingDirectory=/opt/www/its.teztour.com
+Environment=PATH=/opt/www/its.teztour.com/venv/bin
+Environment=FLASK_ENV=production
+Environment=PYTHONPATH=/opt/www/its.teztour.com
+ExecStart=/opt/www/its.teztour.com/venv/bin/gunicorn \
+          --workers 3 --threads 2 --timeout 120 \
+          --bind unix:/run/gunicorn/gunicorn.sock \
+          wsgi:app
+ExecReload=/bin/kill -s HUP $MAINPID
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+# Директория для сокета создаём на старте, если ещё нет
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=yes
+
+# Red Hat специфические настройки
+# Обеспечиваем создание директории для сокета с правильными правами
+ExecStartPre=/bin/mkdir -p /run/gunicorn
+ExecStartPre=/bin/chown yvarslavan:yvarslavan /run/gunicorn
+
+[Install]
+WantedBy=multi-user.target

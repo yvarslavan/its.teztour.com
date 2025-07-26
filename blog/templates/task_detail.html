@@ -226,6 +226,265 @@
     background-color: #6c757d;
 }
 
+/* Стили для управления приоритетом */
+.task-priority-changer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+/* Отображение текущего приоритета */
+.current-priority {
+    margin-bottom: 15px;
+}
+
+.current-priority .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Бейджи приоритетов */
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    line-height: 1.4;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    color: #495057;
+    border: 1px solid rgba(206, 212, 218, 0.5);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.priority-badge::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    transition: left 0.5s ease;
+}
+
+.priority-badge:hover::before {
+    left: 100%;
+}
+
+.priority-badge:hover {
+    transform: translateY(-1px);
+    box-shadow:
+        0 4px 12px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Цветные стили для разных приоритетов */
+.priority-badge.priority-1,
+.priority-badge.priority-2 {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+    border-color: rgba(255, 193, 7, 0.6);
+    box-shadow:
+        0 2px 8px rgba(255, 193, 7, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-badge.priority-3,
+.priority-badge.priority-4 {
+    background: linear-gradient(135deg, #f8d7da 0%, #f5c6cb 100%);
+    color: #721c24;
+    border-color: rgba(220, 53, 69, 0.6);
+    box-shadow:
+        0 2px 8px rgba(220, 53, 69, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-badge.priority-5,
+.priority-badge.priority-6 {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+    border-color: rgba(23, 162, 184, 0.6);
+    box-shadow:
+        0 2px 8px rgba(23, 162, 184, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.priority-badge.priority-none {
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    color: #6c757d;
+    border-color: rgba(108, 117, 125, 0.6);
+    box-shadow:
+        0 2px 8px rgba(108, 117, 125, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+/* Форма изменения приоритета */
+.priority-change-form {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+}
+
+.priority-change-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Селект для выбора приоритета */
+#new-priority-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Кнопка изменения приоритета */
+#change-priority-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+#change-priority-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#change-priority-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #6c757d;
+}
+
+/* Стили для управления исполнителем */
+.task-assignee-changer {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+/* Отображение текущего исполнителя */
+.current-assignee {
+    margin-bottom: 15px;
+}
+
+.current-assignee .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Аватар пользователя */
+.user-avatar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 8px;
+}
+
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 16px;
+    color: white;
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    border: 2px solid rgba(255, 255, 255, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+.avatar-circle.assigned {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.avatar-circle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.user-name {
+    font-weight: 500;
+    color: #495057;
+    font-size: 0.95rem;
+}
+
+/* Форма изменения исполнителя */
+.assignee-change-form {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+}
+
+.assignee-change-form .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Селект для выбора исполнителя */
+#new-assignee-select {
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    padding: 8px 12px;
+    font-size: 0.875rem;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+/* Кнопка изменения исполнителя */
+#change-assignee-btn {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+}
+
+#change-assignee-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+#change-assignee-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: #6c757d;
+}
+
 /* Поле комментария */
 #status-comment {
     border-radius: 6px;
@@ -467,11 +726,11 @@
             </div>
           </div>
 
-          <!-- Status Change Section -->
+          <!-- Status and Priority Management Section -->
           <div class="detail-section">
             <h3 class="section-title">
               <i class="fas fa-sync-alt"></i>
-              Управление статусом
+              Управление статусом и приоритетом
             </h3>
             <div class="detail-items">
               <div class="detail-item status-management">
@@ -482,6 +741,22 @@
                   <span class="detail-label">Статус задачи</span>
                   <div id="task-status-container">
                     <!-- Здесь будет вставлен функционал изменения статуса через JavaScript -->
+                    <div class="loading-placeholder">
+                      <i class="fas fa-spinner fa-spin"></i>
+                      <span>Загрузка...</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="detail-item priority-management">
+                <div class="detail-icon">
+                  <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Приоритет задачи</span>
+                  <div id="task-priority-container">
+                    <!-- Здесь будет вставлен функционал изменения приоритета через JavaScript -->
                     <div class="loading-placeholder">
                       <i class="fas fa-spinner fa-spin"></i>
                       <span>Загрузка...</span>
@@ -519,16 +794,39 @@
                 </div>
                 <div class="detail-content">
                   <span class="detail-label">Исполнитель</span>
-                  {% if task.assigned_to %}
-                    <div class="user-avatar">
-                      <div class="avatar-circle assigned">{{ task.assigned_to.name[0] if task.assigned_to.name else 'U' }}</div>
-                      <span class="user-name">{{ task.assigned_to.name }}</span>
+                  <div id="task-assignee-container">
+                    <!-- Здесь будет вставлен функционал изменения исполнителя через JavaScript -->
+                    <div class="loading-placeholder">
+                      <i class="fas fa-spinner fa-spin"></i>
+                      <span>Загрузка...</span>
                     </div>
-                  {% else %}
-                    <span class="detail-value no-data">Не назначен</span>
-                  {% endif %}
+                  </div>
                 </div>
               </div>
+
+              {% if task.easy_email_to %}
+              <div class="detail-item">
+                <div class="detail-icon">
+                  <i class="fas fa-envelope"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Email to</span>
+                  <a href="mailto:{{ task.easy_email_to }}" class="email-link">{{ task.easy_email_to }}</a>
+                </div>
+              </div>
+              {% endif %}
+
+              {% if task.easy_email_cc %}
+              <div class="detail-item">
+                <div class="detail-icon">
+                  <i class="fas fa-envelope-square"></i>
+                </div>
+                <div class="detail-content">
+                  <span class="detail-label">Email cc</span>
+                  <span class="email-cc">{{ task.easy_email_cc }}</span>
+                </div>
+              </div>
+              {% endif %}
             </div>
           </div>
 
@@ -563,9 +861,22 @@
               <div class="timeline-item">
                 <div class="timeline-dot deadline"></div>
                 <div class="timeline-content">
-                  <span class="timeline-label">Крайний срок</span>
+                  <span class="timeline-label">Окончание</span>
                   <div class="timeline-date">
                     <span class="date-main">{{ task.due_date.strftime('%d %B %Y') }}</span>
+                  </div>
+                </div>
+              </div>
+              {% endif %}
+
+              {% if task.closed_on %}
+              <div class="timeline-item">
+                <div class="timeline-dot closed"></div>
+                <div class="timeline-content">
+                  <span class="timeline-label">Закрыто</span>
+                  <div class="timeline-date">
+                    <span class="date-main">{{ task.closed_on.strftime('%d %B %Y') }}</span>
+                    <span class="date-time">{{ task.closed_on.strftime('%H:%M') }}</span>
                   </div>
                 </div>
               </div>
@@ -678,10 +989,16 @@
       <div class="card-content" id="history-content">
         <!-- Форма для добавления комментария -->
         <div class="comment-section">
-          <button class="comment-button" onclick="toggleCommentInput()">
-            <i class="fas fa-plus-circle"></i>
-            <span>Добавить комментарий</span>
-          </button>
+          <div style="display: flex; gap: 15px; align-items: center; margin-bottom: 15px;">
+            <button class="comment-button" onclick="toggleCommentInput()" style="flex: 1;">
+              <i class="fas fa-plus-circle"></i>
+              <span>Добавить комментарий</span>
+            </button>
+            <button class="email-button" onclick="toggleEmailInput()" style="flex: 1;">
+              <i class="fas fa-envelope"></i>
+              <span>Отправить email</span>
+            </button>
+          </div>
           <form id="commentForm" action="" method="POST" enctype="multipart/form-data" class="comment-form">
             {{ form.hidden_tag() }}
             <div class="form-group">
@@ -696,6 +1013,78 @@
               <button type="button" onclick="submitCommentAjax(event)" class="submit-button" id="submitBtn">
                 <i class="fas fa-paper-plane"></i>
                 <span>Отправить</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- Форма для отправки email -->
+        <div class="email-section">
+          <form id="emailForm" class="email-form" style="display: none;">
+            {{ email_form.hidden_tag() }}
+
+            <div class="email-form-grid">
+              <div class="form-group">
+                {{ email_form.sender.label(class="form-label") }}
+                {{ email_form.sender(class="form-control", value=support_email) }}
+                <!-- DEBUG: support_email = {{ support_email }} -->
+              </div>
+
+              <div class="form-group">
+                {{ email_form.recipient.label(class="form-label") }}
+                {{ email_form.recipient(class="form-control", value=task.easy_email_to or '') }}
+              </div>
+
+              <div class="form-group">
+                {{ email_form.subject.label(class="form-label") }}
+                {{ email_form.subject(class="form-control", value="Задача #" + task.id|string + " - " + task.subject) }}
+              </div>
+
+              <div class="form-group">
+                {{ email_form.cc.label(class="form-label") }}
+                {{ email_form.cc(class="form-control") }}
+              </div>
+
+                          <div class="form-group full-width">
+                {{ email_form.message.label(class="form-label") }}
+                {{ email_form.message(class="form-control", id="emailMessageField", style="display: none;") }}
+                <div id="quillEditor" style="margin-top: 10px; margin-bottom: 15px; min-height: 200px; border: 1px solid #ccc; border-radius: 4px;"></div>
+            </div>
+
+                          <div class="form-group full-width">
+                <div style="margin-bottom: 15px;">
+                  <input type="file" id="fileInput" name="attachments" multiple="multiple" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Отдельная секция файлов вне контейнера сообщений -->
+            <div id="fileSection" style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 5px; border: 1px solid #e9ecef;">
+                <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                  <div style="flex: 1;">
+                    <div id="fileList" style="color: #6c757d; font-size: 14px; margin-bottom: 5px; word-wrap: break-word; word-break: break-word;">Файл не выбран</div>
+                  </div>
+                  <button type="button" id="fileButton" style="width: 40px; height: 40px; border: 3px solid #ff6b35; border-radius: 50%; background-color: #ff6b35; color: white; cursor: pointer; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(255,107,53,0.5); transition: all 0.3s ease; font-weight: bold;" onclick="document.getElementById('fileInput').click();" title="Выбрать файлы">
+                    📎
+                  </button>
+                </div>
+                <small class="form-text" id="fileSizeText">Максимальный размер файла: 10 МБ. Для выбора нескольких файлов используйте Ctrl+клик или Shift+клик.</small>
+            </div>
+
+              <!-- Скрытый переключатель - всегда включен -->
+              <div class="form-group checkbox-group" style="display: none;">
+                {{ email_form.send_email(class="form-check-input", checked=True) }}
+                {{ email_form.send_email.label(class="form-check-label") }}
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button type="button" onclick="toggleEmailInput()" class="cancel-button">
+                <i class="fas fa-times"></i>
+                <span>Отмена</span>
+              </button>
+              <button type="button" onclick="submitEmailAjax(event)" class="submit-button" id="submitEmailBtn">
+                <i class="fas fa-envelope"></i>
+                <span>Отправить email</span>
               </button>
             </div>
           </form>
@@ -880,6 +1269,7 @@
   --success-color: #10b981;
   --warning-color: #f59e0b;
   --error-color: #ef4444;
+  --info-color: #3b82f6;
   --text-primary: #1f2937;
   --text-secondary: #6b7280;
   --text-muted: #9ca3af;
@@ -1408,6 +1798,7 @@
 .timeline-dot.created { background: var(--primary-color); }
 .timeline-dot.started { background: var(--accent-color); }
 .timeline-dot.deadline { background: var(--warning-color); }
+.timeline-dot.closed { background: var(--success-color); }
 .timeline-dot.updated { background: var(--text-muted); }
 
 .timeline-content {
@@ -1437,6 +1828,25 @@
 .date-time {
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+/* Email Link */
+.email-link {
+  color: var(--primary-color);
+  text-decoration: none;
+  font-weight: 500;
+  transition: color var(--transition);
+  font-size: 0.875rem;
+}
+
+.email-link:hover {
+  color: var(--accent-color);
+  text-decoration: underline;
+}
+
+.email-cc {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
 }
 
 /* Description */
@@ -1510,6 +1920,12 @@
 
 .attachment-download:hover {
   transform: scale(1.1);
+}
+
+.attachment-download:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* History */
@@ -1815,6 +2231,104 @@
 
 .submit-button {
   background: var(--success-color);
+}
+
+/* Email Form */
+.email-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border-radius: var(--border-radius);
+  border: 1px solid var(--border-color);
+}
+
+.email-button {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  background: var(--info-color);
+  color: white;
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.email-button:hover {
+  background: var(--secondary-color);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.email-form {
+  display: none;
+  margin-top: 1rem;
+}
+
+.email-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.email-form .form-group {
+  margin-bottom: 1rem;
+}
+
+.email-form .form-group.full-width {
+  grid-column: 1 / -1;
+}
+
+.email-form .form-group.checkbox-group {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.email-form .form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.email-form .form-control {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  font-size: 0.875rem;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  transition: var(--transition);
+  resize: vertical;
+}
+
+.email-form .form-control:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+}
+
+.email-form .form-check-input {
+  margin-right: 0.5rem;
+}
+
+.email-form .form-check-label {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.email-form .form-text {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  margin-top: 0.25rem;
+}
   color: white;
 }
 
@@ -2230,6 +2744,158 @@
 }
 </style>
 <script>
+// Email функции
+function toggleEmailInput() {
+    const emailForm = document.getElementById('emailForm');
+    const emailButton = document.querySelector('.email-button');
+
+    if (emailForm.style.display === 'none' || emailForm.style.display === '') {
+        emailForm.style.display = 'block';
+        emailButton.style.display = 'none';
+
+        // Вставляем HTML подпись в поле сообщения
+        insertEmailSignature();
+
+        // Обновляем тему для кнопки файлов
+        if (typeof updateEmailFormTheme === 'function') {
+            updateEmailFormTheme();
+        }
+
+        // Фокус на поле получателя
+        const recipientField = emailForm.querySelector('input[name="recipient"]');
+        if (recipientField) {
+            recipientField.focus();
+        }
+    } else {
+        emailForm.style.display = 'none';
+        emailButton.style.display = 'block';
+        // Очищаем форму
+        emailForm.reset();
+    }
+}
+
+function insertEmailSignature() {
+    // Подпись будет добавлена автоматически при отправке email
+    // Функция оставлена для совместимости
+    if (typeof window.quillEditor !== 'undefined' && window.quillEditor && typeof window.quillEditor.setText === 'function') {
+        // Очищаем редактор при открытии формы
+        window.quillEditor.setText('');
+    }
+}
+
+function disableEmailSubmitButton() {
+    const submitBtn = document.getElementById('submitEmailBtn');
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Отправка...</span>';
+    }
+}
+
+async function submitEmailAjax(event) {
+    event.preventDefault();
+
+    const form = document.getElementById('emailForm');
+    const formData = new FormData(form);
+
+    // Получаем данные из формы
+    const recipient = formData.get('recipient')?.trim();
+    const subject = formData.get('subject')?.trim();
+
+    // Получаем HTML-контент из Quill.js
+    const message = (typeof window.quillEditor !== 'undefined' && window.quillEditor && typeof window.quillEditor.root !== 'undefined') ? window.quillEditor.root.innerHTML : formData.get('message')?.trim();
+
+    const cc = formData.get('cc')?.trim();
+    const sendEmail = formData.get('send_email') === 'y';
+
+    // Валидация
+    if (!recipient) {
+        showNotification('Email получателя обязателен', 'error');
+        return;
+    }
+    if (!subject) {
+        showNotification('Тема письма обязательна', 'error');
+        return;
+    }
+    if (!message) {
+        showNotification('Текст сообщения обязателен', 'error');
+        return;
+    }
+
+    // Отключаем кнопку отправки
+    disableEmailSubmitButton();
+
+    try {
+        const taskId = getTaskIdFromUrl();
+
+        // Получаем CSRF токен из формы
+        const csrfToken = form.querySelector('input[name="csrf_token"]')?.value;
+
+        // Создаем FormData для отправки файлов
+        const formDataToSend = new FormData();
+        const sender = formData.get('sender')?.trim();
+
+        // Добавляем HTML подпись к сообщению
+        const signatureHtml = `{{ email_signature_html|safe }}`;
+        const messageWithSignature = message + '\n\n' + signatureHtml;
+
+        formDataToSend.append('sender', sender || '');
+        formDataToSend.append('recipient', recipient);
+        formDataToSend.append('subject', subject);
+        formDataToSend.append('message', messageWithSignature);
+        formDataToSend.append('cc', cc || '');
+        formDataToSend.append('send_email', sendEmail ? 'y' : 'n');
+
+        // Добавляем файлы из формы
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput && fileInput.files) {
+            for (let i = 0; i < fileInput.files.length; i++) {
+                formDataToSend.append('attachments', fileInput.files[i]);
+            }
+        }
+
+        const headers = {
+            'X-Requested-With': 'XMLHttpRequest'
+        };
+
+        // Добавляем CSRF токен если он есть
+        if (csrfToken) {
+            headers['X-CSRFToken'] = csrfToken;
+        }
+
+        const response = await fetch(`/tasks/api/task/${taskId}/send-email`, {
+            method: 'POST',
+            headers: headers,
+            body: formDataToSend
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`HTTP ${response.status}: ${errorText}`);
+        }
+
+        const data = await response.json();
+
+        if (data.success) {
+            showNotification(data.message, 'success');
+            // Очищаем форму и скрываем её
+            form.reset();
+            toggleEmailInput();
+        } else {
+            showNotification(data.error, 'error');
+        }
+    } catch (error) {
+        console.error('Ошибка при отправке email:', error);
+        showNotification('Ошибка при отправке email: ' + error.message, 'error');
+    } finally {
+        // Восстанавливаем кнопку отправки
+        const submitBtn = document.getElementById('submitEmailBtn');
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-envelope"></i> <span>Отправить email</span>';
+        }
+    }
+}
+
 function toggleCommentActions(journalId) {
   const menu = document.getElementById(`comment-actions-${journalId}`);
   const allMenus = document.querySelectorAll('.comment-actions-menu');
@@ -2511,9 +3177,68 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// Attachment download (placeholder function)
-function downloadAttachment(attachmentId) {
-  showNotification('Функция загрузки файлов пока не реализована', 'info');
+// Helper function to get task ID from URL
+function getTaskIdFromUrl() {
+  const pathParts = window.location.pathname.split('/');
+  const taskIndex = pathParts.indexOf('my-tasks');
+  if (taskIndex !== -1 && taskIndex + 1 < pathParts.length) {
+    const taskId = pathParts[taskIndex + 1];
+    if (!isNaN(taskId)) {
+      return taskId;
+    }
+  }
+  return null;
+}
+
+// Attachment download function
+async function downloadAttachment(attachmentId) {
+  const taskId = getTaskIdFromUrl();
+
+  if (!taskId) {
+    showNotification('Ошибка: не удалось определить ID задачи', 'error');
+    return;
+  }
+
+  // Показываем индикатор загрузки
+  const downloadBtn = event.target.closest('.attachment-download');
+  const originalContent = downloadBtn.innerHTML;
+  downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  downloadBtn.disabled = true;
+
+  try {
+    // Создаем URL для скачивания
+    const downloadUrl = `/tasks/api/task/${taskId}/attachment/${attachmentId}/download`;
+
+    // Получаем информацию о файле
+    const response = await fetch(downloadUrl, {
+      method: 'GET',
+      credentials: 'same-origin'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.download_url) {
+      // Открываем URL для скачивания в новом окне
+      window.open(data.download_url, '_blank');
+      showNotification(`Открывается скачивание файла: ${data.filename}`, 'success');
+    } else {
+      throw new Error('Не удалось получить URL для скачивания');
+    }
+
+  } catch (error) {
+    console.error('Ошибка скачивания файла:', error);
+    showNotification(`Ошибка скачивания файла: ${error.message}`, 'error');
+  } finally {
+    // Восстанавливаем кнопку
+    setTimeout(() => {
+      downloadBtn.innerHTML = originalContent;
+      downloadBtn.disabled = false;
+    }, 1000);
+  }
 }
 
 function goBackToTasksList(taskId) {
@@ -2650,8 +3375,8 @@ async function submitCommentAjax(event) {
             showNotification(data.error, 'error');
         }
     } catch (error) {
-        console.error('Ошибка отправки комментария:', error);
-        showNotification('Произошла ошибка при отправке комментария', 'error');
+        console.error('Ошибка при отправке комментария:', error);
+        showNotification('Ошибка при отправке комментария: ' + error.message, 'error');
     } finally {
         // Восстанавливаем кнопку отправки
         const submitBtn = document.getElementById('submitBtn');
@@ -2661,6 +3386,8 @@ async function submitCommentAjax(event) {
         }
     }
 }
+
+
 
 /**
  * Функция для инициализации кнопок удаления комментариев
@@ -2834,7 +3561,439 @@ document.addEventListener('DOMContentLoaded', function() {
   </div>
 </div>
 
+            <!-- Quill.js Rich Text Editor -->
+            <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+            <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+            <style>
+                .ql-editor {
+                    min-height: 200px;
+                    font-family: Arial, sans-serif;
+                    font-size: 14px;
+                }
+                .ql-toolbar {
+                    border-top: 1px solid #ccc;
+                    border-left: 1px solid #ccc;
+                    border-right: 1px solid #ccc;
+                    background: #f8f9fa;
+                }
+                .ql-container {
+                    border-bottom: 1px solid #ccc;
+                    border-left: 1px solid #ccc;
+                    border-right: 1px solid #ccc;
+                }
+                .ql-toolbar button {
+                    cursor: pointer !important;
+                }
+                .ql-toolbar button:hover {
+                    color: #007bff !important;
+                }
+                .ql-toolbar .ql-active {
+                    color: #007bff !important;
+                }
+                .ql-toolbar .ql-picker {
+                    cursor: pointer !important;
+                }
+                .ql-toolbar .ql-picker-label {
+                    cursor: pointer !important;
+                }
+                .ql-toolbar .ql-picker-options {
+                    background: white;
+                    border: 1px solid #ccc;
+                    border-radius: 4px;
+                    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+                }
+
+                /* Стили для формы email */
+                .email-form-grid {
+                    gap: 15px;
+                }
+                .email-form .form-group {
+                    margin-bottom: 20px;
+                }
+                .email-form .form-control {
+                    margin-bottom: 8px;
+                }
+                .email-form .form-text {
+                    margin-top: 5px;
+                    color: #6c757d;
+                }
+                .email-form input[type="file"] {
+                    padding: 8px;
+                    border: 1px solid #ced4da;
+                    border-radius: 4px;
+                    background-color: #fff;
+                }
+                .email-form input[type="file"]:focus {
+                    border-color: #80bdff;
+                    outline: 0;
+                    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+                }
+
+                /* Дополнительные стили для улучшения отступов */
+                .email-form {
+                    padding: 20px;
+                    background: #f8f9fa;
+                    border-radius: 8px;
+                    margin-top: 15px;
+                }
+                .email-form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 15px;
+                }
+                .email-form-grid .full-width {
+                    grid-column: 1 / -1;
+                }
+                .form-actions {
+                    margin-top: 20px;
+                    padding-top: 15px;
+                    border-top: 1px solid #dee2e6;
+                }
+
+                /* Стили для темной темы */
+                [data-theme="dark"] .email-form .form-label,
+                [data-theme="dark"] .email-form label {
+                    color: #ffffff !important;
+                }
+                [data-theme="dark"] .email-form .form-text {
+                    color: #adb5bd !important;
+                }
+                [data-theme="dark"] .file-list {
+                    color: #adb5bd !important;
+                }
+                [data-theme="dark"] .email-form {
+                    background: #2d3748;
+                    border: 1px solid #4a5568;
+                }
+                [data-theme="dark"] .email-form .form-control {
+                    background-color: #4a5568;
+                    border-color: #718096;
+                    color: #ffffff;
+                }
+                [data-theme="dark"] .email-form .form-control:focus {
+                    background-color: #4a5568;
+                    border-color: #63b3ed;
+                    color: #ffffff;
+                }
+                [data-theme="dark"] .file-input-container button {
+                    background-color: #4a5568;
+                    border-color: #718096;
+                    color: #ffffff;
+                }
+                [data-theme="dark"] .file-input-container button:hover {
+                    background-color: #718096;
+                    border-color: #a0aec0;
+                }
+                [data-theme="dark"] .file-input-container {
+                    width: 100%;
+                }
+                [data-theme="dark"] .file-status-container {
+                    width: 100%;
+                }
+                [data-theme="dark"] .file-list {
+                    display: block;
+                    word-wrap: break-word;
+                    word-break: break-word;
+                }
+
+                /* Стили для Quill редактора в темной теме */
+                [data-theme="dark"] .ql-toolbar {
+                    background-color: #4a5568;
+                    border-color: #718096;
+                }
+                [data-theme="dark"] .ql-toolbar button {
+                    color: #ffffff;
+                }
+                [data-theme="dark"] .ql-toolbar button:hover {
+                    color: #63b3ed !important;
+                }
+                [data-theme="dark"] .ql-toolbar .ql-active {
+                    color: #63b3ed !important;
+                }
+                [data-theme="dark"] .ql-container {
+                    background-color: #4a5568;
+                    border-color: #718096;
+                }
+                [data-theme="dark"] .ql-editor {
+                    color: #ffffff;
+                }
+                [data-theme="dark"] .ql-editor.ql-blank::before {
+                    color: #a0aec0;
+                }
+
+                /* Стили для плейсхолдеров в темной теме */
+                [data-theme="dark"] .form-control::placeholder {
+                    color: #a0aec0 !important;
+                }
+                [data-theme="dark"] .form-control::-webkit-input-placeholder {
+                    color: #a0aec0 !important;
+                }
+                [data-theme="dark"] .form-control::-moz-placeholder {
+                    color: #a0aec0 !important;
+                }
+                [data-theme="dark"] .form-control:-ms-input-placeholder {
+                    color: #a0aec0 !important;
+                }
+
+                /* Стили для кастомной кнопки выбора файлов */
+                .file-input-container {
+                    display: flex;
+                    align-items: center;
+                    margin-bottom: 8px;
+                    width: 100%;
+                }
+                .file-status-container {
+                    margin-bottom: 10px;
+                    width: 100%;
+                }
+                .file-input-container button {
+                    padding: 8px 16px;
+                    border: 1px solid #ced4da;
+                    border-radius: 4px;
+                    background-color: #fff;
+                    color: #495057;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                    white-space: nowrap;
+                }
+                .file-input-container button:hover {
+                    background-color: #e9ecef;
+                    border-color: #adb5bd;
+                }
+                .file-list {
+                    color: #6c757d;
+                    font-size: 14px;
+                    display: block;
+                    word-wrap: break-word;
+                    word-break: break-word;
+                }
+            </style>
+            <script>
+                // Инициализация Quill.js после полной загрузки DOM
+                document.addEventListener('DOMContentLoaded', function() {
+                    var quill = new Quill('#quillEditor', {
+                    theme: 'snow',
+                    modules: {
+                        toolbar: {
+                            container: [
+                                ['bold', 'italic', 'underline'],
+                                [{ 'color': [] }, { 'background': [] }],
+                                [{ 'align': [] }],
+                                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                                ['link', 'image'],
+                                ['clean']
+                            ],
+                            handlers: {
+                                'link': function() {
+                                    var range = quill.getSelection();
+                                    if (range) {
+                                        var url = prompt('Введите URL:');
+                                        if (url) {
+                                            quill.format('link', url);
+                                        }
+                                    }
+                                },
+                                'image': function() {
+                                    var input = document.createElement('input');
+                                    input.setAttribute('type', 'file');
+                                    input.setAttribute('accept', 'image/*');
+                                    input.click();
+
+                                    input.onchange = function() {
+                                        var file = input.files[0];
+                                        if (file) {
+                                            var formData = new FormData();
+                                            formData.append('file', file);
+
+                                            fetch('/upload_image', {
+                                                method: 'POST',
+                                                body: formData
+                                            })
+                                            .then(response => response.json())
+                                            .then(data => {
+                                                if (data.location) {
+                                                    var range = quill.getSelection();
+                                                    quill.insertEmbed(range.index, 'image', data.location);
+                                                }
+                                            })
+                                            .catch(error => console.error('Ошибка загрузки изображения:', error));
+                                        }
+                                    };
+                                }
+                            }
+                        }
+                    },
+                    placeholder: 'Введите текст сообщения...'
+                });
+
+                // Обработчик вставки изображений
+                quill.on('text-change', function() {
+                    // Обновляем скрытое поле формы
+                    var html = quill.root.innerHTML;
+                    var hiddenInput = document.querySelector('#emailMessageField');
+                    if (hiddenInput) {
+                        hiddenInput.value = html;
+                    }
+                });
+
+                                // Обработчик вставки изображений из буфера обмена
+                quill.clipboard.addMatcher('img', function(node, delta) {
+                    var img = node.querySelector('img');
+                    if (img && img.src.startsWith('data:')) {
+                        // Конвертируем base64 в файл и загружаем
+                        fetch(img.src)
+                            .then(res => res.blob())
+                            .then(blob => {
+                                var formData = new FormData();
+                                formData.append('file', blob, 'image.png');
+
+                                fetch('/upload_image', {
+                                    method: 'POST',
+                                    body: formData
+                                })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.location) {
+                                        // Заменяем base64 на URL
+                                        var range = quill.getSelection();
+                                        quill.deleteText(range.index, range.length);
+                                        quill.insertEmbed(range.index, 'image', data.location);
+                                    }
+                                })
+                                .catch(error => console.error('Ошибка загрузки изображения:', error));
+                            });
+                    }
+                    return delta;
+                });
+
+                // Глобальная переменная для доступа к quill
+                window.quillEditor = quill;
+
+                // Отладочная информация
+                console.log('✅ Quill.js редактор инициализирован');
+                console.log('🔧 Доступные кнопки:', document.querySelectorAll('.ql-toolbar button'));
+
+                // Добавляем обработчики для диагностики
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('.ql-toolbar')) {
+                        console.log('🖱️ Клик по панели инструментов:', e.target.className);
+                    }
+                });
+
+                // Обработчик выбора файлов
+                document.getElementById('fileInput').addEventListener('change', function(e) {
+                    var fileList = document.getElementById('fileList');
+                    var files = e.target.files;
+                    var input = e.target;
+
+                    console.log('🔍 Информация о input:', {
+                        multiple: input.multiple,
+                        accept: input.accept,
+                        filesCount: files.length,
+                        inputHTML: input.outerHTML,
+                        hasMultiple: input.hasAttribute('multiple')
+                    });
+
+                    if (files.length > 0) {
+                        var fileNames = Array.from(files).map(file => file.name).join('<br>');
+                        fileList.innerHTML = `<strong>Выбрано файлов: ${files.length}</strong><br>${fileNames}`;
+                        fileList.style.color = '#28a745';
+                        console.log('✅ Выбрано файлов:', files.length);
+                        console.log('📁 Имена файлов:', Array.from(files).map(f => f.name));
+                    } else {
+                        fileList.textContent = 'Файл не выбран';
+                        fileList.style.color = '#6c757d';
+                    }
+                });
+
+                                // Проверяем и устанавливаем multiple атрибут
+                setTimeout(function() {
+                    var input = document.getElementById('fileInput');
+                    if (input) {
+                        input.setAttribute('multiple', 'multiple');
+                        console.log('🔧 Установлен атрибут multiple для input');
+                        console.log('🔍 Проверка input:', {
+                            multiple: input.multiple,
+                            type: input.type,
+                            name: input.name,
+                            id: input.id,
+                            hasMultiple: input.hasAttribute('multiple'),
+                            inputHTML: input.outerHTML
+                        });
+                    }
+                }, 500);
+
+                // Простая защита кнопки от изменения стилей
+                var originalButtonStyle = {
+                    backgroundColor: '#ff6b35',
+                    borderColor: '#ff6b35',
+                    color: '#ffffff'
+                };
+
+                // Создаем observer для защиты кнопки
+                var buttonObserver = new MutationObserver(function(mutations) {
+                    mutations.forEach(function(mutation) {
+                        if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                            var button = document.getElementById('fileButton');
+                            if (button) {
+                                button.style.backgroundColor = originalButtonStyle.backgroundColor;
+                                button.style.borderColor = originalButtonStyle.borderColor;
+                                button.style.color = originalButtonStyle.color;
+                            }
+                        }
+                    });
+                });
+
+                // Запускаем observer через 1 секунду
+                setTimeout(function() {
+                    var button = document.getElementById('fileButton');
+                    if (button) {
+                        buttonObserver.observe(button, {
+                            attributes: true,
+                            attributeFilter: ['style']
+                        });
+                        console.log('🔧 Observer для защиты кнопки запущен');
+                    }
+                }, 1000);
+
+                // Тест множественного выбора
+                setTimeout(function() {
+                    var input = document.getElementById('fileInput');
+                    if (input) {
+                        console.log('🧪 Тест множественного выбора:');
+                        console.log('- multiple атрибут:', input.multiple);
+                        console.log('- hasAttribute multiple:', input.hasAttribute('multiple'));
+                        console.log('- HTML элемента:', input.outerHTML);
+
+                        // Создаем тестовый input для сравнения
+                        var testInput = document.createElement('input');
+                        testInput.type = 'file';
+                        testInput.multiple = true;
+                        console.log('- Тестовый input multiple:', testInput.multiple);
+                        console.log('- Тестовый input HTML:', testInput.outerHTML);
+                    }
+                }, 2000);
+
+                // Простая инициализация
+                console.log('✅ Скрипт файлов загружен');
+
+                // Простой тест без интервалов
+                console.log('✅ Скрипт файлов загружен - моргание отключено');
+            });
+            </script>
+
             <!-- Подключение скрипта для изменения статуса задачи -->
             <script src="{{ url_for('static', filename='js/task_status_change.js') }}"></script>
+
+            <!-- Подключение скрипта для изменения приоритета задачи -->
+            <script src="{{ url_for('static', filename='js/task_priority_change.js') }}"></script>
+
+            <!-- Подключение скрипта для изменения исполнителя задачи -->
+            <script src="{{ url_for('static', filename='js/task_assignee_change.js') }}"></script>
+
+                        <!-- Восстанавливаем все функции -->
+            <script>
+                console.log('✅ Все функции восстановлены');
+            </script>
 
 {% endblock %}

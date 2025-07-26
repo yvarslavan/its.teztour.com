@@ -260,8 +260,8 @@
                                         <span class="setting-label">Пароль TEZ ERP</span>
                                         <div class="password-container">
                                             <input type="password" id="password-display" class="password-input"
-                                                   value="{{ user_password_erp }}" readonly>
-                                            <button type="button" id="togglePassword" class="password-toggle-btn">
+                                                   value="{{ user_password_erp if user_password_erp else '' }}" readonly>
+                                            <button type="button" id="togglePassword" class="password-toggle-btn" {% if not user_password_erp %}disabled{% endif %}>
                                                 <i id="eyeIcon" class="fas fa-eye"></i>
                                             </button>
                                             <button type="button" id="copyPassword" class="password-copy-btn" disabled>
@@ -269,6 +269,18 @@
                                                 <span>Копировать</span>
                                             </button>
                                         </div>
+                                        {% if not user_password_erp %}
+                                        <div class="password-status">
+                                            <small class="text-muted">
+                                                <i class="fas fa-info-circle"></i>
+                                                Пароль не загружен. Попробуйте перезайти в систему.
+                                            </small>
+                                            <button type="button" id="refreshPasswordBtn" class="btn btn-sm btn-outline-primary mt-2">
+                                                <i class="fas fa-sync-alt"></i>
+                                                Обновить пароль
+                                            </button>
+                                        </div>
+                                        {% endif %}
                                     </div>
                                     </div>
                                 </div>
@@ -401,85 +413,119 @@
                     </div>
                 </div>
 
-                <!-- Admin Panel -->
-                {% if current_user.is_admin %}
-                <div class="admin-sidebar">
-                    <div class="admin-card">
-                        <div class="card-header">
-                            <div class="header-icon">
-                                <i class="fas fa-user-shield"></i>
-                        </div>
-                            <div class="header-content">
-                                <h3 class="card-title">Панель администратора</h3>
-                                <p class="card-subtitle">Управление правами</p>
+
+            </div>
+        </form>
+
+        <!-- Admin Panel - Moved to bottom -->
+        {% if current_user.is_admin %}
+        <div class="admin-panel-bottom">
+            <div class="admin-card-bottom">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-user-shield"></i>
+                    </div>
+                    <div class="header-content">
+                        <h3 class="card-title">Панель администратора</h3>
+                        <p class="card-subtitle">Управление правами и настройками</p>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="admin-sections-grid">
+                        <!-- Контроль качества -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <span>Контроль качества</span>
+                            </div>
+                            <div class="users-list">
+                                {% for u_admin in all_users %}
+                                <div class="user-item">
+                                    <div class="user-info">
+                                        <div class="user-avatar-small">
+                                            <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                                                 alt="{{ u_admin.username }}">
+                                        </div>
+                                        <span class="user-name">{{ u_admin.username }}</span>
+                                    </div>
+                                    <div class="user-toggle">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox"
+                                                   class="permission-toggle"
+                                                   data-user-id="{{ u_admin.id }}"
+                                                   data-type="quality_control"
+                                                   {% if u_admin.can_access_quality_control %}checked{% endif %}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
                             </div>
                         </div>
 
-                        <div class="card-content">
-                            <div class="admin-table-container">
-                                <div class="table-header">
-                                    <span>Контроль качества</span>
-                                </div>
-                                <div class="users-list">
-                                    {% for u_admin in all_users %}
-                                    <div class="user-item">
-                                        <div class="user-info">
-                                            <div class="user-avatar-small">
-                                                <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
-                                                     alt="{{ u_admin.username }}">
-                                            </div>
-                                            <span class="user-name">{{ u_admin.username }}</span>
-                                        </div>
-                                        <div class="user-toggle">
-                                            <label class="toggle-switch">
-                                                <input type="checkbox"
-                                                       class="permission-toggle"
-                                                           data-user-id="{{ u_admin.id }}"
-                                                           data-type="quality_control"
-                                                           {% if u_admin.can_access_quality_control %}checked{% endif %}>
-                                                <span class="toggle-slider"></span>
-                                            </label>
-                                                </div>
-                                    </div>
-                                        {% endfor %}
-                                </div>
+                        <!-- Контакт-центр Москва -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <span>Контакт-центр Москва</span>
                             </div>
-
-                            <!-- Новый блок для Контакт-центр Москва -->
-                            <div class="admin-table-container" style="margin-top: 20px;">
-                                <div class="table-header">
-                                    <span>Контакт-центр Москва</span>
-                                </div>
-                                <div class="users-list">
-                                    {% for u_admin in all_users %}
-                                    <div class="user-item">
-                                        <div class="user-info">
-                                            <div class="user-avatar-small">
-                                                <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
-                                                     alt="{{ u_admin.username }}">
-                                            </div>
-                                            <span class="user-name">{{ u_admin.username }}</span>
+                            <div class="users-list">
+                                {% for u_admin in all_users %}
+                                <div class="user-item">
+                                    <div class="user-info">
+                                        <div class="user-avatar-small">
+                                            <img src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                                                 alt="{{ u_admin.username }}">
                                         </div>
-                                        <div class="user-toggle">
-                                            <label class="toggle-switch">
-                                                <input type="checkbox"
-                                                       class="permission-toggle"
-                                                           data-user-id="{{ u_admin.id }}"
-                                                           data-type="contact_center_moscow"
-                                                           {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}>
-                                                <span class="toggle-slider"></span>
-                                            </label>
+                                        <span class="user-name">{{ u_admin.username }}</span>
+                                    </div>
+                                    <div class="user-toggle">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox"
+                                                   class="permission-toggle"
+                                                   data-user-id="{{ u_admin.id }}"
+                                                   data-type="contact_center_moscow"
+                                                   {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}>
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                        <!-- Уведомления -->
+                        <div class="admin-section">
+                            <div class="section-header">
+                                <span>Уведомления</span>
+                            </div>
+                            <div class="notification-settings">
+                                <div class="notification-item">
+                                    <div class="notification-info">
+                                        <div class="notification-icon">
+                                            <i class="fas fa-bell"></i>
+                                        </div>
+                                        <div class="notification-details">
+                                            <span class="notification-title">О новых заявках</span>
+                                            <span class="notification-description">Получать уведомления о новых заявках в Redmine</span>
                                         </div>
                                     </div>
-                                    {% endfor %}
+                                    <div class="notification-toggle">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox"
+                                                   class="notification-toggle"
+                                                   id="newIssuesNotifications"
+                                                   data-type="new_issues_notifications">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                {% endif %}
             </div>
-        </form>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
@@ -771,7 +817,7 @@
     /* Account Grid */
     .account-page-wrapper .account-grid {
         display: grid;
-        grid-template-columns: 350px 1fr 300px;
+        grid-template-columns: 300px 1fr;
         gap: var(--spacing-xxl);
         align-items: start;
     }
@@ -1661,10 +1707,141 @@
         transform: translateX(26px);
     }
 
+    /* Notification Settings Styles */
+    .account-page-wrapper .notification-settings {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .notification-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: var(--spacing-lg);
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        transition: all var(--transition-normal);
+        border: 1px solid var(--border-light);
+    }
+
+    .account-page-wrapper .notification-item:hover {
+        background: var(--surface-2);
+        transform: translateX(4px);
+        border-color: var(--primary-200);
+    }
+
+    .account-page-wrapper .notification-info {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+        flex: 1;
+    }
+
+    .account-page-wrapper .notification-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-100);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--primary-600);
+        font-size: 1rem;
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .notification-item:hover .notification-icon {
+        background: var(--primary-200);
+        color: var(--primary-700);
+        transform: scale(1.1);
+    }
+
+    .account-page-wrapper .notification-details {
+        display: flex;
+        flex-direction: column;
+        gap: var(--spacing-xs);
+    }
+
+    .account-page-wrapper .notification-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-primary);
+    }
+
+    .account-page-wrapper .notification-description {
+        font-size: 0.75rem;
+        color: var(--text-secondary);
+        line-height: 1.4;
+    }
+
+    .account-page-wrapper .notification-toggle {
+        margin-left: var(--spacing-md);
+    }
+
+    /* Admin Panel Bottom Styles */
+    .account-page-wrapper .admin-panel-bottom {
+        margin-top: var(--spacing-xxl);
+        animation: fadeInUp 0.8s ease-out 0.6s both;
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .account-page-wrapper .admin-card-bottom {
+        background: var(--surface-card);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+    }
+
+    .account-page-wrapper .admin-sections-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: var(--spacing-xl);
+        padding: var(--spacing-xl);
+    }
+
+    .account-page-wrapper .admin-section {
+        background: var(--surface-1);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-lg);
+        border: 1px solid var(--border-light);
+        transition: all var(--transition-normal);
+    }
+
+    .account-page-wrapper .admin-section:hover {
+        background: var(--surface-2);
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-2);
+    }
+
+    .account-page-wrapper .section-header {
+        padding: var(--spacing-md) 0;
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border-bottom: 1px solid var(--border-light);
+        margin-bottom: var(--spacing-md);
+    }
+
     /* Responsive Design */
     @media (max-width: 1200px) {
         .account-page-wrapper .account-grid {
-            grid-template-columns: 300px 1fr 280px;
+            grid-template-columns: 280px 1fr;
             gap: var(--spacing-xl);
         }
     }
@@ -1675,9 +1852,18 @@
             gap: var(--spacing-xl);
         }
 
-        .account-page-wrapper .profile-card,
-        .account-page-wrapper .admin-card {
+        .account-page-wrapper .profile-card {
             position: static;
+        }
+
+        .account-page-wrapper .admin-sections-grid {
+            grid-template-columns: 1fr;
+            gap: var(--spacing-lg);
+            padding: var(--spacing-lg);
+        }
+
+        .account-page-wrapper .admin-section {
+            padding: var(--spacing-md);
         }
 
         .account-page-wrapper .account-container {
@@ -1731,6 +1917,11 @@
             grid-template-columns: repeat(2, 1fr); /* Две колонки на средних экранах */
             max-width: 500px; /* УВЕЛИЧЕНА ширина с 400px до 500px для лучшего отображения */
             gap: var(--spacing-md); /* Уменьшен отступ для экономии места */
+        }
+
+        .account-page-wrapper .admin-sections-grid {
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--spacing-lg);
         }
 
         .account-page-wrapper .action-btn {
@@ -2703,6 +2894,61 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    // Refresh password functionality
+    const refreshPasswordBtn = document.getElementById('refreshPasswordBtn');
+    if (refreshPasswordBtn) {
+        refreshPasswordBtn.addEventListener('click', function() {
+            const button = this;
+            const originalText = button.innerHTML;
+
+            button.disabled = true;
+            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обновление...';
+
+            fetch("{{ url_for('users.refresh_password') }}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': "{{ csrf_token() }}"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Обновляем поле пароля
+                    const passwordField = document.getElementById('password-display');
+                    const togglePasswordBtn = document.getElementById('togglePassword');
+                    const copyPasswordBtn = document.getElementById('copyPassword');
+
+                    if (passwordField && data.password) {
+                        passwordField.value = data.password;
+                        togglePasswordBtn.disabled = false;
+                        copyPasswordBtn.disabled = false;
+
+                        // Удаляем сообщение об ошибке и кнопку обновления
+                        const passwordStatus = document.querySelector('.password-status');
+                        if (passwordStatus) {
+                            passwordStatus.remove();
+                        }
+
+                        Swal.fire('Успешно!', 'Пароль обновлен', 'success');
+                    } else {
+                        Swal.fire('Ошибка', 'Не удалось получить пароль', 'error');
+                    }
+                } else {
+                    Swal.fire('Ошибка', data.message || 'Не удалось обновить пароль', 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении пароля:', error);
+                Swal.fire('Сетевая ошибка', 'Произошла ошибка при обновлении пароля.', 'error');
+            })
+            .finally(() => {
+                button.disabled = false;
+                button.innerHTML = originalText;
+            });
+        });
+    }
+
     function fallbackCopyTextToClipboard(inputElement) {
         const M_IOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
         if(M_IOS) {
@@ -2932,8 +3178,47 @@ document.addEventListener('DOMContentLoaded', function () {
 // Функция тестирования звука из профиля
 function testNotificationFromProfile() {
     console.log('[Account] Тест звука из профиля');
+    console.log('[Account] 🔍 Диагностика теста звука:');
+    console.log('[Account] - Звук отключен:', localStorage.getItem('notificationSoundDisabled') === 'true');
+    console.log('[Account] - Глобальная функция playNotificationSound:', typeof window.playNotificationSound === 'function');
+    console.log('[Account] - Глобальная функция testNotificationSound:', typeof window.testNotificationSound === 'function');
+    console.log('[Account] - Виджет инициализирован:', !!window.notificationsWidget');
 
     try {
+        // Проверяем настройки звука
+        const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+        if (soundDisabled) {
+            console.log('[Account] 🔇 Звук уведомлений отключен в настройках');
+
+            // Показываем уведомление о том, что звук отключен с возможностью включения
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    title: '🔇 Звук отключен',
+                    text: 'Звуковые уведомления отключены в настройках. Хотите включить их для тестирования?',
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'Включить',
+                    cancelButtonText: 'Отмена',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.removeItem('notificationSoundDisabled');
+                        console.log('[Account] ✅ Звук включен для тестирования');
+                        // Повторно вызываем функцию теста
+                        setTimeout(() => testNotificationFromProfile(), 100);
+                    }
+                });
+            } else {
+                if (confirm('🔇 Звуковые уведомления отключены в настройках. Хотите включить их для тестирования?')) {
+                    localStorage.removeItem('notificationSoundDisabled');
+                    console.log('[Account] ✅ Звук включен для тестирования');
+                    // Повторно вызываем функцию теста
+                    setTimeout(() => testNotificationFromProfile(), 100);
+                }
+            }
+            return;
+        }
+
         // Сначала проверяем, есть ли глобальная функция воспроизведения звука
         if (typeof window.playNotificationSound === 'function') {
             window.playNotificationSound();
@@ -2942,13 +3227,67 @@ function testNotificationFromProfile() {
             window.testNotificationSound();
             console.log('[Account] Использована глобальная функция testNotificationSound');
         } else {
-            // Fallback: создаем звук вручную
-            const audio = new Audio('/static/sounds/notification.mp3');
+            // Fallback: создаем звук вручную с правильным путем
+            const audio = new Audio("/static/sounds/notification.mp3?v=1.0");
             audio.volume = 0.7;
+            audio.preload = 'auto';
+
+            // Добавляем обработчики событий для отладки
+            audio.addEventListener('loadstart', () => {
+                console.log('[Account] 🔊 Начало загрузки аудио файла');
+            });
+
+            audio.addEventListener('canplaythrough', () => {
+                console.log('[Account] 🔊 Аудио файл готов к воспроизведению');
+            });
+
+            audio.addEventListener('error', (e) => {
+                console.error('[Account] ❌ Ошибка загрузки аудио файла:', e);
+                console.error('[Account] ❌ Код ошибки:', audio.error?.code);
+                console.error('[Account] ❌ Сообщение ошибки:', audio.error?.message);
+            });
+
             audio.play().then(() => {
-                console.log('[Account] Звук воспроизведен успешно (fallback)');
+                console.log('[Account] 🔊 Звук воспроизведен успешно (fallback)');
             }).catch(error => {
-                console.error('[Account] Ошибка воспроизведения звука:', error);
+                console.error('[Account] ❌ Ошибка воспроизведения звука:', error);
+
+                if (error.name === 'NotAllowedError') {
+                    console.log('[Account] 🔒 Звук заблокирован браузером. Требуется взаимодействие пользователя.');
+
+                    // Создаем кнопку для разблокировки звука
+                    const unlockButton = document.createElement('button');
+                    unlockButton.innerHTML = '🔊 Разблокировать звук';
+                    unlockButton.style.cssText = `
+                        position: fixed;
+                        top: 20px;
+                        right: 20px;
+                        z-index: 10000;
+                        padding: 10px 15px;
+                        background: #007bff;
+                        color: white;
+                        border: none;
+                        border-radius: 5px;
+                        cursor: pointer;
+                        font-size: 12px;
+                        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+                    `;
+
+                    unlockButton.onclick = () => {
+                        audio.play().catch(console.warn);
+                        unlockButton.remove();
+                    };
+
+                    document.body.appendChild(unlockButton);
+
+                    // Автоматически убираем кнопку через 10 секунд
+                    setTimeout(() => {
+                        if (unlockButton.parentNode) {
+                            unlockButton.remove();
+                        }
+                    }, 10000);
+                }
+
                 // Показываем уведомление пользователю
                 if (typeof Swal !== 'undefined') {
                     Swal.fire({
@@ -2975,7 +3314,71 @@ function testNotificationFromProfile() {
             alert('Произошла ошибка при тестировании звука: ' + error.message);
         }
     }
-}
+
+        // Глобальная функция для диагностики звука на странице account
+    window.diagnoseAccountSound = () => {
+        console.log('[Account] 🔍 ДИАГНОСТИКА ЗВУКА НА СТРАНИЦЕ ACCOUNT');
+        console.log('='.repeat(60));
+
+        // 1. Проверка настроек звука
+        const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+        console.log('1. Настройки звука:', soundDisabled ? '🔇 ОТКЛЮЧЕН' : '🔊 ВКЛЮЧЕН');
+
+        // 2. Проверка поддержки Web Audio API
+        const hasAudioContext = !!(window.AudioContext || window.webkitAudioContext);
+        console.log('2. Поддержка Web Audio API:', hasAudioContext ? '✅ ПОДДЕРЖИВАЕТСЯ' : '❌ НЕ ПОДДЕРЖИВАЕТСЯ');
+
+        // 3. Проверка глобальных функций
+        console.log('3. Глобальные функции:');
+        console.log('   - playNotificationSound:', typeof window.playNotificationSound === 'function' ? '✅' : '❌');
+        console.log('   - testNotificationSound:', typeof window.testNotificationSound === 'function' ? '✅' : '❌');
+        console.log('   - diagnoseNotificationSound:', typeof window.diagnoseNotificationSound === 'function' ? '✅' : '❌');
+
+        // 4. Проверка виджета
+        const widgetExists = !!document.getElementById('modern-notifications-widget');
+        const widgetInitialized = !!window.notificationsWidget;
+        console.log('4. Виджет уведомлений:');
+        console.log('   - Элемент найден:', widgetExists ? '✅' : '❌');
+        console.log('   - Инициализирован:', widgetInitialized ? '✅' : '❌');
+
+        // 5. Проверка URL звукового файла
+        const soundUrl = "/static/sounds/notification.mp3?v=1.0";
+        console.log('5. URL звукового файла:', soundUrl);
+
+        // 6. Тест загрузки аудио файла
+        console.log('6. Тест загрузки аудио файла...');
+        const testAudio = new Audio(soundUrl);
+        testAudio.preload = 'auto';
+
+        testAudio.addEventListener('loadstart', () => {
+            console.log('   ✅ Начало загрузки аудио файла');
+        });
+
+        testAudio.addEventListener('canplaythrough', () => {
+            console.log('   ✅ Аудио файл готов к воспроизведению');
+        });
+
+        testAudio.addEventListener('error', (e) => {
+            console.error('   ❌ Ошибка загрузки аудио файла:', e);
+            console.error('   ❌ Код ошибки:', testAudio.error?.code);
+            console.error('   ❌ Сообщение ошибки:', testAudio.error?.message);
+        });
+
+        // 7. Тест воспроизведения
+        console.log('7. Тест воспроизведения звука...');
+        testAudio.volume = 0.1; // Тише для теста
+        testAudio.play().then(() => {
+            console.log('   ✅ Звук успешно воспроизведен');
+        }).catch(e => {
+            console.warn('   ⚠️ Не удалось воспроизвести звук:', e);
+            if (e.name === 'NotAllowedError') {
+                console.log('   🔒 Звук заблокирован браузером. Требуется взаимодействие пользователя.');
+            }
+        });
+
+        console.log('='.repeat(60));
+        console.log('[Account] 🔍 Диагностика завершена. Проверьте консоль выше.');
+    };
 
 // Функция переключения виджета уведомлений и звука
 function toggleNotificationsAndSound() {
@@ -3244,16 +3647,133 @@ function createRipple(event, element) {
         ripple.style.opacity = '0';
     }, 600);
 }
+
+// Обработчик для нового переключателя уведомлений о новых заявках
+document.addEventListener('DOMContentLoaded', function() {
+    const newIssuesToggle = document.getElementById('newIssuesNotifications');
+
+    if (newIssuesToggle) {
+        // Загружаем настройки с сервера при инициализации
+        loadNotificationSettings();
+
+        // Обработчик изменения состояния
+        newIssuesToggle.addEventListener('change', function() {
+            const isEnabled = this.checked;
+
+            // Сохраняем состояние в localStorage как fallback
+            localStorage.setItem('newIssuesNotifications', isEnabled.toString());
+
+            // Отправляем настройку на сервер
+            updateNotificationSetting('new_issues', isEnabled);
+        });
+
+        console.log('[Account] ✅ Инициализирован переключатель уведомлений о новых заявках');
+    }
+});
+
+// Функция загрузки настроек уведомлений с сервера
+async function loadNotificationSettings() {
+    try {
+        const response = await fetch('/tasks/api/notification-settings', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.settings) {
+                // Обновляем состояние переключателя
+                const newIssuesToggle = document.getElementById('newIssuesNotifications');
+                if (newIssuesToggle) {
+                    newIssuesToggle.checked = data.settings.new_issues !== false;
+                }
+
+                console.log('[Account] ✅ Настройки уведомлений загружены с сервера:', data.settings);
+            }
+        } else {
+            console.warn('[Account] ⚠️ Не удалось загрузить настройки уведомлений с сервера');
+        }
+    } catch (error) {
+        console.error('[Account] ❌ Ошибка при загрузке настроек уведомлений:', error);
+    }
+}
+
+// Функция обновления настройки уведомлений на сервере
+async function updateNotificationSetting(notificationType, isEnabled) {
+    try {
+        const response = await fetch('/tasks/api/notification-settings', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notification_type: notificationType,
+                is_enabled: isEnabled
+            })
+        });
+
+        if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                // Показываем уведомление о успешном обновлении
+                if (typeof Swal !== 'undefined') {
+                    const title = isEnabled ? 'Уведомления включены' : 'Уведомления отключены';
+                    const text = isEnabled ?
+                        'Теперь вы будете получать уведомления о новых заявках в Redmine' :
+                        'Уведомления о новых заявках отключены';
+
+                    Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: isEnabled ? 'success' : 'info',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
+
+                console.log('[Account] ✅ Настройка уведомлений успешно обновлена на сервере:', {
+                    type: notificationType,
+                    enabled: isEnabled,
+                    timestamp: new Date().toISOString()
+                });
+            } else {
+                throw new Error(data.error || 'Неизвестная ошибка');
+            }
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Ошибка сервера');
+        }
+    } catch (error) {
+        console.error('[Account] ❌ Ошибка при обновлении настройки уведомлений:', error);
+
+        // Показываем ошибку пользователю
+        if (typeof Swal !== 'undefined') {
+            Swal.fire({
+                title: 'Ошибка',
+                text: `Не удалось обновить настройки: ${error.message}`,
+                icon: 'error'
+            });
+        }
+
+        // Восстанавливаем предыдущее состояние переключателя
+        const newIssuesToggle = document.getElementById('newIssuesNotifications');
+        if (newIssuesToggle) {
+            newIssuesToggle.checked = !newIssuesToggle.checked;
+        }
+    }
+}
 </script>
 
 <!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
 <!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->
 <!--
-<script type="module" src="{{ url_for('static', filename='js/push-notifications.js') }}"></script>
+<script type="module" src="/static/js/push-notifications.js"></script>
 -->
 
 <!-- ОТКЛЮЧЕНО: Отладочный модуль для диагностики -->
 <!--
-<script src="{{ url_for('static', filename='js/push-notifications-debug.js') }}"></script>
+<script src="/static/js/push-notifications-debug.js"></script>
 -->
 {% endblock %}
