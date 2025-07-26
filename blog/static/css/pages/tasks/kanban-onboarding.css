@@ -1,0 +1,405 @@
+/* Kanban Onboarding Styles */
+
+/* Модальное окно онбординга */
+.kanban-onboarding-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: fadeIn 0.3s ease;
+}
+
+.onboarding-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+}
+
+.onboarding-container {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    max-height: 80vh;
+    overflow: hidden;
+    animation: slideInUp 0.3s ease;
+}
+
+.onboarding-container.fade-out {
+    animation: slideOutDown 0.3s ease forwards;
+}
+
+/* Заголовок */
+.onboarding-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 25px 15px;
+    border-bottom: 1px solid #e5e7eb;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.onboarding-progress {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex: 1;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffffff, #f0f9ff);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    font-size: 12px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+    min-width: 40px;
+}
+
+.onboarding-close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin-left: 15px;
+}
+
+.onboarding-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.1);
+}
+
+/* Контент */
+.onboarding-content {
+    padding: 30px 25px;
+    text-align: center;
+}
+
+.onboarding-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.onboarding-icon i {
+    font-size: 32px;
+    color: white;
+}
+
+.onboarding-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0 0 15px;
+    line-height: 1.3;
+}
+
+.onboarding-description {
+    font-size: 16px;
+    color: #6b7280;
+    line-height: 1.6;
+    margin: 0;
+}
+
+/* Действия */
+.onboarding-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 25px;
+    border-top: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.onboarding-nav {
+    display: flex;
+    gap: 10px;
+}
+
+.onboarding-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.onboarding-btn.secondary {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: 1px solid #d1d5db;
+}
+
+.onboarding-btn.secondary:hover:not(:disabled) {
+    background: #e5e7eb;
+    color: #374151;
+    transform: translateY(-1px);
+}
+
+.onboarding-btn.secondary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.onboarding-btn.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.onboarding-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+/* Советы */
+.onboarding-tips {
+    padding: 15px 25px;
+    background: #f0f9ff;
+    border-top: 1px solid #e0f2fe;
+}
+
+.tip-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 13px;
+    color: #0369a1;
+}
+
+.tip-item i {
+    color: #f59e0b;
+    font-size: 14px;
+}
+
+/* Уведомление о завершении */
+.kanban-onboarding-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(16, 185, 129, 0.3);
+    z-index: 10000;
+    transform: translateX(100%);
+    opacity: 0;
+    transition: all 0.3s ease;
+    max-width: 350px;
+}
+
+.kanban-onboarding-notification.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification-content i {
+    font-size: 18px;
+    color: #ffffff;
+}
+
+.notification-content span {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* Анимации */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes slideOutDown {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .onboarding-container {
+        width: 95%;
+        max-height: 85vh;
+    }
+
+    .onboarding-header {
+        padding: 15px 20px 10px;
+    }
+
+    .onboarding-content {
+        padding: 25px 20px;
+    }
+
+    .onboarding-title {
+        font-size: 20px;
+    }
+
+    .onboarding-description {
+        font-size: 14px;
+    }
+
+    .onboarding-actions {
+        padding: 15px 20px;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .onboarding-nav {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .onboarding-btn {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .onboarding-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .onboarding-icon i {
+        font-size: 24px;
+    }
+}
+
+@media (max-width: 480px) {
+    .onboarding-container {
+        width: 98%;
+        border-radius: 15px;
+    }
+
+    .onboarding-title {
+        font-size: 18px;
+    }
+
+    .onboarding-description {
+        font-size: 13px;
+    }
+
+    .onboarding-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+
+    .onboarding-btn span {
+        display: none;
+    }
+
+    .onboarding-btn i {
+        font-size: 14px;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .onboarding-container {
+        background: #1f2937;
+        color: #f9fafb;
+    }
+
+    .onboarding-title {
+        color: #f9fafb;
+    }
+
+    .onboarding-description {
+        color: #d1d5db;
+    }
+
+    .onboarding-actions {
+        background: #111827;
+        border-top-color: #374151;
+    }
+
+    .onboarding-btn.secondary {
+        background: #374151;
+        color: #d1d5db;
+        border-color: #4b5563;
+    }
+
+    .onboarding-btn.secondary:hover:not(:disabled) {
+        background: #4b5563;
+        color: #f9fafb;
+    }
+
+    .onboarding-tips {
+        background: #1e3a8a;
+        border-top-color: #3b82f6;
+    }
+
+    .tip-item {
+        color: #93c5fd;
+    }
+}

@@ -722,7 +722,7 @@ class NotificationService:
             # Для страницы /notifications показываем ВСЕ уведомления (и прочитанные, и непрочитанные)
             status_notifications = Notifications.query.filter_by(
                 user_id=user_id
-            ).order_by(Notifications.date_created.desc()).all()
+            ).order_by(Notifications.date_created.desc()).all() #type ignore
 
             comment_notifications = NotificationsAddNotes.query.filter_by(
                 user_id=user_id

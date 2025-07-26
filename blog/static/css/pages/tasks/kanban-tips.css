@@ -1,0 +1,327 @@
+/* Kanban Tips Banner Styles */
+
+.kanban-tips-banner {
+    background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+    border: 1px solid #bae6fd;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.1);
+    overflow: hidden;
+    animation: slideInDown 0.5s ease;
+}
+
+.kanban-tips-banner.fade-out {
+    animation: slideOutUp 0.3s ease forwards;
+}
+
+.tips-header {
+    display: flex;
+    align-items: center;
+    padding: 15px 20px;
+    gap: 15px;
+}
+
+.tips-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.tips-icon i {
+    color: white;
+    font-size: 16px;
+}
+
+.tips-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.tips-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1e40af;
+    margin: 0 0 4px;
+    line-height: 1.3;
+}
+
+.tips-description {
+    font-size: 14px;
+    color: #475569;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.tips-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.tips-nav-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #cbd5e1;
+    background: white;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #64748b;
+}
+
+.tips-nav-btn:hover {
+    background: #f8fafc;
+    border-color: #94a3b8;
+    color: #475569;
+    transform: translateY(-1px);
+}
+
+.tips-nav-btn:active {
+    transform: translateY(0);
+}
+
+.tips-indicators {
+    display: flex;
+    gap: 4px;
+}
+
+.tip-indicator {
+    width: 8px;
+    height: 8px;
+    border: none;
+    background: #cbd5e1;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.tip-indicator:hover {
+    background: #94a3b8;
+    transform: scale(1.2);
+}
+
+.tip-indicator.active {
+    background: #3b82f6;
+    transform: scale(1.3);
+}
+
+.tips-close-btn {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #fecaca;
+    background: #fef2f2;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #ef4444;
+}
+
+.tips-close-btn:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #dc2626;
+    transform: translateY(-1px);
+}
+
+.tips-progress {
+    height: 3px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 100%;
+    background: #e2e8f0;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Анимации */
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+}
+
+.tip-changed {
+    animation: tipChange 0.3s ease;
+}
+
+@keyframes tipChange {
+    0% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+    50% {
+        opacity: 0.7;
+        transform: translateX(-10px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .tips-header {
+        padding: 12px 15px;
+        gap: 12px;
+    }
+
+    .tips-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .tips-icon i {
+        font-size: 14px;
+    }
+
+    .tips-title {
+        font-size: 14px;
+    }
+
+    .tips-description {
+        font-size: 13px;
+    }
+
+    .tips-controls {
+        gap: 8px;
+    }
+
+    .tips-nav-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .tips-close-btn {
+        width: 28px;
+        height: 28px;
+    }
+
+    .tip-indicator {
+        width: 6px;
+        height: 6px;
+    }
+}
+
+@media (max-width: 480px) {
+    .tips-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .tips-controls {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .tips-content {
+        width: 100%;
+    }
+
+    .tips-title {
+        font-size: 13px;
+    }
+
+    .tips-description {
+        font-size: 12px;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .kanban-tips-banner {
+        background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+        border-color: #3b82f6;
+    }
+
+    .tips-title {
+        color: #93c5fd;
+    }
+
+    .tips-description {
+        color: #cbd5e1;
+    }
+
+    .tips-nav-btn {
+        background: #374151;
+        border-color: #4b5563;
+        color: #d1d5db;
+    }
+
+    .tips-nav-btn:hover {
+        background: #4b5563;
+        border-color: #6b7280;
+        color: #f9fafb;
+    }
+
+    .tip-indicator {
+        background: #4b5563;
+    }
+
+    .tip-indicator:hover {
+        background: #6b7280;
+    }
+
+    .tip-indicator.active {
+        background: #3b82f6;
+    }
+
+    .tips-close-btn {
+        background: #7f1d1d;
+        border-color: #dc2626;
+        color: #fca5a5;
+    }
+
+    .tips-close-btn:hover {
+        background: #991b1b;
+        border-color: #ef4444;
+        color: #fecaca;
+    }
+
+    .tips-progress {
+        background: #374151;
+    }
+
+    .progress-bar {
+        background: #374151;
+    }
+}

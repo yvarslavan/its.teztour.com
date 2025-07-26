@@ -1322,6 +1322,39 @@ table.dataTable tbody tr.return-selected td {
     min-width: 280px;
     max-width: 320px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    flex-shrink: 0; /* Предотвращаем сжатие колонок */
+}
+
+/* Контейнер колонок с правильным отображением */
+.kanban-columns {
+    display: flex;
+    overflow-x: auto;
+    gap: 15px;
+    padding: 20px;
+    min-height: 400px;
+    align-items: flex-start;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e0 #f7fafc;
+}
+
+/* Стилизация скроллбара для колонок */
+.kanban-columns::-webkit-scrollbar {
+    height: 8px;
+}
+
+.kanban-columns::-webkit-scrollbar-track {
+    background: #f7fafc;
+    border-radius: 4px;
+}
+
+.kanban-columns::-webkit-scrollbar-thumb {
+    background: #cbd5e0;
+    border-radius: 4px;
+}
+
+.kanban-columns::-webkit-scrollbar-thumb:hover {
+    background: #a0aec0;
 }
 
 .kanban-column-header {
@@ -1349,14 +1382,15 @@ table.dataTable tbody tr.return-selected td {
 
 .kanban-column-count {
     background: rgba(255,255,255,0.2);
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    border-radius: 12px;
+    padding: 4px 8px;
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 600;
+    min-width: auto;
+    text-align: center;
+    white-space: nowrap;
+    display: inline-block;
+    color: white;
 }
 
 .kanban-column-content {
@@ -1654,8 +1688,10 @@ table.dataTable tbody tr.return-selected td {
   border-radius: 12px;
   font-size: 12px;
   font-weight: 600;
-  min-width: 20px;
+  min-width: auto;
   text-align: center;
+  white-space: nowrap;
+  display: inline-block;
 }
 
 .kanban-column-toggle {
@@ -2192,17 +2228,13 @@ table.dataTable tbody tr.return-selected td {
     background: linear-gradient(135deg, #f59e0b, #ef4444);
     color: white;
     font-weight: 700;
-    padding: 2px 8px;
+    padding: 4px 8px;
     border-radius: 12px;
-    font-size: 11px;
+    font-size: 12px;
     position: relative;
-}
-
-.kanban-column-limited .kanban-column-count::after {
-    content: ' из 1000+';
-    font-size: 9px;
-    opacity: 0.8;
-    margin-left: 2px;
+    white-space: nowrap;
+    display: inline-block;
+    min-width: auto;
 }
 
 /* Индикатор ограничения в заголовке колонки */

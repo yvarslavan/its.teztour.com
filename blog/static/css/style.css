@@ -1528,7 +1528,7 @@ td {
     background: #fff;
     box-shadow: -2px 0 5px rgba(0,0,0,0.1);
     transition: right 0.3s ease;
-    z-index: 300 !important; /* z-index для sidebar */
+    z-index: 9999 !important; /* Увеличиваем z-index для sidebar */
     display: flex;
     flex-direction: column;
 }

@@ -65,7 +65,7 @@ def get_task_by_id(task_id):
 
         try:
             # Получаем задачу из Redmine
-            task = redmine_connector.redmine.issue.get(task_id, include=['status', 'priority', 'project', 'assigned_to'])
+            task = redmine_connector.redmine.issue.get(task_id, include=['status', 'priority', 'project', 'assigned_to', 'start_date', 'due_date', 'closed_on', 'easy_email_to', 'easy_email_cc'])
 
             # Получаем локализованные названия из MySQL
             mysql_conn = get_connection(
@@ -89,7 +89,11 @@ def get_task_by_id(task_id):
                 "assigned_to_name": task.assigned_to.name if hasattr(task, 'assigned_to') and task.assigned_to else "Неизвестен",
                 "created_on": task.created_on.isoformat() if hasattr(task, 'created_on') and task.created_on else None,
                 "updated_on": task.updated_on.isoformat() if hasattr(task, 'updated_on') and task.updated_on else None,
+                "start_date": task.start_date.isoformat() if hasattr(task, 'start_date') and task.start_date else None,
                 "due_date": task.due_date.isoformat() if hasattr(task, 'due_date') and task.due_date else None,
+                "closed_on": task.closed_on.isoformat() if hasattr(task, 'closed_on') and task.closed_on else None,
+                "easy_email_to": getattr(task, 'easy_email_to', None),
+                "easy_email_cc": getattr(task, 'easy_email_cc', None),
                 "done_ratio": getattr(task, 'done_ratio', 0),
                 "tracker_id": task.tracker.id if hasattr(task, 'tracker') and task.tracker else None,
                 "tracker_name": task.tracker.name if hasattr(task, 'tracker') and task.tracker else None
@@ -432,6 +436,624 @@ def update_task_status(task_id):
 
     except Exception as e:
         current_app.logger.error(f"[API] Критическая ошибка в PUT /task/{task_id}/status: {str(e)}. Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False
+        }), 500
+
+
+@api_bp.route("/task/<int:task_id>/priorities", methods=["GET"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def get_task_available_priorities(task_id):
+    """
+    API для получения доступных приоритетов для конкретной задачи
+    """
+    current_app.logger.info(f"[API] /task/{task_id}/priorities - запрос от {current_user.username}")
+    start_time = time.time()
+
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False,
+                "priorities": []
+            }), 403
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False,
+                "priorities": []
+            }), 500
+
+        try:
+            # Получаем задачу для проверки прав доступа
+            task = redmine_connector.redmine.issue.get(task_id, include=['priority'])
+            current_priority = task.priority if hasattr(task, 'priority') and task.priority else None
+
+            # Получаем все доступные приоритеты из Redmine
+            redmine_priorities = redmine_connector.redmine.enumeration.filter(resource='issue_priorities')
+            available_priorities = [{"id": priority.id, "name": priority.name} for priority in redmine_priorities]
+
+            # Получаем локализованные названия приоритетов из MySQL
+            mysql_conn = get_connection(
+                db_redmine_host,
+                db_redmine_user_name,
+                db_redmine_password,
+                db_redmine_name
+            )
+
+            if mysql_conn:
+                cursor = mysql_conn.cursor()
+                try:
+                    # Получаем локализованные названия приоритетов
+                    cursor.execute("""
+                        SELECT e.id, up.name
+                        FROM enumerations e
+                        JOIN u_Priority up ON e.id = up.id
+                        WHERE e.type = 'IssuePriority'
+                        AND e.active = 1
+                        ORDER BY e.position, up.name
+                    """)
+                    localized_priorities = {row["id"]: row["name"] for row in cursor.fetchall()}
+
+                    # Обновляем названия приоритетов локализованными версиями
+                    for priority in available_priorities:
+                        if priority["id"] in localized_priorities:
+                            priority["name"] = localized_priorities[priority["id"]]
+
+                    # Получаем локализованное название текущего приоритета
+                    if current_priority:
+                        current_priority_name = localized_priorities.get(current_priority.id, current_priority.name)
+                        current_priority_data = {
+                            "id": current_priority.id,
+                            "name": current_priority_name
+                        }
+                    else:
+                        current_priority_data = None
+
+                finally:
+                    cursor.close()
+                    mysql_conn.close()
+            else:
+                # Если нет подключения к MySQL, используем данные из Redmine
+                current_priority_data = {
+                    "id": current_priority.id,
+                    "name": current_priority.name
+                } if current_priority else None
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] /task/{task_id}/priorities выполнен за {execution_time:.2f}с")
+
+            return jsonify({
+                "success": True,
+                "current_priority": current_priority_data,
+                "available_priorities": available_priorities
+            })
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка получения приоритетов для задачи {task_id}: {str(redmine_error)}")
+            return jsonify({
+                "error": f"Ошибка получения приоритетов: {str(redmine_error)}",
+                "success": False,
+                "priorities": []
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в /task/{task_id}/priorities: {str(e)}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False,
+            "priorities": []
+        }), 500
+
+
+@api_bp.route("/task/<int:task_id>/priority", methods=["PUT"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def update_task_priority(task_id):
+    """
+    API для изменения приоритета задачи через Redmine REST API
+    """
+    current_app.logger.info(f"[API] PUT /task/{task_id}/priority - запрос от {current_user.username}")
+    current_app.logger.info(f"[API] Заголовки запроса: {dict(request.headers)}")
+    current_app.logger.info(f"[API] Данные запроса: {request.get_json()}")
+    start_time = time.time()
+
+    try:
+        current_app.logger.info(f"[API] Проверка прав доступа: current_user.is_redmine_user = {current_user.is_redmine_user}")
+
+        if not current_user.is_redmine_user:
+            current_app.logger.error(f"[API] Доступ запрещен для пользователя {current_user.username}")
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False
+            }), 403
+
+        # Получаем данные из запроса
+        data = request.get_json()
+        if not data or 'priority_id' not in data:
+            return jsonify({
+                "error": "Не указан новый приоритет (priority_id)",
+                "success": False
+            }), 400
+
+        new_priority_id = data['priority_id']
+        comment = data.get('comment', '')  # Необязательный комментарий
+
+        current_app.logger.info(f"[API] Изменение приоритета задачи {task_id} на {new_priority_id}, комментарий: '{comment}'")
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False
+            }), 500
+
+        try:
+            # Получаем задачу для проверки прав доступа
+            task = redmine_connector.redmine.issue.get(task_id)
+            old_priority_id = task.priority.id if hasattr(task, 'priority') and task.priority else None
+
+            current_app.logger.info(f"[API] Задача {task_id}: текущий приоритет {old_priority_id} -> новый приоритет {new_priority_id}")
+
+            # Проверяем, что приоритет действительно изменился
+            if old_priority_id == new_priority_id:
+                return jsonify({
+                    "error": "Новый приоритет совпадает с текущим",
+                    "success": False
+                }), 400
+
+            # Подготавливаем данные для обновления
+            update_data = {
+                "priority_id": new_priority_id
+            }
+
+            # Добавляем комментарий если указан
+            if comment.strip():
+                update_data["notes"] = comment.strip()
+
+            # Выполняем обновление через Redmine REST API
+            result = redmine_connector.redmine.issue.update(task_id, **update_data)
+
+            current_app.logger.info(f"[API] Приоритет задачи {task_id} успешно изменен на {new_priority_id}")
+
+            # Получаем обновленную задачу для возврата актуальных данных
+            updated_task = redmine_connector.redmine.issue.get(task_id, include=['priority'])
+
+            # Получаем локализованное название нового приоритета
+            mysql_conn = get_connection(
+                db_redmine_host,
+                db_redmine_user_name,
+                db_redmine_password,
+                db_redmine_name
+            )
+
+            new_priority_name = "Неизвестен"
+            if mysql_conn:
+                cursor = mysql_conn.cursor()
+                try:
+                    cursor.execute("SELECT name FROM u_Priority WHERE id = %s", (new_priority_id,))
+                    result_row = cursor.fetchone()
+                    if result_row:
+                        new_priority_name = result_row['name']
+                    else:
+                        new_priority_name = updated_task.priority.name if hasattr(updated_task, 'priority') and updated_task.priority else "Неизвестен"
+                finally:
+                    cursor.close()
+                    mysql_conn.close()
+
+            response_data = {
+                "success": True,
+                "task_id": task_id,
+                "old_priority_id": old_priority_id,
+                "new_priority_id": new_priority_id,
+                "new_priority_name": new_priority_name,
+                "comment": comment,
+                "updated_at": datetime.now().isoformat(),
+                "message": f"Приоритет задачи успешно изменен на '{new_priority_name}'"
+            }
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] PUT /task/{task_id}/priority выполнен за {execution_time:.2f}с")
+
+            return jsonify(response_data)
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка изменения приоритета задачи {task_id}: {str(redmine_error)}")
+
+            # Обработка специфических ошибок Redmine
+            error_message = str(redmine_error)
+            if "422" in error_message or "Unprocessable Entity" in error_message:
+                error_message = "Некорректные данные для изменения приоритета. Проверьте права доступа."
+            elif "401" in error_message or "Unauthorized" in error_message:
+                error_message = "Отсутствуют права для изменения приоритета этой задачи."
+            elif "403" in error_message or "Forbidden" in error_message:
+                error_message = "Доступ запрещен. Недостаточно прав для изменения приоритета."
+            elif "404" in error_message or "Not Found" in error_message:
+                error_message = f"Задача #{task_id} не найдена."
+
+            return jsonify({
+                "error": error_message,
+                "success": False,
+                "technical_error": str(redmine_error)
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в PUT /task/{task_id}/priority: {str(e)}. Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False
+        }), 500
+
+
+@api_bp.route("/users", methods=["GET"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def get_available_users():
+    """
+    API для получения списка доступных пользователей для назначения исполнителем
+    """
+    current_app.logger.info(f"[API] /users - запрос от {current_user.username}")
+    start_time = time.time()
+
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False,
+                "users": []
+            }), 403
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False,
+                "users": []
+            }), 500
+
+        try:
+            # Получаем всех пользователей из Redmine
+            redmine_users = redmine_connector.redmine.user.all()
+            available_users = []
+
+            # Получаем локализованные названия из MySQL
+            mysql_conn = get_connection(
+                db_redmine_host,
+                db_redmine_user_name,
+                db_redmine_password,
+                db_redmine_name
+            )
+
+            if mysql_conn:
+                cursor = mysql_conn.cursor()
+                try:
+                    # Получаем активных пользователей из MySQL
+                    cursor.execute("""
+                        SELECT id, firstname, lastname, login, type, status
+                        FROM users
+                        WHERE status = 1 AND type = 'User'
+                        ORDER BY lastname, firstname
+                    """)
+
+                    mysql_users = {row["id"]: {
+                        "id": row["id"],
+                        "firstname": row["firstname"],
+                        "lastname": row["lastname"],
+                        "login": row["login"],
+                        "full_name": f"{row['lastname'] or ''} {row['firstname'] or ''}".strip()
+                    } for row in cursor.fetchall()}
+
+                    # Объединяем данные из Redmine и MySQL
+                    for user in redmine_users:
+                        if hasattr(user, 'id') and user.id in mysql_users:
+                            mysql_user = mysql_users[user.id]
+                            available_users.append({
+                                "id": mysql_user["id"],
+                                "name": mysql_user["full_name"],
+                                "login": mysql_user["login"],
+                                "firstname": mysql_user["firstname"],
+                                "lastname": mysql_user["lastname"]
+                            })
+                        else:
+                            # Если нет в MySQL, используем данные из Redmine
+                            available_users.append({
+                                "id": user.id,
+                                "name": user.name if hasattr(user, 'name') else f"{getattr(user, 'lastname', '')} {getattr(user, 'firstname', '')}".strip(),
+                                "login": user.login if hasattr(user, 'login') else '',
+                                "firstname": getattr(user, 'firstname', ''),
+                                "lastname": getattr(user, 'lastname', '')
+                            })
+
+                finally:
+                    cursor.close()
+                    mysql_conn.close()
+            else:
+                # Если нет подключения к MySQL, используем данные из Redmine
+                for user in redmine_users:
+                    available_users.append({
+                        "id": user.id,
+                        "name": user.name if hasattr(user, 'name') else f"{getattr(user, 'lastname', '')} {getattr(user, 'firstname', '')}".strip(),
+                        "login": user.login if hasattr(user, 'login') else '',
+                        "firstname": getattr(user, 'firstname', ''),
+                        "lastname": getattr(user, 'lastname', '')
+                    })
+
+            # Сортируем по имени
+            available_users.sort(key=lambda x: x["name"])
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] /users выполнен за {execution_time:.2f}с ({len(available_users)} пользователей)")
+
+            return jsonify({
+                "success": True,
+                "users": available_users
+            })
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка получения пользователей: {str(redmine_error)}")
+            return jsonify({
+                "error": f"Ошибка получения пользователей: {str(redmine_error)}",
+                "success": False,
+                "users": []
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в /users: {str(e)}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False,
+            "users": []
+        }), 500
+
+
+@api_bp.route("/task/<int:task_id>/assignee", methods=["PUT"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def update_task_assignee(task_id):
+    """
+    API для изменения исполнителя задачи через Redmine REST API
+    """
+    current_app.logger.info(f"[API] PUT /task/{task_id}/assignee - запрос от {current_user.username}")
+    current_app.logger.info(f"[API] Заголовки запроса: {dict(request.headers)}")
+    current_app.logger.info(f"[API] Данные запроса: {request.get_json()}")
+    start_time = time.time()
+
+    try:
+        current_app.logger.info(f"[API] Проверка прав доступа: current_user.is_redmine_user = {current_user.is_redmine_user}")
+
+        if not current_user.is_redmine_user:
+            current_app.logger.error(f"[API] Доступ запрещен для пользователя {current_user.username}")
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False
+            }), 403
+
+        # Получаем данные из запроса
+        data = request.get_json()
+        if not data or 'assignee_id' not in data:
+            return jsonify({
+                "error": "Не указан новый исполнитель (assignee_id)",
+                "success": False
+            }), 400
+
+        new_assignee_id = data['assignee_id']
+        comment = data.get('comment', '')  # Необязательный комментарий
+
+        current_app.logger.info(f"[API] Изменение исполнителя задачи {task_id} на {new_assignee_id}, комментарий: '{comment}'")
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False
+            }), 500
+
+        try:
+            # Получаем задачу для проверки прав доступа
+            task = redmine_connector.redmine.issue.get(task_id)
+            old_assignee_id = task.assigned_to.id if hasattr(task, 'assigned_to') and task.assigned_to else None
+
+            current_app.logger.info(f"[API] Задача {task_id}: текущий исполнитель {old_assignee_id} -> новый исполнитель {new_assignee_id}")
+
+            # Проверяем, что исполнитель действительно изменился
+            if old_assignee_id == new_assignee_id:
+                return jsonify({
+                    "error": "Новый исполнитель совпадает с текущим",
+                    "success": False
+                }), 400
+
+            # Подготавливаем данные для обновления
+            update_data = {
+                "assigned_to_id": new_assignee_id
+            }
+
+            # Добавляем комментарий если указан
+            if comment.strip():
+                update_data["notes"] = comment.strip()
+
+            # Выполняем обновление через Redmine REST API
+            result = redmine_connector.redmine.issue.update(task_id, **update_data)
+
+            current_app.logger.info(f"[API] Исполнитель задачи {task_id} успешно изменен на {new_assignee_id}")
+
+            # Получаем обновленную задачу для возврата актуальных данных
+            updated_task = redmine_connector.redmine.issue.get(task_id, include=['assigned_to'])
+
+            # Получаем локализованное название нового исполнителя
+            mysql_conn = get_connection(
+                db_redmine_host,
+                db_redmine_user_name,
+                db_redmine_password,
+                db_redmine_name
+            )
+
+            new_assignee_name = "Неизвестен"
+            if mysql_conn:
+                cursor = mysql_conn.cursor()
+                try:
+                    cursor.execute("SELECT CONCAT(IFNULL(lastname, ''), ' ', IFNULL(firstname, '')) as full_name FROM users WHERE id = %s", (new_assignee_id,))
+                    result_row = cursor.fetchone()
+                    if result_row:
+                        new_assignee_name = result_row['full_name'].strip()
+                    else:
+                        new_assignee_name = updated_task.assigned_to.name if hasattr(updated_task, 'assigned_to') and updated_task.assigned_to else "Неизвестен"
+                finally:
+                    cursor.close()
+                    mysql_conn.close()
+
+            response_data = {
+                "success": True,
+                "task_id": task_id,
+                "old_assignee_id": old_assignee_id,
+                "new_assignee_id": new_assignee_id,
+                "new_assignee_name": new_assignee_name,
+                "comment": comment,
+                "updated_at": datetime.now().isoformat(),
+                "message": f"Исполнитель задачи успешно изменен на '{new_assignee_name}'"
+            }
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] PUT /task/{task_id}/assignee выполнен за {execution_time:.2f}с")
+
+            return jsonify(response_data)
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка изменения исполнителя задачи {task_id}: {str(redmine_error)}")
+
+            # Обработка специфических ошибок Redmine
+            error_message = str(redmine_error)
+            if "422" in error_message or "Unprocessable Entity" in error_message:
+                error_message = "Некорректные данные для изменения исполнителя. Проверьте права доступа."
+            elif "401" in error_message or "Unauthorized" in error_message:
+                error_message = "Отсутствуют права для изменения исполнителя этой задачи."
+            elif "403" in error_message or "Forbidden" in error_message:
+                error_message = "Доступ запрещен. Недостаточно прав для изменения исполнителя."
+            elif "404" in error_message or "Not Found" in error_message:
+                error_message = f"Задача #{task_id} не найдена."
+
+            return jsonify({
+                "error": error_message,
+                "success": False,
+                "technical_error": str(redmine_error)
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в PUT /task/{task_id}/assignee: {str(e)}. Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False
+        }), 500
+
+
+@api_bp.route("/task/<int:task_id>/attachment/<int:attachment_id>/download", methods=["GET"])
+@csrf.exempt
+@login_required
+@weekend_performance_optimizer
+def download_task_attachment(task_id, attachment_id):
+    """
+    API для скачивания вложения задачи
+    """
+    current_app.logger.info(f"[API] GET /task/{task_id}/attachment/{attachment_id}/download - запрос от {current_user.username}")
+    start_time = time.time()
+
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False
+            }), 403
+
+        # Создаем коннектор Redmine
+        redmine_connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=current_user.password
+        )
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False
+            }), 500
+
+        try:
+            # Получаем задачу для проверки прав доступа
+            task = redmine_connector.redmine.issue.get(task_id, include=['attachments'])
+            current_app.logger.info(f"[API] Получена задача {task_id} с {len(task.attachments)} вложениями")
+
+            # Ищем нужное вложение
+            attachment = None
+            for att in task.attachments:
+                current_app.logger.info(f"[API] Проверяем вложение {att.id}: {att.filename}")
+                if att.id == attachment_id:
+                    attachment = att
+                    break
+
+            if not attachment:
+                current_app.logger.error(f"[API] Вложение #{attachment_id} не найдено в задаче {task_id}")
+                return jsonify({
+                    "error": f"Вложение #{attachment_id} не найдено",
+                    "success": False
+                }), 404
+
+            current_app.logger.info(f"[API] Найдено вложение: {attachment.filename} (размер: {attachment.filesize} байт)")
+
+                        # Формируем URL для прямого скачивания из Redmine
+            redmine_download_url = f"{redmine_connector.redmine.url}/attachments/download/{attachment_id}"
+            current_app.logger.info(f"[API] URL для скачивания: {redmine_download_url}")
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] GET /task/{task_id}/attachment/{attachment_id}/download выполнен за {execution_time:.2f}с")
+
+            # Возвращаем JSON с URL для скачивания
+            return jsonify({
+                "success": True,
+                "download_url": redmine_download_url,
+                "filename": attachment.filename,
+                "filesize": attachment.filesize
+            })
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка скачивания вложения {attachment_id} для задачи {task_id}: {str(redmine_error)}")
+            return jsonify({
+                "error": f"Ошибка скачивания файла: {str(redmine_error)}",
+                "success": False
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в GET /task/{task_id}/attachment/{attachment_id}/download: {str(e)}. Traceback: {traceback.format_exc()}")
         return jsonify({
             "error": f"Внутренняя ошибка сервера: {str(e)}",
             "success": False

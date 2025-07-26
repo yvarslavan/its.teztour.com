@@ -379,12 +379,20 @@ class RedmineConnector:
 
     def add_comment(self, issue_id, notes, user_id=None):
         try:
+            # Логируем параметры
+            print(f"[add_comment] Добавление комментария к задаче {issue_id}")
+            print(f"[add_comment] user_id: {user_id}")
+            print(f"[add_comment] notes: {notes[:100]}...")
+
             self.redmine.issue.update(issue_id, notes=notes)
+            print(f"[add_comment] Комментарий добавлен через Redmine API")
         except BaseRedmineError as e:
+            print(f"[add_comment] Ошибка Redmine API: {e}")
             return False, f"Ошибка при добавлении комментария в Redmine: {e}"
 
         if user_id is not None:
             try:
+                print(f"[add_comment] Обновляем user_id в БД на {user_id}")
                 conn = get_connection(
                     db_redmine_host,
                     db_redmine_user_name,
@@ -393,8 +401,11 @@ class RedmineConnector:
                 )
                 success, message = update_user_id(conn, user_id, issue_id)
                 if not success:
+                    print(f"[add_comment] Ошибка обновления user_id: {message}")
                     return False, message
+                print(f"[add_comment] user_id успешно обновлен: {message}")
             except pymysql.Error as e:  # Перехватываем исключения, связанные с pymysql
+                print(f"[add_comment] Ошибка БД: {e}")
                 return False, f"Ошибка работы с базой данных: {e}"
 
         return True, "Комментарий успешно добавлен!"
@@ -436,9 +447,11 @@ class RedmineConnector:
 
 
 def update_user_id(connection, redmine_user_id, redmine_issue_id):
-    """Обновляем user_id с Admin Redmine = 1 на Anonymous = 4"""
+    """Обновляем user_id для последнего добавленного комментария к задаче"""
+    # Обновляем последний добавленный комментарий к задаче
     user_id_update = """UPDATE redmine.journals SET user_id = %s WHERE journalized_id = %s
-                        AND journalized_type = 'Issue' AND user_id = 1;"""
+                        AND journalized_type = 'Issue' AND notes IS NOT NULL AND notes != ''
+                        ORDER BY created_on DESC LIMIT 1;"""
     try:
         with connection.cursor() as cursor:
             cursor.execute(user_id_update, (redmine_user_id, redmine_issue_id))
