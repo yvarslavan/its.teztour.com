@@ -264,7 +264,7 @@
                                             <button type="button" id="togglePassword" class="password-toggle-btn" {% if not user_password_erp %}disabled{% endif %}>
                                                 <i id="eyeIcon" class="fas fa-eye"></i>
                                             </button>
-                                            <button type="button" id="copyPassword" class="password-copy-btn" disabled>
+                                            <button type="button" id="copyPassword" class="password-copy-btn" {% if not user_password_erp %}disabled{% endif %}>
                                                 <i class="fas fa-copy"></i>
                                                 <span>Копировать</span>
                                             </button>
@@ -281,6 +281,8 @@
                                             </button>
                                         </div>
                                         {% endif %}
+
+
                                     </div>
                                     </div>
                                 </div>
@@ -355,16 +357,11 @@
                                                 <span>Настройки</span>
                                             </div>
                                         </a>
-                                        <button onclick="testNotificationFromProfile()" class="modern-settings-btn secondary-btn compact-btn">
-                                            <div class="btn-content">
-                                                <i class="fas fa-volume-up"></i>
-                                                <span>Тест</span>
-                                            </div>
-                                        </button>
-                                        <button onclick="toggleNotificationsAndSound()" class="modern-settings-btn danger-btn compact-btn" id="toggleNotificationsBtn">
+
+                                        <button class="modern-settings-btn danger-btn compact-btn" id="toggleNotificationsBtn">
                                             <div class="btn-content">
                                                 <i class="fas fa-bell-slash"></i>
-                                                <span>Отключить всё</span>
+                                                <span id="toggleNotificationsBtnText">Отключить всё</span>
                                             </div>
                                         </button>
                                     </div>
@@ -2614,6 +2611,18 @@
         opacity: 0.8;
     }
 
+    .account-page-wrapper .notification-status.inactive-status .connection-dot {
+        background-color: #ef4444;
+    }
+
+    .account-page-wrapper .notification-status.inactive-status .connection-text {
+        color: #ef4444;
+    }
+
+    .account-page-wrapper .notification-status.inactive-status .detail-item {
+        opacity: 0.6;
+    }
+
     .account-page-wrapper .connection-dot {
         width: 8px;
         height: 8px;
@@ -2631,995 +2640,152 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER = {{ push_subscription_active|tojson }};
-    console.log('[Account] Initial subscription state from server:', PUSH_SUBSCRIPTION_ACTIVE_FROM_SERVER);
-
-    // Удален вызов setInitialPushUIStateFromServer - больше не используется
-
-    console.log('[Account] DOM загружен, начинаю инициализацию');
-
-    // Проверяем наличие элементов управления виджетом уведомлений
-    console.log('[Account] Проверка элементов виджета уведомлений при загрузке DOM:');
-    console.log('  toggleNotificationsBtn:', document.getElementById('toggleNotificationsBtn'));
-    console.log('  modern-notifications-widget:', document.getElementById('modern-notifications-widget'));
-    console.log('  notifications-restore-btn:', document.getElementById('notifications-restore-btn'));
-
-    // Ripple effect for action buttons
-    const actionBtns = document.querySelectorAll('.action-btn');
-    actionBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            createRipple(e, this);
-        });
-    });
-
-    // Copy signature functionality
-    const copySignatureBtnAccount = document.getElementById('copySignatureBtnAccount');
-    if (copySignatureBtnAccount) {
-        copySignatureBtnAccount.addEventListener('click', function () {
-            const signaturePreview = document.querySelector('.signature-preview');
-            if (signaturePreview) {
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = signaturePreview.innerHTML;
-                const plainText = signaturePreview.innerText || signaturePreview.textContent;
-
-                navigator.clipboard.write([
-                    new ClipboardItem({
-                        'text/html': new Blob([tempDiv.innerHTML], { type: 'text/html' }),
-                        'text/plain': new Blob([plainText], { type: 'text/plain' })
-                    })
-                ]).then(function () {
-                    const originalText = copySignatureBtnAccount.innerHTML;
-                    copySignatureBtnAccount.innerHTML = '<i class="fas fa-check me-2"></i>Скопировано!';
-                    setTimeout(() => {
-                        copySignatureBtnAccount.innerHTML = originalText;
-                    }, 2000);
-                }).catch(function (error) {
-                    console.error('Ошибка копирования подписи: ', error);
-                    Swal.fire('Ошибка', 'Не удалось скопировать подпись. Пожалуйста, скопируйте вручную.', 'error');
-                });
-            }
-        });
-    }
-
-    // Send password functionality
-    const sendPasswordBtn = document.getElementById('sendPasswordButton');
-    if (sendPasswordBtn) {
-        sendPasswordBtn.addEventListener('click', function() {
-            const usernameField = document.querySelector('input.info-input[readonly]');
-            const username = usernameField ? usernameField.value : "{{ user.username }}";
-
-            if (!username) {
-                 Swal.fire('Внимание', 'Имя пользователя не найдено для отправки пароля.', 'warning');
-                return;
-            }
-
-            const originalButtonText = sendPasswordBtn.innerHTML;
-            sendPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Отправка...';
-            sendPasswordBtn.disabled = true;
-
-            fetch("{{ url_for('users.send_password') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                },
-                body: 'Username=' + encodeURIComponent(username)
-            })
-            .then(response => response.json().then(data => ({ status: response.status, body: data })))
-            .then(result => {
-                Swal.fire(
-                    result.status === 200 ? 'Успешно!' : 'Ошибка',
-                    result.body.message,
-                    result.status === 200 ? 'success' : 'error'
-                );
-            })
-            .catch(error => {
-                console.error('Ошибка при отправке пароля:', error);
-                Swal.fire('Сетевая ошибка', 'Произошла ошибка при отправке запроса.', 'error');
-            })
-            .finally(() => {
-                sendPasswordBtn.innerHTML = originalButtonText;
-                sendPasswordBtn.disabled = false;
-            });
-        });
-    }
-
-    // Download ERP functionality
-    const downloadErpBtn = document.getElementById('downloadButton');
-    if (downloadErpBtn) {
-        downloadErpBtn.addEventListener('click', function() {
-            const button = this;
-            const originalButtonText = button.innerHTML;
-            button.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Загрузка...';
-            button.disabled = true;
-
-            fetch("{{ url_for('users.download_erp') }}")
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Ошибка HTTP: ${response.status}`);
-                    }
-                    const contentDisposition = response.headers.get('content-disposition');
-                    let filename = "TEZERP.exe";
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
-                        if (filenameMatch && filenameMatch.length === 2)
-                            filename = filenameMatch[1];
-                    }
-                    return response.blob().then(blob => ({ blob, filename }));
-                })
-                .then(({ blob, filename }) => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.style.display = 'none';
-                    a.href = url;
-                    a.download = filename;
-                    document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    document.body.removeChild(a);
-
-                    Swal.fire('Загрузка завершена', `Файл ${filename} скачан.`, 'success');
-                     button.innerHTML = '<i class="fas fa-check me-2"></i>Файл скачан';
-                })
-                .catch(error => {
-                    console.error('Ошибка при скачивании файла ERP:', error);
-                    Swal.fire('Ошибка загрузки', `Не удалось скачать файл: ${error.message}`, 'error');
-                    button.innerHTML = originalButtonText;
-                })
-                .finally(() => {
-                    button.disabled = false;
-                });
-        });
-    }
-
-    // Update VPN date functionality
-    const updateVpnBtn = document.getElementById('update-vpn-date');
-    const vpnDisplayField = document.getElementById('account-vpn-display');
-    if (updateVpnBtn && vpnDisplayField) {
-        updateVpnBtn.addEventListener('click', function() {
-            const originalButtonText = updateVpnBtn.innerHTML;
-            updateVpnBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>';
-            updateVpnBtn.disabled = true;
-
-            fetch("{{ url_for('users.update_vpn_date') }}", {
-                method: 'POST',
-                 headers: {
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                Swal.fire(data.error ? 'Ошибка' : 'Результат', data.message, data.error ? 'error' : 'success');
-                if (!data.error) {
-                    if (data.vpn_end_date === null) {
-                        vpnDisplayField.value = 'Выключен';
-                    } else {
-                        vpnDisplayField.value = `Включен, заканчивается ${data.vpn_end_date}`;
-                    }
-
-                    // Update badge
-                    const vpnStatusBadgeContainer = document.getElementById('vpn-status-badge-container');
-                    if(vpnStatusBadgeContainer) {
-                        if (data.vpn_end_date === null || data.vpn_status === 0) {
-                             vpnStatusBadgeContainer.innerHTML = '<span class="status-badge inactive"><i class="fas fa-shield-alt"></i>Выключен</span>';
-                        } else if (data.vpn_end_date === '<Дата не определена>') {
-                            vpnStatusBadgeContainer.innerHTML = '<span class="status-badge warning"><i class="fas fa-shield-alt"></i>Включен</span> <span class="status-info">срок не определен</span>';
-                        } else {
-                             vpnStatusBadgeContainer.innerHTML = `<span class="status-badge active"><i class="fas fa-shield-alt"></i>Включен</span> <span class="status-info">до ${data.vpn_end_date}</span>`;
-                        }
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при обновлении даты VPN:', error);
-                Swal.fire('Сетевая ошибка', 'Ошибка при обновлении даты VPN.', 'error');
-            })
-            .finally(() => {
-                updateVpnBtn.innerHTML = originalButtonText;
-                updateVpnBtn.disabled = false;
-            });
-        });
-    }
-
-    // Permission toggles functionality
-    const permissionToggles = document.querySelectorAll('.permission-toggle');
-    permissionToggles.forEach(toggle => {
-        toggle.addEventListener('change', function() {
-            const userId = this.dataset.userId;
-            const type = this.dataset.type;
-            const value = this.checked;
-
-            fetch("{{ url_for('users.update_user_permissions') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                },
-                body: `userId=${userId}&permissionType=${type}&value=${value}`
-            })
-            .then(response => response.json())
-            .then(data => {
-                Swal.fire({
-                    icon: data.success ? 'success' : 'error',
-                    title: data.success ? 'Успешно' : 'Ошибка',
-                    text: data.message,
-                    toast: true,
-                    position: 'top-end',
-                    timer: 3000,
-                    showConfirmButton: false
-                });
-                if (!data.success) {
-                    this.checked = !value;
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при обновлении прав:', error);
-                Swal.fire('Сетевая ошибка', 'Произошла ошибка при обновлении.', 'error');
-                this.checked = !value;
-            });
-        });
-    });
-
-    // Password visibility toggle
+    // === ПРОСТОЙ РАБОЧИЙ СКРИПТ ДЛЯ ИКОНКИ ГЛАЗА ===
     const togglePasswordBtn = document.getElementById('togglePassword');
     const passwordField = document.getElementById('password-display');
-    const copyPasswordBtn = document.getElementById('copyPassword');
     const eyeIcon = document.getElementById('eyeIcon');
 
-    if (togglePasswordBtn && passwordField && copyPasswordBtn && eyeIcon) {
+    if (togglePasswordBtn && passwordField && eyeIcon) {
         togglePasswordBtn.addEventListener('click', function() {
             if (passwordField.type === 'password') {
                 passwordField.type = 'text';
                 eyeIcon.classList.remove('fa-eye');
                 eyeIcon.classList.add('fa-eye-slash');
-                copyPasswordBtn.disabled = false;
             } else {
                 passwordField.type = 'password';
                 eyeIcon.classList.remove('fa-eye-slash');
                 eyeIcon.classList.add('fa-eye');
-                copyPasswordBtn.disabled = true;
-            }
-        });
-
-        copyPasswordBtn.addEventListener('click', function() {
-            if (navigator.clipboard && window.isSecureContext) {
-                navigator.clipboard.writeText(passwordField.value).then(function() {
-                    Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
-                }, function(err) {
-                    fallbackCopyTextToClipboard(passwordField);
-                });
-            } else {
-                fallbackCopyTextToClipboard(passwordField);
             }
         });
     }
 
-    // Refresh password functionality
-    const refreshPasswordBtn = document.getElementById('refreshPasswordBtn');
-    if (refreshPasswordBtn) {
-        refreshPasswordBtn.addEventListener('click', function() {
-            const button = this;
-            const originalText = button.innerHTML;
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: КОПИРОВАНИЕ ПАРОЛЯ ===
+    // const copyPasswordBtn = document.getElementById('copyPassword');
+    // if (copyPasswordBtn && passwordField) {
+    //     // Активируем кнопку копирования только если есть пароль
+    //     if (passwordField.value && passwordField.value.trim() !== '') {
+    //         copyPasswordBtn.disabled = false;
+    //         copyPasswordBtn.classList.remove('disabled');
+    //     } else {
+    //         copyPasswordBtn.disabled = true;
+    //         copyPasswordBtn.classList.add('disabled');
+    //     }
 
-            button.disabled = true;
-            button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Обновление...';
+    //     copyPasswordBtn.addEventListener('click', function() {
+    //         if (passwordField.value && passwordField.value.trim() !== '') {
+    //             if (navigator.clipboard && window.isSecureContext) {
+    //                 navigator.clipboard.writeText(passwordField.value).then(function() {
+    //                     Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
+    //                 }).catch(function(err) {
+    //                     fallbackCopyTextToClipboard(passwordField);
+    //                 });
+    //             } else {
+    //                 fallbackCopyTextToClipboard(passwordField);
+    //             }
+    //         }
+    //     });
+    // }
 
-            fetch("{{ url_for('users.refresh_password') }}", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'X-CSRFToken': "{{ csrf_token() }}"
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    // Обновляем поле пароля
-                    const passwordField = document.getElementById('password-display');
-                    const togglePasswordBtn = document.getElementById('togglePassword');
-                    const copyPasswordBtn = document.getElementById('copyPassword');
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: КОПИРОВАНИЕ ПОДПИСИ ===
+    // const copySignatureBtnAccount = document.getElementById('copySignatureBtnAccount');
+    // if (copySignatureBtnAccount) {
+    //     copySignatureBtnAccount.addEventListener('click', function () {
+    //         const signaturePreview = document.querySelector('.signature-preview');
+    //         if (signaturePreview) {
+    //             const tempDiv = document.createElement('div');
+    //             tempDiv.innerHTML = signaturePreview.innerHTML;
+    //             const plainText = signaturePreview.innerText || signaturePreview.textContent;
 
-                    if (passwordField && data.password) {
-                        passwordField.value = data.password;
-                        togglePasswordBtn.disabled = false;
-                        copyPasswordBtn.disabled = false;
+    //             navigator.clipboard.write([
+    //                 new ClipboardItem({
+    //                     'text/html': new Blob([tempDiv.innerHTML], { type: 'text/html' }),
+    //                     'text/plain': new Blob([plainText], { type: 'text/plain' })
+    //             })
+    //             ]).then(function () {
+    //                 const originalText = copySignatureBtnAccount.innerHTML;
+    //                 copySignatureBtnAccount.innerHTML = '<i class="fas fa-check me-2"></i>Скопировано!';
+    //                 setTimeout(() => {
+    //                     copySignatureBtnAccount.innerHTML = originalText;
+    //                 }, 2000);
+    //             }).catch(function (error) {
+    //                 console.error('Ошибка копирования подписи: ', error);
+    //                 Swal.fire('Ошибка', 'Не удалось скопировать подпись. Пожалуйста, скопируйте вручную.', 'error');
+    //             });
+    //         }
+    //     });
+    // }
 
-                        // Удаляем сообщение об ошибке и кнопку обновления
-                        const passwordStatus = document.querySelector('.password-status');
-                        if (passwordStatus) {
-                            passwordStatus.remove();
-                        }
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: ОБРАБОТКА ОШИБОК ИЗОБРАЖЕНИЙ ===
+    // const images = document.querySelectorAll('img');
+    // images.forEach(img => {
+    //     img.addEventListener('error', function() {
+    //         if (!this.src.includes('default.jpg')) {
+    //             this.src = "{{ url_for('static', filename='profile_pics/default.jpg') }}";
+    //             this.classList.add('avatar-error');
+    //         }
+    //     });
+    // });
 
-                        Swal.fire('Успешно!', 'Пароль обновлен', 'success');
-                    } else {
-                        Swal.fire('Ошибка', 'Не удалось получить пароль', 'error');
-                    }
-                } else {
-                    Swal.fire('Ошибка', data.message || 'Не удалось обновить пароль', 'error');
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при обновлении пароля:', error);
-                Swal.fire('Сетевая ошибка', 'Произошла ошибка при обновлении пароля.', 'error');
-            })
-            .finally(() => {
-                button.disabled = false;
-                button.innerHTML = originalText;
-            });
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: RIPPLE EFFECT ===
+    // const actionBtns = document.querySelectorAll('.action-btn');
+    // actionBtns.forEach(btn => {
+    //     btn.addEventListener('click', function(e) {
+    //         createRipple(e, this);
+    //     });
+    // });
+
+    // === ПРОСТОЕ ПОДКЛЮЧЕНИЕ КНОПКИ УВЕДОМЛЕНИЙ ===
+    console.log('=== НАЧАЛО ИНИЦИАЛИЗАЦИИ ===');
+
+    const toggleNotificationsBtn = document.getElementById('toggleNotificationsBtn');
+    console.log('toggleNotificationsBtn найден:', !!toggleNotificationsBtn);
+
+    if (toggleNotificationsBtn) {
+        console.log('Добавляем обработчик клика на кнопку');
+        toggleNotificationsBtn.onclick = function() {
+            console.log('=== КНОПКА НАЖАТА ===');
+            toggleNotificationsAndSound();
+        };
+
+        // Также добавим addEventListener для надежности
+        toggleNotificationsBtn.addEventListener('click', function(e) {
+            console.log('=== КНОПКА НАЖАТА ЧЕРЕЗ addEventListener ===');
+            e.preventDefault();
+            toggleNotificationsAndSound();
         });
-    }
 
-    function fallbackCopyTextToClipboard(inputElement) {
-        const M_IOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
-        if(M_IOS) {
-            let range = document.createRange();
-            range.selectNodeContents(inputElement);
-            let selection = window.getSelection();
-            selection.removeAllRanges();
-            selection.addRange(range);
-            inputElement.setSelectionRange(0, 999999);
+        console.log('Обработчики добавлены');
+    }
+});
+
+// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+function fallbackCopyTextToClipboard(inputElement) {
+    const M_IOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if(M_IOS) {
+        let range = document.createRange();
+        range.selectNodeContents(inputElement);
+        let selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+        inputElement.setSelectionRange(0, 999999);
+    } else {
+        inputElement.select();
+    }
+    try {
+        var successful = document.execCommand('copy');
+        if (successful) {
+            Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
         } else {
-            inputElement.select();
-        }
-        try {
-            var successful = document.execCommand('copy');
-            if (successful) {
-                Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
-            } else {
-                 Swal.fire('Ошибка', 'Не удалось скопировать пароль', 'error');
-            }
-        } catch (err) {
              Swal.fire('Ошибка', 'Не удалось скопировать пароль', 'error');
         }
-        if (M_IOS) {
-            window.getSelection().removeAllRanges();
-        }
+    } catch (err) {
+         Swal.fire('Ошибка', 'Не удалось скопировать пароль', 'error');
     }
-
-    // ОТКЛЮЧЕНО: Инициализация системы push-уведомлений (фоновая)
-    // Мы используем только polling уведомления, браузерные push-уведомления не нужны
-    /*
-    setTimeout(() => {
-        if (typeof window.PushNotificationManagerInstance !== 'undefined' && typeof window.PushNotificationManagerInstance.init === 'function') {
-            console.log('[Account] window.PushNotificationManagerInstance object and init method found, proceeding with init.');
-            window.PushNotificationManagerInstance.init()
-                .then(() => {
-                    console.log('[Account] PushNotificationManagerInstance.init() completed successfully.');
-                    // Push UI на странице account больше не используется
-                })
-                .catch(error => {
-                    console.error('[Account] Error initializing PushNotificationManagerInstance:', error);
-                });
-        } else {
-            console.warn('[Account] window.PushNotificationManagerInstance or its init method is not available after timeout.');
-        }
-    }, 750);
-    */
-    console.log('[Account] 📡 Система push-уведомлений отключена - используем только polling уведомления');
-
-    // Удалена функция setInitialPushUIStateFromServer - больше не используется
-
-    // Удалены функции push-уведомлений - больше не используются на данной странице
-
-    // Удалены функции push-уведомлений - больше не используются на данной странице
-
-    // 📡 Обработчики для Polling системы уведомлений
-    const testPollingBtn = document.getElementById('testPollingNotification');
-    const managePollingBtn = document.getElementById('managePollingNotifications');
-    const clearNotificationsBtn = document.getElementById('clearAllNotifications');
-
-    // Обработчик тестового уведомления
-    if (testPollingBtn) {
-        testPollingBtn.addEventListener('click', async function() {
-            console.log('[Account] Тест polling уведомления');
-
-            try {
-                testPollingBtn.disabled = true;
-                testPollingBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Тестирование...';
-
-                const response = await fetch('/api/push/test-polling', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    alert('✅ Тестовое уведомление создано!\n📋 ID: ' + data.notification_id + '\n🔄 Проверьте через 30 секунд появится ли toast');
-                } else {
-                    alert('❌ Ошибка: ' + (data.message || 'Неизвестная ошибка'));
-                }
-            } catch (error) {
-                console.error('[Account] Ошибка теста polling:', error);
-                alert('❌ Ошибка сети: ' + error.message);
-            } finally {
-                testPollingBtn.disabled = false;
-                testPollingBtn.innerHTML = '<i class="fas fa-volume-up"></i> Тест';
-            }
-        });
-    }
-
-    // Обработчик управления уведомлениями
-    if (managePollingBtn) {
-        managePollingBtn.addEventListener('click', function() {
-            window.open('/notifications-polling', '_blank');
-        });
-    }
-
-    // Обработчик очистки всех уведомлений
-    if (clearNotificationsBtn) {
-        clearNotificationsBtn.addEventListener('click', async function() {
-            if (!confirm('❓ Вы уверены, что хотите удалить ВСЕ уведомления?')) {
-                return;
-            }
-
-            try {
-                clearNotificationsBtn.disabled = true;
-                clearNotificationsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Очистка...';
-
-                const response = await fetch('/api/notifications/clear', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content') || ''
-                    }
-                });
-
-                const data = await response.json();
-
-                if (response.ok && data.success) {
-                    alert('✅ Все уведомления успешно удалены!');
-                } else {
-                    alert('❌ Ошибка: ' + (data.message || 'Не удалось очистить уведомления'));
-                }
-            } catch (error) {
-                console.error('[Account] Ошибка очистки уведомлений:', error);
-                alert('❌ Ошибка сети: ' + error.message);
-            } finally {
-                clearNotificationsBtn.disabled = false;
-                clearNotificationsBtn.innerHTML = '<i class="fas fa-trash"></i> Очистить все';
-            }
-        });
-    }
-
-        // Очистка всех уведомлений (проверяем существование элемента)
-    const clearAllNotificationsBtn = document.getElementById('clearAllNotifications');
-    if (clearAllNotificationsBtn) {
-        clearAllNotificationsBtn.addEventListener('click', async function() {
-            const btn = this;
-            const originalText = btn.innerHTML;
-
-            if (!confirm('Очистить все уведомления? Это действие нельзя отменить.')) {
-                return;
-            }
-
-            try {
-                btn.disabled = true;
-                btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Очистка...';
-
-                const response = await fetch('/api/notifications/clear', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.content || ''
-                    }
-                });
-
-                const data = await response.json();
-
-                if (data.success) {
-                    Swal.fire({
-                        title: 'Успешно!',
-                        text: 'Все уведомления очищены',
-                        icon: 'success',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    throw new Error(data.message || 'Ошибка очистки');
-                }
-
-            } catch (error) {
-                console.error('Ошибка очистки уведомлений:', error);
-                Swal.fire({
-                    title: 'Ошибка!',
-                    text: `Не удалось очистить уведомления: ${error.message}`,
-                    icon: 'error'
-                });
-            } finally {
-                btn.disabled = false;
-                btn.innerHTML = originalText;
-            }
-        });
-    }
-
-    // === ИНИЦИАЛИЗАЦИЯ УПРАВЛЕНИЯ ВИДЖЕТОМ ===
-    console.log('[Account] 🔧 Инициализация управления виджетом уведомлений');
-
-    // Инициализируем состояние кнопки управления виджетом
-    const toggleBtn = document.getElementById('toggleNotificationsBtn');
-    if (toggleBtn) {
-        console.log('[Account] ✅ Кнопка управления виджетом найдена, инициализируем состояние');
-
-        // ИСПРАВЛЕНО: Принудительно снимаем блокировку кнопки
-        toggleBtn.style.pointerEvents = 'auto';
-        toggleBtn.style.cursor = 'pointer';
-        toggleBtn.disabled = false;
-        console.log('[Account] 🔓 Принудительно разблокировали кнопку');
-
-        updateToggleButtonState();
-
-        // Проверяем, нужно ли скрыть виджет при загрузке
-        const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
-        if (widgetDisabled) {
-            console.log('[Account] 🔕 Виджет должен быть отключен, скрываем его');
-
-            // Скрываем виджет
-            const widget = document.getElementById('modern-notifications-widget');
-            if (widget) {
-                widget.style.display = 'none';
-                widget.classList.add('closed', 'initial-hidden');
-            }
-
-            // Показываем кнопку восстановления
-            const restoreBtn = document.getElementById('notifications-restore-btn');
-            if (restoreBtn) {
-                restoreBtn.style.display = 'block';
-            }
-        }
-    } else {
-        console.warn('[Account] ⚠️ Кнопка управления виджетом не найдена (toggleNotificationsBtn)');
-    }
-});
-
-// Функция тестирования звука из профиля
-function testNotificationFromProfile() {
-    console.log('[Account] Тест звука из профиля');
-    console.log('[Account] 🔍 Диагностика теста звука:');
-    console.log('[Account] - Звук отключен:', localStorage.getItem('notificationSoundDisabled') === 'true');
-    console.log('[Account] - Глобальная функция playNotificationSound:', typeof window.playNotificationSound === 'function');
-    console.log('[Account] - Глобальная функция testNotificationSound:', typeof window.testNotificationSound === 'function');
-    console.log('[Account] - Виджет инициализирован:', !!window.notificationsWidget');
-
-    try {
-        // Проверяем настройки звука
-        const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
-        if (soundDisabled) {
-            console.log('[Account] 🔇 Звук уведомлений отключен в настройках');
-
-            // Показываем уведомление о том, что звук отключен с возможностью включения
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '🔇 Звук отключен',
-                    text: 'Звуковые уведомления отключены в настройках. Хотите включить их для тестирования?',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'Включить',
-                    cancelButtonText: 'Отмена',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        localStorage.removeItem('notificationSoundDisabled');
-                        console.log('[Account] ✅ Звук включен для тестирования');
-                        // Повторно вызываем функцию теста
-                        setTimeout(() => testNotificationFromProfile(), 100);
-                    }
-                });
-            } else {
-                if (confirm('🔇 Звуковые уведомления отключены в настройках. Хотите включить их для тестирования?')) {
-                    localStorage.removeItem('notificationSoundDisabled');
-                    console.log('[Account] ✅ Звук включен для тестирования');
-                    // Повторно вызываем функцию теста
-                    setTimeout(() => testNotificationFromProfile(), 100);
-                }
-            }
-            return;
-        }
-
-        // Сначала проверяем, есть ли глобальная функция воспроизведения звука
-        if (typeof window.playNotificationSound === 'function') {
-            window.playNotificationSound();
-            console.log('[Account] Использована глобальная функция playNotificationSound');
-        } else if (typeof window.testNotificationSound === 'function') {
-            window.testNotificationSound();
-            console.log('[Account] Использована глобальная функция testNotificationSound');
-        } else {
-            // Fallback: создаем звук вручную с правильным путем
-            const audio = new Audio("/static/sounds/notification.mp3?v=1.0");
-            audio.volume = 0.7;
-            audio.preload = 'auto';
-
-            // Добавляем обработчики событий для отладки
-            audio.addEventListener('loadstart', () => {
-                console.log('[Account] 🔊 Начало загрузки аудио файла');
-            });
-
-            audio.addEventListener('canplaythrough', () => {
-                console.log('[Account] 🔊 Аудио файл готов к воспроизведению');
-            });
-
-            audio.addEventListener('error', (e) => {
-                console.error('[Account] ❌ Ошибка загрузки аудио файла:', e);
-                console.error('[Account] ❌ Код ошибки:', audio.error?.code);
-                console.error('[Account] ❌ Сообщение ошибки:', audio.error?.message);
-            });
-
-            audio.play().then(() => {
-                console.log('[Account] 🔊 Звук воспроизведен успешно (fallback)');
-            }).catch(error => {
-                console.error('[Account] ❌ Ошибка воспроизведения звука:', error);
-
-                if (error.name === 'NotAllowedError') {
-                    console.log('[Account] 🔒 Звук заблокирован браузером. Требуется взаимодействие пользователя.');
-
-                    // Создаем кнопку для разблокировки звука
-                    const unlockButton = document.createElement('button');
-                    unlockButton.innerHTML = '🔊 Разблокировать звук';
-                    unlockButton.style.cssText = `
-                        position: fixed;
-                        top: 20px;
-                        right: 20px;
-                        z-index: 10000;
-                        padding: 10px 15px;
-                        background: #007bff;
-                        color: white;
-                        border: none;
-                        border-radius: 5px;
-                        cursor: pointer;
-                        font-size: 12px;
-                        box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-                    `;
-
-                    unlockButton.onclick = () => {
-                        audio.play().catch(console.warn);
-                        unlockButton.remove();
-                    };
-
-                    document.body.appendChild(unlockButton);
-
-                    // Автоматически убираем кнопку через 10 секунд
-                    setTimeout(() => {
-                        if (unlockButton.parentNode) {
-                            unlockButton.remove();
-                        }
-                    }, 10000);
-                }
-
-                // Показываем уведомление пользователю
-                if (typeof Swal !== 'undefined') {
-                    Swal.fire({
-                        title: '🔊 Тест звука',
-                        text: 'Звуковые файлы недоступны или отключены в браузере. Проверьте настройки браузера и наличие файлов.',
-                        icon: 'warning',
-                        timer: 3000,
-                        showConfirmButton: false
-                    });
-                } else {
-                    alert('🔊 Тест звука: звуковые файлы недоступны или отключены в браузере');
-                }
-            });
-        }
-    } catch (error) {
-        console.error('[Account] Ошибка при тестировании звука:', error);
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Ошибка',
-                text: 'Произошла ошибка при тестировании звука: ' + error.message,
-                icon: 'error'
-            });
-        } else {
-            alert('Произошла ошибка при тестировании звука: ' + error.message);
-        }
-    }
-
-        // Глобальная функция для диагностики звука на странице account
-    window.diagnoseAccountSound = () => {
-        console.log('[Account] 🔍 ДИАГНОСТИКА ЗВУКА НА СТРАНИЦЕ ACCOUNT');
-        console.log('='.repeat(60));
-
-        // 1. Проверка настроек звука
-        const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
-        console.log('1. Настройки звука:', soundDisabled ? '🔇 ОТКЛЮЧЕН' : '🔊 ВКЛЮЧЕН');
-
-        // 2. Проверка поддержки Web Audio API
-        const hasAudioContext = !!(window.AudioContext || window.webkitAudioContext);
-        console.log('2. Поддержка Web Audio API:', hasAudioContext ? '✅ ПОДДЕРЖИВАЕТСЯ' : '❌ НЕ ПОДДЕРЖИВАЕТСЯ');
-
-        // 3. Проверка глобальных функций
-        console.log('3. Глобальные функции:');
-        console.log('   - playNotificationSound:', typeof window.playNotificationSound === 'function' ? '✅' : '❌');
-        console.log('   - testNotificationSound:', typeof window.testNotificationSound === 'function' ? '✅' : '❌');
-        console.log('   - diagnoseNotificationSound:', typeof window.diagnoseNotificationSound === 'function' ? '✅' : '❌');
-
-        // 4. Проверка виджета
-        const widgetExists = !!document.getElementById('modern-notifications-widget');
-        const widgetInitialized = !!window.notificationsWidget;
-        console.log('4. Виджет уведомлений:');
-        console.log('   - Элемент найден:', widgetExists ? '✅' : '❌');
-        console.log('   - Инициализирован:', widgetInitialized ? '✅' : '❌');
-
-        // 5. Проверка URL звукового файла
-        const soundUrl = "/static/sounds/notification.mp3?v=1.0";
-        console.log('5. URL звукового файла:', soundUrl);
-
-        // 6. Тест загрузки аудио файла
-        console.log('6. Тест загрузки аудио файла...');
-        const testAudio = new Audio(soundUrl);
-        testAudio.preload = 'auto';
-
-        testAudio.addEventListener('loadstart', () => {
-            console.log('   ✅ Начало загрузки аудио файла');
-        });
-
-        testAudio.addEventListener('canplaythrough', () => {
-            console.log('   ✅ Аудио файл готов к воспроизведению');
-        });
-
-        testAudio.addEventListener('error', (e) => {
-            console.error('   ❌ Ошибка загрузки аудио файла:', e);
-            console.error('   ❌ Код ошибки:', testAudio.error?.code);
-            console.error('   ❌ Сообщение ошибки:', testAudio.error?.message);
-        });
-
-        // 7. Тест воспроизведения
-        console.log('7. Тест воспроизведения звука...');
-        testAudio.volume = 0.1; // Тише для теста
-        testAudio.play().then(() => {
-            console.log('   ✅ Звук успешно воспроизведен');
-        }).catch(e => {
-            console.warn('   ⚠️ Не удалось воспроизвести звук:', e);
-            if (e.name === 'NotAllowedError') {
-                console.log('   🔒 Звук заблокирован браузером. Требуется взаимодействие пользователя.');
-            }
-        });
-
-        console.log('='.repeat(60));
-        console.log('[Account] 🔍 Диагностика завершена. Проверьте консоль выше.');
-    };
-
-// Функция переключения виджета уведомлений и звука
-function toggleNotificationsAndSound() {
-    console.log('[Account] Переключение виджета и звука');
-
-    const btn = document.getElementById('toggleNotificationsBtn');
-    const btnContent = btn.querySelector('.btn-content');
-    const icon = btnContent.querySelector('i');
-    const text = btnContent.querySelector('span');
-
-    // Получаем текущее состояние из localStorage
-    const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
-    const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
-
-    try {
-        if (!widgetDisabled || !soundDisabled) {
-            // Отключаем всё
-            localStorage.setItem('notificationsWidgetDisabled', 'true');
-            localStorage.setItem('notificationSoundDisabled', 'true');
-            localStorage.setItem('notificationsWidgetClosed', 'true');
-
-            // Обновляем UI кнопки
-            btn.classList.add('disabled');
-            icon.className = 'fas fa-bell';
-            text.textContent = 'Включить всё';
-
-            // ИСПРАВЛЕНИЕ: Принудительно скрываем виджет
-            if (window.notificationsWidget) {
-                window.notificationsWidget.closeWidget();
-            }
-
-            // Альтернативный способ скрытия виджета
-            const widget = document.getElementById('modern-notifications-widget');
-            if (widget) {
-                widget.style.display = 'none';
-                widget.classList.add('closed', 'initial-hidden');
-            }
-
-            // ИСПРАВЛЕНО: НЕ показываем кнопку восстановления при полном отключении виджета
-            const restoreBtn = document.getElementById('notifications-restore-btn');
-            if (restoreBtn) {
-                restoreBtn.style.display = 'none'; // ИСПРАВЛЕНО: скрываем кнопку при отключении
-                console.log('[Account] 🔕 Кнопка восстановления скрыта при отключении виджета');
-            }
-
-            // Показываем уведомление
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '🔕 Уведомления отключены',
-                    text: 'Виджет уведомлений и звуковые сигналы отключены',
-                    icon: 'info',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
-            }
-
-            console.log('[Account] ✅ Виджет и звук ОТКЛЮЧЕНЫ');
-        } else {
-            // Включаем всё
-            localStorage.setItem('notificationsWidgetDisabled', 'false');
-            localStorage.setItem('notificationSoundDisabled', 'false');
-            localStorage.setItem('notificationsWidgetClosed', 'false');
-
-            // Обновляем UI кнопки
-            btn.classList.remove('disabled');
-            icon.className = 'fas fa-bell-slash';
-            text.textContent = 'Отключить всё';
-
-            // Скрываем кнопку восстановления
-            const restoreBtn = document.getElementById('notifications-restore-btn');
-            if (restoreBtn) {
-                restoreBtn.style.display = 'none';
-            }
-
-            // ИСПРАВЛЕНИЕ: Перезагружаем страницу для правильной инициализации виджета
-            if (typeof Swal !== 'undefined') {
-                Swal.fire({
-                    title: '🔔 Уведомления включены',
-                    text: 'Страница будет перезагружена для корректной инициализации виджета',
-                    icon: 'success',
-                    timer: 1500,
-                    showConfirmButton: false
-                });
-            }
-
-            console.log('[Account] 🔄 Перезагружаем страницу для корректной инициализации виджета');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-            return;
-        }
-
-        // Обновляем состояние кнопки
-        updateToggleButtonState();
-
-    } catch (error) {
-        console.error('[Account] ❌ Ошибка при переключении уведомлений:', error);
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Ошибка',
-                text: 'Произошла ошибка при изменении настроек: ' + error.message,
-                icon: 'error'
-            });
-        }
+    if (M_IOS) {
+        window.getSelection().removeAllRanges();
     }
 }
 
-// Функция обновления состояния кнопки переключения
-function updateToggleButtonState() {
-    const btn = document.getElementById('toggleNotificationsBtn');
-    if (!btn) return;
-
-    // ИСПРАВЛЕНО: Принудительно снимаем блокировку кнопки
-    btn.style.pointerEvents = 'auto';
-    btn.style.cursor = 'pointer';
-    btn.disabled = false;
-
-    const btnContent = btn.querySelector('.btn-content');
-    const icon = btnContent.querySelector('i');
-    const text = btnContent.querySelector('span');
-
-    const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
-    const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
-
-    if (widgetDisabled || soundDisabled) {
-        // Уведомления отключены
-        btn.classList.add('disabled');
-        icon.className = 'fas fa-bell';
-        text.textContent = 'Включить всё';
-
-        // ИСПРАВЛЕНО: Обновляем статус системы
-        updateSystemStatus(false);
-    } else {
-        // Уведомления включены
-        btn.classList.remove('disabled');
-        icon.className = 'fas fa-bell-slash';
-        text.textContent = 'Отключить всё';
-
-        // ИСПРАВЛЕНО: Обновляем статус системы
-        updateSystemStatus(true);
-    }
-
-    console.log('[Account] 🔄 Состояние кнопки обновлено:', {
-        disabled: btn.classList.contains('disabled'),
-        text: text.textContent,
-        clickable: btn.style.pointerEvents !== 'none'
-    });
-}
-
-// НОВАЯ ФУНКЦИЯ: Обновление статуса системы уведомлений
-function updateSystemStatus(isActive) {
-    console.log('[Account] 🔄 Обновление статуса системы:', isActive ? 'АКТИВНА' : 'ОТКЛЮЧЕНА');
-
-    // Обновляем основной статус
-    const statusElement = document.getElementById('pollingNotificationStatus');
-    const iconElement = document.getElementById('pollingNotificationIcon');
-    const statusContainer = document.getElementById('polling-notification-status');
-
-    if (statusElement && iconElement && statusContainer) {
-        if (isActive) {
-            // Система активна
-            statusElement.textContent = 'Активна (Polling)';
-            iconElement.className = 'fas fa-check-circle';
-            statusContainer.className = 'notification-status active-status';
-
-            // Обновляем детали статуса
-            updateStatusDetails(true, true, true); // звук включен, виджет активен
-        } else {
-            // Система отключена
-            statusElement.textContent = 'Отключена';
-            iconElement.className = 'fas fa-times-circle';
-            statusContainer.className = 'notification-status inactive-status';
-
-            // Обновляем детали статуса
-            updateStatusDetails(false, false, false); // звук отключен, виджет неактивен
-        }
-    }
-
-    // Обновляем индикатор подключения
-    const connectionText = document.querySelector('.connection-text');
-    const connectionDot = document.querySelector('.connection-dot');
-
-    if (connectionText && connectionDot) {
-        if (isActive) {
-            connectionText.textContent = 'Подключено';
-            connectionDot.style.backgroundColor = '#22c55e'; // зеленый
-        } else {
-            connectionText.textContent = 'Отключено';
-            connectionDot.style.backgroundColor = '#ef4444'; // красный
-        }
-    }
-}
-
-// НОВАЯ ФУНКЦИЯ: Обновление деталей статуса
-function updateStatusDetails(soundEnabled, widgetActive, systemActive) {
-    const statusDetails = document.querySelector('.status-details');
-    if (!statusDetails) return;
-
-    // Находим элементы деталей
-    const soundDetail = statusDetails.children[1]; // Звук
-    const widgetDetail = statusDetails.children[2]; // Виджет
-
-    if (soundDetail) {
-        const soundIcon = soundDetail.querySelector('i');
-        const soundText = soundDetail.childNodes[soundDetail.childNodes.length - 1];
-
-        if (soundEnabled) {
-            soundIcon.className = 'fas fa-volume-up';
-            soundText.textContent = 'Звук включен';
-            soundDetail.style.color = '#22c55e';
-        } else {
-            soundIcon.className = 'fas fa-volume-mute';
-            soundText.textContent = 'Звук отключен';
-            soundDetail.style.color = '#ef4444';
-        }
-    }
-
-    if (widgetDetail) {
-        const widgetIcon = widgetDetail.querySelector('i');
-        const widgetText = widgetDetail.childNodes[widgetDetail.childNodes.length - 1];
-
-        if (widgetActive) {
-            widgetIcon.className = 'fas fa-bell';
-            widgetText.textContent = 'Виджет активен';
-            widgetDetail.style.color = '#22c55e';
-        } else {
-            widgetIcon.className = 'fas fa-bell-slash';
-            widgetText.textContent = 'Виджет отключен';
-            widgetDetail.style.color = '#ef4444';
-        }
-    }
-}
-
-// Инициализация состояния кнопки при загрузке страницы
-document.addEventListener('DOMContentLoaded', function() {
-    setTimeout(() => {
-        updateToggleButtonState();
-    }, 100);
-});
-
-// Ripple effect function
 function createRipple(event, element) {
     const btn = element;
     const ripple = btn.querySelector('.btn-ripple');
@@ -3648,132 +2814,221 @@ function createRipple(event, element) {
     }, 600);
 }
 
-// Обработчик для нового переключателя уведомлений о новых заявках
-document.addEventListener('DOMContentLoaded', function() {
-    const newIssuesToggle = document.getElementById('newIssuesNotifications');
+    // === ФУНКЦИЯ ДЛЯ СИСТЕМЫ УВЕДОМЛЕНИЙ ===
+    function toggleNotificationsAndSound() {
+        console.log('=== ФУНКЦИЯ toggleNotificationsAndSound ВЫЗВАНА ===');
 
-    if (newIssuesToggle) {
-        // Загружаем настройки с сервера при инициализации
-        loadNotificationSettings();
-
-        // Обработчик изменения состояния
-        newIssuesToggle.addEventListener('change', function() {
-            const isEnabled = this.checked;
-
-            // Сохраняем состояние в localStorage как fallback
-            localStorage.setItem('newIssuesNotifications', isEnabled.toString());
-
-            // Отправляем настройку на сервер
-            updateNotificationSetting('new_issues', isEnabled);
-        });
-
-        console.log('[Account] ✅ Инициализирован переключатель уведомлений о новых заявках');
-    }
-});
-
-// Функция загрузки настроек уведомлений с сервера
-async function loadNotificationSettings() {
-    try {
-        const response = await fetch('/tasks/api/notification-settings', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-
-        if (response.ok) {
-            const data = await response.json();
-            if (data.success && data.settings) {
-                // Обновляем состояние переключателя
-                const newIssuesToggle = document.getElementById('newIssuesNotifications');
-                if (newIssuesToggle) {
-                    newIssuesToggle.checked = data.settings.new_issues !== false;
-                }
-
-                console.log('[Account] ✅ Настройки уведомлений загружены с сервера:', data.settings);
-            }
-        } else {
-            console.warn('[Account] ⚠️ Не удалось загрузить настройки уведомлений с сервера');
+        // Находим основной элемент уведомлений
+        const notificationStatus = document.getElementById('polling-notification-status');
+        if (!notificationStatus) {
+            console.error('Элемент polling-notification-status не найден');
+            return;
         }
-    } catch (error) {
-        console.error('[Account] ❌ Ошибка при загрузке настроек уведомлений:', error);
-    }
-}
 
-// Функция обновления настройки уведомлений на сервере
-async function updateNotificationSetting(notificationType, isEnabled) {
-    try {
-        const response = await fetch('/tasks/api/notification-settings', {
-            method: 'PUT',
+        // Проверяем текущее состояние
+        const isCurrentlyActive = notificationStatus.classList.contains('active-status');
+        console.log('Текущее состояние активно:', isCurrentlyActive);
+
+        // Определяем новое состояние (противоположное текущему)
+        const newEnabledState = !isCurrentlyActive;
+
+        // Отправляем запрос к API
+        console.log('Отправляем запрос к API:', {
+            enabled: newEnabledState,
+            csrfToken: document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || 'NOT_FOUND'
+        });
+
+        fetch('/api/notifications/toggle', {
+            method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
             },
             body: JSON.stringify({
-                notification_type: notificationType,
-                is_enabled: isEnabled
+                enabled: newEnabledState
             })
-        });
-
-        if (response.ok) {
-            const data = await response.json();
+        })
+        .then(response => {
+            console.log('API response status:', response.status);
+            return response.json();
+        })
+        .then(data => {
+            console.log('API ответ:', data);
             if (data.success) {
-                // Показываем уведомление о успешном обновлении
-                if (typeof Swal !== 'undefined') {
-                    const title = isEnabled ? 'Уведомления включены' : 'Уведомления отключены';
-                    const text = isEnabled ?
-                        'Теперь вы будете получать уведомления о новых заявках в Redmine' :
-                        'Уведомления о новых заявках отключены';
 
+                // Обновляем UI в зависимости от нового состояния
+                if (newEnabledState) {
+                    // Включаем уведомления
+                    updateNotificationUI(true);
+                    showNotificationWidget();
+                } else {
+                    // Отключаем уведомления
+                    updateNotificationUI(false);
+                    hideNotificationWidget();
+                    // Перезагружаем страницу, чтобы убрать виджет из DOM
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                }
+
+                // Показываем уведомление пользователю
+                if (typeof Swal !== 'undefined') {
                     Swal.fire({
-                        title: title,
-                        text: text,
-                        icon: isEnabled ? 'success' : 'info',
+                        icon: newEnabledState ? 'success' : 'info',
+                        title: newEnabledState ? 'Уведомления включены' : 'Уведомления отключены',
+                        text: data.message,
                         timer: 2000,
                         showConfirmButton: false
                     });
                 }
-
-                console.log('[Account] ✅ Настройка уведомлений успешно обновлена на сервере:', {
-                    type: notificationType,
-                    enabled: isEnabled,
-                    timestamp: new Date().toISOString()
-                });
             } else {
-                throw new Error(data.error || 'Неизвестная ошибка');
+                console.error('Ошибка API:', data.error);
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Ошибка',
+                        text: data.error || 'Не удалось изменить состояние уведомлений'
+                    });
+                }
             }
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Ошибка сервера');
-        }
-    } catch (error) {
-        console.error('[Account] ❌ Ошибка при обновлении настройки уведомлений:', error);
+        })
+        .catch(error => {
+            console.error('Ошибка запроса:', error);
+            console.error('Детали ошибки:', {
+                message: error.message,
+                stack: error.stack
+            });
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Ошибка сети',
+                    text: 'Не удалось подключиться к серверу: ' + error.message
+                });
+            }
+        });
+    }
 
-        // Показываем ошибку пользователю
-        if (typeof Swal !== 'undefined') {
-            Swal.fire({
-                title: 'Ошибка',
-                text: `Не удалось обновить настройки: ${error.message}`,
-                icon: 'error'
+    function updateNotificationUI(enabled) {
+        const notificationStatus = document.getElementById('polling-notification-status');
+        const notificationIcon = document.getElementById('pollingNotificationIcon');
+        const notificationStatusText = document.getElementById('pollingNotificationStatus');
+        const statusBadge = document.querySelector('#polling-status-indicator .status-badge');
+        const connectionDot = document.querySelector('.connection-dot');
+        const connectionText = document.querySelector('.connection-text');
+        const toggleBtnText = document.getElementById('toggleNotificationsBtnText');
+        const toggleBtnIcon = document.querySelector('#toggleNotificationsBtn .fas');
+
+        if (enabled) {
+            // Включаем уведомления
+            notificationStatus.className = 'notification-status active-status';
+            notificationStatus.setAttribute('style', `
+                background: #ecfdf5 !important;
+                border: 2px solid #10b981 !important;
+                color: #10b981 !important;
+                padding: 10px !important;
+                border-radius: 8px !important;
+            `);
+
+            if (notificationIcon) notificationIcon.className = 'fas fa-check-circle';
+            if (notificationStatusText) notificationStatusText.textContent = 'Активна (Polling)';
+            if (statusBadge) {
+                statusBadge.setAttribute('style', `
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                    color: white !important;
+                `);
+            }
+            if (connectionDot) connectionDot.setAttribute('style', 'background-color: #10b981 !important;');
+            if (connectionText) connectionText.setAttribute('style', 'color: #10b981 !important;');
+            if (toggleBtnText) toggleBtnText.textContent = 'Отключить всё';
+            if (toggleBtnIcon) toggleBtnIcon.className = 'fas fa-bell-slash';
+
+        } else {
+            // Отключаем уведомления
+            notificationStatus.className = 'notification-status inactive-status';
+            notificationStatus.setAttribute('style', `
+                background: #fef2f2 !important;
+                border: 2px solid #ef4444 !important;
+                color: #ef4444 !important;
+                padding: 10px !important;
+                border-radius: 8px !important;
+            `);
+
+            if (notificationIcon) notificationIcon.className = 'fas fa-bell-slash';
+            if (notificationStatusText) notificationStatusText.textContent = 'Отключена';
+            if (statusBadge) {
+                statusBadge.setAttribute('style', `
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+                    color: white !important;
+                `);
+            }
+            if (connectionDot) connectionDot.setAttribute('style', 'background-color: #ef4444 !important;');
+            if (connectionText) connectionText.setAttribute('style', 'color: #ef4444 !important;');
+            if (toggleBtnText) toggleBtnText.textContent = 'Включить уведомления';
+            if (toggleBtnIcon) toggleBtnIcon.className = 'fas fa-bell';
+        }
+    }
+
+    function showNotificationWidget() {
+        const widget = document.querySelector('.modern-notifications-widget');
+        if (widget) {
+            widget.style.display = 'block';
+            widget.style.opacity = '1';
+            widget.style.visibility = 'visible';
+        } else {
+            // Если виджет не найден, возможно он не загружен из-за отключенных уведомлений
+            // В этом случае нужно перезагрузить страницу, чтобы включить виджет
+            console.log('Виджет уведомлений не найден, перезагружаем страницу...');
+            window.location.reload();
+        }
+    }
+
+    function hideNotificationWidget() {
+        const widget = document.querySelector('.modern-notifications-widget');
+        if (widget) {
+            widget.style.display = 'none';
+            widget.style.opacity = '0';
+            widget.style.visibility = 'hidden';
+        }
+    }
+
+    // Функция для загрузки начального состояния уведомлений
+    function loadNotificationStatus() {
+        fetch('/api/notifications/status')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Загружено состояние уведомлений:', data.enabled);
+
+                // Обновляем UI в соответствии с состоянием из БД
+                if (data.enabled) {
+                    updateNotificationUI(true);
+                    showNotificationWidget();
+                } else {
+                    updateNotificationUI(false);
+                    hideNotificationWidget();
+                }
+            } else {
+                console.error('Ошибка загрузки состояния уведомлений:', data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Ошибка запроса состояния уведомлений:', error);
+        });
+    }
+
+    // Дополнительный обработчик для кнопки
+    document.addEventListener('DOMContentLoaded', function() {
+        const btn = document.getElementById('toggleNotificationsBtn');
+        if (btn) {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                toggleNotificationsAndSound();
             });
         }
 
-        // Восстанавливаем предыдущее состояние переключателя
-        const newIssuesToggle = document.getElementById('newIssuesNotifications');
-        if (newIssuesToggle) {
-            newIssuesToggle.checked = !newIssuesToggle.checked;
-        }
-    }
-}
+        // Загружаем начальное состояние уведомлений
+        loadNotificationStatus();
+    });
 </script>
-
-<!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
-<!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->
-<!--
-<script type="module" src="/static/js/push-notifications.js"></script>
--->
-
-<!-- ОТКЛЮЧЕНО: Отладочный модуль для диагностики -->
-<!--
-<script src="/static/js/push-notifications-debug.js"></script>
--->
 {% endblock %}

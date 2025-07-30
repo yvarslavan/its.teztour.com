@@ -66,10 +66,20 @@
                         <!-- User Avatar -->
                         <div class="user-avatar-section">
                             <div class="avatar-container">
-                                <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-                                     alt="{{ user.username }}"
-                                     class="user-avatar"
-                                     loading="lazy">
+                                {% if user.image_file and user.image_file != 'default.jpg' %}
+                                    <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/account_img/' + user.image_file) }}"
+                                         alt="{{ user.username }}"
+                                         class="user-avatar"
+                                         loading="lazy"
+                                         decoding="async"
+                                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}'; this.classList.add('avatar-error');">
+                                {% else %}
+                                    <img src="{{ url_for('static', filename='profile_pics/default.jpg') }}"
+                                         alt="{{ user.username }}"
+                                         class="user-avatar"
+                                         loading="lazy"
+                                         decoding="async">
+                                {% endif %}
                                 <div class="avatar-overlay">
                                     <i class="fas fa-eye"></i>
                                 </div>
@@ -706,6 +716,56 @@
         border: 3px solid var(--border-light);
         transition: all var(--transition-normal);
         box-shadow: var(--shadow-1);
+        background: var(--surface-2);
+        opacity: 0;
+        transform: scale(0.9);
+    }
+
+    .users-page-wrapper .user-avatar.avatar-loaded {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Avatar loading and error states */
+    .users-page-wrapper .user-avatar.avatar-error {
+        opacity: 0.7;
+        filter: grayscale(1);
+    }
+
+    .users-page-wrapper .avatar-container::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: var(--surface-2);
+        border-radius: 50%;
+        z-index: -1;
+    }
+
+    /* Avatar loading animation */
+    .users-page-wrapper .user-avatar:not([src]) {
+        background: linear-gradient(90deg, var(--surface-2) 25%, var(--surface-3) 50%, var(--surface-2) 75%);
+        background-size: 200% 100%;
+        animation: loading-shimmer 1.5s infinite;
+    }
+
+    .users-page-wrapper .user-avatar.avatar-loaded {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    /* Performance optimizations */
+    .users-page-wrapper .user-avatar {
+        will-change: opacity, transform;
+        backface-visibility: hidden;
+        transform: translateZ(0);
+    }
+
+    @keyframes loading-shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
     }
 
     .users-page-wrapper .avatar-overlay {
@@ -1033,6 +1093,66 @@ document.addEventListener('DOMContentLoaded', function() {
     const userCardsContainer = document.getElementById('user-cards-container');
     const noResultsMessage = document.getElementById('no-results-message');
     const clearSearchBtn = document.getElementById('clear-search-btn');
+
+    // Preload critical images
+    function preloadUserAvatars() {
+        const avatarImages = document.querySelectorAll('.user-avatar');
+        avatarImages.forEach(img => {
+            if (img.src && !img.complete) {
+                img.addEventListener('load', function() {
+                    this.classList.add('avatar-loaded');
+                });
+                img.addEventListener('error', function() {
+                    this.classList.add('avatar-error');
+                    // Fallback to default avatar
+                    if (!this.src.includes('default.jpg')) {
+                        this.src = this.src.replace(/profile_pics\/[^\/]+\/account_img\/[^\/]+/, 'profile_pics/default.jpg');
+                    }
+                });
+            } else if (img.complete) {
+                // Если изображение уже загружено
+                img.classList.add('avatar-loaded');
+            }
+        });
+    }
+
+    // Optimize image loading with intersection observer
+    function setupImageLazyLoading() {
+        const imageObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    const img = entry.target;
+                    if (img.dataset.src) {
+                        img.src = img.dataset.src;
+                        img.removeAttribute('data-src');
+                        observer.unobserve(img);
+                    }
+                }
+            });
+        }, {
+            rootMargin: '50px 0px',
+            threshold: 0.01
+        });
+
+        // Observe all avatar images
+        document.querySelectorAll('.user-avatar').forEach(img => {
+            imageObserver.observe(img);
+        });
+    }
+
+    // Initialize avatar preloading
+    preloadUserAvatars();
+    setupImageLazyLoading();
+
+    // Handle already loaded images
+    setTimeout(() => {
+        const avatarImages = document.querySelectorAll('.user-avatar');
+        avatarImages.forEach(img => {
+            if (img.complete && !img.classList.contains('avatar-loaded')) {
+                img.classList.add('avatar-loaded');
+            }
+        });
+    }, 100);
 
     // Search functionality
     if (searchInput && userCardsContainer && noResultsMessage && clearSearchBtn) {

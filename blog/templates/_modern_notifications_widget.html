@@ -1268,6 +1268,9 @@ try {
 
                 console.log('[ModernWidget] 🔧 Загрузка состояния виджета:', { isClosed, isMinimized, isDisabled, isWidgetClosedByUser });
 
+                // Проверяем состояние уведомлений из базы данных
+                this.checkNotificationStatusFromDB();
+
                 // Если виджет был закрыт пользователем, показываем его закрытым при инициализации
                 if (isWidgetClosedByUser) {
                     console.log('[ModernWidget] 🔒 Виджет был закрыт пользователем - показываем закрытым при инициализации');
@@ -1356,6 +1359,40 @@ try {
                 this.widget.style.display = 'flex';
                 this.widget.style.visibility = 'visible';
                 this.widget.style.opacity = '1';
+            }
+        }
+
+        checkNotificationStatusFromDB() {
+            try {
+                console.log('[ModernWidget] 🔍 Проверка состояния уведомлений из базы данных...');
+
+                fetch('/api/notifications/status')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('[ModernWidget] 📊 Состояние уведомлений из БД:', data.enabled);
+
+                        if (!data.enabled) {
+                            console.log('[ModernWidget] 🔕 Уведомления отключены в БД, скрываем виджет');
+                            this.widget.style.display = 'none';
+                            this.widget.classList.add('closed', 'initial-hidden');
+                            this.widget.style.visibility = 'hidden';
+                            this.widget.style.opacity = '0';
+                            this.hideRestoreButton();
+                            localStorage.setItem('notificationsWidgetDisabled', 'true');
+                        } else {
+                            console.log('[ModernWidget] ✅ Уведомления включены в БД');
+                            localStorage.removeItem('notificationsWidgetDisabled');
+                        }
+                    } else {
+                        console.error('[ModernWidget] ❌ Ошибка получения состояния уведомлений:', data.error);
+                    }
+                })
+                .catch(error => {
+                    console.error('[ModernWidget] ❌ Ошибка запроса состояния уведомлений:', error);
+                });
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в checkNotificationStatusFromDB:', error);
             }
         }
 
@@ -2277,87 +2314,87 @@ try {
             }
         }, 5000);
 
-                // Принудительная очистка стилей через 10 секунд
-        setTimeout(() => {
-            try {
-                const restoreBtn = document.getElementById('notifications-restore-btn');
-                if (restoreBtn) {
-                    const button = restoreBtn.querySelector('.restore-button');
-                    if (button) {
-                        // Принудительно сбрасываем все стили
-                        button.style.cssText = `
-                            width: 56px !important;
-                            height: 56px !important;
-                            border-radius: 50% !important;
-                            background: linear-gradient(135deg, #6366f1, #a855f7) !important;
-                            cursor: pointer !important;
-                            box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
-                            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-                            display: flex !important;
-                            align-items: center !important;
-                            justify-content: center !important;
-                            position: relative !important;
-                            overflow: hidden !important;
-                            text-decoration: none !important;
-                            border: none !important;
-                            outline: none !important;
-                            padding: 0 !important;
-                            margin: 0 !important;
-                            background-color: transparent !important;
-                            background-image: linear-gradient(135deg, #6366f1, #a855f7) !important;
-                            background-repeat: no-repeat !important;
-                            background-position: center !important;
-                            background-size: cover !important;
-                            font-family: inherit !important;
-                            font-size: inherit !important;
-                            font-weight: inherit !important;
-                            line-height: inherit !important;
-                            color: inherit !important;
-                            text-align: inherit !important;
-                            vertical-align: inherit !important;
-                            list-style: none !important;
-                            list-style-type: none !important;
-                            list-style-image: none !important;
-                            list-style-position: outside !important;
-                            background-attachment: scroll !important;
-                            background-clip: border-box !important;
-                            background-origin: padding-box !important;
-                            border-width: 0 !important;
-                            border-style: none !important;
-                            border-color: transparent !important;
-                            padding-top: 0 !important;
-                            padding-right: 0 !important;
-                            padding-bottom: 0 !important;
-                            padding-left: 0 !important;
-                            margin-top: 0 !important;
-                            margin-right: 0 !important;
-                            margin-bottom: 0 !important;
-                            margin-left: 0 !important;
-                        `;
+                // ВРЕМЕННО ОТКЛЮЧЕНО: Принудительная очистка стилей через 10 секунд
+        // setTimeout(() => {
+        //     try {
+        //         const restoreBtn = document.getElementById('notifications-restore-btn');
+        //         if (restoreBtn) {
+        //             const button = restoreBtn.querySelector('.restore-button');
+        //             if (button) {
+        //                 // Принудительно сбрасываем все стили
+        //                 button.style.cssText = `
+        //                     width: 56px !important;
+        //                     height: 56px !important;
+        //                     border-radius: 50% !important;
+        //                     background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+        //                     cursor: pointer !important;
+        //                     box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+        //                     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        //                     display: flex !important;
+        //                     align-items: center !important;
+        //                     justify-content: center !important;
+        //                     position: relative !important;
+        //                     overflow: hidden !important;
+        //                     text-decoration: none !important;
+        //                     border: none !important;
+        //                     outline: none !important;
+        //                     padding: 0 !important;
+        //                     margin: 0 !important;
+        //                     background-color: transparent !important;
+        //                     background-image: linear-gradient(135deg, #6366f1, #a855f7) !important;
+        //                     background-repeat: no-repeat !important;
+        //                     background-position: center !important;
+        //                     background-size: cover !important;
+        //                     font-family: inherit !important;
+        //                     font-size: inherit !important;
+        //                     font-weight: inherit !important;
+        //                     line-height: inherit !important;
+        //                     color: inherit !important;
+        //                     text-align: inherit !important;
+        //                     vertical-align: inherit !important;
+        //                     list-style: none !important;
+        //                     list-style-type: none !important;
+        //                     list-style-image: none !important;
+        //                     list-style-position: outside !important;
+        //                     background-attachment: scroll !important;
+        //                     background-clip: border-box !important;
+        //                     background-origin: padding-box !important;
+        //                     border-width: 0 !important;
+        //                     border-style: none !important;
+        //                     border-color: transparent !important;
+        //                     padding-top: 0 !important;
+        //                     padding-right: 0 !important;
+        //                     padding-bottom: 0 !important;
+        //                     padding-left: 0 !important;
+        //                     margin-top: 0 !important;
+        //                     margin-right: 0 !important;
+        //                     margin-bottom: 0 !important;
+        //                     margin-left: 0 !important;
+        //                 `;
 
-                        const icon = button.querySelector('i');
-                        if (icon) {
-                            icon.style.cssText = `
-                                color: white !important;
-                                font-size: 20px !important;
-                                display: block !important;
-                                margin: 0 !important;
-                                padding: 0 !important;
-                                line-height: 1 !important;
-                                position: relative !important;
-                                z-index: 2 !important;
-                                background: transparent !important;
-                                border: none !important;
-                                outline: none !important;
-                            `;
-                        }
-                    }
-                }
-                console.log('[ModernWidget] ✅ Принудительная очистка стилей выполнена');
-            } catch (error) {
-                console.error('[ModernWidget] ❌ Ошибка принудительной очистки стилей:', error);
-            }
-        }, 10000);
+        //                 const icon = button.querySelector('i');
+        //                 if (icon) {
+        //                     icon.style.cssText = `
+        //                     color: white !important;
+        //                     font-size: 20px !important;
+        //                     display: block !important;
+        //                     margin: 0 !important;
+        //                     padding: 0 !important;
+        //                     line-height: 1 !important;
+        //                     position: relative !important;
+        //                     z-index: 2 !important;
+        //                     background: transparent !important;
+        //                     border: none !important;
+        //                     outline: none !important;
+        //                 `;
+        //             }
+        //         }
+        //     }
+        //     console.log('[ModernWidget] ✅ Принудительная очистка стилей выполнена');
+        // } catch (error) {
+        //     console.error('[ModernWidget] ❌ Ошибка принудительной очистки стилей:', error);
+        // }
+        // }, 10000);
     });
 
     // Функция для принудительного исправления кнопки восстановления
