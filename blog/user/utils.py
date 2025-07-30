@@ -67,3 +67,41 @@ def quality_control_required(f):
             return redirect(url_for('main.home'))
         return f(*args, **kwargs)
     return decorated_function
+
+
+def validate_user_image_path(user):
+    """
+    Проверяет существование файла изображения пользователя и возвращает корректный путь
+    """
+    if not user.image_file or user.image_file == 'default.jpg':
+        return 'default.jpg'
+
+    # Проверяем существование файла
+    image_path = os.path.join(
+        current_app.root_path,
+        'static',
+        'profile_pics',
+        user.username,
+        'account_img',
+        user.image_file
+    )
+
+    if os.path.exists(image_path):
+        return user.image_file
+    else:
+        # Если файл не существует, возвращаем default.jpg
+        return 'default.jpg'
+
+
+def get_user_image_url(user):
+    """
+    Возвращает URL изображения пользователя с проверкой существования файла
+    """
+    from flask import url_for
+
+    valid_image_file = validate_user_image_path(user)
+
+    if valid_image_file == 'default.jpg':
+        return url_for('static', filename='profile_pics/default.jpg')
+    else:
+        return url_for('static', filename=f'profile_pics/{user.username}/account_img/{valid_image_file}')

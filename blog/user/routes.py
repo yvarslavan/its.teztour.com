@@ -32,7 +32,7 @@ from werkzeug.utils import redirect
 from blog import db, scheduler
 from blog.models import User, Post, PushSubscription
 from blog.user.forms import RegistrationForm, LoginForm, UpdateAccountForm
-from blog.user.utils import save_picture, random_avatar, quality_control_required
+from blog.user.utils import save_picture, random_avatar, quality_control_required, validate_user_image_path, get_user_image_url
 from erp_oracle import (
     connect_oracle,
     db_host,
@@ -56,7 +56,8 @@ from redmine import (
     generate_email_signature,
 )
 from mysql_db import Issue, Session, init_quality_db
-from flask_wtf.csrf import generate_csrf
+from flask_wtf.csrf import generate_csrf, CSRFProtect
+csrf = CSRFProtect()
 from blog.call.routes import get_db_connection
 import pymysql
 from pymysql.cursors import DictCursor
@@ -523,7 +524,8 @@ def account():
             default_vpn_end_date=user_obj.vpn_end_date if user_obj else "",
             all_users=all_users,
             email_signature_html=email_signature_html,
-            push_subscription_active=push_subscription_active  # Передаем статус подписки в шаблон
+            push_subscription_active=push_subscription_active,  # Передаем статус подписки в шаблон
+            notifications_widget_enabled=user_obj.notifications_widget_enabled  # Передаем состояние уведомлений
         )
     except Exception as e:
         db.session.rollback()  # Откатываем сессию в случае ошибки
@@ -534,10 +536,20 @@ def account():
 @users.route("/users")
 @login_required
 def all_users():
-    all_users_data = User.query.order_by(User.last_seen.desc()).all()
-    return render_template(
-        "users.html", title="Зарегистированные пользователи", users=all_users_data
-    )
+    try:
+        all_users_data = User.query.order_by(User.last_seen.desc()).all()
+
+        # Проверяем и исправляем пути к изображениям
+        for user in all_users_data:
+            user.image_file = validate_user_image_path(user)
+
+        return render_template(
+            "users.html", title="Зарегистированные пользователи", users=all_users_data
+        )
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при загрузке страницы пользователей: {e}")
+        flash("Произошла ошибка при загрузке списка пользователей", "error")
+        return render_template("users.html", title="Пользователи", users=[])
 
 
 @users.get("/user/<string:username>")
@@ -1035,6 +1047,69 @@ def refresh_password():
     except Exception as e:
         current_app.logger.error(f"Ошибка при обновлении пароля: {e}")
         return jsonify({"success": False, "message": f"Ошибка: {str(e)}"}), 500
+
+
+@users.route("/api/notifications/toggle", methods=["POST"])
+@login_required
+@csrf.exempt
+def toggle_notifications():
+    """Переключает состояние уведомлений пользователя"""
+    try:
+        # Получаем текущее состояние из запроса
+        data = request.get_json()
+        enabled = data.get('enabled', None)
+
+        if enabled is None:
+            return jsonify({'success': False, 'error': 'Missing enabled parameter'}), 400
+
+        # Получаем пользователя напрямую из базы данных
+        user = User.query.filter_by(username=current_user.username).first()
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        # Логируем текущее состояние
+        logger.info(f"Toggle notifications: user={user.username}, current_enabled={user.notifications_widget_enabled}, new_enabled={enabled}")
+
+        # Обновляем состояние в базе данных
+        user.notifications_widget_enabled = enabled
+        db.session.commit()
+
+        # Обновляем current_user для совместимости
+        current_user.notifications_widget_enabled = enabled
+
+        # Логируем результат
+        logger.info(f"Toggle notifications: user={user.username}, final_enabled={user.notifications_widget_enabled}")
+
+        return jsonify({
+            'success': True,
+            'enabled': enabled,
+            'message': 'Уведомления включены' if enabled else 'Уведомления отключены'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error toggling notifications: {str(e)}")
+        return jsonify({'success': False, 'error': 'Database error'}), 500
+
+
+@users.route("/api/notifications/status", methods=["GET"])
+@login_required
+@csrf.exempt
+def get_notifications_status():
+    """Получает текущее состояние уведомлений пользователя"""
+    try:
+        # Получаем пользователя напрямую из базы данных
+        user = User.query.filter_by(username=current_user.username).first()
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        return jsonify({
+            'success': True,
+            'enabled': user.notifications_widget_enabled
+        })
+    except Exception as e:
+        logger.error(f"Error getting notifications status: {str(e)}")
+        return jsonify({'success': False, 'error': 'Database error'}), 500
 
 
 @users.route("/test_xmpp_message", methods=["GET"])
