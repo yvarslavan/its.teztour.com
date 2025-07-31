@@ -1350,7 +1350,7 @@
 }
 
 .fab:hover {
-  transform: translateY(-2px);
+  transform: none !important;
   box-shadow: var(--shadow-xl);
 }
 
@@ -1382,7 +1382,7 @@
   gap: 0.5rem;
   color: white;
   text-decoration: none;
-  transition: var(--transition);
+  transition: none !important;
 }
 
 .breadcrumb-link:hover {
@@ -1526,7 +1526,7 @@
 
 .card:hover {
   box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+  transform: none !important;
 }
 
 .card-header {
@@ -1539,7 +1539,9 @@
 
 .card-header.collapsible {
   cursor: pointer;
-  transition: var(--transition);
+  transition: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
 }
 
 .card-header.collapsible:hover {
@@ -1571,9 +1573,11 @@
 
 .toggle-icon {
   color: var(--text-secondary);
-  transition: transform 0.3s ease;
+  transition: none !important;
   font-size: 1rem;
   margin-left: 1rem;
+  will-change: auto !important;
+  backface-visibility: visible !important;
 }
 
 .toggle-icon.rotated {
@@ -1582,8 +1586,10 @@
 
 .card-content {
   padding: 2rem;
-  transition: all 0.3s ease;
+  transition: none !important;
   overflow: hidden;
+  will-change: auto !important;
+  backface-visibility: visible !important;
 }
 
 .card-content.collapsed {
@@ -1780,12 +1786,16 @@
   background: var(--bg-secondary);
   border-radius: var(--border-radius);
   border-left: 4px solid var(--primary-color);
-  transition: var(--transition);
+  transition: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
+  isolation: auto !important;
+  contain: none !important;
 }
 
 .timeline-item:hover {
   background: var(--bg-tertiary);
-  transform: translateX(4px);
+  transform: none !important;
 }
 
 .timeline-dot {
@@ -1835,7 +1845,7 @@
   color: var(--primary-color);
   text-decoration: none;
   font-weight: 500;
-  transition: color var(--transition);
+  transition: none !important;
   font-size: 0.875rem;
 }
 
@@ -1869,12 +1879,14 @@
   background: var(--bg-secondary);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
-  transition: var(--transition);
+  transition: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
 }
 
 .attachment-item:hover {
   background: var(--bg-tertiary);
-  transform: translateY(-2px);
+  transform: none !important;
   box-shadow: var(--shadow-md);
 }
 
@@ -1989,12 +2001,16 @@
   background: var(--bg-secondary);
   border-radius: var(--border-radius);
   border: 1px solid var(--border-color);
-  transition: var(--transition);
+  transition: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
+  isolation: auto !important;
+  contain: none !important;
 }
 
 .history-item:hover {
   background: var(--bg-tertiary);
-  box-shadow: var(--shadow-md);
+  box-shadow: none !important;
 }
 
 .history-avatar {
@@ -2154,12 +2170,14 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: var(--transition);
+  transition: none !important;
+  will-change: auto !important;
+  backface-visibility: visible !important;
 }
 
 .comment-button:hover {
   background: var(--secondary-color);
-  transform: translateY(-2px);
+  transform: none !important;
   box-shadow: var(--shadow-md);
 }
 
@@ -3995,5 +4013,99 @@ document.addEventListener('DOMContentLoaded', function() {
             <script>
                 console.log('✅ Все функции восстановлены');
             </script>
+
+            <!-- Стили для предотвращения мерцания -->
+            <style>
+              /* Отключение проблемных анимаций для timeline элементов */
+              .timeline-item,
+              .timeline-content,
+              .timeline-marker,
+              .timeline-header,
+              .timeline-user,
+              .timeline-date,
+              .timeline-changes,
+              .timeline-notes,
+              .change-item {
+                transition: none !important;
+                animation: none !important;
+                will-change: auto !important;
+                backface-visibility: visible !important;
+                isolation: auto !important;
+                contain: none !important;
+                pointer-events: auto !important;
+              }
+
+              /* Отключение hover эффектов с сохранением цветов */
+              .timeline-item:hover,
+              .timeline-marker:hover,
+              .timeline-content:hover {
+                transform: none !important;
+                box-shadow: inherit !important;
+                background-color: inherit !important;
+                border-color: inherit !important;
+                color: inherit !important;
+              }
+
+              /* Дополнительная защита для дочерних элементов */
+              .timeline-item *,
+              .timeline-content *,
+              .timeline-marker * {
+                transition: none !important;
+                animation: none !important;
+              }
+
+              .timeline-item *:hover,
+              .timeline-content *:hover,
+              .timeline-marker *:hover {
+                transform: none !important;
+                background-color: inherit !important;
+                border-color: inherit !important;
+                color: inherit !important;
+              }
+
+              /* Поддержка prefers-reduced-motion */
+              @media (prefers-reduced-motion: reduce) {
+                * {
+                  transition: none !important;
+                  animation: none !important;
+                }
+              }
+
+              /* Дополнительная защита от мерцания */
+              .history-item,
+              .history-content,
+              .history-header,
+              .history-user,
+              .history-time,
+              .history-changes,
+              .change-item,
+              .change-description,
+              .history-comment,
+              .comment-content {
+                transition: none !important;
+                animation: none !important;
+                will-change: auto !important;
+                backface-visibility: visible !important;
+                isolation: auto !important;
+                contain: none !important;
+              }
+
+              .history-item:hover,
+              .history-content:hover,
+              .history-header:hover,
+              .history-user:hover,
+              .history-time:hover,
+              .history-changes:hover,
+              .change-item:hover,
+              .change-description:hover,
+              .history-comment:hover,
+              .comment-content:hover {
+                transform: none !important;
+                box-shadow: inherit !important;
+                background-color: inherit !important;
+                border-color: inherit !important;
+                color: inherit !important;
+              }
+            </style>
 
 {% endblock %}
