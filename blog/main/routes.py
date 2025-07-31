@@ -17,7 +17,8 @@ from flask import (
     jsonify,
     g,
     abort,
-    current_app
+    current_app,
+    Response
 )
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
@@ -2864,3 +2865,83 @@ class IssueTemplateHelper:
         if cache_key not in self.cache:
             self.cache[cache_key] = get_property_name(property_name, prop_key, old_value, new_value)
         return self.cache[cache_key]
+
+@main.route("/api/issue/<int:issue_id>/attachment/<int:attachment_id>/download", methods=["GET"])
+@csrf.exempt
+@login_required
+def download_issue_attachment(issue_id, attachment_id):
+    """
+    API для скачивания вложения заявки
+    """
+    current_app.logger.info(f"[API] GET /api/issue/{issue_id}/attachment/{attachment_id}/download - запрос от {current_user.username}")
+    start_time = time.time()
+
+    try:
+        if not current_user.is_redmine_user:
+            return jsonify({
+                "error": "Доступ запрещен",
+                "success": False
+            }), 403
+
+                # Используем существующий Redmine коннектор (он уже использует API ключ администратора)
+        redmine_connector = get_redmine_connector(current_user, None)
+
+        if not redmine_connector:
+            return jsonify({
+                "error": "Ошибка подключения к Redmine",
+                "success": False
+            }), 500
+
+        try:
+            # Получаем заявку для проверки прав доступа
+            issue = redmine_connector.redmine.issue.get(issue_id, include=['attachments'])
+            current_app.logger.info(f"[API] Получена заявка {issue_id} с {len(issue.attachments)} вложениями")
+
+            # Ищем нужное вложение
+            attachment = None
+            for att in issue.attachments:
+                current_app.logger.info(f"[API] Проверяем вложение {att.id}: {att.filename}")
+                if att.id == attachment_id:
+                    attachment = att
+                    break
+
+            if not attachment:
+                current_app.logger.error(f"[API] Вложение #{attachment_id} не найдено в заявке {issue_id}")
+                return jsonify({
+                    "error": f"Вложение #{attachment_id} не найдено",
+                    "success": False
+                }), 404
+
+            current_app.logger.info(f"[API] Найдено вложение: {attachment.filename} (размер: {attachment.filesize} байт)")
+
+            # Проверяем, что attachment найден в заявке
+            current_app.logger.info(f"[API] Attachment {attachment_id} найден в заявке {issue_id}")
+
+            # Формируем URL для прямого скачивания из Redmine
+            redmine_download_url = f"{redmine_connector.redmine.url}/attachments/download/{attachment_id}"
+            current_app.logger.info(f"[API] URL для скачивания: {redmine_download_url}")
+
+            execution_time = time.time() - start_time
+            current_app.logger.info(f"[API] GET /api/issue/{issue_id}/attachment/{attachment_id}/download выполнен за {execution_time:.2f}с")
+
+            # Возвращаем JSON с URL для скачивания
+            return jsonify({
+                "success": True,
+                "download_url": redmine_download_url,
+                "filename": attachment.filename,
+                "filesize": attachment.filesize
+            })
+
+        except Exception as redmine_error:
+            current_app.logger.error(f"[API] Ошибка скачивания вложения {attachment_id} для заявки {issue_id}: {str(redmine_error)}")
+            return jsonify({
+                "error": f"Ошибка скачивания файла: {str(redmine_error)}",
+                "success": False
+            }), 500
+
+    except Exception as e:
+        current_app.logger.error(f"[API] Критическая ошибка в GET /api/issue/{issue_id}/attachment/{attachment_id}/download: {str(e)}. Traceback: {traceback.format_exc()}")
+        return jsonify({
+            "error": f"Внутренняя ошибка сервера: {str(e)}",
+            "success": False
+        }), 500
