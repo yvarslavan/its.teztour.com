@@ -1543,17 +1543,31 @@ try {
                     notifications.redmine_notifications.forEach(n => {
                         const descriptionDetails = n.issue_description ? ` — ${this.truncate(n.issue_description.replace(/<.*?>/g, ''), 70)}` : '';
                         const isGroupNotification = !!n.is_group_notification;
-                        const title = isGroupNotification ? `✅ Задача для группы: ${n.group_name || 'Без имени'}` : `🔥 Вам назначена задача`;
+                        let title = '';
+                        let description = '';
+
+                        if (isGroupNotification) {
+                            // Для групповых уведомлений добавляем Email to с переносом строки и "От:"
+                            const emailToInfo = n.easy_email_to ? `<br><small class="text-muted">📧 От: ${n.easy_email_to}</small>` : '';
+                            title = `✅ Задача для группы: ${n.group_name || 'Без имени'}${emailToInfo}`;
+                            description = `<b>#${n.redmine_issue_id}</b>: ${n.issue_subject}${descriptionDetails}`;
+                        } else {
+                            // Для обычных уведомлений Email to с переносом строки и "От:"
+                            const emailToInfo = n.easy_email_to ? `<br><small class="text-muted">📧 От: ${n.easy_email_to}</small>` : '';
+                            title = `🔥 Вам назначена задача${emailToInfo}`;
+                            description = `<b>#${n.redmine_issue_id}</b>: ${n.issue_subject}${descriptionDetails}`;
+                        }
 
                         this.notifications.push({
                             id: `redmine_${n.id}`,
                             type: 'redmine-task',
                             title: title,
-                            description: `<b>#${n.redmine_issue_id}</b>: ${n.issue_subject}${descriptionDetails}`,
+                            description: description,
                             time: this.formatTime(n.created_at),
                             icon: 'fas fa-tasks',
                             url: n.issue_url,
-                            group_name: n.group_name
+                            group_name: n.group_name,
+                            easy_email_to: n.easy_email_to
                         });
                     });
                 }

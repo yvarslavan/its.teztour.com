@@ -269,6 +269,7 @@ class NotificationService:
                                 issue_url=issue_url,
                                 is_group_notification=is_group,
                                 group_name=group_name_value,
+                                easy_email_to=row.get('author_email'),  # Используем author_email из MySQL
                                 created_at=row['created_at'],
                                 source_notification_id=row['id']
                             )
@@ -695,8 +696,6 @@ class NotificationService:
 
             redmine_data = []
             for notification in redmine_notifications:
-
-
                 redmine_data.append({
                     'id': notification.id,
                     'redmine_issue_id': notification.redmine_issue_id,
@@ -704,7 +703,8 @@ class NotificationService:
                     'issue_url': notification.issue_url,
                     'created_at': notification.created_at.isoformat(),
                     'is_group_notification': notification.is_group_notification,
-                    'group_name': notification.group_name
+                    'group_name': notification.group_name,
+                    'easy_email_to': notification.easy_email_to
                 })
 
             return redmine_data
@@ -780,7 +780,7 @@ class NotificationService:
         try:
             cursor = connection.cursor(pymysql.cursors.DictCursor)
             query = """
-                SELECT id, redmine_issue_id, issue_subject, issue_description, created_at, group_name
+                SELECT id, redmine_issue_id, issue_subject, issue_description, created_at, group_name, author_email
                 FROM u_redmine_notifications
                 WHERE user_id = %s AND is_read = 0
                 ORDER BY created_at DESC
@@ -803,7 +803,8 @@ class NotificationService:
                     'created_at': created_at.isoformat() if created_at else None,
                     'issue_url': f"http://helpdesk.teztour.com/issues/{item.get('redmine_issue_id')}",
                     'is_group_notification': bool(item.get('group_name') and str(item.get('group_name')).strip()) if item.get('group_name') else False,
-                    'group_name': item.get('group_name')  # ИСПРАВЛЕНО: Добавляем само имя группы
+                    'group_name': item.get('group_name'),  # ИСПРАВЛЕНО: Добавляем само имя группы
+                    'easy_email_to': item.get('author_email')
                 })
             return redmine_data
         except Exception as e:
