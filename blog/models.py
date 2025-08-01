@@ -124,6 +124,7 @@ class RedmineNotification(db.Model):
     issue_url = db.Column(db.Text, nullable=False)
     is_group_notification = db.Column(db.Boolean, nullable=False, default=False)
     group_name = db.Column(db.Text, nullable=True)
+    easy_email_to = db.Column(db.Text, nullable=True)  # Добавляем поле для Email to
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     source_notification_id = db.Column(db.Integer, nullable=False)
 

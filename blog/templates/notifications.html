@@ -86,6 +86,12 @@
                                     <i class="fas fa-hashtag"></i>
                                     <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
                                 </div>
+                                {% if notification.is_group_notification and notification.easy_email_to %}
+                                <div class="notification-email-to">
+                                    <i class="fas fa-envelope"></i>
+                                    <span>Email to: {{ notification.easy_email_to }}</span>
+                                </div>
+                                {% endif %}
                             </a>
                         </div>
                     </article>
