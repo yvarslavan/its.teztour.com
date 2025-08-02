@@ -298,16 +298,36 @@ class NotificationService:
         try:
             cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-            query = """
+            # ИСПРАВЛЕНИЕ: Ищем уведомления по IssueID задач, назначенных текущему пользователю
+            # Получаем список IssueID задач, назначенных пользователю
+            user_issues_query = """
+                SELECT DISTINCT i.id as issue_id
+                FROM issues i
+                WHERE i.assigned_to_id = (
+                    SELECT id FROM users WHERE login = %s
+                )
+            """
+            cursor.execute(user_issues_query, (user_email.split('@')[0],))
+            user_issue_ids = [row['issue_id'] for row in cursor.fetchall()]
+
+            logger.info(f"[REQ_ID:{request_id}] Найдено {len(user_issue_ids)} задач для пользователя {user_email}")
+
+            if not user_issue_ids:
+                logger.info(f"[REQ_ID:{request_id}] Нет задач для пользователя {user_email}")
+                return 0
+
+            # Ищем уведомления по IssueID задач пользователя
+            placeholders = ', '.join(['%s'] * len(user_issue_ids))
+            query = f"""
                 SELECT ID, IssueID, OldStatus, NewStatus, OldSubj, Body, RowDateCreated, Author
                 FROM u_its_update_status
-                WHERE LOWER(Author) = LOWER(%s)
+                WHERE IssueID IN ({placeholders})
                 ORDER BY RowDateCreated DESC
                 LIMIT 50
             """
 
-            logger.info(f"[REQ_ID:{request_id}] MySQL Query (status): {query} с user_email: {user_email}")
-            cursor.execute(query, (user_email,))
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (status): {query} с IssueIDs: {user_issue_ids}")
+            cursor.execute(query, user_issue_ids)
             rows = cursor.fetchall()
             source_ids = [row['ID'] for row in rows]
             logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_update_status. IDs: {source_ids}")
@@ -329,7 +349,8 @@ class NotificationService:
                         'subject': row['OldSubj'],
                         'body': row['Body']
                     },
-                    created_at=row['RowDateCreated']
+                    created_at=row['RowDateCreated'],
+                    source_id=row['ID']  # Добавляем MySQL ID как source_id
                 )
 
                 # Проверяем на дублирование
@@ -344,20 +365,24 @@ class NotificationService:
             # Сохраняем уведомления в базу
             if notifications_to_save:
                 logger.info(f"[REQ_ID:{request_id}] Планируется сохранить {len(notifications_to_save)} статус-уведомлений. IDs из MySQL для удаления: {ids_to_delete_from_mysql}")
-                self._save_status_notifications(notifications_to_save, request_id)
 
-                # Отправляем браузерные пуш-уведомления
+                # Сохраняем уведомления и получаем список успешно сохраненных
+                successfully_saved_ids = self._save_status_notifications(notifications_to_save, request_id)
+
+                # Отправляем браузерные пуш-уведомления только для успешно сохраненных
                 for notification in notifications_to_save:
-                    logger.info(f"[REQ_ID:{request_id}][PUSH_STATUS_PRE_SEND] Готовимся отправить PUSH для статус-уведомления (MySQL ID: {row['ID'] if 'ID' in row else 'N/A'}, Issue ID: {notification.issue_id}). Данные уведомления: {notification.to_dict()}")
+                    logger.info(f"[REQ_ID:{request_id}][PUSH_STATUS_PRE_SEND] Готовимся отправить PUSH для статус-уведомления (Issue ID: {notification.issue_id}). Данные уведомления: {notification.to_dict()}")
                     try:
                         self.push_service.send_push_notification(notification)
                         logger.info(f"[REQ_ID:{request_id}][PUSH_STATUS_POST_SEND_SUCCESS] PUSH для статус-уведомления (Issue ID: {notification.issue_id}) ВЫЗВАН (результат см. в логах push_service).")
                     except Exception as e_push:
                         logger.error(f"[REQ_ID:{request_id}][PUSH_STATUS_POST_SEND_ERROR] ОШИБКА при вызове send_push_notification для статус-уведомления (Issue ID: {notification.issue_id}): {e_push}", exc_info=True)
 
-                # Удаляем успешно обработанные записи из MySQL по их ID
-                if ids_to_delete_from_mysql:
-                    self._delete_processed_status_notifications(connection, ids_to_delete_from_mysql, request_id)
+                # Удаляем только успешно обработанные записи из MySQL
+                if successfully_saved_ids:
+                    self._delete_processed_status_notifications(connection, successfully_saved_ids, request_id)
+                else:
+                    logger.info(f"[REQ_ID:{request_id}] Нет успешно сохраненных уведомлений для удаления из MySQL.")
             else:
                 logger.info(f"[REQ_ID:{request_id}] Нет новых статус-уведомлений для сохранения.")
 
@@ -374,16 +399,36 @@ class NotificationService:
         try:
             cursor = connection.cursor(pymysql.cursors.DictCursor)
 
-            query = """
+            # ИСПРАВЛЕНИЕ: Ищем уведомления по IssueID задач, назначенных текущему пользователю
+            # Получаем список IssueID задач, назначенных пользователю
+            user_issues_query = """
+                SELECT DISTINCT i.id as issue_id
+                FROM issues i
+                WHERE i.assigned_to_id = (
+                    SELECT id FROM users WHERE login = %s
+                )
+            """
+            cursor.execute(user_issues_query, (user_email.split('@')[0],))
+            user_issue_ids = [row['issue_id'] for row in cursor.fetchall()]
+
+            logger.info(f"[REQ_ID:{request_id}] Найдено {len(user_issue_ids)} задач для пользователя {user_email}")
+
+            if not user_issue_ids:
+                logger.info(f"[REQ_ID:{request_id}] Нет задач для пользователя {user_email}")
+                return 0
+
+            # Ищем уведомления по IssueID задач пользователя
+            placeholders = ', '.join(['%s'] * len(user_issue_ids))
+            query = f"""
                 SELECT ID, issue_id, Author, notes, date_created, RowDateCreated
                 FROM u_its_add_notes
-                WHERE LOWER(Author) = LOWER(%s)
+                WHERE issue_id IN ({placeholders})
                 ORDER BY RowDateCreated DESC
                 LIMIT 50
             """
 
-            logger.info(f"[REQ_ID:{request_id}] MySQL Query (comment): {query} с user_email: {user_email}")
-            cursor.execute(query, (user_email,))
+            logger.info(f"[REQ_ID:{request_id}] MySQL Query (comment): {query} с IssueIDs: {user_issue_ids}")
+            cursor.execute(query, user_issue_ids)
             rows = cursor.fetchall()
             source_ids = [row['ID'] for row in rows]
             logger.info(f"[REQ_ID:{request_id}] Получено {len(rows)} строк из u_its_add_notes. IDs: {source_ids}")
@@ -393,18 +438,35 @@ class NotificationService:
             ids_to_delete_from_mysql = []
 
             for row in rows:
+                # Получаем правильного автора из journals по issue_id и дате
+                author_query = """
+                    SELECT CONCAT(IFNULL(u.firstname, ''), ' ', IFNULL(u.lastname, '')) as author_name
+                    FROM journals j
+                    LEFT JOIN users u ON j.user_id = u.id
+                    WHERE j.journalized_id = %s
+                    AND j.journalized_type = 'Issue'
+                    AND j.notes IS NOT NULL
+                    AND j.notes != ''
+                    AND j.created_on >= %s
+                    ORDER BY j.created_on DESC
+                    LIMIT 1
+                """
+                cursor.execute(author_query, (row['issue_id'], row['RowDateCreated']))
+                author_result = cursor.fetchone()
+                author_name = author_result['author_name'] if author_result else row['Author']
+
                 notification_data = NotificationData(
                     user_id=user_id,
                     issue_id=row['issue_id'],
                     notification_type=NotificationType.COMMENT_ADDED,
                     title=f"Новый комментарий к заявке #{row['issue_id']}",
-                    message=f"Добавлен комментарий от {row['Author']}",
+                    message=f"Добавлен комментарий от '{author_name}'",
                     data={
-                        'author': row['Author'],
-                        'notes': row['notes'][:200] + '...' if len(row['notes']) > 200 else row['notes']
+                        'author': author_name,
+                        'notes': row['notes']
                     },
-                    created_at=row['date_created'],
-                    source_id=row['ID']
+                    created_at=row['RowDateCreated'],
+                    source_id=row['ID']  # Добавляем MySQL ID как source_id
                 )
 
                 # Проверяем на дублирование
@@ -419,20 +481,24 @@ class NotificationService:
             # Сохраняем уведомления в базу
             if notifications_to_save:
                 logger.info(f"[REQ_ID:{request_id}] Планируется сохранить {len(notifications_to_save)} коммент-уведомлений. IDs из MySQL для удаления: {ids_to_delete_from_mysql}")
-                self._save_comment_notifications(notifications_to_save, request_id)
 
-                # Отправляем браузерные пуш-уведомления
+                # Сохраняем уведомления и получаем список успешно сохраненных
+                successfully_saved_ids = self._save_comment_notifications(notifications_to_save, request_id)
+
+                # Отправляем браузерные пуш-уведомления только для успешно сохраненных
                 for notification in notifications_to_save:
-                    logger.info(f"[REQ_ID:{request_id}][PUSH_COMMENT_PRE_SEND] Готовимся отправить PUSH для коммент-уведомления (MySQL ID: {row['ID'] if 'ID' in row else 'N/A'}, Issue ID: {notification.issue_id}). Данные уведомления: {notification.to_dict()}")
+                    logger.info(f"[REQ_ID:{request_id}][PUSH_COMMENT_PRE_SEND] Готовимся отправить PUSH для коммент-уведомления (Issue ID: {notification.issue_id}). Данные уведомления: {notification.to_dict()}")
                     try:
                         self.push_service.send_push_notification(notification)
                         logger.info(f"[REQ_ID:{request_id}][PUSH_COMMENT_POST_SEND_SUCCESS] PUSH для коммент-уведомления (Issue ID: {notification.issue_id}) ВЫЗВАН (результат см. в логах push_service).")
                     except Exception as e_push:
                         logger.error(f"[REQ_ID:{request_id}][PUSH_COMMENT_POST_SEND_ERROR] ОШИБКА при вызове send_push_notification для коммент-уведомления (Issue ID: {notification.issue_id}): {e_push}", exc_info=True)
 
-                # Удаляем успешно обработанные записи из MySQL по их ID
-                if ids_to_delete_from_mysql:
-                    self._delete_processed_comment_notifications(connection, ids_to_delete_from_mysql, request_id)
+                # Удаляем только успешно обработанные записи из MySQL
+                if successfully_saved_ids:
+                    self._delete_processed_comment_notifications(connection, successfully_saved_ids, request_id)
+                else:
+                    logger.info(f"[REQ_ID:{request_id}] Нет успешно сохраненных уведомлений для удаления из MySQL.")
             else:
                 logger.info(f"[REQ_ID:{request_id}] Нет новых коммент-уведомлений для сохранения.")
 
@@ -443,15 +509,16 @@ class NotificationService:
             logger.error(f"[REQ_ID:{request_id}] Ошибка при обработке уведомлений о комментариях: {e}", exc_info=True)
             return 0
 
-    def _save_status_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
-        """Сохранение уведомлений об изменении статуса в базу данных"""
+    def _save_status_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID) -> List[int]:
+        """Сохранение уведомлений об изменении статуса в базу данных. Возвращает список успешно сохраненных MySQL ID."""
         logger.info(f"[REQ_ID:{request_id}] _save_status_notifications: {len(notifications)} уведомлений")
         saved_count = 0
         newly_created_notifications_for_push = []
+        successfully_saved_mysql_ids = []
 
         if not notifications:
             logger.info(f"[REQ_ID:{request_id}] Нет статус-уведомлений для сохранения.")
-            return
+            return []
 
         try:
             for notification_data in notifications:
@@ -482,6 +549,10 @@ class NotificationService:
                     logger.info(f"[REQ_ID:{request_id}] Подготовлено к сохранению новое статус-уведомление (DB ID: {new_notification_db.id})")
                     newly_created_notifications_for_push.append(notification_data)
                     saved_count += 1
+
+                    # Добавляем MySQL ID в список успешно сохраненных
+                    if notification_data.source_id:
+                        successfully_saved_mysql_ids.append(notification_data.source_id)
 
                 except SQLAlchemyError as e:
                     db.session.rollback()
@@ -514,15 +585,18 @@ class NotificationService:
         else:
             logger.info(f"[REQ_ID:{request_id}] Нет статус-уведомлений для PUSH.")
 
-    def _save_comment_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID):
-        """Сохранение уведомлений о комментариях в базу данных"""
+        return successfully_saved_mysql_ids
+
+    def _save_comment_notifications(self, notifications: List[NotificationData], request_id: uuid.UUID) -> List[int]:
+        """Сохранение уведомлений о комментариях в базу данных. Возвращает список успешно сохраненных MySQL ID."""
         logger.info(f"[REQ_ID:{request_id}] _save_comment_notifications: {len(notifications)} уведомлений")
         saved_count = 0
         newly_created_notifications_for_push = []
+        successfully_saved_mysql_ids = []
 
         if not notifications:
             logger.info(f"[REQ_ID:{request_id}] Нет коммент-уведомлений для сохранения.")
-            return
+            return []
 
         try:
             for notification_data in notifications:
@@ -552,6 +626,10 @@ class NotificationService:
                     logger.info(f"[REQ_ID:{request_id}] Подготовлено к сохранению новое коммент-уведомление (DB ID: {new_notification_db.id})")
                     newly_created_notifications_for_push.append(notification_data)
                     saved_count += 1
+
+                    # Добавляем MySQL ID в список успешно сохраненных
+                    if notification_data.source_id:
+                        successfully_saved_mysql_ids.append(notification_data.source_id)
 
                 except SQLAlchemyError as e:
                     db.session.rollback()
@@ -583,6 +661,8 @@ class NotificationService:
                 self.push_service.send_push_notification(notification_data_to_push)
         else:
             logger.info(f"[REQ_ID:{request_id}] Нет коммент-уведомлений для PUSH.")
+
+        return successfully_saved_mysql_ids
 
     def _delete_processed_status_notifications(self, connection, ids_to_delete: List[int], request_id: uuid.UUID):
         """Удаление обработанных уведомлений о статусах из MySQL по списку ID"""
@@ -1620,3 +1700,90 @@ def check_notifications_improved(user_email: str, user_id: int) -> int:
         int: Количество обработанных уведомлений
     """
     return get_notification_service().process_notifications(user_email, user_id)
+
+def debug_notifications_for_user(user_email: str, user_id: int):
+    """
+    Диагностическая функция для проверки уведомлений пользователя
+    """
+    logger.info(f"[DEBUG] Диагностика уведомлений для user_id={user_id}, email={user_email}")
+
+    try:
+        # Получаем подключение к MySQL
+        connection = redmine.get_connection(
+            DB_REDMINE_HOST,
+            DB_REDMINE_USER,
+            DB_REDMINE_PASSWORD,
+            DB_REDMINE_DB
+        )
+
+        if not connection:
+            logger.error(f"[DEBUG] Не удалось подключиться к MySQL для диагностики")
+            return
+
+        cursor = connection.cursor(pymysql.cursors.DictCursor)
+
+        # 1. Проверим все записи в u_its_update_status
+        cursor.execute("""
+            SELECT ID, IssueID, OldStatus, NewStatus, Author, RowDateCreated
+            FROM u_its_update_status
+            ORDER BY RowDateCreated DESC
+            LIMIT 20
+        """)
+        all_status_rows = cursor.fetchall()
+        logger.info(f"[DEBUG] Все записи в u_its_update_status: {[(row['ID'], row['IssueID'], row['Author']) for row in all_status_rows]}")
+
+        # 2. Проверим записи с точным совпадением email
+        cursor.execute("""
+            SELECT ID, IssueID, OldStatus, NewStatus, Author, RowDateCreated
+            FROM u_its_update_status
+            WHERE LOWER(Author) = LOWER(%s)
+            ORDER BY RowDateCreated DESC
+        """, (user_email,))
+        exact_match_rows = cursor.fetchall()
+        logger.info(f"[DEBUG] Записи с точным совпадением email '{user_email}': {len(exact_match_rows)}")
+
+        # 3. Проверим записи с похожим email
+        email_part = user_email.split('@')[0] if '@' in user_email else user_email
+        cursor.execute("""
+            SELECT ID, IssueID, OldStatus, NewStatus, Author, RowDateCreated
+            FROM u_its_update_status
+            WHERE Author LIKE %s
+            ORDER BY RowDateCreated DESC
+        """, (f'%{email_part}%',))
+        similar_rows = cursor.fetchall()
+        logger.info(f"[DEBUG] Записи с похожим email (часть '{email_part}'): {len(similar_rows)}")
+
+        # 4. Проверим задачи пользователя в таблице issues
+        cursor.execute("""
+            SELECT id, subject, easy_email_to, author_id
+            FROM issues
+            WHERE easy_email_to LIKE %s
+            ORDER BY created_on DESC
+            LIMIT 10
+        """, (f'%{email_part}%',))
+        user_issues = cursor.fetchall()
+        logger.info(f"[DEBUG] Задачи пользователя в issues: {[(row['id'], row['easy_email_to']) for row in user_issues]}")
+
+        # 5. Проверим email адреса пользователя в Redmine
+        cursor.execute("""
+            SELECT user_id, address
+            FROM email_addresses
+            WHERE address LIKE %s
+        """, (f'%{email_part}%',))
+        email_addresses = cursor.fetchall()
+        logger.info(f"[DEBUG] Email адреса в Redmine: {[(row['user_id'], row['address']) for row in email_addresses]}")
+
+        cursor.close()
+        connection.close()
+
+        return {
+            'all_status_rows': len(all_status_rows),
+            'exact_match_rows': len(exact_match_rows),
+            'similar_rows': len(similar_rows),
+            'user_issues': len(user_issues),
+            'email_addresses': len(email_addresses)
+        }
+
+    except Exception as e:
+        logger.error(f"[DEBUG] Ошибка при диагностике: {e}", exc_info=True)
+        return None
