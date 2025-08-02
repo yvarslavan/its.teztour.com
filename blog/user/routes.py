@@ -301,6 +301,15 @@ def handle_successful_login(user: User, form: LoginForm):
         init_quality_db()
 
         check_notifications_and_start_scheduler(user.email, user.id)
+
+        # Принудительно обрабатываем уведомления при входе
+        try:
+            from blog.notification_service import check_notifications_improved
+            notifications_processed = check_notifications_improved(user.email, user.id)
+            current_app.logger.info(f"При входе обработано {notifications_processed} уведомлений для пользователя {user.username}")
+        except Exception as e:
+            current_app.logger.error(f"Ошибка при обработке уведомлений при входе: {e}")
+
         flash(f"Вы вошли как пользователь {user.username}", "success")
 
         next_page = request.args.get("next")
@@ -316,6 +325,15 @@ def handle_successful_login(user: User, form: LoginForm):
 
 def check_notifications_and_start_scheduler(email, user_id):
     print(f"[DEBUG] Запуск функции check_notifications_and_start_scheduler для пользователя ID: {user_id}, Email: {email}")
+
+    # Добавляем диагностику уведомлений
+    try:
+        from blog.notification_service import debug_notifications_for_user
+        debug_result = debug_notifications_for_user(email, user_id)
+        print(f"[DEBUG] Результат диагностики уведомлений: {debug_result}")
+    except Exception as e:
+        print(f"[DEBUG] Ошибка при диагностике уведомлений: {e}")
+
     # Добавляем подробное логирование перед вызовом функции check_notifications
     try:
         print(f"[DEBUG] Попытка вызова check_notifications_improved({email}, {user_id})")

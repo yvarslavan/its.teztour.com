@@ -15,16 +15,25 @@ from redmine import get_connection, db_redmine_host, db_redmine_user_name, db_re
 
 def create_redmine_connector(is_redmine_user, user_login, password=None, api_key_param=None):
     url = get('redmine', 'url')
+    effective_api_key = api_key_param
 
-    # ВСЕГДА используем API ключ администратора для аутентификации
-    admin_api_key = get('redmine', 'api_key', None)
+    if not is_redmine_user and not api_key_param:
+        effective_api_key = get('redmine', 'api_key', None)
 
-    return RedmineConnector(
-        url=url,
-        username=None,
-        password=None,
-        api_key=admin_api_key
-    )
+    if is_redmine_user:
+        return RedmineConnector(
+            url=url,
+            username=user_login,
+            password=password,
+            api_key=effective_api_key
+        )
+    else:
+        return RedmineConnector(
+            url=url,
+            username=None,
+            password=None,
+            api_key=effective_api_key
+        )
 
 def get_redmine_connector(current_user_obj, user_password_erp):
     """Получение экземпляра RedmineConnector. current_user_obj - это объект current_user"""
@@ -37,6 +46,28 @@ def get_redmine_connector(current_user_obj, user_password_erp):
         api_key_param=None
     )
     return redmine_conn
+
+def get_user_redmine_password(username):
+    """Получает оригинальный пароль пользователя из Oracle для подключения к Redmine"""
+    try:
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            current_app.logger.error("Не удалось подключиться к Oracle для получения пароля")
+            return None
+
+        user_password_erp = get_user_erp_password(oracle_conn, username)
+        if not user_password_erp:
+            current_app.logger.error(f"Не удалось получить пароль для пользователя {username} из ERP")
+            return None
+
+        actual_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
+        return actual_password
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при получении пароля пользователя {username}: {str(e)}")
+        return None
 
 def format_issue_date(date_obj):
     if not date_obj:

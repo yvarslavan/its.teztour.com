@@ -57,30 +57,13 @@ def scheduled_check_all_user_notifications():
             logger.info(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Начало проверки уведомлений для пользователя ID: {user.id}, Email: {user.email}")
             user_check_start_time = time.time()
             try:
-                # ИСПРАВЛЕНИЕ: Импортируем check_notifications внутри функции, чтобы избежать циклического импорта
-                from redmine import check_notifications
+                # ИСПРАВЛЕНИЕ: Используем новую улучшенную функцию check_notifications_improved
+                from blog.notification_service import check_notifications_improved
 
-                # Вызываем оригинальную функцию check_notifications из redmine.py
-                # Эта функция ожидает email и id пользователя.
-                # Она также сама обрабатывает внутренние ошибки и логирование.
-                # Предполагаем, что check_notifications теперь возвращает кортеж (processed_count, detailed_errors)
-                # или только processed_count, если детализация ошибок не нужна на этом уровне.
-                # Пока оставим как есть, изменения в check_notifications будут позже
-                processed_data = check_notifications(user_email=user.email, current_user_id=user.id) # Используем именованные аргументы для ясности
+                # Вызываем улучшенную функцию check_notifications_improved
+                processed_count = check_notifications_improved(user_email=user.email, user_id=user.id)
 
-                # Пример обработки, если check_notifications вернет словарь или объект с деталями
-                if isinstance(processed_data, dict):
-                    processed_count = processed_data.get("total_processed", 0)
-                    # Можно добавить логирование других деталей из processed_data
-                    logger.info(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Данные от check_notifications для user ID {user.id}: {processed_data}")
-                elif isinstance(processed_data, bool) and not processed_data:
-                    processed_count = 0
-                    logger.warning(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Функция check_notifications вернула False для пользователя ID: {user.id}. Возможна ошибка внутри функции.")
-                elif isinstance(processed_data, int):
-                     processed_count = processed_data
-                else: # Если вернулся None или что-то неожиданное
-                    processed_count = 0
-                    logger.info(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Функция check_notifications вернула неожиданный тип ({type(processed_data)}) или None для пользователя ID: {user.id}.")
+                logger.info(f"SCHEDULER_RUN: PID={pid}, RunID={run_id}: Обработано {processed_count} уведомлений для пользователя ID: {user.id}.")
 
                 if processed_count > 0:
                     total_processed_notifications_for_run += processed_count
