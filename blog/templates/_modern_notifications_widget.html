@@ -58,8 +58,8 @@
 
 <!-- Floating button to restore widget when closed -->
 <div id="notifications-restore-btn" class="notifications-restore-btn" style="display: none;">
-    <button onclick="showNotificationsWidget()" title="Показать виджет уведомлений" class="restore-button">
-        <i class="fas fa-bell"></i>
+    <button onclick="emergencyShowWidget()" title="Показать виджет уведомлений" class="restore-button" style="width: 56px; height: 56px; border: none; border-radius: 50%; background: linear-gradient(135deg, #6366f1, #a855f7); color: white; font-size: 20px; cursor: pointer; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); display: flex; align-items: center; justify-content: center; outline: none; padding: 0; margin: 0; position: relative; overflow: hidden;">
+        <i class="fas fa-bell" style="color: white; font-size: 20px; display: block;"></i>
     </button>
 </div>
 
@@ -101,6 +101,10 @@
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
+    transform: translateX(200%) !important; /* Увеличиваем до 200% для гарантированного скрытия */
+    right: -200px !important; /* Дополнительное смещение вправо */
+    position: fixed !important;
+    clip-path: inset(0 100% 0 0) !important; /* Обрезаем виджет полностью */
 }
 
 /* Дополнительная защита от мигания */
@@ -118,7 +122,7 @@
 
 @keyframes slideInFromRight {
     from {
-        transform: translateX(100%) scale(0.9);
+        transform: translateX(200%) scale(0.9); /* Увеличиваем до 200% */
         opacity: 0;
     }
     50% {
@@ -156,9 +160,11 @@
 }
 
 .modern-notifications-widget.hidden {
-    transform: translateX(100%);
-    opacity: 0;
-    pointer-events: none;
+    transform: translateX(200%) !important; /* Увеличиваем до 200% */
+    opacity: 0 !important;
+    pointer-events: none !important;
+    right: -200px !important; /* Дополнительное смещение вправо */
+    clip-path: inset(0 100% 0 0) !important; /* Обрезаем виджет полностью */
 }
 
 .modern-notifications-widget.closed {
@@ -934,6 +940,66 @@ span.restore-button,
     font-size: 20px !important;
     display: block !important;
 }
+
+/* Анимация мигания виджета */
+@keyframes widgetBlink {
+    0%, 50% {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+    25%, 75% {
+        box-shadow: 0 25px 50px rgba(59, 130, 246, 0.4), 0 12px 24px rgba(59, 130, 246, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    }
+    100% {
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+}
+
+.modern-notifications-widget.blink {
+    animation: widgetBlink 0.5s ease-in-out;
+}
+
+/* Защита для кнопки восстановления - она не должна скрываться */
+#notifications-restore-btn {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    transform: none !important;
+    right: 20px !important;
+    bottom: 20px !important;
+    clip-path: none !important;
+    position: fixed !important;
+    z-index: 999999 !important;
+}
+
+/* Стили для кнопки восстановления */
+.notifications-restore-btn {
+    position: fixed !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    z-index: 999999 !important;
+    display: none !important; /* По умолчанию скрыта */
+}
+
+.notifications-restore-btn .restore-button {
+    width: 56px !important;
+    height: 56px !important;
+    border: none !important;
+    border-radius: 50% !important;
+    background: linear-gradient(135deg, #6366f1, #a855f7) !important;
+    color: white !important;
+    font-size: 20px !important;
+    cursor: pointer !important;
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    outline: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
 </style>
 
 <script>
@@ -973,9 +1039,7 @@ try {
                     }
                 }
 
-
-
-                                this.loadWidgetState();
+                this.loadWidgetState();
                 this.bindEvents();
                 this.startPolling();
 
@@ -1183,18 +1247,29 @@ try {
         closeWidget() {
             try {
                 console.log('[ModernWidget] 🔘 Закрытие виджета...');
+
+                // Применяем скрытие только к основному виджету, не к кнопке восстановления
                 this.widget.classList.add('hidden');
-                this.widget.style.transform = 'translateX(100%)';
+                this.widget.style.transform = 'translateX(200%)'; // Увеличиваем до 200%
                 this.widget.style.opacity = '0';
+                this.widget.style.pointerEvents = 'none'; // Отключаем взаимодействие
+                this.widget.style.right = '-200px'; // Дополнительное смещение вправо
+                this.widget.style.clipPath = 'inset(0 100% 0 0)'; // Обрезаем виджет полностью
 
                 setTimeout(() => {
                     this.widget.classList.add('closed');
                     this.widget.style.display = 'none';
+                    this.widget.style.visibility = 'hidden'; // Дополнительное скрытие
                     localStorage.setItem('notificationsWidgetClosed', 'true');
                     // Добавляем флаг, что виджет был закрыт пользователем
                     localStorage.setItem('notificationsWidgetClosedByUser', 'true');
-                    this.showRestoreButton();
-                    console.log('[ModernWidget] ✅ Виджет закрыт пользователем, показана кнопка восстановления');
+
+                    // Показываем кнопку восстановления с задержкой
+                    setTimeout(() => {
+                        this.showRestoreButton();
+                        console.log('[ModernWidget] ✅ Виджет закрыт пользователем, показана кнопка восстановления');
+                    }, 100);
+
                 }, 300);
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в closeWidget:', error);
@@ -1205,24 +1280,43 @@ try {
             try {
                 console.log('[ModernWidget] 🔔 Показ виджета...');
 
+                // Принудительно сбрасываем все агрессивные CSS правила
                 this.widget.classList.remove('closed', 'hidden', 'initial-hidden');
-                this.widget.style.display = 'flex';
-                this.widget.style.visibility = 'visible';
-                this.widget.style.opacity = '1';
-                this.widget.style.transform = 'translateX(0)';
-                this.widget.style.width = '480px';
+                this.widget.style.cssText = `
+                    position: fixed !important;
+                    top: 120px !important;
+                    right: 20px !important;
+                    width: 480px !important;
+                    min-width: 400px !important;
+                    max-width: 600px !important;
+                    max-height: 600px !important;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 24px !important;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                    z-index: 999999 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    pointer-events: auto !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    resize: horizontal !important;
+                    overflow: hidden !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    transform: translateX(0) !important;
+                    clip-path: none !important;
+                `;
 
+                // Сбрасываем localStorage
                 localStorage.setItem('notificationsWidgetClosed', 'false');
-                // Сбрасываем флаг "закрыт пользователем" при открытии виджета
                 localStorage.removeItem('notificationsWidgetClosedByUser');
+
+                // Скрываем кнопку восстановления
                 this.hideRestoreButton();
 
-                this.widget.style.animation = 'slideInFromRight 0.6s cubic-bezier(0.4, 0, 0.2, 1)';
-
-                setTimeout(() => {
-                    this.widget.style.animation = '';
-                }, 600);
-
+                // Обновляем уведомления
                 this.updateNotifications();
 
                 console.log('[ModernWidget] ✅ Виджет развернут и обновлен');
@@ -1235,13 +1329,24 @@ try {
             try {
                 const restoreBtn = document.getElementById('notifications-restore-btn');
                 if (restoreBtn) {
+                    // Принудительно показываем кнопку восстановления
                     restoreBtn.style.display = 'block';
+                    restoreBtn.style.visibility = 'visible';
+                    restoreBtn.style.opacity = '1';
+                    restoreBtn.style.transform = 'none';
+                    restoreBtn.style.right = '20px';
+                    restoreBtn.style.bottom = '20px';
+                    restoreBtn.style.position = 'fixed';
+                    restoreBtn.style.zIndex = '999999';
+
                     // Принудительно исправляем стили кнопки восстановления
                     setTimeout(() => {
                         if (window.fixRestoreButton) {
                             window.fixRestoreButton();
                         }
                     }, 100);
+
+                    console.log('[ModernWidget] ✅ Кнопка восстановления принудительно показана');
                 }
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в showRestoreButton:', error);
@@ -1290,75 +1395,17 @@ try {
                     return;
                 }
 
-                this.widget.classList.remove('initial-hidden');
-                this.adjustWidgetPosition();
-
-                // Если виджет был закрыт (но не пользователем), показываем его закрытым
-                if (isClosed) {
-                    this.widget.classList.add('closed');
-                    this.widget.style.display = 'none';
-                    this.widget.style.visibility = 'hidden';
-                    this.widget.style.opacity = '0';
-                    this.showRestoreButton();
-                    console.log('[ModernWidget] Виджет закрыт, показываем кнопку восстановления');
-                    return;
-                }
-
-                // Если виджет не был закрыт пользователем, сбрасываем флаг при первом открытии
-                if (!isWidgetClosedByUser) {
-                    localStorage.removeItem('notificationsWidgetClosedByUser');
-                }
-
-                // По умолчанию скрываем виджет - он покажется только при наличии уведомлений
-                this.widget.classList.add('closed', 'initial-hidden');
-                this.widget.style.display = 'none';
-                this.widget.style.visibility = 'hidden';
-                this.widget.style.opacity = '0';
-                this.showRestoreButton();
-
-                if (isMinimized) {
-                    console.log('[ModernWidget] 📏 Восстанавливаем свернутое состояние');
-                    this.isMinimized = true;
-                    this.widget.classList.add('minimized');
-                    this.widget.style.maxHeight = '70px';
-                    const icon = document.querySelector('#minimize-notifications i');
-                    if (icon) {
-                        icon.className = 'fas fa-chevron-down';
-                        console.log('[ModernWidget] 📏 Иконка восстановлена:', icon.className);
-                    }
-                } else {
-                    console.log('[ModernWidget] 📏 Восстанавливаем развернутое состояние');
-                    this.widget.style.maxHeight = '600px';
-                }
-
-                console.log('[ModernWidget] ✅ Виджет инициализирован и показан');
-            } catch (error) {
-                console.error('[ModernWidget] ❌ Критическая ошибка в loadWidgetState:', error);
-
-                const isDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
-                const isClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
-                const isWidgetClosedByUser = localStorage.getItem('notificationsWidgetClosedByUser') === 'true';
-
-                if (isDisabled) {
-                    console.log('[ModernWidget] 🔕 Виджет отключен, не показываем при ошибке');
-                    this.widget.style.display = 'none';
-                    this.hideRestoreButton();
-                    return;
-                }
-
-                // Если виджет был закрыт пользователем, не показываем его при ошибке инициализации
-                if (isClosed || isWidgetClosedByUser) {
-                    console.log('[ModernWidget] 🔒 Виджет был закрыт пользователем, не показываем при ошибке инициализации');
-                    this.widget.style.display = 'none';
-                    this.widget.classList.add('closed');
-                    this.showRestoreButton();
-                    return;
-                }
-
+                // Если виджет не был закрыт пользователем, показываем его
                 this.widget.classList.remove('initial-hidden');
                 this.widget.style.display = 'flex';
                 this.widget.style.visibility = 'visible';
                 this.widget.style.opacity = '1';
+                this.widget.style.transform = 'translateX(0)';
+                this.widget.style.clipPath = 'none';
+
+                console.log('[ModernWidget] ✅ Виджет инициализирован и готов к автоматическому появлению');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в loadWidgetState:', error);
             }
         }
 
@@ -1484,34 +1531,59 @@ try {
                                           (notifications.comment_notifications && notifications.comment_notifications.length > 0) ||
                                           (notifications.redmine_notifications && notifications.redmine_notifications.length > 0);
 
-                const isWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
                 const isWidgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                const isWidgetClosed = localStorage.getItem('notificationsWidgetClosed') === 'true';
                 const isWidgetClosedByUser = localStorage.getItem('notificationsWidgetClosedByUser') === 'true';
 
-                // Проверяем, есть ли непрочитанные уведомления в localStorage
-                const seenNotificationIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
-                const hasUnreadNotifications = this.notifications.some(n => !seenNotificationIds.includes(n.id));
+                // ОТЛАДКА: Подробная информация о состоянии
+                console.log('[ModernWidget] 🔍 Анализ состояния:');
+                console.log('- hasNewNotifications:', hasNewNotifications);
+                console.log('- isWidgetDisabled:', isWidgetDisabled);
+                console.log('- isWidgetClosed:', isWidgetClosed);
+                console.log('- isWidgetClosedByUser:', isWidgetClosedByUser);
+                console.log('- notifications.status_notifications:', notifications.status_notifications?.length || 0);
+                console.log('- notifications.comment_notifications:', notifications.comment_notifications?.length || 0);
+                console.log('- notifications.redmine_notifications:', notifications.redmine_notifications?.length || 0);
 
-                                if (hasNewNotifications && !isWidgetDisabled) {
+                // ИСПРАВЛЕНО: Простая логика - показываем виджет при наличии уведомлений
+                if (hasNewNotifications && !isWidgetDisabled) {
+                    console.log('[ModernWidget] 🔔 Есть уведомления, показываем виджет');
+
+                    // Показываем виджет только если он закрыт
                     if (isWidgetClosed || this.widget.classList.contains('initial-hidden')) {
-                        console.log('[ModernWidget] 🔔 Есть новые уведомления, показываем виджет');
-                        this.showWidget();
-                        // Сбрасываем флаг "закрыт пользователем" при получении новых уведомлений
-                        localStorage.removeItem('notificationsWidgetClosedByUser');
+                        console.log('[ModernWidget] 🔔 Виджет закрыт, показываем его');
+                        this.forceShowWidget();
+                    } else {
+                        console.log('[ModernWidget] ✅ Виджет уже открыт, обновляем содержимое');
                     }
-                } else if (!hasNewNotifications && !hasUnreadNotifications) {
-                    console.log('[ModernWidget] 📭 Нет новых и непрочитанных уведомлений, виджет остается закрытым');
-                    // Если нет уведомлений и виджет был закрыт пользователем, не открываем его
+
+                    // Сбрасываем флаг "закрыт пользователем" при получении уведомлений
+                    localStorage.removeItem('notificationsWidgetClosedByUser');
+
+                    // Мигаем заголовком вкладки, если она неактивна
+                    this.blinkTabTitle();
+
+                    // Мигаем виджетом для привлечения внимания
+                    this.blinkWidget();
+                } else if (!hasNewNotifications) {
+                    console.log('[ModernWidget] 📭 Нет уведомлений');
+
+                    // Если виджет закрыт пользователем и нет уведомлений, не открываем его
                     if (isWidgetClosed && isWidgetClosedByUser) {
                         console.log('[ModernWidget] 🔒 Виджет закрыт пользователем и нет уведомлений - не открываем автоматически');
                         return;
                     }
-                } else if (!hasNewNotifications) {
-                    console.log('[ModernWidget] 📭 Нет новых уведомлений, сохраняем текущее состояние виджета');
                 }
+
+                // ОТЛАДКА: Логируем количество уведомлений каждого типа
+                console.log('[ModernWidget] 📊 Статистика уведомлений:');
+                console.log('- Status notifications:', notifications.status_notifications?.length || 0);
+                console.log('- Comment notifications:', notifications.comment_notifications?.length || 0);
+                console.log('- Redmine notifications:', notifications.redmine_notifications?.length || 0);
 
                 if (notifications.status_notifications) {
                     notifications.status_notifications.forEach(n => {
+                        console.log(`[ModernWidget] 📝 Status notification: #${n.issue_id} - ${n.old_status} → ${n.new_status} (${n.date_created})`);
                         this.notifications.push({
                             id: `status_${n.id}`,
                             type: 'status-change',
@@ -1519,13 +1591,15 @@ try {
                             description: `Старый статус: ${n.old_status}, Новый статус: ${n.new_status}`,
                             time: this.formatTime(n.date_created),
                             icon: 'fas fa-exchange-alt',
-                            issue_id: n.issue_id
+                            issue_id: n.issue_id,
+                            raw: n // ИСПРАВЛЕНО: Добавляем raw данные для правильной сортировки
                         });
                     });
                 }
 
                 if (notifications.comment_notifications) {
                     notifications.comment_notifications.forEach(n => {
+                        console.log(`[ModernWidget] 💬 Comment notification: #${n.issue_id} - ${n.date_created}`);
                         this.notifications.push({
                             id: `comment_${n.id}`,
                             type: 'comment',
@@ -1541,6 +1615,7 @@ try {
 
                 if (notifications.redmine_notifications) {
                     notifications.redmine_notifications.forEach(n => {
+                        console.log(`[ModernWidget] 🔥 Redmine notification: #${n.redmine_issue_id} - ${n.created_at}`);
                         const descriptionDetails = n.issue_description ? ` — ${this.truncate(n.issue_description.replace(/<.*?>/g, ''), 70)}` : '';
                         const isGroupNotification = !!n.is_group_notification;
                         let title = '';
@@ -1567,10 +1642,17 @@ try {
                             icon: 'fas fa-tasks',
                             url: n.issue_url,
                             group_name: n.group_name,
-                            easy_email_to: n.easy_email_to
+                            easy_email_to: n.easy_email_to,
+                            raw: n // ИСПРАВЛЕНО: Добавляем raw данные для правильной сортировки
                         });
                     });
                 }
+
+                console.log(`[ModernWidget] 📋 Всего обработано уведомлений: ${this.notifications.length}`);
+                console.log('[ModernWidget] 📋 Порядок уведомлений в массиве:');
+                this.notifications.forEach((n, index) => {
+                    console.log(`  ${index + 1}. ${n.type} - ${n.title} (${n.time})`);
+                });
 
                 const incomingIds = this.notifications.map(n => n.id);
                 const seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
@@ -1596,7 +1678,11 @@ try {
 
         renderNotifications() {
             try {
+                console.log('[ModernWidget] 🎨 Начинаем рендеринг уведомлений');
+                console.log('[ModernWidget] 📊 Количество уведомлений для рендеринга:', this.notifications.length);
+
                 if (this.notifications.length === 0) {
+                    console.log('[ModernWidget] 📭 Нет уведомлений для отображения, показываем пустое состояние');
                     this.list.innerHTML = `
                         <div class="empty-state">
                             <div class="empty-icon"><i class="fas fa-inbox"></i></div>
@@ -1607,36 +1693,86 @@ try {
                     return;
                 }
 
-                // ИСПРАВЛЕНО: Сортировка уведомлений по времени (самые новые вверху)
+                console.log('[ModernWidget] 📋 Уведомления для рендеринга:');
+                this.notifications.forEach((n, index) => {
+                    console.log(`  ${index + 1}. ${n.type} - ${n.title} (${n.time})`);
+                });
+
+                // ИСПРАВЛЕНО: Улучшенная сортировка уведомлений по времени (самые новые вверху)
                 const sortedNotifications = [...this.notifications].sort((a, b) => {
                     // Получаем времена для сортировки
                     const getTimestamp = (notification) => {
+                        // Приоритет 1: Если есть raw данные с date_created
                         if (notification.raw && notification.raw.date_created) {
-                            return new Date(notification.raw.date_created).getTime();
+                            const timestamp = new Date(notification.raw.date_created).getTime();
+                            console.log(`[ModernWidget] 🔄 Используем date_created для ${notification.title}: ${timestamp}`);
+                            return timestamp;
                         }
-                        // Парсим время из строки "X мин назад" или "X ч назад"
+
+                        // Приоритет 2: Если есть raw данные с created_at (для Redmine)
+                        if (notification.raw && notification.raw.created_at) {
+                            const timestamp = new Date(notification.raw.created_at).getTime();
+                            console.log(`[ModernWidget] 🔄 Используем created_at для ${notification.title}: ${timestamp}`);
+                            return timestamp;
+                        }
+
+                        // Приоритет 3: Парсим время из строки "X мин назад" или "X ч назад"
                         const timeStr = notification.time;
-                        if (timeStr === 'Только что') return Date.now();
+                        if (timeStr === 'Только что') {
+                            console.log(`[ModernWidget] 🔄 Используем "Только что" для ${notification.title}: ${Date.now()}`);
+                            return Date.now();
+                        }
                         if (timeStr.includes('мин назад')) {
                             const minutes = parseInt(timeStr.match(/\d+/)[0]);
-                            return Date.now() - (minutes * 60 * 1000);
+                            const timestamp = Date.now() - (minutes * 60 * 1000);
+                            console.log(`[ModernWidget] 🔄 Используем "мин назад" для ${notification.title}: ${timestamp}`);
+                            return timestamp;
                         }
                         if (timeStr.includes('ч назад')) {
                             const hours = parseInt(timeStr.match(/\d+/)[0]);
-                            return Date.now() - (hours * 60 * 60 * 1000);
+                            const timestamp = Date.now() - (hours * 60 * 60 * 1000);
+                            console.log(`[ModernWidget] 🔄 Используем "ч назад" для ${notification.title}: ${timestamp}`);
+                            return timestamp;
                         }
-                        // Если дата в формате DD.MM.YYYY
+                        if (timeStr.includes('д назад')) {
+                            const days = parseInt(timeStr.match(/\d+/)[0]);
+                            const timestamp = Date.now() - (days * 24 * 60 * 60 * 1000);
+                            console.log(`[ModernWidget] 🔄 Используем "д назад" для ${notification.title}: ${timestamp}`);
+                            return timestamp;
+                        }
+
+                        // Приоритет 4: Если дата в формате DD.MM.YYYY
                         const dateParts = timeStr.match(/(\d{2})\.(\d{2})\.(\d{4})/);
                         if (dateParts) {
-                            return new Date(dateParts[3], dateParts[2] - 1, dateParts[1]).getTime();
+                            const timestamp = new Date(dateParts[3], dateParts[2] - 1, dateParts[1]).getTime();
+                            console.log(`[ModernWidget] 🔄 Используем DD.MM.YYYY для ${notification.title}: ${timestamp}`);
+                            return timestamp;
                         }
+
+                        // Приоритет 5: Если дата в формате ISO (YYYY-MM-DDTHH:MM:SS)
+                        if (timeStr.includes('T') && timeStr.includes('-')) {
+                            const timestamp = new Date(timeStr).getTime();
+                            console.log(`[ModernWidget] 🔄 Используем ISO формат для ${notification.title}: ${timestamp}`);
+                            return timestamp;
+                        }
+
+                        console.log(`[ModernWidget] ⚠️ Не удалось определить время для ${notification.title}, используем текущее время`);
                         return Date.now(); // Fallback
                     };
 
-                    return getTimestamp(b) - getTimestamp(a); // Сортировка по убыванию (новые первыми)
+                    const timestampA = getTimestamp(a);
+                    const timestampB = getTimestamp(b);
+
+                    console.log(`[ModernWidget] 🔄 Сортировка: ${a.title} (${a.time}) = ${timestampA}, ${b.title} (${b.time}) = ${timestampB}`);
+
+                    return timestampB - timestampA; // Сортировка по убыванию (новые первыми)
                 });
 
                 console.log('[ModernWidget] 🔄 Уведомления отсортированы по времени (новые сверху)');
+                console.log('[ModernWidget] 📋 Порядок после сортировки:');
+                sortedNotifications.forEach((n, index) => {
+                    console.log(`  ${index + 1}. ${n.type} - ${n.title} (${n.time})`);
+                });
 
                 this.list.innerHTML = sortedNotifications.map(notification => {
                     console.log('[ModernWidget] Notification data:', notification); // Для отладки
@@ -1864,19 +2000,17 @@ try {
                 const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
                 audio.volume = 0.5;
                 audio.play().catch(e => {
-                    console.warn('[ModernWidget] Не удалось воспроизвести звук:', e);
+                    // ИСПРАВЛЕНО: Мягкая обработка ошибок воспроизведения звука
                     if (e.name === 'NotAllowedError') {
-                        console.log('[ModernWidget] Звук заблокирован браузером. Ожидание взаимодействия пользователя...');
-                        const playOnClick = () => {
-                            audio.play().catch(console.warn);
-                            document.removeEventListener('click', playOnClick);
-                        };
-                        document.addEventListener('click', playOnClick, { once: true });
+                        console.log('[ModernWidget] 🔇 Звук заблокирован браузером - это нормально');
+                        // Не показываем ошибку пользователю, так как это нормальное поведение браузера
+                    } else {
+                        console.warn('[ModernWidget] ⚠️ Не удалось воспроизвести звук:', e);
                     }
                 });
                 console.log('[ModernWidget] 🔊 Воспроизводим звук уведомления');
             } catch (error) {
-                console.error('[ModernWidget] ❌ Ошибка создания аудио элемента:', error);
+                console.log('[ModernWidget] 🔇 Ошибка создания аудио элемента:', error);
             }
         }
 
@@ -1984,9 +2118,211 @@ try {
                 alert('Произошла критическая ошибка при отметке уведомления как прочитанного.');
             }
         }
+
+        blinkTabTitle() {
+            try {
+                // Проверяем, активна ли вкладка
+                if (document.hidden) {
+                    // Проверяем, не мигает ли уже заголовок
+                    if (document.title.includes('🆕 Новые уведомления!')) {
+                        console.log('[ModernWidget] ℹ️ Мигание уже активно, пропускаем');
+                        return;
+                    }
+
+                    console.log('[ModernWidget] 🔄 Запускаем постоянное мигание заголовка вкладки');
+
+                    const originalTitle = document.title;
+
+                    const blinkInterval = setInterval(() => {
+                        if (document.title === originalTitle) {
+                            document.title = '🆕 Новые уведомления! - ' + originalTitle;
+                        } else {
+                            document.title = originalTitle;
+                        }
+                    }, 800); // Мигаем каждые 800мс
+
+                    // Останавливаем мигание при активации вкладки
+                    const stopBlinking = () => {
+                        if (!document.hidden) {
+                            clearInterval(blinkInterval);
+                            document.title = originalTitle;
+                            document.removeEventListener('visibilitychange', stopBlinking);
+                            console.log('[ModernWidget] ✅ Остановлено мигание - вкладка активирована');
+                        }
+                    };
+
+                    document.addEventListener('visibilitychange', stopBlinking);
+                } else {
+                    console.log('[ModernWidget] ℹ️ Вкладка активна, мигание не нужно');
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка мигания заголовка вкладки:', error);
+            }
+        }
+
+        blinkWidget() {
+            try {
+                console.log('[ModernWidget] 🔄 Мигаем виджетом для привлечения внимания');
+
+                // Добавляем класс для анимации мигания
+                this.widget.classList.add('blink');
+
+                // Убираем класс через 500мс
+                setTimeout(() => {
+                    this.widget.classList.remove('blink');
+                }, 500);
+
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка мигания виджета:', error);
+            }
+        }
+
+        forceShowWidget() {
+            try {
+                console.log('[ModernWidget] 🔔 Принудительное отображение виджета');
+
+                // ОТЛАДКА: Проверяем состояние виджета до изменений
+                console.log('[ModernWidget] 🔍 Состояние виджета ДО forceShowWidget:');
+                console.log('- display:', this.widget.style.display);
+                console.log('- visibility:', this.widget.style.visibility);
+                console.log('- opacity:', this.widget.style.opacity);
+                console.log('- transform:', this.widget.style.transform);
+                console.log('- classes:', this.widget.className);
+
+                // ИСПРАВЛЕНО: Принудительно убираем все блокирующие классы, включая initial-hidden
+                this.widget.classList.remove('initial-hidden', 'hidden', 'closed', 'show');
+
+                // Принудительно устанавливаем все необходимые стили
+                this.widget.style.cssText = `
+                    display: flex !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    position: fixed !important;
+                    top: 120px !important;
+                    right: 20px !important;
+                    width: 480px !important;
+                    min-width: 400px !important;
+                    max-width: 600px !important;
+                    max-height: 600px !important;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 24px !important;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                    flex-direction: column !important;
+                    pointer-events: auto !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    transform: none !important;
+                    clip-path: none !important;
+                    z-index: 999999 !important;
+                `;
+
+                // Сбрасываем localStorage
+                localStorage.setItem('notificationsWidgetClosed', 'false');
+                localStorage.removeItem('notificationsWidgetClosedByUser');
+
+                // Скрываем кнопку восстановления
+                this.hideRestoreButton();
+
+                // ОТЛАДКА: Проверяем состояние виджета после изменений
+                console.log('[ModernWidget] 🔍 Состояние виджета ПОСЛЕ forceShowWidget:');
+                console.log('- display:', this.widget.style.display);
+                console.log('- visibility:', this.widget.style.visibility);
+                console.log('- opacity:', this.widget.style.opacity);
+                console.log('- transform:', this.widget.style.transform);
+                console.log('- classes:', this.widget.className);
+
+                // Проверяем, что виджет действительно видим
+                const rect = this.widget.getBoundingClientRect();
+                console.log('[ModernWidget] 📍 Позиция виджета:', rect);
+                console.log('[ModernWidget] 👁️ Видимость:', this.widget.offsetParent !== null ? 'Видимый' : 'Скрытый');
+
+                // Обновляем уведомления
+                this.updateNotifications();
+
+                console.log('[ModernWidget] ✅ Виджет принудительно отображен');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка при принудительном отображении виджета:', error);
+            }
+        }
+
+        // ТЕСТОВАЯ ФУНКЦИЯ: Принудительный показ виджета для отладки
+        testShowWidget() {
+            console.log('[ModernWidget] 🧪 ТЕСТ: Принудительный показ виджета');
+            this.forceShowWidget();
+        }
+
+        // ТЕСТОВАЯ ФУНКЦИЯ: Принудительный сброс всех стилей виджета
+        resetWidgetStyles() {
+            console.log('[ModernWidget] 🧪 ТЕСТ: Принудительный сброс стилей виджета');
+
+            // Проверяем, существует ли элемент виджета
+            const widgetElement = document.getElementById('modern-notifications-widget');
+            if (!widgetElement) {
+                console.error('[ModernWidget] ❌ Элемент виджета не найден в DOM');
+                return;
+            }
+
+            console.log('[ModernWidget] 🔍 Найден элемент виджета:', widgetElement);
+            console.log('[ModernWidget] 🔍 Текущие классы:', widgetElement.className);
+            console.log('[ModernWidget] 🔍 Текущие стили:', widgetElement.style.cssText);
+
+            // ИСПРАВЛЕНО: Принудительно убираем ВСЕ классы, включая initial-hidden
+            widgetElement.className = 'modern-notifications-widget';
+
+            // Принудительно показываем с помощью !important
+            widgetElement.style.cssText = `
+                display: flex !important;
+                visibility: visible !important;
+                opacity: 1 !important;
+                position: fixed !important;
+                top: 120px !important;
+                right: 20px !important;
+                width: 480px !important;
+                min-width: 400px !important;
+                max-width: 600px !important;
+                max-height: 600px !important;
+                background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                backdrop-filter: blur(20px) !important;
+                border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                border-radius: 24px !important;
+                box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                flex-direction: column !important;
+                pointer-events: auto !important;
+                font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                transform: none !important;
+                clip-path: none !important;
+                z-index: 999999 !important;
+            `;
+
+            console.log('[ModernWidget] ✅ Стили принудительно сброшены и установлены');
+            console.log('[ModernWidget] 🔍 Новые классы:', widgetElement.className);
+            console.log('[ModernWidget] 🔍 Новые стили:', widgetElement.style.cssText);
+
+            // Проверяем, что виджет действительно видим
+            const rect = widgetElement.getBoundingClientRect();
+            console.log('[ModernWidget] 📍 Позиция виджета:', rect);
+            console.log('[ModernWidget] 👁️ Видимость:', widgetElement.offsetParent !== null ? 'Видимый' : 'Скрытый');
+
+            if (notificationsWidget) {
+                notificationsWidget.resetWidgetStyles();
+            }
+        }
     }
 
     let notificationsWidget = null;
+
+    // ТЕСТОВАЯ ФУНКЦИЯ: Глобальная функция для тестирования виджета
+    window.testNotificationsWidget = function() {
+        console.log('[ModernWidget] 🧪 ТЕСТ: Вызов глобальной функции тестирования виджета');
+        if (notificationsWidget) {
+            notificationsWidget.testShowWidget();
+        } else {
+            console.error('[ModernWidget] ❌ Виджет не инициализирован');
+        }
+    };
 
     document.addEventListener('DOMContentLoaded', () => {
         try {
@@ -2156,30 +2492,51 @@ try {
 
     window.emergencyShowWidget = () => {
         try {
-            console.log('[ModernWidget] 🚨 Экстренное восстановление виджета...');
+            console.log('[ModernWidget] 🚨 ЭКСТРЕННОЕ ВОССТАНОВЛЕНИЕ ВИДЖЕТА...');
             const widget = document.getElementById('modern-notifications-widget');
             if (widget) {
-                widget.classList.remove('initial-hidden', 'hidden', 'closed');
-                widget.style.display = 'flex';
-                widget.style.visibility = 'visible';
-                widget.style.opacity = '1';
-                widget.style.position = 'fixed';
-                widget.style.top = '120px';
-                widget.style.right = '20px';
-                widget.style.zIndex = '999999';
-                widget.style.width = '480px';
+                // Полностью сбрасываем все стили и классы
+                widget.className = 'modern-notifications-widget show';
+                widget.style.cssText = `
+                    position: fixed !important;
+                    top: 120px !important;
+                    right: 20px !important;
+                    width: 480px !important;
+                    min-width: 400px !important;
+                    max-width: 600px !important;
+                    max-height: 600px !important;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 24px !important;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                    z-index: 999999 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    pointer-events: auto !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    resize: horizontal !important;
+                    overflow: hidden !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    transform: translateX(0) !important;
+                    clip-path: none !important;
+                `;
 
                 localStorage.setItem('notificationsWidgetClosed', 'false');
-                localStorage.setItem('notificationsWidgetDisabled', 'false');
+                localStorage.removeItem('notificationsWidgetClosedByUser');
+
+                if (window.hideRestoreButton) {
+                    window.hideRestoreButton();
+                }
+
+                // Обновляем уведомления если виджет существует
+                if (notificationsWidget) {
+                    notificationsWidget.updateNotifications();
+                }
 
                 console.log('[ModernWidget] ✅ Виджет экстренно восстановлен');
-
-                if (!window.notificationsWidget) {
-                    console.log('[ModernWidget] 🔄 Переинициализация виджета...');
-                    initializeWidget();
-                }
-            } else {
-                console.error('[ModernWidget] ❌ Элемент виджета не найден в DOM');
             }
         } catch (error) {
             console.error('[ModernWidget] ❌ Ошибка экстренного восстановления:', error);
@@ -2475,16 +2832,33 @@ try {
                 widget.classList.remove('closed', 'hidden', 'initial-hidden');
                 widget.classList.add('show');
 
-                // Принудительно устанавливаем стили
-                widget.style.display = 'flex';
-                widget.style.visibility = 'visible';
-                widget.style.opacity = '1';
-                widget.style.transform = 'translateX(0)';
-                widget.style.width = '480px';
-                widget.style.position = 'fixed';
-                widget.style.top = '120px';
-                widget.style.right = '20px';
-                widget.style.zIndex = '999999';
+                // Принудительно устанавливаем все стили
+                widget.style.cssText = `
+                    position: fixed !important;
+                    top: 120px !important;
+                    right: 20px !important;
+                    width: 480px !important;
+                    min-width: 400px !important;
+                    max-width: 600px !important;
+                    max-height: 600px !important;
+                    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+                    backdrop-filter: blur(20px) !important;
+                    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+                    border-radius: 24px !important;
+                    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+                    z-index: 999999 !important;
+                    display: flex !important;
+                    flex-direction: column !important;
+                    pointer-events: auto !important;
+                    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+                    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+                    resize: horizontal !important;
+                    overflow: hidden !important;
+                    visibility: visible !important;
+                    opacity: 1 !important;
+                    transform: translateX(0) !important;
+                    clip-path: none !important;
+                `;
 
                 localStorage.setItem('notificationsWidgetClosed', 'false');
                 // Сбрасываем флаг "закрыт пользователем" при ручном открытии
@@ -2492,6 +2866,11 @@ try {
 
                 if (window.hideRestoreButton) {
                     window.hideRestoreButton();
+                }
+
+                // Обновляем уведомления если виджет существует
+                if (notificationsWidget) {
+                    notificationsWidget.updateNotifications();
                 }
 
                 console.log('[ModernWidget] ✅ Виджет показан через глобальную функцию');
@@ -2533,6 +2912,7 @@ try {
                     visibility: visible !important;
                     opacity: 1 !important;
                     transform: translateX(0) !important;
+                    clip-path: none !important;
                 `;
 
                 localStorage.setItem('notificationsWidgetClosed', 'false');
@@ -2540,6 +2920,11 @@ try {
 
                 if (window.hideRestoreButton) {
                     window.hideRestoreButton();
+                }
+
+                // Обновляем уведомления если виджет существует
+                if (notificationsWidget) {
+                    notificationsWidget.updateNotifications();
                 }
 
                 console.log('[ModernWidget] ✅ Виджет экстренно восстановлен');
@@ -2586,6 +2971,106 @@ try {
         }
     };
 
+    // ТЕСТОВАЯ ФУНКЦИЯ: Глобальная функция для сброса стилей виджета
+    window.resetWidgetStyles = function() {
+        console.log('[ModernWidget] 🧪 ТЕСТ: Вызов глобальной функции сброса стилей виджета');
+
+        // Проверяем, существует ли элемент виджета
+        const widgetElement = document.getElementById('modern-notifications-widget');
+        if (!widgetElement) {
+            console.error('[ModernWidget] ❌ Элемент виджета не найден в DOM');
+            return;
+        }
+
+        console.log('[ModernWidget] 🔍 Найден элемент виджета:', widgetElement);
+        console.log('[ModernWidget] 🔍 Текущие классы:', widgetElement.className);
+        console.log('[ModernWidget] 🔍 Текущие стили:', widgetElement.style.cssText);
+
+        // ИСПРАВЛЕНО: Принудительно убираем ВСЕ классы, включая initial-hidden
+        widgetElement.className = 'modern-notifications-widget';
+
+        // Принудительно показываем с помощью !important
+        widgetElement.style.cssText = `
+            display: flex !important;
+            visibility: visible !important;
+            opacity: 1 !important;
+            position: fixed !important;
+            top: 120px !important;
+            right: 20px !important;
+            width: 480px !important;
+            min-width: 400px !important;
+            max-width: 600px !important;
+            max-height: 600px !important;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+            backdrop-filter: blur(20px) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 24px !important;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.3), 0 12px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+            flex-direction: column !important;
+            pointer-events: auto !important;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            transform: none !important;
+            clip-path: none !important;
+            z-index: 999999 !important;
+        `;
+
+        console.log('[ModernWidget] ✅ Стили принудительно сброшены и установлены');
+        console.log('[ModernWidget] 🔍 Новые классы:', widgetElement.className);
+        console.log('[ModernWidget] 🔍 Новые стили:', widgetElement.style.cssText);
+
+        // Проверяем, что виджет действительно видим
+        const rect = widgetElement.getBoundingClientRect();
+        console.log('[ModernWidget] 📍 Позиция виджета:', rect);
+        console.log('[ModernWidget] 👁️ Видимость:', widgetElement.offsetParent !== null ? 'Видимый' : 'Скрытый');
+
+        if (notificationsWidget) {
+            notificationsWidget.resetWidgetStyles();
+        }
+    };
+
+    // ТЕСТОВАЯ ФУНКЦИЯ: Проверка существования виджета в DOM
+    window.checkWidgetDOM = function() {
+        console.log('[ModernWidget] 🔍 Проверка виджета в DOM...');
+
+        const widgetElement = document.getElementById('modern-notifications-widget');
+        if (widgetElement) {
+            console.log('[ModernWidget] ✅ Элемент виджета найден:', widgetElement);
+            console.log('[ModernWidget] 📍 Позиция:', widgetElement.getBoundingClientRect());
+            console.log('[ModernWidget] 🎨 Стили:', widgetElement.style.cssText);
+            console.log('[ModernWidget] 🏷️ Классы:', widgetElement.className);
+            console.log('[ModernWidget] 👁️ Видимость:', widgetElement.offsetParent !== null ? 'Видимый' : 'Скрытый');
+        } else {
+            console.error('[ModernWidget] ❌ Элемент виджета НЕ найден в DOM');
+        }
+
+        // Проверяем все элементы с классом modern-notifications-widget
+        const allWidgets = document.querySelectorAll('.modern-notifications-widget');
+        console.log('[ModernWidget] 📊 Найдено элементов с классом modern-notifications-widget:', allWidgets.length);
+        allWidgets.forEach((widget, index) => {
+            console.log(`[ModernWidget] 📋 Виджет ${index + 1}:`, widget);
+        });
+    };
+
+    // ТЕСТОВАЯ ФУНКЦИЯ: Простой показ виджета
+    window.showWidgetSimple = function() {
+        console.log('[ModernWidget] 🧪 ТЕСТ: Простой показ виджета');
+
+        const widgetElement = document.getElementById('modern-notifications-widget');
+        if (!widgetElement) {
+            console.error('[ModernWidget] ❌ Элемент виджета не найден');
+            return;
+        }
+
+        // Просто убираем класс initial-hidden
+        widgetElement.classList.remove('initial-hidden');
+        widgetElement.style.display = 'flex';
+        widgetElement.style.visibility = 'visible';
+        widgetElement.style.opacity = '1';
+
+        console.log('[ModernWidget] ✅ Простой показ выполнен');
+        console.log('[ModernWidget] 🔍 Новые классы:', widgetElement.className);
+    };
 } catch (globalError) {
     console.error('[ModernWidget] 🚨 КРИТИЧЕСКАЯ ОШИБКА ВИДЖЕТА УВЕДОМЛЕНИЙ:', globalError);
 

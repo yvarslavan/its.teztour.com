@@ -713,6 +713,7 @@ class NotificationService:
 
             # Получаем непрочитанные уведомления (is_read=False или is_read=NULL)
             # Сначала получаем все уведомления пользователя, затем фильтруем в Python
+            # ИСПРАВЛЕНО: Сортируем по убыванию даты (новые в начале)
             all_status_notifications = Notifications.query.filter_by(
                 user_id=user_id
             ).order_by(Notifications.date_created.desc()).all()
@@ -770,6 +771,7 @@ class NotificationService:
     def get_local_redmine_notifications(self, user_id: int) -> List[Dict]:
         """Получает Redmine уведомления из локальной таблицы redmine_notifications (для страницы уведомлений)"""
         try:
+            # ИСПРАВЛЕНО: Сортируем по убыванию даты (новые в начале)
             redmine_notifications = RedmineNotification.query.filter_by(
                 user_id=user_id
             ).order_by(RedmineNotification.created_at.desc()).all()
@@ -800,6 +802,7 @@ class NotificationService:
             self._fetch_and_save_redmine_notifications(user_id)
 
             # Для страницы /notifications показываем ВСЕ уведомления (и прочитанные, и непрочитанные)
+            # ИСПРАВЛЕНО: Сортируем по убыванию даты (новые в начале)
             status_notifications = Notifications.query.filter_by(
                 user_id=user_id
             ).order_by(Notifications.date_created.desc()).all() #type ignore
