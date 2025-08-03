@@ -46,7 +46,7 @@
 
                     <!-- Redmine Notifications -->
                     {% for notification in combined_notifications.redmine_notifications_data %}
-                    <article class="notification-card redmine-task-card">
+                    <article class="notification-card redmine-task-card" data-type="redmine" data-id="{{ notification.id }}">
                         <div class="card-header">
                             <div class="notification-type">
                                 <div class="type-icon redmine-icon">
@@ -63,7 +63,7 @@
                                     <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="redmine" data-id="{{ notification.id }}">
+                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -99,7 +99,7 @@
 
                     <!-- Status Change Notifications -->
                     {% for notification in combined_notifications.notifications_data %}
-                    <article class="notification-card status-change-card">
+                    <article class="notification-card status-change-card" data-type="status" data-id="{{ notification.id }}">
                         <div class="card-header">
                             <div class="notification-type">
                                 <div class="type-icon status-icon">
@@ -110,7 +110,7 @@
                                     <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="status" data-id="{{ notification.id }}">
+                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -143,7 +143,7 @@
 
                     <!-- Comment Notifications -->
                     {% for notification in combined_notifications.notifications_add_notes_data %}
-                    <article class="notification-card comment-card">
+                    <article class="notification-card comment-card" data-type="add_notes" data-id="{{ notification.id }}">
                         <div class="card-header">
                             <div class="notification-type">
                                 <div class="type-icon comment-icon">
@@ -154,7 +154,7 @@
                                     <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form" data-type="add_notes" data-id="{{ notification.id }}">
+                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
                                 <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
                                 <button type="submit" class="delete-btn" title="Удалить уведомление">
                                     <i class="fas fa-times"></i>
@@ -1368,5 +1368,177 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+// Автоматическое обновление уведомлений на странице /notifications
+(function() {
+    let updateInterval;
+    let isUpdating = false;
+    let originalTitle = document.title;
+    let titleBlinkInterval;
+    let isBlinking = false;
+
+    function startAutoUpdate() {
+        // Обновляем каждые 30 секунд
+        updateInterval = setInterval(updateNotifications, 30000);
+        console.log('Автообновление уведомлений запущено');
+
+        // Сразу запускаем первое обновление через 2 секунды
+        setTimeout(() => {
+            updateNotifications();
+        }, 2000);
+    }
+
+    function stopAutoUpdate() {
+        if (updateInterval) {
+            clearInterval(updateInterval);
+            updateInterval = null;
+            console.log('Автообновление уведомлений остановлено');
+        }
+    }
+
+    // Функция для мигания заголовка вкладки
+    function startTitleBlink() {
+        if (isBlinking) {
+            console.log('ℹ️ Мигание уже активно, пропускаем');
+            return;
+        }
+
+        isBlinking = true;
+        console.log('🔄 Запускаем постоянное мигание заголовка вкладки');
+
+        titleBlinkInterval = setInterval(() => {
+            if (document.title === originalTitle) {
+                document.title = '🆕 Новые уведомления! - ' + originalTitle;
+            } else {
+                document.title = originalTitle;
+            }
+        }, 800); // Мигаем каждые 800мс (чуть медленнее для комфорта)
+    }
+
+    function stopTitleBlink() {
+        if (titleBlinkInterval) {
+            clearInterval(titleBlinkInterval);
+            titleBlinkInterval = null;
+        }
+        isBlinking = false;
+        document.title = originalTitle;
+        console.log('✅ Остановлено мигание заголовка вкладки');
+    }
+
+    // Проверяем, активна ли вкладка
+    function isTabActive() {
+        return !document.hidden;
+    }
+
+    // Обработчик изменения видимости страницы
+    function handleVisibilityChange() {
+        if (document.hidden) {
+            console.log('Вкладка стала неактивной');
+        } else {
+            console.log('Вкладка стала активной');
+            // Останавливаем мигание при активации вкладки
+            stopTitleBlink();
+        }
+    }
+
+    // Добавляем обработчик изменения видимости
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    function updateNotifications() {
+        if (isUpdating) return;
+
+        isUpdating = true;
+        console.log('Обновление уведомлений...');
+
+        // Просто обновляем содержимое страницы через AJAX
+        fetch('/notifications')
+            .then(response => response.text())
+            .then(html => {
+                console.log('📄 Получен HTML ответ от сервера');
+
+                // Создаем временный элемент для парсинга HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+
+                // Находим контейнер с уведомлениями в новом HTML
+                const newNotificationsGrid = tempDiv.querySelector('.notifications-grid');
+                const currentNotificationsGrid = document.querySelector('.notifications-grid');
+
+                console.log('🔍 Поиск контейнеров уведомлений:');
+                console.log('- Новый контейнер найден:', !!newNotificationsGrid);
+                console.log('- Текущий контейнер найден:', !!currentNotificationsGrid);
+
+                // Проверяем, есть ли уведомления в новом HTML
+                const hasNotificationsInNewHTML = newNotificationsGrid && newNotificationsGrid.querySelectorAll('.notification-card').length > 0;
+                const hasEmptyStateInNewHTML = tempDiv.querySelector('.empty-state');
+
+                console.log('- Есть уведомления в новом HTML:', hasNotificationsInNewHTML);
+                console.log('- Есть пустое состояние в новом HTML:', !!hasEmptyStateInNewHTML);
+
+                if (newNotificationsGrid && currentNotificationsGrid) {
+                    // Сравниваем количество уведомлений
+                    const newCount = newNotificationsGrid.querySelectorAll('.notification-card').length;
+                    const currentCount = currentNotificationsGrid.querySelectorAll('.notification-card').length;
+
+                    console.log(`📊 Сравнение уведомлений:`);
+                    console.log(`- Текущих на странице: ${currentCount}`);
+                    console.log(`- Новых с сервера: ${newCount}`);
+
+                    // ИСПРАВЛЕНО: Просто заменяем содержимое если количество изменилось
+                    if (newCount !== currentCount) {
+                        console.log('✅ Обновляем страницу - количество уведомлений изменилось');
+
+                        // Заменяем содержимое
+                        currentNotificationsGrid.innerHTML = newNotificationsGrid.innerHTML;
+
+                        // Показываем уведомление о новых уведомлениях
+                        if (typeof showNotification === 'function') {
+                            showNotification('🆕 Получены новые уведомления!', 'info');
+                        }
+
+                        // Обновляем счетчик
+                        if (window.refreshNotificationBadge) {
+                            window.refreshNotificationBadge(newCount);
+                        }
+
+                        // Мигаем заголовком, если вкладка неактивна
+                        if (!isTabActive()) {
+                            console.log('🔄 Запускаем мигание заголовка - вкладка неактивна');
+                            startTitleBlink();
+                        }
+
+                        console.log('✅ Страница обновлена');
+                    } else {
+                        console.log('ℹ️ Количество уведомлений не изменилось');
+                    }
+                } else {
+                    console.error('❌ Не удалось найти контейнеры уведомлений');
+
+                    // Если контейнер не найден, но есть уведомления в HTML, обновляем всю страницу
+                    if (hasNotificationsInNewHTML) {
+                        console.log('🔄 Обновляем всю страницу - найдены уведомления');
+                        location.reload();
+                    }
+                }
+            })
+            .catch(error => {
+                console.error('Ошибка при обновлении уведомлений:', error);
+            })
+            .finally(() => {
+                isUpdating = false;
+            });
+    }
+
+    // Запускаем автообновление при загрузке страницы
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', startAutoUpdate);
+    } else {
+        startAutoUpdate();
+    }
+
+    // Останавливаем автообновление при уходе со страницы
+    window.addEventListener('beforeunload', stopAutoUpdate);
+    window.addEventListener('pagehide', stopAutoUpdate);
+})();
 </script>
 {% endblock %}
