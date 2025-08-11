@@ -57,6 +57,7 @@ const MyTasksApp = {
         this.loadFilters();
         this.loadStatistics();
         this.bindEventListeners();
+        this.initializeTooltips();
 
         this.state.isInitialized = true;
         console.log('✅ MyTasksApp инициализирован успешно');
@@ -1192,6 +1193,56 @@ const MyTasksApp = {
                 $(this).addClass('active-page');
             }
         });
+    },
+
+    // Инициализация tooltips с защитой от зависания
+    initializeTooltips: function() {
+        console.log('🎯 Инициализация tooltips для MyTasksApp');
+
+        // Принудительно очищаем все существующие tooltips перед инициализацией
+        if (typeof window.emergencyHideTooltips === 'function') {
+            window.emergencyHideTooltips();
+        }
+
+        // Инициализируем KanbanTooltips если доступен
+        if (typeof window.KanbanTooltips !== 'undefined') {
+            try {
+                if (!this.tooltipManager) {
+                    this.tooltipManager = new window.KanbanTooltips();
+                }
+
+                // Очищаем предыдущую инициализацию
+                if (this.tooltipManager.cleanup) {
+                    this.tooltipManager.cleanup();
+                }
+
+                // Инициализируем заново
+                this.tooltipManager.init();
+                console.log('✅ KanbanTooltips инициализированы успешно');
+            } catch (error) {
+                console.warn('⚠️ Ошибка при инициализации KanbanTooltips:', error);
+            }
+        }
+
+        // Добавляем обработчик для предотвращения зависания tooltips при быстром движении мыши
+        let tooltipHideTimeout;
+        document.addEventListener('mouseleave', () => {
+            clearTimeout(tooltipHideTimeout);
+            tooltipHideTimeout = setTimeout(() => {
+                if (this.tooltipManager && this.tooltipManager.hideAllTooltips) {
+                    this.tooltipManager.hideAllTooltips();
+                }
+            }, 500);
+        });
+
+        // Принудительно скрываем tooltips при скролле
+        window.addEventListener('scroll', () => {
+            if (this.tooltipManager && this.tooltipManager.hideTooltip) {
+                this.tooltipManager.hideTooltip();
+            }
+        }, { passive: true });
+
+        console.log('✅ Tooltips защита от зависания настроена');
     }
 };
 

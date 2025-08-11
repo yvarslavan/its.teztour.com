@@ -923,10 +923,25 @@ class KanbanManager {
                     e.preventDefault();
                     const taskId = e.dataTransfer.getData('text/plain');
                     const statusId = zone.getAttribute('data-status-id');
-                    console.log(`🎯 Drop задачи ${taskId} в зону ${index + 1} (статус: ${statusId})`);
+                    console.log(`🎯 СТАРЫЙ ОБРАБОТЧИК: Drop задачи ${taskId} в зону ${index + 1} (статус: ${statusId})`);
                     zone.style.backgroundColor = '';
 
-                    // Обновляем статус задачи
+                    // ВАЖНО: Добавляем проверку статуса и в старый обработчик
+                    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+                    if (taskCard) {
+                        const currentColumn = taskCard.closest('[data-status-id]');
+                        const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
+
+                        console.log(`🎯 СТАРЫЙ ОБРАБОТЧИК: Проверка статусов - текущий: ${currentStatusId}, новый: ${statusId}`);
+
+                        if (String(currentStatusId) === String(statusId)) {
+                            console.log(`🎯 СТАРЫЙ ОБРАБОТЧИК: Статусы одинаковые, НЕ вызываем updateTaskStatus`);
+                            return; // НЕ вызываем updateTaskStatus
+                        }
+                    }
+
+                    // Обновляем статус задачи только если статусы разные
+                    console.log(`🎯 СТАРЫЙ ОБРАБОТЧИК: Статусы разные, вызываем updateTaskStatus`);
                     if (window.kanbanManager && window.kanbanManager.updateTaskStatus) {
                         window.kanbanManager.updateTaskStatus(taskId, statusId);
                     }
@@ -1323,20 +1338,39 @@ class KanbanManager {
      */
     getStatusColor(statusName) {
         const statusColors = {
-            'Новая': '#3498db',
-            'Открыта': '#3498db',
-            'В очереди': '#95a5a6',
-            'На согласовании': '#f39c12',
-            'В работе': '#f39c12',
-            'Запрошено уточнение': '#e67e22',
-            'Приостановлена': '#f39c12',
-            'Заморожена': '#34495e',
-            'На тестировании': '#9b59b6',
-            'Протестирована': '#9b59b6',
-            'Перенаправлена': '#e74c3c',
-            'Выполнена': '#2ecc71',
-            'Отклонена': '#95a5a6',
-            'Закрыта': '#27ae60'
+            // Начальные статусы - синие оттенки (новые, только поступившие)
+            'Новая': '#2563eb',           // Чисто синий - новая задача
+            'Открыта': '#3b82f6',         // Светло-синий - открыта для работы
+
+            // Ожидание - серые оттенки
+            'В очереди': '#95a5a6',       // Серый - ждет своей очереди
+
+            // Активная работа - зеленые оттенки (процесс)
+            'В работе': '#27ae60',        // Зеленый - активно выполняется
+
+            // Согласование/проверка - оранжевые оттенки (требует внимания)
+            'На согласовании': '#f39c12', // Оранжевый - на согласовании
+            'На тестировании': '#e67e22', // Темно-оранжевый - тестируется
+
+            // Требует действий - красно-оранжевые оттенки
+            'Запрошено уточнение': '#e74c3c', // Красный - требует уточнения
+
+            // Приостановлена/заморожена - темные оттенки
+            'Приостановлена': '#34495e',  // Темно-серый - приостановлена
+            'Заморожена': '#2c3e50',      // Очень темно-серый - заморожена
+
+            // Завершенные тесты - фиолетовые оттенки
+            'Протестирована': '#9b59b6',  // Фиолетовый - прошла тестирование
+
+            // Перенаправления - желто-оранжевые
+            'Перенаправлена': '#f1c40f',  // Желтый - перенаправлена
+
+            // Успешно завершенные - зеленые оттенки
+            'Выполнена': '#2ecc71',       // Ярко-зеленый - выполнена
+            'Закрыта': '#27ae60',         // Темно-зеленый - закрыта
+
+            // Отклоненные - серые оттенки
+            'Отклонена': '#7f8c8d'        // Серый - отклонена
         };
 
         // Если статус не найден, генерируем цвет на основе названия
@@ -1820,8 +1854,15 @@ class KanbanManager {
      * Обработка окончания перетаскивания
      */
     handleDragEnd(event) {
-        event.target.classList.remove('dragging');
         console.log('[KanbanManager] ✅ Перетаскивание завершено');
+
+        // Принудительно очищаем все drag-состояния
+        this.clearAllDragStates();
+
+        // Дополнительная очистка для уверенности
+        setTimeout(() => {
+            this.clearAllDragStates();
+        }, 100);
     }
 
     /**
@@ -1829,21 +1870,75 @@ class KanbanManager {
      */
     handleDragOver(event) {
         event.preventDefault();
-        event.currentTarget.classList.add('drag-over');
+
+        // Проверяем, не пытается ли пользователь перетащить в ту же колонку
+        const dropZone = event.currentTarget;
+        const newStatusId = dropZone.getAttribute('data-status-id');
+
+        // Находим перетаскиваемую карточку
+        const draggingCard = document.querySelector('.kanban-card.dragging');
+        if (draggingCard) {
+            const currentColumn = draggingCard.closest('[data-status-id]');
+            const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
+
+            // Приводим статусы к строкам для корректного сравнения
+            const currentStatusStr = String(currentStatusId);
+            const newStatusStr = String(newStatusId);
+
+            if (currentStatusStr === newStatusStr) {
+                // Если это та же колонка, показываем визуальный индикатор "недоступно"
+                dropZone.classList.add('drag-same-column');
+                dropZone.classList.remove('drag-over');
+            } else {
+                // Если это другая колонка, показываем обычный индикатор
+                dropZone.classList.add('drag-over');
+                dropZone.classList.remove('drag-same-column');
+            }
+        } else {
+            // Fallback: показываем обычный индикатор
+            dropZone.classList.add('drag-over');
+        }
     }
 
     /**
      * Обработка входа в зону перетаскивания
      */
     handleDragEnter(event) {
-        event.currentTarget.classList.add('drag-over');
+        // Логика перенесена в handleDragOver для более точного контроля
+        this.handleDragOver(event);
     }
 
     /**
      * Обработка выхода из зоны перетаскивания
      */
     handleDragLeave(event) {
-        event.currentTarget.classList.remove('drag-over');
+        const dropZone = event.currentTarget;
+
+        // Проверяем, действительно ли мышь покинула зону (не перешла на дочерний элемент)
+        if (!dropZone.contains(event.relatedTarget)) {
+            dropZone.classList.remove('drag-over');
+            dropZone.classList.remove('drag-same-column');
+        }
+    }
+
+    /**
+     * Принудительная очистка всех drag-состояний
+     */
+    clearAllDragStates() {
+        console.log('[KanbanManager] 🧹 Очистка всех drag-состояний');
+
+        // Убираем все классы drag-over и drag-same-column
+        const allDropZones = document.querySelectorAll('.kanban-column-content');
+        allDropZones.forEach(zone => {
+            zone.classList.remove('drag-over');
+            zone.classList.remove('drag-same-column');
+        });
+
+        // Убираем класс dragging со всех карточек
+        const allCards = document.querySelectorAll('.kanban-card');
+        allCards.forEach(card => {
+            card.classList.remove('dragging');
+        });
     }
 
     /**
@@ -1859,6 +1954,28 @@ class KanbanManager {
         const taskId = event.dataTransfer.getData('text/plain');
         const newStatusId = dropZone.getAttribute('data-status-id');
 
+        // КРИТИЧЕСКИ ВАЖНАЯ ПРОВЕРКА: добавляем флаг обработки
+        if (this._isProcessingDrop) {
+            console.log('[KanbanManager] ⚠️ Drop уже обрабатывается, игнорируем повторный вызов');
+            return;
+        }
+        this._isProcessingDrop = true;
+
+        // ЭКСПРЕСС-ПРОВЕРКА: быстрая проверка статусов в самом начале
+        const quickTaskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+        const quickCurrentColumn = quickTaskCard ? quickTaskCard.closest('[data-status-id]') : null;
+        const quickCurrentStatusId = quickCurrentColumn ? quickCurrentColumn.getAttribute('data-status-id') : null;
+
+        console.log(`[KanbanManager] ⚡ ЭКСПРЕСС-ПРОВЕРКА: текущий=${quickCurrentStatusId}, новый=${newStatusId}`);
+
+        if (quickCurrentStatusId && String(quickCurrentStatusId) === String(newStatusId)) {
+            console.log(`[KanbanManager] ⚡ ЭКСПРЕСС-ПРОВЕРКА: статусы одинаковые, немедленно отменяем операцию`);
+            this.clearAllDragStates();
+            this.showNotification(`Задача #${taskId} уже находится в этом статусе`, 'info');
+            this._isProcessingDrop = false;
+            return;
+        }
+
         console.log('[KanbanManager] 📋 taskId из dataTransfer:', taskId);
         console.log('[KanbanManager] 📋 newStatusId из dropZone:', newStatusId);
 
@@ -1868,13 +1985,74 @@ class KanbanManager {
             console.error('[KanbanManager] 📋 event.dataTransfer.types:', event.dataTransfer.types);
             console.error('[KanbanManager] 📋 Попытка получить text/html:', event.dataTransfer.getData('text/html'));
             this.showErrorMessage('Ошибка: не удалось определить задачу для перемещения');
+            this._isProcessingDrop = false; // Сбрасываем флаг
             return;
         }
 
         if (!newStatusId) {
             console.error('[KanbanManager] ❌ Не удалось получить ID статуса из dropZone');
             this.showErrorMessage('Ошибка: не удалось определить целевой статус');
+            this._isProcessingDrop = false; // Сбрасываем флаг
             return;
+        }
+
+        // Проверяем, не перетаскивается ли задача в ту же колонку
+        console.log('[KanbanManager] 🔍 Поиск карточки задачи с ID:', taskId);
+
+        // Ищем все карточки с данным ID (может быть несколько)
+        const allTaskCards = document.querySelectorAll(`[data-task-id="${taskId}"]`);
+        console.log('[KanbanManager] 🔍 Найдено карточек с ID', taskId, ':', allTaskCards.length);
+
+        // Берём первую найденную карточку
+        const taskCard = allTaskCards[0];
+        console.log('[KanbanManager] 🔍 Используем карточку:', taskCard);
+
+        // Дополнительно ищем карточку с классом dragging
+        const draggingCard = document.querySelector('.kanban-card.dragging');
+        console.log('[KanbanManager] 🔍 Карточка с классом dragging:', draggingCard);
+
+        // Используем dragging карточку, если она найдена и соответствует ID
+        const finalTaskCard = (draggingCard && draggingCard.getAttribute('data-task-id') === taskId) ? draggingCard : taskCard;
+        console.log('[KanbanManager] 🔍 Финальная карточка для проверки:', finalTaskCard);
+
+        if (finalTaskCard) {
+            const currentColumn = finalTaskCard.closest('[data-status-id]');
+            console.log('[KanbanManager] 🔍 Текущая колонка:', currentColumn);
+
+            const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
+            console.log('[KanbanManager] 📋 Текущий статус задачи:', currentStatusId, '(тип:', typeof currentStatusId, ')');
+            console.log('[KanbanManager] 📋 Новый статус:', newStatusId, '(тип:', typeof newStatusId, ')');
+
+            // Приводим статусы к строкам для корректного сравнения
+            const currentStatusStr = String(currentStatusId);
+            const newStatusStr = String(newStatusId);
+
+            console.log('[KanbanManager] 📋 Сравнение статусов (строки):', {
+                currentStatusStr,
+                newStatusStr,
+                равны: currentStatusStr === newStatusStr,
+                строгоРавны: currentStatusId === newStatusId
+            });
+
+            if (currentStatusStr === newStatusStr) {
+                console.log('[KanbanManager] ⚠️ СТАТУСЫ ОДИНАКОВЫЕ - отменяем операцию');
+                console.log('[KanbanManager] ⚠️ Останавливаем выполнение handleDrop');
+
+                // Принудительно очищаем все drag-состояния
+                this.clearAllDragStates();
+
+                // Показываем информационное сообщение
+                this.showNotification(`Задача #${taskId} уже находится в этом статусе`, 'info');
+
+                // КРИТИЧЕСКИ ВАЖНО: сбрасываем флаг и завершаем выполнение функции
+                this._isProcessingDrop = false;
+                console.log('[KanbanManager] ⚠️ RETURN - функция завершается здесь');
+                return;
+            } else {
+                console.log('[KanbanManager] ✅ СТАТУСЫ РАЗНЫЕ - продолжаем операцию');
+            }
+        } else {
+            console.log('[KanbanManager] ❌ Карточка задачи НЕ НАЙДЕНА - продолжаем операцию');
         }
 
         // Получаем название нового статуса из заголовка колонки
@@ -1883,14 +2061,21 @@ class KanbanManager {
         console.log(`[KanbanManager] 🎯 Сброс задачи #${taskId} в статус ${newStatusId} (${columnTitle})`);
         console.log(`[KanbanManager] 📋 DataTransfer получен: text/plain = "${taskId}"`);
 
-        // Убираем визуальные эффекты
-        dropZone.classList.remove('drag-over');
+        // Принудительно очищаем все drag-состояния
+        this.clearAllDragStates();
+
+        // Повторно ищем карточку после очистки состояний (на случай если она изменилась)
+        const taskCardAfterCleanup = document.querySelector(`[data-task-id="${taskId}"]`);
+        console.log('[KanbanManager] 🔍 Карточка после очистки состояний:', taskCardAfterCleanup);
 
         // Показываем индикатор загрузки
-        const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
-        if (taskCard) {
-            taskCard.classList.add('updating');
-            this.showUpdateIndicator(taskCard);
+        const cardForUpdate = taskCardAfterCleanup || finalTaskCard;
+        if (cardForUpdate) {
+            cardForUpdate.classList.add('updating');
+            this.showUpdateIndicator(cardForUpdate);
+            console.log('[KanbanManager] ⏳ Показан индикатор загрузки для карточки:', cardForUpdate);
+        } else {
+            console.log('[KanbanManager] ⚠️ Карточка не найдена для показа индикатора загрузки');
         }
 
         try {
@@ -1970,6 +2155,10 @@ class KanbanManager {
                 taskCard.classList.remove('updating');
                 this.hideUpdateIndicator(taskCard);
             }
+
+            // КРИТИЧЕСКИ ВАЖНО: сбрасываем флаг обработки
+            this._isProcessingDrop = false;
+            console.log('[KanbanManager] 🏁 handleDrop завершен, флаг сброшен');
         }
     }
 
@@ -1977,6 +2166,24 @@ class KanbanManager {
      * Обновление статуса задачи в Redmine
      */
     async updateTaskStatus(taskId, newStatusId) {
+        console.log(`[KanbanManager] 🔄 updateTaskStatus вызван для задачи #${taskId}, новый статус: ${newStatusId}`);
+
+        // ДОПОЛНИТЕЛЬНАЯ ПРОВЕРКА: проверяем статус ещё раз прямо здесь
+        const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+        if (taskCard) {
+            const currentColumn = taskCard.closest('[data-status-id]');
+            const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
+
+            console.log(`[KanbanManager] 🔄 Дополнительная проверка в updateTaskStatus:`);
+            console.log(`[KanbanManager] 🔄 Текущий статус: ${currentStatusId}, Новый статус: ${newStatusId}`);
+
+            if (String(currentStatusId) === String(newStatusId)) {
+                console.log(`[KanbanManager] ⚠️ ДУБЛИРУЮЩАЯ ПРОВЕРКА: статусы одинаковые, отменяем запрос к серверу`);
+                this.showNotification(`Задача #${taskId} уже находится в статусе ${newStatusId}`, 'info');
+                return true; // Возвращаем true, чтобы не показывать ошибку
+            }
+        }
+
         // Проверяем, не выполняется ли уже обновление для этой задачи
         const updateKey = `updating_${taskId}`;
         if (this[updateKey]) {
@@ -2275,3 +2482,85 @@ function initKanbanManager() {
 
 // Запускаем инициализацию
 initKanbanManager();
+
+// Глобальная функция для экстренной очистки drag-состояний
+window.emergencyDragCleanup = function() {
+    console.log('[Emergency] 🚨 Экстренная очистка drag-состояний...');
+
+    // Убираем все классы drag-over и drag-same-column
+    const allDropZones = document.querySelectorAll('.kanban-column-content');
+    allDropZones.forEach(zone => {
+        zone.classList.remove('drag-over');
+        zone.classList.remove('drag-same-column');
+        zone.style.backgroundColor = '';
+        zone.style.border = '';
+    });
+
+    // Убираем класс dragging со всех карточек
+    const allCards = document.querySelectorAll('.kanban-card');
+    allCards.forEach(card => {
+        card.classList.remove('dragging');
+        card.style.opacity = '';
+    });
+
+    console.log('[Emergency] ✅ Все drag-состояния экстренно очищены');
+};
+
+// Глобальная функция для диагностики карточек и их статусов
+window.debugKanbanCards = function() {
+    console.log('[Debug] 🔍 Диагностика карточек Kanban...');
+
+    const allCards = document.querySelectorAll('.kanban-card[data-task-id]');
+    console.log(`[Debug] Найдено карточек: ${allCards.length}`);
+
+    allCards.forEach((card, index) => {
+        const taskId = card.getAttribute('data-task-id');
+        const column = card.closest('[data-status-id]');
+        const statusId = column ? column.getAttribute('data-status-id') : 'НЕ НАЙДЕН';
+        const columnTitle = column ? column.querySelector('.kanban-column-title')?.textContent?.trim() : 'НЕ НАЙДЕН';
+
+        console.log(`[Debug] Карточка ${index + 1}:`, {
+            taskId,
+            statusId,
+            columnTitle,
+            element: card,
+            column: column
+        });
+    });
+
+    console.log('[Debug] ✅ Диагностика завершена');
+};
+
+// Глобальная функция для тестирования конкретной задачи
+window.testTaskStatus = function(taskId) {
+    console.log(`[Test] 🧪 Тестирование статуса задачи #${taskId}...`);
+
+    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
+    if (!taskCard) {
+        console.log(`[Test] ❌ Карточка задачи #${taskId} НЕ НАЙДЕНА`);
+        return;
+    }
+
+    const currentColumn = taskCard.closest('[data-status-id]');
+    const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
+    const columnTitle = currentColumn ? currentColumn.querySelector('.kanban-column-title')?.textContent?.trim() : 'НЕ НАЙДЕН';
+
+    console.log(`[Test] 📋 Задача #${taskId}:`, {
+        currentStatusId: currentStatusId,
+        currentStatusType: typeof currentStatusId,
+        currentStatusString: String(currentStatusId),
+        columnTitle: columnTitle,
+        taskCard: taskCard,
+        currentColumn: currentColumn
+    });
+
+    // Тестируем все возможные статусы
+    const allColumns = document.querySelectorAll('[data-status-id]');
+    allColumns.forEach(column => {
+        const statusId = column.getAttribute('data-status-id');
+        const title = column.querySelector('.kanban-column-title')?.textContent?.trim();
+        const isSame = String(currentStatusId) === String(statusId);
+
+        console.log(`[Test] 🎯 Сравнение с колонкой "${title}" (ID: ${statusId}): ${isSame ? 'ОДИНАКОВЫЕ' : 'РАЗНЫЕ'}`);
+    });
+};

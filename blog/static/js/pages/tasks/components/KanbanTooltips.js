@@ -8,7 +8,7 @@ class KanbanTooltips {
         this.tooltips = {
             'kanban-card': {
                 title: '🖱️ Перетащите для изменения статуса',
-                content: 'Зажмите карточку и перетащите в другую колонку для быстрого обновления статуса задачи'
+                content: 'Зажмите мышью карточку и перетащите в другую колонку для быстрого обновления статуса задачи'
             },
             'kanban-card-id': {
                 title: '⚡ Быстрый переход',
@@ -34,6 +34,34 @@ class KanbanTooltips {
 
         this.activeTooltip = null;
         this.isEnabled = true;
+        this.isInitialized = false;
+    }
+
+    /**
+     * Очищает все обработчики и подсказки
+     */
+    cleanup() {
+        console.log('[KanbanTooltips] 🧹 Очистка всех обработчиков и подсказок');
+
+        // Удаляем обработчики событий
+        if (this._mouseOverHandler) {
+            document.removeEventListener('mouseover', this._mouseOverHandler);
+            this._mouseOverHandler = null;
+        }
+        if (this._mouseOutHandler) {
+            document.removeEventListener('mouseout', this._mouseOutHandler);
+            this._mouseOutHandler = null;
+        }
+        if (this._outsideClickHandler) {
+            document.removeEventListener('click', this._outsideClickHandler, true);
+            this._outsideClickHandler = null;
+        }
+
+        // Принудительно скрываем все подсказки
+        this.forceHideAllTooltips();
+
+        // Сбрасываем флаг инициализации
+        this.isInitialized = false;
     }
 
     /**
@@ -42,7 +70,16 @@ class KanbanTooltips {
     init() {
         if (!this.isEnabled) return;
 
+        // Защита от повторной инициализации
+        if (this.isInitialized) {
+            console.log('[KanbanTooltips] ⚠️ Попытка повторной инициализации - пропускаем');
+            return;
+        }
+
         console.log('[KanbanTooltips] 🎯 Инициализация всплывающих подсказок');
+
+        // Очищаем любые существующие подсказки
+        this.cleanup();
 
         // Проверяем, не закрыт ли онбординг - если да, то скрываем все подсказки
         const onboardingModal = document.querySelector('.kanban-onboarding-modal');
@@ -58,19 +95,27 @@ class KanbanTooltips {
         this.createTooltipContainer();
 
         // Глобальный обработчик: клики вне подсказки — закрыть
-        const outsideClickHandler = (e) => {
+        if (this._outsideClickHandler) {
+            document.removeEventListener('click', this._outsideClickHandler, true);
+        }
+
+        this._outsideClickHandler = (e) => {
             const tooltip = e.target.closest('.kanban-tooltip');
             const trigger = e.target.closest('[data-tooltip]');
-            if (!tooltip && !trigger) {
+            const kanbanElement = e.target.closest('.kanban-card, .kanban-column-header, .priority-badge, .view-toggle-btn');
+
+            if (!tooltip && !trigger && !kanbanElement) {
                 this.hideTooltip();
             }
         };
-        // Сохраняем, чтобы можно было отписаться при переинициализации
-        this._outsideClickHandler = outsideClickHandler;
+
         document.addEventListener('click', this._outsideClickHandler, true);
 
         // Добавляем слушатель для автоматического скрытия при закрытии онбординга
         this.addOnboardingCloseListener();
+
+        // Отмечаем как инициализированный
+        this.isInitialized = true;
     }
 
     /**
@@ -98,13 +143,12 @@ class KanbanTooltips {
             }
         });
 
-        // Слушаем изменения в DOM для обнаружения закрытия онбординга
+                    // Слушаем изменения в DOM для обнаружения закрытия онбординга
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {
                 mutation.removedNodes.forEach((node) => {
                     if (node.nodeType === Node.ELEMENT_NODE &&
-                        node.classList &&
-                        node.classList.contains('kanban-onboarding-modal')) {
+                        node.classList?.contains('kanban-onboarding-modal')) {
                         console.log('[KanbanTooltips] 🎯 Обнаружено удаление онбординга из DOM, скрываем подсказки');
                         this.hideAllTooltips();
                     }
@@ -122,35 +166,53 @@ class KanbanTooltips {
      * Добавляет обработчики событий для элементов с подсказками
      */
     addTooltipListeners() {
-        // Обработчики для карточек задач
-        document.addEventListener('mouseover', (e) => {
+        // Удаляем старые обработчики, если они существуют
+        if (this._mouseOverHandler) {
+            document.removeEventListener('mouseover', this._mouseOverHandler);
+        }
+        if (this._mouseOutHandler) {
+            document.removeEventListener('mouseout', this._mouseOutHandler);
+        }
+
+        // Создаем новые обработчики с привязкой контекста
+        this._mouseOverHandler = (e) => {
+            if (!this.isEnabled) return;
+
+            // Проверяем data-tooltip атрибут
             const target = e.target.closest('[data-tooltip]');
             if (target) {
                 this.showTooltip(target, e);
+                return;
             }
-        });
 
-        document.addEventListener('mouseout', (e) => {
-            const target = e.target.closest('[data-tooltip]');
-            if (target) {
-                this.hideTooltip();
-            }
-        });
-
-        // Обработчики для элементов канбана
-        document.addEventListener('mouseover', (e) => {
+            // Проверяем классы для канбан элементов
             const tooltipType = this.getTooltipType(e.target);
             if (tooltipType) {
                 this.showTooltip(e.target, e, tooltipType);
             }
-        });
+        };
 
-        document.addEventListener('mouseout', (e) => {
+        this._mouseOutHandler = (e) => {
+            if (!this.isEnabled) return;
+
+            // Проверяем, покидаем ли мы элемент с подсказкой
+            const target = e.target.closest('[data-tooltip]');
             const tooltipType = this.getTooltipType(e.target);
-            if (tooltipType) {
-                this.hideTooltip();
+
+            if (target || tooltipType) {
+                // Добавляем небольшую задержку для предотвращения мерцания
+                setTimeout(() => {
+                    // Проверяем, не навели ли мы на саму подсказку
+                    if (!e.relatedTarget?.closest('.kanban-tooltip')) {
+                        this.hideTooltip();
+                    }
+                }, 100);
             }
-        });
+        };
+
+        // Добавляем обработчики
+        document.addEventListener('mouseover', this._mouseOverHandler);
+        document.addEventListener('mouseout', this._mouseOutHandler);
     }
 
     /**
@@ -207,6 +269,16 @@ class KanbanTooltips {
         // Скрываем предыдущую подсказку
         this.hideTooltip();
 
+        // Дополнительная проверка на существующие подсказки
+        const existingTooltips = document.querySelectorAll('.kanban-tooltip');
+        existingTooltips.forEach(tip => {
+            try {
+                tip.remove();
+            } catch (e) {
+                console.warn('[KanbanTooltips] Ошибка при удалении существующей подсказки:', e);
+            }
+        });
+
         // Создаем новую подсказку
         const tooltipElement = document.createElement('div');
         tooltipElement.className = 'kanban-tooltip';
@@ -220,10 +292,18 @@ class KanbanTooltips {
             </div>
         `;
 
-        // Добавляем в контейнер
-        const container = document.getElementById('kanban-tooltip-container');
+        // Получаем или создаем контейнер
+        let container = document.getElementById('kanban-tooltip-container');
+        if (!container) {
+            this.createTooltipContainer();
+            container = document.getElementById('kanban-tooltip-container');
+        }
+
         if (container) {
             container.appendChild(tooltipElement);
+        } else {
+            console.warn('[KanbanTooltips] Не удалось создать контейнер для подсказок');
+            return;
         }
 
         // Обработчик закрытия по крестику
@@ -244,7 +324,9 @@ class KanbanTooltips {
 
         // Показываем с анимацией
         setTimeout(() => {
-            tooltipElement.classList.add('show');
+            if (tooltipElement.parentNode) {
+                tooltipElement.classList.add('show');
+            }
         }, 10);
     }
 
@@ -252,7 +334,6 @@ class KanbanTooltips {
      * Позиционирует подсказку относительно элемента
      */
     positionTooltip(tooltipElement, event) {
-        const rect = event.target.getBoundingClientRect();
         const tooltipRect = tooltipElement.getBoundingClientRect();
 
         let left = event.clientX + 10;
@@ -276,17 +357,39 @@ class KanbanTooltips {
      */
     hideTooltip() {
         if (this.activeTooltip) {
+            // Сначала убираем класс show
             this.activeTooltip.classList.remove('show');
-            setTimeout(() => {
-                if (this.activeTooltip && this.activeTooltip.parentNode) {
-                    this.activeTooltip.parentNode.removeChild(this.activeTooltip);
-                }
-            }, 200);
+
+            // Сохраняем ссылку для безопасного удаления
+            const tooltipToRemove = this.activeTooltip;
             this.activeTooltip = null;
-            // Удаляем контейнер, чтобы не оставались «залипания»
-            const container = document.getElementById('kanban-tooltip-container');
-            if (container && container.childElementCount === 0) {
+
+            // Удаляем с анимацией
+            setTimeout(() => {
+                if (tooltipToRemove?.parentNode) {
+                    try {
+                        tooltipToRemove.parentNode.removeChild(tooltipToRemove);
+                    } catch (e) {
+                        console.warn('[KanbanTooltips] Ошибка при удалении подсказки:', e);
+                    }
+                }
+
+                // Проверяем и очищаем пустой контейнер
+                this.cleanupEmptyContainer();
+            }, 200);
+        }
+    }
+
+    /**
+     * Очищает пустые контейнеры подсказок
+     */
+    cleanupEmptyContainer() {
+        const container = document.getElementById('kanban-tooltip-container');
+        if (container?.childElementCount === 0) {
+            try {
                 container.remove();
+            } catch (e) {
+                console.warn('[KanbanTooltips] Ошибка при удалении контейнера:', e);
             }
         }
     }
@@ -425,20 +528,59 @@ window.emergencyHideTooltips = function() {
     // Удаляем все подсказки немедленно
     const allTooltips = document.querySelectorAll('.kanban-tooltip');
     allTooltips.forEach(tooltip => {
-        tooltip.remove();
+        try {
+            tooltip.remove();
+        } catch (e) {
+            console.warn('[Emergency] Ошибка при удалении подсказки:', e);
+        }
     });
 
     // Удаляем все контейнеры подсказок
-    const containers = document.querySelectorAll('#kanban-tooltip-container');
+    const containers = document.querySelectorAll('#kanban-tooltip-container, .kanban-tooltip-container');
     containers.forEach(container => {
-        container.remove();
+        try {
+            container.remove();
+        } catch (e) {
+            console.warn('[Emergency] Ошибка при удалении контейнера:', e);
+        }
     });
 
-    // Удаляем все элементы с data-tooltip
+    // Удаляем все элементы с data-tooltip (только для диагностики)
     const tooltipElements = document.querySelectorAll('[data-tooltip]');
-    tooltipElements.forEach(element => {
-        element.removeAttribute('data-tooltip');
+    console.log(`[Emergency] Найдено ${tooltipElements.length} элементов с data-tooltip`);
+
+    // Удаляем все стили tooltips
+    const tooltipStyles = document.querySelectorAll('#kanban-tooltips-style');
+    tooltipStyles.forEach(style => {
+        try {
+            style.remove();
+        } catch (e) {
+            console.warn('[Emergency] Ошибка при удалении стилей:', e);
+        }
     });
 
     console.log('[Emergency] ✅ Все подсказки экстренно удалены');
+};
+
+// Диагностическая функция для проверки состояния tooltips
+window.debugTooltips = function() {
+    console.log('[Debug] 🔍 Диагностика состояния tooltips...');
+
+    const tooltips = document.querySelectorAll('.kanban-tooltip');
+    const containers = document.querySelectorAll('#kanban-tooltip-container, .kanban-tooltip-container');
+    const dataTooltipElements = document.querySelectorAll('[data-tooltip]');
+
+    console.log(`[Debug] Найдено подсказок: ${tooltips.length}`);
+    console.log(`[Debug] Найдено контейнеров: ${containers.length}`);
+    console.log(`[Debug] Найдено элементов с data-tooltip: ${dataTooltipElements.length}`);
+
+    tooltips.forEach((tooltip, index) => {
+        console.log(`[Debug] Подсказка ${index}:`, tooltip);
+    });
+
+    return {
+        tooltips: tooltips.length,
+        containers: containers.length,
+        dataTooltipElements: dataTooltipElements.length
+    };
 };

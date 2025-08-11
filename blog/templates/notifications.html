@@ -22,7 +22,7 @@
                         <h1 class="page-title">Уведомления</h1>
                         <p class="page-subtitle">Все события по вашим заявкам и задачам</p>
                     </div>
-                    {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
+                    {% if all_notifications_sorted %}
                     <div class="header-actions">
                         <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-form">
                             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
@@ -41,142 +41,145 @@
 
         <!-- Notifications Content -->
         <div class="notifications-content">
-            {% if combined_notifications.notifications_data or combined_notifications.notifications_add_notes_data or combined_notifications.redmine_notifications_data %}
+            {% if all_notifications_sorted %}
                 <div class="notifications-grid">
 
-                    <!-- Redmine Notifications -->
-                    {% for notification in combined_notifications.redmine_notifications_data %}
-                    <article class="notification-card redmine-task-card" data-type="redmine" data-id="{{ notification.id }}">
-                        <div class="card-header">
-                            <div class="notification-type">
-                                <div class="type-icon redmine-icon">
-                                    <i class="fas fa-tasks"></i>
+                    <!-- All Notifications Sorted by Time (newest first) -->
+                    {% for item in all_notifications_sorted %}
+                        {% set notification = item.data %}
+                        {% set notification_type = item.type %}
+
+                        {% if notification_type == 'redmine' %}
+                        <!-- Redmine Notification -->
+                        <article class="notification-card redmine-task-card" data-type="redmine" data-id="{{ notification.id }}">
+                            <div class="card-header">
+                                <div class="notification-type">
+                                    <div class="type-icon redmine-icon">
+                                        <i class="fas fa-tasks"></i>
+                                    </div>
+                                    <div class="type-info">
+                                        <span class="type-title">
+                                            {% if notification.is_group_notification %}
+                                                Задача для группы
+                                            {% else %}
+                                                Новая задача
+                                            {% endif %}
+                                        </span>
+                                        <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
+                                    </div>
                                 </div>
-                                <div class="type-info">
-                                    <span class="type-title">
-                                        {% if notification.is_group_notification %}
-                                            Задача для группы
-                                        {% else %}
-                                            Новая задача
+                                <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="card-content">
+                                 <a href="{{ notification.issue_url }}" class="issue-link" target="_blank">
+                                    <div class="notification-message">
+                                        <p>
+                                            {% if notification.is_group_notification %}
+                                                В вашу группу <strong>{{ notification.group_name }}</strong> поступила задача
+                                            {% else %}
+                                                <i class="fas fa-star" style="color: #f59e0b;"></i> Вы назначены исполнителем по задаче
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="notification-subject">
+                                        <i class="fas fa-hashtag"></i>
+                                        <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
+                                    </div>
+                                    {% if notification.is_group_notification and notification.easy_email_to %}
+                                    <div class="notification-email-to">
+                                        <i class="fas fa-envelope"></i>
+                                        <span>Email to: {{ notification.easy_email_to }}</span>
+                                    </div>
+                                    {% endif %}
+                                </a>
+                            </div>
+                        </article>
+
+                        {% elif notification_type == 'status' %}
+                        <!-- Status Change Notification -->
+                        <article class="notification-card status-change-card" data-type="status" data-id="{{ notification.id }}">
+                            <div class="card-header">
+                                <div class="notification-type">
+                                    <div class="type-icon status-icon">
+                                        <i class="fas fa-exchange-alt"></i>
+                                    </div>
+                                    <div class="type-info">
+                                        <span class="type-title">Изменение статуса</span>
+                                        <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
+                                    </div>
+                                </div>
+                                <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+                            <div class="card-content">
+                                <div class="notification-message">
+                                    <p>Статус заявки
+                                        <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
+                                            #{{ notification.issue_id }}
+                                        </a>
+                                        {% if notification.old_subj %}
+                                            <span class="issue-subject" style="margin-left: 0.3em;">
+                                                <b>Тема:</b> {{ notification.old_subj }}
+                                            </span>
                                         {% endif %}
-                                    </span>
-                                    <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
+                                        изменился
+                                    </p>
+                                    <div class="status-change">
+                                        <span class="status-old">{{ notification.old_status }}</span>
+                                        <i class="fas fa-arrow-right status-arrow"></i>
+                                        <span class="status-new">{{ notification.new_status }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
-                        </div>
+                        </article>
 
-                        <div class="card-content">
-                             <a href="{{ notification.issue_url }}" class="issue-link" target="_blank">
+                        {% elif notification_type == 'comment' %}
+                        <!-- Comment Notification -->
+                        <article class="notification-card comment-card" data-type="add_notes" data-id="{{ notification.id }}">
+                            <div class="card-header">
+                                <div class="notification-type">
+                                    <div class="type-icon comment-icon">
+                                        <i class="fas fa-comment"></i>
+                                    </div>
+                                    <div class="type-info">
+                                        <span class="type-title">Новый комментарий</span>
+                                        <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
+                                    </div>
+                                </div>
+                                <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
+                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </form>
+                            </div>
+
+                            <div class="card-content">
                                 <div class="notification-message">
-                                    <p>
-                                        {% if notification.is_group_notification %}
-                                            В вашу группу <strong>{{ notification.group_name }}</strong> поступила задача
-                                        {% else %}
-                                            <i class="fas fa-star" style="color: #f59e0b;"></i> Вы назначены исполнителем по задаче
-                                        {% endif %}
+                                    <p>В заявку
+                                        <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
+                                            #{{ notification.issue_id }}
+                                        </a>
+                                        добавлен новый комментарий
                                     </p>
                                 </div>
-                                <div class="notification-subject">
-                                    <i class="fas fa-hashtag"></i>
-                                    <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
-                                </div>
-                                {% if notification.is_group_notification and notification.easy_email_to %}
-                                <div class="notification-email-to">
-                                    <i class="fas fa-envelope"></i>
-                                    <span>Email to: {{ notification.easy_email_to }}</span>
-                                </div>
-                                {% endif %}
-                            </a>
-                        </div>
-                    </article>
-                    {% endfor %}
-
-                    <!-- Status Change Notifications -->
-                    {% for notification in combined_notifications.notifications_data %}
-                    <article class="notification-card status-change-card" data-type="status" data-id="{{ notification.id }}">
-                        <div class="card-header">
-                            <div class="notification-type">
-                                <div class="type-icon status-icon">
-                                    <i class="fas fa-exchange-alt"></i>
-                                </div>
-                                <div class="type-info">
-                                    <span class="type-title">Изменение статуса</span>
-                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
+                                <div class="comment-preview">
+                                    {{ notification.notes | safe }}
                                 </div>
                             </div>
-                            <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
-                        </div>
-                        <div class="card-content">
-                            <div class="notification-message">
-                                <p>Статус заявки
-                                    <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
-                                        #{{ notification.issue_id }}
-                                    </a>
-                                    {% if notification.old_subj %}
-                                        <span class="issue-subject" style="margin-left: 0.3em;">
-                                            <b>Тема:</b> {{ notification.old_subj }}
-                                        </span>
-                                    {% endif %}
-                                    изменился
-                                </p>
-                                <div class="status-change">
-                                    <span class="status-old">{{ notification.old_status }}</span>
-                                    <i class="fas fa-arrow-right status-arrow"></i>
-                                    <span class="status-new">{{ notification.new_status }}</span>
-                                </div>
-                            </div>
+                        </article>
+                        {% endif %}
 
-                        </div>
-                    </article>
-                    {% endfor %}
-
-                    <!-- Comment Notifications -->
-                    {% for notification in combined_notifications.notifications_add_notes_data %}
-                    <article class="notification-card comment-card" data-type="add_notes" data-id="{{ notification.id }}">
-                        <div class="card-header">
-                            <div class="notification-type">
-                                <div class="type-icon comment-icon">
-                                    <i class="fas fa-comment"></i>
-                                </div>
-                                <div class="type-info">
-                                    <span class="type-title">Новый комментарий</span>
-                                    <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
-                                </div>
-                            </div>
-                            <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                    <i class="fas fa-times"></i>
-                                </button>
-                            </form>
-                        </div>
-
-                        <div class="card-content">
-                            <div class="notification-message">
-                                <p>В заявку
-                                    <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
-                                        #{{ notification.issue_id }}
-                                    </a>
-                                    добавлен новый комментарий
-                                </p>
-                            </div>
-                            <div class="comment-preview">
-                                {{ notification.notes | safe }}
-                            </div>
-
-                        </div>
-                    </article>
                     {% endfor %}
 
                 </div>
