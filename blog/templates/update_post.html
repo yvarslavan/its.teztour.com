@@ -103,14 +103,35 @@
                             {{ form.content.label.text }}
                             <span class="required">*</span>
                         </label>
+
+                        <!-- Переключатель формата текста -->
+                        <div class="format-switcher">
+                            <div class="format-options">
+                                <label class="format-option">
+                                    <input type="radio" name="content_format" value="plain" id="format_plain" checked>
+                                    <span class="format-label">
+                                        <i class="fas fa-font"></i>
+                                        Простой текст
+                                    </span>
+                                </label>
+                                <label class="format-option">
+                                    <input type="radio" name="content_format" value="html" id="format_html">
+                                    <span class="format-label">
+                                        <i class="fas fa-code"></i>
+                                        HTML
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="format-tips" id="formatTips">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="formatTipText">Простой текст без форматирования</span>
+                            </div>
+                        </div>
+
                         {{ form.content(class="form-control-modern content-textarea", placeholder="Напишите содержимое статьи...", rows="12") }}
                         <div class="field-feedback">
                             <div class="char-counter">
                                 <span id="content-counter">{{ form.content.data|length if form.content.data else 0 }}</span> символов
-                            </div>
-                            <div class="content-tips">
-                                <i class="fas fa-info-circle"></i>
-                                Используйте markdown для форматирования
                             </div>
                         </div>
                         {% for error in form.content.errors %}
@@ -503,6 +524,79 @@
         font-size: 0.85rem;
     }
 
+    /* Переключатель формата текста */
+    .format-switcher {
+        margin-bottom: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .format-options {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .format-option {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .format-option input[type="radio"] {
+        display: none;
+    }
+
+    .format-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .format-label i {
+        font-size: 0.85rem;
+    }
+
+    .format-option input[type="radio"]:checked + .format-label {
+        border-color: #6366f1;
+        background: #6366f1;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .format-option:hover .format-label {
+        border-color: #6366f1;
+        transform: translateY(-1px);
+    }
+
+    .format-tips {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6366f1;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 6px;
+        border-left: 3px solid #6366f1;
+    }
+
+    .format-tips i {
+        font-size: 0.8rem;
+    }
+
     /* Текущее изображение */
     .current-image {
         margin-bottom: 1rem;
@@ -518,9 +612,11 @@
 
     .current-img {
         width: 100%;
-        height: 150px;
-        object-fit: cover;
+        height: auto;
+        max-height: 300px;
+        object-fit: contain;
         display: block;
+        background: white;
     }
 
     .current-image-overlay {
@@ -759,16 +855,17 @@
 
     .preview-image img {
         width: 100%;
-        max-height: 300px;
-        object-fit: cover;
+        height: auto;
+        max-height: 500px;
+        object-fit: contain;
         border-radius: 12px;
         margin-bottom: 1rem;
+        background: white;
     }
 
     .preview-text {
         line-height: 1.7;
         color: #374151;
-        white-space: pre-wrap;
     }
 
     /* Анимации */
@@ -855,6 +952,15 @@
             justify-content: center;
             text-align: center;
         }
+
+        .format-options {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .format-label {
+            justify-content: center;
+        }
     }
 </style>
 
@@ -873,6 +979,11 @@ document.addEventListener('DOMContentLoaded', function() {
     const titleCounter = document.getElementById('title-counter');
     const contentCounter = document.getElementById('content-counter');
 
+    // Элементы переключателя формата
+    const formatPlain = document.getElementById('format_plain');
+    const formatHtml = document.getElementById('format_html');
+    const formatTipText = document.getElementById('formatTipText');
+
     // Счетчики символов
     if (titleInput && titleCounter) {
         titleInput.addEventListener('input', function() {
@@ -884,6 +995,27 @@ document.addEventListener('DOMContentLoaded', function() {
         contentTextarea.addEventListener('input', function() {
             contentCounter.textContent = this.value.length;
         });
+    }
+
+    // Обработчики переключателя формата
+    if (formatPlain && formatHtml && formatTipText) {
+        // Функция обновления подсказки
+        function updateFormatTip() {
+            if (formatPlain.checked) {
+                formatTipText.textContent = 'Простой текст без форматирования';
+                contentTextarea.placeholder = 'Напишите содержимое статьи простым текстом...';
+            } else {
+                formatTipText.textContent = 'Поддерживаются HTML теги: <strong>, <em>, <u>, <br>, <p>, <h1>-<h6>, <ul>, <ol>, <li>';
+                contentTextarea.placeholder = 'Напишите содержимое статьи с HTML разметкой...';
+            }
+        }
+
+        // Обработчики изменения формата
+        formatPlain.addEventListener('change', updateFormatTip);
+        formatHtml.addEventListener('change', updateFormatTip);
+
+        // Инициализация подсказки
+        updateFormatTip();
     }
 
     // Функционал загрузки файлов
@@ -954,7 +1086,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             // Обновляем модальное окно
             document.getElementById('previewTitle').textContent = title || 'Заголовок статьи';
-            document.getElementById('previewText').textContent = content || 'Содержимое статьи';
+            document.getElementById('previewText').innerHTML = content || 'Содержимое статьи';
 
             // Устанавливаем текущую дату
             const currentDate = new Date().toLocaleDateString('ru-RU');

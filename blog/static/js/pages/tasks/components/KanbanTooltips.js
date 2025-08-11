@@ -57,6 +57,18 @@ class KanbanTooltips {
         // Создаем контейнер для подсказок
         this.createTooltipContainer();
 
+        // Глобальный обработчик: клики вне подсказки — закрыть
+        const outsideClickHandler = (e) => {
+            const tooltip = e.target.closest('.kanban-tooltip');
+            const trigger = e.target.closest('[data-tooltip]');
+            if (!tooltip && !trigger) {
+                this.hideTooltip();
+            }
+        };
+        // Сохраняем, чтобы можно было отписаться при переинициализации
+        this._outsideClickHandler = outsideClickHandler;
+        document.addEventListener('click', this._outsideClickHandler, true);
+
         // Добавляем слушатель для автоматического скрытия при закрытии онбординга
         this.addOnboardingCloseListener();
     }
@@ -162,6 +174,23 @@ class KanbanTooltips {
         container.id = 'kanban-tooltip-container';
         container.className = 'kanban-tooltip-container';
         document.body.appendChild(container);
+
+        // Инжект стилей для стабильной работы и кнопки закрытия
+        if (!document.getElementById('kanban-tooltips-style')) {
+            const style = document.createElement('style');
+            style.id = 'kanban-tooltips-style';
+            style.textContent = `
+                .kanban-tooltip-container{position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:2147483000}
+                .kanban-tooltip{position:absolute;max-width:360px;background:#0f172a;color:#e2e8f0;border-radius:10px;padding:12px 14px;box-shadow:0 12px 30px rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.06);opacity:0;transform:translateY(6px) scale(.98);transition:opacity .18s ease,transform .18s ease;pointer-events:auto}
+                .kanban-tooltip.show{opacity:1;transform:translateY(0) scale(1)}
+                .kanban-tooltip .tooltip-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+                .kanban-tooltip .tooltip-title{font-weight:700;font-size:14px}
+                .kanban-tooltip .tooltip-content{font-size:13px;line-height:1.4;color:#cbd5e1}
+                .kanban-tooltip .tooltip-close{appearance:none;background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px;transition:background .15s ease,color .15s ease}
+                .kanban-tooltip .tooltip-close:hover{background:rgba(148,163,184,.15);color:#e2e8f0}
+            `;
+            document.head.appendChild(style);
+        }
     }
 
     /**
@@ -184,6 +213,7 @@ class KanbanTooltips {
         tooltipElement.innerHTML = `
             <div class="tooltip-header">
                 <span class="tooltip-title">${tooltip.title}</span>
+                <button class="tooltip-close" aria-label="Закрыть" title="Закрыть">&times;</button>
             </div>
             <div class="tooltip-content">
                 ${tooltip.content}
@@ -194,6 +224,16 @@ class KanbanTooltips {
         const container = document.getElementById('kanban-tooltip-container');
         if (container) {
             container.appendChild(tooltipElement);
+        }
+
+        // Обработчик закрытия по крестику
+        const closeBtn = tooltipElement.querySelector('.tooltip-close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', (ev) => {
+                ev.preventDefault();
+                ev.stopPropagation();
+                this.hideTooltip();
+            }, { capture: true });
         }
 
         // Позиционируем подсказку
@@ -243,6 +283,11 @@ class KanbanTooltips {
                 }
             }, 200);
             this.activeTooltip = null;
+            // Удаляем контейнер, чтобы не оставались «залипания»
+            const container = document.getElementById('kanban-tooltip-container');
+            if (container && container.childElementCount === 0) {
+                container.remove();
+            }
         }
     }
 

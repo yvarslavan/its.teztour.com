@@ -885,6 +885,586 @@ def simple_api_test():
     return content
 
 
+@main.route("/debug-issue-access/<int:issue_id>", methods=["GET"])
+@login_required
+def debug_issue_access(issue_id):
+    """Диагностический endpoint для проверки доступа к задаче"""
+    debug_info = {
+        "user": current_user.username,
+        "issue_id": issue_id,
+        "is_redmine_user": current_user.is_redmine_user,
+        "checks": []
+    }
+
+    try:
+        # Проверка 1: Подключение к Oracle
+        debug_info["checks"].append("Проверка подключения к Oracle...")
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if oracle_conn:
+            debug_info["checks"].append("✅ Oracle подключение: OK")
+
+            # Проверка 2: Получение пароля пользователя
+            user_password = get_user_erp_password(oracle_conn, current_user.username)
+            if user_password:
+                debug_info["checks"].append("✅ Пароль пользователя получен: OK")
+
+                                # Проверка 3: Получение конфигурации Redmine
+                try:
+                    from config import get
+                    redmine_url = get('redmine', 'url')
+                    debug_info["checks"].append(f"✅ URL Redmine получен: {redmine_url}")
+                    debug_info["redmine_url"] = redmine_url
+                except Exception as config_error:
+                    debug_info["checks"].append(f"❌ Ошибка получения конфигурации Redmine: {config_error}")
+                    redmine_url = None
+
+                # Проверка 4: Создание Redmine коннектора
+                from blog.tasks.utils import get_redmine_connector, create_redmine_connector
+
+                try:
+                    # Сначала попробуем создать коннектор напрямую
+                    debug_info["checks"].append(f"Попытка создания коннектора для пользователя: {current_user.username}")
+                    debug_info["checks"].append(f"Является пользователем Redmine: {current_user.is_redmine_user}")
+                    debug_info["checks"].append(f"Пароль получен: {'Да' if user_password else 'Нет'}")
+
+                    direct_conn = create_redmine_connector(
+                        is_redmine_user=current_user.is_redmine_user,
+                        user_login=current_user.username,
+                        password=user_password,
+                        api_key_param=None
+                    )
+
+                    if direct_conn:
+                        debug_info["checks"].append("✅ Прямое создание коннектора: OK")
+
+                        # Проверяем наличие атрибута redmine
+                        if hasattr(direct_conn, 'redmine'):
+                            debug_info["checks"].append("✅ Атрибут 'redmine' присутствует: OK")
+
+                            if direct_conn.redmine:
+                                debug_info["checks"].append("✅ Объект Redmine инициализирован: OK")
+
+                                # Проверка 5: Аутентификация в Redmine
+                                try:
+                                    current_redmine_user = direct_conn.redmine.user.get('current')
+                                    debug_info["checks"].append(f"✅ Аутентификация в Redmine: OK (ID: {current_redmine_user.id})")
+                                    debug_info["redmine_user_id"] = current_redmine_user.id
+
+                                    # Проверка 6: Доступ к конкретной задаче
+                                    try:
+                                        issue = direct_conn.redmine.issue.get(issue_id)
+                                        debug_info["checks"].append(f"✅ Доступ к задаче #{issue_id}: OK")
+                                        debug_info["issue_subject"] = getattr(issue, 'subject', 'Не указано')
+                                        debug_info["issue_status"] = getattr(issue, 'status', {}).get('name', 'Неизвестно')
+                                    except Exception as issue_error:
+                                        debug_info["checks"].append(f"❌ Доступ к задаче #{issue_id}: ОШИБКА - {issue_error}")
+
+                                except Exception as auth_error:
+                                    debug_info["checks"].append(f"❌ Аутентификация в Redmine: ОШИБКА - {auth_error}")
+
+                            else:
+                                debug_info["checks"].append("❌ Объект Redmine равен None")
+                        else:
+                            debug_info["checks"].append("❌ Атрибут 'redmine' отсутствует")
+                    else:
+                        debug_info["checks"].append("❌ Прямое создание коннектора: вернул None")
+
+                except Exception as connector_error:
+                    debug_info["checks"].append(f"❌ Ошибка при создании коннектора: {connector_error}")
+                    import traceback
+                    debug_info["checks"].append(f"Трассировка: {traceback.format_exc()}")
+
+                # Теперь попробуем через get_redmine_connector
+                try:
+                    redmine_conn = get_redmine_connector(current_user, user_password)
+
+                    if redmine_conn and hasattr(redmine_conn, 'redmine'):
+                        debug_info["checks"].append("✅ get_redmine_connector: OK")
+                    else:
+                        debug_info["checks"].append("❌ get_redmine_connector: ОШИБКА создания")
+
+                except Exception as get_conn_error:
+                    debug_info["checks"].append(f"❌ get_redmine_connector: ОШИБКА - {get_conn_error}")
+
+            else:
+                debug_info["checks"].append("❌ Пароль пользователя: НЕ ПОЛУЧЕН")
+
+        else:
+            debug_info["checks"].append("❌ Oracle подключение: ОШИБКА")
+
+    except Exception as e:
+        debug_info["checks"].append(f"❌ Общая ошибка: {e}")
+
+    return f"""
+    <html>
+    <head>
+        <title>Диагностика доступа к задаче #{issue_id}</title>
+        <style>
+            body {{ font-family: Arial, sans-serif; margin: 20px; }}
+            .success {{ color: green; }}
+            .error {{ color: red; }}
+            .info {{ color: blue; }}
+            ul {{ list-style-type: none; }}
+            li {{ margin: 5px 0; padding: 5px; background: #f5f5f5; border-radius: 3px; }}
+            .details {{ background: #e8f4fd; padding: 10px; border-radius: 5px; margin: 10px 0; }}
+        </style>
+    </head>
+    <body>
+        <h1>Диагностика доступа к задаче #{issue_id}</h1>
+
+        <div class="details">
+            <h3>Информация о пользователе:</h3>
+            <p><strong>Пользователь:</strong> {debug_info['user']}</p>
+            <p><strong>Является пользователем Redmine:</strong> {debug_info['is_redmine_user']}</p>
+            {f"<p><strong>URL Redmine:</strong> {debug_info.get('redmine_url', 'N/A')}</p>" if 'redmine_url' in debug_info else ''}
+            {f"<p><strong>ID пользователя в Redmine:</strong> {debug_info.get('redmine_user_id', 'N/A')}</p>" if 'redmine_user_id' in debug_info else ''}
+        </div>
+
+        <h2>Результаты проверок:</h2>
+        <ul>
+        {''.join([f'<li class="{"success" if "✅" in check else "error" if "❌" in check else "info"}">{check}</li>' for check in debug_info['checks']])}
+        </ul>
+
+        {f'<div class="details"><h3>Информация о задаче:</h3><p><strong>Тема:</strong> {debug_info.get("issue_subject", "N/A")}</p><p><strong>Статус:</strong> {debug_info.get("issue_status", "N/A")}</p></div>' if 'issue_subject' in debug_info else ''}
+
+        <div class="details">
+            <h3>Рекомендации:</h3>
+            <ul>
+                <li>Если ошибка в подключении к Oracle - проверьте VPN</li>
+                <li>Если ошибка в получении пароля - обратитесь к администратору ERP</li>
+                <li>Если ошибка в создании коннектора - проверьте конфигурацию Redmine</li>
+                <li>Если ошибка аутентификации - проверьте правильность логина/пароля</li>
+                <li>Если ошибка доступа к задаче - проверьте права доступа в Redmine</li>
+            </ul>
+        </div>
+    </body>
+    </html>
+    """
+
+
+@main.route("/test-user-connection/<username>", methods=["GET"])
+@login_required
+def test_user_connection(username):
+    """Простой тест подключения для конкретного пользователя"""
+    if not current_user.is_admin:
+        return "Доступ запрещен", 403
+
+    try:
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+        from blog.tasks.utils import create_redmine_connector
+        from config import get
+
+        # Получаем данные пользователя
+        test_user = User.query.filter_by(username=username).first()
+        if not test_user:
+            return f"Пользователь {username} не найден"
+
+        # Подключение к Oracle
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            return "Ошибка подключения к Oracle"
+
+        # Получение пароля
+        user_password = get_user_erp_password(oracle_conn, username)
+        if not user_password:
+            return f"Пароль для пользователя {username} не найден в Oracle"
+
+        # Получение конфигурации Redmine
+        redmine_url = get('redmine', 'url')
+
+        # Попытка создания коннектора
+        try:
+            connector = create_redmine_connector(
+                is_redmine_user=test_user.is_redmine_user,
+                user_login=username,
+                password=user_password,
+                api_key_param=None
+            )
+
+            if connector and hasattr(connector, 'redmine'):
+                # Тест аутентификации
+                try:
+                    current_redmine_user = connector.redmine.user.get('current')
+                    return f"""
+                    <h2>Тест успешен для пользователя {username}</h2>
+                    <p>Redmine URL: {redmine_url}</p>
+                    <p>ID в Redmine: {current_redmine_user.id}</p>
+                    <p>Имя в Redmine: {getattr(current_redmine_user, 'firstname', '')} {getattr(current_redmine_user, 'lastname', '')}</p>
+                    <p>Email в Redmine: {getattr(current_redmine_user, 'mail', '')}</p>
+                    """
+                except Exception as auth_error:
+                    return f"Ошибка аутентификации в Redmine: {auth_error}"
+            else:
+                return "Не удалось создать коннектор Redmine"
+
+        except Exception as connector_error:
+            import traceback
+            return f"Ошибка создания коннектора: {connector_error}<br><pre>{traceback.format_exc()}</pre>"
+
+    except Exception as e:
+        import traceback
+        return f"Общая ошибка: {e}<br><pre>{traceback.format_exc()}</pre>"
+
+
+@main.route("/search-redmine-users/<search_term>", methods=["GET"])
+@login_required
+def search_redmine_users(search_term):
+    """Поиск пользователей в Redmine по имени/логину"""
+    if not current_user.is_admin:
+        return "Доступ запрещен - только для администраторов", 403
+
+    try:
+        from config import get
+        from redminelib import Redmine
+        import requests
+
+        # Используем системный API ключ для поиска
+        redmine_url = get('redmine', 'url')
+        system_api_key = get('redmine', 'api_key')
+
+        if not system_api_key:
+            return "Системный API ключ не найден", 500
+
+        session = requests.Session()
+        session.verify = False
+        session.proxies.clear()
+
+        redmine = Redmine(redmine_url, key=system_api_key, requests={'session': session})
+
+        # Различные варианты поиска
+        search_variations = [
+            search_term,
+            search_term.lower(),
+            search_term.upper(),
+            search_term.capitalize(),
+            f"{search_term[0].lower()}.{search_term[1:].lower()}" if len(search_term) > 1 else search_term,
+            f"a.{search_term.lower()}",
+            f"{search_term.lower()}.a",
+            search_term.replace('.', ''),
+        ]
+
+        found_users = []
+        results = [f"🔍 Поиск пользователей по термину: '{search_term}'", ""]
+
+        for variation in search_variations:
+            try:
+                results.append(f"Поиск по: '{variation}'")
+                users = redmine.user.filter(name=variation, limit=20)
+
+                for user in users:
+                    user_info = {
+                        'id': user.id,
+                        'login': getattr(user, 'login', 'N/A'),
+                        'firstname': getattr(user, 'firstname', ''),
+                        'lastname': getattr(user, 'lastname', ''),
+                        'mail': getattr(user, 'mail', ''),
+                        'status': getattr(user, 'status', 1),
+                        'created_on': getattr(user, 'created_on', ''),
+                        'last_login_on': getattr(user, 'last_login_on', ''),
+                    }
+
+                    # Проверяем, не добавляли ли уже этого пользователя
+                    if not any(u['id'] == user_info['id'] for u in found_users):
+                        found_users.append(user_info)
+
+                results.append(f"   Найдено: {len(list(users))} пользователей")
+
+            except Exception as e:
+                results.append(f"   Ошибка: {e}")
+
+        results.append("")
+        results.append("📋 НАЙДЕННЫЕ ПОЛЬЗОВАТЕЛИ:")
+
+        if found_users:
+            for user in found_users:
+                status_text = "Активен" if user['status'] == 1 else "Заблокирован"
+                results.append(f"• ID: {user['id']}")
+                results.append(f"  Логин: {user['login']}")
+                results.append(f"  Имя: {user['firstname']} {user['lastname']}")
+                results.append(f"  Email: {user['mail']}")
+                results.append(f"  Статус: {status_text}")
+                results.append(f"  Создан: {user['created_on']}")
+                results.append(f"  Последний вход: {user['last_login_on']}")
+                results.append("")
+        else:
+            results.append("❌ Пользователи не найдены")
+
+        return f"""
+        <html>
+        <head><title>Поиск пользователей Redmine</title></head>
+        <body style="font-family: Arial; margin: 20px;">
+            <h2>Поиск пользователей в Redmine</h2>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+                {'<br>'.join(results)}
+            </div>
+        </body>
+        </html>
+        """
+
+    except Exception as e:
+        import traceback
+        return f"Ошибка поиска: {e}<br><pre>{traceback.format_exc()}</pre>"
+
+
+@main.route("/check-redmine-user/<username>", methods=["GET"])
+@login_required
+def check_redmine_user(username):
+    """Проверка статуса пользователя в Redmine"""
+    # Разрешаем пользователю проверять только свой аккаунт или админам любой
+    if not current_user.is_admin and current_user.username != username:
+        return "Доступ запрещен - можно проверять только свой аккаунт", 403
+
+    try:
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+
+        # Получаем пароль из Oracle
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            return "Ошибка подключения к Oracle"
+
+        user_password = get_user_erp_password(oracle_conn, username)
+        if not user_password:
+            return f"Пароль для пользователя {username} не найден"
+
+        # Прямая проверка в Redmine
+        from redminelib import Redmine
+        from config import get
+
+        redmine_url = get('redmine', 'url')
+
+        try:
+            # Создаем прямое подключение к Redmine
+            import requests
+            session = requests.Session()
+            session.verify = False
+            session.proxies.clear()
+
+            redmine = Redmine(redmine_url, username=username, password=user_password, requests={'session': session})
+
+            # Проверяем аутентификацию
+            current_redmine_user = redmine.user.get('current')
+
+            return f"""
+            <h2>✅ Пользователь {username} успешно аутентифицирован в Redmine</h2>
+            <p><strong>Redmine URL:</strong> {redmine_url}</p>
+            <p><strong>ID в Redmine:</strong> {current_redmine_user.id}</p>
+            <p><strong>Имя:</strong> {getattr(current_redmine_user, 'firstname', '')} {getattr(current_redmine_user, 'lastname', '')}</p>
+            <p><strong>Email:</strong> {getattr(current_redmine_user, 'mail', '')}</p>
+            <p><strong>Статус:</strong> {'Активен' if getattr(current_redmine_user, 'status', 1) == 1 else 'Заблокирован'}</p>
+            <p><strong>Последний вход:</strong> {getattr(current_redmine_user, 'last_login_on', 'Неизвестно')}</p>
+            """
+
+        except Exception as redmine_error:
+            return f"""
+            <h2>❌ Ошибка аутентификации пользователя {username} в Redmine</h2>
+            <p><strong>Redmine URL:</strong> {redmine_url}</p>
+            <p><strong>Тип ошибки:</strong> {type(redmine_error).__name__}</p>
+            <p><strong>Сообщение:</strong> {str(redmine_error)}</p>
+            <h3>Возможные причины:</h3>
+            <ul>
+                <li>Неверный пароль пользователя</li>
+                <li>Пользователь заблокирован в Redmine</li>
+                <li>Пользователь не существует в Redmine</li>
+                <li>Проблемы с сетевым подключением к Redmine</li>
+            </ul>
+            """
+
+    except Exception as e:
+        import traceback
+        return f"Общая ошибка: {e}<br><pre>{traceback.format_exc()}</pre>"
+
+
+@main.route("/my-redmine-check", methods=["GET"])
+@login_required
+def my_redmine_check():
+    """Самодиагностика Redmine для текущего пользователя"""
+    try:
+        from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password
+
+        username = current_user.username
+        results = []
+
+        # Шаг 1: Проверка подключения к Oracle
+        results.append("🔍 Проверяем подключение к Oracle...")
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if not oracle_conn:
+            results.append("❌ Ошибка подключения к Oracle")
+            return "<br>".join(results)
+        results.append("✅ Oracle подключение успешно")
+
+        # Шаг 2: Получение пароля
+        results.append(f"🔍 Получаем пароль для пользователя {username}...")
+        user_password = get_user_erp_password(oracle_conn, username)
+        if not user_password:
+            results.append(f"❌ Пароль для пользователя {username} не найден в Oracle")
+            return "<br>".join(results)
+        results.append("✅ Пароль получен из Oracle")
+
+        # Шаг 3: Проверка конфигурации Redmine
+        from config import get
+        redmine_url = get('redmine', 'url')
+        results.append(f"🔍 URL Redmine: {redmine_url}")
+
+        # Шаг 4: Прямая проверка аутентификации в Redmine
+        results.append("🔍 Проверяем аутентификацию в Redmine...")
+
+        try:
+            from redminelib import Redmine
+            import requests
+
+            session = requests.Session()
+            session.verify = False
+            session.proxies.clear()
+
+            redmine = Redmine(redmine_url, username=username, password=user_password, requests={'session': session})
+            current_redmine_user = redmine.user.get('current')
+
+            results.append("✅ Аутентификация в Redmine успешна!")
+            results.append(f"📋 ID в Redmine: {current_redmine_user.id}")
+            results.append(f"📋 Имя: {getattr(current_redmine_user, 'firstname', '')} {getattr(current_redmine_user, 'lastname', '')}")
+            results.append(f"📋 Email: {getattr(current_redmine_user, 'mail', '')}")
+            results.append(f"📋 Статус: {'Активен' if getattr(current_redmine_user, 'status', 1) == 1 else 'Заблокирован'}")
+
+            # Шаг 5: Проверка доступа к задаче
+            results.append("🔍 Проверяем доступ к задачам...")
+            try:
+                issues = redmine.issue.filter(assigned_to_id='me', limit=1)
+                issue_list = list(issues)
+                results.append(f"✅ Доступ к задачам есть (найдено задач: {len(issue_list)})")
+            except Exception as issues_error:
+                results.append(f"⚠️ Проблема с доступом к задачам: {issues_error}")
+
+            # Шаг 6: Поиск похожих пользователей в Redmine
+            results.append("🔍 Ищем похожих пользователей в Redmine...")
+            try:
+                # Поиск пользователей с похожими именами
+                search_terms = [
+                    username.lower(),
+                    username.lower().replace('.', ''),
+                    f"{username[0].lower()}.{username[1:].lower()}",
+                    f"{username.lower()}.a",
+                    f"a.{username.lower()}",
+                ]
+
+                found_users = []
+                for term in search_terms:
+                    try:
+                        users = redmine.user.filter(name=term, limit=10)
+                        for user in users:
+                            user_info = f"ID: {user.id}, Login: {getattr(user, 'login', 'N/A')}, Name: {getattr(user, 'firstname', '')} {getattr(user, 'lastname', '')}"
+                            if user_info not in found_users:
+                                found_users.append(user_info)
+                    except:
+                        continue
+
+                if found_users:
+                    results.append("📋 Найденные пользователи в Redmine:")
+                    for user_info in found_users[:5]:  # Показываем только первые 5
+                        results.append(f"   • {user_info}")
+                else:
+                    results.append("❌ Похожих пользователей не найдено")
+
+            except Exception as search_error:
+                results.append(f"⚠️ Ошибка поиска пользователей: {search_error}")
+
+        except Exception as redmine_error:
+            results.append(f"❌ Ошибка аутентификации в Redmine:")
+            results.append(f"   Тип ошибки: {type(redmine_error).__name__}")
+            results.append(f"   Сообщение: {str(redmine_error)}")
+
+            # Анализируем тип ошибки
+            error_str = str(redmine_error).lower()
+            if "401" in error_str or "unauthorized" in error_str or "invalid authentication" in error_str:
+                results.append("💡 Причина: Неверные учетные данные или логин не совпадает")
+            elif "403" in error_str or "forbidden" in error_str:
+                results.append("💡 Причина: Доступ запрещен (возможно, пользователь заблокирован)")
+            elif "404" in error_str or "not found" in error_str:
+                results.append("💡 Причина: Пользователь не найден в Redmine")
+            elif "timeout" in error_str or "connection" in error_str:
+                results.append("💡 Причина: Проблема с сетевым подключением")
+
+            # Поиск похожих пользователей через системный API ключ
+            results.append("")
+            results.append("🔍 Ищем похожих пользователей в Redmine через системный API...")
+            try:
+                from config import get
+                system_api_key = get('redmine', 'api_key')
+
+                if system_api_key:
+                    # Создаем отдельное подключение с системным API
+                    system_session = requests.Session()
+                    system_session.verify = False
+                    system_session.proxies.clear()
+
+                    system_redmine = Redmine(redmine_url, key=system_api_key, requests={'session': system_session})
+
+                    # Различные варианты поиска
+                    search_variations = [
+                        username,
+                        username.lower(),
+                        username.upper(),
+                        username.capitalize(),
+                        f"{username[0].lower()}.{username[1:].lower()}" if len(username) > 1 else username,
+                        f"a.{username.lower()}",
+                        f"{username.lower()}.a",
+                        username.replace('.', ''),
+                    ]
+
+                    found_users = []
+                    for variation in search_variations:
+                        try:
+                            users = system_redmine.user.filter(name=variation, limit=10)
+                            for user in users:
+                                user_info = f"ID: {user.id}, Login: {getattr(user, 'login', 'N/A')}, Name: {getattr(user, 'firstname', '')} {getattr(user, 'lastname', '')}, Email: {getattr(user, 'mail', '')}"
+                                if user_info not in found_users:
+                                    found_users.append(user_info)
+                        except:
+                            continue
+
+                    if found_users:
+                        results.append("📋 Найденные пользователи в Redmine:")
+                        for user_info in found_users[:5]:
+                            results.append(f"   • {user_info}")
+                        results.append("")
+                        results.append("💡 Если ваш логин в Redmine отличается от ERP, обратитесь к администратору")
+                    else:
+                        results.append("❌ Похожих пользователей не найдено")
+                        results.append("💡 Возможно, ваш аккаунт не создан в Redmine или логин сильно отличается")
+                else:
+                    results.append("⚠️ Системный API ключ не настроен для поиска пользователей")
+
+            except Exception as search_error:
+                results.append(f"⚠️ Ошибка поиска пользователей: {search_error}")
+
+        return f"""
+        <html>
+        <head><title>Диагностика Redmine для {username}</title></head>
+        <body style="font-family: Arial; margin: 20px;">
+            <h2>Диагностика Redmine для пользователя {username}</h2>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+                {'<br>'.join(results)}
+            </div>
+            <hr>
+            <p><small>Если проблема не решена, обратитесь к администратору системы</small></p>
+        </body>
+        </html>
+        """
+
+    except Exception as e:
+        import traceback
+        return f"""
+        <html>
+        <body style="font-family: Arial; margin: 20px;">
+            <h2>Ошибка диагностики для {current_user.username}</h2>
+            <p><strong>Ошибка:</strong> {e}</p>
+            <pre>{traceback.format_exc()}</pre>
+        </body>
+        </html>
+        """
+
+
 @main.route("/get-my-issues", methods=["GET"])
 @login_required
 def get_my_issues():
@@ -996,24 +1576,65 @@ def issue(issue_id):
     start_time = time.time()
 
     # Подключение к Oracle (для получения пароля пользователя)
-    oracle_connect_instance = connect_oracle(
-        db_host, db_port, db_service_name, db_user_name, db_password
-    )
+    oracle_connect_instance = None
+    user_password_erp = None
 
-    user_password_erp = get_user_erp_password(oracle_connect_instance, current_user.username)
-    if not oracle_connect_instance or not user_password_erp:
-        flash("Не удалось подключиться к базе данных Oracle или получить пароль пользователя для Redmine.", "error")
+    try:
+        oracle_connect_instance = connect_oracle(
+            db_host, db_port, db_service_name, db_user_name, db_password
+        )
+
+        if not oracle_connect_instance:
+            current_app.logger.error(f"Не удалось подключиться к Oracle для пользователя {current_user.username}")
+            flash("Ошибка подключения к базе данных Oracle. Проверьте VPN соединение.", "error")
+            return redirect(url_for("main.my_issues"))
+
+        user_password_erp = get_user_erp_password(oracle_connect_instance, current_user.username)
+
+        if not user_password_erp:
+            current_app.logger.error(f"Не удалось получить пароль из Oracle для пользователя {current_user.username}")
+            flash("Не удалось получить пароль пользователя. Обратитесь в службу поддержки.", "error")
+            return redirect(url_for("main.my_issues"))
+
+    except Exception as oracle_error:
+        current_app.logger.error(f"Ошибка при работе с Oracle для пользователя {current_user.username}: {oracle_error}")
+        flash("Ошибка при подключении к системе аутентификации. Попробуйте позже.", "error")
         return redirect(url_for("main.my_issues"))
 
     # Получаем пароль пользователя
     actual_user_password = user_password_erp[0] if isinstance(user_password_erp, tuple) else user_password_erp
 
     # === ЭТАП 2: Создание Redmine коннектора ===
-    redmine_connector_user = get_redmine_connector(current_user, actual_user_password)
+    redmine_connector_user = None
 
-    if not redmine_connector_user or not hasattr(redmine_connector_user, 'redmine'):
-        flash("Не удалось создать пользовательский коннектор Redmine.", "error")
-        current_app.logger.error(f"Не удалось создать redmine_connector_user для {current_user.username}")
+    try:
+        redmine_connector_user = get_redmine_connector(current_user, actual_user_password)
+
+        if not redmine_connector_user:
+            current_app.logger.error(f"get_redmine_connector вернул None для пользователя {current_user.username}")
+
+            # Проверяем, есть ли у пользователя API ключ
+            has_api_key = hasattr(current_user, 'redmine_api_key') and current_user.redmine_api_key
+            if has_api_key:
+                flash("Ошибка аутентификации в Redmine. Проверьте ваш API ключ в настройках профиля.", "error")
+            else:
+                flash("Ошибка аутентификации в Redmine. Возможные причины: пароль или логин в ERP не совпадает с данными в Redmine. Обратитесь к администратору для проверки соответствия учетных записей.", "error")
+            return redirect(url_for("main.my_issues"))
+
+        if not hasattr(redmine_connector_user, 'redmine'):
+            current_app.logger.error(f"Redmine коннектор не имеет атрибута 'redmine' для пользователя {current_user.username}")
+            flash("Ошибка конфигурации подключения к системе задач.", "error")
+            return redirect(url_for("main.my_issues"))
+
+        # Проверяем, что коннектор действительно работает
+        if not redmine_connector_user.redmine:
+            current_app.logger.error(f"Redmine объект равен None для пользователя {current_user.username}")
+            flash("Не удалось установить соединение с системой задач.", "error")
+            return redirect(url_for("main.my_issues"))
+
+    except Exception as connector_error:
+        current_app.logger.error(f"Ошибка при создании Redmine коннектора для пользователя {current_user.username}: {connector_error}")
+        flash("Ошибка при подключении к системе задач. Проверьте ваши учетные данные.", "error")
         return redirect(url_for("main.my_issues"))
 
     # === ЭТАП 3: Загрузка данных заявки ===
@@ -1023,21 +1644,58 @@ def issue(issue_id):
 
     try:
         # Загружаем основные данные задачи
+        current_app.logger.info(f"Попытка загрузки задачи #{issue_id} для пользователя {current_user.username}")
+
+        # Сначала попробуем загрузить задачу без дополнительных данных для диагностики
+        try:
+            basic_issue = redmine_connector_user.redmine.issue.get(issue_id)
+            current_app.logger.info(f"Базовая информация о задаче #{issue_id} получена успешно")
+        except Exception as basic_error:
+            current_app.logger.error(f"Не удалось получить базовую информацию о задаче #{issue_id}: {basic_error}")
+            raise basic_error
+
+        # Теперь загружаем полную информацию
         issue_detail_obj = redmine_connector_user.redmine.issue.get(
             issue_id,
             include=['attachments', 'journals']
         )
 
+        if not issue_detail_obj:
+            current_app.logger.error(f"Задача #{issue_id} не найдена или недоступна для пользователя {current_user.username}")
+            flash(f"Задача #{issue_id} не найдена или у вас нет прав доступа к ней.", "error")
+            return redirect(url_for("main.my_issues"))
+
+        current_app.logger.info(f"Задача #{issue_id} успешно загружена для пользователя {current_user.username}")
+
         # Получаем вложения
         if hasattr(issue_detail_obj, 'attachments'):
             attachment_list = issue_detail_obj.attachments
+            current_app.logger.info(f"Найдено {len(attachment_list)} вложений для задачи #{issue_id}")
 
         # Получаем историю изменений
-        issue_history = redmine_connector_user.get_issue_history(issue_id)
+        try:
+            issue_history = redmine_connector_user.get_issue_history(issue_id)
+            current_app.logger.info(f"История изменений загружена для задачи #{issue_id}")
+        except Exception as history_error:
+            current_app.logger.warning(f"Не удалось загрузить историю для задачи #{issue_id}: {history_error}")
+            issue_history = None  # Продолжаем без истории
 
     except Exception as e:
-        current_app.logger.error(f"Ошибка при загрузке задачи #{issue_id}: {e}")
-        flash(f"Не удалось загрузить задачу #{issue_id}.", "error")
+        error_msg = str(e)
+        current_app.logger.error(f"Ошибка при загрузке задачи #{issue_id} для пользователя {current_user.username}: {error_msg}")
+
+        # Определяем тип ошибки для более точного сообщения
+        if "403" in error_msg or "Forbidden" in error_msg:
+            flash(f"У вас нет прав доступа к задаче #{issue_id}.", "error")
+        elif "404" in error_msg or "Not Found" in error_msg:
+            flash(f"Задача #{issue_id} не найдена.", "error")
+        elif "401" in error_msg or "Unauthorized" in error_msg:
+            flash("Ошибка аутентификации. Проверьте ваши учетные данные.", "error")
+        elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
+            flash("Превышено время ожидания подключения к серверу. Попробуйте позже.", "error")
+        else:
+            flash(f"Не удалось загрузить задачу #{issue_id}. Обратитесь в службу поддержки.", "error")
+
         return redirect(url_for("main.my_issues"))
 
     # === ЭТАП 4: КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ - Предзагрузка данных для истории ===

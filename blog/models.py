@@ -40,6 +40,8 @@ class User(db.Model, UserMixin):
     browser_notifications_enabled = db.Column(db.Boolean, default=False)
     notifications_widget_enabled = db.Column(db.Boolean, default=True, nullable=False)
     last_notification_check = db.Column(db.DateTime, nullable=True)
+    redmine_username = db.Column(db.String(100), nullable=True)  # Логин пользователя в Redmine (если отличается от ERP)
+    redmine_api_key = db.Column(db.String(255), nullable=True)   # API ключ пользователя в Redmine
     posts = db.relationship("Post", backref="author", lazy=True)
     push_subscriptions = db.relationship("PushSubscription", backref="user", lazy=True, cascade="all, delete-orphan")
 

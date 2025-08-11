@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Обновление почтовых адресов отделов - TEZ TOUR</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .notification-container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            padding: 30px;
+            max-width: 800px;
+            width: 100%;
+            margin: 0 auto;
+            border: 1px solid #e9ecef;
+        }
+
+        .header {
+            margin-bottom: 25px;
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 20px;
+        }
+
+        .title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .content {
+            margin-bottom: 30px;
+        }
+
+        .main-message {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .main-message h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+        }
+
+        .main-message h3::before {
+            content: '📧';
+            margin-right: 10px;
+            font-size: 20px;
+        }
+
+        .main-message p {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .main-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        .departments-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .department-card {
+            background: white;
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .department-name {
+            font-size: 15px;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .department-email {
+            background: #007bff;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+
+        .info-box {
+            background: #e3f2fd;
+            border: 1px solid #bbdefb;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1565c0;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-box h4::before {
+            content: 'ℹ';
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .info-box p {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #495057;
+            margin-bottom: 0;
+        }
+
+        .warning-box {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .warning-box h4 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #856404;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+        }
+
+        .warning-box h4::before {
+            content: '⚠';
+            margin-right: 8px;
+            font-size: 18px;
+        }
+
+        .warning-box p {
+            font-size: 14px;
+            line-height: 1.4;
+            color: #495057;
+            margin-bottom: 0;
+        }
+
+        .footer {
+            text-align: center;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .footer p {
+            font-size: 13px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        @media (max-width: 768px) {
+            .notification-container {
+                padding: 20px;
+                margin: 10px;
+            }
+
+            .title {
+                font-size: 20px;
+            }
+
+            .department-card {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+
+            .department-email {
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="notification-container">
+        <div class="header">
+            <h1 class="title">Обновление почтовых адресов отделов</h1>
+            <p class="subtitle">Важная информация для всех сотрудников</p>
+        </div>
+
+        <div class="content">
+            <div class="main-message">
+                <h3>Офис в МИНСКЕ перешел на новый почтовый сервер</h3>
+                <p>Обращаем внимание, что офис в МИНСКЕ перешел на новый почтовый сервер <span class="department-email">@tez-tour.by</span></p>
+                <p>Общие адреса отделов дублирую ниже, личные адреса сотрудников можно проверить в ЕРП - Контакты - Офис в Минске (данные уже обновлены). В личных адресах изменилось только название сервера, названия (имя) почтового ящика сохранилось.</p>
+            </div>
+
+            <div class="info-box">
+                <h4>Проверка личных адресов</h4>
+                <p>Личные адреса сотрудников можно проверить в ЕРП - Контакты - Офис в Минске (данные уже обновлены). В личных адресах изменилось только название сервера, названия (имя) почтового ящика сохранилось.</p>
+            </div>
+
+            <div class="departments-grid">
+                <div class="department-card">
+                    <span class="department-name">Отдел продаж</span>
+                    <span class="department-email">info@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Отдел бронирования</span>
+                    <span class="department-email">book@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Отдел маркетинга</span>
+                    <span class="department-email">calc@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Юридический отдел</span>
+                    <span class="department-email">pravo@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Отдел выдачи</span>
+                    <span class="department-email">voucher@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Визовый отдел</span>
+                    <span class="department-email">visa@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Бухгалтерия</span>
+                    <span class="department-email">buh@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Online продажи</span>
+                    <span class="department-email">support@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">Отдел рекламы и PR</span>
+                    <span class="department-email">reklama@tez-tour.by</span>
+                </div>
+
+                <div class="department-card">
+                    <span class="department-name">MICE отдел</span>
+                    <span class="department-email">mice@tez-tour.by</span>
+                </div>
+            </div>
+
+            <div class="warning-box">
+                <h4>Важно!</h4>
+                <p>Если вы использовали какие-то наши адреса для рассылок/групп - замените, пожалуйста, на новые адреса.</p>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>С уважением,<br>Команда технической поддержки TEZ TOUR</p>
+        </div>
+    </div>
+</body>
+</html>

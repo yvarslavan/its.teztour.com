@@ -257,36 +257,66 @@ def get_property_name(property_name, prop_key, old_value, value):
 
 class RedmineConnector:
     def __init__(self, url, username=None, password=None, api_key=None):
-        parsed_url = urlparse(url)
-        if not all([parsed_url.scheme, parsed_url.netloc]):
-            raise ValueError("Некорректный URL для подключения к Redmine.")
+        try:
+            parsed_url = urlparse(url)
+            if not all([parsed_url.scheme, parsed_url.netloc]):
+                logger.error(f"Некорректный URL для подключения к Redmine: {url}")
+                raise ValueError("Некорректный URL для подключения к Redmine.")
 
-        # ИСПРАВЛЕНИЕ: Отключаем проверку SSL и прокси для избежания ошибок подключения
-        import requests
-        session = requests.Session()
-        session.verify = False
-        # Отключаем использование прокси
-        session.proxies.clear()
-        # Устанавливаем таймауты для избежания зависания запросов
-        # Таймауты будут передаваться в каждый запрос
+            logger.info(f"Инициализация RedmineConnector с URL: {url}")
+            logger.info(f"Параметры: username={username}, password={'***' if password else None}, api_key={'***' if api_key else None}")
 
-        if username and password:
-            self.redmine = Redmine(url, username=username, password=password, requests={'session': session})
-            logger.info("Инициализировано подключение к Redmine с использованием имени пользователя и пароля.")
-        elif api_key:
-            self.redmine = Redmine(url, key=api_key, requests={'session': session})
-            logger.info("Инициализировано подключение к Redmine с использованием API ключа.")
-        else:
-            raise ValueError("Или (username, password) или api_key должны быть определены.")
+            # ИСПРАВЛЕНИЕ: Отключаем проверку SSL и прокси для избежания ошибок подключения
+            import requests
+            session = requests.Session()
+            session.verify = False
+            # Отключаем использование прокси
+            session.proxies.clear()
+            # Устанавливаем таймауты для избежания зависания запросов
+            # Таймауты будут передаваться в каждый запрос
+
+            if username and password:
+                logger.info(f"Создание подключения к Redmine с именем пользователя: {username}")
+                self.redmine = Redmine(url, username=username, password=password, requests={'session': session})
+                logger.info("Инициализировано подключение к Redmine с использованием имени пользователя и пароля.")
+            elif api_key:
+                logger.info("Создание подключения к Redmine с API ключом")
+                self.redmine = Redmine(url, key=api_key, requests={'session': session})
+                logger.info("Инициализировано подключение к Redmine с использованием API ключа.")
+            else:
+                logger.error("Не предоставлены учетные данные для подключения к Redmine")
+                raise ValueError("Или (username, password) или api_key должны быть определены.")
+
+            logger.info("RedmineConnector успешно инициализирован")
+
+        except Exception as e:
+            logger.error(f"Ошибка при инициализации RedmineConnector: {e}")
+            import traceback
+            logger.error(f"Трассировка: {traceback.format_exc()}")
+            raise
 
     def is_user_authenticated(self):
         try:
-            self.redmine.user.get("current")
+            logger.info("Проверка аутентификации пользователя в Redmine...")
+            current_user = self.redmine.user.get("current")
+            logger.info(f"Аутентификация успешна. Пользователь ID: {current_user.id}, Email: {getattr(current_user, 'mail', 'N/A')}")
             return True
-        except AuthError:
+        except AuthError as auth_error:
+            logger.error(f"Ошибка аутентификации (AuthError): {auth_error}")
             return False
-        except BaseRedmineError as e:
-            logging.error("Ошибка при проверке аутентификации: %s", e)
+        except ForbiddenError as forbidden_error:
+            logger.error(f"Доступ запрещен (ForbiddenError): {forbidden_error}")
+            return False
+        except ResourceNotFoundError as not_found_error:
+            logger.error(f"Ресурс не найден (ResourceNotFoundError): {not_found_error}")
+            return False
+        except BaseRedmineError as base_error:
+            logger.error(f"Общая ошибка Redmine (BaseRedmineError): {base_error}")
+            return False
+        except Exception as general_error:
+            logger.error(f"Неожиданная ошибка при проверке аутентификации: {general_error}")
+            import traceback
+            logger.error(f"Трассировка: {traceback.format_exc()}")
             return False
 
     def get_current_user(self, user_id):

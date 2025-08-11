@@ -29,13 +29,74 @@ def save_picture(form_picture):
     _, f_ext = os.path.splitext(form_picture.filename)
     picture_fn = random_hex + f_ext
     full_path = os.path.join(current_app.root_path, 'static', 'profile_pics/', current_user.username, 'account_img')
+
+    # Создаем директорию с правильными правами
     if not os.path.exists(full_path):
-        os.mkdir(full_path)
+        try:
+            os.makedirs(full_path, exist_ok=True)
+            # Устанавливаем права 755 для директории (rwxr-xr-x)
+            os.chmod(full_path, 0o755)
+            current_app.logger.info(f"Создана директория: {full_path}")
+        except Exception as e:
+            current_app.logger.error(f"Ошибка создания директории {full_path}: {e}")
+            raise e
+
     picture_path = os.path.join(full_path, picture_fn)
     output_size = (600, 600)
-    i = Image.open(form_picture)
-    i.thumbnail(output_size)
-    i.save(picture_path)
+
+    try:
+        i = Image.open(form_picture)
+        current_app.logger.info(f"Открыто изображение: формат={i.format}, режим={i.mode}, размер={i.size}")
+
+        # Конвертируем изображение в RGB режим для совместимости с JPEG
+        if i.mode in ('RGBA', 'LA', 'P'):
+            current_app.logger.info(f"Конвертируем изображение из режима {i.mode} в RGB")
+            # Создаем белый фон для прозрачных изображений
+            background = Image.new('RGB', i.size, 0xFFFFFF)
+            if i.mode == 'P':
+                i = i.convert('RGBA')
+            background.paste(i, mask=i.split()[-1] if i.mode == 'RGBA' else None)
+            i = background
+        elif i.mode != 'RGB':
+            current_app.logger.info(f"Конвертируем изображение из режима {i.mode} в RGB")
+            i = i.convert('RGB')
+
+        # Изменяем размер
+        i.thumbnail(output_size, Image.Resampling.LANCZOS)
+
+        # Определяем формат для сохранения
+        _, file_ext = os.path.splitext(form_picture.filename)
+        if file_ext.lower() in ['.jpg', '.jpeg']:
+            # Сохраняем как JPEG
+            i.save(picture_path, 'JPEG', quality=85, optimize=True)
+        elif file_ext.lower() in ['.png']:
+            # Сохраняем как PNG
+            i.save(picture_path, 'PNG', optimize=True)
+        else:
+            # По умолчанию сохраняем как JPEG
+            i.save(picture_path, 'JPEG', quality=85, optimize=True)
+
+        # Устанавливаем права 644 для файла (rw-r--r--)
+        os.chmod(picture_path, 0o644)
+        current_app.logger.info(f"Файл сохранен: {picture_path} (формат: {i.mode})")
+
+        # Проверяем, что файл действительно создан
+        if os.path.exists(picture_path):
+            file_size = os.path.getsize(picture_path)
+            current_app.logger.info(f"Файл создан успешно, размер: {file_size} байт")
+        else:
+            current_app.logger.error(f"Файл не найден после сохранения: {picture_path}")
+            raise Exception("Файл не был создан")
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка сохранения файла {picture_path}: {e}")
+        # Удаляем частично созданный файл
+        if os.path.exists(picture_path):
+            try:
+                os.remove(picture_path)
+            except:
+                pass
+        raise e
 
     return picture_fn
 

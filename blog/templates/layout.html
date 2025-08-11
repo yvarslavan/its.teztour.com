@@ -19,6 +19,9 @@
             <link rel="stylesheet" href="{{ url_for('static', filename='css/sweetalert2.min.css') }}">
             <link rel="stylesheet" href="{{ url_for('static', filename='css/mobile-menu.css') }}">
 
+            <!-- Modern Splash Screen CSS -->
+            <link rel="stylesheet" href="{{ url_for('static', filename='css/modern_splash_screen.css') }}">
+
             <!-- Локальные JS файлы -->
                     <script src="{{ url_for('static', filename='js/sweetalert2.all.min.js') }}"></script>
 <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
@@ -752,7 +755,123 @@
                     </style>
 
     </head>
-        <body class="{% if current_user.is_authenticated %}logged-in{% endif %}">
+        <body class="{% if current_user.is_authenticated %}logged-in{% endif %}"
+              {% if request.endpoint == 'users.login' or request.endpoint == 'users.register' %}
+              data-splash-time="3500"
+              data-splash-once="false"
+              data-splash-debug="false"
+              data-show-splash="true"
+              {% else %}
+              data-show-splash="false"
+              {% endif %}>
+
+            {% if request.endpoint == 'users.login' or request.endpoint == 'users.register' %}
+            <!-- ================================
+                 MODERN SPLASH SCREEN - Показывается только на login/register
+                 ================================ -->
+            <div class="modern-splash-screen">
+                <!-- Анимированный фон -->
+                <div class="splash-background">
+                    <!-- Частицы и геометрия будут добавлены через JavaScript -->
+                </div>
+
+                <!-- Основной контент -->
+                <div class="splash-content">
+                    <div class="splash-glass-card">
+                                                <!-- Логотип и брендинг -->
+                        <div class="splash-logo-container">
+                            <div class="splash-logo-icon">
+                                <!-- Настоящий логотип TEZ TOUR с fallback -->
+                                <img src="https://r.tez-tour.com/portal/images/main/logo-white.png"
+                                     alt="TEZ TOUR"
+                                     class="splash-company-logo"
+                                     onerror="this.src='{{ url_for('static', filename='img/tez-logo-white.png') }}'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';}">
+                                <!-- Fallback иконка если ни один логотип не загрузится -->
+                                <i class="fas fa-tasks splash-fallback-icon" style="display: none;"></i>
+
+                                <!-- Дополнительные эффекты -->
+                                <div class="splash-logo-glow"></div>
+                                <div class="splash-logo-pulse"></div>
+                            </div>
+                        </div>
+
+                        <!-- Заголовки -->
+                        <h1 class="splash-title">
+                            <span class="title-word" data-delay="1.2">TEZ</span>
+                            <span class="title-word" data-delay="1.4">Navigator</span>
+                        </h1>
+
+                        <!-- Современный индикатор загрузки -->
+                        <div class="splash-loading">
+                            <!-- Круговой прогресс с процентами -->
+                            <div class="splash-progress-ring-container">
+                                <div class="splash-progress-ring">
+                                    <svg class="progress-ring-svg" viewBox="0 0 120 120">
+                                        <circle class="progress-ring-background" cx="60" cy="60" r="50"/>
+                                        <circle class="progress-ring-fill" cx="60" cy="60" r="50"/>
+                                    </svg>
+                                    <div class="progress-percentage">
+                                        <span class="percentage-number">0</span>
+                                        <span class="percentage-symbol">%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Линейный прогресс-бар с этапами -->
+                            <div class="splash-progress-container">
+                                <div class="splash-progress-bar">
+                                    <div class="progress-segments">
+                                        <div class="progress-segment" data-stage="1"></div>
+                                        <div class="progress-segment" data-stage="2"></div>
+                                        <div class="progress-segment" data-stage="3"></div>
+                                        <div class="progress-segment" data-stage="4"></div>
+                                    </div>
+                                </div>
+                                <div class="progress-labels">
+                                    <span class="progress-label" data-stage="1">Соединение</span>
+                                    <span class="progress-label" data-stage="2">Авторизация</span>
+                                    <span class="progress-label" data-stage="3">Интерфейс</span>
+                                    <span class="progress-label" data-stage="4">Готово</span>
+                                </div>
+                            </div>
+
+                            <!-- Улучшенные пульсирующие точки -->
+                            <div class="splash-dots">
+                                <div class="splash-dot" data-delay="0"></div>
+                                <div class="splash-dot" data-delay="0.2"></div>
+                                <div class="splash-dot" data-delay="0.4"></div>
+                                <div class="splash-dot" data-delay="0.6"></div>
+                                <div class="splash-dot" data-delay="0.8"></div>
+                            </div>
+
+                            <!-- Динамический текст загрузки -->
+                            <div class="splash-loading-text">
+                                <span class="loading-main-text">
+                                    {% if request.endpoint == 'users.login' %}
+                                        Подготавливаем вход в систему
+                                    {% elif request.endpoint == 'users.register' %}
+                                        Подготавливаем регистрацию
+                                    {% else %}
+                                        Загружаем интерфейс
+                                    {% endif %}
+                                </span>
+                                <span class="loading-dots">
+                                    <span class="dot-1">.</span>
+                                    <span class="dot-2">.</span>
+                                    <span class="dot-3">.</span>
+                                </span>
+                            </div>
+
+                            <!-- Статусное сообщение -->
+                            <div class="splash-status-text">
+                                Инициализация системы...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             <div class="wrapper">
                 {% block menu %}
                 <header class="modern-header">
@@ -1847,9 +1966,37 @@
                     if (!isModernWidgetClosed) {
                         console.log('[Polling] Современный виджет активен, воспроизводим звук и обновляем виджет');
 
-                        // Воспроизводим звук для современного виджета
-                        if (typeof window.playNotificationSound === 'function') {
-                            window.playNotificationSound();
+                        // Воспроизводим звук для современного виджета - с улучшенным fallback механизмом
+                        try {
+                            if (typeof window.playNotificationSound === 'function') {
+                                console.log('[Polling] 🔊 Вызываем window.playNotificationSound()');
+                                window.playNotificationSound();
+                            } else {
+                                console.log('[Polling] 🔊 window.playNotificationSound не готова, используем fallback');
+                                // Fallback механизм с проверками
+                                const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
+                                if (!soundDisabled) {
+                                    try {
+                                        const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
+                                        audio.volume = 0.5;
+                                        audio.play().then(() => {
+                                            console.log('[Polling] ✅ Fallback звук воспроизведен успешно');
+                                        }).catch(e => {
+                                            if (e.name === 'NotAllowedError') {
+                                                console.log('[Polling] 🔇 Звук заблокирован браузером (требуется взаимодействие пользователя)');
+                                            } else {
+                                                console.warn('[Polling] ⚠️ Ошибка fallback воспроизведения звука:', e);
+                                            }
+                                        });
+                                    } catch (audioError) {
+                                        console.error('[Polling] ❌ Ошибка создания аудио элемента:', audioError);
+                                    }
+                                } else {
+                                    console.log('[Polling] 🔇 Звук отключен через localStorage');
+                                }
+                            }
+                        } catch (soundError) {
+                            console.error('[Polling] ❌ Критическая ошибка воспроизведения звука:', soundError);
                         }
 
                         // Обновляем современный виджет
@@ -2114,5 +2261,8 @@
                     console.log('Mobile menu initialized successfully.');
                 });
             </script>
+
+            <!-- Modern Splash Screen JavaScript -->
+            <script src="{{ url_for('static', filename='js/modern_splash_screen.js') }}"></script>
         </body>
 </html>

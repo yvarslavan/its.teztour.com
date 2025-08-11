@@ -4,7 +4,6 @@ import os
 from configparser import ConfigParser
 from datetime import datetime, timedelta
 import time
-from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.jobstores.base import JobLookupError
 import oracledb
 import sqlalchemy
@@ -32,7 +31,7 @@ from werkzeug.utils import redirect
 from blog import db, scheduler
 from blog.models import User, Post, PushSubscription
 from blog.user.forms import RegistrationForm, LoginForm, UpdateAccountForm
-from blog.user.utils import save_picture, random_avatar, quality_control_required, validate_user_image_path, get_user_image_url
+from blog.user.utils import save_picture, random_avatar, quality_control_required, validate_user_image_path
 from erp_oracle import (
     connect_oracle,
     db_host,
@@ -495,6 +494,33 @@ def account():
             return redirect(url_for("users.login"))
 
         form = UpdateAccountForm()
+
+        if form.validate_on_submit():
+            # Обработка загрузки фото
+            if form.picture.data:
+                try:
+                    picture_file = save_picture(form.picture.data)
+
+                    # Обновляем image_file в объекте из базы данных
+                    user_obj.image_file = picture_file
+
+                    # Также обновляем current_user для совместимости
+                    current_user.image_file = picture_file
+
+                    # Сохраняем изменения в базе данных
+                    db.session.commit()
+
+                    flash('Ваше фото профиля было обновлено!', 'success')
+                    current_app.logger.info(f"Фото профиля успешно обновлено для пользователя {current_user.username}: {picture_file}")
+
+                    # Дополнительная проверка обновления в БД
+                    db.session.refresh(user_obj)
+                    current_app.logger.info(f"Проверка БД - image_file после обновления: {user_obj.image_file}")
+
+                except Exception as e:
+                    current_app.logger.error(f"Ошибка при сохранении фото для пользователя {current_user.username}: {e}")
+                    flash(f'Ошибка при загрузке фото: {str(e)}. Обратитесь к администратору.', 'error')
+            return redirect(url_for('users.account'))
 
         if request.method == "GET":
             form.username.data = current_user.username
@@ -1135,3 +1161,172 @@ def get_notifications_status():
 def test_xmpp_message():
     # Этот роут будет удален или закомментирован
     return "Функция недоступна", 404
+
+
+@users.route("/debug-photo-upload", methods=["GET"])
+@login_required
+def debug_photo_upload():
+    """Диагностика загрузки фото профиля"""
+    import os
+    import stat
+
+    results = []
+    username = current_user.username
+
+    # Проверяем базовую директорию
+    base_path = os.path.join(current_app.root_path, 'static', 'profile_pics')
+    results.append(f"🔍 Базовая директория: {base_path}")
+    results.append(f"   Существует: {os.path.exists(base_path)}")
+
+    if os.path.exists(base_path):
+        try:
+            base_perms = oct(os.stat(base_path).st_mode)[-3:]
+            results.append(f"   Права доступа: {base_perms}")
+        except Exception as e:
+            results.append(f"   Ошибка получения прав: {e}")
+
+    # Проверяем директорию пользователя
+    user_path = os.path.join(base_path, username)
+    results.append(f"🔍 Директория пользователя: {user_path}")
+    results.append(f"   Существует: {os.path.exists(user_path)}")
+
+    if os.path.exists(user_path):
+        try:
+            user_perms = oct(os.stat(user_path).st_mode)[-3:]
+            results.append(f"   Права доступа: {user_perms}")
+        except Exception as e:
+            results.append(f"   Ошибка получения прав: {e}")
+
+    # Проверяем директорию account_img
+    account_img_path = os.path.join(user_path, 'account_img')
+    results.append(f"🔍 Директория account_img: {account_img_path}")
+    results.append(f"   Существует: {os.path.exists(account_img_path)}")
+
+    if os.path.exists(account_img_path):
+        try:
+            account_perms = oct(os.stat(account_img_path).st_mode)[-3:]
+            results.append(f"   Права доступа: {account_perms}")
+
+            # Список файлов в директории
+            files = os.listdir(account_img_path)
+            results.append(f"   Файлы в директории: {files}")
+
+            for file in files:
+                file_path = os.path.join(account_img_path, file)
+                try:
+                    file_perms = oct(os.stat(file_path).st_mode)[-3:]
+                    file_size = os.path.getsize(file_path)
+                    results.append(f"   {file}: права {file_perms}, размер {file_size} байт")
+                except Exception as e:
+                    results.append(f"   {file}: ошибка {e}")
+
+        except Exception as e:
+            results.append(f"   Ошибка получения прав: {e}")
+
+    # Проверяем текущий image_file
+    results.append(f"🔍 Текущий image_file в БД: {current_user.image_file}")
+
+    # Проверяем полный путь к файлу
+    if current_user.image_file and current_user.image_file != 'default.jpg':
+        full_image_path = os.path.join(account_img_path, current_user.image_file)
+        results.append(f"🔍 Полный путь к файлу: {full_image_path}")
+        results.append(f"   Существует: {os.path.exists(full_image_path)}")
+
+        if os.path.exists(full_image_path):
+            try:
+                file_perms = oct(os.stat(full_image_path).st_mode)[-3:]
+                file_size = os.path.getsize(full_image_path)
+                results.append(f"   Права доступа: {file_perms}, размер: {file_size} байт")
+            except Exception as e:
+                results.append(f"   Ошибка получения информации: {e}")
+
+    # Проверяем права на запись
+    results.append(f"🔍 Проверка прав на запись:")
+    try:
+        test_file = os.path.join(account_img_path, 'test_write.tmp')
+        with open(test_file, 'w') as f:
+            f.write('test')
+        os.remove(test_file)
+        results.append("   ✅ Права на запись есть")
+    except Exception as e:
+        results.append(f"   ❌ Ошибка записи: {e}")
+
+    return f"""
+    <html>
+    <head><title>Диагностика загрузки фото</title></head>
+    <body style="font-family: Arial; margin: 20px;">
+        <h2>Диагностика загрузки фото для {username}</h2>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+            {'<br>'.join(results)}
+        </div>
+        <hr>
+        <h3>Действия:</h3>
+        <p><a href="/fix-image-file" style="background: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Исправить image_file в БД</a></p>
+    </body>
+    </html>
+    """
+
+
+@users.route("/fix-image-file", methods=["GET"])
+@login_required
+def fix_image_file():
+    """Исправление image_file в базе данных"""
+    import os
+
+    username = current_user.username
+    results = []
+
+    try:
+        # Получаем пользователя из БД
+        user = User.query.filter_by(username=username).first()
+        if not user:
+            return "Пользователь не найден", 404
+
+        results.append(f"🔍 Исправление image_file для пользователя {username}")
+        results.append(f"   Текущий image_file в БД: {user.image_file}")
+
+        # Проверяем директорию с файлами
+        account_img_path = os.path.join(current_app.root_path, 'static', 'profile_pics', username, 'account_img')
+
+        if os.path.exists(account_img_path):
+            files = os.listdir(account_img_path)
+            results.append(f"   Файлы в директории: {files}")
+
+            if files:
+                # Берем самый новый файл (по времени изменения)
+                newest_file = max(files, key=lambda f: os.path.getmtime(os.path.join(account_img_path, f)))
+                results.append(f"   Самый новый файл: {newest_file}")
+
+                # Обновляем в БД
+                old_image_file = user.image_file
+                user.image_file = newest_file
+                db.session.commit()
+
+                results.append(f"   ✅ Обновлено в БД: {old_image_file} → {newest_file}")
+
+                # Обновляем current_user
+                current_user.image_file = newest_file
+
+                results.append("   ✅ current_user также обновлен")
+            else:
+                results.append("   ❌ Файлы не найдены в директории")
+        else:
+            results.append("   ❌ Директория не существует")
+
+    except Exception as e:
+        results.append(f"   ❌ Ошибка: {e}")
+        current_app.logger.error(f"Ошибка при исправлении image_file для {username}: {e}")
+
+    return f"""
+    <html>
+    <head><title>Исправление image_file</title></head>
+    <body style="font-family: Arial; margin: 20px;">
+        <h2>Исправление image_file</h2>
+        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
+            {'<br>'.join(results)}
+        </div>
+        <hr>
+        <p><a href="/account" style="background: #28a745; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Вернуться в профиль</a></p>
+    </body>
+    </html>
+    """

@@ -1165,7 +1165,7 @@ def test_status_api():
         return "Файл test_status_api.html не найден", 404
 
 def get_my_tasks_statuses_localized():
-    """API для получения локализованных статусов задач из таблицы u_statuses
+    """API для получения локализованных статусов задач с правильной сортировкой по position
 
     Внимание: Не проверяет авторизацию! Должен вызываться только из авторизованного контекста.
     """
@@ -1182,14 +1182,25 @@ def get_my_tasks_statuses_localized():
         statuses = []
 
         try:
-            # Получаем локализованные статусы из таблицы u_statuses
+            # Получаем локализованные статусы с правильной сортировкой по position из issue_statuses
             status_start = time.time()
+            # ВАЖНО: не используем алиас "is" (зарезервирован в SQL/логический оператор)
             cursor.execute("""
-                SELECT id, name
-                FROM u_statuses
-                ORDER BY id, name
+                SELECT us.id, us.name, ist.position, ist.is_closed
+                FROM u_statuses us
+                JOIN issue_statuses AS ist ON us.id = ist.id
+                ORDER BY ist.position ASC, us.name ASC
             """)
-            statuses = [{"id": row["id"], "name": row["name"]} for row in cursor.fetchall()]
+
+            statuses = []
+            for row in cursor.fetchall():
+                statuses.append({
+                    "id": row["id"],
+                    "name": row["name"],
+                    "position": row["position"],
+                    "is_closed": bool(row["is_closed"])
+                })
+
             status_time = time.time() - status_start
             logger.info(f"✅ [STATUSES] Локализованные статусы загружены за {status_time:.3f}с ({len(statuses)} записей)")
 
@@ -2065,39 +2076,22 @@ def get_my_tasks_statuses():
             current_app.logger.error("❌ Не удалось получить статусы из таблицы u_statuses")
             return jsonify({"success": False, "error": "Не удалось получить статусы"}), 500
 
-        # Определяем, какие статусы являются закрытыми по ID
-        # Примечание: если в таблице u_statuses появятся новые статусы, их нужно будет добавить сюда
-        closed_status_ids = [5, 6, 14]  # Закрыта, Отклонена, Перенаправлена
-
-        # Логируем все полученные статусы для мониторинга новых
+        # Логируем все полученные статусы для мониторинга
         current_app.logger.info("📋 [STATUSES] Все полученные статусы:")
         for status in localized_statuses:
-            current_app.logger.info(f"  - ID: {status['id']}, Name: '{status['name']}'")
+            current_app.logger.info(f"  - ID: {status['id']}, Name: '{status['name']}', Position: {status['position']}, Is_Closed: {status['is_closed']}")
 
-        # Проверяем, есть ли новые статусы, которые не в списке закрытых
-        new_statuses = []
-        for status in localized_statuses:
-            if status['id'] not in closed_status_ids and any(closed_word in status['name'].lower() for closed_word in ['закрыт', 'отклонен', 'выполнен', 'перенаправлен', 'завершен']):
-                new_statuses.append(status)
-
-        if new_statuses:
-            current_app.logger.warning(f"⚠️ [STATUSES] Обнаружены потенциально закрытые статусы, не в списке: {new_statuses}")
-            current_app.logger.warning(f"⚠️ [STATUSES] Рекомендуется добавить их ID в closed_status_ids")
-
-        # Преобразуем в формат с флагом is_closed
+        # Преобразуем в формат для фронтенда
         statuses_list = []
         for status in localized_statuses:
-            status_id = status['id']
-            status_name = status['name']
-            is_closed = status_id in closed_status_ids
-
             statuses_list.append({
                 'id': status['id'],
                 'name': status['name'],
-                'is_closed': is_closed
+                'position': status['position'],
+                'is_closed': status['is_closed']
             })
 
-            current_app.logger.info(f"  Статус: {status_name} (ID: {status['id']}, is_closed: {is_closed})")
+            current_app.logger.info(f"  Статус: {status['name']} (ID: {status['id']}, Position: {status['position']}, is_closed: {status['is_closed']})")
 
         current_app.logger.info(f"✅ Получено {len(statuses_list)} статусов из u_statuses для пользователя {current_user.username}")
 

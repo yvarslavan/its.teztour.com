@@ -18,6 +18,9 @@ class KanbanManager {
             cacheTimeout: 5 * 60 * 1000 // 5 минут
         };
 
+        // Встраиваем стили для компактных (пустых) колонок
+        this.ensureCompactColumnStyles();
+
         console.log('[KanbanManager] 🚀 Конструктор Kanban менеджера');
 
         // Инициализируем только если DOM готов
@@ -30,15 +33,51 @@ class KanbanManager {
         }
     }
 
+    // Добавленные методы
+    ensureCompactColumnStyles() {
+        if (document.getElementById('kanban-compact-columns-style')) return;
+        const style = document.createElement('style');
+        style.id = 'kanban-compact-columns-style';
+        style.textContent = `
+            /* Плавные переходы высоты */
+            .kanban-column, .kanban-column .kanban-column-content { transition: min-height .25s ease; }
+            /* Сжатие пустых колонок: перекрываем любые глобальные правила */
+            .kanban-column.kanban-column-empty { min-height: 120px !important; }
+            .kanban-columns .kanban-column.kanban-column-empty .kanban-column-content { min-height: 100px !important; }
+            /* Мини-статус (точка и бордер) без текста внутри карточки */
+            .kanban-card{ position: relative; border-left: 3px solid var(--status-dot, transparent); }
+            .kanban-card.has-status-dot::before{ content:''; position:absolute; top:8px; left:8px; width:8px; height:8px; border-radius:50%; background: var(--status-dot, #94a3b8); box-shadow: 0 0 6px var(--status-dot, transparent); }
+            .kanban-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+            .kanban-card-meta { display: flex; align-items: center; gap: 8px; }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // (Убрали индикатор статуса с текстом внутри карточки по требованию)
+
+    adjustEmptyColumns() {
+        try {
+            const columns = document.querySelectorAll('.kanban-column');
+            columns.forEach(col => {
+                const content = col.querySelector('.kanban-column-content');
+                if (!content) return;
+                const cards = content.querySelectorAll('.kanban-card');
+                const isEmpty = cards.length === 0;
+                col.classList.toggle('kanban-column-empty', isEmpty);
+            });
+            console.log('[KanbanManager] ✅ Пустые колонки сжаты');
+        } catch (e) {
+            console.warn('[KanbanManager] ⚠️ Не удалось применить сжатие пустых колонок:', e);
+        }
+    }
+
     init() {
         console.log('[KanbanManager] 🚀 Инициализация Kanban менеджера');
-
         try {
             // Проверяем наличие элементов
             const toggleButtons = document.querySelectorAll('.view-toggle-btn');
             const kanbanBoard = document.getElementById('kanban-board');
             const tableContainer = document.querySelector('.table-container');
-
             console.log('[KanbanManager] 🔍 Проверка элементов:');
             console.log('- Кнопки переключения:', toggleButtons.length);
             console.log('- Kanban доска:', !!kanbanBoard);
@@ -48,18 +87,18 @@ class KanbanManager {
             this.createDynamicColumns().then(() => {
                 this.setupEventListeners();
                 this.initDragAndDrop();
-                this.initTooltips(); // Инициализируем всплывающие подсказки
+                this.initTooltips();
+                // При первом рендере также применяем сжатие пустых колонок
+                this.adjustEmptyColumns();
 
                 // Загружаем данные задач в Kanban
                 this.loadKanbanDataOptimized().then(() => {
-                    // Ограничения убраны - показываем все задачи сразу
                     console.log('[KanbanManager] 🔒 Ограничения отключены');
-
                     this.isInitialized = true;
                     console.log('[KanbanManager] ✅ Инициализация завершена');
                 }).catch(error => {
                     console.error('[KanbanManager] ❌ Ошибка загрузки данных Kanban:', error);
-                    this.isInitialized = true; // Инициализация завершена, но данные не загружены
+                    this.isInitialized = true;
                 });
             }).catch(error => {
                 console.error('[KanbanManager] ❌ Ошибка инициализации:', error);
@@ -397,13 +436,8 @@ class KanbanManager {
     renderKanbanBoard(tasks) {
         console.log('[KanbanManager] 🎨 Отрисовка Kanban доски с динамическими колонками');
         console.log('[KanbanManager] 📊 Количество задач для отрисовки:', tasks.length);
-
-        // Очищаем все колонки
         const allColumns = document.querySelectorAll('.kanban-column-content');
-        allColumns.forEach(column => {
-            column.innerHTML = '';
-        });
-
+        allColumns.forEach(column => { column.innerHTML = ''; });
         console.log('[KanbanManager] 📋 Начинаем распределение задач по колонкам...');
 
                     // Подсчитываем статистику статусов для отладки
@@ -502,6 +536,9 @@ class KanbanManager {
         // Показываем баннер с подсказками
         this.showTipsBanner();
 
+        // Применяем сжатие пустых колонок после полного рендера
+        this.adjustEmptyColumns();
+
         console.log('[KanbanManager] ✅ Ограничение по 10 задач в каждом статусе применено');
     }
 
@@ -550,7 +587,8 @@ class KanbanManager {
     updateColumnCount(columnElement) {
         if (!columnElement) return;
 
-        const taskCards = columnElement.querySelectorAll('.task-card');
+        // Карточки имеют класс .kanban-card
+        const taskCards = columnElement.querySelectorAll('.kanban-card');
         const count = taskCards.length;
 
         // Находим элемент счетчика в заголовке колонки
@@ -579,6 +617,8 @@ class KanbanManager {
 
             console.log(`[KanbanManager] 📊 Обновлен счетчик колонки: ${count} задач`);
         }
+        // При каждом обновлении счетчика пересчитываем пустые колонки
+        this.adjustEmptyColumns();
     }
 
         /**
@@ -821,10 +861,11 @@ class KanbanManager {
 
         // Создаем HTML карточки с названием проекта
         const projectName = task.project_name || 'Неизвестный проект';
+        const statusColor = this.getStatusColor(task.status_name || '');
         const cardHtml = `
-            <div class="kanban-card" data-task-id="${task.id}" data-priority="${priorityClass}" data-updated-on="${task.updated_on || ''}" draggable="true">
+            <div class="kanban-card has-status-dot" data-task-id="${task.id}" data-priority="${priorityClass}" data-updated-on="${task.updated_on || ''}" draggable="true" style="--status-dot:${statusColor}">
                 <div class="kanban-card-header">
-                    <div class="kanban-card-id" data-task-id="${task.id}" style="cursor: pointer; color: #2563eb;">#${task.id}</div>
+                    <div class="kanban-card-meta"><div class="kanban-card-id" data-task-id="${task.id}" style="cursor: pointer; color: #2563eb;">#${task.id}</div></div>
                     <div class="kanban-card-priority">
                         <span class="priority-badge ${priorityClass}">${this.escapeHtml(priority)}</span>
                     </div>
@@ -1128,56 +1169,19 @@ class KanbanManager {
      * Сортирует статусы в нужном порядке для отображения
      */
     sortStatusesByOrder(statuses) {
-        // Определяем порядок колонок согласно требованиям
-        const columnOrder = [
-            // 1 строка
-            'Новая',
-            'В работе',
-            'Запрошено уточнение',
-            'Выполнена',
-            'Закрыта',
-            // 2 строка
-            'Отклонена',
-            'На согласовании',
-            'Приостановлена',
-            'Протестирована',
-            'Перенаправлена',
-            // 3 строка
-            'Заморожена',
-            'Открыта',
-            'Сообщи ка понял задачу!'
-        ];
-
-        // Сортируем статусы согласно порядку
-        const sortedStatuses = [];
-        const remainingStatuses = [];
-
-        // Сначала добавляем статусы в нужном порядке
-        columnOrder.forEach(statusName => {
-            const foundStatus = statuses.find(status =>
-                status.name === statusName ||
-                status.name.includes(statusName) ||
-                statusName.includes(status.name)
-            );
-            if (foundStatus) {
-                sortedStatuses.push(foundStatus);
+        // Сортируем статусы по полю position из базы данных
+        const sortedStatuses = [...statuses].sort((a, b) => {
+            // Если у статуса есть position, используем его для сортировки
+            if (a.position !== undefined && b.position !== undefined) {
+                return a.position - b.position;
             }
+            // Если position нет, сортируем по ID
+            return a.id - b.id;
         });
 
-        // Затем добавляем оставшиеся статусы
-        statuses.forEach(status => {
-            const isAlreadyIncluded = sortedStatuses.some(s => s.id === status.id);
-            if (!isAlreadyIncluded) {
-                remainingStatuses.push(status);
-            }
-        });
+        console.log('[KanbanManager] 📋 Статусы отсортированы по position:', sortedStatuses.map(s => `${s.name} (pos: ${s.position || 'N/A'})`));
 
-        // Объединяем отсортированные и оставшиеся статусы
-        const result = [...sortedStatuses, ...remainingStatuses];
-
-        console.log('[KanbanManager] 📋 Статусы отсортированы:', result.map(s => s.name));
-
-        return result;
+        return sortedStatuses;
     }
 
     /**
@@ -1257,24 +1261,22 @@ class KanbanManager {
         try {
             console.log('[KanbanManager] 🔄 Создание fallback колонок...');
 
-            // Используем реальные статусы из API в нужном порядке
+            // Используем базовые статусы в случае ошибки API
             const fallbackStatuses = [
-                // 1 строка
-                {id: 1, name: 'Новая', is_closed: false},
-                {id: 2, name: 'В работе', is_closed: false},
-                {id: 9, name: 'Запрошено уточнение', is_closed: false},
-                {id: 7, name: 'Выполнена', is_closed: true},
-                {id: 5, name: 'Закрыта', is_closed: true},
-                // 2 строка
-                {id: 6, name: 'Отклонена', is_closed: true},
-                {id: 15, name: 'На согласовании', is_closed: false},
-                {id: 10, name: 'Приостановлена', is_closed: false},
-                {id: 13, name: 'Протестирована', is_closed: false},
-                {id: 14, name: 'Перенаправлена', is_closed: true},
-                // 3 строка
-                {id: 16, name: 'Заморожена', is_closed: false},
-                {id: 17, name: 'Открыта', is_closed: false},
-                {id: 20, name: 'Сообщи ка понял задачу!', is_closed: false}
+                {id: 1, name: 'Новая', position: 1, is_closed: false},
+                {id: 17, name: 'Открыта', position: 2, is_closed: false},
+                {id: 19, name: 'В очереди', position: 3, is_closed: false},
+                {id: 15, name: 'На согласовании', position: 4, is_closed: false},
+                {id: 2, name: 'В работе', position: 5, is_closed: false},
+                {id: 9, name: 'Запрошено уточнение', position: 6, is_closed: false},
+                {id: 10, name: 'Приостановлена', position: 7, is_closed: false},
+                {id: 16, name: 'Заморожена', position: 8, is_closed: false},
+                {id: 18, name: 'На тестировании', position: 9, is_closed: false},
+                {id: 13, name: 'Протестирована', position: 10, is_closed: false},
+                {id: 14, name: 'Перенаправлена', position: 11, is_closed: true},
+                {id: 7, name: 'Выполнена', position: 12, is_closed: false},
+                {id: 6, name: 'Отклонена', position: 13, is_closed: true},
+                {id: 5, name: 'Закрыта', position: 14, is_closed: true}
             ];
 
             const kanbanColumns = document.getElementById('kanban-columns');
@@ -1309,6 +1311,8 @@ class KanbanManager {
             });
 
             console.log('[KanbanManager] ✅ Fallback колонки созданы в нужном порядке');
+            // Сжимаем пустые колонки сразу после создания
+            this.adjustEmptyColumns();
         } catch (error) {
             console.error('[KanbanManager] ❌ Ошибка создания fallback колонок:', error);
         }
@@ -1320,19 +1324,19 @@ class KanbanManager {
     getStatusColor(statusName) {
         const statusColors = {
             'Новая': '#3498db',
+            'Открыта': '#3498db',
+            'В очереди': '#95a5a6',
+            'На согласовании': '#f39c12',
             'В работе': '#f39c12',
-            'Закрыта': '#27ae60',
-            'Отклонена': '#95a5a6',
-            'Выполнена': '#2ecc71',
             'Запрошено уточнение': '#e67e22',
             'Приостановлена': '#f39c12',
+            'Заморожена': '#34495e',
+            'На тестировании': '#9b59b6',
             'Протестирована': '#9b59b6',
             'Перенаправлена': '#e74c3c',
-            'На согласовании': '#f39c12',
-            'Заморожена': '#34495e',
-            'Открыта': '#3498db',
-            'На тестировании': '#9b59b6',
-            'В очереди': '#95a5a6'
+            'Выполнена': '#2ecc71',
+            'Отклонена': '#95a5a6',
+            'Закрыта': '#27ae60'
         };
 
         // Если статус не найден, генерируем цвет на основе названия
