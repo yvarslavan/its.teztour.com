@@ -1886,6 +1886,38 @@ def my_notifications():
     notifications_data = get_notification_service().get_notifications_for_page(current_user.id)
 
     if notifications_data['total_count'] > 0:
+        # Объединяем все уведомления и сортируем по времени создания (новые сверху)
+        from datetime import datetime
+
+        all_notifications = []
+
+        # Добавляем Redmine уведомления
+        for notification in notifications_data['redmine_notifications']:
+            all_notifications.append({
+                'type': 'redmine',
+                'data': notification,
+                'created_at_dt': datetime.fromisoformat(notification['created_at']) if notification.get('created_at') else datetime.min
+            })
+
+        # Добавляем уведомления об изменении статуса
+        for notification in notifications_data['status_notifications']:
+            all_notifications.append({
+                'type': 'status',
+                'data': notification,
+                'created_at_dt': datetime.fromisoformat(notification['date_created']) if notification.get('date_created') else datetime.min
+            })
+
+        # Добавляем уведомления о комментариях
+        for notification in notifications_data['comment_notifications']:
+            all_notifications.append({
+                'type': 'comment',
+                'data': notification,
+                'created_at_dt': datetime.fromisoformat(notification['date_created']) if notification.get('date_created') else datetime.min
+            })
+
+        # Сортируем все уведомления по времени создания (новые сверху)
+        all_notifications.sort(key=lambda x: x['created_at_dt'], reverse=True)
+
         return render_template(
             "notifications.html",
             title="Уведомления",
@@ -1893,9 +1925,10 @@ def my_notifications():
                 'notifications_data': notifications_data['status_notifications'],
                 'notifications_add_notes_data': notifications_data['comment_notifications'],
                 'redmine_notifications_data': notifications_data['redmine_notifications']  # Из локальной базы
-            }
+            },
+            all_notifications_sorted=all_notifications  # Новый параметр с отсортированными уведомлениями
         )
-    return render_template("notifications.html", title="Уведомления", combined_notifications={})
+    return render_template("notifications.html", title="Уведомления", combined_notifications={}, all_notifications_sorted=[])
 
 
 @main.route("/clear-notifications", methods=["POST"])
