@@ -1,7 +1,7 @@
 from flask import flash
 from flask_login import current_user
 from flask_wtf import FlaskForm
-from flask_wtf.file import FileAllowed
+from flask_wtf.file import FileAllowed, FileSize
 from wtforms import StringField, PasswordField, SubmitField, BooleanField, FileField
 from wtforms.fields.simple import TextAreaField
 from wtforms.validators import DataRequired, EqualTo, Length, ValidationError, Optional, Email
@@ -106,7 +106,11 @@ class UpdateAccountForm(FlaskForm):
         render_kw={"readonly": True},
     )
     picture = FileField(
-        "Изображение (png, jpg)", validators=[FileAllowed(["jpg", "png"])]
+        "Изображение (png, jpg, jpeg)",
+        validators=[
+            FileAllowed(["jpg", "jpeg", "png"], "Разрешены только изображения в форматах JPG, JPEG и PNG"),
+            FileSize(max_size=5 * 1024 * 1024, message="Размер файла не должен превышать 5MB")
+        ]
     )
     submit = SubmitField("Обновить", render_kw={"class": "btn-left-align"})
 

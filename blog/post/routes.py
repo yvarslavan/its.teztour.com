@@ -1,3 +1,5 @@
+import os
+import time
 from flask import (
     Blueprint,
     render_template,
@@ -7,6 +9,9 @@ from flask import (
     abort,
     request,
     g,
+    make_response,
+    current_app,
+    send_from_directory,
 )
 from flask_login import current_user, login_required
 from blog import db
@@ -62,10 +67,28 @@ def post(post_id):
     if post_view.image_post is None:
         path_img_file = False
     else:
-        path_img_file = url_for(
-            "static",
-            filename=f"profile_pics/{post_view.author.username}/post_images/{post_view.image_post}",
+        # Проверяем существование файла
+        image_path = os.path.join(
+            current_app.root_path,
+            'static',
+            'profile_pics',
+            post_view.author.username,
+            'post_images',
+            post_view.image_post
         )
+
+        # Если файл не существует, не показываем изображение
+        if not os.path.exists(image_path):
+            current_app.logger.warning(f"Файл изображения не найден: {image_path}")
+            path_img_file = False
+        else:
+            # Используем специальный маршрут для изображений
+            path_img_file = url_for(
+                "post.serve_post_image",
+                username=post_view.author.username,
+                filename=post_view.image_post
+            )
+            current_app.logger.info(f"URL изображения: {path_img_file}")
 
     return render_template(
         "post.html", title=post_view.title, post=post_view, img_file_path=path_img_file
@@ -94,10 +117,29 @@ def update_post(post_id):
 
         return redirect(url_for("post.post", post_id=post_update.id))
 
-    image_file = url_for(
-        "static",
-        filename=f"profile_pics/{current_user.username}/post_images/{post_update.image_post}",
-    )
+        # Проверяем существование файла и добавляем версию для кэширования
+    if post_update.image_post:
+        image_path = os.path.join(
+            current_app.root_path,
+            'static',
+            'profile_pics',
+            current_user.username,
+            'post_images',
+            post_update.image_post
+        )
+
+        # Если файл не существует, не показываем изображение
+        if not os.path.exists(image_path):
+            image_file = None
+        else:
+            # Используем специальный маршрут для изображений
+            image_file = url_for(
+                "post.serve_post_image",
+                username=current_user.username,
+                filename=post_update.image_post
+            )
+    else:
+        image_file = None
 
     return render_template(
         "update_post.html",
@@ -119,3 +161,39 @@ def delete_post(post_id):
     db.session.commit()
     flash('Данный пост был удален', 'success')
     return redirect(url_for('main.blog'))
+
+
+@posts.route('/post/image/<username>/<filename>')
+def serve_post_image(username, filename):
+    """
+    Специальный маршрут для обслуживания изображений статей с правильными заголовками кэширования
+    """
+    # Путь к папке с изображениями
+    image_dir = os.path.join(
+        current_app.root_path,
+        'static',
+        'profile_pics',
+        username,
+        'post_images'
+    )
+
+    # Полный путь к файлу
+    file_path = os.path.join(image_dir, filename)
+
+    # Логируем для отладки
+    current_app.logger.info(f"Запрос изображения: {file_path}")
+    current_app.logger.info(f"Файл существует: {os.path.exists(file_path)}")
+
+    # Проверяем существование файла
+    if not os.path.exists(file_path):
+        current_app.logger.error(f"Файл не найден: {file_path}")
+        abort(404)
+
+    # Отправляем файл с заголовками для предотвращения кэширования
+    response = make_response(send_from_directory(image_dir, filename))
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+
+    current_app.logger.info(f"Изображение отправлено: {filename}")
+    return response

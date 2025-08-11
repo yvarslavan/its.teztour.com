@@ -296,13 +296,19 @@
   .article-image {
     position: relative;
     overflow: hidden;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    margin: var(--spacing-lg) 0;
+    background: var(--bg-secondary);
+    width: 100%;
   }
 
   .article-image img {
     width: 100%;
-    height: 400px;
-    object-fit: cover;
+    height: auto;
+    display: block;
     transition: transform 0.3s ease;
+    border-radius: var(--radius-xl);
   }
 
   .article-image:hover img {
@@ -664,19 +670,14 @@
       <!-- Article Image -->
       {% if img_file_path %}
       <div class="article-image">
-        <img src="{{ img_file_path }}" alt="Изображение к статье">
+        <img src="{{ img_file_path }}" alt="Изображение к статье" id="articleImage" onerror="this.style.display='none'">
       </div>
       {% endif %}
 
       <!-- Article Content -->
       <div class="article-content">
         <div class="content">
-          {% set sanitized_content = post.content | replace('* {', '.article-scoped * {') | replace('body {', '.article-scoped .custom-body {') %}
-          <div class="article-scoped">
-            <div class="custom-body">
-              {{ sanitized_content | safe }}
-            </div>
-          </div>
+          {{ post.content | safe }}
         </div>
       </div>
 
@@ -728,4 +729,28 @@
   </div>
 </div>
 {% endif %}
+
+<script>
+// Принудительное обновление изображений при загрузке страницы
+document.addEventListener('DOMContentLoaded', function() {
+    const articleImage = document.getElementById('articleImage');
+    if (articleImage) {
+        // Добавляем временную метку к URL изображения для предотвращения кэширования
+        const originalSrc = articleImage.src;
+        const separator = originalSrc.includes('?') ? '&' : '?';
+        articleImage.src = originalSrc + separator + 't=' + Date.now();
+
+        // Обработка ошибок загрузки изображения
+        articleImage.onerror = function() {
+            this.style.display = 'none';
+            console.log('Изображение не загружено:', originalSrc);
+        };
+
+        // Обработка успешной загрузки
+        articleImage.onload = function() {
+            console.log('Изображение успешно загружено:', originalSrc);
+        };
+    }
+});
+</script>
 {% endblock %}

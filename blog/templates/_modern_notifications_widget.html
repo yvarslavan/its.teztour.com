@@ -1023,6 +1023,9 @@ try {
                 this.notifications = [];
                 this.isMinimized = false;
 
+                // Обработчик для разблокировки аудио после взаимодействия пользователя
+                this.setupAudioUnblockHandler();
+
                 const missingElements = [];
                 if (!this.widget) missingElements.push('modern-notifications-widget');
                 if (!this.list) missingElements.push('notifications-list');
@@ -1658,11 +1661,28 @@ try {
                 const seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
                 const newNotificationIds = incomingIds.filter(id => !seenIds.includes(id));
 
+                console.log('[ModernWidget] 📊 Диагностика уведомлений:', {
+                    incoming: incomingIds.length,
+                    seen: seenIds.length,
+                    new: newNotificationIds.length,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+
+                console.log('[ModernWidget] 🔍 Детальная информация:', {
+                    incomingIds: incomingIds,
+                    seenIds: seenIds,
+                    newNotificationIds: newNotificationIds
+                });
+
                 if (newNotificationIds.length > 0) {
                     console.log('[ModernWidget] 🎶 Обнаружены новые уведомления, воспроизводим звук. ID:', newNotificationIds);
+                    console.log('[ModernWidget] 🔊 Инициируем воспроизведение звука для новых уведомлений...');
                     this.playNotificationSound();
                     const updatedSeenIds = [...seenIds, ...newNotificationIds];
                     localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
+                    console.log('[ModernWidget] 💾 Обновлены seen IDs:', updatedSeenIds);
+                } else {
+                    console.log('[ModernWidget] 🔇 Новых уведомлений не обнаружено, звук не воспроизводится');
                 }
 
                 this.renderNotifications();
@@ -1991,26 +2011,131 @@ try {
 
         playNotificationSound() {
             try {
+                console.log('[ModernWidget] 🔊 Попытка воспроизведения звука уведомления...');
+
+                // Проверка на отключение звука пользователем
                 const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
                 if (soundDisabled) {
-                    console.log('[ModernWidget] 🔇 Звук уведомлений отключен, пропускаем воспроизведение');
+                    console.log('[ModernWidget] 🔇 Звук уведомлений отключен пользователем, пропускаем воспроизведение');
                     return;
                 }
 
+                // Проверка статуса документа для диагностики
+                const isVisible = document.visibilityState === 'visible';
+                const hasFocus = document.hasFocus();
+                console.log('[ModernWidget] 📊 Статус страницы:', {
+                    visibility: document.visibilityState,
+                    hasFocus: hasFocus,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+
                 const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
                 audio.volume = 0.5;
-                audio.play().catch(e => {
-                    // ИСПРАВЛЕНО: Мягкая обработка ошибок воспроизведения звука
-                    if (e.name === 'NotAllowedError') {
-                        console.log('[ModernWidget] 🔇 Звук заблокирован браузером - это нормально');
-                        // Не показываем ошибку пользователю, так как это нормальное поведение браузера
-                    } else {
-                        console.warn('[ModernWidget] ⚠️ Не удалось воспроизвести звук:', e);
-                    }
+
+                // Добавляем более детальные обработчики событий
+                audio.addEventListener('loadstart', () => {
+                    console.log('[ModernWidget] 📥 Начата загрузка аудио файла');
                 });
-                console.log('[ModernWidget] 🔊 Воспроизводим звук уведомления');
+
+                audio.addEventListener('canplay', () => {
+                    console.log('[ModernWidget] ✅ Аудио файл готов к воспроизведению');
+                });
+
+                audio.addEventListener('play', () => {
+                    console.log('[ModernWidget] ▶️ Воспроизведение звука началось');
+                });
+
+                audio.addEventListener('ended', () => {
+                    console.log('[ModernWidget] ⏹️ Воспроизведение звука завершено');
+                });
+
+                const playPromise = audio.play();
+
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        console.log('[ModernWidget] ✅ Звук воспроизведен успешно');
+                    }).catch(e => {
+                        // ИСПРАВЛЕНО: Расширенная обработка ошибок воспроизведения звука
+                        if (e.name === 'NotAllowedError') {
+                            console.log('[ModernWidget] 🔇 Звук заблокирован браузером (требуется взаимодействие пользователя)');
+                            // Сохраняем информацию о блокировке для будущих попыток
+                            sessionStorage.setItem('audioBlocked', 'true');
+                        } else if (e.name === 'NotSupportedError') {
+                            console.warn('[ModernWidget] ⚠️ Формат аудио не поддерживается:', e);
+                        } else if (e.name === 'AbortError') {
+                            console.log('[ModernWidget] 🔇 Воспроизведение прервано:', e);
+                        } else {
+                            console.warn('[ModernWidget] ⚠️ Неизвестная ошибка воспроизведения:', e.name, e.message);
+                        }
+                    });
+                } else {
+                    console.warn('[ModernWidget] ⚠️ audio.play() не вернул Promise');
+                }
+
+                console.log('[ModernWidget] 🔊 Команда воспроизведения звука отправлена');
             } catch (error) {
-                console.log('[ModernWidget] 🔇 Ошибка создания аудио элемента:', error);
+                console.error('[ModernWidget] ❌ Критическая ошибка создания аудио элемента:', error);
+                // Попытка fallback воспроизведения
+                this.fallbackNotificationSound();
+            }
+        }
+
+        // Новый fallback метод для критических ситуаций
+        fallbackNotificationSound() {
+            try {
+                console.log('[ModernWidget] 🔄 Попытка fallback воспроизведения звука...');
+                // Простейший способ без дополнительных обработчиков
+                const simpleAudio = new Audio('/static/sounds/notification.mp3');
+                simpleAudio.volume = 0.3; // Меньше громкость для fallback
+                simpleAudio.play().catch(() => {
+                    console.log('[ModernWidget] 🔇 Fallback воспроизведение также заблокировано');
+                });
+            } catch (fallbackError) {
+                console.error('[ModernWidget] ❌ Даже fallback не сработал:', fallbackError);
+            }
+        }
+
+        // Настройка обработчика для разблокировки аудио
+        setupAudioUnblockHandler() {
+            try {
+                console.log('[ModernWidget] 🔧 Настройка обработчика разблокировки аудио...');
+
+                const unlockAudio = () => {
+                    const audioBlocked = sessionStorage.getItem('audioBlocked') === 'true';
+                    if (audioBlocked) {
+                        console.log('[ModernWidget] 🔓 Пытаемся разблокировать аудио после взаимодействия пользователя...');
+
+                        try {
+                            // Тихий тестовый звук для разблокировки
+                            const testAudio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
+                            testAudio.volume = 0.01; // Очень тихо
+                            testAudio.play().then(() => {
+                                console.log('[ModernWidget] ✅ Аудио успешно разблокировано!');
+                                sessionStorage.removeItem('audioBlocked');
+                                // Удаляем обработчики после успешной разблокировки
+                                document.removeEventListener('click', unlockAudio);
+                                document.removeEventListener('keydown', unlockAudio);
+                                document.removeEventListener('touchstart', unlockAudio);
+                            }).catch((e) => {
+                                if (e.name !== 'NotAllowedError') {
+                                    console.log('[ModernWidget] 🔓 Разблокировка не удалась, но это не NotAllowedError');
+                                    sessionStorage.removeItem('audioBlocked');
+                                }
+                            });
+                        } catch (error) {
+                            console.warn('[ModernWidget] ⚠️ Ошибка при попытке разблокировки:', error);
+                        }
+                    }
+                };
+
+                // Добавляем обработчики для различных типов взаимодействия
+                document.addEventListener('click', unlockAudio, { once: false });
+                document.addEventListener('keydown', unlockAudio, { once: false });
+                document.addEventListener('touchstart', unlockAudio, { once: false });
+
+                console.log('[ModernWidget] ✅ Обработчик разблокировки аудио установлен');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка настройки обработчика разблокировки:', error);
             }
         }
 
@@ -2458,25 +2583,50 @@ try {
 
     window.playNotificationSound = () => {
         try {
+            console.log('[Global] 🔊 Глобальный вызов playNotificationSound...');
+
             const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
             if (soundDisabled) {
                 console.log('[Global] 🔇 Звук уведомлений отключен глобально, пропускаем воспроизведение');
                 return;
             }
+
+            // Информация о состоянии браузера
+            const audioBlocked = sessionStorage.getItem('audioBlocked') === 'true';
+            if (audioBlocked) {
+                console.log('[Global] 🔇 Аудио ранее было заблокировано браузером');
+            }
+
             if (notificationsWidget) {
+                console.log('[Global] ✅ Используем метод виджета');
                 notificationsWidget.playNotificationSound();
             } else {
+                console.log('[Global] 🔄 Виджет недоступен, используем глобальный fallback');
                 try {
                     const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
                     audio.volume = 0.5;
-                    audio.play().catch(console.warn);
-                    console.log('[Global] 🔊 Воспроизводим звук уведомления (fallback)');
+
+                    const playPromise = audio.play();
+                    if (playPromise !== undefined) {
+                        playPromise.then(() => {
+                            console.log('[Global] ✅ Fallback звук воспроизведен успешно');
+                        }).catch(e => {
+                            if (e.name === 'NotAllowedError') {
+                                console.log('[Global] 🔇 Fallback заблокирован браузером');
+                                sessionStorage.setItem('audioBlocked', 'true');
+                            } else {
+                                console.warn('[Global] ⚠️ Ошибка fallback воспроизведения:', e.name, e.message);
+                            }
+                        });
+                    }
+
+                    console.log('[Global] 🔊 Команда fallback воспроизведения отправлена');
                 } catch (error) {
-                    console.error('[Global] Ошибка воспроизведения звука:', error);
+                    console.error('[Global] ❌ Ошибка создания fallback аудио:', error);
                 }
             }
         } catch (error) {
-            console.error('[ModernWidget] ❌ Ошибка в playNotificationSound:', error);
+            console.error('[Global] ❌ Критическая ошибка в playNotificationSound:', error);
         }
     };
 
@@ -2486,6 +2636,54 @@ try {
                 if (notificationsWidget) notificationsWidget.updateNotifications();
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в refreshNotifications:', error);
+            }
+        },
+        showWidget: () => {
+            try {
+                if (notificationsWidget) notificationsWidget.showWidget();
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка в showWidget:', error);
+            }
+        },
+        testSound: () => {
+            try {
+                console.log('[ModernWidget] 🔊 Тестирование звука по запросу пользователя...');
+                if (notificationsWidget) {
+                    notificationsWidget.playNotificationSound();
+                } else {
+                    // Fallback для тестирования
+                    window.playNotificationSound();
+                }
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка тестирования звука:', error);
+            }
+        },
+        resetSeenNotifications: () => {
+            try {
+                console.log('[ModernWidget] 🔄 Сброс seen уведомлений для тестирования...');
+                localStorage.removeItem('seenNotificationIds');
+                sessionStorage.removeItem('audioBlocked');
+                console.log('[ModernWidget] ✅ Сброс completed - следующие уведомления будут считаться новыми');
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка сброса seen уведомлений:', error);
+            }
+        },
+        getDiagnostics: () => {
+            try {
+                const diagnostics = {
+                    soundDisabled: localStorage.getItem('notificationSoundDisabled') === 'true',
+                    audioBlocked: sessionStorage.getItem('audioBlocked') === 'true',
+                    widgetClosed: localStorage.getItem('notificationsWidgetClosed') === 'true',
+                    seenNotifications: JSON.parse(localStorage.getItem('seenNotificationIds')) || [],
+                    documentVisibility: document.visibilityState,
+                    hasFocus: document.hasFocus(),
+                    userAgent: navigator.userAgent
+                };
+                console.log('[ModernWidget] 📊 Диагностика системы уведомлений:', diagnostics);
+                return diagnostics;
+            } catch (error) {
+                console.error('[ModernWidget] ❌ Ошибка получения диагностики:', error);
+                return null;
             }
         }
     };

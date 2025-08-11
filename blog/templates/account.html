@@ -3029,6 +3029,45 @@ function createRipple(event, element) {
 
         // Загружаем начальное состояние уведомлений
         loadNotificationStatus();
+
+        // Предварительный просмотр загружаемого изображения
+        const pictureUpload = document.getElementById('pictureUpload');
+        const profileAvatar = document.querySelector('.profile-avatar');
+
+        if (pictureUpload && profileAvatar) {
+            pictureUpload.addEventListener('change', function(e) {
+                const file = e.target.files[0];
+                if (file) {
+                    // Проверяем тип файла
+                    if (!file.type.startsWith('image/')) {
+                        alert('Пожалуйста, выберите файл изображения (JPG или PNG)');
+                        return;
+                    }
+
+                    // Проверяем размер файла (максимум 5MB)
+                    if (file.size > 5 * 1024 * 1024) {
+                        alert('Размер файла не должен превышать 5MB');
+                        return;
+                    }
+
+                    // Создаем предварительный просмотр
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        profileAvatar.src = e.target.result;
+
+                        // Добавляем визуальную обратную связь
+                        const avatarContainer = document.querySelector('.avatar-container');
+                        if (avatarContainer) {
+                            avatarContainer.style.transform = 'scale(1.05)';
+                            setTimeout(() => {
+                                avatarContainer.style.transform = 'scale(1)';
+                            }, 300);
+                        }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+        }
     });
 </script>
 {% endblock %}
