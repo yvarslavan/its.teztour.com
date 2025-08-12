@@ -1819,7 +1819,61 @@
                 </div>
             {% endif %}
 
-            <!-- <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script> -->
+            <script src="{{ url_for('static', filename='js/dropdown.js') }}"></script>
+
+            <!-- Dropdown State Cleanup Script -->
+            <script>
+                // Функция для очистки состояния dropdown меню при переходах между страницами
+                function cleanupDropdownState() {
+                    try {
+                        // Закрываем все активные dropdown меню Bootstrap
+                        const dropdowns = document.querySelectorAll('.dropdown-menu.show');
+                        if (dropdowns.length > 0) {
+                            dropdowns.forEach(dropdown => {
+                                dropdown.classList.remove('show');
+                            });
+
+                            // Удаляем класс show с dropdown toggle элементов
+                            const toggles = document.querySelectorAll('.dropdown-toggle[aria-expanded="true"]');
+                            toggles.forEach(toggle => {
+                                toggle.setAttribute('aria-expanded', 'false');
+                                toggle.classList.remove('show');
+                            });
+
+                            console.log('[DropdownCleanup] ✅ Очищено ' + dropdowns.length + ' открытых dropdown меню');
+                        }
+                    } catch (error) {
+                        console.error('[DropdownCleanup] ❌ Ошибка очистки dropdown:', error);
+                    }
+                }
+
+                // Сохраняем текущий URL для определения смены страницы
+                let currentUrl = window.location.href;
+
+                // Очищаем только при смене страницы
+                window.addEventListener('pageshow', function(event) {
+                    // Если URL изменился или страница загружается из кэша
+                    if (event.persisted || window.location.href !== currentUrl) {
+                        setTimeout(cleanupDropdownState, 50);
+                        currentUrl = window.location.href;
+                    }
+                });
+
+                // Очищаем при загрузке новой страницы
+                document.addEventListener('DOMContentLoaded', function() {
+                    // Проверяем, есть ли уже открытые dropdown при загрузке страницы
+                    setTimeout(() => {
+                        const openDropdowns = document.querySelectorAll('.dropdown-menu.show');
+                        if (openDropdowns.length > 0) {
+                            console.log('[DropdownCleanup] 🔧 Обнаружены открытые dropdown при загрузке страницы, очищаем...');
+                            cleanupDropdownState();
+                        }
+                    }, 200);
+                });
+
+                // Глобальная функция для принудительной очистки (для отладки)
+                window.forceCleanupDropdowns = cleanupDropdownState;
+            </script>
 
             <!-- ОТКЛЮЧЕНО: Подключение модуля пуш-уведомлений -->
             <!-- Мы используем только polling уведомления, браузерные push-уведомления не нужны -->

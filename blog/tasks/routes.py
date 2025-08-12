@@ -1,7 +1,7 @@
 # blog/tasks/routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
-
+import time
 import time # Перенесен в начало файла из функций
 import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
@@ -242,11 +242,13 @@ def my_tasks_page():
     count_notifications = 0  # Значение по умолчанию
 
     # Генерируем cache_buster для принудительного обновления кэша
-    import time
     cache_buster = str(int(time.time()))
 
+    # Получаем настройку показа баннера Kanban для текущего пользователя
+    show_kanban_tips = getattr(current_user, 'show_kanban_tips', True)
+
     return render_template("my_tasks.html", title="Мои задачи", count_notifications=count_notifications,
-                         cache_buster=cache_buster)
+                         cache_buster=cache_buster, show_kanban_tips=show_kanban_tips)
 
 @tasks_bp.route("/my-tasks/<int:task_id>", methods=["GET", "POST"])
 @login_required

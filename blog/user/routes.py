@@ -1136,6 +1136,50 @@ def toggle_notifications():
         return jsonify({'success': False, 'error': 'Database error'}), 500
 
 
+@users.route("/api/user/kanban-tips-preference", methods=["POST"])
+@login_required
+@csrf.exempt
+def update_kanban_tips_preference():
+    """Обновляет настройку показа баннера Kanban подсказок"""
+    try:
+        # Получаем данные из запроса
+        data = request.get_json()
+        show_kanban_tips = data.get('show_kanban_tips', None)
+
+        if show_kanban_tips is None:
+            return jsonify({'success': False, 'error': 'Missing show_kanban_tips parameter'}), 400
+
+        # Получаем пользователя напрямую из базы данных
+        user = User.query.filter_by(username=current_user.username).first()
+        if not user:
+            return jsonify({'success': False, 'error': 'User not found'}), 404
+
+        # Логируем текущее состояние
+        logger.info(f"Update Kanban tips preference: user={user.username}, current_show={getattr(user, 'show_kanban_tips', True)}, new_show={show_kanban_tips}")
+
+        # Обновляем состояние в базе данных
+        user.show_kanban_tips = show_kanban_tips
+        db.session.commit()
+
+        # Обновляем current_user для совместимости
+        if hasattr(current_user, 'show_kanban_tips'):
+            current_user.show_kanban_tips = show_kanban_tips
+
+        # Логируем результат
+        logger.info(f"Update Kanban tips preference: user={user.username}, final_show={user.show_kanban_tips}")
+
+        return jsonify({
+            'success': True,
+            'show_kanban_tips': show_kanban_tips,
+            'message': 'Настройка баннера сохранена успешно'
+        })
+
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error updating Kanban tips preference: {str(e)}")
+        return jsonify({'success': False, 'error': 'Database error'}), 500
+
+
 @users.route("/api/notifications/status", methods=["GET"])
 @login_required
 @csrf.exempt
