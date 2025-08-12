@@ -10,6 +10,7 @@ class KanbanManager {
         this.filters = {};
         this.isLoading = false;
         this.isInitialized = false;
+        this.eventListenersInitialized = false; // Флаг для предотвращения повторной инициализации обработчиков
         this.cache = {
             tasks: null,
             statuses: null,
@@ -114,6 +115,12 @@ class KanbanManager {
         try {
             console.log('[KanbanManager] 🔧 Настройка обработчиков событий');
 
+            // Защита от повторной инициализации обработчиков
+            if (this.eventListenersInitialized) {
+                console.log('[KanbanManager] ⚠️ Обработчики событий уже инициализированы, пропускаем');
+                return;
+            }
+
             // Переключение между видами
             document.addEventListener('click', (e) => {
                 console.log('[KanbanManager] 🖱️ Клик по элементу:', e.target);
@@ -129,12 +136,27 @@ class KanbanManager {
                 if (e.target.closest('.kanban-card-id')) {
                     e.preventDefault();
                     e.stopPropagation();
+                    e.stopImmediatePropagation(); // Останавливаем немедленное всплытие
 
                     const taskIdElement = e.target.closest('.kanban-card-id');
                     const taskId = taskIdElement.dataset.taskId;
 
                     if (taskId) {
                         console.log(`[KanbanManager] 🎯 Клик по задаче ${taskId} в Kanban`);
+                        console.log(`[KanbanManager] 🔍 Target:`, e.target);
+                        console.log(`[KanbanManager] 🔍 CurrentTarget:`, e.currentTarget);
+
+                        // Защита от двойного клика
+                        if (taskIdElement.dataset.clicking === 'true') {
+                            console.log(`[KanbanManager] ⚠️ Двойной клик по задаче ${taskId} - игнорируем`);
+                            return;
+                        }
+
+                        // Устанавливаем флаг клика
+                        taskIdElement.dataset.clicking = 'true';
+                        setTimeout(() => {
+                            taskIdElement.dataset.clicking = 'false';
+                        }, 1000);
 
                         // Сохраняем текущий режим просмотра
                         const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
@@ -146,31 +168,16 @@ class KanbanManager {
                     }
                 }
 
-                // Обработка клика по всей карточке Kanban (кроме ID)
-                if (e.target.closest('.kanban-card') && !e.target.closest('.kanban-card-id')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    const cardElement = e.target.closest('.kanban-card');
-                    const taskId = cardElement.dataset.taskId;
-
-                    if (taskId) {
-                        console.log(`[KanbanManager] 🎯 Клик по карточке задачи ${taskId} в Kanban`);
-
-                        // Сохраняем текущий режим просмотра
-                        const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
-                        sessionStorage.setItem('return_from_task_view', currentView);
-                        console.log(`[KanbanManager] 💾 Сохранен режим просмотра: ${currentView}`);
-
-                        // Открываем задачу в новой вкладке
-                        window.open(`/tasks/my-tasks/${taskId}`, '_blank');
-                    }
-                }
+                // УДАЛЕНО: Обработка клика по всей карточке Kanban
+                // Теперь детали задачи открываются только при клике по номеру задачи (.kanban-card-id)
+                // Клики по остальной части карточки игнорируются
             });
 
             // Обработка фильтров
             this.setupFilterListeners();
 
+            // Устанавливаем флаг инициализации
+            this.eventListenersInitialized = true;
             console.log('[KanbanManager] ✅ Обработчики событий настроены');
         } catch (error) {
             console.error('[KanbanManager] ❌ Ошибка настройки обработчиков событий:', error);
@@ -286,6 +293,14 @@ class KanbanManager {
      * Инициализирует всплывающие подсказки
      */
     initTooltips() {
+        // Проверяем настройку пользователя
+        const showKanbanTips = window.showKanbanTips !== undefined ? window.showKanbanTips : true;
+
+        if (!showKanbanTips) {
+            console.log('[KanbanManager] 🚫 Всплывающие подсказки отключены пользователем');
+            return;
+        }
+
         // Проверяем, есть ли компонент всплывающих подсказок
         if (typeof window.KanbanTooltips !== 'undefined') {
             const tooltips = new window.KanbanTooltips();

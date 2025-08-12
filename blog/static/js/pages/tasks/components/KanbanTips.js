@@ -99,6 +99,14 @@ class KanbanTips {
                     </button>
                 </div>
             </div>
+            <div class="tips-footer">
+                <div class="tips-hide-option">
+                    <input type="checkbox" id="hide-tips-forever" class="tips-checkbox">
+                    <label for="hide-tips-forever" class="tips-checkbox-label">
+                        <span class="checkbox-text">Не показывать больше</span>
+                    </label>
+                </div>
+            </div>
             <div class="tips-progress">
                 <div class="progress-bar">
                     <div class="progress-fill" id="tips-progress-fill"></div>
@@ -123,10 +131,18 @@ class KanbanTips {
         const prevBtn = document.getElementById('tips-prev-btn');
         const nextBtn = document.getElementById('tips-next-btn');
         const closeBtn = document.getElementById('tips-close-btn');
+        const hideForeverCheckbox = document.getElementById('hide-tips-forever');
 
         prevBtn.addEventListener('click', () => this.previousTip());
         nextBtn.addEventListener('click', () => this.nextTip());
-        closeBtn.addEventListener('click', () => this.hide());
+        closeBtn.addEventListener('click', () => this.handleClose());
+
+        // Обработчик для чекбокса "Не показывать больше"
+        hideForeverCheckbox?.addEventListener('change', (e) => {
+            if (e.target.checked) {
+                this.handleHideForever();
+            }
+        });
 
         // Останавливаем автоповорот при взаимодействии
         const banner = document.getElementById('kanban-tips-banner');
@@ -311,9 +327,17 @@ class KanbanTips {
     }
 
     /**
-     * Показывает баннер если канбан активен
+     * Показывает баннер если канбан активен и пользователь не отключил подсказки
      */
     showIfKanbanActive() {
+        // Проверяем настройку пользователя из шаблона
+        const showKanbanTips = window.showKanbanTips !== undefined ? window.showKanbanTips : true;
+
+        if (!showKanbanTips) {
+            console.log('[KanbanTips] 🚫 Баннер отключен пользователем, не показываем');
+            return;
+        }
+
         const kanbanBoard = document.getElementById('kanban-board');
         const isKanbanVisible = kanbanBoard && kanbanBoard.style.display !== 'none';
 
@@ -335,6 +359,61 @@ class KanbanTips {
                     console.log('[KanbanTips] ⚠️ Баннер появился во время задержки, не показываем');
                 }
             }, 1000);
+        }
+    }
+
+    /**
+     * Обработчик закрытия баннера (обычное закрытие)
+     */
+    handleClose() {
+        this.hide();
+    }
+
+    /**
+     * Обработчик скрытия баннера навсегда
+     */
+    handleHideForever() {
+        console.log('[KanbanTips] 💾 Сохраняем настройку скрытия баннера навсегда');
+
+        // Отправляем запрос на сервер для сохранения настройки
+        fetch('/api/user/kanban-tips-preference', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+            },
+            body: JSON.stringify({
+                show_kanban_tips: false
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('[KanbanTips] ✅ Настройка сохранена успешно');
+                // Показываем уведомление пользователю
+                if (typeof showNotification === 'function') {
+                    showNotification('Настройка сохранена. Баннер больше не будет показываться.', 'success');
+                }
+            } else {
+                console.error('[KanbanTips] ❌ Ошибка сохранения настройки:', data.error);
+                // Снимаем галочку в случае ошибки
+                const checkbox = document.getElementById('hide-tips-forever');
+                if (checkbox) checkbox.checked = false;
+            }
+        })
+        .catch(error => {
+            console.error('[KanbanTips] ❌ Ошибка запроса:', error);
+            // Снимаем галочку в случае ошибки
+            const checkbox = document.getElementById('hide-tips-forever');
+            if (checkbox) checkbox.checked = false;
+        });
+
+        // Скрываем баннер
+        this.hide();
+
+        // Отключаем все tooltips навсегда
+        if (typeof window.disableAllKanbanTooltips === 'function') {
+            window.disableAllKanbanTooltips();
         }
     }
 }

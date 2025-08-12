@@ -711,19 +711,51 @@ if (typeof jQuery === 'undefined') {
         <script src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
 
 <script>
-// Функция для сохранения режима просмотра и открытия задачи
-function saveViewAndOpenTask(taskId) {
-    // Сохраняем текущий режим просмотра
-    const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
-    sessionStorage.setItem('return_from_task_view', currentView);
-    console.log(`[saveViewAndOpenTask] 💾 Сохранен режим просмотра: ${currentView}`);
+// Глобальная переменная с настройкой показа баннера Kanban
+window.showKanbanTips = {{ show_kanban_tips | tojson }};
 
-    // Открываем задачу в новой вкладке
-    window.open(`/tasks/my-tasks/${taskId}`, '_blank');
-}
+// Диагностическая функция для проверки состояния подсказок
+window.checkKanbanTipsStatus = function() {
+    console.log('=== ДИАГНОСТИКА KANBAN ПОДСКАЗОК ===');
+    console.log('🔧 showKanbanTips:', window.showKanbanTips);
+    console.log('🔧 kanbanTooltipsDisabled:', window.kanbanTooltipsDisabled);
+    console.log('🔧 KanbanTooltips доступен:', typeof window.KanbanTooltips !== 'undefined');
+    console.log('🔧 disableAllKanbanTooltips доступен:', typeof window.disableAllKanbanTooltips === 'function');
+    console.log('🔧 enableAllKanbanTooltips доступен:', typeof window.enableAllKanbanTooltips === 'function');
 
-// Делаем функцию глобально доступной
-window.saveViewAndOpenTask = saveViewAndOpenTask;
+    const existingTooltips = document.querySelectorAll('.kanban-tooltip');
+    console.log('🔧 Активных tooltips на странице:', existingTooltips.length);
+
+    const banner = document.getElementById('kanban-tips-banner');
+    console.log('🔧 Баннер на странице:', banner ? 'да' : 'нет');
+
+    console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
+};
+
+// Диагностическая функция для проверки состояния обработчиков кликов
+window.checkClickHandlers = function() {
+    console.log('=== ДИАГНОСТИКА ОБРАБОТЧИКОВ КЛИКОВ ===');
+    console.log('🔧 KanbanManager доступен:', typeof window.kanbanManager !== 'undefined');
+
+    if (window.kanbanManager) {
+        console.log('🔧 KanbanManager инициализирован:', window.kanbanManager.isInitialized);
+        console.log('🔧 Обработчики событий инициализированы:', window.kanbanManager.eventListenersInitialized);
+    }
+
+    const kanbanCards = document.querySelectorAll('.kanban-card');
+    console.log('🔧 Количество Kanban карточек:', kanbanCards.length);
+
+    const kanbanCardIds = document.querySelectorAll('.kanban-card-id');
+    console.log('🔧 Количество элементов .kanban-card-id:', kanbanCardIds.length);
+
+    console.log('ℹ️ ПРИМЕЧАНИЕ: Детали задачи открываются только при клике по номеру задачи (.kanban-card-id)');
+    console.log('ℹ️ Клики по остальной части карточки игнорируются');
+
+    console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
+};
+
+// УДАЛЕНО: Функция saveViewAndOpenTask была неиспользуемой и потенциально конфликтовала
+// Теперь открытие задач обрабатывается только через KanbanManager.js
 
 // 🎬 Динамическая анимация загрузки
 function initLoadingAnimation() {

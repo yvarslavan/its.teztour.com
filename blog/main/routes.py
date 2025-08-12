@@ -5,6 +5,7 @@ import logging
 from logging.handlers import RotatingFileHandler
 import sys
 import time
+from datetime import datetime
 import pymysql.cursors
 from datetime import datetime, timedelta, timezone, date
 from flask import (
@@ -1887,10 +1888,7 @@ def my_notifications():
 
     if notifications_data['total_count'] > 0:
         # Объединяем все уведомления и сортируем по времени создания (новые сверху)
-        from datetime import datetime
-
         all_notifications = []
-
         # Добавляем Redmine уведомления
         for notification in notifications_data['redmine_notifications']:
             all_notifications.append({

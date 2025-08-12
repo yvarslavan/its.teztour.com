@@ -414,6 +414,53 @@
             </div>
         </form>
 
+        <!-- Настройки интерфейса - доступны всем пользователям -->
+        <div class="interface-settings-panel">
+            <div class="interface-card">
+                <div class="card-header">
+                    <div class="header-icon">
+                        <i class="fas fa-cogs"></i>
+                    </div>
+                    <div class="header-content">
+                        <h3>Настройки интерфейса</h3>
+                        <p>Персонализация интерфейса и подсказок</p>
+                    </div>
+                </div>
+
+                <div class="card-content">
+                    <div class="settings-section">
+                        <div class="section-header">
+                            <span>Подсказки и помощь</span>
+                        </div>
+                        <div class="notification-settings">
+                            <!-- Настройка показа баннера Kanban -->
+                            <div class="notification-item">
+                                <div class="notification-info">
+                                    <div class="notification-icon">
+                                        <i class="fas fa-lightbulb"></i>
+                                    </div>
+                                    <div class="notification-details">
+                                        <span class="notification-title">Подсказки Kanban</span>
+                                        <span class="notification-description">Показывать баннер с полезными советами на странице задач</span>
+                                    </div>
+                                </div>
+                                <div class="notification-toggle">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox"
+                                               class="notification-toggle"
+                                               id="kanbanTipsToggle"
+                                               data-type="kanban_tips"
+                                               {{ 'checked' if current_user.show_kanban_tips else '' }}>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Admin Panel - Moved to bottom -->
         {% if current_user.is_admin %}
         <div class="admin-panel-bottom">
@@ -490,7 +537,7 @@
                             </div>
                         </div>
 
-                        <!-- Уведомления -->
+                                                <!-- Уведомления -->
                         <div class="admin-section">
                             <div class="section-header">
                                 <span>Уведомления</span>
@@ -516,6 +563,8 @@
                                         </label>
                                     </div>
                                 </div>
+
+                                <!-- ПРИМЕЧАНИЕ: Настройка "Подсказки Kanban" перенесена в раздел "Настройки интерфейса" для всех пользователей -->
                             </div>
                         </div>
                     </div>
@@ -1776,6 +1825,87 @@
         margin-left: var(--spacing-md);
     }
 
+    /* Interface Settings Panel Styles */
+    .account-page-wrapper .interface-settings-panel {
+        margin-top: var(--spacing-xxl);
+        animation: fadeInUp 0.8s ease-out 0.5s both;
+    }
+
+    .account-page-wrapper .interface-card {
+        background: var(--surface-card);
+        backdrop-filter: blur(20px);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: var(--shadow-card);
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .account-page-wrapper .interface-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 35px rgba(0, 121, 140, 0.12);
+    }
+
+    .account-page-wrapper .interface-card .card-header {
+        background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+        color: white;
+        padding: var(--spacing-lg);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .interface-card .header-icon {
+        width: 50px;
+        height: 50px;
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        backdrop-filter: blur(10px);
+    }
+
+    .account-page-wrapper .interface-card .header-content h3 {
+        margin: 0;
+        font-size: 1.5rem;
+        font-weight: 700;
+    }
+
+    .account-page-wrapper .interface-card .header-content p {
+        margin: 0.25rem 0 0;
+        opacity: 0.9;
+        font-size: 0.9rem;
+    }
+
+    .account-page-wrapper .interface-card .card-content {
+        padding: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .settings-section {
+        margin-bottom: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .settings-section:last-child {
+        margin-bottom: 0;
+    }
+
+    .account-page-wrapper .settings-section .section-header {
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-md);
+        padding-bottom: var(--spacing-sm);
+        border-bottom: 2px solid var(--primary-100);
+    }
+
+    .account-page-wrapper .settings-section .section-header span {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: var(--primary-700);
+    }
+
     /* Admin Panel Bottom Styles */
     .account-page-wrapper .admin-panel-bottom {
         margin-top: var(--spacing-xxl);
@@ -3029,6 +3159,85 @@ function createRipple(event, element) {
 
         // Загружаем начальное состояние уведомлений
         loadNotificationStatus();
+
+        // Обработчик для переключателя Kanban подсказок
+        const kanbanTipsToggle = document.getElementById('kanbanTipsToggle');
+        if (kanbanTipsToggle) {
+            kanbanTipsToggle.addEventListener('change', function(e) {
+                const isEnabled = e.target.checked;
+
+                // Отправляем запрос на сервер
+                fetch('/api/user/kanban-tips-preference', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('meta[name=csrf-token]')?.getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        show_kanban_tips: isEnabled
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        console.log('✅ Настройка Kanban подсказок обновлена:', isEnabled);
+
+                                                // Обновляем глобальную переменную
+                        window.showKanbanTips = isEnabled;
+
+                        // Управляем tooltips в зависимости от настройки
+                        if (isEnabled) {
+                            // Включаем tooltips если они были отключены
+                            if (typeof window.enableAllKanbanTooltips === 'function') {
+                                window.enableAllKanbanTooltips();
+                            }
+                        } else {
+                            // Отключаем tooltips
+                            if (typeof window.disableAllKanbanTooltips === 'function') {
+                                window.disableAllKanbanTooltips();
+                            }
+                        }
+
+                        // Показываем уведомление пользователю
+                        const message = isEnabled
+                            ? 'Баннер с подсказками будет показываться на странице задач'
+                            : 'Баннер с подсказками больше не будет показываться';
+
+                        // Используем SweetAlert если доступен, иначе обычный alert
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: 'success',
+                                title: 'Настройка сохранена',
+                                text: message,
+                                timer: 3000,
+                                showConfirmButton: false,
+                                toast: true,
+                                position: 'top-end'
+                            });
+                        } else {
+                            alert(message);
+                        }
+                    } else {
+                        console.error('❌ Ошибка сохранения настройки:', data.error);
+                        // Возвращаем переключатель в предыдущее состояние
+                        e.target.checked = !isEnabled;
+                        alert('Ошибка при сохранении настройки. Попробуйте еще раз.');
+                    }
+                })
+                .catch(error => {
+                    console.error('❌ Ошибка запроса:', error);
+                    // Возвращаем переключатель в предыдущее состояние
+                    e.target.checked = !isEnabled;
+                    alert('Ошибка при сохранении настройки. Проверьте подключение к интернету.');
+                });
+            });
+        }
+
+        // Проверяем доступность настроек интерфейса
+        const interfacePanel = document.querySelector('.interface-settings-panel');
+        if (interfacePanel) {
+            console.log('✅ Настройки интерфейса доступны для всех пользователей');
+        }
 
         // Предварительный просмотр загружаемого изображения
         const pictureUpload = document.getElementById('pictureUpload');

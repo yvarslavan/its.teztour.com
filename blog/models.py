@@ -3,7 +3,6 @@ from flask import current_app
 from flask_login import UserMixin
 from sqlalchemy import text
 from mysql_db import QualityBase
-from blog.db_config import db # Импортируем db из нового файла
 from blog import db
 # Создаем алиас внутри модуля
 db_call = db
@@ -42,6 +41,7 @@ class User(db.Model, UserMixin):
     last_notification_check = db.Column(db.DateTime, nullable=True)
     redmine_username = db.Column(db.String(100), nullable=True)  # Логин пользователя в Redmine (если отличается от ERP)
     redmine_api_key = db.Column(db.String(255), nullable=True)   # API ключ пользователя в Redmine
+    show_kanban_tips = db.Column(db.Boolean, default=True, nullable=False)  # Показывать ли баннер с подсказками Kanban
     posts = db.relationship("Post", backref="author", lazy=True)
     push_subscriptions = db.relationship("PushSubscription", backref="user", lazy=True, cascade="all, delete-orphan")
 
