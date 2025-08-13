@@ -501,7 +501,7 @@ function generateTaskCards() {
         const priorityInfo = getPriorityInfo(rowData.priority_name);
 
         const cardHtml = `
-            <div class="task-card ${rowData.priority_name.toLowerCase().includes('высок') ? 'high-priority-task' : ''}">
+            <div class="task-card ${(typeof rowData.priority_position === 'number' && rowData.priority_position >= 7) ? 'high-priority-task' : ''}">
                 <div class="task-card-header">
                     <a href="/tasks/my-tasks/${rowData.id}" class="task-card-id" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${rowData.id} в новой вкладке">#${rowData.id}</a>
                     <div class="status-badge ${statusInfo.class}" data-status="${escapeHtml(rowData.status_name || 'N/A')}">
@@ -566,8 +566,8 @@ function enhanceTableRows() {
             const $row = $(this.node());
             if (!$row.length) return; // Пропускаем, если элемент DOM не найден
 
-            // Добавляем класс для задач с высоким приоритетом
-            if (data.priority_name && data.priority_name.toLowerCase().includes('высок')) {
+            // Добавляем класс для задач с высоким приоритетом по position
+            if (typeof data.priority_position === 'number' && data.priority_position >= 7) {
                 $row.addClass('high-priority-task');
             }
 

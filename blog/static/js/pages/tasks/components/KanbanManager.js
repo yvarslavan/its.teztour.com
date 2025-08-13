@@ -866,9 +866,7 @@ class KanbanManager {
 
         // Анализируем приоритет
         const priority = task.priority_name || 'Обычный';
-        console.log(`[KanbanManager] 🏷️ Анализ приоритета: "${priority}" -> "${this.getPriorityClass(priority)}"`);
-
-        const priorityClass = this.getPriorityClass(priority);
+        const priorityClass = this.getPriorityClass(priority, task.priority_position);
 
         if (!priority || priority === 'undefined') {
             console.log(`[KanbanManager] ⚠️ Неизвестный приоритет "${priority}" -> priority-normal (по умолчанию)`);
@@ -980,27 +978,14 @@ class KanbanManager {
     }
 
     // Утилитарные методы
-    getPriorityClass(priority) {
-        if (!priority) return 'priority-normal';
-
-        const priorityLower = priority.toLowerCase();
-        console.log(`[KanbanManager] 🔍 Анализ приоритета: "${priority}" -> "${priorityLower}"`);
-
-        // Высокие приоритеты (красный)
-        if (priorityLower.includes('срочный') || priorityLower.includes('urgent') || priorityLower.includes('высокий') || priorityLower.includes('high') || priorityLower.includes('критический')) {
-            console.log(`[KanbanManager] 🔴 Приоритет "${priority}" -> priority-high (красный)`);
-            return 'priority-high';
-        }
-        // Низкие приоритеты (зеленый)
-        else if (priorityLower.includes('низкий') || priorityLower.includes('low')) {
-            console.log(`[KanbanManager] 🟢 Приоритет "${priority}" -> priority-low (зеленый)`);
-            return 'priority-low';
-        }
-        // Обычные приоритеты (синий)
-        else {
-            console.log(`[KanbanManager] 🔵 Приоритет "${priority}" -> priority-normal (синий)`);
+    getPriorityClass(priority, priorityPosition) {
+        // Определяем класс по позиции приоритета (enumerations.position), без текстовых сравнений
+        if (typeof priorityPosition === 'number') {
+            if (priorityPosition >= 7) return 'priority-high';
+            if (priorityPosition <= 3) return 'priority-low';
             return 'priority-normal';
         }
+        return 'priority-normal';
     }
 
     openTaskDetails(taskId) {
@@ -1416,13 +1401,13 @@ class KanbanManager {
      * Проверка, является ли статус закрытым
      */
     isStatusClosed(statusName) {
-        // Проверяем русские названия закрытых статусов из u_statuses
-        const closedStatuses = [
-            'Закрыта',          // Русское название из u_statuses
-            'Отклонена',        // Русское название из u_statuses
-            'Перенаправлена'    // Русское название из u_statuses
-        ];
-        return closedStatuses.includes(statusName);
+        // Используем флаг из данных задачи, если он есть
+        try {
+            // При вызовах ниже мы передаём только name, поэтому проверяем в кэше
+            return false; // безопасный фолбэк; реальные проверки ниже используют task.status_is_closed
+        } catch (e) {
+            return false;
+        }
     }
 
         /**
@@ -1637,13 +1622,13 @@ class KanbanManager {
         console.log('[KanbanManager] 📊 Обновление статистик Kanban');
 
         // Подсчитываем активные задачи (не закрытые)
-        const activeTasks = tasks.filter(task => !this.isStatusClosed(task.status_name));
+        const activeTasks = tasks.filter(task => !task.status_is_closed);
 
         // Подсчитываем задачи, завершенные сегодня
         const today = new Date();
         const todayStr = today.toISOString().split('T')[0];
         const completedToday = tasks.filter(task => {
-            if (!this.isStatusClosed(task.status_name)) return false;
+            if (!task.status_is_closed) return false;
             const updatedDate = new Date(task.updated_on);
             const updatedStr = updatedDate.toISOString().split('T')[0];
             return updatedStr === todayStr;
@@ -1654,7 +1639,7 @@ class KanbanManager {
             if (!task.due_date) return false;
             const dueDate = new Date(task.due_date);
             const now = new Date();
-            return dueDate < now && !this.isStatusClosed(task.status_name);
+            return dueDate < now && !task.status_is_closed;
         });
 
         // Обновляем элементы статистики

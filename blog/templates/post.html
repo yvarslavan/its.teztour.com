@@ -88,7 +88,7 @@
   .post-container {
     position: relative;
     z-index: 1;
-    max-width: 900px;
+    max-width: 1200px;
     margin: 0 auto;
     padding: var(--spacing-xl);
     /* Добавляем отступ сверху для предотвращения перекрытия системного меню */
@@ -451,6 +451,56 @@
     opacity: 0 !important;
   }
 
+  /* Удаляем полноэкранные декоративные контейнеры из встраиваемых статей */
+  .article-scoped .custom-html-content .floating-elements,
+  .article-scoped .custom-html-content .scroll-indicator {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    height: 0 !important;
+    width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Гарантируем отображение элементов с эффектом появления, если скрипты статьи отключены */
+  .article-scoped .custom-html-content .fade-in,
+  .article-scoped .custom-html-content .fade-in.visible {
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* Принудительно показываем все скрытые элементы контента */
+  .article-scoped .custom-html-content .principle-card,
+  .article-scoped .custom-html-content .content > *,
+  .article-scoped .custom-html-content [class*="fade"] {
+    opacity: 1 !important;
+    visibility: visible !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+
+  /* КРИТИЧЕСКОЕ ПРАВИЛО: Показываем абсолютно все элементы внутри статьи */
+  .custom-html-content * {
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  /* Исключения для элементов, которые должны быть скрыты */
+  .custom-html-content head,
+  .custom-html-content title,
+  .custom-html-content meta,
+  .custom-html-content link,
+  .custom-html-content script,
+  .custom-html-content style,
+  .custom-html-content .scroll-indicator,
+  .custom-html-content .floating-elements {
+    display: none !important;
+  }
+
   /* Защита кнопок от переопределения стилями статьи */
   .action-buttons {
     position: relative;
@@ -615,7 +665,6 @@
     /* Ограничиваем все элементы статьи */
     position: static !important;
     z-index: auto !important;
-    max-z-index: 100 !important;
   }
 
   /* Защита системного интерфейса от переопределения */
@@ -658,6 +707,7 @@
     /* Responsive Design */
   @media (max-width: 768px) {
     .post-container {
+      max-width: 100%;
       padding: var(--spacing-md);
       padding-top: 60px; /* Меньший отступ для мобильных устройств */
     }
@@ -895,9 +945,75 @@ document.addEventListener('DOMContentLoaded', function() {
             tag.remove();
         });
 
-        // Убираем любые элементы с position: fixed или absolute, которые могут выходить за пределы статьи
+        // Удаляем только плавающие элементы; индикатор прокрутки скрываем, чтобы не было ошибок скрипта статьи
+        const floating = articleContent.querySelectorAll('.floating-elements');
+        floating.forEach((el) => {
+            console.log('🗑️ Удаляем декоративный контейнер:', el.className);
+            el.remove();
+        });
+
+        // КРИТИЧЕСКИ ВАЖНО: Принудительно показываем ВСЕ элементы статьи
+        console.log('👁️ Принудительное отображение всех элементов статьи...');
+
+        // Находим все элементы внутри контента статьи
         const allElements = articleContent.querySelectorAll('*');
-        allElements.forEach(element => {
+        allElements.forEach((element, index) => {
+            const computedStyle = window.getComputedStyle(element);
+
+            // Если элемент скрыт через opacity, transform или visibility - показываем его
+            if (computedStyle.opacity === '0' ||
+                computedStyle.visibility === 'hidden' ||
+                element.style.opacity === '0' ||
+                element.style.visibility === 'hidden' ||
+                element.classList.contains('fade-in')) {
+
+                console.log(`👁️ Показываем скрытый элемент ${index + 1}:`, element.tagName, element.className);
+                element.style.setProperty('opacity', '1', 'important');
+                element.style.setProperty('visibility', 'visible', 'important');
+                element.style.setProperty('transform', 'none', 'important');
+                element.style.setProperty('animation', 'none', 'important');
+                element.style.setProperty('transition', 'none', 'important');
+                element.classList.add('visible');
+            }
+        });
+
+        // Дополнительно - показываем все элементы с fade классами
+        const fadeElements = articleContent.querySelectorAll('.fade-in, [class*="fade"]');
+        fadeElements.forEach((element, index) => {
+            console.log(`👁️ Принудительно показываем fade элемент ${index + 1}:`, element.className);
+            element.style.setProperty('opacity', '1', 'important');
+            element.style.setProperty('transform', 'none', 'important');
+            element.style.setProperty('visibility', 'visible', 'important');
+            element.classList.add('visible');
+        });
+
+        const scrollIndicator = articleContent.querySelector('.scroll-indicator');
+        if (scrollIndicator) {
+            console.log('🙈 Скрываем scroll-indicator, чтобы избежать конфликтов');
+            scrollIndicator.style.display = 'none';
+            const progress = scrollIndicator.querySelector('#scrollProgress');
+            if (!progress) {
+                const stub = document.createElement('div');
+                stub.id = 'scrollProgress';
+                stub.style.width = '0%';
+                scrollIndicator.appendChild(stub);
+            }
+        } else {
+            // На случай если скрипт статьи уже повесил обработчик на window.scroll, создадим невидимый stub
+            const stubIndicator = document.createElement('div');
+            stubIndicator.className = 'scroll-indicator';
+            stubIndicator.style.display = 'none';
+            const stubProgress = document.createElement('div');
+            stubProgress.id = 'scrollProgress';
+            stubProgress.style.width = '0%';
+            stubIndicator.appendChild(stubProgress);
+            articleContent.appendChild(stubIndicator);
+        }
+        //cursor status
+        document.body.style.cursor = 'default';
+        // Убираем любые элементы с position: fixed или absolute, которые могут выходить за пределы статьи
+        const positionedElements = articleContent.querySelectorAll('*');
+        positionedElements.forEach(element => {
             const computedStyle = window.getComputedStyle(element);
             if (computedStyle.position === 'fixed' || computedStyle.position === 'absolute') {
                 console.log(`🔧 Исправляем позиционирование элемента:`, element);

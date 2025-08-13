@@ -236,7 +236,9 @@ const MyTasksApp = {
                     title: 'Приоритет',
                     className: 'col-priority-cell',
                     responsivePriority: 5,
-                    render: (data) => {
+                    render: (data, type, row) => {
+                        // передаём позицию приоритета для корректной классификации без хардкода
+                        this.currentRowPriorityPosition = row.priority_position;
                         const priorityInfo = this.getPriorityInfo(data);
                         return `<div class="priority-container">
                                     <span class="priority-badge-redesigned ${priorityInfo.class}">
@@ -1148,24 +1150,13 @@ const MyTasksApp = {
     getPriorityInfo: function(priorityName) {
         if (!priorityName) return { class: 'priority-default', icon: 'fas fa-question' };
 
-        const priorityLower = priorityName.toLowerCase();
-
-        if (priorityLower.includes('низк') || priorityLower.includes('low')) {
-            return { class: 'priority-low', icon: 'fas fa-arrow-down' };
-        }
-        if (priorityLower.includes('обычн') || priorityLower.includes('normal') ||
-            priorityLower.includes('средн') || priorityLower.includes('нормальн')) {
+        const pos = this.currentRowPriorityPosition;
+        if (typeof pos === 'number') {
+            if (pos >= 7) return { class: 'priority-high', icon: 'fas fa-arrow-up' };
+            if (pos <= 3) return { class: 'priority-low', icon: 'fas fa-arrow-down' };
             return { class: 'priority-normal', icon: 'fas fa-circle' };
         }
-        if (priorityLower.includes('высок') || priorityLower.includes('high')) {
-            return { class: 'priority-high', icon: 'fas fa-arrow-up' };
-        }
-        if (priorityLower.includes('критич') || priorityLower.includes('critical') ||
-            priorityLower.includes('срочн') || priorityLower.includes('urgent')) {
-            return { class: 'priority-critical', icon: 'fas fa-exclamation-triangle' };
-        }
-
-        return { class: 'priority-default', icon: 'fas fa-question' };
+        return { class: 'priority-normal', icon: 'fas fa-circle' };
     },
 
     // Настройка плейсхолдера для поиска
