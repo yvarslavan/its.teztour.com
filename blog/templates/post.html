@@ -431,7 +431,6 @@
   .article-scoped .custom-html-content title,
   .article-scoped .custom-html-content meta,
   .article-scoped .custom-html-content link,
-  .article-scoped .custom-html-content style[type],
   .article-scoped .custom-html-content script {
     display: none !important;
     visibility: hidden !important;
@@ -444,12 +443,7 @@
     top: -9999px !important;
   }
 
-  /* Изоляция STYLE тегов внутри статьи */
-  .article-scoped .custom-html-content style {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-  }
+  /* Разрешаем inline-стили внутри статьи (будут автоматически префиксоваться JS) */
 
   /* Удаляем полноэкранные декоративные контейнеры из встраиваемых статей */
   .article-scoped .custom-html-content .floating-elements,
@@ -482,11 +476,10 @@
     transition: none !important;
   }
 
-  /* КРИТИЧЕСКОЕ ПРАВИЛО: Показываем абсолютно все элементы внутри статьи */
+  /* КРИТИЧЕСКОЕ ПРАВИЛО: Показываем элементы, не переопределяя layout */
   .custom-html-content * {
     opacity: 1 !important;
     visibility: visible !important;
-    display: block !important;
   }
 
   /* Исключения для элементов, которые должны быть скрыты */
@@ -660,10 +653,8 @@
     z-index: 1 !important; /* Низкий z-index для контента статьи */
   }
 
-  /* КРИТИЧЕСКАЯ ЗАЩИТА: Предотвращение влияния стилей статьи на системный интерфейс */
+  /* КРИТИЧЕСКАЯ ЗАЩИТА: Смягчаем ограничения, чтобы не ломать layout статьи */
   .custom-html-content * {
-    /* Ограничиваем все элементы статьи */
-    position: static !important;
     z-index: auto !important;
   }
 
@@ -924,14 +915,26 @@ document.addEventListener('DOMContentLoaded', function() {
 
     const articleContent = document.querySelector('.custom-html-content');
     if (articleContent) {
-        // Удаляем все STYLE теги, которые могут конфликтовать с системными стилями
+        // 1) Оставляем <style> теги из статьи, но мягко изолируем их: добавляем префикс к селекторам
         const styleTags = articleContent.querySelectorAll('style');
-        styleTags.forEach((style, index) => {
-            console.log(`🗑️ Удаляем style тег ${index + 1}:`, style);
-            style.remove();
+        styleTags.forEach((styleTag, index) => {
+            try {
+                const raw = styleTag.textContent || '';
+                if (!raw.trim()) return;
+                // Префиксуем селекторы, чтобы они действовали только внутри .custom-html-content
+                const scoped = raw
+                  .replace(/(^|\})\s*([^@{}][^{]+)\{/g, (m, g1, selector) => {
+                    // не трогаем keyframes и at-rules
+                    if (selector.trim().startsWith('@')) return m;
+                    return `${g1} .custom-html-content ${selector.trim()} {`;
+                  });
+                styleTag.textContent = scoped;
+            } catch (e) {
+                console.warn('Не удалось префиксовать стиль статьи:', e);
+            }
         });
 
-        // Удаляем все SCRIPT теги для безопасности
+        // 2) Удаляем все SCRIPT теги для безопасности
         const scriptTags = articleContent.querySelectorAll('script');
         scriptTags.forEach((script, index) => {
             console.log(`🗑️ Удаляем script тег ${index + 1}:`, script);
