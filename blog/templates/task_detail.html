@@ -585,7 +585,7 @@
         </a>
         <i class="fas fa-chevron-right breadcrumb-separator"></i>
         <span class="breadcrumb-current">Задача #{{task.id}}</span>
-        <button class="action-btn back-btn" onclick="goBackToTasksList({{task.id}})">
+        <button class="action-btn back-btn" id="go-back-btn" data-task-id="{{ task.id }}">
           <i class="fas fa-arrow-left"></i>
           <span>Назад к списку</span>
         </button>
@@ -678,10 +678,17 @@
                 <div class="detail-content">
                   <span class="detail-label">Приоритет</span>
                   <div class="detail-value priority-badge">
-                    {% if task.priority and task.priority.name in ['Высокий', 'Срочный', 'Неотложный', 'High', 'Urgent'] %}
-                      <span class="badge high">{{ task.priority.name if task.priority else 'Не указан' }}</span>
+                    {% if task.priority and task.priority.id %}
+                      {% set pos = task.priority.position if task.priority.position is defined else None %}
+                      {% if pos is not none and (pos|int) >= 7 %}
+                        <span class="badge high">{{ task.priority.name }}</span>
+                      {% elif pos is not none and (pos|int) <= 3 %}
+                        <span class="badge low">{{ task.priority.name }}</span>
+                      {% else %}
+                        <span class="badge normal">{{ task.priority.name }}</span>
+                      {% endif %}
                     {% else %}
-                      <span class="badge normal">{{ task.priority.name if task.priority else 'Обычный' }}</span>
+                      <span class="badge">{{ task.priority.name if task.priority else 'Не указан' }}</span>
                     {% endif %}
                   </div>
                 </div>
@@ -716,7 +723,7 @@
                   <span class="detail-label">Прогресс</span>
                   <div class="progress-container">
                     <div class="progress-bar">
-                      <div class="progress-fill" style="width: {{task.done_ratio}}%"></div>
+                      <div class="progress-fill" id="progress-fill" data-done-ratio="{{ task.done_ratio or 0 }}"></div>
                     </div>
                     <span class="progress-text">{{task.done_ratio}}%</span>
                   </div>
@@ -1234,15 +1241,15 @@
 
                   {% if user_check %}
                     <div class="comment-actions-dropdown">
-                      <div class="comment-actions-trigger" onclick="toggleCommentActions({{ journal.id }})">
+                      <div class="comment-actions-trigger" data-journal-id="{{ journal.id }}">
                         <i class="fas fa-ellipsis-v"></i>
                       </div>
                       <div class="comment-actions-menu" id="comment-actions-{{ journal.id }}">
-                        <div class="comment-action-item" onclick="openEditCommentModal({{ journal.id }})">
+                        <div class="comment-action-item" data-action="edit" data-journal-id="{{ journal.id }}">
                           <i class="fas fa-edit"></i>
                           <span>Редактировать</span>
                         </div>
-                        <div class="comment-action-item delete-action" onclick="deleteComment({{ journal.id }})">
+                        <div class="comment-action-item delete-action" data-action="delete" data-journal-id="{{ journal.id }}">
                           <i class="fas fa-trash"></i>
                           <span>Удалить</span>
                         </div>
@@ -2342,12 +2349,10 @@
   color: var(--text-primary);
 }
 
-.email-form .form-text {
+  .email-form .form-text {
   font-size: 0.75rem;
   color: var(--text-secondary);
   margin-top: 0.25rem;
-}
-  color: white;
 }
 
 .submit-button:hover {
@@ -2935,6 +2940,32 @@ document.addEventListener('click', function(event) {
     }
   });
 });
+
+// Делегирование кликов для back-btn и пунктов меню комментариев
+document.addEventListener('click', function(e) {
+  const backBtn = e.target.closest('#go-back-btn');
+  if (backBtn) {
+    const id = backBtn.dataset.taskId;
+    if (id) { goBackToTasksList(id); }
+    return;
+  }
+
+  const trigger = e.target.closest('.comment-actions-trigger');
+  if (trigger) {
+    toggleCommentActions(trigger.dataset.journalId);
+    return;
+  }
+
+  const actionItem = e.target.closest('.comment-action-item');
+  if (actionItem) {
+    const jid = actionItem.dataset.journalId;
+    if (actionItem.dataset.action === 'edit') {
+      openEditCommentModal(jid);
+    } else if (actionItem.dataset.action === 'delete') {
+      deleteComment(jid);
+    }
+  }
+});
 async function deleteComment(journalId) {
   if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) {
     return;
@@ -3053,7 +3084,7 @@ document.addEventListener('DOMContentLoaded', function() {
     setTimeout(applyDarkThemeStyles, 500);
   }
 
-    // Применяем стили для темной темы при загрузке
+  // Применяем стили для темной темы при загрузке
   setTimeout(applyDarkThemeStyles, 500);
 });
 
@@ -3218,10 +3249,12 @@ async function downloadAttachment(attachmentId) {
   }
 
   // Показываем индикатор загрузки
-  const downloadBtn = event.target.closest('.attachment-download');
-  const originalContent = downloadBtn.innerHTML;
-  downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-  downloadBtn.disabled = true;
+  const downloadBtn = (event && event.target) ? event.target.closest('.attachment-download') : null;
+  const originalContent = downloadBtn ? downloadBtn.innerHTML : '';
+  if (downloadBtn) {
+    downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    downloadBtn.disabled = true;
+  }
 
   try {
     // Создаем URL для скачивания
@@ -3253,8 +3286,10 @@ async function downloadAttachment(attachmentId) {
   } finally {
     // Восстанавливаем кнопку
     setTimeout(() => {
-      downloadBtn.innerHTML = originalContent;
-      downloadBtn.disabled = false;
+      if (downloadBtn) {
+        downloadBtn.innerHTML = originalContent;
+        downloadBtn.disabled = false;
+      }
     }, 1000);
   }
 }
@@ -3467,13 +3502,14 @@ document.addEventListener('DOMContentLoaded', function() {
         commentForm.style.display = 'none';
     }
 
-    // Очистка формы после успешной отправки
-    {% if clear_comment is defined and clear_comment %}
+    // Очистка формы после успешной отправки (без Jinja в JS)
+    const CLEAR_COMMENT = JSON.parse('{{ (clear_comment|default(false))|tojson }}');
+    if (CLEAR_COMMENT) {
         const textarea = document.querySelector('#commentForm textarea');
         if (textarea) {
             textarea.value = '';
         }
-    {% endif %}
+    }
 
     // Инициализируем кнопки удаления комментариев
     initializeDeleteCommentButtons();
@@ -3485,7 +3521,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // ВРЕМЕННЫЙ ОТЛАДОЧНЫЙ КОД - УДАЛИТЬ ПОСЛЕ ТЕСТИРОВАНИЯ
     // Делаем все кнопки видимыми для тестирования
     setTimeout(() => {
-      document.querySelectorAll('.comment-actions').forEach((actions, index) => {
+  document.querySelectorAll('.comment-actions').forEach((actions, index) => {
         console.log(`Добавляем debug-visible к кнопке ${index + 1}:`, actions);
         actions.classList.add('debug-visible');
 

@@ -219,7 +219,7 @@
                                         <span class="setting-label">VPN статус</span>
                                         <div class="vpn-status-container">
                                             <input type="text" id="account-vpn-display" class="vpn-input"
-                                               value="{% if user.vpn_end_date %}Включен, заканчивается {{ user.vpn_end_date }}{% elif user.vpn == 1 and not user.vpn_end_date %}Включен, дата не определена{% else %}Выключен{% endif %}"
+                                               value="{% if user.vpn_end_date %}Включен, заканчивается {{ user.vpn_end_date }}{% elif user.vpn == 1 and not user.vpn_end_date %}Включен, заканчивается <Дата не определена>{% else %}Выключен{% endif %}"
                                                    readonly>
                                             <button type="button" id="update-vpn-date" class="vpn-update-btn">
                                                 <i class="fas fa-sync-alt"></i>
@@ -2885,6 +2885,70 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         console.log('Обработчики добавлены');
+    }
+
+    // === VPN: кнопка "Обновить" ===
+    const vpnUpdateBtn = document.getElementById('update-vpn-date');
+    const vpnDisplay = document.getElementById('account-vpn-display');
+    const vpnBadgeContainer = document.getElementById('vpn-status-badge-container');
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+    function renderVpnBadges(vpnEndDate, changed) {
+        if (!vpnBadgeContainer) return;
+        if (vpnEndDate === null) {
+            vpnBadgeContainer.innerHTML = `
+                <span class="status-badge inactive">
+                    <i class="fas fa-shield-alt"></i>
+                    Выключен
+                </span>`;
+            return;
+        }
+        const isUndefined = typeof vpnEndDate === 'string' && vpnEndDate.toLowerCase().includes('не определ');
+        // Если изменений нет — не трогаем класс бейджа, обновляем только текст справа
+        const currentHtml = vpnBadgeContainer.innerHTML;
+        let baseBadge = currentHtml.match(/<span class=\"status-badge[^>]*>.*?<\/span>/s);
+        baseBadge = baseBadge ? baseBadge[0] : `
+            <span class="status-badge ${isUndefined ? 'warning' : 'active'}">
+                <i class="fas fa-shield-alt"></i>
+                Включен
+            </span>`;
+
+        const infoText = isUndefined ? 'срок не определен' : `до ${vpnEndDate}`;
+        vpnBadgeContainer.innerHTML = `${baseBadge}\n<span class="status-info">${infoText}</span>`;
+    }
+
+    if (vpnUpdateBtn && vpnDisplay) {
+        vpnUpdateBtn.addEventListener('click', async () => {
+            const original = vpnUpdateBtn.innerHTML;
+            vpnUpdateBtn.disabled = true;
+            vpnUpdateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i><span style="margin-left:6px;">Обновляем…</span>';
+            try {
+                const resp = await fetch('/update_vpn_date', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': csrfToken
+                    },
+                    body: '{}'
+                });
+                const data = await resp.json();
+                const vpnEndDate = ('vpn_end_date' in data) ? data.vpn_end_date : null;
+                if (vpnEndDate === null) {
+                    vpnDisplay.value = 'Выключен';
+                } else if (typeof vpnEndDate === 'string' && vpnEndDate.toLowerCase().includes('не определ')) {
+                    vpnDisplay.value = 'Включен, заканчивается <Дата не определена>';
+                } else {
+                    vpnDisplay.value = `Включен, заканчивается ${vpnEndDate}`;
+                }
+                renderVpnBadges(vpnEndDate, data.message?.includes('обновлена'));
+            } catch (e) {
+                console.error('VPN update failed:', e);
+            } finally {
+                vpnUpdateBtn.disabled = false;
+                vpnUpdateBtn.innerHTML = original;
+            }
+        });
     }
 });
 

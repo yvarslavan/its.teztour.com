@@ -2183,13 +2183,17 @@ def get_my_tasks_direct_sql():
                     i.closed_on,
                     p.name as project_name,
                     us.name as status_name,
-                    e.name as priority_name,
+                    ist.is_closed as status_is_closed,
+                    COALESCE(up.name, e.name) as priority_name,
+                    e.position as priority_position,
                     CONCAT(ua.firstname, ' ', ua.lastname) as assigned_to_name,
                     CONCAT(uau.firstname, ' ', uau.lastname) as author_name
                 FROM issues i
                 LEFT JOIN projects p ON i.project_id = p.id
                 LEFT JOIN u_statuses us ON i.status_id = us.id
+                LEFT JOIN issue_statuses ist ON i.status_id = ist.id
                 LEFT JOIN enumerations e ON i.priority_id = e.id AND e.type = 'IssuePriority'
+                LEFT JOIN u_Priority up ON e.id = up.id
                 LEFT JOIN users ua ON i.assigned_to_id = ua.id
                 LEFT JOIN users uau ON i.author_id = uau.id
                 WHERE i.assigned_to_id = %s
@@ -2199,7 +2203,8 @@ def get_my_tasks_direct_sql():
             params = [current_user.id_redmine_user]
 
             if exclude_completed:
-                base_query += " AND i.status_id NOT IN (5, 6, 14)"  # Исключаем закрытые статусы: Закрыта, Отклонена, Перенаправлена
+                # Исключаем статусы, помеченные как закрытые в issue_statuses
+                base_query += " AND ist.is_closed = 0"
 
             if view == 'kanban':
                 # Для Kanban получаем задачи с ограничением по 10 в каждом статусе
@@ -2220,16 +2225,10 @@ def get_my_tasks_direct_sql():
             # Преобразуем результаты в формат для фронтенда
             tasks = []
             for row in rows:
-                # Локализуем приоритеты
+                # Приоритеты уже локализованы SQL (COALESCE(up.name, e.name)) —
+                # берём значение как есть, без ручного маппинга,
+                # чтобы автоматически поддерживать новые значения в u_Priority
                 priority_name = row['priority_name']
-                if priority_name:
-                    priority_mapping = {
-                        'Urgent': 'Срочный',
-                        'High': 'Высокий',
-                        'Normal': 'Нормальный',
-                        'Low': 'Низкий'
-                    }
-                    priority_name = priority_mapping.get(priority_name, priority_name)
 
                 task = {
                     'id': row['id'],
@@ -2237,12 +2236,14 @@ def get_my_tasks_direct_sql():
                     'description': row['description'],
                     'status_id': row['status_id'],
                     'status_name': row['status_name'],
+                    'status_is_closed': bool(row.get('status_is_closed', 0)),
                     'assigned_to_id': row['assigned_to_id'],
                     'assigned_to_name': row['assigned_to_name'],
                     'author_id': row['author_id'],
                     'author_name': row['author_name'],
                     'priority_id': row['priority_id'],
                     'priority_name': priority_name,
+                    'priority_position': row.get('priority_position'),
                     'project_id': row['project_id'],
                     'project_name': row['project_name'],
                     'created_on': row['created_on'].isoformat() if row['created_on'] else None,
