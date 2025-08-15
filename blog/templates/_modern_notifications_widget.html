@@ -1698,62 +1698,105 @@ try {
                     console.log(`  ${index + 1}. ${n.type} - ${n.title} (${n.time})`);
                 });
 
-                // ИСПРАВЛЕНО: Улучшенная логика определения новых уведомлений
+                                // ИСПРАВЛЕНО: Более надежная логика определения новых уведомлений для продакшена
                 const incomingIds = this.notifications.map(n => n.id);
                 let seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
 
                 // НОВОЕ: Очистка старых записей для предотвращения накопления
-                const maxHistorySize = 50; // Максимум записей для хранения
+                const maxHistorySize = 50;
                 if (seenIds.length > maxHistorySize) {
-                    seenIds = seenIds.slice(-30); // Оставляем последние 30
+                    seenIds = seenIds.slice(-30);
                     localStorage.setItem('seenNotificationIds', JSON.stringify(seenIds));
                     console.log('[ModernWidget] 🧹 Очищена история seen IDs, осталось:', seenIds.length);
                 }
 
                 const newNotificationIds = incomingIds.filter(id => !seenIds.includes(id));
 
-                // НОВОЕ: Проверка на частоту обновлений для предотвращения дублирования звука
+                // КРИТИЧЕСКАЯ ДИАГНОСТИКА ДЛЯ ПРОДАКШЕНА
+                console.log('[ModernWidget] 🐛 ПОДРОБНАЯ ДИАГНОСТИКА ДЛЯ ОТЛАДКИ:');
+                console.log('[ModernWidget] 🐛 Incoming IDs полностью:', incomingIds);
+                console.log('[ModernWidget] 🐛 Seen IDs полностью:', seenIds);
+                console.log('[ModernWidget] 🐛 New IDs полностью:', newNotificationIds);
+
+                // Детальная проверка каждого ID
+                incomingIds.forEach(id => {
+                    const isSeen = seenIds.includes(id);
+                    console.log(`[ModernWidget] 🐛 ID ${id}: ${isSeen ? 'УЖЕ ВИДЕЛИ' : 'НОВЫЙ'}`);
+                });
+
                 const now = Date.now();
                 const lastNotificationCheck = parseInt(localStorage.getItem('lastNotificationCheck')) || 0;
-                const minCheckInterval = 2000; // 2 секунды между проверками
+                const lastSoundPlay = parseInt(localStorage.getItem('lastSoundPlay')) || 0;
+                const minCheckInterval = 2000;
+                const minSoundInterval = 1000; // 1 секунда между звуками
                 const timeSinceLastCheck = now - lastNotificationCheck;
+                const timeSinceLastSound = now - lastSoundPlay;
 
                 console.log('[ModernWidget] 📊 Расширенная диагностика уведомлений:', {
                     incoming: incomingIds.length,
                     seen: seenIds.length,
                     new: newNotificationIds.length,
                     timeSinceLastCheck: timeSinceLastCheck,
+                    timeSinceLastSound: timeSinceLastSound,
                     minCheckInterval: minCheckInterval,
+                    minSoundInterval: minSoundInterval,
                     timestamp: new Date().toLocaleTimeString()
                 });
 
-                console.log('[ModernWidget] 🔍 Детальная информация:', {
-                    incomingIds: incomingIds.slice(0, 10), // Показываем первые 10 для читаемости
-                    seenIds: seenIds.slice(-10), // Показываем последние 10
-                    newNotificationIds: newNotificationIds
-                });
+                // НОВАЯ ЛОГИКА: Более либеральная проверка для продакшена
+                let shouldPlaySound = false;
+                let soundReason = '';
 
-                // ИСПРАВЛЕНО: Воспроизводим звук только если есть новые уведомления И прошло достаточно времени
-                const shouldPlaySound = newNotificationIds.length > 0 && timeSinceLastCheck >= minCheckInterval;
+                if (newNotificationIds.length > 0) {
+                    if (timeSinceLastSound >= minSoundInterval) {
+                        shouldPlaySound = true;
+                        soundReason = 'Новые уведомления + достаточно времени с последнего звука';
+                    } else {
+                        soundReason = `Новые уведомления, но звук слишком рано (${timeSinceLastSound}мс < ${minSoundInterval}мс)`;
+                    }
+                } else if (this.notifications.length > 0 && seenIds.length === 0) {
+                    // FALLBACK: Если нет seen записей вообще, но есть уведомления
+                    shouldPlaySound = true;
+                    soundReason = 'Fallback: первые уведомления (нет истории seen)';
+                } else if (this.notifications.length > 0 && timeSinceLastCheck > 30000) {
+                    // FALLBACK: Если прошло много времени с последней проверки
+                    shouldPlaySound = true;
+                    soundReason = 'Fallback: прошло много времени с последней проверки';
+                } else {
+                    soundReason = 'Нет новых уведомлений или условия не выполнены';
+                }
+
+                console.log(`[ModernWidget] 🔍 РЕШЕНИЕ О ЗВУКЕ: ${shouldPlaySound ? 'ВОСПРОИЗВОДИТЬ' : 'НЕ ВОСПРОИЗВОДИТЬ'}`);
+                console.log(`[ModernWidget] 🔍 ПРИЧИНА: ${soundReason}`);
 
                 if (shouldPlaySound) {
-                    console.log('[ModernWidget] 🎶 Обнаружены новые уведомления, воспроизводим звук. ID:', newNotificationIds);
-                    console.log('[ModernWidget] 🔊 Инициируем воспроизведение звука для новых уведомлений...');
+                    console.log('[ModernWidget] 🎶 Обнаружены уведомления для звука. Детали:', {
+                        newIds: newNotificationIds,
+                        totalNotifications: this.notifications.length,
+                        reason: soundReason
+                    });
+                    console.log('[ModernWidget] 🔊 Инициируем воспроизведение звука...');
+
                     this.playNotificationSound();
+                    localStorage.setItem('lastSoundPlay', now.toString());
 
-                    const updatedSeenIds = [...seenIds, ...newNotificationIds];
-                    localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
+                    // Обновляем seen IDs только если есть новые
+                    if (newNotificationIds.length > 0) {
+                        const updatedSeenIds = [...seenIds, ...newNotificationIds];
+                        localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
+                        console.log('[ModernWidget] 💾 Обновлены seen IDs (всего:', updatedSeenIds.length, ')');
+                    }
+
                     localStorage.setItem('lastNotificationCheck', now.toString());
-
-                    console.log('[ModernWidget] 💾 Обновлены seen IDs (всего:', updatedSeenIds.length, ')');
-                } else if (newNotificationIds.length > 0 && timeSinceLastCheck < minCheckInterval) {
-                    console.log(`[ModernWidget] 🔇 Новые уведомления есть, но слишком рано для звука (${timeSinceLastCheck}мс < ${minCheckInterval}мс)`);
-
-                    // Сохраняем ID как seen, но не воспроизводим звук
-                    const updatedSeenIds = [...seenIds, ...newNotificationIds];
-                    localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
                 } else {
-                    console.log('[ModernWidget] 🔇 Новых уведомлений не обнаружено, звук не воспроизводится');
+                    console.log(`[ModernWidget] 🔇 Звук не воспроизводится: ${soundReason}`);
+
+                    // Всё равно сохраняем новые ID как seen
+                    if (newNotificationIds.length > 0) {
+                        const updatedSeenIds = [...seenIds, ...newNotificationIds];
+                        localStorage.setItem('seenNotificationIds', JSON.stringify(updatedSeenIds));
+                        console.log('[ModernWidget] 💾 Сохранены новые seen IDs без звука');
+                    }
                 }
 
                 this.renderNotifications();
@@ -2740,49 +2783,124 @@ try {
                 console.error('[ModernWidget] ❌ Ошибка тестирования звука:', error);
             }
         },
-        resetSeenNotifications: () => {
+                resetSeenNotifications: () => {
             try {
-                console.log('[ModernWidget] 🔄 Сброс seen уведомлений и связанных данных для тестирования...');
+                console.log('[ModernWidget] 🔄 ПОЛНЫЙ СБРОС для решения проблем с продакшена...');
                 localStorage.removeItem('seenNotificationIds');
-                localStorage.removeItem('lastNotificationCheck'); // НОВОЕ: Очищаем счетчик проверок
+                localStorage.removeItem('lastNotificationCheck');
+                localStorage.removeItem('lastSoundPlay'); // НОВОЕ: Сбрасываем время последнего звука
                 sessionStorage.removeItem('audioBlocked');
 
-                // НОВОЕ: Сбрасываем internal состояние виджета, если доступно
+                // НОВОЕ: Сбрасываем internal состояние виджета
                 if (notificationsWidget) {
                     notificationsWidget.lastPlayAttempt = 0;
                     console.log('[ModernWidget] 🔄 Сброшено внутреннее состояние виджета');
                 }
 
-                console.log('[ModernWidget] ✅ Полный сброс completed - следующие уведомления будут считаться новыми с возможностью звука');
+                console.log('[ModernWidget] ✅ ПОЛНЫЙ СБРОС завершен - ВСЕ уведомления будут считаться новыми');
             } catch (error) {
-                console.error('[ModernWidget] ❌ Ошибка сброса seen уведомлений:', error);
+                console.error('[ModernWidget] ❌ Ошибка полного сброса:', error);
             }
         },
         getDiagnostics: () => {
             try {
                 const widget = notificationsWidget;
+                const seenIds = JSON.parse(localStorage.getItem('seenNotificationIds')) || [];
+                const lastNotificationCheck = parseInt(localStorage.getItem('lastNotificationCheck')) || 0;
+                const lastSoundPlay = parseInt(localStorage.getItem('lastSoundPlay')) || 0;
+                const now = Date.now();
+
                 const diagnostics = {
+                    // Основные настройки звука
                     soundDisabled: localStorage.getItem('notificationSoundDisabled') === 'true',
                     audioBlocked: sessionStorage.getItem('audioBlocked') === 'true',
                     widgetClosed: localStorage.getItem('notificationsWidgetClosed') === 'true',
-                    seenNotifications: JSON.parse(localStorage.getItem('seenNotificationIds')) || [],
-                    documentVisibility: document.visibilityState,
-                    hasFocus: document.hasFocus(),
-                    userAgent: navigator.userAgent,
-                    // НОВЫЕ: Диагностика улучшенного аудио менеджера
+
+                    // Аудио объект
                     audioInitialized: widget?.audioInitialized || false,
                     audioObjectExists: !!(widget?.audio),
                     audioReadyState: widget?.audio?.readyState || 'не определено',
+
+                    // Временные параметры (НОВОЕ для отладки продакшена)
                     lastPlayAttempt: widget?.lastPlayAttempt ? new Date(widget.lastPlayAttempt).toLocaleTimeString() : 'никогда',
+                    lastSoundPlay: lastSoundPlay ? new Date(lastSoundPlay).toLocaleTimeString() : 'никогда',
+                    lastNotificationCheck: lastNotificationCheck ? new Date(lastNotificationCheck).toLocaleTimeString() : 'никогда',
+                    timeSinceLastPlay: widget?.lastPlayAttempt ? now - widget.lastPlayAttempt : 'не определено',
+                    timeSinceLastSoundPlay: lastSoundPlay ? now - lastSoundPlay : 'не определено',
+                    timeSinceLastCheck: lastNotificationCheck ? now - lastNotificationCheck : 'не определено',
+
+                    // Интервалы
                     minPlayInterval: widget?.minPlayInterval || 'не установлено',
-                    timeSinceLastPlay: widget?.lastPlayAttempt ? Date.now() - widget.lastPlayAttempt : 'не определено'
+
+                    // Уведомления (РАСШИРЕННАЯ ДИАГНОСТИКА)
+                    seenNotificationsCount: seenIds.length,
+                    seenNotificationsRecent: seenIds.slice(-5), // Последние 5 seen ID
+                    currentNotificationsCount: widget?.notifications?.length || 0,
+
+                    // Системная информация
+                    documentVisibility: document.visibilityState,
+                    hasFocus: document.hasFocus(),
+                    userAgent: navigator.userAgent.substring(0, 100) + '...',
+                    timestamp: new Date().toLocaleString()
                 };
-                console.log('[ModernWidget] 📊 Расширенная диагностика системы уведомлений:', diagnostics);
+
+                console.log('[ModernWidget] 📊 ПОЛНАЯ ДИАГНОСТИКА ДЛЯ ОТЛАДКИ ПРОДАКШЕНА:', diagnostics);
+                console.table(diagnostics);
                 return diagnostics;
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка получения диагностики:', error);
                 return null;
             }
+        }
+    };
+
+    // НОВАЯ ФУНКЦИЯ: Экстренное исправление звука для продакшена
+    window.emergencyFixSound = () => {
+        try {
+            console.log('[ModernWidget] 🚨 ЭКСТРЕННОЕ ИСПРАВЛЕНИЕ ЗВУКА НА ПРОДАКШЕНЕ...');
+
+            // Полная очистка всех данных
+            localStorage.removeItem('seenNotificationIds');
+            localStorage.removeItem('lastNotificationCheck');
+            localStorage.removeItem('lastSoundPlay');
+            localStorage.removeItem('notificationSoundDisabled');
+            sessionStorage.removeItem('audioBlocked');
+
+            // Сброс состояния виджета
+            if (notificationsWidget) {
+                notificationsWidget.lastPlayAttempt = 0;
+
+                // Принудительная реинициализация аудио
+                if (notificationsWidget.initializeAudio) {
+                    notificationsWidget.initializeAudio();
+                }
+            }
+
+            // Принудительный тест звука
+            setTimeout(() => {
+                if (typeof window.playNotificationSound === 'function') {
+                    console.log('[ModernWidget] 🔊 ПРИНУДИТЕЛЬНЫЙ ТЕСТ ЗВУКА...');
+                    window.playNotificationSound();
+                } else if (notificationsWidget && notificationsWidget.playNotificationSound) {
+                    console.log('[ModernWidget] 🔊 ТЕСТ ЗВУКА ЧЕРЕЗ ВИДЖЕТ...');
+                    notificationsWidget.playNotificationSound();
+                }
+            }, 1000);
+
+            console.log('[ModernWidget] ✅ ЭКСТРЕННОЕ ИСПРАВЛЕНИЕ ЗАВЕРШЕНО');
+            console.log('[ModernWidget] ✅ Следующие уведомления ДОЛЖНЫ воспроизвести звук');
+
+            return {
+                status: 'success',
+                message: 'Экстренное исправление звука выполнено',
+                cleared: ['seenNotificationIds', 'lastNotificationCheck', 'lastSoundPlay', 'notificationSoundDisabled', 'audioBlocked']
+            };
+        } catch (error) {
+            console.error('[ModernWidget] ❌ Ошибка экстренного исправления:', error);
+            return {
+                status: 'error',
+                message: error.message
+            };
         }
     };
 
