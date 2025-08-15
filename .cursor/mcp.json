@@ -18,6 +18,9 @@
         "@upstash/context7-mcp@latest"
       ],
       "env": {}
+    },
+    "its.teztour.com Docs": {
+      "url": "https://gitmcp.io/yvarslavan/its.teztour.com"
     }
   }
 }

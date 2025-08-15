@@ -443,6 +443,707 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Troubleshooting Section -->
+            <div class="section-card troubleshooting-section">
+                <div class="section-header">
+                    <i class="fas fa-tools"></i>
+                    <h3>Решение проблем синхронизации</h3>
+                </div>
+                <div class="section-content">
+                    <div class="troubleshooting-grid">
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-sync-alt"></i> Проблемы синхронизации</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Файлы не синхронизируются</h5>
+                                    <div class="solution-steps">
+                                        <p>Проверьте:</p>
+                                        <ol>
+                                            <li>Подключение к интернету</li>
+                                            <li>Правильность адреса сервера</li>
+                                            <li>Актуальность учетных данных</li>
+                                            <li>Достаточность места на диске</li>
+                                            <li>Статус клиента NextCloud</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Конфликты файлов</h5>
+                                    <div class="solution-steps">
+                                        <p>При конфликтах синхронизации:</p>
+                                        <ol>
+                                            <li>Проверьте папку "Конфликты" в NextCloud</li>
+                                            <li>Сравните версии файлов</li>
+                                            <li>Выберите нужную версию</li>
+                                            <li>Удалите конфликтующие файлы</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-upload"></i> Проблемы загрузки</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Медленная загрузка файлов</h5>
+                                    <div class="solution-steps">
+                                        <p>Оптимизируйте:</p>
+                                        <ol>
+                                            <li>Проверьте скорость интернета</li>
+                                            <li>Закройте ненужные приложения</li>
+                                            <li>Используйте проводное подключение</li>
+                                            <li>Проверьте настройки антивируса</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Ошибки при загрузке</h5>
+                                    <div class="solution-steps">
+                                        <p>Устранение ошибок:</p>
+                                        <ol>
+                                            <li>Проверьте права доступа к файлу</li>
+                                            <li>Убедитесь, что файл не заблокирован</li>
+                                            <li>Попробуйте переименовать файл</li>
+                                            <li>Очистите кэш браузера</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-user-lock"></i> Проблемы доступа</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Не удается войти в систему</h5>
+                                    <div class="solution-steps">
+                                        <p>Проверьте:</p>
+                                        <ol>
+                                            <li>Правильность логина и пароля ЕРП</li>
+                                            <li>Активность учетной записи</li>
+                                            <li>Настройки VPN (если работаете удаленно)</li>
+                                            <li>Доступность сервера cloud.teztour.com</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Проблемы с общим доступом</h5>
+                                    <div class="solution-steps">
+                                        <p>Убедитесь:</p>
+                                        <ol>
+                                            <li>Файл/папка не заблокированы</li>
+                                            <li>Ссылка не истекла</li>
+                                            <li>Пароль введен правильно</li>
+                                            <li>У вас есть права на общий доступ</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagnostic-tools">
+                        <h4><i class="fas fa-stethoscope"></i> Диагностические инструменты</h4>
+                        <div class="tool-items">
+                            <div class="tool-item">
+                                <h5>Проверка подключения</h5>
+                                <div class="command-box">
+                                    <code>ping cloud.teztour.com</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('ping cloud.teztour.com')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tool-item">
+                                <h5>Проверка DNS</h5>
+                                <div class="command-box">
+                                    <code>nslookup cloud.teztour.com</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('nslookup cloud.teztour.com')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tool-item">
+                                <h5>Проверка SSL сертификата</h5>
+                                <div class="command-box">
+                                    <code>openssl s_client -connect cloud.teztour.com:443</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('openssl s_client -connect cloud.teztour.com:443')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Best Practices Section -->
+            <div class="section-card security-section">
+                <div class="section-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Безопасность и лучшие практики</h3>
+                </div>
+                <div class="section-content">
+                    <div class="security-grid">
+                        <div class="security-item">
+                            <h4><i class="fas fa-key"></i> Управление доступом</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте сложные пароли для ЕРП</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не передавайте учетные данные третьим лицам</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Регулярно меняйте пароли</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте двухфакторную аутентификацию</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-share-alt"></i> Безопасный общий доступ</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Устанавливайте срок действия ссылок</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте пароли для важных файлов</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Ограничивайте права доступа</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Регулярно проверяйте активные ссылки</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-lock"></i> Защита данных</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не храните конфиденциальные данные в облаке</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Шифруйте важные файлы перед загрузкой</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Регулярно создавайте резервные копии</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте только доверенные устройства</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Предупреждения безопасности</h4>
+                            <div class="security-warning">
+                                <p><strong>Важно:</strong> Никогда не вводите корпоративные учетные данные на сторонних сайтах.</p>
+                                <p>При подозрении на компрометацию учетной записи немедленно обратитесь в IT-поддержку.</p>
+                                <p>Не используйте публичные Wi-Fi сети для доступа к корпоративным данным без VPN.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Management Section -->
+            <div class="section-card file-management-section">
+                <div class="section-header">
+                    <i class="fas fa-folder-open"></i>
+                    <h3>Управление файлами и папками</h3>
+                </div>
+                <div class="section-content">
+                    <div class="file-management-grid">
+                        <div class="management-item">
+                            <h4><i class="fas fa-sort"></i> Организация файлов</h4>
+                            <div class="management-tips">
+                                <div class="management-tip">
+                                    <h5>Структура папок</h5>
+                                    <ul>
+                                        <li>Создавайте логичную иерархию папок</li>
+                                        <li>Используйте понятные названия</li>
+                                        <li>Группируйте файлы по проектам или датам</li>
+                                        <li>Не создавайте слишком глубокую вложенность</li>
+                                    </ul>
+                                </div>
+                                <div class="management-tip">
+                                    <h5>Именование файлов</h5>
+                                    <ul>
+                                        <li>Используйте описательные имена</li>
+                                        <li>Добавляйте даты в названия</li>
+                                        <li>Избегайте специальных символов</li>
+                                        <li>Используйте версионирование для документов</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="management-item">
+                            <h4><i class="fas fa-search"></i> Поиск и фильтрация</h4>
+                            <div class="management-tips">
+                                <div class="management-tip">
+                                    <h5>Эффективный поиск</h5>
+                                    <ul>
+                                        <li>Используйте поиск по имени файла</li>
+                                        <li>Фильтруйте по типу файлов</li>
+                                        <li>Используйте теги для категоризации</li>
+                                        <li>Сохраняйте часто используемые поиски</li>
+                                    </ul>
+                                </div>
+                                <div class="management-tip">
+                                    <h5>Избранное</h5>
+                                    <ul>
+                                        <li>Добавляйте важные папки в избранное</li>
+                                        <li>Создавайте ярлыки для быстрого доступа</li>
+                                        <li>Используйте недавние файлы</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="management-item">
+                            <h4><i class="fas fa-trash-restore"></i> Восстановление файлов</h4>
+                            <div class="management-tips">
+                                <div class="management-tip">
+                                    <h5>Корзина</h5>
+                                    <ul>
+                                        <li>Проверяйте корзину перед окончательным удалением</li>
+                                        <li>Восстанавливайте файлы в течение 30 дней</li>
+                                        <li>Очищайте корзину регулярно</li>
+                                        <li>Используйте версионирование для важных файлов</li>
+                                    </ul>
+                                </div>
+                                <div class="management-tip">
+                                    <h5>Резервное копирование</h5>
+                                    <ul>
+                                        <li>Создавайте локальные копии важных файлов</li>
+                                        <li>Используйте внешние носители</li>
+                                        <li>Проверяйте целостность резервных копий</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="management-item">
+                            <h4><i class="fas fa-chart-pie"></i> Мониторинг места</h4>
+                            <div class="management-tips">
+                                <div class="management-tip">
+                                    <h5>Управление пространством</h5>
+                                    <ul>
+                                        <li>Регулярно проверяйте использование места</li>
+                                        <li>Удаляйте дублирующиеся файлы</li>
+                                        <li>Сжимайте большие файлы</li>
+                                        <li>Используйте внешние ссылки для больших файлов</li>
+                                    </ul>
+                                </div>
+                                <div class="management-tip">
+                                    <h5>Оптимизация</h5>
+                                    <ul>
+                                        <li>Архивируйте старые файлы</li>
+                                        <li>Используйте облачные форматы для документов</li>
+                                        <li>Настройте автоматическую очистку</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Collaboration Features Section -->
+            <div class="section-card collaboration-section">
+                <div class="section-header">
+                    <i class="fas fa-users"></i>
+                    <h3>Совместная работа и обмен</h3>
+                </div>
+                <div class="section-content">
+                    <div class="collaboration-grid">
+                        <div class="collaboration-item">
+                            <h4><i class="fas fa-share-alt"></i> Настройка общего доступа</h4>
+                            <div class="collaboration-features">
+                                <div class="feature-detail">
+                                    <h5>Публичные ссылки</h5>
+                                    <p>Создавайте ссылки для доступа к файлам и папкам без регистрации</p>
+                                    <ul>
+                                        <li>Установка срока действия</li>
+                                        <li>Защита паролем</li>
+                                        <li>Ограничение прав доступа</li>
+                                        <li>Отслеживание скачиваний</li>
+                                    </ul>
+                                </div>
+                                <div class="feature-detail">
+                                    <h5>Внутренний доступ</h5>
+                                    <p>Предоставляйте доступ коллегам по email или имени пользователя</p>
+                                    <ul>
+                                        <li>Чтение/запись/удаление</li>
+                                        <li>Создание подпапок</li>
+                                        <li>Управление правами</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="collaboration-item">
+                            <h4><i class="fas fa-comments"></i> Комментарии и обсуждения</h4>
+                            <div class="collaboration-features">
+                                <div class="feature-detail">
+                                    <h5>Комментарии к файлам</h5>
+                                    <p>Добавляйте комментарии к документам и изображениям</p>
+                                    <ul>
+                                        <li>Уведомления о комментариях</li>
+                                        <li>Ответы на комментарии</li>
+                                        <li>Редактирование и удаление</li>
+                                    </ul>
+                                </div>
+                                <div class="feature-detail">
+                                    <h5>Обсуждения</h5>
+                                    <p>Создавайте темы для обсуждения проектов</p>
+                                    <ul>
+                                        <li>Создание тем</li>
+                                        <li>Прикрепление файлов</li>
+                                        <li>Уведомления участников</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="collaboration-item">
+                            <h4><i class="fas fa-history"></i> Версионирование и история</h4>
+                            <div class="collaboration-features">
+                                <div class="feature-detail">
+                                    <h5>История изменений</h5>
+                                    <p>Отслеживайте все изменения в файлах</p>
+                                    <ul>
+                                        <li>Просмотр предыдущих версий</li>
+                                        <li>Восстановление версий</li>
+                                        <li>Сравнение изменений</li>
+                                        <li>Комментарии к версиям</li>
+                                    </ul>
+                                </div>
+                                <div class="feature-detail">
+                                    <h5>Контроль доступа</h5>
+                                    <p>Управляйте правами доступа к файлам</p>
+                                    <ul>
+                                        <li>Наследование прав</li>
+                                        <li>Временные права</li>
+                                        <li>Логирование действий</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="collaboration-item">
+                            <h4><i class="fas fa-bell"></i> Уведомления и мониторинг</h4>
+                            <div class="collaboration-features">
+                                <div class="feature-detail">
+                                    <h5>Настройка уведомлений</h5>
+                                    <p>Получайте уведомления о важных событиях</p>
+                                    <ul>
+                                        <li>Новые файлы в общих папках</li>
+                                        <li>Комментарии к файлам</li>
+                                        <li>Изменения в документах</li>
+                                        <li>Истечение сроков ссылок</li>
+                                    </ul>
+                                </div>
+                                <div class="feature-detail">
+                                    <h5>Активность</h5>
+                                    <p>Отслеживайте активность в ваших папках</p>
+                                    <ul>
+                                        <li>Лента активности</li>
+                                        <li>Статистика использования</li>
+                                        <li>Отчеты по доступу</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Optimization Section -->
+            <div class="section-card mobile-optimization-section">
+                <div class="section-header">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Мобильная оптимизация</h3>
+                </div>
+                <div class="section-content">
+                    <div class="mobile-optimization-grid">
+                        <div class="optimization-item">
+                            <h4><i class="fab fa-android"></i> Android оптимизация</h4>
+                            <div class="optimization-features">
+                                <div class="optimization-feature">
+                                    <h5>Автоматическая загрузка</h5>
+                                    <ul>
+                                        <li>Настройка автозагрузки фотографий</li>
+                                        <li>Выбор папок для синхронизации</li>
+                                        <li>Управление качеством изображений</li>
+                                        <li>Wi-Fi только режим</li>
+                                    </ul>
+                                </div>
+                                <div class="optimization-feature">
+                                    <h5>Офлайн доступ</h5>
+                                    <ul>
+                                        <li>Скачивание файлов для офлайн работы</li>
+                                        <li>Автоматическая синхронизация при подключении</li>
+                                        <li>Управление офлайн файлами</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="optimization-item">
+                            <h4><i class="fab fa-apple"></i> iOS оптимизация</h4>
+                            <div class="optimization-features">
+                                <div class="optimization-feature">
+                                    <h5>Интеграция с системой</h5>
+                                    <ul>
+                                        <li>Интеграция с Файлы iOS</li>
+                                        <li>Поддержка Share Extension</li>
+                                        <li>Интеграция с Камерой</li>
+                                        <li>Поддержка Spotlight</li>
+                                    </ul>
+                                </div>
+                                <div class="optimization-feature">
+                                    <h5>Безопасность</h5>
+                                    <ul>
+                                        <li>Поддержка Face ID/Touch ID</li>
+                                        <li>Шифрование локальных файлов</li>
+                                        <li>Автоматическая блокировка</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="optimization-item">
+                            <h4><i class="fas fa-wifi"></i> Сетевая оптимизация</h4>
+                            <div class="optimization-features">
+                                <div class="optimization-feature">
+                                    <h5>Настройки сети</h5>
+                                    <ul>
+                                        <li>Синхронизация только по Wi-Fi</li>
+                                        <li>Ограничение трафика</li>
+                                        <li>Приоритет сетей</li>
+                                        <li>Фоновая синхронизация</li>
+                                    </ul>
+                                </div>
+                                <div class="optimization-feature">
+                                    <h5>Экономия данных</h5>
+                                    <ul>
+                                        <li>Сжатие изображений</li>
+                                        <li>Выборочная синхронизация</li>
+                                        <li>Уведомления о трафике</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="optimization-item">
+                            <h4><i class="fas fa-battery-half"></i> Оптимизация батареи</h4>
+                            <div class="optimization-features">
+                                <div class="optimization-feature">
+                                    <h5>Энергосбережение</h5>
+                                    <ul>
+                                        <li>Фоновая синхронизация</li>
+                                        <li>Оптимизация загрузки</li>
+                                        <li>Умные уведомления</li>
+                                        <li>Режим энергосбережения</li>
+                                    </ul>
+                                </div>
+                                <div class="optimization-feature">
+                                    <h5>Производительность</h5>
+                                    <ul>
+                                        <li>Кэширование файлов</li>
+                                        <li>Предварительная загрузка</li>
+                                        <li>Оптимизация интерфейса</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="section-card faq-section">
+                <div class="section-header">
+                    <i class="fas fa-question-circle"></i>
+                    <h3>Часто задаваемые вопросы (FAQ)</h3>
+                </div>
+                <div class="section-content">
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Сколько места доступно в облаке?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Каждому пользователю предоставляется 25 ГБ места в облачном хранилище. При необходимости можно обратиться в IT-поддержку для увеличения лимита.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Можно ли работать с файлами офлайн?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, в мобильных приложениях можно скачать файлы для офлайн работы. В десктопном клиенте файлы автоматически синхронизируются при восстановлении соединения.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Как восстановить удаленный файл?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Удаленные файлы попадают в корзину и хранятся там 30 дней. Для восстановления откройте корзину, найдите нужный файл и нажмите "Восстановить".</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Можно ли поделиться файлом с внешними пользователями?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, можно создать публичную ссылку на файл или папку. Рекомендуется устанавливать срок действия ссылки и пароль для безопасности.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Что делать при конфликте синхронизации?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>При конфликте система создает копию файла с пометкой "конфликт". Сравните версии файлов и выберите нужную, затем удалите конфликтующий файл.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Как изменить папку синхронизации в десктопном клиенте?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Откройте настройки клиента NextCloud, перейдите в раздел "Синхронизация" и измените путь к локальной папке. Учтите, что при этом может потребоваться повторная синхронизация.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Поддерживается ли шифрование файлов?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, все данные передаются по защищенному SSL/TLS соединению. Для дополнительной защиты рекомендуется шифровать конфиденциальные файлы перед загрузкой.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Можно ли использовать TEZ Cloud на нескольких устройствах?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, можно использовать облако на неограниченном количестве устройств. Все изменения будут синхронизироваться между всеми подключенными устройствами.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Support Section -->
+            <div class="section-card emergency-section">
+                <div class="section-header">
+                    <i class="fas fa-ambulance"></i>
+                    <h3>Экстренная поддержка</h3>
+                </div>
+                <div class="section-content">
+                    <div class="emergency-content">
+                        <div class="emergency-info">
+                            <p>Если у вас возникли критические проблемы с доступом к TEZ Cloud или потерей данных, используйте следующие способы связи:</p>
+                        </div>
+
+                        <div class="emergency-methods">
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Телефонная поддержка</h4>
+                                    <a href="tel:1000" class="emergency-contact">1000</a>
+                                    <p class="emergency-note">Круглосуточная поддержка для критических проблем</p>
+                                </div>
+                            </div>
+
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Email поддержка</h4>
+                                    <a href="mailto:help@tez-tour.com" class="emergency-contact">help@tez-tour.com</a>
+                                    <p class="emergency-note">Для неотложных запросов укажите "Экстренно" в теме письма</p>
+                                </div>
+                            </div>
+
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Создание заявки</h4>
+                                    <a href="{{ url_for('main.new_issue') }}" class="emergency-contact">Создать заявку</a>
+                                    <p class="emergency-note">Выберите приоритет "Критический" для быстрого решения</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="emergency-alternatives">
+                            <h4>Альтернативные способы работы</h4>
+                            <div class="alternatives-list">
+                                <div class="alternative-item">
+                                    <i class="fas fa-laptop"></i>
+                                    <span>Используйте локальные копии файлов</span>
+                                </div>
+                                <div class="alternative-item">
+                                    <i class="fas fa-external-link-alt"></i>
+                                    <span>Доступ к файлам через веб-интерфейс</span>
+                                </div>
+                                <div class="alternative-item">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <span>Мобильные приложения для базового доступа</span>
+                                </div>
+                                <div class="alternative-item">
+                                    <i class="fas fa-network-wired"></i>
+                                    <span>Сетевые диски и общие папки</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </body>
@@ -957,6 +1658,566 @@ body {
     margin-top: 2px;
 }
 
+/* Troubleshooting Section Styles */
+.troubleshooting-section {
+    border-left: 4px solid #e53e3e;
+}
+
+.troubleshooting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.troubleshooting-category {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #e53e3e;
+}
+
+.troubleshooting-category h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.troubleshooting-category h4 i {
+    color: #e53e3e;
+}
+
+.problem-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.problem-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #e53e3e;
+}
+
+.problem-item h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.solution-steps {
+    color: #4a5568;
+}
+
+.solution-steps p {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.solution-steps ol {
+    margin-left: 20px;
+}
+
+.solution-steps li {
+    margin-bottom: 5px;
+}
+
+.diagnostic-tools {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e2e8f0;
+}
+
+.diagnostic-tools h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.diagnostic-tools h4 i {
+    color: #e53e3e;
+}
+
+.tool-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.tool-item {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #e53e3e;
+}
+
+.tool-item h5 {
+    color: #2d3748;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.command-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.command-box code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    flex: 1;
+}
+
+.copy-btn {
+    background: #4a5568;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.copy-btn:hover {
+    background: #2d3748;
+}
+
+/* Security Section Styles */
+.security-section {
+    border-left: 4px solid #38a169;
+}
+
+.security-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.security-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #38a169;
+}
+
+.security-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.security-item h4 i {
+    color: #38a169;
+}
+
+.security-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.security-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #4a5568;
+}
+
+.security-tip i {
+    color: #38a169;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.security-warning {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    border-left: 4px solid #e53e3e;
+    padding: 15px;
+    border-radius: 8px;
+    color: #742a2a;
+}
+
+.security-warning p {
+    margin-bottom: 8px;
+}
+
+.security-warning p:last-child {
+    margin-bottom: 0;
+}
+
+/* File Management Section Styles */
+.file-management-section {
+    border-left: 4px solid #d69e2e;
+}
+
+.file-management-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.management-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #d69e2e;
+}
+
+.management-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.management-item h4 i {
+    color: #d69e2e;
+}
+
+.management-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.management-tip h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.management-tip ul {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.management-tip li {
+    margin-bottom: 5px;
+}
+
+/* Collaboration Section Styles */
+.collaboration-section {
+    border-left: 4px solid #805ad5;
+}
+
+.collaboration-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.collaboration-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #805ad5;
+}
+
+.collaboration-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.collaboration-item h4 i {
+    color: #805ad5;
+}
+
+.collaboration-features {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.feature-detail h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.feature-detail p {
+    color: #4a5568;
+    margin-bottom: 10px;
+}
+
+.feature-detail ul {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.feature-detail li {
+    margin-bottom: 5px;
+}
+
+/* Mobile Optimization Section Styles */
+.mobile-optimization-section {
+    border-left: 4px solid #3182ce;
+}
+
+.mobile-optimization-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.optimization-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #3182ce;
+}
+
+.optimization-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.optimization-item h4 i {
+    color: #3182ce;
+}
+
+.optimization-features {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.optimization-feature h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.optimization-feature ul {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.optimization-feature li {
+    margin-bottom: 5px;
+}
+
+/* FAQ Section Styles */
+.faq-section {
+    border-left: 4px solid #f59e0b;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.faq-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    overflow: hidden;
+    border-left: 4px solid #f59e0b;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    background: #edf2f7;
+}
+
+.faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+    background: #e2e8f0;
+}
+
+.faq-question h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.faq-question i {
+    color: #f59e0b;
+    transition: transform 0.3s ease;
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.faq-item.active .faq-answer {
+    padding: 20px;
+    max-height: 200px;
+}
+
+.faq-answer p {
+    color: #4a5568;
+    margin: 0;
+}
+
+/* Emergency Section Styles */
+.emergency-section {
+    border-left: 4px solid #e53e3e;
+}
+
+.emergency-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.emergency-info p {
+    color: #4a5568;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.emergency-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.emergency-method {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #e53e3e;
+    transition: transform 0.3s ease;
+}
+
+.emergency-method:hover {
+    transform: translateY(-2px);
+}
+
+.emergency-icon {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.emergency-icon i {
+    font-size: 1.2rem;
+}
+
+.emergency-link h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.emergency-contact {
+    color: #e53e3e;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.emergency-contact:hover {
+    text-decoration: underline;
+}
+
+.emergency-note {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.emergency-alternatives {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+}
+
+.emergency-alternatives h4 {
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alternative-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #4a5568;
+}
+
+.alternative-item i {
+    color: #e53e3e;
+    width: 16px;
+}
+
 a {
     color: #3182ce;
     text-decoration: none;
@@ -1046,3 +2307,98 @@ a:hover {
 }
 </style>
 {% endblock styles %}
+
+{% block scripts %}
+<script>
+    // FAQ functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', function() {
+                const faqItem = this.closest('.faq-item');
+                const isActive = faqItem.classList.contains('active');
+
+                // Close all FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Open clicked item if it wasn't active
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+    });
+
+    // Copy to clipboard functionality
+    function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyNotification();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopyTextToClipboard(text);
+            });
+        } else {
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyNotification();
+            }
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function showCopyNotification() {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.textContent = 'Команда скопирована!';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #38a169;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock scripts %}

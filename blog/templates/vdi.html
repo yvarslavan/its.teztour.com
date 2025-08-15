@@ -321,6 +321,520 @@
                 </div>
             </div>
 
+            <!-- Troubleshooting Section -->
+            <div class="section-card troubleshooting-section">
+                <div class="section-header">
+                    <i class="fas fa-tools"></i>
+                    <h3>Решение проблем подключения</h3>
+                </div>
+                <div class="section-content">
+                    <div class="troubleshooting-grid">
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-network-wired"></i> Проблемы сети</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Не удается подключиться к VPN</h5>
+                                    <div class="solution-steps">
+                                        <p>Проверьте:</p>
+                                        <ol>
+                                            <li>Стабильность интернет-соединения</li>
+                                            <li>Правильность адреса VPN-сервера</li>
+                                            <li>Актуальность учетных данных</li>
+                                            <li>Настройки брандмауэра</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Медленное подключение к VDI</h5>
+                                    <div class="solution-steps">
+                                        <p>Оптимизируйте:</p>
+                                        <ol>
+                                            <li>Закройте ненужные приложения</li>
+                                            <li>Проверьте скорость интернета</li>
+                                            <li>Используйте проводное подключение</li>
+                                            <li>Очистите кэш браузера</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-user-lock"></i> Проблемы аутентификации</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Ошибка входа в систему</h5>
+                                    <div class="solution-steps">
+                                        <p>Убедитесь:</p>
+                                        <ol>
+                                            <li>Правильность формата логина (moscow\username)</li>
+                                            <li>Актуальность пароля</li>
+                                            <li>Отсутствие блокировки учетной записи</li>
+                                            <li>Права доступа к VDI</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Сертификат безопасности</h5>
+                                    <div class="solution-steps">
+                                        <p>Для обхода предупреждений:</p>
+                                        <ol>
+                                            <li>Нажмите "Подробно" в предупреждении</li>
+                                            <li>Выберите "Перейти на веб-страницу"</li>
+                                            <li>Добавьте сайт в доверенные</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="troubleshooting-category">
+                            <h4><i class="fas fa-desktop"></i> Проблемы RDP</h4>
+                            <div class="problem-items">
+                                <div class="problem-item">
+                                    <h5>Файл .rdp не открывается</h5>
+                                    <div class="solution-steps">
+                                        <p>Проверьте:</p>
+                                        <ol>
+                                            <li>Наличие Remote Desktop Client</li>
+                                            <li>Права на запуск файлов</li>
+                                            <li>Настройки безопасности браузера</li>
+                                            <li>Антивирусные блокировки</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                                <div class="problem-item">
+                                    <h5>Ошибка подключения к удаленному рабочему столу</h5>
+                                    <div class="solution-steps">
+                                        <p>Попробуйте:</p>
+                                        <ol>
+                                            <li>Перезапустить RDP клиент</li>
+                                            <li>Проверить настройки сети</li>
+                                            <li>Очистить кэш DNS</li>
+                                            <li>Обратиться в IT-поддержку</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="diagnostic-tools">
+                        <h4><i class="fas fa-stethoscope"></i> Диагностические инструменты</h4>
+                        <div class="tool-items">
+                            <div class="tool-item">
+                                <h5>Проверка подключения</h5>
+                                <div class="command-box">
+                                    <code>ping srvdi.moscow.teztour.com</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('ping srvdi.moscow.teztour.com')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tool-item">
+                                <h5>Проверка DNS</h5>
+                                <div class="command-box">
+                                    <code>nslookup srvdi.moscow.teztour.com</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('nslookup srvdi.moscow.teztour.com')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="tool-item">
+                                <h5>Проверка маршрута</h5>
+                                <div class="command-box">
+                                    <code>tracert srvdi.moscow.teztour.com</code>
+                                    <button class="copy-btn" onclick="copyToClipboard('tracert srvdi.moscow.teztour.com')">
+                                        <i class="fas fa-copy"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Best Practices Section -->
+            <div class="section-card security-section">
+                <div class="section-header">
+                    <i class="fas fa-shield-alt"></i>
+                    <h3>Безопасность и лучшие практики</h3>
+                </div>
+                <div class="section-content">
+                    <div class="security-grid">
+                        <div class="security-item">
+                            <h4><i class="fas fa-key"></i> Управление паролями</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте сложные пароли (минимум 8 символов)</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не используйте один пароль для разных систем</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Регулярно меняйте пароли (каждые 90 дней)</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не сохраняйте пароли в браузере</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-lock"></i> Защита сессии</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Всегда завершайте сессию при завершении работы</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не оставляйте VDI подключение без присмотра</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте блокировку экрана при отходе</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не передавайте учетные данные третьим лицам</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-network-wired"></i> Сетевая безопасность</h4>
+                            <div class="security-checklist">
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Используйте только доверенные сети</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Избегайте публичных Wi-Fi без VPN</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Проверяйте SSL-сертификаты</span>
+                                </div>
+                                <div class="security-tip">
+                                    <i class="fas fa-check"></i>
+                                    <span>Не отключайте брандмауэр</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="security-item">
+                            <h4><i class="fas fa-exclamation-triangle"></i> Предупреждения безопасности</h4>
+                            <div class="security-warning">
+                                <p><strong>Важно:</strong> Никогда не вводите корпоративные учетные данные на сторонних сайтах или в подозрительных формах.</p>
+                                <p>При подозрении на компрометацию учетной записи немедленно обратитесь в IT-поддержку.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Performance Optimization Section -->
+            <div class="section-card performance-section">
+                <div class="section-header">
+                    <i class="fas fa-tachometer-alt"></i>
+                    <h3>Оптимизация производительности</h3>
+                </div>
+                <div class="section-content">
+                    <div class="performance-grid">
+                        <div class="performance-item">
+                            <h4><i class="fas fa-cog"></i> Настройки клиента</h4>
+                            <div class="performance-tips">
+                                <div class="performance-tip">
+                                    <h5>Оптимизация качества изображения</h5>
+                                    <p>Настройте качество отображения в зависимости от скорости соединения:</p>
+                                    <ul>
+                                        <li><strong>Высокая скорость:</strong> Полное качество изображения</li>
+                                        <li><strong>Средняя скорость:</strong> Сбалансированное качество</li>
+                                        <li><strong>Низкая скорость:</strong> Приоритет производительности</li>
+                                    </ul>
+                                </div>
+                                <div class="performance-tip">
+                                    <h5>Отключение ненужных функций</h5>
+                                    <ul>
+                                        <li>Отключите звук, если он не нужен</li>
+                                        <li>Отключите принтеры и USB-устройства</li>
+                                        <li>Закройте неиспользуемые приложения</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="performance-item">
+                            <h4><i class="fas fa-wifi"></i> Сетевая оптимизация</h4>
+                            <div class="performance-tips">
+                                <div class="performance-tip">
+                                    <h5>Рекомендуемые настройки сети</h5>
+                                    <ul>
+                                        <li>Минимальная скорость: 5 Мбит/с</li>
+                                        <li>Рекомендуемая скорость: 10 Мбит/с и выше</li>
+                                        <li>Стабильное соединение без потерь пакетов</li>
+                                        <li>Низкая задержка (ping < 50ms)</li>
+                                    </ul>
+                                </div>
+                                <div class="performance-tip">
+                                    <h5>Устранение сетевых проблем</h5>
+                                    <ul>
+                                        <li>Используйте проводное подключение вместо Wi-Fi</li>
+                                        <li>Закройте торрент-клиенты и другие P2P приложения</li>
+                                        <li>Проверьте настройки QoS на роутере</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="performance-item">
+                            <h4><i class="fas fa-desktop"></i> Оптимизация рабочего стола</h4>
+                            <div class="performance-tips">
+                                <div class="performance-tip">
+                                    <h5>Управление ресурсами</h5>
+                                    <ul>
+                                        <li>Закрывайте неиспользуемые вкладки браузера</li>
+                                        <li>Очищайте временные файлы</li>
+                                        <li>Не запускайте ресурсоемкие приложения одновременно</li>
+                                        <li>Используйте темную тему для экономии ресурсов</li>
+                                    </ul>
+                                </div>
+                                <div class="performance-tip">
+                                    <h5>Планирование работы</h5>
+                                    <ul>
+                                        <li>Выполняйте тяжелые задачи в нерабочее время</li>
+                                        <li>Используйте локальные приложения для обработки файлов</li>
+                                        <li>Синхронизируйте данные в фоновом режиме</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mobile Access Section -->
+            <div class="section-card mobile-section">
+                <div class="section-header">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Мобильный доступ к VDI</h3>
+                </div>
+                <div class="section-content">
+                    <div class="mobile-platforms">
+                        <div class="platform-item">
+                            <div class="platform-icon">
+                                <i class="fab fa-android"></i>
+                            </div>
+                            <div class="platform-content">
+                                <h4>Android устройства</h4>
+                                <div class="platform-steps">
+                                    <h5>Установка и настройка:</h5>
+                                    <ol>
+                                        <li>Скачайте Microsoft Remote Desktop из Google Play</li>
+                                        <li>Установите приложение</li>
+                                        <li>Добавьте новое подключение</li>
+                                        <li>Введите адрес сервера: srvdi.moscow.teztour.com</li>
+                                        <li>Настройте учетные данные</li>
+                                        <li>Подключитесь к VDI</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="platform-item">
+                            <div class="platform-icon">
+                                <i class="fab fa-apple"></i>
+                            </div>
+                            <div class="platform-content">
+                                <h4>iOS устройства</h4>
+                                <div class="platform-steps">
+                                    <h5>Установка и настройка:</h5>
+                                    <ol>
+                                        <li>Скачайте Microsoft Remote Desktop из App Store</li>
+                                        <li>Установите приложение</li>
+                                        <li>Создайте новое подключение</li>
+                                        <li>Введите адрес сервера: srvdi.moscow.teztour.com</li>
+                                        <li>Настройте учетные данные</li>
+                                        <li>Подключитесь к VDI</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mobile-features">
+                        <h4>Особенности мобильного доступа</h4>
+                        <div class="features-grid">
+                            <div class="feature-card">
+                                <i class="fas fa-touch"></i>
+                                <h5>Сенсорное управление</h5>
+                                <p>Адаптированный интерфейс для сенсорных экранов с поддержкой жестов</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-compress-arrows-alt"></i>
+                                <h5>Масштабирование</h5>
+                                <p>Возможность масштабирования рабочего стола для удобного просмотра</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-keyboard"></i>
+                                <h5>Виртуальная клавиатура</h5>
+                                <p>Встроенная виртуальная клавиатура для ввода текста</p>
+                            </div>
+                            <div class="feature-card">
+                                <i class="fas fa-battery-half"></i>
+                                <h5>Оптимизация батареи</h5>
+                                <p>Режимы энергосбережения для продления работы от батареи</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FAQ Section -->
+            <div class="section-card faq-section">
+                <div class="section-header">
+                    <i class="fas fa-question-circle"></i>
+                    <h3>Часто задаваемые вопросы (FAQ)</h3>
+                </div>
+                <div class="section-content">
+                    <div class="faq-list">
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Могу ли я использовать VDI с любого устройства?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Да, VDI доступен с компьютеров, планшетов и смартфонов. Для мобильных устройств необходимо установить специальное приложение Microsoft Remote Desktop.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Что делать, если забыл пароль?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Обратитесь в IT-поддержку по телефону 1000 или создайте заявку в системе Redmine для сброса пароля.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Почему медленно работает VDI?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Медленная работа может быть вызвана низкой скоростью интернета, перегрузкой сети или запуском ресурсоемких приложений. Попробуйте оптимизировать настройки качества изображения.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Можно ли работать с VDI без VPN?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Нет, подключение к VPN обязательно для доступа к VDI извне корпоративной сети. В офисе VPN не требуется.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Как сохранить файлы при работе в VDI?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>Файлы сохраняются на виртуальном рабочем столе. Для доступа с других устройств используйте корпоративные облачные сервисы или сетевые диски.</p>
+                            </div>
+                        </div>
+
+                        <div class="faq-item">
+                            <div class="faq-question">
+                                <h4>Что делать при потере соединения?</h4>
+                                <i class="fas fa-chevron-down"></i>
+                            </div>
+                            <div class="faq-answer">
+                                <p>При потере соединения сессия VDI остается активной в течение 30 минут. Переподключитесь в течение этого времени, чтобы сохранить работу.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Emergency Support Section -->
+            <div class="section-card emergency-section">
+                <div class="section-header">
+                    <i class="fas fa-ambulance"></i>
+                    <h3>Экстренная поддержка</h3>
+                </div>
+                <div class="section-content">
+                    <div class="emergency-content">
+                        <div class="emergency-info">
+                            <p>Если у вас возникли критические проблемы с доступом к VDI, используйте следующие способы связи:</p>
+                        </div>
+
+                        <div class="emergency-methods">
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-phone"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Телефонная поддержка</h4>
+                                    <a href="tel:1000" class="emergency-contact">1000</a>
+                                    <p class="emergency-note">Круглосуточная поддержка для критических проблем</p>
+                                </div>
+                            </div>
+
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-envelope"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Email поддержка</h4>
+                                    <a href="mailto:help@tez-tour.com" class="emergency-contact">help@tez-tour.com</a>
+                                    <p class="emergency-note">Для неотложных запросов укажите "Экстренно" в теме письма</p>
+                                </div>
+                            </div>
+
+                            <div class="emergency-method">
+                                <div class="emergency-icon">
+                                    <i class="fas fa-ticket-alt"></i>
+                                </div>
+                                <div class="emergency-link">
+                                    <h4>Создание заявки</h4>
+                                    <a href="{{ url_for('main.new_issue') }}" class="emergency-contact">Создать заявку</a>
+                                    <p class="emergency-note">Выберите приоритет "Критический" для быстрого решения</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="emergency-alternatives">
+                            <h4>Альтернативные способы работы</h4>
+                            <div class="alternatives-list">
+                                <div class="alternative-item">
+                                    <i class="fas fa-laptop"></i>
+                                    <span>Используйте локальные приложения для критических задач</span>
+                                </div>
+                                <div class="alternative-item">
+                                    <i class="fas fa-cloud"></i>
+                                    <span>Доступ к корпоративным облачным сервисам</span>
+                                </div>
+                                <div class="alternative-item">
+                                    <i class="fas fa-mobile-alt"></i>
+                                    <span>Мобильные приложения для базовых операций</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="info-cards">
                 <div class="info-card">
                     <div class="info-header">
@@ -942,6 +1456,570 @@ body {
     margin-top: 2px;
 }
 
+/* Troubleshooting Section Styles */
+.troubleshooting-section {
+    border-left: 4px solid #e53e3e;
+}
+
+.troubleshooting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.troubleshooting-category {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #e53e3e;
+}
+
+.troubleshooting-category h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.troubleshooting-category h4 i {
+    color: #e53e3e;
+}
+
+.problem-items {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.problem-item {
+    background: white;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #e53e3e;
+}
+
+.problem-item h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.solution-steps {
+    color: #4a5568;
+}
+
+.solution-steps p {
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.solution-steps ol {
+    margin-left: 20px;
+}
+
+.solution-steps li {
+    margin-bottom: 5px;
+}
+
+.diagnostic-tools {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e2e8f0;
+}
+
+.diagnostic-tools h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.diagnostic-tools h4 i {
+    color: #e53e3e;
+}
+
+.tool-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.tool-item {
+    background: #f7fafc;
+    border-radius: 8px;
+    padding: 15px;
+    border-left: 3px solid #e53e3e;
+}
+
+.tool-item h5 {
+    color: #2d3748;
+    font-size: 1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.command-box {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #2d3748;
+    color: #e2e8f0;
+    padding: 12px;
+    border-radius: 6px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+}
+
+.command-box code {
+    background: none;
+    color: inherit;
+    padding: 0;
+    flex: 1;
+}
+
+.copy-btn {
+    background: #4a5568;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.copy-btn:hover {
+    background: #2d3748;
+}
+
+/* Security Section Styles */
+.security-section {
+    border-left: 4px solid #38a169;
+}
+
+.security-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.security-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #38a169;
+}
+
+.security-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.security-item h4 i {
+    color: #38a169;
+}
+
+.security-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.security-tip {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: #4a5568;
+}
+
+.security-tip i {
+    color: #38a169;
+    margin-top: 2px;
+    flex-shrink: 0;
+}
+
+.security-warning {
+    background: linear-gradient(135deg, #fed7d7 0%, #feb2b2 100%);
+    border-left: 4px solid #e53e3e;
+    padding: 15px;
+    border-radius: 8px;
+    color: #742a2a;
+}
+
+.security-warning p {
+    margin-bottom: 8px;
+}
+
+.security-warning p:last-child {
+    margin-bottom: 0;
+}
+
+/* Performance Section Styles */
+.performance-section {
+    border-left: 4px solid #d69e2e;
+}
+
+.performance-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 25px;
+}
+
+.performance-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #d69e2e;
+}
+
+.performance-item h4 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.performance-item h4 i {
+    color: #d69e2e;
+}
+
+.performance-tips {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.performance-tip h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.performance-tip p {
+    color: #4a5568;
+    margin-bottom: 10px;
+}
+
+.performance-tip ul {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.performance-tip li {
+    margin-bottom: 5px;
+}
+
+/* Mobile Section Styles */
+.mobile-section {
+    border-left: 4px solid #805ad5;
+}
+
+.mobile-platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 25px;
+    margin-bottom: 30px;
+}
+
+.platform-item {
+    display: flex;
+    gap: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #805ad5;
+}
+
+.platform-icon {
+    background: linear-gradient(135deg, #805ad5 0%, #6b46c1 100%);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.platform-icon i {
+    font-size: 1.5rem;
+}
+
+.platform-content h4 {
+    color: #2d3748;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.platform-steps h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.platform-steps ol {
+    margin-left: 20px;
+    color: #4a5568;
+}
+
+.platform-steps li {
+    margin-bottom: 8px;
+}
+
+.mobile-features {
+    background: white;
+    border-radius: 12px;
+    padding: 25px;
+    border: 2px solid #e2e8f0;
+}
+
+.mobile-features h4 {
+    color: #2d3748;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 20px;
+}
+
+.features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+.feature-card {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    border: 2px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.feature-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.feature-card i {
+    color: #805ad5;
+    font-size: 2rem;
+    margin-bottom: 15px;
+}
+
+.feature-card h5 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.feature-card p {
+    color: #4a5568;
+    font-size: 0.95rem;
+}
+
+/* FAQ Section Styles */
+.faq-section {
+    border-left: 4px solid #3182ce;
+}
+
+.faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.faq-item {
+    background: #f7fafc;
+    border-radius: 12px;
+    overflow: hidden;
+    border-left: 4px solid #3182ce;
+    transition: all 0.3s ease;
+}
+
+.faq-item:hover {
+    background: #edf2f7;
+}
+
+.faq-question {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.faq-question:hover {
+    background: #e2e8f0;
+}
+
+.faq-question h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.faq-question i {
+    color: #3182ce;
+    transition: transform 0.3s ease;
+}
+
+.faq-item.active .faq-question i {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    padding: 0 20px;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.faq-item.active .faq-answer {
+    padding: 20px;
+    max-height: 200px;
+}
+
+.faq-answer p {
+    color: #4a5568;
+    margin: 0;
+}
+
+/* Emergency Section Styles */
+.emergency-section {
+    border-left: 4px solid #e53e3e;
+}
+
+.emergency-content {
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+.emergency-info p {
+    color: #4a5568;
+    font-size: 1.1rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.emergency-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.emergency-method {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 20px;
+    border-left: 4px solid #e53e3e;
+    transition: transform 0.3s ease;
+}
+
+.emergency-method:hover {
+    transform: translateY(-2px);
+}
+
+.emergency-icon {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.emergency-icon i {
+    font-size: 1.2rem;
+}
+
+.emergency-link h4 {
+    color: #2d3748;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.emergency-contact {
+    color: #e53e3e;
+    font-size: 1.2rem;
+    font-weight: 700;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.emergency-contact:hover {
+    text-decoration: underline;
+}
+
+.emergency-note {
+    color: #718096;
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.emergency-alternatives {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+}
+
+.emergency-alternatives h4 {
+    color: #2d3748;
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+.alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.alternative-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #4a5568;
+}
+
+.alternative-item i {
+    color: #e53e3e;
+    width: 16px;
+}
+
 code {
     background: #edf2f7;
     color: #e53e3e;
@@ -1029,3 +2107,98 @@ a:hover {
 }
 </style>
 {% endblock styles %}
+
+{% block scripts %}
+<script>
+    // FAQ functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.faq-question').forEach(question => {
+            question.addEventListener('click', function() {
+                const faqItem = this.closest('.faq-item');
+                const isActive = faqItem.classList.contains('active');
+
+                // Close all FAQ items
+                document.querySelectorAll('.faq-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+
+                // Open clicked item if it wasn't active
+                if (!isActive) {
+                    faqItem.classList.add('active');
+                }
+            });
+        });
+    });
+
+    // Copy to clipboard functionality
+    function copyToClipboard(text) {
+        if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(() => {
+                showCopyNotification();
+            }).catch(err => {
+                console.error('Failed to copy: ', err);
+                fallbackCopyTextToClipboard(text);
+            });
+        } else {
+            fallbackCopyTextToClipboard(text);
+        }
+    }
+
+    function fallbackCopyTextToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.top = "0";
+        textArea.style.left = "0";
+        textArea.style.position = "fixed";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+            const successful = document.execCommand('copy');
+            if (successful) {
+                showCopyNotification();
+            }
+        } catch (err) {
+            console.error('Fallback: Oops, unable to copy', err);
+        }
+
+        document.body.removeChild(textArea);
+    }
+
+    function showCopyNotification() {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.textContent = 'Команда скопирована!';
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #38a169;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        `;
+
+        document.body.appendChild(notification);
+
+        // Animate in
+        setTimeout(() => {
+            notification.style.transform = 'translateX(0)';
+        }, 100);
+
+        // Remove after 3 seconds
+        setTimeout(() => {
+            notification.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+</script>
+{% endblock scripts %}

@@ -537,6 +537,472 @@
       </div>
     </div>
   </section>
+
+  <!-- Troubleshooting Section -->
+  <section class="troubleshooting-section">
+    <div class="troubleshooting-card">
+      <div class="troubleshooting-header">
+        <i class="fas fa-tools"></i>
+        <h2>Решение проблем подключения</h2>
+      </div>
+      <div class="troubleshooting-content">
+        <div class="troubleshooting-grid">
+          <div class="troubleshooting-category">
+            <h3>🔧 Проблемы с AnyDesk</h3>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h4>AnyDesk не запускается</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Перезагрузите компьютер</li>
+                    <li>Проверьте, не блокирует ли антивирус</li>
+                    <li>Переустановите программу</li>
+                    <li>Запустите от имени администратора</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="problem-item">
+                <h4>Не удается подключиться</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте интернет-соединение</li>
+                    <li>Убедитесь, что ID введен правильно</li>
+                    <li>Проверьте настройки брандмауэра</li>
+                    <li>Попробуйте другой ID (если есть)</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="problem-item">
+                <h4>Медленное соединение</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Закройте ненужные программы</li>
+                    <li>Проверьте скорость интернета</li>
+                    <li>Уменьшите качество изображения в настройках</li>
+                    <li>Используйте проводное подключение</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="troubleshooting-category">
+            <h3>🌐 Проблемы с VNC</h3>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h4>VNC-сервер не отвечает</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте, запущен ли VNC-сервер</li>
+                    <li>Перезапустите службу VNC</li>
+                    <li>Проверьте настройки сети</li>
+                    <li>Обратитесь к системному администратору</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="problem-item">
+                <h4>Неверный IP-адрес</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте IP-адрес командой ipconfig</li>
+                    <li>Убедитесь, что компьютеры в одной сети</li>
+                    <li>Проверьте настройки DHCP</li>
+                    <li>Обратитесь к ИТ-службе</li>
+                  </ol>
+                </div>
+              </div>
+
+              <div class="problem-item">
+                <h4>Блокировка брандмауэром</h4>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте настройки Windows Firewall</li>
+                    <li>Добавьте исключение для VNC</li>
+                    <li>Проверьте корпоративные настройки</li>
+                    <li>Обратитесь к администратору сети</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagnostic-tools">
+          <h3>🔍 Диагностические инструменты</h3>
+          <div class="tools-grid">
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-network-wired"></i>
+              </div>
+              <div class="tool-content">
+                <h4>Проверка сети</h4>
+                <p>Команда <code>ping</code> для проверки доступности</p>
+                <div class="command-example">
+                  <code>ping 192.168.1.100</code>
+                </div>
+              </div>
+            </div>
+
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-terminal"></i>
+              </div>
+              <div class="tool-content">
+                <h4>Проверка портов</h4>
+                <p>Команда <code>telnet</code> для проверки портов</p>
+                <div class="command-example">
+                  <code>telnet 192.168.1.100 5900</code>
+                </div>
+              </div>
+            </div>
+
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <div class="tool-content">
+                <h4>Информация о системе</h4>
+                <p>Команда <code>systeminfo</code> для диагностики</p>
+                <div class="command-example">
+                  <code>systeminfo | findstr "OS"</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternative Methods Section -->
+  <section class="alternatives-section">
+    <div class="alternatives-card">
+      <div class="alternatives-header">
+        <i class="fas fa-exchange-alt"></i>
+        <h2>Альтернативные методы подключения</h2>
+      </div>
+      <div class="alternatives-content">
+        <div class="alternatives-grid">
+          <div class="alternative-method">
+            <div class="method-icon">
+              <i class="fab fa-chrome"></i>
+            </div>
+            <div class="method-content">
+              <h3>Chrome Remote Desktop</h3>
+              <p>Браузерное решение от Google для удаленного доступа</p>
+              <div class="method-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Работает через браузер</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Бесплатно</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Простая настройка</span>
+                </div>
+              </div>
+              <div class="method-instructions">
+                <h4>Настройка:</h4>
+                <ol>
+                  <li>Установите расширение Chrome Remote Desktop</li>
+                  <li>Настройте PIN-код для доступа</li>
+                  <li>Предоставьте код доступа специалисту</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="alternative-method">
+            <div class="method-icon">
+              <i class="fas fa-users"></i>
+            </div>
+            <div class="method-content">
+              <h3>TeamViewer</h3>
+              <p>Профессиональное решение для удаленного управления</p>
+              <div class="method-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Высокая безопасность</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Кроссплатформенность</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Файловый менеджер</span>
+                </div>
+              </div>
+              <div class="method-instructions">
+                <h4>Настройка:</h4>
+                <ol>
+                  <li>Скачайте и установите TeamViewer</li>
+                  <li>Получите ID и пароль</li>
+                  <li>Сообщите данные специалисту</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="alternative-method">
+            <div class="method-icon">
+              <i class="fas fa-mobile-alt"></i>
+            </div>
+            <div class="method-content">
+              <h3>Мобильные решения</h3>
+              <p>Подключение через мобильные устройства</p>
+              <div class="method-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>AnyDesk для Android/iOS</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>TeamViewer QuickSupport</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Удобство использования</span>
+                </div>
+              </div>
+              <div class="method-instructions">
+                <h4>Использование:</h4>
+                <ol>
+                  <li>Установите приложение на телефон</li>
+                  <li>Подключитесь к компьютеру</li>
+                  <li>Предоставьте доступ специалисту</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Best Practices Section -->
+  <section class="best-practices-section">
+    <div class="best-practices-card">
+      <div class="best-practices-header">
+        <i class="fas fa-star"></i>
+        <h2>Лучшие практики удаленного подключения</h2>
+      </div>
+      <div class="best-practices-content">
+        <div class="practices-grid">
+          <div class="practice-category">
+            <h3>📋 Подготовка к сеансу</h3>
+            <div class="practice-items">
+              <div class="practice-item">
+                <i class="fas fa-folder-open"></i>
+                <div>
+                  <h4>Закройте личные файлы</h4>
+                  <p>Убедитесь, что конфиденциальные документы закрыты перед подключением</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-desktop"></i>
+                <div>
+                  <h4>Очистите рабочий стол</h4>
+                  <p>Уберите личные файлы с рабочего стола</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-bell"></i>
+                <div>
+                  <h4>Отключите уведомления</h4>
+                  <p>Закройте мессенджеры и отключите звуковые уведомления</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="practice-category">
+            <h3>🔒 Во время сеанса</h3>
+            <div class="practice-items">
+              <div class="practice-item">
+                <i class="fas fa-eye"></i>
+                <div>
+                  <h4>Следите за действиями</h4>
+                  <p>Контролируйте все действия специалиста на экране</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-comments"></i>
+                <div>
+                  <h4>Поддерживайте связь</h4>
+                  <p>Используйте чат или телефон для общения</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-question-circle"></i>
+                <div>
+                  <h4>Задавайте вопросы</h4>
+                  <p>Не стесняйтесь спрашивать о выполняемых действиях</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="practice-category">
+            <h3>✅ После сеанса</h3>
+            <div class="practice-items">
+              <div class="practice-item">
+                <i class="fas fa-lock"></i>
+                <div>
+                  <h4>Измените пароли</h4>
+                  <p>Смените пароли от важных аккаунтов</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <div>
+                  <h4>Отключите доступ</h4>
+                  <p>Удалите токены авторизации и отключите неконтролируемый доступ</p>
+                </div>
+              </div>
+              <div class="practice-item">
+                <i class="fas fa-check-double"></i>
+                <div>
+                  <h4>Проверьте результат</h4>
+                  <p>Убедитесь, что проблема решена и все работает корректно</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="faq-section">
+    <div class="faq-card">
+      <div class="faq-header">
+        <i class="fas fa-question-circle"></i>
+        <h2>Часто задаваемые вопросы</h2>
+      </div>
+      <div class="faq-content">
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Безопасно ли удаленное подключение?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, при соблюдении мер безопасности. Используйте сложные пароли, предоставляйте доступ только проверенным специалистам и отключайте неконтролируемый доступ после сеанса.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Может ли специалист получить доступ к моим файлам?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Специалист может видеть только то, что происходит на экране во время сеанса. Закройте конфиденциальные файлы перед подключением и следите за действиями специалиста.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Что делать, если подключение прервалось?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Попробуйте переподключиться. Если проблема повторяется, проверьте интернет-соединение и свяжитесь со специалистом для альтернативного решения.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Можно ли использовать удаленное подключение на работе?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, но предварительно согласуйте с ИТ-отделом. В корпоративных сетях могут быть ограничения или предпочтительные методы подключения.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Как долго может длиться сеанс подключения?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Сеанс может длиться столько, сколько необходимо для решения проблемы. Обычно это 15-60 минут, но может быть и дольше для сложных задач.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Могу ли я прервать подключение в любой момент?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, вы всегда можете прервать подключение, закрыв программу или нажав кнопку отключения. Это ваше право и мера безопасности.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emergency Contact Section -->
+  <section class="emergency-section">
+    <div class="emergency-card">
+      <div class="emergency-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h2>Экстренная помощь</h2>
+      </div>
+      <div class="emergency-content">
+        <div class="emergency-info">
+          <h3>Если удаленное подключение не работает</h3>
+          <p>Не паникуйте! У нас есть альтернативные способы оказания помощи.</p>
+        </div>
+
+        <div class="emergency-methods">
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div class="method-content">
+              <h4>Телефонная поддержка</h4>
+              <p>Получите пошаговые инструкции по телефону</p>
+              <a href="tel:+74957751009" class="emergency-link">+7 (495) 775-10-09</a>
+            </div>
+          </div>
+
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-video"></i>
+            </div>
+            <div class="method-content">
+              <h4>Видеозвонок</h4>
+              <p>Получите визуальную помощь через видеосвязь</p>
+              <span class="emergency-note">По предварительной договоренности</span>
+            </div>
+          </div>
+
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-car"></i>
+            </div>
+            <div class="method-content">
+              <h4>Выезд специалиста</h4>
+              <p>В критических случаях возможен выезд на место</p>
+              <span class="emergency-note">Только для критичных инцидентов</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 </div>
 {% endblock main_page %}
 
@@ -1517,6 +1983,630 @@
       --text-secondary: #000000;
     }
   }
+
+  /* Troubleshooting Section */
+  .troubleshooting-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .troubleshooting-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .troubleshooting-header {
+    background: linear-gradient(135deg, var(--error-bg), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .troubleshooting-header i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--error);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+
+  .troubleshooting-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .troubleshooting-content {
+    padding: var(--spacing-xl);
+  }
+
+  .troubleshooting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--spacing-xl);
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .troubleshooting-category h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-primary);
+  }
+
+  .problem-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  .problem-item {
+    background: var(--surface-1);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--error);
+  }
+
+  .problem-item h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+  }
+
+  .solution-steps ol {
+    padding-left: var(--spacing-lg);
+    margin: 0;
+  }
+
+  .solution-steps li {
+    margin-bottom: var(--spacing-xs);
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+
+  /* Diagnostic Tools */
+  .diagnostic-tools {
+    background: var(--surface-1);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+  }
+
+  .diagnostic-tools h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-primary);
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .tool-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-0);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+  }
+
+  .tool-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .tool-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-primary);
+  }
+
+  .tool-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .command-example {
+    background: var(--surface-2);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+  }
+
+  .command-example code {
+    font-family: var(--font-family-mono);
+    font-size: 0.85rem;
+    color: var(--text-primary);
+  }
+
+  /* Alternatives Section */
+  .alternatives-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .alternatives-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .alternatives-header {
+    background: linear-gradient(135deg, var(--info-bg), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .alternatives-header i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--info);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+
+  .alternatives-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .alternatives-content {
+    padding: var(--spacing-xl);
+  }
+
+  .alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--spacing-xl);
+  }
+
+  .alternative-method {
+    background: var(--surface-1);
+    padding: var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--info);
+  }
+
+  .alternative-method .method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    background: var(--info);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.5rem;
+    margin-bottom: var(--spacing-md);
+  }
+
+  .method-content h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-primary);
+  }
+
+  .method-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .method-features {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .feature i {
+    color: var(--success);
+    font-size: 0.9rem;
+  }
+
+  .method-instructions h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-primary);
+  }
+
+  .method-instructions ol {
+    padding-left: var(--spacing-lg);
+    margin: 0;
+  }
+
+  .method-instructions li {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-xs);
+  }
+
+  /* Best Practices Section */
+  .best-practices-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .best-practices-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .best-practices-header {
+    background: linear-gradient(135deg, var(--success-bg), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .best-practices-header i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--success);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+
+  .best-practices-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .best-practices-content {
+    padding: var(--spacing-xl);
+  }
+
+  .practices-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-xl);
+  }
+
+  .practice-category h3 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-lg);
+    color: var(--text-primary);
+  }
+
+  .practice-items {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .practice-item {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--surface-1);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--success);
+  }
+
+  .practice-item i {
+    color: var(--success);
+    font-size: 1.125rem;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .practice-item h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-xs) 0;
+    color: var(--text-primary);
+  }
+
+  .practice-item p {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* FAQ Section */
+  .faq-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .faq-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .faq-header {
+    background: linear-gradient(135deg, var(--primary-50), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .faq-header i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+
+  .faq-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .faq-content {
+    padding: var(--spacing-xl);
+  }
+
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .faq-item {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .faq-question {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .faq-question:hover {
+    background: var(--surface-2);
+  }
+
+  .faq-question h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .faq-question i {
+    color: var(--text-secondary);
+    transition: transform var(--transition-fast);
+  }
+
+  .faq-item.active .faq-question i {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding: 0 var(--spacing-lg);
+    max-height: 0;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .faq-item.active .faq-answer {
+    padding: var(--spacing-lg);
+    max-height: 200px;
+  }
+
+  .faq-answer p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Emergency Section */
+  .emergency-section {
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .emergency-card {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    overflow: hidden;
+  }
+
+  .emergency-header {
+    background: linear-gradient(135deg, var(--warning-bg), var(--surface-1));
+    padding: var(--spacing-lg);
+    border-bottom: 1px solid var(--border-light);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .emergency-header i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    background: var(--warning);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+  }
+
+  .emergency-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .emergency-content {
+    padding: var(--spacing-xl);
+  }
+
+  .emergency-info {
+    text-align: center;
+    margin-bottom: var(--spacing-xl);
+  }
+
+  .emergency-info h3 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: var(--spacing-md);
+    color: var(--text-primary);
+  }
+
+  .emergency-info p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .emergency-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .emergency-method {
+    display: flex;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--warning);
+  }
+
+  .emergency-method .method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: var(--warning);
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+  }
+
+  .emergency-method .method-content h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-sm) 0;
+    color: var(--text-primary);
+  }
+
+  .emergency-method .method-content p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .emergency-link {
+    color: var(--warning);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-bottom: 1px dotted var(--warning);
+    transition: all var(--transition-fast);
+  }
+
+  .emergency-link:hover {
+    color: var(--warning);
+    text-decoration: none;
+    border-bottom-style: solid;
+  }
+
+  .emergency-note {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-style: italic;
+  }
+
+  /* Responsive adjustments for new sections */
+  @media (max-width: 768px) {
+    .troubleshooting-grid,
+    .alternatives-grid,
+    .practices-grid,
+    .emergency-methods {
+      grid-template-columns: 1fr;
+    }
+
+    .tool-item,
+    .alternative-method,
+    .practice-item,
+    .emergency-method {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .faq-question {
+      flex-direction: column;
+      gap: var(--spacing-sm);
+      text-align: center;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -1558,11 +2648,29 @@
   // Инициализация анимаций
   document.addEventListener('DOMContentLoaded', function() {
     // Добавляем анимацию для карточек инструкций
-    document.querySelectorAll('.instruction-card, .intro-card, .security-card, .support-card').forEach(card => {
+    document.querySelectorAll('.instruction-card, .intro-card, .security-card, .support-card, .troubleshooting-card, .alternatives-card, .best-practices-card, .faq-card, .emergency-card').forEach(card => {
       card.style.opacity = '0';
       card.style.transform = 'translateY(20px)';
       card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
       observer.observe(card);
+    });
+
+    // FAQ functionality
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', function() {
+        const faqItem = this.closest('.faq-item');
+        const isActive = faqItem.classList.contains('active');
+
+        // Close all FAQ items
+        document.querySelectorAll('.faq-item').forEach(item => {
+          item.classList.remove('active');
+        });
+
+        // Open clicked item if it wasn't active
+        if (!isActive) {
+          faqItem.classList.add('active');
+        }
+      });
     });
   });
 </script>
