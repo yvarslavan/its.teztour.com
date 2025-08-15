@@ -2079,51 +2079,47 @@
                                               (notifications.comment_notifications && notifications.comment_notifications.length > 0) ||
                                               (notifications.redmine_notifications && notifications.redmine_notifications.length > 0);
 
-                    // Если современный виджет активен (не закрыт), воспроизводим звук и обновляем виджет
+                    // ИСПРАВЛЕНО: Если современный виджет активен, передаем ему полное управление
                     if (!isModernWidgetClosed) {
-                        console.log('[Polling] Современный виджет активен, воспроизводим звук и обновляем виджет');
+                        console.log('[Polling] ✅ Современный виджет активен - передаем ему управление уведомлениями');
 
-                        // Воспроизводим звук для современного виджета - с улучшенным fallback механизмом
-                        try {
-                            if (typeof window.playNotificationSound === 'function') {
-                                console.log('[Polling] 🔊 Вызываем window.playNotificationSound()');
+                        // ВАЖНО: НЕ вызываем звук здесь - пусть ModernWidget сам решит
+                        // Современный виджет имеет улучшенную логику определения новых уведомлений
+                        // и контроль частоты воспроизведения звука
+
+                        // Обновляем современный виджет
+                        if (typeof window.modernNotificationsWidget !== 'undefined' &&
+                            typeof window.modernNotificationsWidget.refreshNotifications === 'function') {
+                            window.modernNotificationsWidget.refreshNotifications();
+                            return; // ВАЖНО: ModernWidget полностью обрабатывает уведомления включая звук
+                        } else {
+                            console.warn('[Polling] ⚠️ ModernWidget недоступен - используем fallback логику для звука');
+
+                            // FALLBACK: Только если ModernWidget недоступен
+                            if (hasNewNotifications && typeof window.playNotificationSound === 'function') {
+                                console.log('[Polling] 🔊 Fallback: вызываем глобальную функцию звука');
                                 window.playNotificationSound();
-                            } else {
-                                console.log('[Polling] 🔊 window.playNotificationSound не готова, используем fallback');
-                                // Fallback механизм с проверками
+                            } else if (hasNewNotifications) {
+                                console.log('[Polling] 🔊 Fallback: используем базовое воспроизведение звука');
                                 const soundDisabled = localStorage.getItem('notificationSoundDisabled') === 'true';
                                 if (!soundDisabled) {
                                     try {
                                         const audio = new Audio("{{ url_for('static', filename='sounds/notification.mp3') }}");
                                         audio.volume = 0.5;
                                         audio.play().then(() => {
-                                            console.log('[Polling] ✅ Fallback звук воспроизведен успешно');
+                                            console.log('[Polling] ✅ Базовый fallback звук воспроизведен');
                                         }).catch(e => {
-                                            if (e.name === 'NotAllowedError') {
-                                                console.log('[Polling] 🔇 Звук заблокирован браузером (требуется взаимодействие пользователя)');
-                                            } else {
-                                                console.warn('[Polling] ⚠️ Ошибка fallback воспроизведения звука:', e);
-                                            }
+                                            console.log('[Polling] 🔇 Базовый fallback заблокирован:', e.name);
                                         });
                                     } catch (audioError) {
-                                        console.error('[Polling] ❌ Ошибка создания аудио элемента:', audioError);
+                                        console.error('[Polling] ❌ Ошибка базового fallback:', audioError);
                                     }
-                                } else {
-                                    console.log('[Polling] 🔇 Звук отключен через localStorage');
                                 }
                             }
-                        } catch (soundError) {
-                            console.error('[Polling] ❌ Критическая ошибка воспроизведения звука:', soundError);
+                            return;
                         }
 
-                        // Обновляем современный виджет
-                        if (typeof window.modernNotificationsWidget !== 'undefined' &&
-                            typeof window.modernNotificationsWidget.refreshNotifications === 'function') {
-                            window.modernNotificationsWidget.refreshNotifications();
-                        }
-
-                        return;
-                    }
+                    } // ИСПРАВЛЕНО: Закрывающая скобка для if (!isModernWidgetClosed)
 
                     // Если виджет закрыт, проверяем есть ли новые уведомления
                     if (hasNewNotifications) {
