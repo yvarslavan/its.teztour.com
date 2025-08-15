@@ -509,6 +509,310 @@
     </div>
   </section>
 
+  <!-- Network Diagnostics Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon info">
+          <i class="fas fa-search"></i>
+        </div>
+        <div class="section-info">
+          <h2>Диагностика проблемы</h2>
+          <p>Определите тип проблемы с помощью простых тестов</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="diagnostic-tests">
+          <div class="test-item">
+            <h4>Тест 1: Проверка интернет-соединения</h4>
+            <div class="command-box">
+              <code>ping 8.8.8.8</code>
+              <button class="copy-button" onclick="copyToClipboard('ping 8.8.8.8')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <p>Если пинг проходит - интернет работает, проблема в DNS</p>
+          </div>
+
+          <div class="test-item">
+            <h4>Тест 2: Проверка DNS</h4>
+            <div class="command-box">
+              <code>nslookup google.com</code>
+              <button class="copy-button" onclick="copyToClipboard('nslookup google.com')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <p>Проверяет работу DNS-серверов</p>
+          </div>
+
+          <div class="test-item">
+            <h4>Тест 3: Проверка конкретного сайта</h4>
+            <div class="command-box">
+              <code>tracert google.com</code>
+              <button class="copy-button" onclick="copyToClipboard('tracert google.com')">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+            <p>Показывает маршрут до сайта и где происходит сбой</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternative DNS Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon success">
+          <i class="fas fa-server"></i>
+        </div>
+        <div class="section-info">
+          <h2>Альтернативные DNS-серверы</h2>
+          <p>Если Google DNS не работает, попробуйте другие варианты</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="dns-alternatives-grid">
+          <div class="dns-alternative">
+            <h4>Cloudflare DNS</h4>
+            <div class="dns-settings">
+              <div class="dns-item">
+                <span class="dns-label">Предпочитаемый:</span>
+                <code class="dns-value">1.1.1.1</code>
+                <button class="copy-button" onclick="copyToClipboard('1.1.1.1')">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <div class="dns-item">
+                <span class="dns-label">Альтернативный:</span>
+                <code class="dns-value">1.0.0.1</code>
+                <button class="copy-button" onclick="copyToClipboard('1.0.0.1')">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="dns-alternative">
+            <h4>OpenDNS</h4>
+            <div class="dns-settings">
+              <div class="dns-item">
+                <span class="dns-label">Предпочитаемый:</span>
+                <code class="dns-value">208.67.222.222</code>
+                <button class="copy-button" onclick="copyToClipboard('208.67.222.222')">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+              <div class="dns-item">
+                <span class="dns-label">Альтернативный:</span>
+                <code class="dns-value">208.67.220.220</code>
+                <button class="copy-button" onclick="copyToClipboard('208.67.220.220')">
+                  <i class="fas fa-copy"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Proxy/VPN Issues Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon warning">
+          <i class="fas fa-shield-alt"></i>
+        </div>
+        <div class="section-info">
+          <h2>Проблемы с прокси и VPN</h2>
+          <p>Настройки прокси могут блокировать доступ к сайтам</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="instruction-card">
+          <div class="card-header">
+            <i class="fas fa-cog"></i>
+            <h3>Проверка настроек прокси</h3>
+          </div>
+          <div class="card-content">
+            <div class="step-container">
+              <div class="step-number">1</div>
+              <div class="step-content">
+                <h4>Откройте настройки интернета</h4>
+                <p>Нажмите <kbd>Win</kbd> + <kbd>R</kbd>, введите <code>inetcpl.cpl</code></p>
+                <div class="command-box">
+                  <code>inetcpl.cpl</code>
+                  <button class="copy-button" onclick="copyToClipboard('inetcpl.cpl')">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="step-container">
+              <div class="step-number">2</div>
+              <div class="step-content">
+                <h4>Проверьте настройки прокси</h4>
+                <p>Перейдите на вкладку <strong>«Подключения»</strong> → <strong>«Настройки сети»</strong></p>
+                <p>Убедитесь, что прокси-сервер отключен или настроен правильно</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Antivirus/Firewall Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon error">
+          <i class="fas fa-shield-virus"></i>
+        </div>
+        <div class="section-info">
+          <h2>Антивирус и файрвол</h2>
+          <p>Защитное ПО может блокировать доступ к сайтам</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="warning-card">
+          <div class="warning-header">
+            <i class="fas fa-exclamation-triangle"></i>
+            <h4>Временное отключение защиты</h4>
+          </div>
+          <div class="warning-content">
+            <p><strong>Внимание:</strong> Отключайте защиту только временно для диагностики!</p>
+            <ul class="checklist">
+              <li>Временно отключите антивирус (обычно иконка в трее)</li>
+              <li>Проверьте настройки Windows Defender</li>
+              <li>Отключите файрвол Windows на 5 минут</li>
+              <li>Попробуйте зайти на проблемный сайт</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Devices Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon info">
+          <i class="fas fa-mobile-alt"></i>
+        </div>
+        <div class="section-info">
+          <h2>Мобильные устройства</h2>
+          <p>Решение проблем на смартфонах и планшетах</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="mobile-solutions">
+          <div class="mobile-solution">
+            <h4>Android</h4>
+            <div class="step-list">
+              <div class="mini-step">
+                <span class="mini-number">1</span>
+                <span>Настройки → Подключения → Wi-Fi</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">2</span>
+                <span>Долгое нажатие на сеть → Изменить сеть</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">3</span>
+                <span>Дополнительные настройки → Статический IP</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">4</span>
+                <span>DNS1: 8.8.8.8, DNS2: 8.8.4.4</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="mobile-solution">
+            <h4>iOS</h4>
+            <div class="step-list">
+              <div class="mini-step">
+                <span class="mini-number">1</span>
+                <span>Настройки → Wi-Fi</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">2</span>
+                <span>Нажмите ⓘ рядом с сетью</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">3</span>
+                <span>Прокрутите вниз → Настроить DNS</span>
+              </div>
+              <div class="mini-step">
+                <span class="mini-number">4</span>
+                <span>Вручную → Добавить сервер: 8.8.8.8</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon primary">
+          <i class="fas fa-question-circle"></i>
+        </div>
+        <div class="section-info">
+          <h2>Часто задаваемые вопросы</h2>
+          <p>Ответы на популярные вопросы о проблемах с доступом к сайтам</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Почему некоторые сайты работают, а другие нет?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Это может указывать на проблемы с DNS-серверами провайдера или блокировку конкретных сайтов. Попробуйте сменить DNS на Google (8.8.8.8) или Cloudflare (1.1.1.1).</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Сайт работает на телефоне, но не на компьютере</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Проблема скорее всего в настройках компьютера. Проверьте антивирус, файрвол, настройки прокси и DNS.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Как понять, что проблема на стороне сайта?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Если сайт не открывается на всех устройствах и сетях, используйте сервисы проверки доступности сайтов (например, downforeveryoneorjustme.com).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Final Notes Section -->
   <section class="final-section">
     <div class="final-card">
@@ -659,6 +963,9 @@
     color: var(--text-primary);
     background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
     min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
   }
 
   /* Page Header */
@@ -768,6 +1075,7 @@
   /* Problem Section */
   .problem-section {
     margin-bottom: var(--spacing-xl);
+    width: 100%;
   }
 
   .problem-card {
@@ -778,6 +1086,8 @@
     display: flex;
     gap: var(--spacing-xl);
     align-items: flex-start;
+    width: 100%;
+    margin: 0;
   }
 
   .problem-icon {
@@ -870,6 +1180,7 @@
   /* Content Sections */
   .content-section {
     margin-bottom: var(--spacing-xl);
+    width: 100%;
   }
 
   .section-card {
@@ -878,6 +1189,8 @@
     box-shadow: var(--shadow-2);
     overflow: hidden;
     transition: all var(--transition-normal);
+    width: 100%;
+    margin: 0;
   }
 
   .section-card:hover {
@@ -1341,6 +1654,7 @@
   /* Final Section */
   .final-section {
     margin-bottom: var(--spacing-xl);
+    width: 100%;
   }
 
   .final-card {
@@ -1348,6 +1662,8 @@
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-2);
     overflow: hidden;
+    width: 100%;
+    margin: 0;
   }
 
   .final-header {
@@ -1588,6 +1904,200 @@
       --text-secondary: #000000;
     }
   }
+
+  /* Diagnostic Tests */
+  .diagnostic-tests {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-lg);
+  }
+
+  .test-item {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--info);
+  }
+
+  .test-item h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+  }
+
+  .test-item p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: var(--spacing-sm) 0 0 0;
+  }
+
+  /* DNS Alternatives Grid */
+  .dns-alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .dns-alternative {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--success);
+  }
+
+  .dns-alternative h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+  }
+
+  /* Warning Card */
+  .warning-card {
+    background: var(--warning-bg);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--warning);
+    overflow: hidden;
+  }
+
+  .warning-header {
+    background: var(--warning-light);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .warning-header i {
+    color: var(--warning);
+    font-size: 1.25rem;
+  }
+
+  .warning-header h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .warning-content {
+    padding: var(--spacing-lg);
+  }
+
+  .warning-content p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .checklist {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .checklist li {
+    padding: var(--spacing-sm) 0;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    position: relative;
+    padding-left: var(--spacing-lg);
+  }
+
+  .checklist li::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--success);
+    font-weight: bold;
+  }
+
+  /* Mobile Solutions */
+  .mobile-solutions {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+  }
+
+  .mobile-solution {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 4px solid var(--info);
+  }
+
+  .mobile-solution h4 {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 var(--spacing-md) 0;
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  /* FAQ List */
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .faq-item {
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+
+  .faq-question {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+  }
+
+  .faq-question:hover {
+    background: var(--surface-2);
+  }
+
+  .faq-question h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+  }
+
+  .faq-question i {
+    color: var(--text-muted);
+    transition: transform var(--transition-fast);
+  }
+
+  .faq-item.active .faq-question i {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding: 0 var(--spacing-lg);
+    max-height: 0;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .faq-item.active .faq-answer {
+    padding: var(--spacing-lg);
+    max-height: 200px;
+  }
+
+  .faq-answer p {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.6;
+  }
 </style>
 {% endblock styles %}
 
@@ -1700,5 +2210,26 @@
       button.style.display = 'none';
     });
   }
+
+  // FAQ functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    // Add click handlers to FAQ questions
+    document.querySelectorAll('.faq-question').forEach(question => {
+      question.addEventListener('click', function() {
+        const faqItem = this.closest('.faq-item');
+        const isActive = faqItem.classList.contains('active');
+
+        // Close all FAQ items
+        document.querySelectorAll('.faq-item').forEach(item => {
+          item.classList.remove('active');
+        });
+
+        // Open clicked item if it wasn't active
+        if (!isActive) {
+          faqItem.classList.add('active');
+        }
+      });
+    });
+  });
 </script>
 {% endblock scripts %}

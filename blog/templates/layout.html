@@ -101,11 +101,39 @@
                 /* === Специальная логика для страницы /notifications === */
                 if (window.location.pathname === '/notifications') {
                     // На странице уведомлений показываем количество всех уведомлений (включая прочитанные)
-                    const pageCount = {{ count_notifications_page if count_notifications_page is defined and count_notifications_page is not none and count_notifications_page else 0 | int }};
+                    const pageCount = JSON.parse('{{ (count_notifications_page | default(0)) | tojson }}');
                     refreshNotificationBadge(pageCount);
                 }
 
                 /* ==== Tasks Notification badge (удалено: используем общий) ==== */
+            </script>
+
+            <script>
+                // Sticky header shadow + scroll progress for header bar
+                (function(){
+                  const onScroll = () => {
+                    const max = (document.documentElement.scrollHeight - window.innerHeight) || 1;
+                    const p = Math.max(0, Math.min(1, window.scrollY / max));
+                    document.documentElement.style.setProperty('--scroll-progress', (p*100).toFixed(1) + '%');
+                    document.body.classList.toggle('scrolled', window.scrollY > 4);
+                  };
+                  window.addEventListener('scroll', onScroll, { passive: true });
+                  onScroll();
+                })();
+            </script>
+
+            <script>
+                // Fallback для логотипов: если CDN недоступен — используем локальный файл
+                document.addEventListener('DOMContentLoaded', function () {
+                    const fallbackSrc = JSON.parse('{{ url_for("static", filename="img/tez-tour-logo-30.jpg") | tojson }}');
+                    document.querySelectorAll('.splash-company-logo, .footer-logo').forEach(function(img){
+                        img.addEventListener('error', function onLogoError(){
+                            if (img.dataset.fallbackApplied === '1') return;
+                            img.dataset.fallbackApplied = '1';
+                            img.src = fallbackSrc;
+                        }, { once: true });
+                    });
+                });
             </script>
 
             <script>
@@ -385,6 +413,42 @@
                     .nav-link .other-icon { color: #f59e0b !important; }
                     .nav-link .notification-icon { color: #fbbf24 !important; }
 
+                    /* --- Header enhancements (glass, sticky, active pill, underline) --- */
+                    .modern-header{
+                        backdrop-filter: saturate(180%) blur(10px);
+                        -webkit-backdrop-filter: saturate(180%) blur(10px);
+                        border-bottom: 1px solid rgba(255,255,255,.12);
+                        position: sticky; top: 0; z-index: 10000;
+                    }
+                    body.scrolled .modern-header{ box-shadow: 0 6px 22px rgba(0,0,0,.18); }
+
+                    /* Active item as pill */
+                    .main-navigation .nav-link.active{
+                        background: rgba(255,255,255,.14);
+                        border-radius: 9999px;
+                        padding-inline: 12px;
+                        color: #fff !important;
+                    }
+
+                    /* Underline animation */
+                    .main-navigation .nav-link{ position: relative; }
+                    .main-navigation .nav-link::after{
+                        content: '';
+                        position: absolute; left: 10px; right: 10px; bottom: 6px; height: 2px;
+                        background: currentColor; transform: scaleX(0); transform-origin: left;
+                        transition: transform .25s ease;
+                    }
+                    .main-navigation .nav-link:hover::after,
+                    .main-navigation .nav-link.active::after{ transform: scaleX(1); }
+
+                    /* Scroll progress bar at top of header */
+                    .modern-header::after{
+                        content: '';
+                        position: fixed; left: 0; top: 0; height: 3px; width: var(--scroll-progress, 0%);
+                        background: linear-gradient(90deg, var(--header-primary-light), var(--header-accent));
+                        z-index: 10001; pointer-events: none;
+                    }
+
                     /* Styles for SVG icons in nav - to be used when Font Awesome is replaced */
                     .nav-icon-wrapper .nav-icon-svg { /* New class for SVG elements */
                         width: 20px;  /* Default width */
@@ -506,7 +570,7 @@
 
                     .dropdown-divider {
                         height: 1px;
-                        background: linear-gradient(90deg, transparent, rgba(0, 121, 140, 0.2), transparent);
+                        background: linear-gradient(90deg, transparent, rgba(0, 131, 214, 0.2), transparent);
                         margin: 0.5rem 1rem;
                         border: none;
                     }
@@ -782,10 +846,9 @@
                         <div class="splash-logo-container">
                             <div class="splash-logo-icon">
                                 <!-- Настоящий логотип TEZ TOUR с fallback -->
-                                <img src="https://r.tez-tour.com/portal/images/main/logo-white.png"
-                                     alt="TEZ TOUR"
-                                     class="splash-company-logo"
-                                     onerror="this.src='{{ url_for('static', filename='img/tez-logo-white.png') }}'; this.onerror=function(){this.style.display='none'; this.nextElementSibling.style.display='block';}">
+                                     <img src="https://s.tez-tour.com/article/7025866/TEZ_TOUR_logo_horizontal_cmyk_7505.png"
+                                      alt="TEZ TOUR"
+                                      class="splash-company-logo">
                                 <!-- Fallback иконка если ни один логотип не загрузится -->
                                 <i class="fas fa-tasks splash-fallback-icon" style="display: none;"></i>
 
@@ -1139,9 +1202,9 @@
 
                     /* Header CSS Variables */
                     :root {
-                        --header-primary: #00798C;
-                        --header-primary-dark: #005f73;
-                        --header-primary-light: #26c6da;
+                        --header-primary: #0083d6;
+                        --header-primary-dark: #005bb5;
+                        --header-primary-light: #1ec3ff;
                         --header-accent: #ff6b35;
                         --header-success: #10b981;
                         --header-warning: #f59e0b;
@@ -1151,7 +1214,7 @@
                         --header-text: #1f2937;
                         --header-text-light: #6b7280;
                         --header-border: rgba(255, 255, 255, 0.2);
-                        --header-shadow: 0 8px 32px rgba(0, 121, 140, 0.1);
+                        --header-shadow: 0 8px 32px rgba(0, 91, 181, 0.12);
                         --header-blur: 20px;
                         --header-transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
                         --header-radius: 16px;
@@ -1533,7 +1596,7 @@
 
                     .dropdown-divider {
                         height: 1px;
-                        background: linear-gradient(90deg, transparent, rgba(0, 121, 140, 0.2), transparent);
+                        background: linear-gradient(90deg, transparent, rgba(0, 131, 214, 0.2), transparent);
                         margin: 0.5rem 1rem;
                         border: none;
                     }
@@ -1809,7 +1872,7 @@
             {% if request.path == '/' and request.endpoint != 'users.register' %}
                 <div class="footer-bottom-panel">
                     <div class="left-logo-side">
-                        <img src="https://r.tez-tour.com/portal/images/main/logo-white.png" title="TEZ TOUR" class="footer-logo">
+                        <img src="https://s.tez-tour.com/article/7025866/TEZ_TOUR_logo_horizontal_cmyk_7505.png" title="TEZ TOUR" class="footer-logo">
                         <br>
                         2024 - 2025 © TEZ Navigator
                         <br>

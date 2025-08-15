@@ -613,6 +613,618 @@
     </div>
   </section>
 
+
+
+  <!-- Troubleshooting Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon troubleshoot-color">
+        <i class="fas fa-tools"></i>
+      </div>
+      <div class="method-info">
+        <h2>Решение проблем подключения</h2>
+        <p>Диагностика и устранение типичных проблем с почтовыми аккаунтами</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Частые проблемы и решения</h3>
+      </div>
+      <div class="card-content">
+        <div class="troubleshooting-grid">
+          <div class="troubleshooting-category">
+            <h4>🔧 Проблемы с подключением</h4>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h5>Не удается подключиться к серверу</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте интернет-соединение</li>
+                    <li>Убедитесь в правильности адресов серверов</li>
+                    <li>Проверьте настройки брандмауэра</li>
+                    <li>Попробуйте отключить антивирус временно</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Ошибка аутентификации</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте правильность логина и пароля</li>
+                    <li>Убедитесь в правильном формате имени пользователя</li>
+                    <li>Попробуйте сменить пароль в веб-интерфейсе</li>
+                    <li>Обратитесь к администратору для сброса пароля</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Письма не загружаются</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте настройки портов (993 для IMAP, 995 для POP3)</li>
+                    <li>Убедитесь в правильности типа шифрования (SSL)</li>
+                    <li>Попробуйте перезапустить Thunderbird</li>
+                    <li>Очистите кэш и перезагрузите папки</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="troubleshooting-category">
+            <h4>🔧 Проблемы с отправкой</h4>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h5>Письма не отправляются</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте настройки SMTP сервера</li>
+                    <li>Убедитесь в правильности порта 465</li>
+                    <li>Проверьте настройки аутентификации</li>
+                    <li>Попробуйте отправить тестовое письмо</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Письма попадают в спам</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте настройки SPF/DKIM</li>
+                    <li>Убедитесь в правильности обратного адреса</li>
+                    <li>Избегайте спам-слов в теме письма</li>
+                    <li>Обратитесь к ИТ-поддержке для настройки</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="troubleshooting-category">
+            <h4>🔧 Диагностические команды</h4>
+            <div class="diagnostic-tools">
+              <div class="tool-item">
+                <h5>Проверка доступности сервера</h5>
+                <div class="command-box">
+                  <code>ping imap.tez-tour.com</code>
+                  <button onclick="copyToClipboard('ping imap.tez-tour.com')" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="tool-item">
+                <h5>Проверка портов</h5>
+                <div class="command-box">
+                  <code>telnet imap.tez-tour.com 993</code>
+                  <button onclick="copyToClipboard('telnet imap.tez-tour.com 993')" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+              <div class="tool-item">
+                <h5>Проверка DNS</h5>
+                <div class="command-box">
+                  <code>nslookup imap.tez-tour.com</code>
+                  <button onclick="copyToClipboard('nslookup imap.tez-tour.com')" class="copy-btn">
+                    <i class="fas fa-copy"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Alternative Clients Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon alternative-color">
+        <i class="fas fa-exchange-alt"></i>
+      </div>
+      <div class="method-info">
+        <h2>Альтернативные почтовые клиенты</h2>
+        <p>Другие программы для работы с корпоративной почтой</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-desktop"></i>
+        <h3>Популярные альтернативы</h3>
+      </div>
+      <div class="card-content">
+        <div class="clients-grid">
+          <div class="client-card">
+            <div class="client-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="client-content">
+              <h4>Microsoft Outlook</h4>
+              <p>Профессиональный клиент с интеграцией Office</p>
+              <div class="client-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Интеграция с календарем</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Продвинутые фильтры</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Автоответы</span>
+                </div>
+              </div>
+              <div class="client-settings">
+                <h5>Настройки серверов:</h5>
+                <ul>
+                  <li><strong>IMAP:</strong> imap.tez-tour.com:993 (SSL)</li>
+                  <li><strong>SMTP:</strong> smtp.tez-tour.com:465 (SSL)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="client-card">
+            <div class="client-icon">
+              <i class="fab fa-apple"></i>
+            </div>
+            <div class="client-content">
+              <h4>Apple Mail (macOS)</h4>
+              <p>Встроенный клиент для устройств Apple</p>
+              <div class="client-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Нативная интеграция</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Синхронизация iCloud</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Умные папки</span>
+                </div>
+              </div>
+              <div class="client-settings">
+                <h5>Настройки серверов:</h5>
+                <ul>
+                  <li><strong>IMAP:</strong> imap.tez-tour.com:993 (SSL)</li>
+                  <li><strong>SMTP:</strong> smtp.tez-tour.com:465 (SSL)</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          <div class="client-card">
+            <div class="client-icon">
+              <i class="fas fa-globe"></i>
+            </div>
+            <div class="client-content">
+              <h4>Веб-интерфейс Outlook</h4>
+              <p>Доступ к почте через браузер</p>
+              <div class="client-features">
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Работает без установки</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Доступ с любого устройства</span>
+                </div>
+                <div class="feature">
+                  <i class="fas fa-check"></i>
+                  <span>Полный функционал</span>
+                </div>
+              </div>
+              <div class="client-settings">
+                <h5>Доступ:</h5>
+                <ul>
+                  <li><strong>URL:</strong> outlook.office.com</li>
+                  <li><strong>Логин:</strong> ваш корпоративный email</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon security-color">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="method-info">
+        <h2>Безопасность и лучшие практики</h2>
+        <p>Рекомендации по защите корпоративной почты</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-lock"></i>
+        <h3>Безопасность паролей</h3>
+      </div>
+      <div class="card-content">
+        <div class="security-grid">
+          <div class="security-item">
+            <h4>🔐 Создание надежного пароля</h4>
+            <div class="security-checklist">
+              <div class="checklist-item">
+                <i class="fas fa-check"></i>
+                <span>Минимум 12 символов</span>
+              </div>
+              <div class="checklist-item">
+                <i class="fas fa-check"></i>
+                <span>Буквы верхнего и нижнего регистра</span>
+              </div>
+              <div class="checklist-item">
+                <i class="fas fa-check"></i>
+                <span>Цифры и специальные символы</span>
+              </div>
+              <div class="checklist-item">
+                <i class="fas fa-check"></i>
+                <span>Не используйте личную информацию</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="security-item">
+            <h4>🔄 Регулярная смена пароля</h4>
+            <div class="security-tips">
+              <p>Меняйте пароль каждые 90 дней</p>
+              <p>Не используйте один пароль для разных сервисов</p>
+              <p>Используйте менеджер паролей</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="security-warning">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Важно:</strong>
+            <p>Никогда не передавайте пароли по email или в чатах. При подозрении на компрометацию немедленно смените пароль и обратитесь в ИТ-поддержку.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-user-shield"></i>
+        <h3>Защита от фишинга</h3>
+      </div>
+      <div class="card-content">
+        <div class="phishing-tips">
+          <div class="tip-item">
+            <h4>🚨 Признаки фишинговых писем</h4>
+            <ul>
+              <li>Срочные требования действий</li>
+              <li>Запросы паролей или личных данных</li>
+              <li>Подозрительные ссылки</li>
+              <li>Ошибки в написании</li>
+              <li>Необычные адреса отправителей</li>
+            </ul>
+          </div>
+
+          <div class="tip-item">
+            <h4>✅ Правила безопасности</h4>
+            <ul>
+              <li>Проверяйте адрес отправителя</li>
+              <li>Не переходите по подозрительным ссылкам</li>
+              <li>Не открывайте вложения от неизвестных отправителей</li>
+              <li>Используйте двухфакторную аутентификацию</li>
+              <li>Регулярно обновляйте антивирус</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Mobile Setup Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon mobile-color">
+        <i class="fas fa-mobile-alt"></i>
+      </div>
+      <div class="method-info">
+        <h2>Мобильная настройка</h2>
+        <p>Настройка корпоративной почты на мобильных устройствах</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fab fa-android"></i>
+        <h3>Android устройства</h3>
+      </div>
+      <div class="card-content">
+        <div class="mobile-platforms">
+          <div class="platform-item">
+            <div class="platform-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="platform-content">
+              <h4>Gmail приложение</h4>
+              <p>Настройка корпоративной почты в Gmail</p>
+              <div class="platform-steps">
+                <ol>
+                  <li>Откройте приложение Gmail</li>
+                  <li>Нажмите на аватар → Добавить аккаунт</li>
+                  <li>Выберите "Другое" → "Настроить вручную"</li>
+                  <li>Введите данные серверов IMAP/SMTP</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="platform-item">
+            <div class="platform-icon">
+              <i class="fas fa-download"></i>
+            </div>
+            <div class="platform-content">
+              <h4>Thunderbird для Android</h4>
+              <p>Официальное мобильное приложение</p>
+              <div class="platform-steps">
+                <ol>
+                  <li>Установите из Google Play Store</li>
+                  <li>Добавьте корпоративный аккаунт</li>
+                  <li>Используйте те же настройки серверов</li>
+                  <li>Настройте уведомления</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fab fa-apple"></i>
+        <h3>iOS устройства</h3>
+      </div>
+      <div class="card-content">
+        <div class="mobile-platforms">
+          <div class="platform-item">
+            <div class="platform-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="platform-content">
+              <h4>Приложение Mail</h4>
+              <p>Встроенный почтовый клиент iOS</p>
+              <div class="platform-steps">
+                <ol>
+                  <li>Откройте Настройки → Mail</li>
+                  <li>Нажмите "Аккаунты" → "Добавить аккаунт"</li>
+                  <li>Выберите "Другое" → "Добавить почтовый аккаунт"</li>
+                  <li>Введите данные серверов</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+
+          <div class="platform-item">
+            <div class="platform-icon">
+              <i class="fas fa-cloud"></i>
+            </div>
+            <div class="platform-content">
+              <h4>Outlook для iOS</h4>
+              <p>Официальное приложение Microsoft</p>
+              <div class="platform-steps">
+                <ol>
+                  <li>Установите из App Store</li>
+                  <li>Войдите с корпоративными данными</li>
+                  <li>Настройте уведомления и синхронизацию</li>
+                  <li>Активируйте Focus режим</li>
+                </ol>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon faq-color">
+        <i class="fas fa-question-circle"></i>
+      </div>
+      <div class="method-info">
+        <h2>Часто задаваемые вопросы</h2>
+        <p>Ответы на популярные вопросы по настройке почты</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-comments"></i>
+        <h3>FAQ</h3>
+      </div>
+      <div class="card-content">
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>В чем разница между IMAP и POP3?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p><strong>IMAP</strong> хранит письма на сервере и синхронизирует их между устройствами. <strong>POP3</strong> загружает письма на компьютер и обычно удаляет их с сервера. Рекомендуется использовать IMAP для работы с нескольких устройств.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Как часто нужно менять пароль?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Рекомендуется менять пароль каждые 90 дней. При подозрении на компрометацию смените пароль немедленно и обратитесь в ИТ-поддержку.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Почему письма не отправляются?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Проверьте настройки SMTP сервера (smtp.tez-tour.com:465), убедитесь в правильности логина и пароля, проверьте интернет-соединение и настройки брандмауэра.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Как настроить автоответчик?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>В Thunderbird: Инструменты → Параметры учетной записи → Копии и папки → Автоответчик. Укажите текст ответа и период действия.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Можно ли использовать почту без VPN?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, корпоративная почта доступна из интернета. VPN требуется только для доступа к внутренним ресурсам компании.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Как восстановить удаленные письма?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Проверьте папку "Удаленные" в Thunderbird. Если письма удалены с сервера, обратитесь в ИТ-поддержку для восстановления из резервной копии.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emergency Support Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon emergency-color">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="method-info">
+        <h2>Экстренная поддержка</h2>
+        <p>Способы связи при критических проблемах с почтой</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-phone-alt"></i>
+        <h3>Способы экстренной связи</h3>
+      </div>
+      <div class="card-content">
+        <div class="emergency-content">
+          <div class="emergency-info">
+            <p>В случае полной недоступности почты используйте альтернативные способы связи:</p>
+          </div>
+
+          <div class="emergency-methods">
+            <div class="emergency-method">
+              <div class="emergency-icon">
+                <i class="fas fa-phone"></i>
+              </div>
+              <div class="emergency-content">
+                <h5>Телефон поддержки</h5>
+                <p>Позвоните в службу технической поддержки</p>
+                <a href="tel:1000" class="emergency-link">1000</a>
+              </div>
+            </div>
+
+            <div class="emergency-method">
+              <div class="emergency-icon">
+                <i class="fas fa-envelope"></i>
+              </div>
+              <div class="emergency-content">
+                <h5>Email поддержка</h5>
+                <p>Отправьте письмо с описанием проблемы</p>
+                <a href="mailto:help@tez-tour.com" class="emergency-link">help@tez-tour.com</a>
+              </div>
+            </div>
+
+            <div class="emergency-method">
+              <div class="emergency-icon">
+                <i class="fas fa-comments"></i>
+              </div>
+              <div class="emergency-content">
+                <h5>Корпоративный чат</h5>
+                <p>Используйте Vacuum-IM для быстрой связи с коллегами</p>
+                <span class="emergency-note">Доступен через веб-версию</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="emergency-alternatives">
+            <h4>🔄 Альтернативные способы работы</h4>
+            <div class="alternatives-list">
+              <div class="alternative-item">
+                <i class="fas fa-globe"></i>
+                <div>
+                  <h5>Веб-версия почты</h5>
+                  <p>Используйте Outlook Web для работы без почтового клиента</p>
+                </div>
+              </div>
+              <div class="alternative-item">
+                <i class="fas fa-mobile-alt"></i>
+                <div>
+                  <h5>Мобильные приложения</h5>
+                  <p>Установите почтовые приложения на телефон для экстренного доступа</p>
+                </div>
+              </div>
+              <div class="alternative-item">
+                <i class="fas fa-laptop"></i>
+                <div>
+                  <h5>Резервные устройства</h5>
+                  <p>Используйте другой компьютер или планшет для доступа к почте</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- Support Section -->
   <section class="support-section">
     <div class="support-card">
@@ -831,6 +1443,12 @@
 .install-color { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
 .imap-color { background: linear-gradient(135deg, #059669, #10b981); }
 .pop3-color { background: linear-gradient(135deg, #dc2626, #ef4444); }
+.troubleshoot-color { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.alternative-color { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
+.security-color { background: linear-gradient(135deg, #10b981, #059669); }
+.mobile-color { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.faq-color { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.emergency-color { background: linear-gradient(135deg, #ef4444, #dc2626); }
 
 .method-info h2 {
   font-size: 2rem;
@@ -1488,6 +2106,526 @@ kbd {
   .modal-image {
     max-height: 70vh;
   }
+
+  /* Troubleshooting Section */
+  .troubleshooting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .troubleshooting-category h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .problem-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .problem-item {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .problem-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .solution-steps ol {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .solution-steps li {
+    margin-bottom: 0.25rem;
+    color: #4b5563;
+  }
+
+  .diagnostic-tools {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .tool-item {
+    background: #f0f9ff;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #0284c7;
+  }
+
+  .tool-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #0c4a6e;
+  }
+
+  .command-box {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 0.75rem;
+    border-radius: 6px;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.9rem;
+  }
+
+  .copy-btn {
+    background: #475569;
+    color: white;
+    border: none;
+    padding: 0.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .copy-btn:hover {
+    background: #64748b;
+  }
+
+  /* Alternative Clients Section */
+  .clients-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .client-card {
+    background: #f8fafc;
+    border-radius: 12px;
+    padding: 1.5rem;
+    border: 1px solid #e2e8f0;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  .client-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+  }
+
+  .client-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #8b5cf6, #a855f7);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .client-content h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .client-content p {
+    color: #6b7280;
+    margin-bottom: 1rem;
+  }
+
+  .client-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .client-features .feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: #059669;
+  }
+
+  .client-features .feature i {
+    color: #10b981;
+  }
+
+  .client-settings {
+    background: #f0f9ff;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #0284c7;
+  }
+
+  .client-settings h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0c4a6e;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .client-settings ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .client-settings li {
+    font-size: 0.9rem;
+    color: #0369a1;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Security Section */
+  .security-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .security-item {
+    background: #f0fdf4;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #10b981;
+  }
+
+  .security-item h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #065f46;
+    margin: 0 0 1rem 0;
+  }
+
+  .security-checklist {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: #047857;
+  }
+
+  .checklist-item i {
+    color: #10b981;
+  }
+
+  .security-tips p {
+    color: #047857;
+    margin-bottom: 0.5rem;
+  }
+
+  .security-warning {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .security-warning i {
+    color: #f59e0b;
+    font-size: 1.3rem;
+    margin-top: 0.2rem;
+  }
+
+  .security-warning strong {
+    color: #92400e;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .security-warning p {
+    color: #92400e;
+    margin: 0;
+  }
+
+  .phishing-tips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .tip-item {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .tip-item h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 1rem 0;
+  }
+
+  .tip-item ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .tip-item li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #e2e8f0;
+    color: #4b5563;
+  }
+
+  .tip-item li:last-child {
+    border-bottom: none;
+  }
+
+  /* Mobile Section */
+  .mobile-platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+  }
+
+  .platform-item {
+    display: flex;
+    gap: 1rem;
+    background: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #0284c7;
+  }
+
+  .platform-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #06b6d4, #0891b2);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .platform-content h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #0c4a6e;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .platform-content p {
+    color: #0369a1;
+    margin-bottom: 1rem;
+  }
+
+  .platform-steps ol {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .platform-steps li {
+    color: #0369a1;
+    margin-bottom: 0.25rem;
+  }
+
+  /* FAQ Section */
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .faq-item {
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .faq-item.active {
+    background: #f0f9ff;
+    border-color: #0284c7;
+  }
+
+  .faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .faq-question:hover {
+    background: #f1f5f9;
+  }
+
+  .faq-question h4 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  .faq-question i {
+    color: #6366f1;
+    transition: transform 0.3s ease;
+  }
+
+  .faq-item.active .faq-question i {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .faq-item.active .faq-answer {
+    max-height: 200px;
+  }
+
+  .faq-answer p {
+    padding: 0 1.5rem 1.5rem;
+    color: #4b5563;
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* Emergency Section */
+  .emergency-content {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .emergency-info p {
+    font-size: 1.1rem;
+    color: #4b5563;
+    margin-bottom: 1rem;
+  }
+
+  .emergency-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .emergency-method {
+    display: flex;
+    gap: 1rem;
+    background: #fef2f2;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #ef4444;
+  }
+
+  .emergency-icon {
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .emergency-method .emergency-content h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #991b1b;
+    margin: 0 0 0.5rem 0;
+  }
+
+  .emergency-method .emergency-content p {
+    color: #dc2626;
+    margin-bottom: 0.5rem;
+  }
+
+  .emergency-link {
+    color: #dc2626;
+    font-weight: 600;
+    text-decoration: none;
+    border-bottom: 1px solid #dc2626;
+  }
+
+  .emergency-link:hover {
+    color: #991b1b;
+  }
+
+  .emergency-note {
+    font-size: 0.9rem;
+    color: #dc2626;
+    font-style: italic;
+  }
+
+  .emergency-alternatives {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .emergency-alternatives h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 0 0 1rem 0;
+  }
+
+  .alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .alternative-item {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .alternative-item i {
+    color: #6b7280;
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+  }
+
+  .alternative-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0 0 0.25rem 0;
+  }
+
+  .alternative-item p {
+    color: #6b7280;
+    margin: 0;
+    font-size: 0.9rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1558,6 +2696,93 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   });
+
+  // FAQ functionality
+  document.querySelectorAll('.faq-question').forEach(question => {
+    question.addEventListener('click', function() {
+      const faqItem = this.closest('.faq-item');
+      const isActive = faqItem.classList.contains('active');
+
+      // Close all FAQ items
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Open clicked item if it wasn't active
+      if (!isActive) {
+        faqItem.classList.add('active');
+      }
+    });
+  });
 });
+
+// Copy to clipboard function
+function copyToClipboard(text) {
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      showCopyNotification();
+    });
+  } else {
+    // Fallback for older browsers
+    const textArea = document.createElement('textarea');
+    textArea.value = text;
+    textArea.style.position = 'fixed';
+    textArea.style.left = '-999999px';
+    textArea.style.top = '-999999px';
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+      document.execCommand('copy');
+      showCopyNotification();
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+    }
+
+    document.body.removeChild(textArea);
+  }
+}
+
+// Show copy notification
+function showCopyNotification() {
+  const notification = document.createElement('div');
+  notification.textContent = 'Команда скопирована!';
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    font-weight: 600;
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+
+  document.body.appendChild(notification);
+
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => {
+      document.body.removeChild(notification);
+    }, 300);
+  }, 2000);
+}
+
+// Add CSS animations for notification
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes slideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+  }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
