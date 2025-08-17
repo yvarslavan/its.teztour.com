@@ -1,7 +1,5 @@
 ---
-description: 
-globs: app/**/*.*
-alwaysApply: false
+alwaysApply: true
 ---
 - Use Flask's render_template for server-side rendering
 - Implement Flask-WTF for form handling

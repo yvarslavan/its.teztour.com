@@ -1,9 +1,6 @@
 ---
-description: Basic archiving approach for Level 2 Simple Enhancement tasks
-globs: "**/level2/**", "**/archive/**", "**/completion/**"
-alwaysApply: false
+alwaysApply: true
 ---
-
 # BASIC ARCHIVING FOR LEVEL 2 TASKS
 
 > **TL;DR:** This document outlines a basic archiving approach for Level 2 (Simple Enhancement) tasks, ensuring that completed work is properly documented and knowledge is preserved with minimal overhead.
@@ -119,7 +116,7 @@ When creating cross-references:
    ```markdown
    ## Recently Completed
    - [Feature Name] enhancement is now complete. Archive: [link](../docs/archive/enhancements/YYYY-MM/feature-name.md)
-   
+
    ## Current Focus
    - Moving to [Next Task Name]
    ```
@@ -161,7 +158,7 @@ graph TD
     Archive["Enhancement<br>Archive"] --> TasksUpdate["Update<br>tasks.md"]
     Archive --> ProgressUpdate["Update<br>progress.md"]
     Archive --> ContextUpdate["Update<br>activeContext.md"]
-    
+
     TasksUpdate & ProgressUpdate & ContextUpdate --> CrossLinks["Create<br>Cross-Links"]
     CrossLinks --> Verify["Verify<br>References"]
 ```
@@ -178,4 +175,4 @@ Remember:
 └─────────────────────────────────────────────────────┘
 ```
 
-This ensures that knowledge is preserved and can be referenced in the future. 
+This ensures that knowledge is preserved and can be referenced in the future.

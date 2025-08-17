@@ -1,9 +1,6 @@
 ---
-description: Basic reflection format for Level 2 Simple Enhancement tasks
-globs: "**/level2/**", "**/reflection/**"
-alwaysApply: false
+alwaysApply: true
 ---
-
 # BASIC REFLECTION FOR LEVEL 2 TASKS
 
 > **TL;DR:** This document outlines a basic reflection approach for Level 2 (Simple Enhancement) tasks, ensuring that key insights and lessons are captured without unnecessary overhead.
@@ -159,7 +156,7 @@ graph TD
     Reflection["Enhancement<br>Reflection"] --> Archive["Add to<br>Archive"]
     Reflection --> ProgressUpdate["Update<br>progress.md"]
     Reflection --> ActionItems["Document<br>Action Items"]
-    
+
     ActionItems --> Tasks["Add to<br>tasks.md"]
     Archive & ProgressUpdate & Tasks --> CrossLinks["Create<br>Cross-Links"]
 ```
@@ -175,4 +172,4 @@ Remember:
 └─────────────────────────────────────────────────────┘
 ```
 
-This ensures that reflection directly contributes to ongoing improvement of both the product and the process. 
+This ensures that reflection directly contributes to ongoing improvement of both the product and the process.

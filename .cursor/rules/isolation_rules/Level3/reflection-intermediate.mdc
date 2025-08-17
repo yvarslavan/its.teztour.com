@@ -1,7 +1,5 @@
 ---
-description: 
-globs: reflection-intermediate.mdc
-alwaysApply: false
+alwaysApply: true
 ---
 # LEVEL 3 REFLECTION: INTERMEDIATE FEATURE REVIEW
 
