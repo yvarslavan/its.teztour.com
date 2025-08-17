@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Тест API фильтров - Main Module</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .test-button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        .test-button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <h1>Тестирование API фильтров - Main Module</h1>
+
+    <div class="test-section">
+        <h2>1. Тест получения фильтров</h2>
+        <button class="test-button" onclick="testGetFilters()">Получить фильтры</button>
+        <div id="filters-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. Тест применения фильтра</h2>
+        <button class="test-button" onclick="testApplyFilter()">Применить фильтр</button>
+        <div id="apply-filter-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Тест сброса фильтров</h2>
+        <button class="test-button" onclick="testResetFilters()">Сбросить фильтры</button>
+        <div id="reset-filters-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Тест сохранения фильтра</h2>
+        <button class="test-button" onclick="testSaveFilter()">Сохранить фильтр</button>
+        <div id="save-filter-result" class="result"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, type = 'success') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `result ${type}`;
+        }
+
+        async function testGetFilters() {
+            showResult('filters-result', 'Загрузка...', 'loading');
+            try {
+                const response = await fetch('/api/filters', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('filters-result', `✅ Успешно получены фильтры:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('filters-result', `❌ Ошибка: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult('filters-result', `❌ Ошибка запроса: ${error.message}`, 'error');
+            }
+        }
+
+        async function testApplyFilter() {
+            showResult('apply-filter-result', 'Загрузка...', 'loading');
+            try {
+                const filterData = {
+                    status: 'open',
+                    priority: 'high',
+                    assignee: 'current'
+                };
+
+                const response = await fetch('/api/filters/apply', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(filterData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('apply-filter-result', `✅ Фильтр применен:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('apply-filter-result', `❌ Ошибка: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult('apply-filter-result', `❌ Ошибка запроса: ${error.message}`, 'error');
+            }
+        }
+
+        async function testResetFilters() {
+            showResult('reset-filters-result', 'Загрузка...', 'loading');
+            try {
+                const response = await fetch('/api/filters/reset', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('reset-filters-result', `✅ Фильтры сброшены:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('reset-filters-result', `❌ Ошибка: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult('reset-filters-result', `❌ Ошибка запроса: ${error.message}`, 'error');
+            }
+        }
+
+        async function testSaveFilter() {
+            showResult('save-filter-result', 'Загрузка...', 'loading');
+            try {
+                const filterData = {
+                    name: 'Тестовый фильтр',
+                    filters: {
+                        status: 'open',
+                        priority: 'high'
+                    }
+                };
+
+                const response = await fetch('/api/filters/save', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(filterData)
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('save-filter-result', `✅ Фильтр сохранен:\n${JSON.stringify(data, null, 2)}`, 'success');
+                } else {
+                    showResult('save-filter-result', `❌ Ошибка: ${response.status} ${response.statusText}`, 'error');
+                }
+            } catch (error) {
+                showResult('save-filter-result', `❌ Ошибка запроса: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>

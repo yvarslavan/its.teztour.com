@@ -1,0 +1,43 @@
+{
+  "name": "flask-helpdesk-playwright-tests",
+  "version": "1.0.0",
+  "description": "Playwright тесты для Flask Helpdesk - модуль main",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
+    "test:main": "playwright test main.spec.js",
+    "test:test-pages": "playwright test main-test-pages.spec.js",
+    "test:auth": "playwright test main-auth.spec.js",
+    "test:all": "playwright test --reporter=html",
+    "install-browsers": "playwright install",
+    "show-report": "playwright show-report",
+    "codegen": "playwright codegen localhost:5000"
+  },
+  "keywords": [
+    "playwright",
+    "testing",
+    "flask",
+    "helpdesk",
+    "e2e",
+    "automation"
+  ],
+  "author": "Flask Helpdesk Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/flask-helpdesk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/your-org/flask-helpdesk/issues"
+  },
+  "homepage": "https://github.com/your-org/flask-helpdesk#readme"
+}

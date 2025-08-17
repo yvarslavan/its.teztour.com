@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Простой тест API - Main Module</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .test-card {
+            background: white;
+            margin: 15px 0;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border-left: 4px solid #007bff;
+        }
+        .test-button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .test-button:hover {
+            background: #218838;
+        }
+        .test-button.danger {
+            background: #dc3545;
+        }
+        .test-button.danger:hover {
+            background: #c82333;
+        }
+        .result-box {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #28a745; }
+        .status-error { background: #dc3545; }
+        .status-loading { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <h1>🧪 Простое тестирование API - Main Module</h1>
+
+    <div class="test-card">
+        <h3>1. Тест подключения к серверу</h3>
+        <button class="test-button" onclick="testServerConnection()">Проверить подключение</button>
+        <div id="connection-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>2. Тест аутентификации</h3>
+        <button class="test-button" onclick="testAuthentication()">Проверить аутентификацию</button>
+        <div id="auth-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>3. Тест получения данных пользователя</h3>
+        <button class="test-button" onclick="testUserData()">Получить данные пользователя</button>
+        <div id="user-data-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>4. Тест сессии</h3>
+        <button class="test-button" onclick="testSession()">Проверить сессию</button>
+        <div id="session-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>5. Тест доступности главной страницы</h3>
+        <button class="test-button" onclick="testHomePage()">Проверить главную страницу</button>
+        <div id="home-page-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>6. Тест API статистики</h3>
+        <button class="test-button" onclick="testStatistics()">Получить статистику</button>
+        <div id="statistics-result" class="result-box"></div>
+    </div>
+
+    <div class="test-card">
+        <h3>7. Тест очистки кэша</h3>
+        <button class="test-button danger" onclick="testCacheClear()">Очистить кэш</button>
+        <div id="cache-result" class="result-box"></div>
+    </div>
+
+    <script>
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            const timestamp = new Date().toLocaleTimeString();
+            const statusClass = type === 'success' ? 'status-success' :
+                              type === 'error' ? 'status-error' : 'status-loading';
+
+            element.innerHTML = `
+                <div>
+                    <span class="status-indicator ${statusClass}"></span>
+                    <strong>[${timestamp}]</strong> ${message}
+                </div>
+            `;
+            element.className = `result-box ${type}`;
+        }
+
+        async function testServerConnection() {
+            showResult('connection-result', 'Проверка подключения к серверу...', 'info');
+            try {
+                const startTime = Date.now();
+                const response = await fetch('/', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/html',
+                    }
+                });
+                const endTime = Date.now();
+                const responseTime = endTime - startTime;
+
+                if (response.ok) {
+                    showResult('connection-result',
+                        `✅ Сервер доступен!\nСтатус: ${response.status}\nВремя ответа: ${responseTime}ms\nURL: ${response.url}`,
+                        'success');
+                } else {
+                    showResult('connection-result',
+                        `⚠️ Сервер отвечает, но с ошибкой\nСтатус: ${response.status}\nВремя ответа: ${responseTime}ms`,
+                        'error');
+                }
+            } catch (error) {
+                showResult('connection-result',
+                    `❌ Ошибка подключения к серверу\nДетали: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testAuthentication() {
+            showResult('auth-result', 'Проверка аутентификации...', 'info');
+            try {
+                const response = await fetch('/user/profile', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.status === 401) {
+                    showResult('auth-result',
+                        `ℹ️ Пользователь не аутентифицирован (ожидаемо для теста)\nСтатус: ${response.status}`,
+                        'info');
+                } else if (response.ok) {
+                    const data = await response.json();
+                    showResult('auth-result',
+                        `✅ Пользователь аутентифицирован\nДанные: ${JSON.stringify(data, null, 2)}`,
+                        'success');
+                } else {
+                    showResult('auth-result',
+                        `⚠️ Неожиданный статус: ${response.status}`,
+                        'error');
+                }
+            } catch (error) {
+                showResult('auth-result',
+                    `❌ Ошибка проверки аутентификации: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testUserData() {
+            showResult('user-data-result', 'Получение данных пользователя...', 'info');
+            try {
+                const response = await fetch('/api/user/current', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('user-data-result',
+                        `✅ Данные пользователя получены:\n${JSON.stringify(data, null, 2)}`,
+                        'success');
+                } else {
+                    showResult('user-data-result',
+                        `ℹ️ Данные пользователя недоступны (статус: ${response.status})`,
+                        'info');
+                }
+            } catch (error) {
+                showResult('user-data-result',
+                    `❌ Ошибка получения данных: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testSession() {
+            showResult('session-result', 'Проверка сессии...', 'info');
+            try {
+                const response = await fetch('/api/session/test', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('session-result',
+                        `✅ Сессия активна:\n${JSON.stringify(data, null, 2)}`,
+                        'success');
+                } else {
+                    showResult('session-result',
+                        `ℹ️ Тест сессии недоступен (статус: ${response.status})`,
+                        'info');
+                }
+            } catch (error) {
+                showResult('session-result',
+                    `❌ Ошибка проверки сессии: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testHomePage() {
+            showResult('home-page-result', 'Проверка главной страницы...', 'info');
+            try {
+                const response = await fetch('/', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'text/html',
+                    }
+                });
+
+                if (response.ok) {
+                    const contentType = response.headers.get('content-type');
+                    const contentLength = response.headers.get('content-length');
+                    showResult('home-page-result',
+                        `✅ Главная страница доступна\nСтатус: ${response.status}\nТип контента: ${contentType}\nРазмер: ${contentLength || 'неизвестно'} байт`,
+                        'success');
+                } else {
+                    showResult('home-page-result',
+                        `⚠️ Главная страница недоступна\nСтатус: ${response.status}`,
+                        'error');
+                }
+            } catch (error) {
+                showResult('home-page-result',
+                    `❌ Ошибка доступа к главной странице: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testStatistics() {
+            showResult('statistics-result', 'Получение статистики...', 'info');
+            try {
+                const response = await fetch('/api/statistics', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('statistics-result',
+                        `✅ Статистика получена:\n${JSON.stringify(data, null, 2)}`,
+                        'success');
+                } else {
+                    showResult('statistics-result',
+                        `ℹ️ API статистики недоступен (статус: ${response.status})`,
+                        'info');
+                }
+            } catch (error) {
+                showResult('statistics-result',
+                    `❌ Ошибка получения статистики: ${error.message}`,
+                    'error');
+            }
+        }
+
+        async function testCacheClear() {
+            showResult('cache-result', 'Очистка кэша...', 'info');
+            try {
+                const response = await fetch('/api/cache/clear', {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showResult('cache-result',
+                        `✅ Кэш очищен:\n${JSON.stringify(data, null, 2)}`,
+                        'success');
+                } else {
+                    showResult('cache-result',
+                        `ℹ️ API очистки кэша недоступен (статус: ${response.status})`,
+                        'info');
+                }
+            } catch (error) {
+                showResult('cache-result',
+                    `❌ Ошибка очистки кэша: ${error.message}`,
+                    'error');
+            }
+        }
+    </script>
+</body>
+</html>
