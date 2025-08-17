@@ -21,6 +21,26 @@
     },
     "its.teztour.com Docs": {
       "url": "https://gitmcp.io/yvarslavan/its.teztour.com"
+    },
+    "playwright-mcp": {
+      "command": "npx",
+      "args": ["-y", "playwright-mcp"]
+    },
+    "sequential-thinking-simplified-fork": {
+      "command": "npx",
+      "args": ["sequential-thinking-simplified-fork"]
+    },
+    "pieces-memorybank-mcp": {
+      "command": "npx",
+      "args": ["pieces-memorybank-mcp"]
+    },
+    "sql-mcp": {
+      "command": "npx",
+      "args": ["sql-mcp"]
+    },
+    "figma-mcp": {
+      "command": "npx",
+      "args": ["figma-mcp"]
     }
   }
 }
