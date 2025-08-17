@@ -1,6 +1,4 @@
 ---
-description: 
-globs: **/*.py
-alwaysApply: false
+alwaysApply: true
 ---
 - Always use python 3.12
