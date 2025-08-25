@@ -721,9 +721,40 @@
         transform: scale(0.9);
     }
 
-    .users-page-wrapper .user-avatar.avatar-loaded {
+    /* Avatar Loading States */
+    .user-avatar {
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+
+    .user-avatar.avatar-loading {
+        opacity: 0.6;
+        animation: avatar-pulse 1.5s ease-in-out infinite;
+    }
+
+    .user-avatar.avatar-loaded {
         opacity: 1;
         transform: scale(1);
+    }
+
+    .user-avatar.avatar-error {
+        opacity: 0.8;
+        filter: grayscale(1);
+    }
+
+    @keyframes avatar-pulse {
+        0%, 100% { opacity: 0.6; }
+        50% { opacity: 0.8; }
+    }
+
+    /* Performance optimization for images */
+    .user-avatar {
+        will-change: opacity, transform;
+        backface-visibility: hidden;
+    }
+
+    /* Optimize rendering */
+    .user-card {
+        contain: layout style paint;
     }
 
     /* Avatar loading and error states */
@@ -1094,29 +1125,56 @@ document.addEventListener('DOMContentLoaded', function() {
     const noResultsMessage = document.getElementById('no-results-message');
     const clearSearchBtn = document.getElementById('clear-search-btn');
 
-    // Preload critical images
+    // Preload critical images with retry logic
     function preloadUserAvatars() {
         const avatarImages = document.querySelectorAll('.user-avatar');
-        avatarImages.forEach(img => {
-            if (img.src && !img.complete) {
-                img.addEventListener('load', function() {
-                    this.classList.add('avatar-loaded');
-                });
-                img.addEventListener('error', function() {
-                    this.classList.add('avatar-error');
-                    // Fallback to default avatar
-                    if (!this.src.includes('default.jpg')) {
-                        this.src = this.src.replace(/profile_pics\/[^\/]+\/account_img\/[^\/]+/, 'profile_pics/default.jpg');
-                    }
-                });
-            } else if (img.complete) {
-                // Если изображение уже загружено
-                img.classList.add('avatar-loaded');
+        const maxRetries = 3;
+        const retryDelay = 1000; // 1 second
+
+        avatarImages.forEach((img, index) => {
+            let retryCount = 0;
+
+            function loadImage() {
+                if (img.src && !img.complete) {
+                    img.addEventListener('load', function() {
+                        this.classList.add('avatar-loaded');
+                        this.classList.remove('avatar-loading');
+                    });
+
+                    img.addEventListener('error', function() {
+                        retryCount++;
+                        this.classList.add('avatar-error');
+
+                        if (retryCount < maxRetries) {
+                            // Retry with delay
+                            setTimeout(() => {
+                                this.classList.remove('avatar-error');
+                                this.classList.add('avatar-loading');
+                                loadImage();
+                            }, retryDelay * retryCount);
+                        } else {
+                            // Final fallback to default avatar
+                            this.classList.remove('avatar-loading');
+                            if (!this.src.includes('default.jpg')) {
+                                this.src = this.src.replace(/profile_pics\/[^\/]+\/account_img\/[^\/]+/, 'profile_pics/default.jpg');
+                            }
+                        }
+                    });
+
+                    // Add loading state
+                    img.classList.add('avatar-loading');
+                } else if (img.complete) {
+                    // Если изображение уже загружено
+                    img.classList.add('avatar-loaded');
+                }
             }
+
+            // Start loading with staggered delay to prevent overwhelming the server
+            setTimeout(loadImage, index * 50);
         });
     }
 
-    // Optimize image loading with intersection observer
+    // Optimize image loading with intersection observer and preloading
     function setupImageLazyLoading() {
         const imageObserver = new IntersectionObserver((entries, observer) => {
             entries.forEach(entry => {
@@ -1130,7 +1188,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         }, {
-            rootMargin: '50px 0px',
+            rootMargin: '100px 0px', // Increased margin for earlier loading
             threshold: 0.01
         });
 
@@ -1140,19 +1198,35 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Initialize avatar preloading
+    // Initialize avatar preloading with performance monitoring
+    const avatarLoadStart = performance.now();
     preloadUserAvatars();
     setupImageLazyLoading();
 
-    // Handle already loaded images
+    // Monitor avatar loading performance
     setTimeout(() => {
-        const avatarImages = document.querySelectorAll('.user-avatar');
-        avatarImages.forEach(img => {
-            if (img.complete && !img.classList.contains('avatar-loaded')) {
-                img.classList.add('avatar-loaded');
-            }
-        });
-    }, 100);
+        const avatarLoadTime = performance.now() - avatarLoadStart;
+        const loadedAvatars = document.querySelectorAll('.user-avatar.avatar-loaded').length;
+        const totalAvatars = document.querySelectorAll('.user-avatar').length;
+
+        console.log(`Avatar loading performance: ${loadedAvatars}/${totalAvatars} loaded in ${avatarLoadTime.toFixed(2)}ms`);
+
+        // Log to server if needed
+        if (window.performance && window.performance.navigation) {
+            fetch('/api/log-performance', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    metric: 'avatar_loading',
+                    value: avatarLoadTime,
+                    loaded: loadedAvatars,
+                    total: totalAvatars
+                })
+            }).catch(err => console.log('Performance logging failed:', err));
+        }
+    }, 2000);
 
     // Search functionality
     if (searchInput && userCardsContainer && noResultsMessage && clearSearchBtn) {
