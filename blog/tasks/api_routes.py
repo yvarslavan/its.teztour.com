@@ -1169,3 +1169,29 @@ def download_task_attachment(task_id, attachment_id):
             "error": f"Внутренняя ошибка сервера: {str(e)}",
             "success": False
         }), 500
+
+
+@api_bp.route("/log-performance", methods=["POST"])
+@csrf.exempt
+@login_required
+def log_performance_metrics():
+    """
+    API для логирования метрик производительности с клиентской стороны
+    """
+    try:
+        data = request.get_json()
+        metric = data.get('metric')
+        value = data.get('value')
+        additional_data = data.get('additional_data', {})
+
+        # Логируем метрики производительности
+        current_app.logger.info(f"[PERFORMANCE] {metric}: {value}ms - User: {current_user.username} - Data: {additional_data}")
+
+        # Можно добавить сохранение в базу данных для анализа трендов
+        # save_performance_metric(metric, value, current_user.id, additional_data)
+
+        return jsonify({"success": True, "message": "Performance metric logged"})
+
+    except Exception as e:
+        current_app.logger.error(f"[PERFORMANCE] Error logging metric: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500

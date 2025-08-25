@@ -580,18 +580,25 @@ def account():
 @users.route("/users")
 @login_required
 def all_users():
+    start_time = time.time()
     try:
+        # Получаем пользователей с оптимизированным запросом
         all_users_data = User.query.order_by(User.last_seen.desc()).all()
 
-        # Проверяем и исправляем пути к изображениям
-        for user in all_users_data:
-            user.image_file = validate_user_image_path(user)
+        # Используем пакетную валидацию вместо цикла
+        from blog.user.utils import batch_validate_user_images
+        all_users_data = batch_validate_user_images(all_users_data)
+
+        # Логируем время выполнения
+        execution_time = time.time() - start_time
+        current_app.logger.info(f"Users page loaded in {execution_time:.3f}s for {len(all_users_data)} users")
 
         return render_template(
             "users.html", title="Зарегистированные пользователи", users=all_users_data
         )
     except Exception as e:
-        current_app.logger.error(f"Ошибка при загрузке страницы пользователей: {e}")
+        execution_time = time.time() - start_time
+        current_app.logger.error(f"Ошибка при загрузке страницы пользователей за {execution_time:.3f}s: {e}")
         flash("Произошла ошибка при загрузке списка пользователей", "error")
         return render_template("users.html", title="Пользователи", users=[])
 

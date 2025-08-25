@@ -8,6 +8,8 @@ from flask import current_app
 from flask_login import current_user
 from functools import wraps
 from flask import flash, redirect, url_for
+from functools import lru_cache
+import time
 
 
 def random_avatar(user):
@@ -130,11 +132,12 @@ def quality_control_required(f):
     return decorated_function
 
 
-def validate_user_image_path(user):
+@lru_cache(maxsize=1000)
+def validate_user_image_path_cached(username, image_file):
     """
-    Проверяет существование файла изображения пользователя и возвращает корректный путь
+    Кэшированная версия валидации пути к изображению пользователя
     """
-    if not user.image_file or user.image_file == 'default.jpg':
+    if not image_file or image_file == 'default.jpg':
         return 'default.jpg'
 
     # Проверяем существование файла
@@ -142,16 +145,39 @@ def validate_user_image_path(user):
         current_app.root_path,
         'static',
         'profile_pics',
-        user.username,
+        username,
         'account_img',
-        user.image_file
+        image_file
     )
 
     if os.path.exists(image_path):
-        return user.image_file
+        return image_file
     else:
-        # Если файл не существует, возвращаем default.jpg
         return 'default.jpg'
+
+
+def validate_user_image_path(user):
+    """
+    Проверяет существование файла изображения пользователя и возвращает корректный путь
+    """
+    return validate_user_image_path_cached(user.username, user.image_file)
+
+
+def batch_validate_user_images(users):
+    """
+    Пакетная валидация изображений пользователей с оптимизацией
+    """
+    start_time = time.time()
+    validated_users = []
+
+    for user in users:
+        user.image_file = validate_user_image_path_cached(user.username, user.image_file)
+        validated_users.append(user)
+
+    validation_time = time.time() - start_time
+    current_app.logger.info(f"Batch validation completed in {validation_time:.3f}s for {len(users)} users")
+
+    return validated_users
 
 
 def get_user_image_url(user):
@@ -161,6 +187,20 @@ def get_user_image_url(user):
     from flask import url_for
 
     valid_image_file = validate_user_image_path(user)
+
+    if valid_image_file == 'default.jpg':
+        return url_for('static', filename='profile_pics/default.jpg')
+    else:
+        return url_for('static', filename=f'profile_pics/{user.username}/account_img/{valid_image_file}')
+
+
+def get_user_image_url_optimized(user):
+    """
+    Оптимизированная версия получения URL изображения с кэшированием
+    """
+    from flask import url_for
+
+    valid_image_file = validate_user_image_path_cached(user.username, user.image_file)
 
     if valid_image_file == 'default.jpg':
         return url_for('static', filename='profile_pics/default.jpg')
