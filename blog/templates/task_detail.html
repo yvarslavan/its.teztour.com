@@ -2767,6 +2767,13 @@
 }
 </style>
 <script>
+// Глобальные данные пользователя для динамических комментариев
+const currentUserData = {
+    username: '{{ current_user.username }}',
+    fullName: '{{ current_user.full_name or current_user.username }}',
+    firstLetter: '{{ (current_user.full_name or current_user.username)[0]|upper }}'
+};
+
 // Email функции
 function toggleEmailInput() {
     const emailForm = document.getElementById('emailForm');
@@ -2900,6 +2907,17 @@ async function submitEmailAjax(event) {
 
         if (data.success) {
             showNotification(data.message, 'success');
+
+            // НОВЫЙ КОД: Добавляем комментарий в историю
+            try {
+                const attachmentCount = document.getElementById('fileInput')?.files?.length || 0;
+                // Получаем текстовую версию сообщения (без HTML тегов)
+                const plainTextMessage = message.replace(/<[^>]+>/g, '').trim();
+                addEmailCommentToHistory(recipient, subject, plainTextMessage, cc, attachmentCount);
+            } catch (commentError) {
+                console.error('Ошибка при добавлении комментария в историю:', commentError);
+            }
+
             // Очищаем форму и скрываем её
             form.reset();
             toggleEmailInput();
@@ -2917,6 +2935,87 @@ async function submitEmailAjax(event) {
             submitBtn.innerHTML = '<i class="fas fa-envelope"></i> <span>Отправить email</span>';
         }
     }
+}
+
+// Функция для добавления нового комментария об отправке email в DOM
+function addEmailCommentToHistory(recipient, subject, message, cc = null, attachments = null) {
+    const historyTimeline = document.querySelector('.history-timeline');
+    if (!historyTimeline) {
+        console.error('История задачи не найдена');
+        return;
+    }
+
+    // Генерируем уникальный ID для комментария (временный)
+    const tempJournalId = 'temp_' + Date.now();
+
+    // Получаем текущее время в формате dd.mm.yyyy HH:MM
+    const now = new Date();
+    const timeString = now.toLocaleString('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+
+    // Формируем текст комментария (такой же как в Python коде)
+    let commentLines = [`Получатель: ${recipient}`];
+
+    if (cc) {
+        commentLines.push(`Копия: ${cc}`);
+    }
+
+    if (attachments && attachments > 0) {
+        commentLines.push(`Приложения: ${attachments} файл(ов)`);
+    }
+
+    // Добавляем само сообщение
+    commentLines.push('', message);
+
+    const commentText = commentLines.join('\n');
+
+    // Создаем HTML для нового комментария
+    const newCommentHTML = `
+        <div class="history-item" data-type="comments">
+            <div class="history-avatar">
+                <div class="avatar-circle history">
+                    ${currentUserData.firstLetter}
+                </div>
+            </div>
+
+            <div class="history-content">
+                <div class="history-header">
+                    <div class="history-user">
+                        <span class="user-name">${currentUserData.fullName}</span>
+                        <span class="history-time">${timeString}</span>
+                    </div>
+                </div>
+
+                <div class="history-comment" data-journal-id="${tempJournalId}">
+                    <div class="comment-content">
+                        ${commentText.replace(/\n/g, '<br>')}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Добавляем в начало истории (чтобы был сверху)
+    historyTimeline.insertAdjacentHTML('afterbegin', newCommentHTML);
+
+    // Добавляем небольшую анимацию появления
+    const newComment = historyTimeline.querySelector('.history-item[data-type="comments"]');
+    if (newComment) {
+        newComment.style.opacity = '0.5';
+        newComment.style.transform = 'translateY(-10px)';
+        setTimeout(() => {
+            newComment.style.transition = 'all 0.3s ease';
+            newComment.style.opacity = '1';
+            newComment.style.transform = 'translateY(0)';
+        }, 100);
+    }
+
+    console.log('Комментарий об отправке email добавлен в историю');
 }
 
 function toggleCommentActions(journalId) {
