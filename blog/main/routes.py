@@ -649,6 +649,7 @@ def notifications_widget_status():
 
 
 @main.route("/api/notifications/clear", methods=["POST"])
+@csrf.exempt
 @login_required
 def api_clear_notifications():
     """API эндпоинт для очистки всех уведомлений пользователя."""
@@ -668,6 +669,7 @@ def api_clear_notifications():
 
 
 @main.route("/api/notifications/redmine/mark-read", methods=["POST"])
+@csrf.exempt
 @login_required
 def api_mark_redmine_notification_read():
     """API для отметки Redmine уведомления как прочитанного"""
@@ -692,6 +694,7 @@ def api_mark_redmine_notification_read():
 
 
 @main.route("/api/notifications/mark-all-read", methods=["POST"])
+@csrf.exempt
 @login_required
 def api_mark_all_notifications_read():
     """API для отметки всех уведомлений как прочитанных (для кнопки Очистить в виджете)"""
@@ -710,6 +713,7 @@ def api_mark_all_notifications_read():
 
 
 @main.route("/api/notifications/mark-read", methods=["POST"])
+@csrf.exempt
 @login_required
 def api_mark_notification_read():
     """API для отметки уведомлений заявок как прочитанных"""
