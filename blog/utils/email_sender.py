@@ -151,21 +151,19 @@ class EmailSender:
         task_message = f"""
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
             <!-- Стильный заголовок с логотипом -->
-            <div style="background-color: #ecd8bf; padding: 20px; margin-bottom: 20px;">
+            <div style="background-color: #1a365d; padding: 20px; margin-bottom: 20px;">
                 <table width="100%" border="0" cellspacing="0" cellpadding="0" style="border-collapse: collapse;">
                     <tr align="top">
                         <td width="280" align="left">
                             <a href="http://www.tez-tour.com" target="_blank">
-                                <img src="https://s.tez-tour.com/article/7025866/TEZ_TOUR_logo_horizontal_cmyk_7505.png"
+                                <img src="https://r.tez-tour.com/armmanager/images/teztour_logo.png"
                                      alt="TEZ TOUR" title="TEZ TOUR" border="0" style="max-width: 200px; height: auto;">
                             </a>
                         </td>
                         <td align="right" width="400">
-                            <div style="font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; color: #252525; padding: 0; line-height: 18px;">
+                            <div style="font-family: Tahoma, Verdana, Arial, sans-serif; font-size: 14px; color: #ffffff; padding: 0; line-height: 18px;">
                                 <b>Служба технической поддержки TEZ TOUR</b><br>
-                                <a href="tel:+7(495) 775-10-09">+7(495) 775-10-09</a>,
-                                <a href="tel:+7(495) 660-10-09">+7(495) 660-10-09</a>, вн.1000<br>
-                                Email: <a href="mailto:help@tez-tour.com" target="_blank">help@tez-tour.com</a>
+                                Email: <a href="mailto:help@tez-tour.com" target="_blank" style="color: #ffffff; text-decoration: underline;">help@tez-tour.com</a>
                             </div>
                         </td>
                     </tr>
@@ -191,11 +189,103 @@ class EmailSender:
         """
 
         try:
+            # Отправляем email
             result = self.send_email(recipient, task_subject, task_message, cc, attachments, reply_to)
             current_app.logger.info(f"📧 [TASK] Email для задачи {task_id} отправлен: {result}")
+
+            # ИСПРАВЛЕНИЕ: Если email отправлен успешно, добавляем комментарий в Redmine
+            if result:
+                try:
+                    self._add_email_comment_to_redmine(task_id, recipient, subject, message, cc, attachments)
+                except Exception as comment_error:
+                    current_app.logger.error(f"⚠️ [TASK] Email отправлен, но не удалось добавить комментарий в Redmine для задачи {task_id}: {comment_error}")
+                    # Email отправлен, поэтому возвращаем True даже если комментарий не добавлен
+
             return result
         except Exception as e:
             current_app.logger.error(f"❌ [TASK] Ошибка при отправке email для задачи {task_id}: {e}")
+            return False
+
+    def _add_email_comment_to_redmine(self, task_id, recipient, subject, message, cc=None, attachments=None):
+        """
+        Добавляет комментарий в Redmine о том, что был отправлен email
+
+        Args:
+            task_id (int): ID задачи
+            recipient (str): Email получателя
+            subject (str): Тема письма
+            message (str): Текст сообщения
+            cc (str): Email для копии (CC)
+            attachments (list): Список путей к файлам для вложения
+        """
+        from flask_login import current_user
+        from blog.tasks.utils import create_redmine_connector, get_user_redmine_password
+
+        try:
+            current_app.logger.info(f"📝 [TASK] Добавление комментария в Redmine о отправке email для задачи {task_id}")
+
+            # Получаем пароль пользователя из ERP
+            actual_password = get_user_redmine_password(current_user.username)
+            if not actual_password:
+                current_app.logger.error(f"❌ [TASK] Не удалось получить пароль пользователя {current_user.username} для добавления комментария")
+                return False
+
+            # Создаем коннектор Redmine
+            redmine_connector = create_redmine_connector(
+                is_redmine_user=current_user.is_redmine_user,
+                user_login=current_user.username,
+                password=actual_password
+            )
+
+            if not redmine_connector:
+                current_app.logger.error(f"❌ [TASK] Не удалось создать Redmine коннектор для добавления комментария")
+                return False
+
+            # Формируем текст комментария
+            comment_lines = [f"Получатель: {recipient}"]
+
+            if cc:
+                comment_lines.append(f"Копия: {cc}")
+
+            if attachments:
+                comment_lines.append(f"Приложения: {len(attachments)} файл(ов)")
+
+            # Добавляем само сообщение
+            comment_lines.extend(["", message])
+
+            comment_text = "\n".join(comment_lines)
+
+            # Определяем user_id для добавления комментария
+            if current_user.is_redmine_user and hasattr(current_user, 'id_redmine_user') and current_user.id_redmine_user:
+                user_id = current_user.id_redmine_user
+                current_app.logger.info(f"📝 [TASK] Используем Redmine user_id: {user_id} для пользователя {current_user.username}")
+            else:
+                # Для анонимных пользователей используем системный ID
+                from config import get
+                try:
+                    user_id = get('redmine', 'anonymous_user_id')
+                except:
+                    user_id = 13  # Значение по умолчанию
+                current_app.logger.info(f"📝 [TASK] Используем анонимный user_id: {user_id}")
+
+            # Добавляем комментарий в задачу
+            success, message = redmine_connector.add_comment(
+                issue_id=task_id,
+                notes=comment_text,
+                user_id=user_id
+            )
+
+            if success:
+                current_app.logger.info(f"✅ [TASK] Комментарий об отправке email успешно добавлен в задачу {task_id}")
+                return True
+            else:
+                current_app.logger.error(f"❌ [TASK] Ошибка при добавлении комментария в задачу {task_id}: {message}")
+                return False
+
+        except Exception as e:
+            current_app.logger.error(f"💥 [TASK] Критическая ошибка при добавлении комментария в задачу {task_id}: {e}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
             return False
 
 
