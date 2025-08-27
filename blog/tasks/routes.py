@@ -57,6 +57,10 @@ import os
 import uuid
 from werkzeug.utils import secure_filename
 
+
+
+
+
 # Константы для анонимного пользователя (из main/routes.py)
 ANONYMOUS_USER_ID = 4  # ID анонимного пользователя в Redmine
 
@@ -411,6 +415,8 @@ def task_detail(task_id):
                              convert_datetime_msk_format=convert_datetime_msk_format,
                              format_boolean_field=format_boolean_field,
                              get_property_name=get_property_name_fast,
+
+
                              # ✅ Добавляем формы
                              form=form,
                              email_form=email_form,
