@@ -1,339 +1,400 @@
-{% extends 'layout.html' %}
-
-{% block content %}
-<!-- CSS Update Version: 2.1 - Updated button sizes 2024-01-15 -->
+{% extends 'layout.html' %} {% block content %}
+<!-- CSS Update Version: 3.0 - Dark Theme 2025-09-13 -->
 <div class="profile-page-wrapper">
-    <!-- Background Elements -->
-    <div class="background-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-                </div>
+  <!-- Background Elements -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
 
-    <div class="container profile-container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div class="header-content">
-                <div class="back-navigation">
-                    <a href="{{ url_for('users.all_users') }}" class="back-btn">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Назад к пользователям</span>
-                    </a>
-                </div>
-                <div class="header-title">
-                    <h1 class="page-title">Профиль пользователя</h1>
-                    <p class="page-subtitle">Детальная информация и контакты</p>
-                </div>
-            </div>
+  <div class="container profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+      <div class="header-content">
+        <div class="back-navigation">
+          <a href="{{ url_for('users.all_users') }}" class="back-btn">
+            <i class="fas fa-arrow-left"></i>
+            <span>Назад к пользователям</span>
+          </a>
         </div>
-
-        <!-- Profile Content -->
-        <div class="profile-content">
-            <div class="profile-grid">
-                <!-- User Card -->
-                <div class="user-profile-card">
-                    <!-- Online Status -->
-                    {% if user.online %}
-                        <div class="online-status">
-                            <div class="online-dot"></div>
-                            <span class="online-text">Online</span>
-                        </div>
-                    {% else %}
-                        <div class="offline-status">
-                            <div class="offline-dot"></div>
-                            <span class="offline-text">Offline</span>
-                        </div>
-                    {% endif %}
-
-                    <!-- Avatar Section -->
-                    <div class="avatar-section">
-                        <div class="avatar-container" data-bs-toggle="modal" data-bs-target="#avatarModal">
-                            <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-                                 alt="Аватар {{ user.full_name }}"
-                                 class="user-avatar"
-                                 loading="lazy">
-                            <div class="avatar-overlay">
-                                <i class="fas fa-expand-alt"></i>
-                    </div>
-                            <div class="avatar-glow"></div>
-                        </div>
-                    </div>
-
-                    <!-- User Info -->
-                    <div class="user-main-info">
-                        <h2 class="user-full-name">{{ user.full_name or user.username }}</h2>
-                        <p class="user-position">{{ user.position or 'Должность не указана' }}</p>
-                        </div>
-
-                    <!-- Quick Actions -->
-                    <div class="quick-actions">
-                        <a href="mailto:{{ user.email }}" class="action-btn primary-btn">
-                            <i class="fas fa-envelope"></i>
-                            <span>Написать E-mail</span>
-                            <div class="btn-ripple"></div>
-                        </a>
-                        {% if user.phone %}
-                        <a href="tel:{{ user.phone }}" class="action-btn secondary-btn">
-                            <i class="fas fa-phone"></i>
-                            <span>Позвонить</span>
-                            <div class="btn-ripple"></div>
-                        </a>
-                        {% endif %}
-                    </div>
-
-                    <!-- Meta Info -->
-                    <div class="meta-info">
-                        <div class="meta-item">
-                            <div class="meta-icon">
-                                <i class="fas fa-clock"></i>
-                            </div>
-                            <div class="meta-content">
-                                <span class="meta-label">Последний вход</span>
-                                <span class="meta-value">{{ user.last_seen.strftime('%d.%m.%Y %H:%M') if user.last_seen else 'Никогда' }}</span>
-                            </div>
-                        </div>
-                        <div class="meta-item">
-                            <div class="meta-icon">
-                                <i class="fas fa-tasks"></i>
-                            </div>
-                            <div class="meta-content">
-                                <span class="meta-label">Созданных задач</span>
-                                <span class="meta-value">{{ count_issues }}</span>
-                    </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Details Card -->
-                <div class="details-card">
-                    <div class="card-header">
-                        <div class="header-icon">
-                            <i class="fas fa-info-circle"></i>
-                        </div>
-                        <div class="header-content">
-                            <h3 class="card-title">Детальная информация</h3>
-                            <p class="card-subtitle">Персональные данные и контакты</p>
-                        </div>
-                    </div>
-
-                    <div class="details-content">
-                        <!-- Contact Information -->
-                        <div class="details-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-address-card"></i>
-                                Контактная информация
-                            </h4>
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-user"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">Имя пользователя</span>
-                                        <span class="detail-value">{{ user.username }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-envelope"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">E-mail</span>
-                                        <a href="mailto:{{ user.email }}" class="detail-value email-link">{{ user.email }}</a>
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-phone"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">Телефон</span>
-                                        {% if user.phone %}
-                                            <a href="tel:{{ user.phone }}" class="detail-value phone-link">{{ user.phone }}</a>
-                                        {% else %}
-                                            <span class="detail-value empty">Не указан</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-map-marker-alt"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">Локация (Офис)</span>
-                                        <span class="detail-value {{ 'empty' if not user.office else '' }}">{{ user.office or 'Не указан' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Work Information -->
-                        <div class="details-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-briefcase"></i>
-                                Рабочая информация
-                            </h4>
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-building"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">Подразделение (Отдел)</span>
-                                        <span class="detail-value {{ 'empty' if not user.department else '' }}">{{ user.department or 'Не указан' }}</span>
-                                    </div>
-                                </div>
-
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-user-tie"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">Должность</span>
-                                        <span class="detail-value {{ 'empty' if not user.position else '' }}">{{ user.position or 'Не указана' }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                    </div>
-
-                        <!-- Access and Status -->
-                        <div class="details-section">
-                            <h4 class="section-title">
-                                <i class="fas fa-shield-alt"></i>
-                                Статусы и доступы
-                            </h4>
-                            <div class="details-grid">
-                                <div class="detail-item">
-                                    <div class="detail-icon">
-                                        <i class="fas fa-network-wired"></i>
-                                    </div>
-                                    <div class="detail-content">
-                                        <span class="detail-label">VPN Статус</span>
-                            {% if user.vpn == 1 %}
-                                            <div class="status-value">
-                                                <span class="status-badge active">
-                                                    <i class="fas fa-shield-alt"></i>
-                                                    Включен
-                                                </span>
-                                {% if user.vpn_end_date %}
-                                                    <span class="status-expiry">до {{ user.vpn_end_date }}</span>
-                                {% endif %}
-                                            </div>
-                            {% else %}
-                                            <span class="status-badge inactive">
-                                                <i class="fas fa-shield-alt"></i>
-                                                Выключен
-                                            </span>
-                            {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Card Footer -->
-                    <div class="card-footer">
-                        <button class="edit-btn" disabled title="Редактирование пока не доступно">
-                            <i class="fas fa-edit"></i>
-                            <span>Редактировать профиль</span>
-                        </button>
-                </div>
-                </div>
-            </div>
+        <div class="header-title">
+          <h1 class="page-title">Профиль пользователя</h1>
+          <p class="page-subtitle">Детальная информация и контакты</p>
         </div>
-    </div>
-</div>
-
-<!-- Avatar Modal -->
-<div class="modal fade" id="avatarModal" tabindex="-1" aria-labelledby="avatarModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-lg">
-        <div class="modal-content modal-modern">
-            <div class="modal-header">
-                <div class="modal-title-wrapper">
-                    <h5 class="modal-title" id="avatarModalLabel">{{ user.full_name or user.username }}</h5>
-                    <p class="modal-subtitle">@{{ user.username }}</p>
-                </div>
-                <button type="button" class="btn-close-modern" data-bs-dismiss="modal" aria-label="Close">
-                    <i class="fas fa-times"></i>
-                </button>
+        <div class="theme-switcher-container">
+          <button
+            id="theme-switcher"
+            class="theme-switcher"
+            title="Переключить тему"
+          >
+            <i
+              class="fas fa-sun theme-icon-light"
+              style="color: #fbbf24 !important; display: block !important"
+            ></i>
+            <i
+              class="fas fa-moon theme-icon-dark"
+              style="color: #60a5fa !important; display: none !important"
+            ></i>
+          </button>
+        </div>
       </div>
-            <div class="modal-body">
-                <div class="modal-avatar-container">
-        <img src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-             alt="Аватар {{ user.full_name }}"
-                         class="modal-avatar">
+    </div>
+
+    <!-- Profile Content -->
+    <div class="profile-content">
+      <div class="profile-grid">
+        <!-- User Card -->
+        <div class="user-profile-card">
+          <!-- Online Status -->
+          {% if user.online %}
+          <div class="online-status">
+            <div class="online-dot"></div>
+            <span class="online-text">Online</span>
+          </div>
+          {% else %}
+          <div class="offline-status">
+            <div class="offline-dot"></div>
+            <span class="offline-text">Offline</span>
+          </div>
+          {% endif %}
+
+          <!-- Avatar Section -->
+          <div class="avatar-section">
+            <div
+              class="avatar-container"
+              data-bs-toggle="modal"
+              data-bs-target="#avatarModal"
+            >
+              <img
+                src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                alt="Аватар {{ user.full_name }}"
+                class="user-avatar"
+                loading="lazy"
+              />
+              <div class="avatar-overlay">
+                <i class="fas fa-expand-alt"></i>
+              </div>
+              <div class="avatar-glow"></div>
+            </div>
+          </div>
+
+          <!-- User Info -->
+          <div class="user-main-info">
+            <h2 class="user-full-name">
+              {{ user.full_name or user.username }}
+            </h2>
+            <p class="user-position">
+              {{ user.position or 'Должность не указана' }}
+            </p>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-actions">
+            <a href="mailto:{{ user.email }}" class="action-btn primary-btn">
+              <i class="fas fa-envelope"></i>
+              <span>Написать E-mail</span>
+              <div class="btn-ripple"></div>
+            </a>
+            {% if user.phone %}
+            <a href="tel:{{ user.phone }}" class="action-btn secondary-btn">
+              <i class="fas fa-phone"></i>
+              <span>Позвонить</span>
+              <div class="btn-ripple"></div>
+            </a>
+            {% endif %}
+          </div>
+
+          <!-- Meta Info -->
+          <div class="meta-info">
+            <div class="meta-item">
+              <div class="meta-icon">
+                <i class="fas fa-clock"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Последний вход</span>
+                <span class="meta-value"
+                  >{{ user.last_seen.strftime('%d.%m.%Y %H:%M') if
+                  user.last_seen else 'Никогда' }}</span
+                >
+              </div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-icon">
+                <i class="fas fa-tasks"></i>
+              </div>
+              <div class="meta-content">
+                <span class="meta-label">Созданных задач</span>
+                <span class="meta-value">{{ count_issues }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Details Card -->
+        <div class="details-card">
+          <div class="card-header">
+            <div class="header-icon">
+              <i class="fas fa-info-circle"></i>
+            </div>
+            <div class="header-content-details">
+              <h3 class="card-title">Детальная информация</h3>
+              <p class="card-subtitle">Персональные данные и контакты</p>
+            </div>
+          </div>
+
+          <div class="details-content">
+            <!-- Contact Information -->
+            <div class="details-section">
+              <h4 class="section-title">
+                <i class="fas fa-address-card"></i>
+                Контактная информация
+              </h4>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Имя пользователя</span>
+                    <span class="detail-value">{{ user.username }}</span>
+                  </div>
                 </div>
+
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">E-mail</span>
+                    <a
+                      href="mailto:{{ user.email }}"
+                      class="detail-value email-link"
+                      >{{ user.email }}</a
+                    >
+                  </div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-phone"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Телефон</span>
+                    {% if user.phone %}
+                    <a
+                      href="tel:{{ user.phone }}"
+                      class="detail-value phone-link"
+                      >{{ user.phone }}</a
+                    >
+                    {% else %}
+                    <span class="detail-value empty">Не указан</span>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Локация (Офис)</span>
+                    <span
+                      class="detail-value {{ 'empty' if not user.office else '' }}"
+                      >{{ user.office or 'Не указан' }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Work Information -->
+            <div class="details-section">
+              <h4 class="section-title">
+                <i class="fas fa-briefcase"></i>
+                Рабочая информация
+              </h4>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-building"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Подразделение (Отдел)</span>
+                    <span
+                      class="detail-value {{ 'empty' if not user.department else '' }}"
+                      >{{ user.department or 'Не указан' }}</span
+                    >
+                  </div>
+                </div>
+
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-user-tie"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">Должность</span>
+                    <span
+                      class="detail-value {{ 'empty' if not user.position else '' }}"
+                      >{{ user.position or 'Не указана' }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Access and Status -->
+            <div class="details-section">
+              <h4 class="section-title">
+                <i class="fas fa-shield-alt"></i>
+                Статусы и доступы
+              </h4>
+              <div class="details-grid">
+                <div class="detail-item">
+                  <div class="detail-icon">
+                    <i class="fas fa-network-wired"></i>
+                  </div>
+                  <div class="detail-content">
+                    <span class="detail-label">VPN Статус</span>
+                    <div class="status-value">
+                      {% if user.vpn == 1 %}
+                      <span class="status-badge active">
+                        <i class="fas fa-check-circle"></i>
+                        Включен
+                      </span>
+                      {% if user.vpn_end_date %}
+                      <span class="status-expiry"
+                        >до {{ user.vpn_end_date }}</span
+                      >
+                      {% endif %} {% else %}
+                      <span class="status-badge inactive">
+                        <i class="fas fa-times-circle"></i>
+                        Выключен
+                      </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Footer -->
+          <div class="card-footer">
+            <button
+              class="edit-btn"
+              disabled
+              title="Редактирование пока не доступно"
+            >
+              <i class="fas fa-edit"></i>
+              <span>Редактировать профиль</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Avatar Modal -->
+<div
+  class="modal fade"
+  id="avatarModal"
+  tabindex="-1"
+  aria-labelledby="avatarModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content modal-modern">
+      <div class="modal-header">
+        <div class="modal-title-wrapper">
+          <h5 class="modal-title" id="avatarModalLabel">
+            {{ user.full_name or user.username }}
+          </h5>
+          <p class="modal-subtitle">@{{ user.username }}</p>
+        </div>
+        <button
+          type="button"
+          class="btn-close-modern"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        >
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-avatar-container">
+          <img
+            src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+            alt="Аватар {{ user.full_name }}"
+            class="modal-avatar"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block scripts %}
 <script>
-    // Debug: Check if new CSS version loaded
-    console.log('Profile template loaded - CSS Version 2.1');
-    console.log('Button styles should be updated now');
-document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener("DOMContentLoaded", function () {
     // Ripple effect for buttons
-    const actionBtns = document.querySelectorAll('.action-btn');
-    actionBtns.forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            createRipple(e, this);
-        });
+    const actionBtns = document.querySelectorAll(".action-btn");
+    actionBtns.forEach((btn) => {
+      btn.addEventListener("click", function (e) {
+        createRipple(e, this);
+      });
     });
 
     // Enhanced modal animations
-    const avatarModal = document.getElementById('avatarModal');
+    const avatarModal = document.getElementById("avatarModal");
     if (avatarModal) {
-        avatarModal.addEventListener('show.bs.modal', function() {
-            document.body.style.overflow = 'hidden';
-        });
+      avatarModal.addEventListener("show.bs.modal", function () {
+        document.body.style.overflow = "hidden";
+      });
 
-        avatarModal.addEventListener('hidden.bs.modal', function() {
-            document.body.style.overflow = '';
-        });
+      avatarModal.addEventListener("hidden.bs.modal", function () {
+        document.body.style.overflow = "";
+      });
     }
 
     // Parallax effect for background shapes
-    window.addEventListener('scroll', function() {
-        const shapes = document.querySelectorAll('.shape');
-        const scrolled = window.pageYOffset;
-        const rate = scrolled * -0.5;
+    window.addEventListener("scroll", function () {
+      const shapes = document.querySelectorAll(".shape");
+      const scrolled = window.pageYOffset;
+      const rate = scrolled * -0.5;
 
-        shapes.forEach((shape, index) => {
-            const speed = (index + 1) * 0.2;
-            shape.style.transform = `translateY(${rate * speed}px)`;
-        });
+      shapes.forEach((shape, index) => {
+        const speed = (index + 1) * 0.2;
+        shape.style.transform = `translateY(${rate * speed}px)`;
+      });
     });
 
     // Smooth animations on scroll
     const observerOptions = {
-        threshold: 0.1,
-        rootMargin: '0px 0px -50px 0px'
+      threshold: 0.1,
+      rootMargin: "0px 0px -50px 0px",
     };
 
     const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                entry.target.style.animationPlayState = 'running';
-            }
-        });
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.style.animationPlayState = "running";
+        }
+      });
     }, observerOptions);
 
-    const animatedElements = document.querySelectorAll('.detail-item, .meta-item');
-    animatedElements.forEach(el => {
-        observer.observe(el);
+    const animatedElements = document.querySelectorAll(
+      ".detail-item, .meta-item"
+    );
+    animatedElements.forEach((el) => {
+      observer.observe(el);
     });
-});
+  });
 
-// Ripple effect function
-function createRipple(event, element) {
+  // Ripple effect function
+  function createRipple(event, element) {
     const btn = element;
-    const ripple = btn.querySelector('.btn-ripple');
+    const ripple = btn.querySelector(".btn-ripple");
 
     if (!ripple) return;
 
@@ -342,1008 +403,1064 @@ function createRipple(event, element) {
     const x = event.clientX - rect.left - size / 2;
     const y = event.clientY - rect.top - size / 2;
 
-    ripple.style.width = ripple.style.height = size + 'px';
-    ripple.style.left = x + 'px';
-    ripple.style.top = y + 'px';
-    ripple.style.transform = 'scale(0)';
-    ripple.style.opacity = '1';
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
+    ripple.style.transform = "scale(0)";
+    ripple.style.opacity = "1";
 
     // Trigger animation
     requestAnimationFrame(() => {
-        ripple.style.transform = 'scale(2)';
-        ripple.style.opacity = '0';
+      ripple.style.transform = "scale(2)";
+      ripple.style.opacity = "0";
     });
 
     // Clean up
     setTimeout(() => {
-        ripple.style.transform = 'scale(0)';
-        ripple.style.opacity = '0';
+      ripple.style.transform = "scale(0)";
+      ripple.style.opacity = "0";
     }, 600);
-}
+  }
+
+  // Profile Theme Manager
+  class ProfileThemeManager {
+    constructor() {
+      this.init();
+    }
+
+    init() {
+      this.loadTheme();
+      this.bindEvents();
+    }
+
+    loadTheme() {
+      const savedTheme = localStorage.getItem("theme");
+      const lightIcon = document.querySelector(".theme-icon-light");
+      const darkIcon = document.querySelector(".theme-icon-dark");
+
+      if (savedTheme === "light") {
+        document.body.classList.add("light-theme");
+        // Светлая тема - показываем луну
+        if (lightIcon) {
+          lightIcon.style.display = "none";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "block";
+          darkIcon.style.color = "#60a5fa";
+        }
+      } else {
+        // Темная тема - показываем солнце
+        if (lightIcon) {
+          lightIcon.style.display = "block";
+          lightIcon.style.color = "#fbbf24";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "none";
+        }
+      }
+    }
+
+    bindEvents() {
+      const themeSwitcher = document.getElementById("theme-switcher");
+      if (themeSwitcher) {
+        themeSwitcher.addEventListener("click", () => this.toggleTheme());
+      }
+    }
+
+    toggleTheme() {
+      const isLight = document.body.classList.contains("light-theme");
+      const lightIcon = document.querySelector(".theme-icon-light");
+      const darkIcon = document.querySelector(".theme-icon-dark");
+
+      if (isLight) {
+        document.body.classList.remove("light-theme");
+        localStorage.setItem("theme", "dark");
+        // Показываем солнце (светлая иконка) в темной теме
+        if (lightIcon) {
+          lightIcon.style.display = "block";
+          lightIcon.style.color = "#fbbf24";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "none";
+        }
+      } else {
+        document.body.classList.add("light-theme");
+        localStorage.setItem("theme", "light");
+        // Показываем луну (темная иконка) в светлой теме
+        if (lightIcon) {
+          lightIcon.style.display = "none";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "block";
+          darkIcon.style.color = "#60a5fa";
+        }
+      }
+    }
+  }
+
+  // Initialize theme manager
+  new ProfileThemeManager();
 </script>
-{% endblock %}
-
-{% block styles %}
-<!-- Profile Styles v2.1 - Force cache refresh -->
+{% endblock %} {% block styles %}
 <style>
-    /* Force CSS cache refresh - Version 2.1 */
-    /* Import Modern Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
 
-    /* CSS Custom Properties */
-    :root {
-        /* TEZ TOUR Brand Colors */
-        --primary-50: #e0f7fa;
-        --primary-100: #b2ebf2;
-        --primary-200: #80deea;
-        --primary-300: #4dd0e1;
-        --primary-400: #26c6da;
-        --primary-500: #00798C;
-        --primary-600: #00696a;
-        --primary-700: #005f73;
-        --primary-800: #003440;
-        --primary-900: #001f26;
+  :root {
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1;
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
+    --success: #22c55e;
+    --success-bg: rgba(34, 197, 94, 0.15);
+    --error: #ef4444;
+    --error-bg: rgba(239, 68, 68, 0.15);
+    --warning: #f97316;
+    --info: #06b6d4;
+    --online: #22c55e;
+    --offline: #9ca3af;
+    --surface-0: #111827;
+    --surface-1: #1f2937;
+    --surface-2: #374151;
+    --surface-3: #4b5563;
+    --surface-glass: rgba(31, 41, 55, 0.7);
+    --surface-card: rgba(55, 65, 81, 0.6);
+    --text-primary: #f9fafb;
+    --text-secondary: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-disabled: #6b7280;
+    --text-on-primary: #ffffff;
+    --border-light: #374151;
+    --border-medium: #4b5563;
+    --border-focus: var(--primary-400);
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.4);
+    --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.3), 0 6px 6px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --shadow-header: 0 4px 20px rgba(0, 0, 0, 0.2);
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    --font-family-primary: "Inter", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    --font-family-mono: "JetBrains Mono", "Courier New", monospace;
+  }
 
-        /* Status Colors */
-        --success: #10b981;
-        --success-bg: #ecfdf5;
-        --error: #ef4444;
-        --error-bg: #fef2f2;
-        --warning: #f59e0b;
-        --info: #3b82f6;
-        --online: #22c55e;
-        --offline: #64748b;
+  /* Light theme overrides */
+  body.light-theme {
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #e2e8f0;
+    --surface-3: #cbd5e1;
+    --surface-glass: rgba(248, 250, 252, 0.8);
+    --surface-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-focus: var(--primary-500);
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-header: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --error-bg: rgba(239, 68, 68, 0.1);
+  }
 
-        /* Surface Colors */
-        --surface-0: #ffffff;
-        --surface-1: #f8fafc;
-        --surface-2: #f1f5f9;
-        --surface-3: #e2e8f0;
-        --surface-glass: rgba(255, 255, 255, 0.95);
-        --surface-card: rgba(255, 255, 255, 0.9);
-
-        /* Text Colors */
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-        --text-disabled: #94a3b8;
-        --text-on-primary: #ffffff;
-
-        /* Border & Effects */
-        --border-light: #e2e8f0;
-        --border-medium: #cbd5e1;
-        --border-focus: var(--primary-500);
-
-        /* Shadows */
-        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
-        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
-
-        /* Spacing */
-        --spacing-xs: 0.25rem;
-        --spacing-sm: 0.5rem;
-        --spacing-md: 1rem;
-        --spacing-lg: 1.5rem;
-        --spacing-xl: 2rem;
-        --spacing-xxl: 3rem;
-
-        /* Border Radius */
-        --radius-sm: 4px;
-        --radius-md: 8px;
-        --radius-lg: 12px;
-        --radius-xl: 16px;
-        --radius-xxl: 24px;
-
-        /* Transitions */
-        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-
-        /* Typography */
-        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
-    }
-
-    /* Base Styles */
-    body {
-        font-family: var(--font-family-primary);
-        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
-        min-height: 100vh;
-    }
-
-    .profile-page-wrapper {
-        min-height: 100vh;
-        padding: var(--spacing-xl) 0;
-        position: relative;
-        overflow: hidden;
-    }
-
-    /* Background Shapes */
-    .background-shapes {
-        position: fixed;
-        top: 0;
-        left: 0;
+  body {
+    font-family: var(--font-family-primary);
+    background: linear-gradient(
+      135deg,
+      var(--surface-0) 0%,
+      var(--surface-1) 100%
+    );
+    min-height: 100vh;
+    color: var(--text-secondary);
+    transition: background var(--transition-normal),
+      color var(--transition-normal);
+  }
+  .profile-page-wrapper {
+    min-height: 100vh;
+    padding: var(--spacing-xl) 0;
+    position: relative;
+    overflow: hidden;
+  }
+  .background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-        pointer-events: none;
-        z-index: 0;
-    }
-
-    .shape {
-        position: absolute;
-        background: rgba(0, 121, 140, 0.05);
-        border-radius: 50%;
-        animation: float 15s ease-in-out infinite;
-    }
-
-    .shape-1 {
-        width: 400px;
-        height: 400px;
-        top: 10%;
-        left: -10%;
-        animation-delay: 0s;
-    }
-
-    .shape-2 {
-        width: 300px;
-        height: 300px;
-        top: 50%;
-        right: -5%;
-        animation-delay: 5s;
-    }
-
-    .shape-3 {
-        width: 250px;
-        height: 250px;
-        bottom: 20%;
-        left: 20%;
-        animation-delay: 10s;
-    }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-40px) rotate(5deg); }
-        66% { transform: translateY(20px) rotate(-5deg); }
-    }
-
-    /* Container */
-    .profile-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        position: relative;
-        z-index: 1;
-        padding: 0 var(--spacing-lg);
-    }
-
-    /* Profile Header */
-    .profile-header {
-        background: var(--surface-glass);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xxl);
-        box-shadow: var(--shadow-header);
-        padding: var(--spacing-xl) var(--spacing-xxl);
-        margin-bottom: var(--spacing-xxl);
-        animation: slideDown 0.8s ease-out;
-    }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .header-content {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-xl);
-        flex-wrap: wrap;
-    }
-
-    .back-navigation {
-        flex-shrink: 0;
-    }
-
-    .back-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md) var(--spacing-lg);
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-        color: var(--text-on-primary);
-        text-decoration: none;
-        border-radius: var(--radius-lg);
-        font-weight: 600;
-        font-size: 0.9rem;
-        transition: all var(--transition-normal);
-        box-shadow: var(--shadow-1);
-    }
-
-    .back-btn:hover {
-        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-2);
-        color: var(--text-on-primary);
-    }
-
-    .header-title {
-        flex: 1;
-    }
-
-    .page-title {
-        font-size: 2.25rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-    }
-
-    .page-subtitle {
-        font-size: 1.125rem;
-        color: var(--text-secondary);
-        margin: 0;
-        font-weight: 400;
-    }
-
-    /* Profile Content */
-    .profile-content {
-        animation: fadeInUp 0.8s ease-out 0.2s both;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .profile-grid {
-        display: grid;
-        grid-template-columns: 400px 1fr;
-        gap: var(--spacing-xxl);
-        align-items: start;
-    }
-
-    /* User Profile Card */
-    .user-profile-card {
-        background: var(--surface-card);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xl);
-        padding: var(--spacing-xxl);
-        box-shadow: var(--shadow-card);
-        position: relative;
-        overflow: hidden;
-        text-align: center;
-        position: sticky;
-        top: 120px;
-    }
-
-    .user-profile-card::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 4px;
-        background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
-    }
-
-    /* Online/Offline Status */
-    .online-status,
-    .offline-status {
-        position: absolute;
-        top: var(--spacing-lg);
-        right: var(--spacing-lg);
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        padding: var(--spacing-xs) var(--spacing-sm);
-        border-radius: var(--radius-lg);
-        font-size: 0.75rem;
-        font-weight: 600;
-        z-index: 10;
-    }
-
-    .online-status {
-        background: var(--success-bg);
-        border: 1px solid var(--online);
-        color: var(--online);
-    }
-
-    .offline-status {
-        background: var(--surface-2);
-        border: 1px solid var(--offline);
-        color: var(--offline);
-    }
-
-    .online-dot,
-    .offline-dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        animation: pulseStatus 2s ease-in-out infinite;
-    }
-
-    .online-dot {
-        background: var(--online);
-    }
-
-    .offline-dot {
-        background: var(--offline);
-    }
-
-    @keyframes pulseStatus {
-        0%, 100% { transform: scale(1); opacity: 1; }
-        50% { transform: scale(1.2); opacity: 0.8; }
-    }
-
-    /* Avatar Section */
-    .avatar-section {
-        margin-bottom: var(--spacing-xl);
-    }
-
-    .avatar-container {
-        position: relative;
-        display: inline-block;
-    cursor: pointer;
-}
-
-    .user-avatar {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 4px solid var(--surface-0);
-        box-shadow: var(--shadow-2);
-        transition: all var(--transition-normal);
-    }
-
-    .avatar-overlay {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 121, 140, 0.8);
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-on-primary);
-        font-size: 1.5rem;
-        opacity: 0;
-        transition: all var(--transition-normal);
-    }
-
-    .avatar-container:hover .avatar-overlay {
-        opacity: 1;
-    }
-
-    .avatar-container:hover .user-avatar {
-        transform: scale(1.05);
-    }
-
-    .avatar-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 120%;
-        height: 120%;
-        background: radial-gradient(circle, rgba(0, 121, 140, 0.2) 0%, transparent 70%);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        animation: pulse 4s ease-in-out infinite;
-        z-index: -1;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
-    }
-
-    /* User Main Info */
-    .user-main-info {
-        margin-bottom: var(--spacing-xl);
-    }
-
-    .user-full-name {
-        font-size: 1.75rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-        line-height: 1.3;
-    }
-
-    .user-position {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        margin-bottom: var(--spacing-sm);
-        font-weight: 500;
-    }
-
-    /* Quick Actions */
-    .quick-actions {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-md);
-        margin-bottom: var(--spacing-xl);
-    }
-
-    .action-btn {
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        gap: var(--spacing-lg) !important;
-        padding: 16px 24px !important;
-        border-radius: var(--radius-lg) !important;
-        text-decoration: none !important;
-        font-weight: 600 !important;
-        font-size: 1.1rem !important;
-        min-height: 56px !important;
-        width: 100% !important;
-        transition: all var(--transition-normal) !important;
-        position: relative !important;
-        overflow: hidden !important;
-        box-sizing: border-box !important;
-    }
-
-    /* Alternative selector for extra specificity */
-    .quick-actions .action-btn {
-        display: flex !important;
-        padding: 16px 24px !important;
-        font-size: 1.1rem !important;
-        min-height: 56px !important;
-    }
-
-    .primary-btn {
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-        color: var(--text-on-primary);
-        box-shadow: var(--shadow-1);
-    }
-
-    .primary-btn:hover {
-        background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-2);
-        color: var(--text-on-primary);
-    }
-
-    .secondary-btn {
-        background: var(--surface-2);
-        color: var(--text-secondary);
-        border: 1px solid var(--border-light);
-    }
-
-    .secondary-btn:hover {
-        background: var(--surface-3);
-        color: var(--text-primary);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-1);
-    }
-
-    .action-btn i {
-        font-size: 1.2rem !important;
-        margin-right: 4px !important;
-    }
-
-    .action-btn span {
-        font-size: inherit !important;
-        font-weight: inherit !important;
-    }
-
-    .btn-ripple {
-        position: absolute;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.6);
-        transform: scale(0);
-        pointer-events: none;
-    }
-
-    /* Meta Info */
-    .meta-info {
-        padding-top: var(--spacing-lg);
-        border-top: 1px solid var(--border-light);
-    }
-
-    .meta-item {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        padding: var(--spacing-md);
-        background: var(--surface-1);
-        border-radius: var(--radius-md);
-        margin-bottom: var(--spacing-md);
-        transition: all var(--transition-normal);
-    }
-
-    .meta-item:hover {
-        background: var(--surface-2);
-        transform: translateX(4px);
-    }
-
-    .meta-item:last-child {
-        margin-bottom: 0;
-    }
-
-    .meta-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        background: var(--primary-50);
-        border: 1px solid var(--primary-200);
-        border-radius: var(--radius-md);
-        color: var(--primary-600);
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
-
-    .meta-content {
-        flex: 1;
-        text-align: left;
-    }
-
-    .meta-label {
-    display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--text-muted);
-    text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: var(--spacing-xs);
-    }
-
-    .meta-value {
-        font-size: 0.9rem;
-        font-weight: 500;
-        color: var(--text-primary);
-    }
-
-    /* Details Card */
-    .details-card {
-        background: var(--surface-card);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-card);
-        overflow: hidden;
-    }
-
-    .card-header {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-lg);
-        padding: var(--spacing-xl) var(--spacing-xxl);
-        background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
-        border-bottom: 1px solid var(--border-light);
-    }
-
-    .header-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 50px;
-        height: 50px;
-        background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
-        border-radius: var(--radius-lg);
-        color: var(--text-on-primary);
-        font-size: 1.25rem;
-        box-shadow: var(--shadow-1);
-    }
-
-    .card-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-        line-height: 1.3;
-    }
-
-    .card-subtitle {
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        margin: 0;
-    }
-
-    .details-content {
-        padding: var(--spacing-xxl);
-    }
-
-    .details-section {
-        margin-bottom: var(--spacing-xxl);
-    }
-
-    .details-section:last-child {
-        margin-bottom: 0;
-    }
-
-    .section-title {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-lg);
-        padding-bottom: var(--spacing-md);
-        border-bottom: 2px solid var(--border-light);
-    }
-
-    .section-title i {
-        color: var(--primary-500);
-    }
-
-    .details-grid {
-        display: grid;
-        grid-template-columns: 1fr;
-        gap: var(--spacing-lg);
-    }
-
-    .detail-item {
-        display: flex;
-        align-items: flex-start;
-        gap: var(--spacing-md);
-        padding: var(--spacing-lg);
-        background: var(--surface-1);
-        border-radius: var(--radius-md);
-        transition: all var(--transition-normal);
-        border: 1px solid transparent;
-    }
-
-    .detail-item:hover {
-        background: var(--surface-2);
-        border-color: var(--primary-200);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-1);
-    }
-
-    .detail-icon {
+    pointer-events: none;
+    z-index: 0;
+  }
+  .shape {
+    position: absolute;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+  }
+  .shape-1 {
+    width: 400px;
+    height: 400px;
+    top: 10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+  .shape-2 {
+    width: 300px;
+    height: 300px;
+    top: 50%;
+    right: -5%;
+    animation-delay: 5s;
+  }
+  .shape-3 {
+    width: 250px;
+    height: 250px;
+    bottom: 20%;
+    left: 20%;
+    animation-delay: 10s;
+  }
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-40px) rotate(5deg);
+    }
+    66% {
+      transform: translateY(20px) rotate(-5deg);
+    }
+  }
+
+  .profile-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--spacing-lg);
+  }
+
+  .profile-header {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-header);
+    padding: var(--spacing-xl) var(--spacing-xxl);
+    margin-bottom: var(--spacing-xxl);
+    animation: slideDown 0.8s ease-out;
+  }
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .header-content {
     display: flex;
     align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        background: var(--primary-50);
-        border: 1px solid var(--primary-200);
-        border-radius: var(--radius-md);
-        color: var(--primary-600);
-        font-size: 0.875rem;
-        flex-shrink: 0;
-    }
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+  }
+  .back-navigation {
+    flex-shrink: 0;
+  }
 
-    .detail-content {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .detail-label {
-        display: block;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--text-muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: var(--spacing-xs);
-    }
-
-    .detail-value {
-        font-size: 1rem;
-        font-weight: 500;
-        color: var(--text-primary);
-        line-height: 1.4;
-        word-break: break-word;
-    }
-
-    .detail-value.empty {
-        color: var(--text-muted);
-        font-style: italic;
-    }
-
-    .email-link,
-    .phone-link {
-        color: var(--primary-500);
+  .back-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    color: var(--text-on-primary);
     text-decoration: none;
-        transition: all var(--transition-normal);
-}
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-1);
+  }
+  .back-btn:hover {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    color: var(--text-on-primary);
+  }
 
-    .email-link:hover,
-    .phone-link:hover {
-        color: var(--primary-700);
-    text-decoration: underline;
-}
+  .header-title {
+    flex: 1;
+  }
+  .page-title {
+    font-size: 2.25rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
 
-    .status-value {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-xs);
+  /* Theme Switcher Styles */
+  .theme-switcher-container {
+    flex-shrink: 0;
+  }
+  .theme-switcher {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  /* Принудительные стили для иконок */
+  .theme-switcher * {
+    pointer-events: none;
+  }
+  .theme-switcher:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
+  .theme-switcher:active {
+    transform: translateY(0);
+  }
+  .theme-icon-light,
+  .theme-icon-dark {
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    position: absolute;
+  }
+  .theme-switcher .theme-icon-light,
+  .theme-switcher i.theme-icon-light,
+  .theme-switcher .fas.theme-icon-light {
+    display: block !important;
+    color: #fbbf24 !important; /* Желтый цвет для солнца */
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  .theme-switcher .theme-icon-dark,
+  .theme-switcher i.theme-icon-dark,
+  .theme-switcher .fas.theme-icon-dark {
+    display: none !important;
+    color: #60a5fa !important; /* Голубой цвет для луны */
+  }
+  body.light-theme .theme-switcher .theme-icon-light,
+  body.light-theme .theme-switcher i.theme-icon-light,
+  body.light-theme .theme-switcher .fas.theme-icon-light {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  body.light-theme .theme-switcher .theme-icon-dark,
+  body.light-theme .theme-switcher i.theme-icon-dark,
+  body.light-theme .theme-switcher .fas.theme-icon-dark {
+    display: block !important;
+    color: #60a5fa !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .profile-content {
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
     }
-
-    .status-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        padding: var(--spacing-xs) var(--spacing-md);
-        border-radius: var(--radius-lg);
-    font-size: 0.8rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 
-    .status-badge.active {
-        background: var(--success-bg);
-        color: var(--success);
-        border: 1px solid var(--success);
+  .profile-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: var(--spacing-xxl);
+    align-items: start;
+  }
+
+  .user-profile-card,
+  .details-card {
+    background: var(--surface-card);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+  .user-profile-card {
+    padding: var(--spacing-xxl);
+    text-align: center;
+    position: sticky;
+    top: 120px;
+  }
+  .user-profile-card::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-400));
+  }
+
+  .online-status,
+  .offline-status {
+    position: absolute;
+    top: var(--spacing-lg);
+    right: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 10;
+  }
+  .online-status {
+    background: var(--success-bg);
+    border: 1px solid var(--online);
+    color: var(--online);
+  }
+  .offline-status {
+    background: var(--surface-2);
+    border: 1px solid var(--offline);
+    color: var(--offline);
+  }
+  .online-dot,
+  .offline-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    animation: pulseStatus 2s ease-in-out infinite;
+  }
+  .online-dot {
+    background: var(--online);
+  }
+  .offline-dot {
+    background: var(--offline);
+  }
+  @keyframes pulseStatus {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
     }
-
-    .status-badge.inactive {
-        background: var(--error-bg);
-        color: var(--error);
-        border: 1px solid var(--error);
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
     }
+  }
 
-    .status-expiry {
-        font-size: 0.75rem;
-        color: var(--text-muted);
+  .avatar-section {
+    margin-bottom: var(--spacing-xl);
+  }
+  .avatar-container {
+    position: relative;
+    display: inline-block;
+    cursor: pointer;
+  }
+  .user-avatar {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 4px solid var(--surface-1);
+    box-shadow: var(--shadow-2);
+    transition: all var(--transition-normal);
+  }
+  .avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(79, 70, 229, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-on-primary);
+    font-size: 1.5rem;
+    opacity: 0;
+    transition: all var(--transition-normal);
+  }
+  .avatar-container:hover .avatar-overlay {
+    opacity: 1;
+  }
+  .avatar-container:hover .user-avatar {
+    transform: scale(1.05);
+  }
+  .avatar-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(
+      circle,
+      rgba(99, 102, 241, 0.2) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 4s ease-in-out infinite;
+    z-index: -1;
+  }
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.2);
+      opacity: 0.8;
+    }
+  }
+
+  .user-main-info {
+    margin-bottom: var(--spacing-xl);
+  }
+  .user-full-name {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.3;
+  }
+  .user-position {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-sm);
     font-weight: 500;
-}
+  }
 
-    /* Card Footer */
-    .card-footer {
-        padding: var(--spacing-xl) var(--spacing-xxl);
-        background: var(--surface-1);
-        border-top: 1px solid var(--border-light);
-        text-align: right;
+  .quick-actions {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-xl);
+  }
+  .action-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: var(--spacing-lg) !important;
+    padding: 16px 24px !important;
+    border-radius: var(--radius-lg) !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    font-size: 1.1rem !important;
+    min-height: 56px !important;
+    width: 100% !important;
+    transition: all var(--transition-normal) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
+  }
+  .quick-actions .action-btn {
+    display: flex !important;
+    padding: 16px 24px !important;
+    font-size: 1.1rem !important;
+    min-height: 56px !important;
+  }
+  .primary-btn {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-1);
+  }
+  .primary-btn:hover {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+    color: var(--text-on-primary);
+  }
+  .secondary-btn {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-light);
+  }
+  .secondary-btn:hover {
+    background: var(--surface-3);
+    color: var(--text-primary);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-1);
+  }
+  .action-btn i {
+    font-size: 1.2rem !important;
+    margin-right: 4px !important;
+  }
+  .action-btn span {
+    font-size: inherit !important;
+    font-weight: inherit !important;
+  }
+  .btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    pointer-events: none;
+  }
+
+  .meta-info {
+    padding-top: var(--spacing-lg);
+    border-top: 1px solid var(--border-light);
+  }
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--surface-1);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--spacing-md);
+    transition: all var(--transition-normal);
+  }
+  .meta-item:hover {
+    background: var(--surface-2);
+    transform: translateX(4px);
+  }
+  .meta-item:last-child {
+    margin-bottom: 0;
+  }
+  .meta-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: var(--primary-800);
+    border: 1px solid var(--primary-700);
+    border-radius: var(--radius-md);
+    color: var(--primary-300);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  .meta-content {
+    flex: 1;
+    text-align: left;
+  }
+  .meta-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+  }
+  .meta-value {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    padding: var(--spacing-xl) var(--spacing-xxl);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-light);
+  }
+  .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    border-radius: var(--radius-lg);
+    color: var(--text-on-primary);
+    font-size: 1.25rem;
+    box-shadow: var(--shadow-1);
+  }
+  .card-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    line-height: 1.3;
+  }
+  .card-subtitle {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .details-content {
+    padding: var(--spacing-xxl);
+  }
+  .details-section {
+    margin-bottom: var(--spacing-xxl);
+  }
+  .details-section:last-child {
+    margin-bottom: 0;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-lg);
+    padding-bottom: var(--spacing-md);
+    border-bottom: 2px solid var(--border-light);
+  }
+  .section-title i {
+    color: var(--primary-400);
+  }
+
+  .details-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  .detail-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+    border: 1px solid transparent;
+  }
+  .detail-item:hover {
+    background: var(--surface-2);
+    border-color: var(--primary-600);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-1);
+  }
+  .detail-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: var(--primary-800);
+    border: 1px solid var(--primary-700);
+    border-radius: var(--radius-md);
+    color: var(--primary-300);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+  .detail-content {
+    flex: 1;
+    min-width: 0;
+  }
+  .detail-label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: var(--spacing-xs);
+  }
+  .detail-value {
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .detail-value.empty {
+    color: var(--text-muted);
+    font-style: italic;
+  }
+  .email-link,
+  .phone-link {
+    color: var(--primary-300);
+    text-decoration: none;
+    transition: all var(--transition-normal);
+  }
+  .email-link:hover,
+  .phone-link:hover {
+    color: var(--primary-200);
+    text-decoration: underline;
+  }
+
+  .status-value {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-badge.active {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+  .status-badge.inactive {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error);
+  }
+  .status-expiry {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  .card-footer {
+    padding: var(--spacing-xl) var(--spacing-xxl);
+    background: var(--surface-1);
+    border-top: 1px solid var(--border-light);
+    text-align: right;
+  }
+  .edit-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-3);
+    color: var(--text-disabled);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: not-allowed;
+    transition: all var(--transition-normal);
+  }
+
+  .modal-modern .modal-content {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+  }
+  .modal-modern .modal-header {
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--spacing-xl);
+  }
+  .modal-title-wrapper {
+    flex: 1;
+  }
+  .modal-modern .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+  }
+  .modal-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-family: var(--font-family-mono);
+  }
+  .btn-close-modern {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-muted);
+    transition: all var(--transition-normal);
+  }
+  .btn-close-modern:hover {
+    background: var(--error-bg);
+    color: var(--error);
+  }
+  .modal-modern .modal-body {
+    padding: var(--spacing-xxl);
+    text-align: center;
+  }
+  .modal-avatar-container {
+    display: inline-block;
+    position: relative;
+  }
+  .modal-avatar {
+    width: 300px;
+    height: 300px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: var(--shadow-3);
+  }
+
+  @media (max-width: 1200px) {
+    .profile-grid {
+      grid-template-columns: 350px 1fr;
+      gap: var(--spacing-xl);
     }
-
-    .edit-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md) var(--spacing-lg);
-        background: var(--surface-3);
-        color: var(--text-disabled);
-        border: 1px solid var(--border-medium);
-        border-radius: var(--radius-md);
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: not-allowed;
-        transition: all var(--transition-normal);
+  }
+  @media (max-width: 968px) {
+    .profile-grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-xl);
     }
-
-    /* Modal Styles */
-    .modal-modern .modal-content {
-        background: var(--surface-card);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-3);
+    .user-profile-card {
+      position: static;
     }
-
-    .modal-modern .modal-header {
-        border-bottom: 1px solid var(--border-light);
-        padding: var(--spacing-xl);
+    .profile-container {
+      padding: 0 var(--spacing-md);
     }
-
-    .modal-title-wrapper {
-        flex: 1;
+    .profile-header {
+      padding: var(--spacing-lg) var(--spacing-xl);
     }
-
-    .modal-modern .modal-title {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
+    .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-lg);
     }
-
-    .modal-subtitle {
-        font-size: 0.875rem;
-        color: var(--text-secondary);
-        margin: 0;
-        font-family: var(--font-family-mono);
+    .details-grid {
+      grid-template-columns: 1fr;
     }
-
-    .btn-close-modern {
-        background: none;
-        border: none;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: var(--text-muted);
-        transition: all var(--transition-normal);
+    .theme-switcher-container {
+      align-self: flex-end;
     }
-
-    .btn-close-modern:hover {
-        background: var(--error-bg);
-        color: var(--error);
+  }
+  @media (max-width: 768px) {
+    .page-title {
+      font-size: 1.75rem;
     }
-
-    .modal-modern .modal-body {
-        padding: var(--spacing-xxl);
-        text-align: center;
+    .user-profile-card,
+    .details-content {
+      padding: var(--spacing-xl);
     }
-
-    .modal-avatar-container {
-        display: inline-block;
-        position: relative;
+    .card-header {
+      padding: var(--spacing-lg) var(--spacing-xl);
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-md);
     }
-
+    .action-btn {
+      padding: 14px 20px !important;
+      font-size: 1rem !important;
+      min-height: 52px !important;
+    }
+    .user-avatar {
+      width: 120px;
+      height: 120px;
+    }
+    .user-full-name {
+      font-size: 1.5rem;
+    }
+    .background-shapes {
+      display: none;
+    }
     .modal-avatar {
-        width: 300px;
-        height: 300px;
-        border-radius: 50%;
-        object-fit: cover;
-        box-shadow: var(--shadow-3);
+      width: 250px;
+      height: 250px;
     }
-
-    /* Responsive Design */
-    @media (max-width: 1200px) {
-        .profile-grid {
-            grid-template-columns: 350px 1fr;
-            gap: var(--spacing-xl);
-        }
+  }
+  @media (max-width: 480px) {
+    .profile-header {
+      padding: var(--spacing-md);
     }
-
-    @media (max-width: 968px) {
-        .profile-grid {
-            grid-template-columns: 1fr;
-            gap: var(--spacing-xl);
-        }
-
-        .user-profile-card {
-            position: static;
-        }
-
-        .profile-container {
-            padding: 0 var(--spacing-md);
-        }
-
-        .profile-header {
-            padding: var(--spacing-lg) var(--spacing-xl);
-        }
-
-        .header-content {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--spacing-lg);
-        }
-
-        .details-grid {
-            grid-template-columns: 1fr;
-        }
+    .page-title {
+      font-size: 1.5rem;
     }
-
-    @media (max-width: 768px) {
-        .page-title {
-            font-size: 1.75rem;
-        }
-
-        .user-profile-card,
-        .details-content {
-            padding: var(--spacing-xl);
-        }
-
-        .card-header {
-            padding: var(--spacing-lg) var(--spacing-xl);
-            flex-direction: column;
-            text-align: center;
-            gap: var(--spacing-md);
-        }
-
-        .action-btn {
-            padding: 14px 20px !important;
-            font-size: 1rem !important;
-            min-height: 52px !important;
-        }
-
-        .user-avatar {
-            width: 120px;
-            height: 120px;
-        }
-
-        .user-full-name {
-            font-size: 1.5rem;
-        }
-
-        .background-shapes {
-            display: none;
-        }
-
-        .modal-avatar {
-            width: 250px;
-            height: 250px;
-        }
+    .user-profile-card,
+    .details-content {
+      padding: var(--spacing-lg);
     }
-
-    @media (max-width: 480px) {
-        .profile-header {
-            padding: var(--spacing-md);
-        }
-
-        .page-title {
-            font-size: 1.5rem;
-        }
-
-        .user-profile-card,
-        .details-content {
-            padding: var(--spacing-lg);
-        }
-
-        .card-header {
-            padding: var(--spacing-md);
-        }
-
-        .action-btn {
-            padding: 12px 18px !important;
-            font-size: 0.95rem !important;
-            min-height: 48px !important;
-        }
-
-        .modal-modern .modal-body {
-            padding: var(--spacing-lg);
-        }
-
-        .modal-avatar {
-            width: 200px;
-            height: 200px;
-        }
+    .card-header {
+      padding: var(--spacing-md);
     }
-
-    /* High Contrast Mode */
-    @media (prefers-contrast: high) {
-        :root {
-            --border-light: #000000;
-            --text-secondary: #000000;
-        }
+    .action-btn {
+      padding: 12px 18px !important;
+      font-size: 0.95rem !important;
+      min-height: 48px !important;
     }
-
-    /* Reduced Motion */
-    @media (prefers-reduced-motion: reduce) {
-        * {
-            animation-duration: 0.01ms !important;
-            animation-iteration-count: 1 !important;
-            transition-duration: 0.01ms !important;
-        }
+    .modal-modern .modal-body {
+      padding: var(--spacing-lg);
     }
-
-    /* Print Styles */
-    @media print {
-        .background-shapes,
-        .avatar-glow {
-            display: none !important;
-        }
-
-        .user-profile-card,
-        .details-card {
-            box-shadow: none !important;
-            border: 1px solid #ddd;
-            page-break-inside: avoid;
-        }
-
-        .quick-actions {
-            display: none;
-        }
+    .modal-avatar {
+      width: 200px;
+      height: 200px;
     }
+  }
+  @media (prefers-contrast: high) {
+    :root {
+      --border-light: #ffffff;
+      --text-secondary: #ffffff;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  @media print {
+    .background-shapes,
+    .avatar-glow {
+      display: none !important;
+    }
+    .user-profile-card,
+    .details-card {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+    }
+    .quick-actions {
+      display: none;
+    }
+  }
 </style>
 {% endblock %}

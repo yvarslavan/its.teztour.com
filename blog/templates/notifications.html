@@ -1,1074 +1,1297 @@
-{% extends 'layout.html' %}
-{% block content %}
+{% extends 'layout.html' %} {% block content %}
 <div class="notifications-page-wrapper">
-    <!-- Background Elements -->
-    <div class="background-shapes">
-        <div class="shape shape-1"></div>
-        <div class="shape shape-2"></div>
-        <div class="shape shape-3"></div>
-        <div class="shape shape-4"></div>
-    </div>
+  <!-- Background Elements -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="shape shape-4"></div>
+  </div>
 
-    <div class="container notifications-container">
-        <!-- Page Header -->
-        <div class="page-header">
-            <div class="header-content">
-                <div class="title-section">
-                    <div class="icon-wrapper">
-                        <i class="fas fa-bell"></i>
-                        <div class="icon-glow"></div>
-                    </div>
-                    <div class="title-content">
-                        <h1 class="page-title">Уведомления</h1>
-                        <p class="page-subtitle">Все события по вашим заявкам и задачам</p>
-                    </div>
-                    {% if all_notifications_sorted %}
-                    <div class="header-actions">
-                        <form action="{{ url_for('main.clear_notifications') }}" method="POST" class="clear-form">
-                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                            <button type="submit" class="clear-all-btn" id="clearAllBtn">
-                                <span class="btn-content">
-                                    <i class="fas fa-trash-alt"></i>
-                                    <span class="btn-text">Очистить все</span>
-                                </span>
-                            </button>
-                        </form>
-                    </div>
-                    {% endif %}
-                </div>
-            </div>
-        </div>
-
-        <!-- Notifications Content -->
-        <div class="notifications-content">
+  <div class="container notifications-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="icon-wrapper">
+            <i class="fas fa-bell"></i>
+            <div class="icon-glow"></div>
+          </div>
+          <div class="title-content">
+            <h1 class="page-title">Уведомления</h1>
+            <p class="page-subtitle">Все события по вашим заявкам и задачам</p>
+          </div>
+          <div class="header-actions">
             {% if all_notifications_sorted %}
-                <div class="notifications-grid">
-
-                    <!-- All Notifications Sorted by Time (newest first) -->
-                    {% for item in all_notifications_sorted %}
-                        {% set notification = item.data %}
-                        {% set notification_type = item.type %}
-
-                        {% if notification_type == 'redmine' %}
-                        <!-- Redmine Notification -->
-                        <article class="notification-card redmine-task-card" data-type="redmine" data-id="{{ notification.id }}">
-                            <div class="card-header">
-                                <div class="notification-type">
-                                    <div class="type-icon redmine-icon">
-                                        <i class="fas fa-tasks"></i>
-                                    </div>
-                                    <div class="type-info">
-                                        <span class="type-title">
-                                            {% if notification.is_group_notification %}
-                                                Задача для группы
-                                            {% else %}
-                                                Новая задача
-                                            {% endif %}
-                                        </span>
-                                        <time class="notification-time">{{ notification.created_at | format_datetime }}</time>
-                                    </div>
-                                </div>
-                                <form action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="card-content">
-                                 <a href="{{ notification.issue_url }}" class="issue-link" target="_blank">
-                                    <div class="notification-message">
-                                        <p>
-                                            {% if notification.is_group_notification %}
-                                                В вашу группу <strong>{{ notification.group_name }}</strong> поступила задача
-                                            {% else %}
-                                                <i class="fas fa-star" style="color: #f59e0b;"></i> Вы назначены исполнителем по задаче
-                                            {% endif %}
-                                        </p>
-                                    </div>
-                                    <div class="notification-subject">
-                                        <i class="fas fa-hashtag"></i>
-                                        <span>{{ notification.redmine_issue_id }}: {{ notification.issue_subject }}</span>
-                                    </div>
-                                    {% if notification.is_group_notification and notification.easy_email_to %}
-                                    <div class="notification-email-to">
-                                        <i class="fas fa-envelope"></i>
-                                        <span>Email to: {{ notification.easy_email_to }}</span>
-                                    </div>
-                                    {% endif %}
-                                </a>
-                            </div>
-                        </article>
-
-                        {% elif notification_type == 'status' %}
-                        <!-- Status Change Notification -->
-                        <article class="notification-card status-change-card" data-type="status" data-id="{{ notification.id }}">
-                            <div class="card-header">
-                                <div class="notification-type">
-                                    <div class="type-icon status-icon">
-                                        <i class="fas fa-exchange-alt"></i>
-                                    </div>
-                                    <div class="type-info">
-                                        <span class="type-title">Изменение статуса</span>
-                                        <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
-                                    </div>
-                                </div>
-                                <form action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
-                            </div>
-                            <div class="card-content">
-                                <div class="notification-message">
-                                    <p>Статус заявки
-                                        <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
-                                            #{{ notification.issue_id }}
-                                        </a>
-                                        {% if notification.old_subj %}
-                                            <span class="issue-subject" style="margin-left: 0.3em;">
-                                                <b>Тема:</b> {{ notification.old_subj }}
-                                            </span>
-                                        {% endif %}
-                                        изменился
-                                    </p>
-                                    <div class="status-change">
-                                        <span class="status-old">{{ notification.old_status }}</span>
-                                        <i class="fas fa-arrow-right status-arrow"></i>
-                                        <span class="status-new">{{ notification.new_status }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </article>
-
-                        {% elif notification_type == 'comment' %}
-                        <!-- Comment Notification -->
-                        <article class="notification-card comment-card" data-type="add_notes" data-id="{{ notification.id }}">
-                            <div class="card-header">
-                                <div class="notification-type">
-                                    <div class="type-icon comment-icon">
-                                        <i class="fas fa-comment"></i>
-                                    </div>
-                                    <div class="type-info">
-                                        <span class="type-title">Новый комментарий</span>
-                                        <time class="notification-time">{{ notification.date_created | format_datetime }}</time>
-                                    </div>
-                                </div>
-                                <form action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}" method="POST" class="delete-form">
-                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-                                    <button type="submit" class="delete-btn" title="Удалить уведомление">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </form>
-                            </div>
-
-                            <div class="card-content">
-                                <div class="notification-message">
-                                    <p>В заявку
-                                        <a href="/my-issues/{{ notification.issue_id }}" class="issue-link">
-                                            #{{ notification.issue_id }}
-                                        </a>
-                                        добавлен новый комментарий
-                                    </p>
-                                </div>
-                                <div class="comment-preview">
-                                    {{ notification.notes | safe }}
-                                </div>
-                            </div>
-                        </article>
-                        {% endif %}
-
-                    {% endfor %}
-
-                </div>
-            {% else %}
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <i class="fas fa-bell-slash"></i>
-                        <div class="empty-icon-glow"></div>
-                    </div>
-                    <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
-                    <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
-                </div>
+            <form
+              action="{{ url_for('main.clear_notifications') }}"
+              method="POST"
+              class="clear-form"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button type="submit" class="clear-all-btn" id="clearAllBtn">
+                <span class="btn-content">
+                  <i class="fas fa-trash-alt"></i>
+                  <span class="btn-text">Очистить все</span>
+                </span>
+              </button>
+            </form>
             {% endif %}
+            <div class="theme-switcher-container">
+              <button
+                id="theme-switcher"
+                class="theme-switcher"
+                title="Переключить тему"
+              >
+                <i
+                  class="fas fa-sun theme-icon-light"
+                  style="color: #fbbf24 !important; display: block !important"
+                ></i>
+                <i
+                  class="fas fa-moon theme-icon-dark"
+                  style="color: #60a5fa !important; display: none !important"
+                ></i>
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
     </div>
+
+    <!-- Notifications Content -->
+    <div class="notifications-content">
+      {% if all_notifications_sorted %}
+      <div class="notifications-grid">
+        <!-- All Notifications Sorted by Time (newest first) -->
+        {% for item in all_notifications_sorted %} {% set notification =
+        item.data %} {% set notification_type = item.type %} {% if
+        notification_type == 'redmine' %}
+        <!-- Redmine Notification -->
+        <article
+          class="notification-card redmine-task-card"
+          data-type="redmine"
+          data-id="{{ notification.id }}"
+        >
+          <div class="card-header">
+            <div class="notification-type">
+              <div class="type-icon redmine-icon">
+                <i class="fas fa-tasks"></i>
+              </div>
+              <div class="type-info">
+                <span class="type-title">
+                  {% if notification.is_group_notification %} Задача для группы
+                  {% else %} Новая задача {% endif %}
+                </span>
+                <time class="notification-time"
+                  >{{ notification.created_at | format_datetime }}</time
+                >
+              </div>
+            </div>
+            <form
+              action="{{ url_for('main.delete_notification_redmine', notification_id=notification.id) }}"
+              method="POST"
+              class="delete-form"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button
+                type="submit"
+                class="delete-btn"
+                title="Удалить уведомление"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="card-content">
+            <a
+              href="{{ notification.issue_url }}"
+              class="issue-link"
+              target="_blank"
+            >
+              <div class="notification-message">
+                <p>
+                  {% if notification.is_group_notification %} В вашу группу
+                  <strong>{{ notification.group_name }}</strong> поступила
+                  задача {% else %}
+                  <i class="fas fa-star" style="color: #f59e0b"></i> Вы
+                  назначены исполнителем по задаче {% endif %}
+                </p>
+              </div>
+              <div class="notification-subject">
+                <i class="fas fa-hashtag"></i>
+                <span
+                  >{{ notification.redmine_issue_id }}: {{
+                  notification.issue_subject }}</span
+                >
+              </div>
+              {% if notification.is_group_notification and
+              notification.easy_email_to %}
+              <div class="notification-email-to">
+                <i class="fas fa-envelope"></i>
+                <span>Email to: {{ notification.easy_email_to }}</span>
+              </div>
+              {% endif %}
+            </a>
+          </div>
+        </article>
+
+        {% elif notification_type == 'status' %}
+        <!-- Status Change Notification -->
+        <article
+          class="notification-card status-change-card"
+          data-type="status"
+          data-id="{{ notification.id }}"
+        >
+          <div class="card-header">
+            <div class="notification-type">
+              <div class="type-icon status-icon">
+                <i class="fas fa-exchange-alt"></i>
+              </div>
+              <div class="type-info">
+                <span class="type-title">Изменение статуса</span>
+                <time class="notification-time"
+                  >{{ notification.date_created | format_datetime }}</time
+                >
+              </div>
+            </div>
+            <form
+              action="{{ url_for('main.delete_notification_status', notification_id=notification.id) }}"
+              method="POST"
+              class="delete-form"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button
+                type="submit"
+                class="delete-btn"
+                title="Удалить уведомление"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </form>
+          </div>
+          <div class="card-content">
+            <div class="notification-message">
+              <p>
+                Статус заявки
+                <a
+                  href="/my-issues/{{ notification.issue_id }}"
+                  class="issue-link"
+                >
+                  #{{ notification.issue_id }}
+                </a>
+                {% if notification.old_subj %}
+                <span class="issue-subject" style="margin-left: 0.3em">
+                  <b>Тема:</b> {{ notification.old_subj }}
+                </span>
+                {% endif %} изменился
+              </p>
+              <div class="status-change">
+                <span class="status-old">{{ notification.old_status }}</span>
+                <i class="fas fa-arrow-right status-arrow"></i>
+                <span class="status-new">{{ notification.new_status }}</span>
+              </div>
+            </div>
+          </div>
+        </article>
+
+        {% elif notification_type == 'comment' %}
+        <!-- Comment Notification -->
+        <article
+          class="notification-card comment-card"
+          data-type="add_notes"
+          data-id="{{ notification.id }}"
+        >
+          <div class="card-header">
+            <div class="notification-type">
+              <div class="type-icon comment-icon">
+                <i class="fas fa-comment"></i>
+              </div>
+              <div class="type-info">
+                <span class="type-title">Новый комментарий</span>
+                <time class="notification-time"
+                  >{{ notification.date_created | format_datetime }}</time
+                >
+              </div>
+            </div>
+            <form
+              action="{{ url_for('main.delete_notification_add_notes', notification_id=notification.id) }}"
+              method="POST"
+              class="delete-form"
+            >
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token() }}"
+              />
+              <button
+                type="submit"
+                class="delete-btn"
+                title="Удалить уведомление"
+              >
+                <i class="fas fa-times"></i>
+              </button>
+            </form>
+          </div>
+
+          <div class="card-content">
+            <div class="notification-message">
+              <p>
+                В заявку
+                <a
+                  href="/my-issues/{{ notification.issue_id }}"
+                  class="issue-link"
+                >
+                  #{{ notification.issue_id }}
+                </a>
+                добавлен новый комментарий
+              </p>
+            </div>
+            <div class="comment-preview">{{ notification.notes | safe }}</div>
+          </div>
+        </article>
+        {% endif %} {% endfor %}
+      </div>
+      {% else %}
+      <div class="empty-state">
+        <div class="empty-icon">
+          <i class="fas fa-bell-slash"></i>
+          <div class="empty-icon-glow"></div>
+        </div>
+        <h3 class="empty-title">У вас пока нет новых уведомлений</h3>
+        <p class="empty-subtitle">
+          Все новые события по вашим заявкам и задачам будут отображаться здесь
+        </p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
 </div>
-{% endblock %}
-
-{% block styles %}
+{% endblock %} {% block styles %}
 <style>
-    /* Import Modern Fonts */
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
+  /* Import Modern Fonts */
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
 
-    /* CSS Custom Properties */
-    .notifications-page-wrapper {
-        /* TEZ TOUR Brand Colors */
-        --primary-50: #e0f7fa;
-        --primary-100: #b2ebf2;
-        --primary-200: #80deea;
-        --primary-300: #4dd0e1;
-        --primary-400: #26c6da;
-        --primary-500: #00798C;
-        --primary-600: #00696a;
-        --primary-700: #005f73;
-        --primary-800: #003440;
-        --primary-900: #001f26;
+  /* CSS Custom Properties */
+  .notifications-page-wrapper {
+    /* New Dark Theme Palette */
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1; /* Main Indigo */
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
 
-        /* Status Colors */
-        --success: #10b981;
-        --success-bg: #ecfdf5;
-        --error: #ef4444;
-        --error-bg: #fef2f2;
-        --warning: #f59e0b;
-        --warning-bg: #fef3c7;
-        --info: #3b82f6;
-        --info-bg: #eff6ff;
-        --comment: #8b5cf6;
-        --comment-bg: #f3e8ff;
+    /* Status Colors (adjusted for dark theme) */
+    --success: #22c55e;
+    --success-bg: rgba(34, 197, 94, 0.15);
+    --error: #ef4444;
+    --error-bg: rgba(239, 68, 68, 0.15);
+    --warning: #f97316;
+    --warning-bg: rgba(249, 115, 22, 0.15);
+    --info: #06b6d4;
+    --info-bg: rgba(6, 182, 212, 0.15);
+    --comment: #d946ef;
+    --comment-bg: rgba(217, 70, 239, 0.15);
 
-        /* Surface Colors */
-        --surface-0: #ffffff;
-        --surface-1: #f8fafc;
-        --surface-2: #f1f5f9;
-        --surface-3: #e2e8f0;
-        --surface-glass: rgba(255, 255, 255, 0.95);
-        --surface-card: rgba(255, 255, 255, 0.9);
+    /* Surface Colors (Dark) */
+    --surface-0: #111827;
+    --surface-1: #1f2937;
+    --surface-2: #374151;
+    --surface-3: #4b5563;
+    --surface-glass: rgba(31, 41, 55, 0.7);
+    --surface-card: rgba(55, 65, 81, 0.6);
 
-        /* Text Colors */
-        --text-primary: #0f172a;
-        --text-secondary: #475569;
-        --text-muted: #64748b;
-        --text-disabled: #94a3b8;
-        --text-on-primary: #ffffff;
+    /* Text Colors (Light) */
+    --text-primary: #f9fafb;
+    --text-secondary: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-disabled: #6b7280;
+    --text-on-primary: #ffffff;
 
-        /* Border & Effects */
-        --border-light: #e2e8f0;
-        --border-medium: #cbd5e1;
-        --border-focus: var(--primary-500);
+    /* Border & Effects */
+    --border-light: #374151;
+    --border-medium: #4b5563;
+    --border-focus: var(--primary-400);
 
-        /* Shadows */
-        --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-        --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-        --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-        --shadow-card: 0 8px 25px rgba(0, 121, 140, 0.08);
-        --shadow-header: 0 4px 20px rgba(0, 121, 140, 0.1);
+    /* Shadows */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.4);
+    --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.3), 0 6px 6px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --shadow-header: 0 4px 20px rgba(0, 0, 0, 0.2);
 
-        /* Spacing */
-        --spacing-xs: 0.25rem;
-        --spacing-sm: 0.5rem;
-        --spacing-md: 1rem;
-        --spacing-lg: 1.5rem;
-        --spacing-xl: 2rem;
-        --spacing-xxl: 3rem;
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
 
-        /* Border Radius */
-        --radius-sm: 4px;
-        --radius-md: 8px;
-        --radius-lg: 12px;
-        --radius-xl: 16px;
-        --radius-xxl: 24px;
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
 
-        /* Transitions */
-        --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
-        /* Typography */
-        --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        --font-family-mono: 'JetBrains Mono', 'Courier New', monospace;
+    /* Typography */
+    --font-family-primary: "Inter", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    --font-family-mono: "JetBrains Mono", "Courier New", monospace;
+  }
+
+  /* Light theme overrides */
+  body.light-theme .notifications-page-wrapper {
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #e2e8f0;
+    --surface-3: #cbd5e1;
+    --surface-glass: rgba(248, 250, 252, 0.8);
+    --surface-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-focus: var(--primary-500);
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08);
+    --shadow-header: 0 4px 20px rgba(0, 0, 0, 0.08);
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --error-bg: rgba(239, 68, 68, 0.1);
+  }
+
+  /* Base Styles */
+  .notifications-page-wrapper {
+    font-family: var(--font-family-primary);
+    background: linear-gradient(
+      135deg,
+      var(--surface-0) 0%,
+      var(--surface-1) 100%
+    );
+    color: var(--text-secondary);
+    transition: background var(--transition-normal),
+      color var(--transition-normal);
+    min-height: 100vh;
+    padding: var(--spacing-xl) 0;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Background Shapes */
+  .background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .shape {
+    position: absolute;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+  }
+
+  .shape-1 {
+    width: 400px;
+    height: 400px;
+    top: 10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+  .shape-2 {
+    width: 300px;
+    height: 300px;
+    top: 60%;
+    right: -5%;
+    animation-delay: 5s;
+  }
+  .shape-3 {
+    width: 250px;
+    height: 250px;
+    bottom: 10%;
+    left: 20%;
+    animation-delay: 10s;
+  }
+  .shape-4 {
+    width: 200px;
+    height: 200px;
+    top: 30%;
+    right: 15%;
+    animation-delay: 15s;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
     }
-
-    /* Base Styles */
-    .notifications-page-wrapper {
-        font-family: var(--font-family-primary);
-        background: linear-gradient(135deg, var(--surface-1) 0%, var(--surface-2) 100%);
-        min-height: 100vh;
-        padding: var(--spacing-xl) 0;
-        position: relative;
-        overflow: hidden;
+    33% {
+      transform: translateY(-30px) rotate(5deg);
     }
-
-    /* Background Shapes */
-    .background-shapes {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 0;
+    66% {
+      transform: translateY(15px) rotate(-5deg);
     }
+  }
 
-    .shape {
-        position: absolute;
-        background: rgba(0, 121, 140, 0.05);
-        border-radius: 50%;
-        animation: float 15s ease-in-out infinite;
+  /* Container */
+  .notifications-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--spacing-lg);
+  }
+
+  /* Page Header */
+  .page-header {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-header);
+    padding: var(--spacing-xl) var(--spacing-xxl);
+    margin-bottom: var(--spacing-xxl);
+    animation: slideDown 0.8s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
     }
-
-    .shape-1 {
-        width: 400px;
-        height: 400px;
-        top: 10%;
-        left: -10%;
-        animation-delay: 0s;
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
+  }
 
-    .shape-2 {
-        width: 300px;
-        height: 300px;
-        top: 60%;
-        right: -5%;
-        animation-delay: 5s;
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xl);
+    flex-wrap: wrap;
+  }
+  .title-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    flex: 1;
+  }
+
+  .icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 70px;
+    height: 70px;
+    background: linear-gradient(135deg, var(--primary-400), var(--primary-600));
+    border-radius: var(--radius-xl);
+    color: var(--text-on-primary);
+    font-size: 1.75rem;
+    box-shadow: var(--shadow-2);
+    z-index: 2;
+  }
+
+  .icon-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 130%;
+    background: radial-gradient(
+      circle,
+      rgba(99, 102, 241, 0.4) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 3s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
     }
-
-    .shape-3 {
-        width: 250px;
-        height: 250px;
-        bottom: 10%;
-        left: 20%;
-        animation-delay: 10s;
+    50% {
+      transform: translate(-50%, -50%) scale(1.2);
+      opacity: 0.8;
     }
+  }
 
-    .shape-4 {
-        width: 200px;
-        height: 200px;
-        top: 30%;
-        right: 15%;
-        animation-delay: 15s;
+  .title-content {
+    flex: 1;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-xs);
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .page-subtitle {
+    font-size: 1.125rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    justify-content: flex-end;
+  }
+
+  /* Theme Switcher Styles */
+  .theme-switcher-container {
+    flex-shrink: 0;
+    margin-left: auto; /* Всегда прижимает переключатель к правому краю */
+  }
+  .theme-switcher {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .theme-switcher:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
+  .theme-switcher:active {
+    transform: translateY(0);
+  }
+  .theme-switcher * {
+    pointer-events: none;
+  }
+  .theme-switcher .theme-icon-light,
+  .theme-switcher i.theme-icon-light,
+  .theme-switcher .fas.theme-icon-light {
+    display: block !important;
+    color: #fbbf24 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    position: absolute;
+  }
+  .theme-switcher .theme-icon-dark,
+  .theme-switcher i.theme-icon-dark,
+  .theme-switcher .fas.theme-icon-dark {
+    display: none !important;
+    color: #60a5fa !important;
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    position: absolute;
+  }
+  body.light-theme .theme-switcher .theme-icon-light,
+  body.light-theme .theme-switcher i.theme-icon-light,
+  body.light-theme .theme-switcher .fas.theme-icon-light {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  body.light-theme .theme-switcher .theme-icon-dark,
+  body.light-theme .theme-switcher i.theme-icon-dark,
+  body.light-theme .theme-switcher .fas.theme-icon-dark {
+    display: block !important;
+    color: #60a5fa !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  .clear-all-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--error);
+    border: none;
+    border-radius: var(--radius-lg);
+    color: var(--text-on-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-1);
+    position: relative;
+    min-width: 140px;
+    justify-content: center;
+  }
+
+  .clear-all-btn:hover:not(:disabled) {
+    background: #c13232;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .clear-all-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+  .btn-content,
+  .btn-spinner {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+  .btn-spinner .fa-spinner {
+    animation: spin 1s linear infinite;
+  }
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
     }
-
-    @keyframes float {
-        0%, 100% { transform: translateY(0px) rotate(0deg); }
-        33% { transform: translateY(-30px) rotate(5deg); }
-        66% { transform: translateY(15px) rotate(-5deg); }
+    to {
+      transform: rotate(360deg);
     }
+  }
 
-    /* Container */
+  /* Notifications Content */
+  .notifications-content {
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  .notifications-grid {
+    display: grid;
+    gap: var(--spacing-lg);
+  }
+
+  /* Notification Cards */
+  .notification-card {
+    background: var(--surface-card);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    animation: slideInCard 0.6s ease-out;
+  }
+
+  @keyframes slideInCard {
+    from {
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .notification-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
+  }
+
+  .status-change-card {
+    border-left: 4px solid var(--info);
+  }
+  .comment-card {
+    border-left: 4px solid var(--comment);
+  }
+  .redmine-task-card {
+    border-left: 4px solid var(--warning);
+  }
+
+  /* Card Header */
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg) var(--spacing-xl);
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .status-change-card .card-header,
+  .comment-card .card-header {
+    background: transparent;
+  }
+
+  .notification-type {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .type-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    border-radius: var(--radius-lg);
+    font-size: 1.5rem;
+    position: relative;
+    z-index: 1;
+    color: white;
+  }
+
+  .type-icon::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: inherit;
+    background: var(--glow-bg, transparent);
+    filter: blur(15px);
+    opacity: 0.7;
+    z-index: -1;
+    transition: opacity 0.3s ease;
+  }
+
+  .notification-card:hover .type-icon::after {
+    opacity: 1;
+  }
+  .status-icon {
+    background: linear-gradient(135deg, var(--info), #0891b2);
+    --glow-bg: var(--info);
+  }
+  .comment-icon {
+    background: linear-gradient(135deg, var(--comment), #c026d3);
+    --glow-bg: var(--comment);
+  }
+  .redmine-icon {
+    background: linear-gradient(135deg, var(--warning), #ea580c);
+    --glow-bg: var(--warning);
+  }
+
+  .type-info {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+  .type-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .notification-time {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-family: var(--font-family-mono);
+  }
+
+  .delete-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-lg);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+
+  .delete-btn:hover {
+    background: var(--error-bg);
+    color: var(--error);
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 0 15px var(--error-bg);
+  }
+
+  /* Card Content */
+  .card-content {
+    padding: var(--spacing-xl);
+  }
+
+  .issue-link {
+    color: var(--primary-300);
+    text-decoration: none;
+    font-weight: 600;
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: rgba(99, 102, 241, 0.15);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-normal);
+  }
+
+  .issue-link:hover {
+    color: var(--primary-200);
+    background: rgba(99, 102, 241, 0.25);
+    text-decoration: none;
+  }
+
+  .status-change {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    margin-top: var(--spacing-md);
+  }
+
+  .status-old {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--surface-3);
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    text-decoration: line-through;
+    font-weight: 500;
+  }
+
+  .status-arrow {
+    color: var(--text-muted);
+    font-size: 0.875rem;
+  }
+  .status-new {
+    padding: var(--spacing-xs) var(--spacing-md);
+    background: var(--success-bg);
+    color: var(--success);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+  }
+
+  .notification-subject {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    border-left: 3px solid var(--primary-500);
+  }
+
+  .notification-subject i {
+    color: var(--primary-400);
+  }
+
+  /* Comment Preview */
+  .comment-preview {
+    margin-top: var(--spacing-lg);
+  }
+  .comment-text {
+    padding: var(--spacing-lg);
+    background: var(--surface-1);
+    border-radius: var(--radius-lg);
+    border-left: 3px solid var(--comment);
+    line-height: 1.6;
+    color: var(--text-primary);
+    position: relative;
+  }
+
+  .read-more-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--comment-bg);
+    color: var(--comment);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+
+  .read-more-btn:hover {
+    background: var(--comment);
+    color: white;
+    transform: translateY(-1px);
+  }
+
+  /* Empty State */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-xxl) var(--spacing-xl);
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xxl);
+    box-shadow: var(--shadow-card);
+    text-align: center;
+    animation: fadeIn 0.8s ease-out;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .empty-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 120px;
+    height: 120px;
+    background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+    border-radius: 50%;
+    margin-bottom: var(--spacing-xl);
+    font-size: 3rem;
+    color: var(--text-muted);
+  }
+
+  .empty-icon-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 130%;
+    background: radial-gradient(
+      circle,
+      rgba(156, 163, 175, 0.1) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: emptyPulse 4s ease-in-out infinite;
+  }
+
+  @keyframes emptyPulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.5;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.1);
+      opacity: 0.8;
+    }
+  }
+
+  .empty-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+  }
+  .empty-subtitle {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+    max-width: 400px;
+  }
+
+  /* Animations for removal */
+  .notification-card.removing {
+    animation: slideOutRight 0.5s ease-in forwards;
+  }
+  @keyframes slideOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(100px) scale(0.8);
+    }
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
     .notifications-container {
-        max-width: 1200px;
-        margin: 0 auto;
-        position: relative;
-        z-index: 1;
-        padding: 0 var(--spacing-lg);
+      padding: 0 var(--spacing-md);
     }
-
-    /* Page Header */
     .page-header {
-        background: var(--surface-glass);
-        backdrop-filter: blur(20px);
-        -webkit-backdrop-filter: blur(20px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xxl);
-        box-shadow: var(--shadow-header);
-        padding: var(--spacing-xl) var(--spacing-xxl);
-        margin-bottom: var(--spacing-xxl);
-        animation: slideDown 0.8s ease-out;
+      padding: var(--spacing-lg) var(--spacing-xl);
     }
-
-    @keyframes slideDown {
-        from {
-            opacity: 0;
-            transform: translateY(-30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     .header-content {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-xl);
-        flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-lg);
     }
-
     .title-section {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-lg);
-        flex: 1;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
     }
-
-    .icon-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 70px;
-        height: 70px;
-        background: linear-gradient(135deg, #fbbf24, #f59e0b);
-        border-radius: var(--radius-xl);
-        color: var(--text-on-primary);
-        font-size: 1.75rem;
-        box-shadow: var(--shadow-2);
-        z-index: 2;
-    }
-
-    .icon-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 130%;
-        height: 130%;
-        background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        animation: pulse 3s ease-in-out infinite;
-        z-index: 1;
-    }
-
-    @keyframes pulse {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.6; }
-        50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.8; }
-    }
-
-    .title-content {
-        flex: 1;
-    }
-
-    .page-title {
-        font-size: 2.5rem;
-        font-weight: 800;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-xs);
-        letter-spacing: -0.025em;
-        line-height: 1.2;
-    }
-
-    .page-subtitle {
-        font-size: 1.125rem;
-        color: var(--text-secondary);
-        margin: 0;
-        font-weight: 400;
-    }
-
     .header-actions {
-        display: flex;
-        align-items: center;
+      align-self: flex-end;
+      width: 100%;
+      justify-content: space-between;
     }
-
-    .clear-all-btn {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md) var(--spacing-lg);
-        background: linear-gradient(135deg, var(--error), #dc2626);
-        border: none;
-        border-radius: var(--radius-lg);
-        color: var(--text-on-primary);
-        font-weight: 600;
-        font-size: 0.9rem;
-        cursor: pointer;
-        transition: all var(--transition-normal);
-        box-shadow: var(--shadow-1);
-        position: relative;
-        min-width: 140px;
-        justify-content: center;
+    
+    .theme-switcher-container {
+      margin-left: 0; /* Убираем auto margin на мобильных */
     }
-
-    .clear-all-btn:hover:not(:disabled) {
-        background: linear-gradient(135deg, #dc2626, #b91c1c);
-        transform: translateY(-2px);
-        box-shadow: var(--shadow-2);
+    .page-title {
+      font-size: 2rem;
     }
-
-    .clear-all-btn:disabled {
-        opacity: 0.7;
-        cursor: not-allowed;
-        transform: none;
-    }
-
-    .btn-content,
-    .btn-spinner {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-    }
-
-    .btn-spinner .fa-spinner {
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        from { transform: rotate(0deg); }
-        to { transform: rotate(360deg); }
-    }
-
-    /* Notifications Content */
-    .notifications-content {
-        animation: fadeInUp 0.8s ease-out 0.2s both;
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(30px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .notifications-grid {
-        display: grid;
-        gap: var(--spacing-lg);
-    }
-
-    /* Notification Cards */
-    .notification-card {
-        background: var(--surface-card);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xl);
-        box-shadow: var(--shadow-card);
-        overflow: hidden;
-        transition: all var(--transition-normal);
-        animation: slideInCard 0.6s ease-out;
-    }
-
-    @keyframes slideInCard {
-        from {
-            opacity: 0;
-            transform: translateY(20px) scale(0.95);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-        }
-    }
-
-    .notification-card:hover {
-        transform: translateY(-4px);
-        box-shadow: var(--shadow-3);
-    }
-
-    .status-change-card {
-        border-left: 4px solid var(--info);
-    }
-
-    .comment-card {
-        border-left: 4px solid var(--comment);
-    }
-
-    /* Card Header */
     .card-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: var(--spacing-lg) var(--spacing-xl);
-        background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
-        border-bottom: 1px solid var(--border-light);
+      padding: var(--spacing-md) var(--spacing-lg);
     }
-
-    .status-change-card .card-header {
-        background: linear-gradient(135deg, var(--info-bg), var(--surface-1));
-    }
-
-    .comment-card .card-header {
-        background: linear-gradient(135deg, var(--comment-bg), var(--surface-1));
-    }
-
-    .notification-type {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-    }
-
-    .type-icon {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 45px;
-        height: 45px;
-        border-radius: var(--radius-lg);
-        font-size: 1.25rem;
-        box-shadow: var(--shadow-1);
-    }
-
-    .status-icon {
-        background: linear-gradient(135deg, var(--info), #2563eb);
-        color: white;
-    }
-
-    .comment-icon {
-        background: linear-gradient(135deg, var(--comment), #7c3aed);
-        color: white;
-    }
-
-    .type-info {
-        display: flex;
-        flex-direction: column;
-        gap: var(--spacing-xs);
-    }
-
-    .type-title {
-        font-size: 1.125rem;
-        font-weight: 600;
-        color: var(--text-primary);
-    }
-
-    .notification-time {
-        font-size: 0.875rem;
-        color: var(--text-muted);
-        font-family: var(--font-family-mono);
-    }
-
-    .delete-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 36px;
-        height: 36px;
-        background: none;
-        border: none;
-        border-radius: var(--radius-lg);
-        color: var(--text-muted);
-        cursor: pointer;
-        transition: all var(--transition-normal);
-    }
-
-    .delete-btn:hover {
-        background: var(--error-bg);
-        color: var(--error);
-        transform: scale(1.1);
-    }
-
-    /* Card Content */
     .card-content {
-        padding: var(--spacing-xl);
+      padding: var(--spacing-lg);
     }
-
-    .issue-link {
-        color: var(--primary-500);
-        text-decoration: none;
-        font-weight: 600;
-        padding: var(--spacing-xs) var(--spacing-sm);
-        background: var(--primary-50);
-        border-radius: var(--radius-sm);
-        transition: all var(--transition-normal);
-    }
-
-    .issue-link:hover {
-        color: var(--primary-700);
-        background: var(--primary-100);
-        text-decoration: none;
-    }
-
     .status-change {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-md);
-        padding: var(--spacing-md);
-        background: var(--surface-1);
-        border-radius: var(--radius-lg);
-        margin-top: var(--spacing-md);
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-sm);
     }
+  }
 
-    .status-old {
-        padding: var(--spacing-xs) var(--spacing-md);
-        background: var(--surface-3);
-        color: var(--text-muted);
-        border-radius: var(--radius-md);
-        text-decoration: line-through;
-        font-weight: 500;
+  @media (max-width: 480px) {
+    .page-title {
+      font-size: 1.75rem;
     }
-
-    .status-arrow {
-        color: var(--text-muted);
-        font-size: 0.875rem;
+    .icon-wrapper {
+      width: 60px;
+      height: 60px;
+      font-size: 1.5rem;
     }
-
-    .status-new {
-        padding: var(--spacing-xs) var(--spacing-md);
-        background: var(--success-bg);
-        color: var(--success);
-        border-radius: var(--radius-md);
-        font-weight: 600;
+    .card-header {
+      padding: var(--spacing-md);
     }
-
-    .notification-subject {
-        display: flex;
-        align-items: center;
-        gap: var(--spacing-sm);
-        padding: var(--spacing-md);
-        background: var(--surface-1);
-        border-radius: var(--radius-lg);
-        font-size: 0.9rem;
-        color: var(--text-secondary);
-        border-left: 3px solid var(--primary-300);
+    .card-content {
+      padding: var(--spacing-md);
     }
+  }
 
-    .notification-subject i {
-        color: var(--primary-500);
-    }
+  .notification-card .issue-link:hover {
+    color: var(--primary-300);
+    text-decoration: underline;
+  }
+  .card-content a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
 
-    /* Comment Preview */
-    .comment-preview {
-        margin-top: var(--spacing-lg);
-    }
+  /* === Стили для кнопок действий === */
+  .notification-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    margin-top: var(--spacing-lg);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--border-light);
+  }
+  .notification-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-md);
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+  }
 
-    .comment-text {
-        padding: var(--spacing-lg);
-        background: var(--surface-1);
-        border-radius: var(--radius-lg);
-        border-left: 3px solid var(--comment);
-        line-height: 1.6;
-        color: var(--text-primary);
-        position: relative;
-    }
+  .notification-action-btn:hover {
+    background: var(--primary-600);
+    color: var(--text-on-primary);
+    border-color: var(--primary-500);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
 
-    .read-more-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        margin-top: var(--spacing-md);
-        padding: var(--spacing-sm) var(--spacing-md);
-        background: var(--comment-bg);
-        color: var(--comment);
-        border: none;
-        border-radius: var(--radius-md);
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all var(--transition-normal);
-    }
+  .notification-action-btn i {
+    font-size: 0.75rem;
+  }
+  .mark-read-btn:hover {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: var(--success);
+  }
+  .redmine-link-btn:hover {
+    background: var(--info-bg);
+    color: var(--info);
+    border-color: var(--info);
+  }
 
-    .read-more-btn:hover {
-        background: var(--comment);
-        color: white;
-        transform: translateY(-1px);
-    }
+  .notification-message p {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    margin: 0;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+  }
 
-    /* Empty State */
-    .empty-state {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        padding: var(--spacing-xxl) var(--spacing-xl);
-        background: var(--surface-card);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        border: 1px solid rgba(255, 255, 255, 0.2);
-        border-radius: var(--radius-xxl);
-        box-shadow: var(--shadow-card);
-        text-align: center;
-        animation: fadeIn 0.8s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-    }
-
-    .empty-icon {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 120px;
-        height: 120px;
-        background: linear-gradient(135deg, var(--surface-2), var(--surface-3));
-        border-radius: 50%;
-        margin-bottom: var(--spacing-xl);
-        font-size: 3rem;
-        color: var(--text-muted);
-    }
-
-    .empty-icon-glow {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 130%;
-        height: 130%;
-        background: radial-gradient(circle, rgba(100, 116, 139, 0.2) 0%, transparent 70%);
-        border-radius: 50%;
-        transform: translate(-50%, -50%);
-        animation: emptyPulse 4s ease-in-out infinite;
-    }
-
-    @keyframes emptyPulse {
-        0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.5; }
-        50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
-    }
-
-    .empty-title {
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: var(--text-primary);
-        margin-bottom: var(--spacing-md);
-    }
-
-    .empty-subtitle {
-        font-size: 1rem;
-        color: var(--text-secondary);
-        margin: 0;
-        max-width: 400px;
-    }
-
-    /* Animations for removal */
-    .notification-card.removing {
-        animation: slideOutRight 0.5s ease-in forwards;
-    }
-
-    @keyframes slideOutRight {
-        from {
-            opacity: 1;
-            transform: translateX(0) scale(1);
-        }
-        to {
-            opacity: 0;
-            transform: translateX(100px) scale(0.8);
-        }
-    }
-
-    /* Responsive Design */
-    @media (max-width: 768px) {
-        .notifications-container {
-            padding: 0 var(--spacing-md);
-        }
-
-        .page-header {
-            padding: var(--spacing-lg) var(--spacing-xl);
-        }
-
-        .header-content {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--spacing-lg);
-        }
-
-        .title-section {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--spacing-md);
-        }
-
-        .page-title {
-            font-size: 2rem;
-        }
-
-        .card-header {
-            padding: var(--spacing-md) var(--spacing-lg);
-        }
-
-        .card-content {
-            padding: var(--spacing-lg);
-        }
-
-        .status-change {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: var(--spacing-sm);
-        }
-    }
-
-    @media (max-width: 480px) {
-        .page-title {
-            font-size: 1.75rem;
-        }
-
-        .icon-wrapper {
-            width: 60px;
-            height: 60px;
-            font-size: 1.5rem;
-        }
-
-        .card-header {
-            padding: var(--spacing-md);
-        }
-
-        .card-content {
-            padding: var(--spacing-md);
-        }
-    }
-
-    .notification-card.redmine-task-card {
-        border-left: 5px solid var(--warning);
-    }
-    .type-icon.redmine-icon {
-        background: linear-gradient(135deg, var(--warning), #f9c55d);
-    }
-    .notification-card .issue-link {
-        text-decoration: none;
-        color: var(--primary-700);
-        font-weight: 600;
-        transition: color var(--transition-fast);
-    }
-    .notification-card .issue-link:hover {
-        color: var(--primary-500);
-        text-decoration: underline;
-    }
-    .card-content a {
-        text-decoration: none;
-        color: inherit;
-        display: block;
-    }
-
-    /* === Стили для кнопок действий === */
-    .notification-actions {
-        display: flex;
-        gap: var(--spacing-sm);
-        margin-top: var(--spacing-lg);
-        padding-top: var(--spacing-md);
-        border-top: 1px solid var(--border-light);
-    }
-
-    .notification-action-btn {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        padding: var(--spacing-sm) var(--spacing-md);
-        border: 1px solid var(--border-medium);
-        border-radius: var(--radius-md);
-        background: var(--surface-0);
-        color: var(--text-secondary);
-        text-decoration: none;
-        font-size: 0.875rem;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all var(--transition-normal);
-        white-space: nowrap;
-    }
-
-    .notification-action-btn:hover {
-        background: var(--primary-50);
-        color: var(--primary-600);
-        border-color: var(--primary-300);
-        text-decoration: none;
-        transform: translateY(-1px);
-        box-shadow: var(--shadow-1);
-    }
-
-    .notification-action-btn i {
-        font-size: 0.75rem;
-    }
-
-    .mark-read-btn:hover {
-        background: var(--success-bg);
-        color: var(--success);
-        border-color: var(--success);
-    }
-
-    .redmine-link-btn:hover {
-        background: var(--info-bg);
-        color: var(--info);
-        border-color: var(--info);
-    }
-    .notification-message p {
-        display: flex;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 0.3em;
-        margin: 0;
-    }
-    .issue-link, .issue-subject {
-        white-space: nowrap;
-        font-weight: 600;
-        font-size: 1em;
-        vertical-align: baseline;
-    }
-    .issue-subject b {
-        color: #222;
-        font-weight: 700;
-        margin-right: 0.2em;
-    }
+  .issue-link,
+  .issue-subject {
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 1em;
+    vertical-align: baseline;
+  }
+  .issue-subject b {
+    color: var(--text-primary);
+    font-weight: 700;
+    margin-right: 0.2em;
+  }
 </style>
-{% endblock %}
-
-{% block scripts %}
+{% endblock %} {% block scripts %}
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    const deleteForms = document.querySelectorAll('.delete-form');
+  document.addEventListener("DOMContentLoaded", function () {
+    const deleteForms = document.querySelectorAll(".delete-form");
 
-    deleteForms.forEach(form => {
-        form.addEventListener('submit', function(e) {
-            e.preventDefault();
+    deleteForms.forEach((form) => {
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
 
-            const card = this.closest('.notification-card');
-            const formData = new FormData(this);
-            const deleteBtn = this.querySelector('.delete-btn');
-            let csrfToken = formData.get('csrf_token');
+        const card = this.closest(".notification-card");
+        const formData = new FormData(this);
+        const deleteBtn = this.querySelector(".delete-btn");
+        let csrfToken = formData.get("csrf_token");
 
-            // Если токен не найден в форме, попробуем получить из meta тега
-            if (!csrfToken) {
-                const metaToken = document.querySelector('meta[name="csrf-token"]');
-                if (metaToken) {
-                    csrfToken = metaToken.getAttribute('content');
-                }
+        // Если токен не найден в форме, попробуем получить из meta тега
+        if (!csrfToken) {
+          const metaToken = document.querySelector('meta[name="csrf-token"]');
+          if (metaToken) {
+            csrfToken = metaToken.getAttribute("content");
+          }
+        }
+
+        // Отладочная информация
+        console.log("CSRF Token from form:", formData.get("csrf_token"));
+        console.log("CSRF Token final:", csrfToken);
+        console.log("Form action:", this.action);
+        console.log("Form data entries:", [...formData.entries()]);
+
+        // Показываем индикатор загрузки
+        const originalIcon = deleteBtn.innerHTML;
+        deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+        deleteBtn.disabled = true;
+
+        fetch(this.action, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            // Отладочная информация
-            console.log('CSRF Token from form:', formData.get('csrf_token'));
-            console.log('CSRF Token final:', csrfToken);
-            console.log('Form action:', this.action);
-            console.log('Form data entries:', [...formData.entries()]);
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+              return response.json();
+            } else {
+              // Fallback: если не JSON, считаем что успешно
+              return { success: true };
+            }
+          })
+          .then((data) => {
+            if (data && data.success) {
+              // Показываем уведомление об успешном удалении
+              showNotification("Уведомление успешно удалено", "success");
 
-            // Показываем индикатор загрузки
-            const originalIcon = deleteBtn.innerHTML;
-            deleteBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-            deleteBtn.disabled = true;
-
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                },
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+              /* === Синхронизируем глобальный бейдж === */
+              try {
+                const badgeEl = document.getElementById("notification-badge");
+                const raw = badgeEl
+                  ? parseInt(badgeEl.textContent || "0", 10)
+                  : 0;
+                const current = isNaN(raw) ? 0 : raw;
+                const newCount = Math.max(0, current - 1);
+                if (window.refreshNotificationBadge) {
+                  window.refreshNotificationBadge(newCount);
                 }
+              } catch (err) {
+                console.warn("Cannot refresh notification badge:", err);
+              }
 
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.indexOf('application/json') !== -1) {
-                    return response.json();
-                } else {
-                    // Fallback: если не JSON, считаем что успешно
-                    return { success: true };
-                }
-            })
-            .then(data => {
-                if (data && data.success) {
-                    // Показываем уведомление об успешном удалении
-                    showNotification('Уведомление успешно удалено', 'success');
+              // Добавляем класс для анимации удаления
+              card.classList.add("removing");
 
-                    /* === Синхронизируем глобальный бейдж === */
-                    try {
-                        const badgeEl = document.getElementById('notification-badge');
-                        const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
-                        const current = isNaN(raw) ? 0 : raw;
-                        const newCount = Math.max(0, current - 1);
-                        if (window.refreshNotificationBadge) {
-                            window.refreshNotificationBadge(newCount);
-                        }
-                    } catch (err) {
-                        console.warn('Cannot refresh notification badge:', err);
-                    }
+              // Удаляем карточку после завершения анимации
+              setTimeout(() => {
+                card.remove();
 
-                    // Добавляем класс для анимации удаления
-                    card.classList.add('removing');
-
-                    // Удаляем карточку после завершения анимации
-                    setTimeout(() => {
-                        card.remove();
-
-                        // Проверяем, есть ли еще уведомления
-                        const remainingCards = document.querySelectorAll('.notification-card');
-                        if (remainingCards.length === 0) {
-                            // Если уведомлений больше нет, показываем пустое состояние
-                            const notificationsGrid = document.querySelector('.notifications-grid');
-                            if (notificationsGrid) {
-                                notificationsGrid.innerHTML = `
+                // Проверяем, есть ли еще уведомления
+                const remainingCards =
+                  document.querySelectorAll(".notification-card");
+                if (remainingCards.length === 0) {
+                  // Если уведомлений больше нет, показываем пустое состояние
+                  const notificationsGrid = document.querySelector(
+                    ".notifications-grid"
+                  );
+                  if (notificationsGrid) {
+                    notificationsGrid.innerHTML = `
                                     <div class="empty-state">
                                         <div class="empty-icon">
                                             <i class="fas fa-bell-slash"></i>
@@ -1078,111 +1301,121 @@ document.addEventListener('DOMContentLoaded', function() {
                                         <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
                                     </div>
                                 `;
-                            }
+                  }
 
-                            /* === Обновляем глобальный бейдж до 0 === */
-                            try {
-                                if (window.refreshNotificationBadge) {
-                                    window.refreshNotificationBadge(0);
-                                }
-                            } catch (err) {
-                                console.warn('Cannot refresh notification badge after clear:', err);
-                            }
+                  /* === Обновляем глобальный бейдж до 0 === */
+                  try {
+                    if (window.refreshNotificationBadge) {
+                      window.refreshNotificationBadge(0);
+                    }
+                  } catch (err) {
+                    console.warn(
+                      "Cannot refresh notification badge after clear:",
+                      err
+                    );
+                  }
 
-                            // Скрываем кнопку "Очистить все"
-                            const clearAllBtn = document.getElementById('clearAllBtn');
-                            if (clearAllBtn) {
-                                clearAllBtn.closest('.header-actions').style.display = 'none';
-                            }
-                        }
-                    }, 500);
-
-                } else if (data && data.error) {
-                    // Восстанавливаем кнопку и показываем ошибку
-                    deleteBtn.innerHTML = originalIcon;
-                    deleteBtn.disabled = false;
-
-                    // Показываем более красивое уведомление об ошибке
-                    showNotification('Ошибка: ' + data.error, 'error');
-                } else {
-                    throw new Error('Неожиданный ответ сервера');
+                  // Скрываем кнопку "Очистить все"
+                  const clearAllBtn = document.getElementById("clearAllBtn");
+                  if (clearAllBtn) {
+                    clearAllBtn.closest(".header-actions").style.display =
+                      "none";
+                  }
                 }
-            })
-            .catch(error => {
-                console.error('Ошибка удаления уведомления:', error);
+              }, 500);
+            } else if (data && data.error) {
+              // Восстанавливаем кнопку и показываем ошибку
+              deleteBtn.innerHTML = originalIcon;
+              deleteBtn.disabled = false;
 
-                // Восстанавливаем кнопку
-                deleteBtn.innerHTML = originalIcon;
-                deleteBtn.disabled = false;
+              // Показываем более красивое уведомление об ошибке
+              showNotification("Ошибка: " + data.error, "error");
+            } else {
+              throw new Error("Неожиданный ответ сервера");
+            }
+          })
+          .catch((error) => {
+            console.error("Ошибка удаления уведомления:", error);
 
-                showNotification('Произошла ошибка при удалении уведомления. Попробуйте еще раз.', 'error');
-            });
-        });
+            // Восстанавливаем кнопку
+            deleteBtn.innerHTML = originalIcon;
+            deleteBtn.disabled = false;
+
+            showNotification(
+              "Произошла ошибка при удалении уведомления. Попробуйте еще раз.",
+              "error"
+            );
+          });
+      });
     });
 
     // === Обработчик кнопок "Прочитано" ===
-    const markReadButtons = document.querySelectorAll('.mark-read-btn');
+    const markReadButtons = document.querySelectorAll(".mark-read-btn");
 
-    markReadButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const notificationId = this.getAttribute('data-id');
-            const card = this.closest('.notification-card');
+    markReadButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        const notificationId = this.getAttribute("data-id");
+        const card = this.closest(".notification-card");
 
-            // Визуальная обратная связь
-            const originalContent = this.innerHTML;
-            this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
-            this.disabled = true;
+        // Визуальная обратная связь
+        const originalContent = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Отмечаем...';
+        this.disabled = true;
 
-            // Здесь можно добавить AJAX-запрос для отметки как прочитанное
-            // Пока просто скрываем карточку
+        // Здесь можно добавить AJAX-запрос для отметки как прочитанное
+        // Пока просто скрываем карточку
+        setTimeout(() => {
+          this.innerHTML = '<i class="fas fa-check"></i>Прочитано';
+          this.style.background = "var(--success-bg)";
+          this.style.color = "var(--success)";
+          this.style.borderColor = "var(--success)";
+
+          // Через секунду скрываем карточку
+          setTimeout(() => {
+            card.classList.add("removing");
             setTimeout(() => {
-                this.innerHTML = '<i class="fas fa-check"></i>Прочитано';
-                this.style.background = 'var(--success-bg)';
-                this.style.color = 'var(--success)';
-                this.style.borderColor = 'var(--success)';
+              card.remove();
 
-                // Через секунду скрываем карточку
-                setTimeout(() => {
-                    card.classList.add('removing');
-                    setTimeout(() => {
-                        card.remove();
-
-                        // Обновляем счётчик
-                        try {
-                            const badgeEl = document.getElementById('notification-badge');
-                            const raw = badgeEl ? parseInt(badgeEl.textContent || '0', 10) : 0;
-                            const current = isNaN(raw) ? 0 : raw;
-                            const newCount = Math.max(0, current - 1);
-                            if (window.refreshNotificationBadge) {
-                                window.refreshNotificationBadge(newCount);
-                            }
-                        } catch (err) {
-                            console.warn('Cannot refresh notification badge:', err);
-                        }
-                    }, 500);
-                }, 1000);
-            }, 800);
-        });
+              // Обновляем счётчик
+              try {
+                const badgeEl = document.getElementById("notification-badge");
+                const raw = badgeEl
+                  ? parseInt(badgeEl.textContent || "0", 10)
+                  : 0;
+                const current = isNaN(raw) ? 0 : raw;
+                const newCount = Math.max(0, current - 1);
+                if (window.refreshNotificationBadge) {
+                  window.refreshNotificationBadge(newCount);
+                }
+              } catch (err) {
+                console.warn("Cannot refresh notification badge:", err);
+              }
+            }, 500);
+          }, 1000);
+        }, 800);
+      });
     });
 
     // Функция для показа красивых уведомлений
-    function showNotification(message, type = 'info') {
-        // Удаляем существующие уведомления
-        const existingNotifications = document.querySelectorAll('.toast-notification');
-        existingNotifications.forEach(notification => notification.remove());
+    function showNotification(message, type = "info") {
+      // Удаляем существующие уведомления
+      const existingNotifications = document.querySelectorAll(
+        ".toast-notification"
+      );
+      existingNotifications.forEach((notification) => notification.remove());
 
-        // Создаем новое уведомление
-        const notification = document.createElement('div');
-        notification.className = `toast-notification toast-${type}`;
+      // Создаем новое уведомление
+      const notification = document.createElement("div");
+      notification.className = `toast-notification toast-${type}`;
 
-        const iconMap = {
-            success: 'fas fa-check-circle',
-            error: 'fas fa-exclamation-circle',
-            warning: 'fas fa-exclamation-triangle',
-            info: 'fas fa-info-circle'
-        };
+      const iconMap = {
+        success: "fas fa-check-circle",
+        error: "fas fa-exclamation-circle",
+        warning: "fas fa-exclamation-triangle",
+        info: "fas fa-info-circle",
+      };
 
-        notification.innerHTML = `
+      notification.innerHTML = `
             <div class="toast-content">
                 <i class="${iconMap[type]} toast-icon"></i>
                 <span class="toast-message">${message}</span>
@@ -1192,11 +1425,11 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         `;
 
-        // Добавляем стили для уведомления
-        if (!document.getElementById('toast-styles')) {
-            const style = document.createElement('style');
-            style.id = 'toast-styles';
-            style.textContent = `
+      // Добавляем стили для уведомления
+      if (!document.getElementById("toast-styles")) {
+        const style = document.createElement("style");
+        style.id = "toast-styles";
+        style.textContent = `
                 .toast-notification {
                     position: fixed;
                     top: 20px;
@@ -1259,86 +1492,99 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                 }
             `;
-            document.head.appendChild(style);
+        document.head.appendChild(style);
+      }
+
+      document.body.appendChild(notification);
+
+      // Автоматически удаляем уведомление через 5 секунд
+      setTimeout(() => {
+        if (notification.parentElement) {
+          notification.style.animation = "slideInRight 0.3s ease-out reverse";
+          setTimeout(() => notification.remove(), 300);
         }
-
-        document.body.appendChild(notification);
-
-        // Автоматически удаляем уведомление через 5 секунд
-        setTimeout(() => {
-            if (notification.parentElement) {
-                notification.style.animation = 'slideInRight 0.3s ease-out reverse';
-                setTimeout(() => notification.remove(), 300);
-            }
-                 }, 5000);
-     }
+      }, 5000);
+    }
 
     // Обработчик для кнопки "Очистить все"
-    const clearAllBtn = document.getElementById('clearAllBtn');
+    const clearAllBtn = document.getElementById("clearAllBtn");
     if (clearAllBtn) {
-        const clearForm = clearAllBtn.closest('.clear-form');
-        clearForm.addEventListener('submit', function(e) {
-            e.preventDefault();
+      const clearForm = clearAllBtn.closest(".clear-form");
+      clearForm.addEventListener("submit", function (e) {
+        e.preventDefault();
 
-            if (!confirm('Вы уверены, что хотите удалить ВСЕ уведомления? Это действие нельзя отменить.')) {
-                return;
+        if (
+          !confirm(
+            "Вы уверены, что хотите удалить ВСЕ уведомления? Это действие нельзя отменить."
+          )
+        ) {
+          return;
+        }
+
+        const originalContent = clearAllBtn.innerHTML;
+        clearAllBtn.disabled = true;
+        clearAllBtn.innerHTML =
+          '<span class="btn-content"><i class="fas fa-spinner fa-spin"></i><span class="btn-text">Удаление...</span></span>';
+
+        const formData = new FormData(this);
+        const csrfToken = formData.get("csrf_token");
+
+        fetch(this.action, {
+          method: "POST",
+          headers: {
+            "X-Requested-With": "XMLHttpRequest",
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        })
+          .then((response) => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! status: ${response.status}`);
             }
 
-            const originalContent = clearAllBtn.innerHTML;
-            clearAllBtn.disabled = true;
-            clearAllBtn.innerHTML = '<span class="btn-content"><i class="fas fa-spinner fa-spin"></i><span class="btn-text">Удаление...</span></span>';
+            const contentType = response.headers.get("content-type");
+            if (contentType && contentType.indexOf("application/json") !== -1) {
+              return response.json();
+            } else {
+              // Fallback: если не JSON, считаем что успешно
+              return { success: true };
+            }
+          })
+          .then((data) => {
+            if (data && data.success) {
+              showNotification(
+                "✅ Все уведомления успешно удалены!",
+                "success"
+              );
 
-            const formData = new FormData(this);
-            const csrfToken = formData.get('csrf_token');
+              // Анимированно удаляем все карточки
+              const cards = document.querySelectorAll(".notification-card");
+              cards.forEach((card, index) => {
+                setTimeout(() => {
+                  card.classList.add("removing");
+                  setTimeout(() => card.remove(), 500);
+                }, index * 100); // Задержка для красивой анимации
+              });
 
-            fetch(this.action, {
-                method: 'POST',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest',
-                    'X-CSRFToken': csrfToken
-                },
-                body: formData
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+              /* === Обновляем глобальный бейдж до 0 === */
+              try {
+                if (window.refreshNotificationBadge) {
+                  window.refreshNotificationBadge(0);
                 }
+              } catch (err) {
+                console.warn(
+                  "Cannot refresh notification badge after clear:",
+                  err
+                );
+              }
 
-                const contentType = response.headers.get('content-type');
-                if (contentType && contentType.indexOf('application/json') !== -1) {
-                    return response.json();
-                } else {
-                    // Fallback: если не JSON, считаем что успешно
-                    return { success: true };
-                }
-            })
-            .then(data => {
-                if (data && data.success) {
-                    showNotification('✅ Все уведомления успешно удалены!', 'success');
-
-                    // Анимированно удаляем все карточки
-                    const cards = document.querySelectorAll('.notification-card');
-                    cards.forEach((card, index) => {
-                        setTimeout(() => {
-                            card.classList.add('removing');
-                            setTimeout(() => card.remove(), 500);
-                        }, index * 100); // Задержка для красивой анимации
-                    });
-
-                    /* === Обновляем глобальный бейдж до 0 === */
-                    try {
-                        if (window.refreshNotificationBadge) {
-                            window.refreshNotificationBadge(0);
-                        }
-                    } catch (err) {
-                        console.warn('Cannot refresh notification badge after clear:', err);
-                    }
-
-                    // Показываем пустое состояние после удаления всех карточек
-                    setTimeout(() => {
-                        const notificationsGrid = document.querySelector('.notifications-grid');
-                        if (notificationsGrid) {
-                            notificationsGrid.innerHTML = `
+              // Показываем пустое состояние после удаления всех карточек
+              setTimeout(() => {
+                const notificationsGrid = document.querySelector(
+                  ".notifications-grid"
+                );
+                if (notificationsGrid) {
+                  notificationsGrid.innerHTML = `
                                 <div class="empty-state">
                                     <div class="empty-icon">
                                         <i class="fas fa-bell-slash"></i>
@@ -1348,32 +1594,34 @@ document.addEventListener('DOMContentLoaded', function() {
                                     <p class="empty-subtitle">Все новые события по вашим заявкам и задачам будут отображаться здесь</p>
                                 </div>
                             `;
-                        }
-
-                        // Скрываем кнопку "Очистить все"
-                        clearAllBtn.closest('.header-actions').style.display = 'none';
-                    }, cards.length * 100 + 500);
-
-                } else if (data && data.error) {
-                    clearAllBtn.innerHTML = originalContent;
-                    clearAllBtn.disabled = false;
-                    showNotification('Ошибка: ' + data.error, 'error');
-                } else {
-                    throw new Error('Неожиданный ответ сервера');
                 }
-            })
-            .catch(error => {
-                console.error('Ошибка удаления всех уведомлений:', error);
-                clearAllBtn.innerHTML = originalContent;
-                clearAllBtn.disabled = false;
-                showNotification('Произошла ошибка при удалении уведомлений. Попробуйте еще раз.', 'error');
-            });
-        });
-    }
-});
 
-// Автоматическое обновление уведомлений на странице /notifications
-(function() {
+                // Скрываем кнопку "Очистить все"
+                clearAllBtn.closest(".header-actions").style.display = "none";
+              }, cards.length * 100 + 500);
+            } else if (data && data.error) {
+              clearAllBtn.innerHTML = originalContent;
+              clearAllBtn.disabled = false;
+              showNotification("Ошибка: " + data.error, "error");
+            } else {
+              throw new Error("Неожиданный ответ сервера");
+            }
+          })
+          .catch((error) => {
+            console.error("Ошибка удаления всех уведомлений:", error);
+            clearAllBtn.innerHTML = originalContent;
+            clearAllBtn.disabled = false;
+            showNotification(
+              "Произошла ошибка при удалении уведомлений. Попробуйте еще раз.",
+              "error"
+            );
+          });
+      });
+    }
+  });
+
+  // Автоматическое обновление уведомлений на странице /notifications
+  (function () {
     let updateInterval;
     let isUpdating = false;
     let originalTitle = document.title;
@@ -1381,167 +1629,273 @@ document.addEventListener('DOMContentLoaded', function() {
     let isBlinking = false;
 
     function startAutoUpdate() {
-        // Обновляем каждые 30 секунд
-        updateInterval = setInterval(updateNotifications, 30000);
-        console.log('Автообновление уведомлений запущено');
+      // Обновляем каждые 30 секунд
+      updateInterval = setInterval(updateNotifications, 30000);
+      console.log("Автообновление уведомлений запущено");
 
-        // Сразу запускаем первое обновление через 2 секунды
-        setTimeout(() => {
-            updateNotifications();
-        }, 2000);
+      // Сразу запускаем первое обновление через 2 секунды
+      setTimeout(() => {
+        updateNotifications();
+      }, 2000);
     }
 
     function stopAutoUpdate() {
-        if (updateInterval) {
-            clearInterval(updateInterval);
-            updateInterval = null;
-            console.log('Автообновление уведомлений остановлено');
-        }
+      if (updateInterval) {
+        clearInterval(updateInterval);
+        updateInterval = null;
+        console.log("Автообновление уведомлений остановлено");
+      }
     }
 
     // Функция для мигания заголовка вкладки
     function startTitleBlink() {
-        if (isBlinking) {
-            console.log('ℹ️ Мигание уже активно, пропускаем');
-            return;
+      if (isBlinking) {
+        console.log("ℹ️ Мигание уже активно, пропускаем");
+        return;
+      }
+
+      isBlinking = true;
+      console.log("🔄 Запускаем постоянное мигание заголовка вкладки");
+
+      titleBlinkInterval = setInterval(() => {
+        if (document.title === originalTitle) {
+          document.title = "🆕 Новые уведомления! - " + originalTitle;
+        } else {
+          document.title = originalTitle;
         }
-
-        isBlinking = true;
-        console.log('🔄 Запускаем постоянное мигание заголовка вкладки');
-
-        titleBlinkInterval = setInterval(() => {
-            if (document.title === originalTitle) {
-                document.title = '🆕 Новые уведомления! - ' + originalTitle;
-            } else {
-                document.title = originalTitle;
-            }
-        }, 800); // Мигаем каждые 800мс (чуть медленнее для комфорта)
+      }, 800); // Мигаем каждые 800мс (чуть медленнее для комфорта)
     }
 
     function stopTitleBlink() {
-        if (titleBlinkInterval) {
-            clearInterval(titleBlinkInterval);
-            titleBlinkInterval = null;
-        }
-        isBlinking = false;
-        document.title = originalTitle;
-        console.log('✅ Остановлено мигание заголовка вкладки');
+      if (titleBlinkInterval) {
+        clearInterval(titleBlinkInterval);
+        titleBlinkInterval = null;
+      }
+      isBlinking = false;
+      document.title = originalTitle;
+      console.log("✅ Остановлено мигание заголовка вкладки");
     }
 
     // Проверяем, активна ли вкладка
     function isTabActive() {
-        return !document.hidden;
+      return !document.hidden;
     }
 
     // Обработчик изменения видимости страницы
     function handleVisibilityChange() {
-        if (document.hidden) {
-            console.log('Вкладка стала неактивной');
-        } else {
-            console.log('Вкладка стала активной');
-            // Останавливаем мигание при активации вкладки
-            stopTitleBlink();
-        }
+      if (document.hidden) {
+        console.log("Вкладка стала неактивной");
+      } else {
+        console.log("Вкладка стала активной");
+        // Останавливаем мигание при активации вкладки
+        stopTitleBlink();
+      }
     }
 
     // Добавляем обработчик изменения видимости
-    document.addEventListener('visibilitychange', handleVisibilityChange);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     function updateNotifications() {
-        if (isUpdating) return;
+      if (isUpdating) return;
 
-        isUpdating = true;
-        console.log('Обновление уведомлений...');
+      isUpdating = true;
+      console.log("Обновление уведомлений...");
 
-        // Просто обновляем содержимое страницы через AJAX
-        fetch('/notifications')
-            .then(response => response.text())
-            .then(html => {
-                console.log('📄 Получен HTML ответ от сервера');
+      // Просто обновляем содержимое страницы через AJAX
+      fetch("/notifications")
+        .then((response) => response.text())
+        .then((html) => {
+          console.log("📄 Получен HTML ответ от сервера");
 
-                // Создаем временный элемент для парсинга HTML
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
+          // Создаем временный элемент для парсинга HTML
+          const tempDiv = document.createElement("div");
+          tempDiv.innerHTML = html;
 
-                // Находим контейнер с уведомлениями в новом HTML
-                const newNotificationsGrid = tempDiv.querySelector('.notifications-grid');
-                const currentNotificationsGrid = document.querySelector('.notifications-grid');
+          // Находим контейнер с уведомлениями в новом HTML
+          const newNotificationsGrid = tempDiv.querySelector(
+            ".notifications-grid"
+          );
+          const currentNotificationsGrid = document.querySelector(
+            ".notifications-grid"
+          );
 
-                console.log('🔍 Поиск контейнеров уведомлений:');
-                console.log('- Новый контейнер найден:', !!newNotificationsGrid);
-                console.log('- Текущий контейнер найден:', !!currentNotificationsGrid);
+          console.log("🔍 Поиск контейнеров уведомлений:");
+          console.log("- Новый контейнер найден:", !!newNotificationsGrid);
+          console.log(
+            "- Текущий контейнер найден:",
+            !!currentNotificationsGrid
+          );
 
-                // Проверяем, есть ли уведомления в новом HTML
-                const hasNotificationsInNewHTML = newNotificationsGrid && newNotificationsGrid.querySelectorAll('.notification-card').length > 0;
-                const hasEmptyStateInNewHTML = tempDiv.querySelector('.empty-state');
+          // Проверяем, есть ли уведомления в новом HTML
+          const hasNotificationsInNewHTML =
+            newNotificationsGrid &&
+            newNotificationsGrid.querySelectorAll(".notification-card").length >
+              0;
+          const hasEmptyStateInNewHTML = tempDiv.querySelector(".empty-state");
 
-                console.log('- Есть уведомления в новом HTML:', hasNotificationsInNewHTML);
-                console.log('- Есть пустое состояние в новом HTML:', !!hasEmptyStateInNewHTML);
+          console.log(
+            "- Есть уведомления в новом HTML:",
+            hasNotificationsInNewHTML
+          );
+          console.log(
+            "- Есть пустое состояние в новом HTML:",
+            !!hasEmptyStateInNewHTML
+          );
 
-                if (newNotificationsGrid && currentNotificationsGrid) {
-                    // Сравниваем количество уведомлений
-                    const newCount = newNotificationsGrid.querySelectorAll('.notification-card').length;
-                    const currentCount = currentNotificationsGrid.querySelectorAll('.notification-card').length;
+          if (newNotificationsGrid && currentNotificationsGrid) {
+            // Сравниваем количество уведомлений
+            const newCount =
+              newNotificationsGrid.querySelectorAll(
+                ".notification-card"
+              ).length;
+            const currentCount =
+              currentNotificationsGrid.querySelectorAll(
+                ".notification-card"
+              ).length;
 
-                    console.log(`📊 Сравнение уведомлений:`);
-                    console.log(`- Текущих на странице: ${currentCount}`);
-                    console.log(`- Новых с сервера: ${newCount}`);
+            console.log(`📊 Сравнение уведомлений:`);
+            console.log(`- Текущих на странице: ${currentCount}`);
+            console.log(`- Новых с сервера: ${newCount}`);
 
-                    // ИСПРАВЛЕНО: Просто заменяем содержимое если количество изменилось
-                    if (newCount !== currentCount) {
-                        console.log('✅ Обновляем страницу - количество уведомлений изменилось');
+            // ИСПРАВЛЕНО: Просто заменяем содержимое если количество изменилось
+            if (newCount !== currentCount) {
+              console.log(
+                "✅ Обновляем страницу - количество уведомлений изменилось"
+              );
 
-                        // Заменяем содержимое
-                        currentNotificationsGrid.innerHTML = newNotificationsGrid.innerHTML;
+              // Заменяем содержимое
+              currentNotificationsGrid.innerHTML =
+                newNotificationsGrid.innerHTML;
 
-                        // Показываем уведомление о новых уведомлениях
-                        if (typeof showNotification === 'function') {
-                            showNotification('🆕 Получены новые уведомления!', 'info');
-                        }
+              // Показываем уведомление о новых уведомлениях
+              if (typeof showNotification === "function") {
+                showNotification("🆕 Получены новые уведомления!", "info");
+              }
 
-                        // Обновляем счетчик
-                        if (window.refreshNotificationBadge) {
-                            window.refreshNotificationBadge(newCount);
-                        }
+              // Обновляем счетчик
+              if (window.refreshNotificationBadge) {
+                window.refreshNotificationBadge(newCount);
+              }
 
-                        // Мигаем заголовком, если вкладка неактивна
-                        if (!isTabActive()) {
-                            console.log('🔄 Запускаем мигание заголовка - вкладка неактивна');
-                            startTitleBlink();
-                        }
+              // Мигаем заголовком, если вкладка неактивна
+              if (!isTabActive()) {
+                console.log(
+                  "🔄 Запускаем мигание заголовка - вкладка неактивна"
+                );
+                startTitleBlink();
+              }
 
-                        console.log('✅ Страница обновлена');
-                    } else {
-                        console.log('ℹ️ Количество уведомлений не изменилось');
-                    }
-                } else {
-                    console.error('❌ Не удалось найти контейнеры уведомлений');
+              console.log("✅ Страница обновлена");
+            } else {
+              console.log("ℹ️ Количество уведомлений не изменилось");
+            }
+          } else {
+            console.error("❌ Не удалось найти контейнеры уведомлений");
 
-                    // Если контейнер не найден, но есть уведомления в HTML, обновляем всю страницу
-                    if (hasNotificationsInNewHTML) {
-                        console.log('🔄 Обновляем всю страницу - найдены уведомления');
-                        location.reload();
-                    }
-                }
-            })
-            .catch(error => {
-                console.error('Ошибка при обновлении уведомлений:', error);
-            })
-            .finally(() => {
-                isUpdating = false;
-            });
+            // Если контейнер не найден, но есть уведомления в HTML, обновляем всю страницу
+            if (hasNotificationsInNewHTML) {
+              console.log("🔄 Обновляем всю страницу - найдены уведомления");
+              location.reload();
+            }
+          }
+        })
+        .catch((error) => {
+          console.error("Ошибка при обновлении уведомлений:", error);
+        })
+        .finally(() => {
+          isUpdating = false;
+        });
     }
 
     // Запускаем автообновление при загрузке страницы
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', startAutoUpdate);
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", startAutoUpdate);
     } else {
-        startAutoUpdate();
+      startAutoUpdate();
     }
 
     // Останавливаем автообновление при уходе со страницы
-    window.addEventListener('beforeunload', stopAutoUpdate);
-    window.addEventListener('pagehide', stopAutoUpdate);
-})();
+    window.addEventListener("beforeunload", stopAutoUpdate);
+    window.addEventListener("pagehide", stopAutoUpdate);
+  })();
+
+  // Notifications Theme Manager
+  class NotificationsThemeManager {
+    constructor() {
+      this.init();
+    }
+
+    init() {
+      this.loadTheme();
+      this.bindEvents();
+    }
+
+    loadTheme() {
+      const savedTheme = localStorage.getItem("theme");
+      const lightIcon = document.querySelector(".theme-icon-light");
+      const darkIcon = document.querySelector(".theme-icon-dark");
+
+      if (savedTheme === "light") {
+        document.body.classList.add("light-theme");
+        // Светлая тема - показываем луну
+        if (lightIcon) {
+          lightIcon.style.display = "none";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "block";
+          darkIcon.style.color = "#60a5fa";
+        }
+      } else {
+        // Темная тема - показываем солнце
+        if (lightIcon) {
+          lightIcon.style.display = "block";
+          lightIcon.style.color = "#fbbf24";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "none";
+        }
+      }
+    }
+
+    bindEvents() {
+      const themeSwitcher = document.getElementById("theme-switcher");
+      if (themeSwitcher) {
+        themeSwitcher.addEventListener("click", () => this.toggleTheme());
+      }
+    }
+
+    toggleTheme() {
+      const isLight = document.body.classList.contains("light-theme");
+      const lightIcon = document.querySelector(".theme-icon-light");
+      const darkIcon = document.querySelector(".theme-icon-dark");
+
+      if (isLight) {
+        document.body.classList.remove("light-theme");
+        localStorage.setItem("theme", "dark");
+        // Показываем солнце (светлая иконка) в темной теме
+        if (lightIcon) {
+          lightIcon.style.display = "block";
+          lightIcon.style.color = "#fbbf24";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "none";
+        }
+      } else {
+        document.body.classList.add("light-theme");
+        localStorage.setItem("theme", "light");
+        // Показываем луну (темная иконка) в светлой теме
+        if (lightIcon) {
+          lightIcon.style.display = "none";
+        }
+        if (darkIcon) {
+          darkIcon.style.display = "block";
+          darkIcon.style.color = "#60a5fa";
+        }
+      }
+    }
+  }
+
+  // Initialize theme manager
+  new NotificationsThemeManager();
 </script>
 {% endblock %}

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tilda Partners Carousel Component</title>
+</head>
+<body>
+    <!-- Hidden Image Container for Tilda Integration -->
+    <!-- This container will be used by JavaScript to get the logo image -->
+    <div id="rec1313636551-hidden-image" style="display: none;">
+        <img src="https://static.tildacdn.com/tild3834-3165-4865-b435-653865396434/clipboard.png" 
+             alt="Partner Logo" 
+             id="partners-source-image">
+    </div>
+
+    <!-- Main Partners Carousel Component -->
+    <section class="tilda-partners-modern" 
+             id="rec1313636551" 
+             aria-label="Наши партнеры">
+        
+        <!-- Decorative Background Elements -->
+        <div class="partners-bg-decoration" aria-hidden="true">
+            <div class="bg-gradient-primary"></div>
+            <div class="bg-pattern-dots"></div>
+            <div class="bg-glow-effect"></div>
+        </div>
+
+        <!-- Main Content Wrapper -->
+        <div class="partners-content-wrapper">
+            
+            <!-- Title Section -->
+            <header class="partners-header">
+                <h2 class="partners-title" id="partners-title">
+                    Наши партнеры
+                </h2>
+                <p class="partners-subtitle" id="partners-subtitle">
+                    Компании, которые доверяют нам
+                </p>
+            </header>
+
+            <!-- Logos Carousel Container -->
+            <div class="logos-carousel-container" 
+                 aria-labelledby="partners-title"
+                 aria-describedby="partners-subtitle">
+                
+                <!-- Gradient Overlays for Smooth Edges -->
+                <div class="carousel-gradient-left" aria-hidden="true"></div>
+                <div class="carousel-gradient-right" aria-hidden="true"></div>
+                
+                <!-- Main Logos Track -->
+                <div class="logos-track" 
+                     id="logosTrack"
+                     aria-label="Логотипы партнеров">
+                    <!-- Logos will be dynamically inserted here by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Optional: Loading State -->
+            <div class="partners-loading" 
+                 id="partnersLoading" 
+                 aria-live="polite" 
+                 aria-label="Загрузка логотипов партнеров">
+                <div class="loading-spinner" aria-hidden="true"></div>
+                <span class="loading-text">Загрузка...</span>
+            </div>
+
+            <!-- Optional: Error State -->
+            <div class="partners-error" 
+                 id="partnersError" 
+                 role="alert" 
+                 aria-live="assertive"
+                 style="display: none;">
+                <p>Не удалось загрузить логотипы партнеров</p>
+            </div>
+        </div>
+
+        <!-- Accessibility: Skip Link for Screen Readers -->
+        <a href="#after-partners-carousel" 
+           class="sr-only sr-only-focusable">
+            Пропустить карусель партнеров
+        </a>
+    </section>
+
+    <!-- Anchor for Skip Link -->
+    <div id="after-partners-carousel"></div>
+
+    <!-- Tilda Integration Script Placeholder -->
+    <!-- This will be replaced with actual JavaScript in the next task -->
+    <script>
+        // Placeholder for Tilda Partners Controller
+        // Will be implemented in task 5: "Разработка JavaScript контроллера"
+        console.log('Tilda Partners Carousel HTML structure loaded');
+        
+        // Basic initialization check
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('rec1313636551');
+            const hiddenImage = document.getElementById('partners-source-image');
+            
+            if (container && hiddenImage) {
+                console.log('Partners carousel structure ready for JavaScript controller');
+                // Hide loading state for now
+                const loading = document.getElementById('partnersLoading');
+                if (loading) {
+                    loading.style.display = 'none';
+                }
+            } else {
+                console.error('Partners carousel structure incomplete');
+                // Show error state
+                const error = document.getElementById('partnersError');
+                if (error) {
+                    error.style.display = 'block';
+                }
+            }
+        });
+    </script>
+
+    <!-- CSS Placeholder -->
+    <!-- Styles will be implemented in task 2: "Разработка адаптивной CSS архитектуры" -->
+    <style>
+        /* Temporary basic styles for structure verification */
+        .tilda-partners-modern {
+            position: relative;
+            width: 100%;
+            min-height: 200px;
+            overflow: hidden;
+            background: #f8fafc;
+        }
+        
+        .partners-content-wrapper {
+            padding: 40px 20px;
+            text-align: center;
+        }
+        
+        .partners-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            color: #1a202c;
+        }
+        
+        .partners-subtitle {
+            font-size: 1.1rem;
+            color: #718096;
+            margin-bottom: 2rem;
+        }
+        
+        .logos-carousel-container {
+            position: relative;
+            width: 100%;
+            height: 80px;
+            overflow: hidden;
+        }
+        
+        .logos-track {
+            display: flex;
+            align-items: center;
+            height: 100%;
+            white-space: nowrap;
+        }
+        
+        .partners-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .loading-spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e2e8f0;
+            border-top: 2px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .partners-error {
+            padding: 20px;
+            background: #fed7d7;
+            color: #c53030;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        /* Screen reader only utility class */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+        
+        .sr-only-focusable:focus {
+            position: static;
+            width: auto;
+            height: auto;
+            padding: 0.5rem;
+            margin: 0;
+            overflow: visible;
+            clip: auto;
+            white-space: normal;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        
+        /* Hide decorative elements for now */
+        .partners-bg-decoration {
+            display: none;
+        }
+    </style>
+</body>
+</html>
