@@ -1,7 +1,30 @@
 {% extends 'layout.html' %}
 
+<!-- Preload critical resources -->
+<link
+  rel="preload"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+  as="style"
+  onload="this.onload=null;this.rel='stylesheet'"
+/>
+<noscript
+  ><link
+    rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+/></noscript>
+
 {% block main_page %}
 <div class="issues-page-container">
+  <!-- Background Shapes - Lazy loaded -->
+  <div
+    class="background-shapes"
+    style="opacity: 0; transition: opacity 0.5s ease"
+  >
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
   <!-- Loading Spinner -->
   <div id="loading-spinner" class="loading-overlay">
     <div class="loading-content">
@@ -19,62 +42,106 @@
       <div class="header-main">
         <div class="header-icon">
           <i class="fas fa-ticket-alt"></i>
-    </div>
+        </div>
         <div class="header-text">
           <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
-          <p class="page-subtitle">Управление и отслеживание ваших обращений в техническую поддержку</p>
+          <p class="page-subtitle">
+            Управление и отслеживание ваших обращений в техническую поддержку
+          </p>
         </div>
       </div>
       <div class="header-actions">
-        <a href="https://helpdesk.teztour.com" target="_blank" class="action-button secondary">
+        <a
+          href="https://helpdesk.teztour.com"
+          target="_blank"
+          class="action-button secondary"
+        >
           <i class="fas fa-external-link-alt"></i>
           <span>Перейти в Helpdesk</span>
         </a>
         <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
           <i class="fas fa-plus"></i>
           <span>Создать заявку</span>
-    </a>
-  </div>
+        </a>
+        <div class="theme-switcher-container">
+          <button id="theme-switcher" class="theme-switcher">
+            <i class="fas fa-sun"></i>
+            <i class="fas fa-moon"></i>
+          </button>
+        </div>
+      </div>
     </div>
   </header>
 
   <!-- Statistics Dashboard -->
   <section class="stats-dashboard">
     <div class="stats-grid">
-      <div class="stat-card total">
-        <div class="stat-icon">
-          <i class="fas fa-list-alt"></i>
-    </div>
-        <div class="stat-content">
-          <span class="stat-value" id="totalIssues">-</span>
-          <span class="stat-label">Всего заявок</span>
-    </div>
-  </div>
-      <div class="stat-card open">
-        <div class="stat-icon">
-          <i class="fas fa-folder-open"></i>
+      <div class="stat-card total expandable" data-category="total">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-list-alt"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="totalIssues">-</span>
+            <span class="stat-label">Всего заявок</span>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
         </div>
-        <div class="stat-content">
-          <span class="stat-value" id="openIssues">-</span>
-          <span class="stat-label">Открытых</span>
-        </div>
-      </div>
-      <div class="stat-card progress">
-        <div class="stat-icon">
-          <i class="fas fa-clock"></i>
-        </div>
-        <div class="stat-content">
-          <span class="stat-value" id="inProgressIssues">-</span>
-          <span class="stat-label">В работе</span>
+        <div class="stat-details" id="totalDetails">
+          <!-- Детализация заполняется JS -->
         </div>
       </div>
-      <div class="stat-card closed">
-        <div class="stat-icon">
-          <i class="fas fa-check-circle"></i>
+      <div class="stat-card open expandable" data-category="open">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-folder-open"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="openIssues">-</span>
+            <span class="stat-label">Открытых</span>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
         </div>
-        <div class="stat-content">
-          <span class="stat-value" id="closedIssues">-</span>
-          <span class="stat-label">Закрытых</span>
+        <div class="stat-details" id="openDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card progress expandable" data-category="progress">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="inProgressIssues">-</span>
+            <span class="stat-label">В работе</span>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="progressDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card closed expandable" data-category="closed">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="closedIssues">-</span>
+            <span class="stat-label">Закрытых</span>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="closedDetails">
+          <!-- Детализация заполняется JS -->
         </div>
       </div>
     </div>
@@ -92,9 +159,9 @@
             </label>
             <div id="statusFilterContainer" class="filter-container">
               <!-- Динамически заполняется JavaScript -->
-    </div>
-    </div>
-    </div>
+            </div>
+          </div>
+        </div>
         <div class="search-section">
           <label class="search-label">
             <i class="fas fa-search"></i>
@@ -102,8 +169,8 @@
           </label>
           <div id="searchBoxContainer" class="search-container">
             <!-- Динамически заполняется JavaScript -->
-    </div>
-  </div>
+          </div>
+        </div>
       </div>
       <div class="display-options">
         <div class="display-item">
@@ -121,8 +188,8 @@
     <div class="table-container">
       <div class="table-wrapper">
         <table id="issue" class="issues-table">
-    <thead>
-        <tr>
+          <thead>
+            <tr>
               <th class="column-id">
                 <div class="column-header">
                   <i class="fas fa-hashtag"></i>
@@ -147,12 +214,12 @@
                   <span>Статус</span>
                 </div>
               </th>
-        </tr>
-    </thead>
-    <tbody id="table-body">
+            </tr>
+          </thead>
+          <tbody id="table-body">
             <!-- Динамически заполняется JavaScript -->
-    </tbody>
-  </table>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -171,90 +238,54 @@
     </div>
   </section>
 </div>
-{% endblock main_page %}
+{% endblock main_page %} {% block styles %}
+<!-- Base Styles (Always Active) -->
+<style id="base-styles">
+  /* Fonts will be loaded via preload link in head */
 
-{% block styles %}
-<style>
-  /* Import Modern Fonts */
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700&display=swap');
+  /* Global Base Styles - Optimized */
+  * {
+    box-sizing: border-box;
+  }
 
-  /* CSS Custom Properties */
+  /* Performance optimizations */
+  .stat-card,
+  .issues-table,
+  .page-header {
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  /* Reduce paint operations */
+  .stat-details,
+  .loading-overlay {
+    contain: layout style paint;
+  }
+
+  html {
+    background: var(--surface-0);
+  }
+
+  body {
+    background: var(--body-bg);
+    color: var(--text-secondary);
+    margin: 0;
+    padding: 0;
+    font-family: var(--font-family-primary);
+    overflow-x: hidden;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+
+  /* Light Theme Variables (Default) */
   :root {
-    /* Primary Color Palette */
-    --primary-50: #e3f2fd;
-    --primary-100: #bbdefb;
-    --primary-200: #90caf9;
-    --primary-300: #64b5f6;
-    --primary-400: #42a5f5;
-    --primary-500: #2196f3;
-    --primary-600: #1e88e5;
-    --primary-700: #1976d2;
-    --primary-800: #1565c0;
-    --primary-900: #0d47a1;
-
-    /* Secondary Color Palette */
-    --secondary-50: #e8f5e8;
-    --secondary-100: #c8e6c9;
-    --secondary-200: #a5d6a7;
-    --secondary-300: #81c784;
-    --secondary-400: #66bb6a;
-    --secondary-500: #4caf50;
-    --secondary-600: #43a047;
-    --secondary-700: #388e3c;
-    --secondary-800: #2e7d32;
-    --secondary-900: #1b5e20;
-
-    /* Status Colors */
-    --status-open: #2196f3;
-    --status-open-bg: #e3f2fd;
-    --status-progress: #ff9800;
-    --status-progress-bg: #fff3e0;
-    --status-closed: #4caf50;
-    --status-closed-bg: #e8f5e8;
-    --status-clarification: #9c27b0;
-    --status-clarification-bg: #f3e5f5;
-    --status-approval: #607d8b;
-    --status-approval-bg: #eceff1;
-    --status-rejected: #f44336;
-    --status-rejected-bg: #ffebee;
-
-    /* Surface Colors */
-    --surface-0: #ffffff;
-    --surface-1: #f8f9fa;
-    --surface-2: #e9ecef;
-    --surface-3: #dee2e6;
-    --surface-4: #ced4da;
-    --surface-5: #adb5bd;
-
-    /* Text Colors */
-    --text-primary: #212529;
-    --text-secondary: #6c757d;
-    --text-muted: #868e96;
-    --text-disabled: #adb5bd;
-    --text-on-primary: #ffffff;
-    --text-on-surface: #212529;
-
-    /* Border & Divider */
-    --border-light: #e9ecef;
-    --border-medium: #dee2e6;
-    --border-dark: #adb5bd;
-    --divider: #e9ecef;
-
-    /* Shadows */
-    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
-    --shadow-4: 0 14px 28px rgba(0,0,0,0.25), 0 10px 10px rgba(0,0,0,0.22);
-    --shadow-5: 0 19px 38px rgba(0,0,0,0.30), 0 15px 12px rgba(0,0,0,0.22);
-
     /* Spacing System */
-    --spacing-xs: 0.25rem;    /* 4px */
-    --spacing-sm: 0.5rem;     /* 8px */
-    --spacing-md: 1rem;       /* 16px */
-    --spacing-lg: 1.5rem;     /* 24px */
-    --spacing-xl: 2rem;       /* 32px */
-    --spacing-xxl: 3rem;      /* 48px */
-    --spacing-xxxl: 4rem;     /* 64px */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+    --spacing-xxxl: 4rem;
 
     /* Border Radius */
     --radius-sm: 4px;
@@ -269,33 +300,305 @@
     --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 
     /* Typography */
-    --font-family-primary: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    --font-family-secondary: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --font-family-primary: "Inter", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    --font-family-secondary: "Roboto", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", sans-serif;
 
     /* Container Widths */
     --container-max-width: 1400px;
     --container-padding: var(--spacing-lg);
 
-    /* === Table Header Background Color Customization === */
-    --table-header-bg: #e9f5ff; /* основной фон */
-    --table-header-bg-mobile: #d0eaff; /* фон для мобильных */
+    /* Light Theme Colors */
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-200: #bfdbfe;
+    --primary-300: #93c5fd;
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+    --primary-900: #1e3a8a;
+
+    /* Secondary Colors */
+    --secondary-50: #f0fdf4;
+    --secondary-100: #dcfce7;
+    --secondary-200: #bbf7d0;
+    --secondary-300: #86efac;
+    --secondary-400: #4ade80;
+    --secondary-500: #22c55e;
+    --secondary-600: #16a34a;
+    --secondary-700: #15803d;
+    --secondary-800: #166534;
+    --secondary-900: #14532d;
+
+    /* Status Colors (Light Theme) */
+    --status-open: #0ea5e9;
+    --status-open-bg: rgba(14, 165, 233, 0.1);
+    --status-progress: #f59e0b;
+    --status-progress-bg: rgba(245, 158, 11, 0.1);
+    --status-closed: #10b981;
+    --status-closed-bg: rgba(16, 185, 129, 0.1);
+    --status-clarification: #ec4899;
+    --status-clarification-bg: rgba(236, 72, 153, 0.1);
+    --status-approval: #8b5cf6;
+    --status-approval-bg: rgba(139, 92, 246, 0.1);
+    --status-rejected: #ef4444;
+    --status-rejected-bg: rgba(239, 68, 68, 0.1);
+
+    /* Surface Colors (Light Theme) */
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
+    --surface-3: #e2e8f0;
+    --surface-4: #cbd5e1;
+    --surface-5: #94a3b8;
+    --surface-glass: rgba(255, 255, 255, 0.8);
+    --surface-card: rgba(255, 255, 255, 0.9);
+
+    /* Text Colors (Light Theme) */
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+    --text-on-surface: #0f172a;
+
+    /* Border & Divider */
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-dark: #94a3b8;
+    --divider: #e2e8f0;
+    --border-focus: var(--primary-400);
+
+    /* Shadows (Light Theme) */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-4: 0 20px 25px rgba(0, 0, 0, 0.1), 0 10px 10px rgba(0, 0, 0, 0.04);
+    --shadow-5: 0 25px 50px rgba(0, 0, 0, 0.15);
+    --shadow-card: 0 4px 6px rgba(0, 0, 0, 0.07);
+    --shadow-header: 0 2px 4px rgba(0, 0, 0, 0.06);
+
+    /* Body Background */
+    --body-bg: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+
+    /* Table Header */
+    --table-header-bg: #e9f5ff;
+    --table-header-bg-mobile: #d0eaff;
     --table-header-text: #0d47a1;
-    /* === End Customization Section === */
   }
 
-  /* Base Styles */
+  /* Dark Theme Variables Override */
+  body.dark-theme {
+    --body-bg: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+
+    /* Primary Color Palette (Dark Theme) */
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1;
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
+
+    /* Secondary Color Palette */
+    --secondary-50: #e8f5e8;
+    --secondary-100: #c8e6c9;
+    --secondary-200: #a5d6a7;
+    --secondary-300: #81c784;
+    --secondary-400: #66bb6a;
+    --secondary-500: #22c55e;
+    --secondary-600: #16a34a;
+    --secondary-700: #15803d;
+    --secondary-800: #166534;
+    --secondary-900: #14532d;
+
+    /* Status Colors (Dark Theme) */
+    --status-open: #06b6d4;
+    --status-open-bg: rgba(6, 182, 212, 0.15);
+    --status-progress: #f97316;
+    --status-progress-bg: rgba(249, 115, 22, 0.15);
+    --status-closed: #22c55e;
+    --status-closed-bg: rgba(34, 197, 94, 0.15);
+    --status-clarification: #d946ef;
+    --status-clarification-bg: rgba(217, 70, 239, 0.15);
+    --status-approval: #8b5cf6;
+    --status-approval-bg: rgba(139, 92, 246, 0.15);
+    --status-rejected: #ef4444;
+    --status-rejected-bg: rgba(239, 68, 68, 0.15);
+
+    /* Surface Colors (Dark Theme) */
+    --surface-0: #111827;
+    --surface-1: #1f2937;
+    --surface-2: #374151;
+    --surface-3: #4b5563;
+    --surface-4: #6b7280;
+    --surface-5: #9ca3af;
+    --surface-glass: rgba(31, 41, 55, 0.7);
+    --surface-card: rgba(55, 65, 81, 0.6);
+
+    /* Text Colors (Dark Theme) */
+    --text-primary: #f9fafb;
+    --text-secondary: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-disabled: #6b7280;
+    --text-on-primary: #ffffff;
+    --text-on-surface: #f9fafb;
+
+    /* Border & Divider */
+    --border-light: #374151;
+    --border-medium: #4b5563;
+    --border-dark: #6b7280;
+    --divider: #374151;
+    --border-focus: var(--primary-400);
+
+    /* Shadows (Dark Theme) */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.4);
+    --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.3), 0 6px 6px rgba(0, 0, 0, 0.4);
+    --shadow-4: 0 14px 28px rgba(0, 0, 0, 0.4), 0 10px 10px rgba(0, 0, 0, 0.3);
+    --shadow-5: 0 19px 38px rgba(0, 0, 0, 0.5), 0 15px 12px rgba(0, 0, 0, 0.4);
+    --shadow-card: 0 8px 32px rgba(0, 0, 0, 0.2);
+    --shadow-header: 0 4px 20px rgba(0, 0, 0, 0.2);
+
+    /* Table Header */
+    --table-header-bg: #374151;
+    --table-header-bg-mobile: #4b5563;
+    --table-header-text: #f9fafb;
+  }
+
+  /* Theme Transition Styles */
+
+  body.theme-switching {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Prevent flickering during theme switch */
+  body.theme-switching * {
+    transition: background-color 0.3s ease, color 0.3s ease,
+      border-color 0.3s ease, box-shadow 0.3s ease !important;
+  }
+
+  /* Smooth transitions for all themed elements */
+  .stat-card,
+  .table-container,
+  .page-header,
+  .action-button,
+  .theme-switcher,
+  .loading-content,
+  .dataTables_wrapper,
+  .dataTables_paginate .paginate_button {
+    transition: background-color 0.3s ease, color 0.3s ease,
+      border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+
+  /* Loading indicator for theme switching */
+  body.theme-switching::before {
+    content: "";
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.1);
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    animation: fadeInOut 0.3s ease;
+  }
+
+  @keyframes fadeInOut {
+    0% {
+      opacity: 0;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+
+  /* Ensure proper contrast in both themes */
+  body.light-theme {
+    --theme-transition-bg: rgba(255, 255, 255, 0.9);
+    --theme-transition-text: #1f2937;
+  }
+
+  /* Base S
+tyles */
   .issues-page-container {
-    max-width: var(--container-max-width);
+    max-width: 95vw;
     margin: 0 auto;
-    padding: var(--container-padding);
+    padding: var(--spacing-lg);
     font-family: var(--font-family-primary);
     line-height: 1.6;
-    color: var(--text-primary);
-    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    color: var(--text-secondary);
+    background: var(--body-bg);
     min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
   }
 
-  /* Loading Overlay */
+  /* Background Shapes - Optimized */
+  .background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+    will-change: transform;
+  }
+
+  .shape {
+    position: absolute;
+    background: rgba(99, 102, 241, 0.08);
+    border-radius: 50%;
+    animation: float 20s ease-in-out infinite;
+    will-change: transform;
+    transform: translateZ(0);
+  }
+
+  .shape-1 {
+    width: 350px;
+    height: 350px;
+    top: 10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+  .shape-2 {
+    width: 250px;
+    height: 250px;
+    top: 60%;
+    right: -5%;
+    animation-delay: 7s;
+  }
+  .shape-3 {
+    width: 200px;
+    height: 200px;
+    bottom: 10%;
+    left: 20%;
+    animation-delay: 14s;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translate3d(0, 0, 0) rotate(0deg);
+    }
+    50% {
+      transform: translate3d(-20px, -20px, 0) rotate(3deg);
+    }
+  }
+
+  /* Loading Overlay - Optimized */
   .loading-overlay {
     position: fixed;
     top: 0;
@@ -303,11 +606,12 @@
     width: 100%;
     height: 100%;
     background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(8px);
     z-index: 99999;
     display: none;
     align-items: center;
     justify-content: center;
+    will-change: opacity;
   }
 
   .loading-content {
@@ -319,17 +623,22 @@
     box-shadow: var(--shadow-3);
     border: 1px solid var(--border-light);
   }
-
   .spinner-icon {
-    font-size: 4rem;
+    font-size: 3rem;
     color: var(--primary-600);
     margin-bottom: var(--spacing-lg);
-    animation: spin 1s linear infinite;
+    animation: spin 1.2s linear infinite;
+    will-change: transform;
+    transform: translateZ(0);
   }
 
   @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    0% {
+      transform: rotate(0deg) translateZ(0);
+    }
+    100% {
+      transform: rotate(360deg) translateZ(0);
+    }
   }
 
   .loading-content h3 {
@@ -345,38 +654,59 @@
     margin: 0;
   }
 
-  /* Page Header */
+  /* Page Header - Modern Gradient Style */
   .page-header {
-    background: var(--surface-0);
-    border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-2);
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%);
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(59, 130, 246, 0.25),
+      0 2px 8px rgba(0, 0, 0, 0.1);
     margin-bottom: var(--spacing-xl);
-    overflow: hidden;
     position: relative;
+    z-index: 1;
+    animation: slideDown 0.8s ease-out;
+    overflow: hidden;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   .page-header::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     left: 0;
     right: 0;
-    height: 4px;
-    background: linear-gradient(90deg, var(--primary-500), var(--primary-700), var(--secondary-500));
+    bottom: 0;
+    background: linear-gradient(
+      135deg,
+      rgba(255, 255, 255, 0.1) 0%,
+      rgba(255, 255, 255, 0.05) 100%
+    );
+    pointer-events: none;
   }
 
   .header-content {
-    padding: var(--spacing-xl);
+    padding: 20px 24px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: var(--spacing-lg);
+    position: relative;
+    z-index: 1;
   }
 
   .header-main {
     display: flex;
     align-items: center;
-    gap: var(--spacing-lg);
+    gap: 16px;
     flex: 1;
   }
 
@@ -384,84 +714,254 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-    color: var(--text-on-primary);
-    border-radius: var(--radius-xl);
-    font-size: 1.75rem;
-    box-shadow: var(--shadow-2);
+    width: 48px;
+    height: 48px;
+    background: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    border-radius: 12px;
+    font-size: 1.5rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    flex-shrink: 0;
+    transition: all 0.3s ease;
+  }
+
+  .header-icon:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
   }
 
   .header-text {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .page-title {
-    font-size: 2rem;
+    font-size: 1.75rem;
     font-weight: 700;
-    margin: 0 0 var(--spacing-xs) 0;
-    color: var(--text-primary);
+    margin: 0 0 4px 0;
+    color: #ffffff;
     letter-spacing: -0.025em;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .page-subtitle {
-    font-size: 1rem;
-    color: var(--text-secondary);
+    font-size: 0.95rem;
+    color: rgba(255, 255, 255, 0.85);
     margin: 0;
     font-weight: 400;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
   }
 
   .header-actions {
     display: flex;
-    gap: var(--spacing-md);
+    gap: 12px;
     align-items: center;
   }
 
   .action-button {
     display: inline-flex;
     align-items: center;
-    gap: var(--spacing-sm);
-    padding: var(--spacing-md) var(--spacing-lg);
-    border-radius: var(--radius-lg);
+    gap: 8px;
+    padding: 10px 16px;
+    border-radius: 8px;
     text-decoration: none;
-    font-weight: 500;
+    font-weight: 600;
     font-size: 0.875rem;
-    transition: all var(--transition-normal);
+    transition: all 0.3s ease;
     border: none;
     cursor: pointer;
     white-space: nowrap;
+    backdrop-filter: blur(10px);
   }
 
   .action-button.primary {
-    background: linear-gradient(135deg, var(--primary-500), var(--primary-700));
-    color: var(--text-on-primary);
-    box-shadow: var(--shadow-2);
+    background: rgba(255, 255, 255, 0.95);
+    color: #1e40af;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .action-button.primary:hover {
-    background: linear-gradient(135deg, var(--primary-600), var(--primary-800));
+    background: #ffffff;
     transform: translateY(-2px);
-    box-shadow: var(--shadow-3);
-    color: var(--text-on-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    color: #1e40af;
     text-decoration: none;
+  }
+
+  .action-button.primary:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
 
   .action-button.secondary {
-    background: var(--surface-1);
-    color: var(--text-primary);
-    border: 1px solid var(--border-medium);
+    background: rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.3);
   }
 
   .action-button.secondary:hover {
-    background: var(--surface-2);
+    background: rgba(255, 255, 255, 0.25);
     transform: translateY(-2px);
-    box-shadow: var(--shadow-2);
-    color: var(--text-primary);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    color: #ffffff;
     text-decoration: none;
   }
 
-  /* Statistics Dashboard */
+  /* Theme Switcher */
+  .theme-switcher-container {
+    margin-left: 8px;
+  }
+
+  .theme-switcher {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    color: #ffffff;
+    cursor: pointer;
+    padding: 10px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .theme-switcher:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Улучшенные стили для светлой темы */
+  body:not(.dark-theme) .theme-switcher {
+    background: rgba(0, 0, 0, 0.08);
+    border: 2px solid rgba(0, 0, 0, 0.25);
+    color: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  body:not(.dark-theme) .theme-switcher:hover {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0.95);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  /* Дополнительные стили для лучшей видимости в светлой теме */
+  body:not(.dark-theme) .theme-switcher::before {
+    content: "";
+    position: absolute;
+    top: -1px;
+    left: -1px;
+    right: -1px;
+    bottom: -1px;
+    background: linear-gradient(
+      135deg,
+      rgba(0, 0, 0, 0.1),
+      rgba(0, 0, 0, 0.05)
+    );
+    border-radius: 9px;
+    z-index: -2;
+  }
+
+  /* Улучшенные стили строк таблицы для светлой темы */
+  body:not(.dark-theme) .issues-table td {
+    background: rgba(0, 0, 0, 0.02);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
+
+  body:not(.dark-theme) .issues-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.08);
+  }
+
+  body:not(.dark-theme) .issues-table tbody tr:hover td {
+    background: rgba(102, 126, 234, 0.06);
+    border-bottom-color: rgba(102, 126, 234, 0.2);
+  }
+
+  /* Улучшенные стили контейнера таблицы для светлой темы */
+  body:not(.dark-theme) .table-container {
+    background: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.1);
+  }
+
+  /* Улучшенные стили строк таблицы для темной темы */
+  body.dark-theme .issues-table td {
+    background: rgba(255, 255, 255, 0.05);
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body.dark-theme .issues-table tbody tr:hover td {
+    background: rgba(102, 126, 234, 0.12);
+    border-bottom-color: rgba(102, 126, 234, 0.3);
+  }
+
+  /* Базовые стили иконок theme-switcher */
+  .theme-switcher i {
+    font-size: 16px;
+    transition: all 0.3s ease;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Логика отображения иконок theme-switcher */
+  .theme-switcher .fa-sun {
+    display: none !important;
+  }
+
+  .theme-switcher .fa-moon {
+    display: inline-block !important;
+  }
+
+  body.dark-theme .theme-switcher .fa-sun {
+    display: inline-block !important;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 900;
+  }
+
+  body.dark-theme .theme-switcher .fa-moon {
+    display: none !important;
+  }
+
+  /* Стили иконок в светлой теме */
+  body:not(.dark-theme) .theme-switcher .fa-sun {
+    display: none !important;
+  }
+
+  body:not(.dark-theme) .theme-switcher .fa-moon {
+    display: inline-block !important;
+    color: rgba(0, 0, 0, 0.8);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    font-weight: 900;
+  }
+
+  body:not(.dark-theme) .theme-switcher:hover .fa-moon {
+    color: rgba(0, 0, 0, 0.95);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
+    transform: scale(1.1);
+  }
+
+  body.dark-theme .theme-switcher:hover .fa-sun {
+    color: #fbbf24;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    transform: scale(1.1);
+  }
+
+  /* S
+tatistics Dashboard */
   .stats-dashboard {
     margin-bottom: var(--spacing-xl);
   }
@@ -471,26 +971,290 @@
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: var(--spacing-lg);
     align-items: stretch;
+    margin-bottom: var(--spacing-xl);
   }
 
   .stat-card {
-    background: var(--surface-0);
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
-    padding: var(--spacing-lg);
-    box-shadow: var(--shadow-2);
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-md);
+    box-shadow: var(--shadow-card);
     transition: all var(--transition-normal);
     border-left: 4px solid transparent;
     position: relative;
     overflow: hidden;
-    min-height: 100px;
-    height: 100%;
+    min-height: 120px;
+    z-index: 1;
   }
 
+  .stat-card.expandable {
+    flex-direction: column;
+    cursor: pointer;
+  }
+
+  .stat-card.expandable.expanded {
+    min-height: 300px;
+  }
+
+  .stat-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    width: 100%;
+    padding: var(--spacing-lg);
+  }
+
+  .expand-arrow {
+    margin-left: auto;
+    transition: transform var(--transition-normal);
+    color: var(--text-tertiary);
+    font-size: 0.875rem;
+  }
+
+  .stat-card.expanded .expand-arrow {
+    transform: rotate(180deg);
+  }
+
+  .stat-details {
+    display: none;
+    width: 100%;
+    padding: var(--spacing-lg);
+    background: linear-gradient(135deg, var(--surface-1), var(--surface-2));
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-light);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    margin-top: 0;
+    position: relative;
+    z-index: 1;
+    overflow: visible;
+    min-height: auto;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  }
+
+  /* Стили для развернутых деталей */
+  .stat-card.expanded .stat-details {
+    display: block !important;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Стили для категорий */
+  .category-group {
+    margin-bottom: var(--spacing-lg);
+    position: relative;
+  }
+
+  .category-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .category-title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    color: var(--text-on-primary);
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-1);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .category-title::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+      45deg,
+      transparent 30%,
+      rgba(255, 255, 255, 0.1) 50%,
+      transparent 70%
+    );
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+
+  .category-group:hover .category-title::before {
+    transform: translateX(100%);
+  }
+
+  .status-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    min-height: 48px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+  }
+
+  .status-item::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--border-medium);
+    transition: all var(--transition-normal);
+  }
+
+  .status-item:hover {
+    background: var(--surface-2);
+    transform: translateY(-2px) translateX(4px);
+    box-shadow: var(--shadow-2);
+    border-color: var(--primary-300);
+  }
+
+  .status-item:hover::before {
+    width: 6px;
+    background: var(--primary-400);
+  }
+
+  .status-item.active {
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-600));
+    border-color: var(--primary-400);
+    box-shadow: var(--shadow-3);
+    transform: translateY(-3px) translateX(6px);
+    color: var(--text-on-primary);
+  }
+
+  .status-item.active::before {
+    width: 8px;
+    background: var(--text-on-primary);
+  }
+
+  .status-item.active .status-name {
+    color: var(--text-on-primary);
+    font-weight: 600;
+  }
+
+  .status-item.active .status-count {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-700);
+    font-weight: 700;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .reset-filter-container {
+    display: flex;
+    align-items: flex-end;
+  }
+
+  #reset-filter-btn {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.1),
+      rgba(239, 68, 68, 0.15)
+    );
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #ef4444;
+    transition: all var(--transition-normal);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    white-space: nowrap;
+    box-shadow: var(--shadow-1);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  #reset-filter-btn:hover {
+    background: linear-gradient(
+      135deg,
+      rgba(239, 68, 68, 0.2),
+      rgba(239, 68, 68, 0.25)
+    );
+    border-color: rgba(239, 68, 68, 0.5);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+    color: #dc2626;
+  }
+
+  #reset-filter-btn:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-1);
+  }
+
+  .status-item.open-status::before {
+    background: var(--status-open);
+  }
+
+  .status-item.open-status:hover::before {
+    background: var(--status-open);
+    box-shadow: 0 0 8px rgba(14, 165, 233, 0.4);
+  }
+
+  .status-item.progress-status::before {
+    background: var(--status-progress);
+  }
+
+  .status-item.progress-status:hover::before {
+    background: var(--status-progress);
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  }
+
+  .status-item.closed-status::before {
+    background: var(--status-closed);
+  }
+
+  .status-item.closed-status:hover::before {
+    background: var(--status-closed);
+    box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
+  }
+
+  .status-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    letter-spacing: 0.025em;
+    flex: 1;
+  }
+
+  .status-count {
+    background: linear-gradient(135deg, var(--surface-3), var(--surface-4));
+    color: var(--text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-xl);
+    font-size: 0.75rem;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: center;
+    border: 1px solid var(--border-light);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 28px;
+  }
   .stat-card::before {
-    content: '';
+    content: "";
     position: absolute;
     top: 0;
     right: 0;
@@ -563,15 +1327,18 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-  }
-
-  /* Controls Panel */
+  } /* C
+ontrols Panel */
   .controls-panel {
-    background: var(--surface-0);
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-2);
+    box-shadow: var(--shadow-card);
     margin-bottom: var(--spacing-xl);
-    overflow: hidden;
+    position: relative;
+    z-index: 1;
   }
 
   .controls-content {
@@ -623,18 +1390,17 @@
     padding: var(--spacing-md);
     border: 1px solid var(--border-medium);
     border-radius: var(--radius-md);
-    background: var(--surface-0);
+    background: var(--surface-2);
     color: var(--text-primary);
     font-size: 0.875rem;
     transition: all var(--transition-fast);
   }
-
-  .filter-container select:focus,
+  .f ilter-container select:focus,
   .search-container input:focus,
   .length-container select:focus {
     outline: none;
-    border-color: var(--primary-500);
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
+    border-color: var(--primary-400);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
   }
 
   .search-container input {
@@ -656,20 +1422,31 @@
 
   /* Issues Section */
   .issues-section {
-    background: var(--surface-0);
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
-    box-shadow: var(--shadow-2);
-    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    z-index: 1;
   }
 
   /* Table Container */
   .table-container {
     overflow: hidden;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+    background: rgba(31, 41, 55, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
   }
 
   .table-wrapper {
     overflow-x: auto;
     position: relative;
+    border-radius: 16px;
   }
 
   /* Issues Table */
@@ -677,51 +1454,311 @@
     width: 100%;
     border-collapse: separate;
     border-spacing: 0;
-    background: var(--surface-0);
+    background: transparent;
     font-size: 0.875rem;
   }
 
   .issues-table thead {
-    background: var(--table-header-bg);
+    background: transparent;
   }
 
   .issues-table th {
-    font-size: 0.75rem;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: var(--table-header-text);
-    border-bottom: 2px solid var(--primary-200);
+    /* Современный градиентный фон с яркими акцентами */
+    background: linear-gradient(
+      135deg,
+      #667eea 0%,
+      #764ba2 25%,
+      #6b73ff 50%,
+      #9644ff 75%,
+      #667eea 100%
+    ) !important;
+
+    /* Цвет текста и типографика */
+    color: #ffffff !important;
+    font-weight: 700 !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase !important;
+
+    /* Отступы и размеры */
+    padding: 1.25rem 1rem !important;
+
+    /* Границы */
+    border-bottom: 4px solid #4f46e5 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+
+    /* Позиционирование */
+    position: relative !important;
+    vertical-align: middle !important;
+
+    /* Анимации */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    /* Тени */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3),
+      0 4px 12px rgba(102, 126, 234, 0.25) !important;
   }
 
-  /* Скругляем углы первой и последней ячейки */
   .issues-table th:first-child {
     border-top-left-radius: var(--radius-lg);
   }
   .issues-table th:last-child {
     border-top-right-radius: var(--radius-lg);
+    border-right: none !important;
   }
 
-  /* Уточняем цвет иконок в шапке */
+  /* Эффект при наведении на заголовки */
+  .issues-table th:hover {
+    background: linear-gradient(
+      135deg,
+      #5a67d8 0%,
+      #6b46c1 25%,
+      #5b21b6 50%,
+      #7c3aed 75%,
+      #5a67d8 100%
+    ) !important;
+
+    color: #f8fafc !important;
+
+    /* Легкое поднятие при наведении */
+    transform: translateY(-2px) scale(1.02) !important;
+
+    /* Усиленная тень */
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
+      0 8px 24px rgba(102, 126, 234, 0.4), 0 4px 16px rgba(139, 92, 246, 0.3) !important;
+
+    /* Более яркая нижняя граница */
+    border-bottom-color: #3730a3 !important;
+  }
+
+  /* Стили для содержимого заголовков */
+  .column-header {
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+    white-space: nowrap !important;
+    font-weight: inherit !important;
+  }
+
   .column-header i {
-    color: var(--primary-600);
+    color: #fbbf24 !important;
+    font-size: 1rem !important;
+    opacity: 0.95 !important;
+    transition: all 0.4s ease !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.5));
+  }
+
+  /* Изменение цвета иконок при наведении */
+  .issues-table th:hover .column-header i {
+    color: #fcd34d !important;
+    opacity: 1 !important;
+    transform: scale(1.15) rotate(5deg) !important;
+    filter: drop-shadow(0 0 8px rgba(252, 211, 77, 0.8));
+  }
+
+  /* Текст заголовков */
+  .column-header span {
+    color: inherit !important;
+    font-weight: inherit !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.2));
+  }
+
+  /* Специфические цвета для разных колонок */
+  .issues-table th.column-id .column-header i {
+    color: #10b981 !important;
+  }
+  .issues-table th.column-id:hover .column-header i {
+    color: #34d399 !important;
+    filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.8));
+  }
+
+  .issues-table th.column-date .column-header i {
+    color: #06b6d4 !important;
+  }
+  .issues-table th.column-date:hover .column-header i {
+    color: #22d3ee !important;
+    filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.8));
+  }
+
+  .issues-table th.column-subject .column-header i {
+    color: #8b5cf6 !important;
+  }
+  .issues-table th.column-subject:hover .column-header i {
+    color: #a78bfa !important;
+    filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8));
+  }
+
+  .issues-table th.column-status .column-header i {
+    color: #ef4444 !important;
+  }
+  .issues-table th.column-status:hover .column-header i {
+    color: #f87171 !important;
+    filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.8));
+  }
+
+  /* Анимация появления заголовков */
+  .issues-table th {
+    animation: headerFadeIn 0.6s ease-out forwards;
+  }
+
+  @keyframes headerFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Пульсирующий эффект для активных заголовков при сортировке */
+  .issues-table th.sorting_asc,
+  .issues-table th.sorting_desc {
+    animation: pulseGlow 2s ease-in-out infinite alternate;
+  }
+
+  @keyframes pulseGlow {
+    0% {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3),
+        0 4px 12px rgba(102, 126, 234, 0.25);
+    }
+    100% {
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
+        0 6px 20px rgba(102, 126, 234, 0.4), 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+  }
+
+  /* Адаптивные стили для таблицы */
+  @media (max-width: 1024px) {
+    .issues-table th {
+      padding: 1rem 0.875rem !important;
+      font-size: 0.8125rem !important;
+    }
+
+    .column-header {
+      gap: 0.5rem !important;
+    }
+
+    .column-header i {
+      font-size: 0.875rem !important;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .table-container {
+      border-radius: 12px;
+    }
+
+    .table-wrapper {
+      border-radius: 12px;
+    }
+
+    .issues-table th {
+      padding: 0.875rem 0.625rem !important;
+      font-size: 0.75rem !important;
+      letter-spacing: 0.025em !important;
+    }
+
+    .column-header {
+      gap: 0.375rem !important;
+    }
+
+    .column-header i {
+      font-size: 0.8125rem !important;
+    }
+
+    .issues-table td {
+      padding: 0.875rem 0.625rem;
+    }
+
+    /* Упрощаем анимации на мобильных для производительности */
+    .issues-table th {
+      animation: none;
+    }
+
+    .issues-table th.sorting_asc,
+    .issues-table th.sorting_desc {
+      animation: none;
+    }
+
+    .issues-table tbody tr:hover {
+      transform: translateX(3px) scale(1.005);
+    }
+  }
+
+  @media (max-width: 480px) {
+    .issues-table th {
+      padding: 0.75rem 0.5rem !important;
+      font-size: 0.6875rem !important;
+    }
+
+    .column-header {
+      gap: 0.25rem !important;
+    }
+
+    .column-header i {
+      font-size: 0.75rem !important;
+    }
+
+    .issues-table td {
+      padding: 0.75rem 0.5rem;
+    }
+
+    /* Отключаем сложные эффекты на очень маленьких экранах */
+    .issues-table th:hover {
+      transform: none !important;
+    }
+
+    .issues-table tbody tr:hover {
+      transform: translateX(2px);
+    }
   }
 
   .issues-table td {
     padding: var(--spacing-lg);
-    border-bottom: 1px solid var(--border-light);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     vertical-align: middle;
     color: var(--text-primary);
+    background: rgba(255, 255, 255, 0.03);
+    transition: all 0.3s ease;
   }
 
   .issues-table tbody tr {
-    transition: all var(--transition-fast);
-    background: var(--surface-0);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: transparent;
+    border-radius: 0;
+    position: relative;
   }
 
   .issues-table tbody tr:hover {
-    background: var(--surface-1);
-    transform: translateX(4px);
-    box-shadow: inset 4px 0 0 var(--primary-500);
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateX(6px) scale(1.01);
+    box-shadow: inset 4px 0 0 #667eea, 0 4px 20px rgba(102, 126, 234, 0.2),
+      0 2px 10px rgba(139, 92, 246, 0.15);
+  }
+
+  .issues-table tbody tr:hover td {
+    background: rgba(102, 126, 234, 0.08);
+    border-bottom-color: rgba(102, 126, 234, 0.3);
+  }
+
+  /* Анимация появления строк */
+  .issues-table tbody tr {
+    animation: rowFadeIn 0.5s ease-out forwards;
+  }
+
+  @keyframes rowFadeIn {
+    0% {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
 
   /* Column Specific Styles */
@@ -747,7 +1784,7 @@
     display: inline-flex;
     align-items: center;
     gap: var(--spacing-sm);
-    color: var(--primary-600);
+    color: #60a5fa;
     text-decoration: none;
     font-weight: 600;
     transition: all var(--transition-fast);
@@ -756,8 +1793,8 @@
   }
 
   .issue-id-link:hover {
-    color: var(--primary-700);
-    background: var(--primary-50);
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.1);
     text-decoration: none;
     transform: translateX(2px);
   }
@@ -765,9 +1802,8 @@
   .issue-id-link i {
     font-size: 0.75rem;
     opacity: 0.7;
-  }
-
-  /* Issue Subject */
+  } /* Iss
+ue Subject */
   .issue-subject {
     font-weight: 500;
     line-height: 1.4;
@@ -776,6 +1812,30 @@
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .issue-subject-link {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    color: #60a5fa;
+    text-decoration: none;
+    font-weight: 500;
+    transition: color 0.2s, background 0.2s;
+    border-radius: var(--radius-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    cursor: pointer;
+  }
+
+  .issue-subject-link:hover {
+    color: #93c5fd;
+    background: rgba(96, 165, 250, 0.1);
+    text-decoration: underline;
+  }
+
+  .issue-subject-link i {
+    font-size: 0.8em;
+    opacity: 0.7;
   }
 
   /* Status Styles */
@@ -816,8 +1876,7 @@
     color: var(--status-progress);
     border-color: var(--status-progress);
   }
-
-  .status-closed .status-badge {
+  .st atus-closed .status-badge {
     background: var(--status-closed-bg);
     color: var(--status-closed);
     border-color: var(--status-closed);
@@ -872,11 +1931,18 @@
     justify-content: space-between;
     align-items: flex-start;
     padding: var(--spacing-lg);
-    background: var(--surface-1);
-    border-top: 1px solid var(--border-light);
+    background: linear-gradient(
+      135deg,
+      rgba(102, 126, 234, 0.1) 0%,
+      rgba(139, 92, 246, 0.1) 50%,
+      rgba(102, 126, 234, 0.1) 100%
+    );
+    border-top: 1px solid rgba(102, 126, 234, 0.3);
     gap: var(--spacing-lg);
     flex-wrap: wrap;
     min-height: 60px;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .table-info {
@@ -885,8 +1951,7 @@
     flex: 0 0 auto;
     min-width: 200px;
   }
-
-  .table-pagination {
+  . table-pagination {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -909,23 +1974,30 @@
     height: 36px;
     padding: var(--spacing-xs) var(--spacing-md);
     margin: 0 2px;
-    border: 1px solid var(--border-medium);
+    border: 1px solid rgba(102, 126, 234, 0.3);
     border-radius: var(--radius-md);
-    background: var(--surface-0);
+    background: rgba(31, 41, 55, 0.6);
     color: var(--text-primary);
     text-decoration: none;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: var(--primary-50);
-    border-color: var(--primary-500);
-    color: var(--primary-700);
-    transform: translateY(-1px);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: #667eea;
+    color: #ffffff;
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
   }
 
   .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: var(--primary-500);
-    border-color: var(--primary-500);
+    background: linear-gradient(135deg, #667eea 0%, #9644ff 100%);
+    border-color: #667eea;
+    color: #ffffff;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.5);
+    transform: scale(1.1);
     color: var(--text-on-primary);
   }
 
@@ -964,9 +2036,8 @@
   .empty-state p {
     font-size: 1rem;
     margin-bottom: var(--spacing-xl);
-  }
-
-  /* Error State */
+  } /* Error
+ State */
   .error-state {
     text-align: center;
     padding: var(--spacing-xxxl);
@@ -1022,25 +2093,27 @@
     }
   }
 
-  /* Промежуточные экраны планшетов */
-  @media (max-width: 992px) {
-    .dataTables_paginate .paginate_button {
-      min-width: 34px;
-      height: 34px;
-      font-size: 0.8rem;
-      padding: 5px 7px;
-    }
-
-    .dataTables_paginate .paginate_button.previous,
-    .dataTables_paginate .paginate_button.next {
-      padding: 5px 9px;
-      font-size: 0.75rem;
-    }
-  }
-
   @media (max-width: 768px) {
+    .header-content {
+      flex-direction: column;
+      text-align: center;
+      gap: 20px;
+      padding: 16px 20px;
+    }
+
+    .header-main {
+      justify-content: center;
+      gap: 12px;
+    }
+
     .page-title {
       font-size: 1.5rem;
+    }
+
+    .header-icon {
+      width: 40px;
+      height: 40px;
+      font-size: 1.25rem;
     }
 
     .stats-grid {
@@ -1057,941 +2130,1129 @@
     }
 
     .header-actions {
-      flex-direction: column;
+      flex-direction: row;
+      justify-content: center;
       width: 100%;
+      gap: 8px;
     }
 
     .action-button {
       justify-content: center;
-      width: 100%;
-    }
-
-    .table-footer {
-      flex-direction: column;
-      text-align: center;
-      gap: var(--spacing-md);
-      align-items: center;
-      padding: var(--spacing-md);
-    }
-
-    .table-info {
-      order: 2;
-      min-width: auto;
-      text-align: center;
-    }
-
-    .table-pagination {
-      order: 1;
-      width: 100%;
-      justify-content: center;
-    }
-
-    .dataTables_paginate .paginate_button {
-      min-width: 32px;
-      height: 32px;
-      font-size: 0.75rem;
-      padding: 4px 6px;
-    }
-
-    .dataTables_paginate .paginate_button.previous,
-    .dataTables_paginate .paginate_button.next {
-      padding: 4px 8px;
-      font-size: 0.7rem;
-    }
-
-    /* Mobile Table Adjustments */
-    .column-subject {
-      max-width: 200px;
-    }
-
-    .issue-subject {
-      max-width: 180px;
-    }
-
-    .filter-container select,
-    .search-container input,
-    .length-container select {
-      min-width: 100%;
-    }
-  }
-
-  @media (max-width: 480px) {
-    .stats-grid {
-      grid-template-columns: 1fr;
-    }
-
-    .header-icon {
-      width: 48px;
-      height: 48px;
-      font-size: 1.25rem;
-    }
-
-    .column-id,
-    .column-date {
-      width: auto;
-    }
-
-    .issues-table th,
-    .issues-table td {
-      padding: var(--spacing-md);
+      flex: 1;
+      max-width: 140px;
+      padding: 8px 12px;
       font-size: 0.8rem;
     }
 
-    /* Компактная пагинация для очень маленьких экранов */
-    .dataTables_paginate {
-      gap: 2px;
-    }
-
-    .dataTables_paginate .paginate_button {
-      min-width: 28px;
-      height: 28px;
-      font-size: 0.7rem;
-      padding: 2px 4px;
-      margin: 0;
-    }
-
-    .dataTables_paginate .paginate_button.previous,
-    .dataTables_paginate .paginate_button.next {
-      padding: 2px 6px;
-      font-size: 0.65rem;
-    }
-
-    .dataTables_paginate .ellipsis {
-      padding: 0 4px;
-      font-size: 0.7rem;
-    }
-
-    .table-footer {
-      padding: var(--spacing-sm);
+    .theme-switcher {
+      width: 36px;
+      height: 36px;
+      padding: 8px;
     }
   }
 
-  /* Print Styles */
-  @media print {
-    .loading-overlay,
-    .header-actions,
-    .controls-panel,
-    .table-footer {
-      display: none !important;
-    }
-
-    .issues-page-container {
-      background: white !important;
-    }
-
-    .page-header,
-    .issues-section {
-      box-shadow: none !important;
-      border: 1px solid #ddd;
-    }
+  /* Улучшенные переходы между темами */
+  .issues-page-container,
+  .page-header,
+  .stats-dashboard,
+  .controls-panel,
+  .issues-section {
+    transition: all var(--transition-normal);
   }
 
-  /* Accessibility Improvements */
-  @media (prefers-reduced-motion: reduce) {
-    * {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: 0.01ms !important;
-    }
-  }
-
-  /* Focus States */
-  .action-button:focus,
-  .filter-container select:focus,
-  .search-container input:focus,
-  .length-container select:focus {
-    outline: 2px solid var(--primary-500);
-    outline-offset: 2px;
-  }
-
-  .issue-id-link:focus {
-    outline: 2px solid var(--primary-500);
-    outline-offset: 1px;
-  }
-
-  /* High Contrast Mode */
-  @media (prefers-contrast: high) {
-    :root {
-      --border-light: #000000;
-      --border-medium: #000000;
-      --text-secondary: #000000;
-  }
-  }
-
-  /* Оптимизированные стили для пагинации DataTables */
-  .dataTables_paginate {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 4px;
-    flex-wrap: wrap;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .dataTables_paginate .paginate_button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 36px;
-    height: 36px;
-    padding: 6px 8px;
-    margin: 1px;
-    border: 1px solid var(--border-light, #e2e8f0);
-    background: var(--surface-0, #ffffff);
-    color: var(--text-primary, #0f172a);
-    border-radius: 6px;
-    cursor: pointer;
-    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-    font-size: 0.8rem;
-    font-weight: 500;
-    text-decoration: none;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .dataTables_paginate .paginate_button:hover:not(.current):not(.disabled) {
-    background: var(--surface-2, #f1f5f9);
-    border-color: var(--primary-300, #64b5f6);
-    transform: translateY(-1px);
-  }
-
-  .dataTables_paginate .paginate_button.current {
-    background: var(--primary-500, #2196f3);
-    color: white;
-    border-color: var(--primary-500, #2196f3);
-    font-weight: 600;
-  }
-
-  .dataTables_paginate .paginate_button.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  .dataTables_paginate .ellipsis {
-    padding: 0 6px;
-    color: var(--text-muted, #64748b);
-    font-weight: 500;
-    flex-shrink: 0;
-  }
-
-  /* Стили для информации о записях */
-  .dataTables_info {
-    color: var(--text-secondary, #475569);
-    font-size: 0.875rem;
-  }
-
-  /* Стили для селектора количества записей */
-  .dataTables_length select {
-    padding: 8px 12px;
-    border: 2px solid var(--border-light, #e2e8f0);
-    border-radius: 8px;
-    font-size: 0.9rem;
+  /* Предотвращение мерцания при переключении темы */
+  .theme-transition {
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--surface-0, #ffffff);
-    color: var(--text-primary, #0f172a);
-    min-width: 80px;
   }
 
-  .dataTables_length select:focus {
-    outline: none;
-    border-color: var(--primary-500, #2196f3);
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-  }
-
-  /* Стили для поиска */
-  .dataTables_filter input {
-    padding: 12px 16px;
-    border: 2px solid var(--border-light, #e2e8f0);
-    border-radius: 8px;
-    font-size: 0.9rem;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--surface-0, #ffffff);
-    color: var(--text-primary, #0f172a);
-    min-width: 250px;
-  }
-
-  .dataTables_filter input:focus {
-    outline: none;
-    border-color: var(--primary-500, #2196f3);
-    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.1);
-  }
-
-  /* CSS анимации для появления строк таблицы */
-  @keyframes fadeIn {
-    from {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  .fade-in {
-    animation: fadeIn 0.5s ease-out forwards;
-  }
-
-  /* Стили для подсветки возвращаемых строк */
-  .highlight-return {
-    background-color: #e3f2fd !important;
-    box-shadow: 0 0 10px rgba(33, 150, 243, 0.3);
-    transition: all 0.8s ease;
-  }
-
-  .highlight-return td {
-    border-left: 4px solid #2196f3 !important;
-  }
-
-  @keyframes fadeHighlight {
-    0% { background-color: #e3f2fd; }
-    100% { background-color: transparent; }
-  }
-
-  .highlight-return.fade-out {
-    animation: fadeHighlight 2s ease-out forwards;
-  }
-
-  /* Дополнительные стили для пагинации */
-  .dataTables_wrapper .dataTables_paginate {
-    float: none !important;
-    text-align: center;
-    margin-top: 0 !important;
-    width: 100%;
-  }
-
-  .dataTables_wrapper .dataTables_paginate .paginate_button {
-    float: none !important;
-    display: inline-flex !important;
-  }
-
-  .dataTables_wrapper .dataTables_paginate .paginate_button.previous,
-  .dataTables_wrapper .dataTables_paginate .paginate_button.next {
-    min-width: auto;
-    padding: 6px 10px;
-    font-size: 0.75rem;
-    max-width: 100px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  /* Принудительное отображение пагинации */
-  .table-pagination {
-    min-height: 50px;
-    display: flex !important;
-    align-items: center;
-    justify-content: center;
-    width: 100%;
-    max-width: 100%;
-    overflow: hidden;
-  }
-
-  .table-pagination .dataTables_paginate {
-    display: flex !important;
+  /* Сохранение видимости элементов при переключении */
+  .preserve-visibility {
+    opacity: 1 !important;
     visibility: visible !important;
-    width: 100%;
-    max-width: 100%;
   }
 
-  /* === Responsive Table Header Color === */
-  @media (max-width: 600px) {
-    .issues-table thead {
-      background: var(--table-header-bg-mobile);
-    }
+  /* Плавные переходы для статистических карточек */
+  .stat-card .stat-details {
+    transition: all var(--transition-normal);
   }
-  /* === End Responsive Table Header Color === */
 
-  /* === Стили шапки таблицы как на /tasks/my-tasks === */
-  .issues-table thead th {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #6b73ff 50%, #9644ff 75%, #667eea 100%) !important;
-    color: #fff !important;
-    font-weight: 700 !important;
-    font-size: 0.9rem !important;
-    letter-spacing: 0.05em !important;
-    text-transform: uppercase !important;
-    padding: 1.25rem 1rem !important;
-    border-bottom: 4px solid #4f46e5 !important;
-    border-right: 1px solid rgba(255,255,255,0.2) !important;
-    position: relative !important;
-    vertical-align: middle !important;
-    transition: all 0.4s cubic-bezier(0.4,0,0.2,1) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.3), 0 4px 12px rgba(102,126,234,0.25) !important;
+  /* Улучшенные переходы для таблицы */
+  .issues-table,
+  .issues-table tbody tr {
+    transition: background-color var(--transition-fast),
+      color var(--transition-fast);
   }
-  .issues-table thead th:last-child {
-    border-right: none !important;
-  }
-  .issues-table thead th:hover {
-    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 25%, #5b21b6 50%, #7c3aed 75%, #5a67d8 100%) !important;
-    color: #f8fafc !important;
-    transform: translateY(-2px) scale(1.02) !important;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.4), 0 8px 24px rgba(102,126,234,0.4), 0 4px 16px rgba(139,92,246,0.3) !important;
-    border-bottom-color: #3730a3 !important;
-  }
-  /* === END === */
 
-  .issue-subject-link {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--spacing-xs);
-    color: var(--primary-700);
-    text-decoration: none;
-    font-weight: 500;
-    transition: color 0.2s, background 0.2s;
-    border-radius: var(--radius-sm);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    cursor: pointer;
-  }
-  .issue-subject-link:hover {
-    color: var(--primary-900);
-    background: var(--primary-50);
-    text-decoration: underline;
-  }
-  .issue-subject-link i {
-    font-size: 0.8em;
+  /* Индикатор переключения темы */
+  .theme-switching {
+    pointer-events: none;
     opacity: 0.7;
   }
-</style>
-{% endblock %}
 
-{% block scripts %}
+  .theme-switching * {
+    transition: none !important;
+  }
+</style>
+{% endblock %}{% block scripts %}
 <script>
-$(document).ready(function() {
-    // Показываем спиннер перед отправкой запроса
-    $('#loading-spinner').show();
+  // ThemeManager - компонент для управления переключением темы
+  class ThemeManager {
+    constructor() {
+      this.currentTheme = this.loadTheme();
+      this.themeToggle = document.getElementById("theme-switcher");
+      this.init();
+    }
+
+    init() {
+      // Применяем сохраненную тему при инициализации
+      this.applyTheme(this.currentTheme);
+
+      // Добавляем обработчик события для переключения темы
+      if (this.themeToggle) {
+        this.themeToggle.addEventListener("click", (e) => {
+          e.preventDefault();
+          this.switchTheme();
+        });
+      }
+    }
+
+    switchTheme() {
+      try {
+        // Определяем новую тему
+        const newTheme = this.currentTheme === "light" ? "dark" : "light";
+
+        // Сохраняем состояние данных перед переключением
+        if (window.dataStateManager) {
+          window.dataStateManager.saveCurrentState();
+        }
+
+        // Применяем новую тему
+        this.applyTheme(newTheme);
+
+        // Сохраняем выбор темы
+        this.saveTheme(newTheme);
+
+        // Восстанавливаем состояние данных после переключения
+        setTimeout(() => {
+          if (window.dataStateManager) {
+            window.dataStateManager.restoreState();
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Ошибка при переключении темы:", error);
+        // Fallback - перезагружаем страницу при критической ошибке
+        if (error.critical) {
+          window.location.reload();
+        }
+      }
+    }
+
+    applyTheme(theme) {
+      try {
+        const body = document.body;
+
+        // Удаляем предыдущие классы темы
+        body.classList.remove("light-theme", "dark-theme");
+
+        // Добавляем класс новой темы
+        body.classList.add(`${theme}-theme`);
+
+        // Обновляем иконку переключателя
+        this.updateToggleIcon(theme);
+
+        // Сохраняем текущую тему
+        this.currentTheme = theme;
+
+        // Добавляем плавный переход
+        body.style.transition = "background-color 0.3s ease, color 0.3s ease";
+      } catch (error) {
+        console.error("Ошибка при применении темы:", error);
+      }
+    }
+
+    updateToggleIcon(theme) {
+      if (this.themeToggle) {
+        // Не изменяем иконки через JavaScript - используем только CSS
+        if (theme === "dark") {
+          this.themeToggle.title = "Переключить на светлую тему";
+        } else {
+          this.themeToggle.title = "Переключить на темную тему";
+        }
+      }
+    }
+
+    saveTheme(theme) {
+      try {
+        localStorage.setItem("selectedTheme", theme);
+      } catch (error) {
+        console.warn("Не удалось сохранить тему в localStorage:", error);
+        // Graceful degradation - продолжаем работу без сохранения
+      }
+    }
+
+    loadTheme() {
+      try {
+        const savedTheme = localStorage.getItem("selectedTheme");
+        return savedTheme || "light"; // По умолчанию светлая тема
+      } catch (error) {
+        console.warn("Не удалось загрузить тему из localStorage:", error);
+        return "light"; // Fallback к светлой теме
+      }
+    }
+  }
+
+  // DataStateManager - компонент для сохранения состояния данных
+  class DataStateManager {
+    constructor() {
+      this.tableState = {};
+      this.statsState = {};
+      this.storageKey = "issuesPageState";
+    }
+
+    getDataTable() {
+      try {
+        return window.issuesTable || window.table || null;
+      } catch (e) {
+        console.warn("Ошибка получения DataTable:", e);
+        return null;
+      }
+    }
+
+    saveTableState() {
+      this.saveCurrentState();
+    }
+
+    saveCurrentState() {
+      try {
+        // Сохраняем состояние таблицы DataTables
+        const dt = this.getDataTable();
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          const tableInfo = dt.page.info();
+          const searchValue = dt.search();
+          const orderInfo = dt.order();
+
+          this.tableState = {
+            page: tableInfo.page,
+            length: tableInfo.length,
+            search: searchValue,
+            order: orderInfo,
+            timestamp: Date.now(),
+          };
+        }
+
+        // Сохраняем состояние статистических карточек
+        this.saveStatsState();
+
+        // Сохраняем в localStorage
+        this.persistState();
+      } catch (error) {
+        console.error("Ошибка при сохранении состояния:", error);
+      }
+    }
+
+    saveStatsState() {
+      try {
+        const statsCards = document.querySelectorAll(".stat-card");
+        this.statsState = {};
+
+        statsCards.forEach((card, index) => {
+          const isExpanded = card.classList.contains("expanded");
+          const cardId = card.id || `stat-card-${index}`;
+
+          this.statsState[cardId] = {
+            expanded: isExpanded,
+            visible: !card.classList.contains("hidden"),
+          };
+        });
+      } catch (error) {
+        console.error("Ошибка при сохранении состояния статистики:", error);
+      }
+    }
+
+    restoreState() {
+      try {
+        // Восстанавливаем состояние таблицы
+        this.restoreTableState();
+
+        // Восстанавливаем состояние статистики
+        this.restoreStatsState();
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния:", error);
+      }
+    }
+
+    restoreTableState() {
+      try {
+        const dt = this.getDataTable();
+        if (this.tableState && dt && $.fn.DataTable.isDataTable("#issue")) {
+          // Восстанавливаем поиск
+          if (this.tableState.search) {
+            dt.search(this.tableState.search);
+          }
+
+          // Восстанавливаем сортировку
+          if (this.tableState.order) {
+            dt.order(this.tableState.order);
+          }
+
+          // Восстанавливаем размер страницы
+          if (this.tableState.length) {
+            dt.page.len(this.tableState.length);
+          }
+
+          // Восстанавливаем текущую страницу
+          if (this.tableState.page !== undefined) {
+            dt.page(this.tableState.page);
+          }
+
+          // Перерисовываем таблицу
+          dt.draw(false);
+        }
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния таблицы:", error);
+      }
+    }
+
+    restoreStatsState() {
+      try {
+        if (this.statsState) {
+          Object.keys(this.statsState).forEach((cardId) => {
+            const card = document.getElementById(cardId);
+            if (card) {
+              const state = this.statsState[cardId];
+
+              // Восстанавливаем состояние раскрытия
+              if (state.expanded) {
+                card.classList.add("expanded");
+              } else {
+                card.classList.remove("expanded");
+              }
+
+              // Восстанавливаем видимость
+              if (state.visible) {
+                card.classList.remove("hidden");
+              } else {
+                card.classList.add("hidden");
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния статистики:", error);
+      }
+    }
+
+    persistState() {
+      try {
+        const stateData = {
+          table: this.tableState,
+          stats: this.statsState,
+          timestamp: Date.now(),
+        };
+
+        localStorage.setItem(this.storageKey, JSON.stringify(stateData));
+      } catch (error) {
+        console.warn("Не удалось сохранить состояние в localStorage:", error);
+      }
+    }
+
+    loadPersistedState() {
+      try {
+        const savedData = localStorage.getItem(this.storageKey);
+        if (savedData) {
+          const stateData = JSON.parse(savedData);
+
+          // Проверяем, не устарели ли данные (старше 1 часа)
+          const oneHour = 60 * 60 * 1000;
+          if (Date.now() - stateData.timestamp < oneHour) {
+            this.tableState = stateData.table || {};
+            this.statsState = stateData.stats || {};
+          }
+        }
+      } catch (error) {
+        console.warn("Не удалось загрузить состояние из localStorage:", error);
+      }
+    }
+
+    clearState() {
+      try {
+        this.tableState = {};
+        this.statsState = {};
+        localStorage.removeItem(this.storageKey);
+      } catch (error) {
+        console.error("Ошибка при очистке состояния:", error);
+      }
+    }
+  }
+
+  // Optimized DOM Ready with performance improvements
+  $(document).ready(function () {
+    // Performance optimization: Use requestAnimationFrame for smooth initialization
+    requestAnimationFrame(() => {
+      // Инициализируем менеджеры
+      window.themeManager = new ThemeManager();
+      window.dataStateManager = new DataStateManager();
+
+      // Загружаем сохраненное состояние
+      window.dataStateManager.loadPersistedState();
+
+      // Показываем спиннер перед отправкой запроса
+      $("#loading-spinner").show();
+
+      // Defer heavy operations
+      setTimeout(() => {
+        initializeTableData();
+      }, 0);
+    });
 
     // Функция для определения стиля статуса
     function getStatusStyle(statusName) {
-        let style = {
-            trClass: 'status-default',
-            iconClass: 'fas fa-question-circle',
-            tooltip: statusName,
-            statusTextClass: ''
-        };
-        const normalizedStatus = String(statusName).toLowerCase();
+      let style = {
+        trClass: "status-default",
+        iconClass: "fas fa-question-circle",
+        tooltip: statusName,
+        statusTextClass: "",
+      };
+      const normalizedStatus = String(statusName).toLowerCase();
 
-        if (normalizedStatus.includes('закрыта') || normalizedStatus.includes('closed') || normalizedStatus.includes('resolved')) {
-            style.trClass = 'status-closed';
-            style.iconClass = 'fas fa-check-circle';
-            style.tooltip = 'Заявка успешно выполнена и закрыта';
-        } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
-            style.trClass = 'status-progress';
-            style.iconClass = 'fas fa-clock';
-            style.tooltip = 'Заявка находится в процессе выполнения';
-        } else if (normalizedStatus.includes('запрошено уточнение') || normalizedStatus.includes('clarification')) {
-            style.trClass = 'status-clarification';
-            style.iconClass = 'fas fa-exclamation-circle';
-            style.tooltip = 'Требуется ваше уточнение для продолжения работы';
-        } else if (normalizedStatus.includes('на согласовании') || normalizedStatus.includes('approval')) {
-            style.trClass = 'status-approval';
-            style.iconClass = 'fas fa-user-clock';
-            style.tooltip = 'Заявка ожидает согласования';
-        } else if (normalizedStatus.includes('отклонена') || normalizedStatus.includes('rejected')) {
-            style.trClass = 'status-rejected';
-            style.iconClass = 'fas fa-times-circle';
-            style.tooltip = 'Заявка была отклонена';
-        } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
-            style.trClass = 'status-open';
-            style.iconClass = 'fas fa-folder-open';
-            style.tooltip = 'Заявка зарегистрирована и ожидает обработки';
-        }
-        return style;
+      if (
+        normalizedStatus.includes("закрыта") ||
+        normalizedStatus.includes("отклонена") ||
+        normalizedStatus.includes("перенаправлена") ||
+        normalizedStatus.includes("closed") ||
+        normalizedStatus.includes("rejected") ||
+        normalizedStatus.includes("redirected")
+      ) {
+        style.trClass = "status-closed";
+        style.iconClass = "fas fa-times-circle";
+        style.tooltip = "Заявка окончательно закрыта";
+      } else if (
+        normalizedStatus.includes("выполнена") ||
+        normalizedStatus.includes("resolved")
+      ) {
+        style.trClass = "status-open";
+        style.iconClass = "fas fa-check-circle";
+        style.tooltip = "Заявка выполнена, ожидает закрытия";
+      } else if (
+        normalizedStatus.includes("в работе") ||
+        normalizedStatus.includes("in progress") ||
+        normalizedStatus.includes("назначена") ||
+        normalizedStatus.includes("assigned")
+      ) {
+        style.trClass = "status-progress";
+        style.iconClass = "fas fa-clock";
+        style.tooltip = "Заявка находится в процессе выполнения";
+      } else if (
+        normalizedStatus.includes("запрошено уточнение") ||
+        normalizedStatus.includes("clarification")
+      ) {
+        style.trClass = "status-clarification";
+        style.iconClass = "fas fa-exclamation-circle";
+        style.tooltip = "Требуется ваше уточнение для продолжения работы";
+      } else if (
+        normalizedStatus.includes("на согласовании") ||
+        normalizedStatus.includes("approval")
+      ) {
+        style.trClass = "status-approval";
+        style.iconClass = "fas fa-user-clock";
+        style.tooltip = "Заявка ожидает согласования";
+      } else if (
+        normalizedStatus.includes("открыта") ||
+        normalizedStatus.includes("new") ||
+        normalizedStatus.includes("open") ||
+        normalizedStatus.includes("pending") ||
+        normalizedStatus.includes("создана") ||
+        normalizedStatus.includes("зарегистрирована")
+      ) {
+        style.trClass = "status-open";
+        style.iconClass = "fas fa-folder-open";
+        style.tooltip = "Заявка зарегистрирована и ожидает обработки";
+      }
+      return style;
     }
 
     // Функция форматирования даты
     function formatDate(dateString) {
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-            return 'Нет даты';
-        }
-        return date.toLocaleDateString('ru-RU', {
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        });
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Нет даты";
+      }
+      return date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
     }
-
     // Функция инициализации данных таблицы с поддержкой кеша
     function initializeTableData() {
-        const cacheKey = 'my_issues_data_v2';
-        const stateKey = 'my_issues_table_state_v2';
-        const cacheTimeKey = 'my_issues_cache_time_v2';
-        const cacheExpiry = 10 * 60 * 1000; // 10 минут
+      const cacheKey = "my_issues_data_v2";
+      const stateKey = "my_issues_table_state_v2";
+      const cacheTimeKey = "my_issues_cache_time_v2";
+      const cacheExpiry = 10 * 60 * 1000; // 10 минут
 
-        // Проверяем URL параметры
-        const urlParams = new URLSearchParams(window.location.search);
-        const useCached = urlParams.get('cached') === '1';
-        const fromIssueId = urlParams.get('from_issue');
+      // Проверяем URL параметры
+      const urlParams = new URLSearchParams(window.location.search);
+      const useCached = urlParams.get("cached") === "1";
+      const fromIssueId = urlParams.get("from_issue");
 
-        // Попытка использовать кеш
-        if (useCached) {
-            const cachedData = sessionStorage.getItem(cacheKey);
-            const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
-            const cachedState = sessionStorage.getItem(stateKey);
+      // Попытка использовать кеш
+      if (useCached) {
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
+        const cachedState = sessionStorage.getItem(stateKey);
 
-            if (cachedData && cacheTimestamp &&
-                (Date.now() - parseInt(cacheTimestamp)) < cacheExpiry) {
-                try {
-                    const response = JSON.parse(cachedData);
-                    const tableState = cachedState ? JSON.parse(cachedState) : null;
+        if (
+          cachedData &&
+          cacheTimestamp &&
+          Date.now() - parseInt(cacheTimestamp) < cacheExpiry
+        ) {
+          try {
+            const response = JSON.parse(cachedData);
+            const tableState = cachedState ? JSON.parse(cachedState) : null;
 
-                    console.log('📚 Используем кешированные данные');
-                    processTableData(response, tableState, fromIssueId);
+            console.log("📚 Используем кешированные данные");
+            processTableData(response, tableState, fromIssueId);
 
-                    // Очищаем URL от параметров кеша
-                    window.history.replaceState({}, '', '/my-issues');
-                    return;
-                } catch (error) {
-                    console.warn('⚠️ Ошибка при использовании кеша:', error);
-                }
-            }
+            // Очищаем URL от параметров кеша
+            window.history.replaceState({}, "", "/my-issues");
+            return;
+          } catch (error) {
+            console.warn("⚠️ Ошибка при использовании кеша:", error);
+          }
         }
+      }
 
-        // Загрузка данных с сервера
-        console.log('🌐 Загружаем данные с сервера');
-        loadDataFromServer();
+      // Загрузка данных с сервера
+      console.log("🌐 Загружаем данные с сервера");
+      loadDataFromServer();
     }
 
     // AJAX запрос для получения данных с сервера
     function loadDataFromServer() {
-        $.ajax({
-            url: '/get-my-issues',
-            method: 'GET',
-            crossDomain: true,
-            xhrFields: {
-                withCredentials: true
-            },
-            success: function(response) {
-                // Кешируем полученные данные
-                const cacheKey = 'my_issues_data_v2';
-                const cacheTimeKey = 'my_issues_cache_time_v2';
+      $.ajax({
+        url: "/get-my-issues",
+        method: "GET",
+        crossDomain: true,
+        xhrFields: {
+          withCredentials: true,
+        },
+        success: function (response) {
+          // Кешируем полученные данные
+          const cacheKey = "my_issues_data_v2";
+          const cacheTimeKey = "my_issues_cache_time_v2";
 
-                try {
-                    sessionStorage.setItem(cacheKey, JSON.stringify(response));
-                    sessionStorage.setItem(cacheTimeKey, Date.now().toString());
-                    console.log('💾 Данные сохранены в кеш');
-                } catch (error) {
-                    console.warn('⚠️ Не удалось сохранить в кеш:', error);
-                }
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(response));
+            sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+            console.log("💾 Данные сохранены в кеш");
+          } catch (error) {
+            console.warn("⚠️ Не удалось сохранить в кеш:", error);
+          }
 
-                // Обрабатываем данные
-                processTableData(response);
-            },
-            error: function(xhr, status, error) {
-                console.error('Error:', error);
-                $('#table-body').html(`
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td>
-                            <div class="error-state">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                <h3>Ошибка загрузки данных</h3>
-                                <p>Не удалось подключиться к системе HelpDesk</p>
-                                <button onclick="location.reload()" class="action-button primary">
-                                    <i class="fas fa-refresh"></i>
-                                    <span>Попробовать снова</span>
-                                </button>
-                            </div>
-                        </td>
-                        <td></td>
-                    </tr>
-                `);
-            },
-            complete: function() {
-                // Скрываем спиннер после завершения запроса
-                $('#loading-spinner').hide();
-            }
-        });
+          // Обрабатываем данные
+          processTableData(response);
+        },
+        error: function (xhr, status, error) {
+          console.error("Error:", error);
+          $("#table-body").html(`
+                      <tr>
+                          <td></td>
+                          <td></td>
+                          <td>
+                              <div class="error-state">
+                                  <i class="fas fa-exclamation-triangle"></i>
+                                  <h3>Ошибка загрузки данных</h3>
+                                  <p>Не удалось подключиться к системе HelpDesk</p>
+                                  <button onclick="location.reload()" class="action-button primary">
+                                      <i class="fas fa-refresh"></i>
+                                      <span>Попробовать снова</span>
+                                  </button>
+                              </div>
+                          </td>
+                          <td></td>
+                      </tr>
+                  `);
+        },
+        complete: function () {
+          // Скрываем спиннер после завершения запроса
+          $("#loading-spinner").hide();
+        },
+      });
     }
-
-    // Функция анимации чисел
+    // Функция анимации чисел - Optimized
     function animateNumber(element, finalNumber) {
-        let currentNumber = 0;
-        const increment = finalNumber / 30; // 30 шагов анимации
-        const timer = setInterval(function() {
-            currentNumber += increment;
-            if (currentNumber >= finalNumber) {
-                currentNumber = finalNumber;
-                clearInterval(timer);
-            }
-            element.text(Math.floor(currentNumber));
-        }, 50);
+      if (finalNumber === 0) {
+        element.text("0");
+        return;
+      }
+
+      let currentNumber = 0;
+      const steps = Math.min(20, finalNumber); // Меньше шагов для лучшей производительности
+      const increment = finalNumber / steps;
+      const duration = Math.min(1000, finalNumber * 30); // Адаптивная длительность
+      const stepTime = duration / steps;
+
+      const timer = setInterval(function () {
+        currentNumber += increment;
+        if (currentNumber >= finalNumber) {
+          currentNumber = finalNumber;
+          clearInterval(timer);
+        }
+        element.text(Math.floor(currentNumber));
+      }, stepTime);
     }
 
-    // Функция обработки данных таблицы (общая для кеша и сервера)
+    // Функция заполнения деталей карточек
+    function populateCardDetails(stats) {
+      console.log("🔍 populateCardDetails вызвана с:", stats);
+
+      // Проверяем наличие структуры detailsByCategory
+      if (!stats || !stats.detailsByCategory) {
+        console.error("❌ stats.detailsByCategory не найден:", stats);
+        return;
+      }
+
+      console.log("📊 detailsByCategory:", stats.detailsByCategory);
+
+      // Вспомогательная функция генерации блока статусов
+      function buildCategoryBlock(titleEmojiAndText, categoryMap, itemClass) {
+        if (!categoryMap || Object.keys(categoryMap).length === 0) return "";
+        let html = `<div class="category-group"><div class="category-title">${titleEmojiAndText}</div>`;
+        Object.keys(categoryMap).forEach((status) => {
+          const count = categoryMap[status];
+          html += `
+                      <div class="status-item ${itemClass}" data-status="${status}">
+                          <span class="status-name">${status}</span>
+                          <span class="status-count">${count}</span>
+                      </div>
+                  `;
+        });
+        html += "</div>";
+        return html;
+      }
+
+      // Заполняем детализацию для всех заявок (total)
+      let totalDetailsHTML = "";
+
+      // Группируем по категориям для лучшего отображения
+      // Открытые статусы
+      totalDetailsHTML += buildCategoryBlock(
+        "📂 Открытые",
+        stats.detailsByCategory.open,
+        "open-status"
+      );
+
+      // Статусы в работе
+      totalDetailsHTML += buildCategoryBlock(
+        "⚙️ В работе",
+        stats.detailsByCategory.progress,
+        "progress-status"
+      );
+
+      // Закрытые статусы
+      totalDetailsHTML += buildCategoryBlock(
+        "✅ Закрытые",
+        stats.detailsByCategory.closed,
+        "closed-status"
+      );
+
+      if (totalDetailsHTML === "") {
+        totalDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      }
+      $("#totalDetails").html(totalDetailsHTML);
+
+      // Заполняем детализацию по отдельным карточкам
+      let openDetailsHTML = buildCategoryBlock(
+        "📂 Открытые",
+        stats.detailsByCategory.open,
+        "open-status"
+      );
+      if (openDetailsHTML === "")
+        openDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#openDetails").html(openDetailsHTML);
+
+      let progressDetailsHTML = buildCategoryBlock(
+        "⚙️ В работе",
+        stats.detailsByCategory.progress,
+        "progress-status"
+      );
+      if (progressDetailsHTML === "")
+        progressDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#progressDetails").html(progressDetailsHTML);
+
+      let closedDetailsHTML = buildCategoryBlock(
+        "✅ Закрытые",
+        stats.detailsByCategory.closed,
+        "closed-status"
+      );
+      if (closedDetailsHTML === "")
+        closedDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#closedDetails").html(closedDetailsHTML);
+    } // Функция обработки данных таблицы (общая для кеша и сервера)
     function processTableData(response, savedState, fromIssueId) {
-        // Создаем фильтр статусов
-        let statusFilter = '<select id="status-filter" class="form-control">' +
-                         '<option value="">Все статусы</option>';
+      // Создаем фильтр статусов
+      let statusFilter =
+        '<select id="status-filter" class="form-control">' +
+        '<option value="">Все статусы</option>';
 
-        response.statuses.forEach(function(status) {
-            statusFilter += `<option value="${status.name}">${status.name}</option>`;
-        });
+      response.statuses.forEach(function (status) {
+        statusFilter += `<option value="${status.name}">${status.name}</option>`;
+      });
 
-        statusFilter += '</select>';
-        $('#statusFilterContainer').html(statusFilter);
+      statusFilter += "</select>";
+      $("#statusFilterContainer").html(statusFilter);
 
-        // Подсчет и отображение статистики
-        let stats = {
-            total: response.issues.length,
-            open: 0,
-            inProgress: 0,
-            closed: 0
-        };
+      // Подсчет и отображение статистики
+      let stats = {
+        total: response.issues.length,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+        detailsByCategory: {
+          open: {},
+          progress: {},
+          closed: {},
+          other: {},
+        },
+      };
 
-        response.issues.forEach(function(issue) {
-            const normalizedStatus = String(issue.status_name).toLowerCase();
-            if (normalizedStatus.includes('закрыта') || normalizedStatus.includes('closed') || normalizedStatus.includes('resolved')) {
-                stats.closed++;
-            } else if (normalizedStatus.includes('в работе') || normalizedStatus.includes('in progress')) {
-                stats.inProgress++;
-            } else if (normalizedStatus.includes('открыта') || normalizedStatus.includes('new') || normalizedStatus.includes('open') || normalizedStatus.includes('pending')) {
-                stats.open++;
-            }
-        });
+      response.issues.forEach(function (issue) {
+        const normalizedStatus = String(issue.status_name).toLowerCase();
+        const statusName = issue.status_name;
 
-        // Обновляем статистику с анимацией
-        animateNumber($('#totalIssues'), stats.total);
-        animateNumber($('#openIssues'), stats.open);
-        animateNumber($('#inProgressIssues'), stats.inProgress);
-        animateNumber($('#closedIssues'), stats.closed);
-
-        // Заполняем таблицу данными
-        if (response.issues.length === 0) {
-            $('#table-body').html(`
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <div class="empty-state">
-                            <i class="fas fa-inbox"></i>
-                            <h3>Заявки не найдены</h3>
-                            <p>У вас пока нет заявок в системе</p>
-                            <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
-                                <i class="fas fa-plus"></i>
-                                <span>Создать первую заявку</span>
-                            </a>
-                        </div>
-                    </td>
-                    <td></td>
-                </tr>
-            `);
+        if (
+          normalizedStatus.includes("закрыта") ||
+          normalizedStatus.includes("отклонена") ||
+          normalizedStatus.includes("перенаправлена") ||
+          normalizedStatus.includes("closed") ||
+          normalizedStatus.includes("rejected") ||
+          normalizedStatus.includes("redirected")
+        ) {
+          stats.closed++;
+          stats.detailsByCategory.closed[statusName] =
+            (stats.detailsByCategory.closed[statusName] || 0) + 1;
+        } else if (
+          normalizedStatus.includes("в работе") ||
+          normalizedStatus.includes("in progress") ||
+          normalizedStatus.includes("назначена") ||
+          normalizedStatus.includes("assigned")
+        ) {
+          stats.inProgress++;
+          stats.detailsByCategory.progress[statusName] =
+            (stats.detailsByCategory.progress[statusName] || 0) + 1;
+        } else if (
+          normalizedStatus.includes("открыта") ||
+          normalizedStatus.includes("выполнена") ||
+          normalizedStatus.includes("new") ||
+          normalizedStatus.includes("open") ||
+          normalizedStatus.includes("pending") ||
+          normalizedStatus.includes("resolved") ||
+          normalizedStatus.includes("создана") ||
+          normalizedStatus.includes("зарегистрирована")
+        ) {
+          stats.open++;
+          stats.detailsByCategory.open[statusName] =
+            (stats.detailsByCategory.open[statusName] || 0) + 1;
         } else {
-            let tableBody = '';
-            response.issues.forEach(function(issue) {
-                let statusInfo = getStatusStyle(issue.status_name);
-                tableBody += `
-                    <tr class="${statusInfo.trClass}">
-                        <td>
-                            <a href="/my-issues/${issue.id}" class="issue-id-link" title="Посмотреть детали заявки">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>#${issue.id}</span>
-                            </a>
-                        </td>
-                        <td data-sort="${issue.updated_on}">
-                            <span title="${new Date(issue.updated_on).toLocaleString('ru-RU')}">${formatDate(issue.updated_on)}</span>
-                        </td>
-                        <td>
-                            <a href="/my-issues/${issue.id}" class="issue-subject-link issue-subject" title="${issue.subject}">
-                                <i class="fas fa-external-link-alt"></i>
-                                <span>${issue.subject}</span>
-                            </a>
-                        </td>
-                        <td>
-                            <div class="status-cell">
-                                <div class="status-badge" title="${statusInfo.tooltip}">
-                                    <i class="${statusInfo.iconClass} status-icon"></i>
-                                    <span>${issue.status_name}</span>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-            $('#table-body').html(tableBody);
+          // Другие статусы
+          stats.detailsByCategory.other[statusName] =
+            (stats.detailsByCategory.other[statusName] || 0) + 1;
         }
+      });
 
-                // Проверяем структуру таблицы перед инициализацией DataTables
-        const tableElement = $('#issue');
+      // Обновляем статистику с анимацией
+      animateNumber($("#totalIssues"), stats.total);
+      animateNumber($("#openIssues"), stats.open);
+      animateNumber($("#inProgressIssues"), stats.inProgress);
+      animateNumber($("#closedIssues"), stats.closed);
 
-        if (tableElement.length === 0) {
-            console.error('❌ Таблица с id="issue" не найдена!');
-            return;
-        }
+      // Заполняем детализацию карточек
+      populateCardDetails(stats);
+      // Инициализируем клики по стат-карточкам
+      initStatCards();
 
-        const headerCells = tableElement.find('thead tr th').length;
-        const firstRowCells = tableElement.find('tbody tr:first-child td').length;
-
-        console.log('🔍 Проверка структуры таблицы:');
-        console.log('- Колонок в заголовке:', headerCells);
-        console.log('- Колонок в первой строке:', firstRowCells);
-
-        if (headerCells !== firstRowCells) {
-            console.error('❌ Несоответствие количества колонок в заголовке и данных!');
-            console.error('- Заголовок:', headerCells, 'колонок');
-            console.error('- Данные:', firstRowCells, 'колонок');
-        }
-
-        if (headerCells === 0) {
-            console.error('❌ Заголовок таблицы не найден!');
-            return;
-        }
-
-        // Инициализируем DataTables с обработкой ошибок
-        let table;
-        try {
-            table = $('#issue').DataTable({
-            "language": {
-                "url": "/static/js/datatables/Russian.json"
-            },
-            "order": [[1, 'desc']],
-            "pageLength": 10,
-            "lengthMenu": [[5, 10, 25, 50], [5, 10, 25, 50]],
-            "pagingType": "full_numbers",
-            "columnDefs": [
-                {
-                    "targets": 0, // ID колонка
-                    "orderable": true,
-                    "searchable": true
-                },
-                {
-                    "targets": 1, // Дата колонка
-                    "type": "date",
-                    "orderable": true,
-                    "searchable": true,
-                    "render": function(data, type, row) {
-                        if (type === 'display' || type === 'filter') {
-                            return formatDate(data);
-                        }
-                        return data;
-                    }
-                },
-                {
-                    "targets": 2, // Тема заявки колонка
-                    "orderable": true,
-                    "searchable": true
-                },
-                {
-                    "targets": 3, // Статус колонка
-                    "orderable": true,
-                    "searchable": true
-                }
-            ],
-            "dom": '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
-            "drawCallback": function(settings) {
-                // Добавляем анимацию появления строк
-                $('#table-body tr').each(function(index) {
-                    $(this).css('animation-delay', (index * 50) + 'ms');
-                    $(this).addClass('fade-in');
-                });
-            },
-            "initComplete": function () {
-                // Перемещаем элементы управления
-                $('.dataTables_filter').detach().appendTo('#searchBoxContainer');
-                $('#searchBoxContainer label').contents().filter(function(){
-                    return this.nodeType === 3;
-                }).remove();
-                $('#searchBoxContainer input[type="search"]').attr("placeholder", "Поиск по заявкам...");
-
-                $('.dataTables_length').detach().appendTo('#lengthContainer');
-                $('#lengthContainer label').contents().filter(function(){
-                    return this.nodeType === 3;
-                }).remove();
-
-                $('.dataTables_info').detach().appendTo('#infoContainer');
-                $('.dataTables_paginate').detach().appendTo('#paginationContainer');
-
-                // Принудительно показываем пагинацию
-                $('.dataTables_paginate').show();
-
-                // Отладочная информация
-                console.log('DataTables инициализирована');
-                console.log('Количество записей:', this.api().data().length);
-                console.log('Количество колонок:', this.api().columns().count());
-                console.log('Пагинация найдена:', $('.dataTables_paginate').length);
-
-                // Дополнительная проверка через небольшую задержку
-                setTimeout(function() {
-                    if ($('.dataTables_paginate').length === 0) {
-                        console.log('Пагинация не найдена, создаем вручную');
-                        $('#paginationContainer').html('<div class="dataTables_paginate paging_full_numbers"><span class="paginate_button previous disabled">Предыдущая</span><span class="paginate_button current">1</span><span class="paginate_button next disabled">Следующая</span></div>');
-                    }
-                    $('.dataTables_paginate').show();
-                }, 100);
-            },
-            "paging": true,
-            "info": true,
-            "searching": true,
-            "ordering": true
+      // Заполняем таблицу данными
+      if (response.issues.length === 0) {
+        $("#table-body").html(`
+                  <tr>
+                      <td></td>
+                      <td></td>
+                      <td>
+                          <div class="empty-state">
+                              <i class="fas fa-inbox"></i>
+                              <h3>Заявки не найдены</h3>
+                              <p>У вас пока нет заявок в системе</p>
+                              <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
+                                  <i class="fas fa-plus"></i>
+                                  <span>Создать первую заявку</span>
+                              </a>
+                          </div>
+                      </td>
+                      <td></td>
+                  </tr>
+              `);
+      } else {
+        let tableBody = "";
+        response.issues.forEach(function (issue) {
+          let statusInfo = getStatusStyle(issue.status_name);
+          tableBody += `
+                      <tr class="${statusInfo.trClass}">
+                          <td>
+                              <a href="/my-issues/${
+                                issue.id
+                              }" class="issue-id-link" title="Посмотреть детали заявки">
+                                  <i class="fas fa-external-link-alt"></i>
+                                  <span>#${issue.id}</span>
+                              </a>
+                          </td>
+                          <td data-sort="${issue.updated_on}">
+                              <span title="${new Date(
+                                issue.updated_on
+                              ).toLocaleString("ru-RU")}">${formatDate(
+            issue.updated_on
+          )}</span>
+                          </td>
+                          <td>
+                              <a href="/my-issues/${
+                                issue.id
+                              }" class="issue-subject-link issue-subject" title="${
+            issue.subject
+          }">
+                                  <i class="fas fa-external-link-alt"></i>
+                                  <span>${issue.subject}</span>
+                              </a>
+                          </td>
+                          <td>
+                              <div class="status-cell">
+                                  <div class="status-badge" title="${
+                                    statusInfo.tooltip
+                                  }">
+                                      <i class="${
+                                        statusInfo.iconClass
+                                      } status-icon"></i>
+                                      <span>${issue.status_name}</span>
+                                  </div>
+                              </div>
+                          </td>
+                      </tr>
+                  `;
         });
-        } catch (error) {
-            console.error('❌ Ошибка инициализации DataTables:', error);
-            console.error('Детали ошибки:', error.message);
+        $("#table-body").html(tableBody);
+      }
 
-            // Показываем сообщение об ошибке пользователю
-            $('#table-body').html(`
-                <tr>
-                    <td></td>
-                    <td></td>
-                    <td>
-                        <div class="error-state">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <h3>Ошибка загрузки таблицы</h3>
-                            <p>Произошла ошибка при инициализации таблицы. Попробуйте обновить страницу.</p>
-                            <button onclick="location.reload()" class="action-button primary">
-                                <i class="fas fa-refresh"></i>
-                                <span>Обновить страницу</span>
-                            </button>
-                        </div>
-                    </td>
-                    <td></td>
-                </tr>
-            `);
-            return;
-        }
+      // Инициализируем DataTables
+      let table;
+      try {
+        table = window.issuesTable = $("#issue").DataTable({
+          language: {
+            url: "/static/js/datatables/Russian.json",
+          },
+          order: [[1, "desc"]],
+          pageLength: 10,
+          lengthMenu: [
+            [5, 10, 25, 50],
+            [5, 10, 25, 50],
+          ],
+          pagingType: "full_numbers",
+          dom: '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
+          deferRender: true, // Optimize rendering
+          processing: false, // Disable processing indicator for better UX
+          stateSave: false, // We handle state manually
+          initComplete: function () {
+            // Перемещаем элементы управления
+            $(".dataTables_filter").detach().appendTo("#searchBoxContainer");
+            $("#searchBoxContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+            $('#searchBoxContainer input[type="search"]').attr(
+              "placeholder",
+              "Поиск по заявкам..."
+            );
+
+            $(".dataTables_length").detach().appendTo("#lengthContainer");
+            $("#lengthContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+
+            $(".dataTables_info").detach().appendTo("#infoContainer");
+            $(".dataTables_paginate").detach().appendTo("#paginationContainer");
+          },
+          paging: true,
+          info: true,
+          searching: true,
+          ordering: true,
+        });
 
         // Добавляем обработчик изменения фильтра статусов
-        $('#status-filter').on('change', function() {
-            let selectedStatus = $(this).val();
-            table.column(3).search(selectedStatus).draw();
-            saveTableState(table);
-        });
+        $("#status-filter").on("change", function () {
+          let selectedStatus = $(this).val();
+          table.column(3).search(selectedStatus).draw();
 
-        // Восстанавливаем состояние таблицы, если есть сохраненное
-        if (savedState) {
-            console.log('🔄 Восстанавливаем состояние таблицы:', savedState);
-            restoreTableState(table, savedState);
-        }
-
-        // Автоскролл к заявке, от которой вернулись (если указана)
-        if (fromIssueId) {
+          // Сохраняем состояние при изменении фильтра
+          if (window.dataStateManager) {
             setTimeout(() => {
-                scrollToIssue(fromIssueId);
-            }, 500);
-        }
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
 
-        // Настройка автосохранения состояния при взаимодействии с таблицей
-        setupAutoSaveState(table);
+        // Добавляем обработчики для сохранения состояния при других изменениях
+        table.on("page.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
 
-        // Скрываем спиннер после успешной обработки данных (при кешированном или серверном ответе)
-        $('#loading-spinner').hide();
+        table.on("length.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        table.on("order.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        table.on("search.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+      } catch (error) {
+        console.error("❌ Ошибка инициализации DataTables:", error);
+      }
+
+      // Восстанавливаем состояние таблицы после инициализации
+      if (window.dataStateManager && savedState) {
+        setTimeout(() => {
+          window.dataStateManager.restoreTableState();
+        }, 100);
+      }
+
+      // Скрываем спиннер после успешной обработки данных
+      $("#loading-spinner").hide();
+
+      // Уведомляем о загрузке данных
+      $(document).trigger("dataLoaded");
     }
 
-    // Функция сохранения состояния таблицы
-    function saveTableState(table) {
-        if (!table) return;
+    // Table initialization moved to requestAnimationFrame above
 
-        const stateKey = 'my_issues_table_state_v2';
-        const state = {
-            page: table.page(),
-            pageLength: table.page.len(),
-            order: table.order(),
-            search: table.search(),
-            statusFilter: $('#status-filter').val(),
-            timestamp: Date.now()
-        };
+    // Инициализация поведения стат-карточек - Optimized
+    function initStatCards() {
+      try {
+        $(".stat-card.expandable").each(function () {
+          const $card = $(this);
+          const $details = $card.find(".stat-details");
 
-        try {
-            sessionStorage.setItem(stateKey, JSON.stringify(state));
-            console.log('💾 Состояние таблицы сохранено');
-        } catch (error) {
-            console.warn('⚠️ Не удалось сохранить состояние таблицы:', error);
-        }
-    }
+          $card.off("click.statToggle").on("click.statToggle", function (e) {
+            if (
+              $(e.target).is(
+                "select, option, input, button, a, .action-button, .status-item"
+              )
+            )
+              return;
 
-    // Функция восстановления состояния таблицы
-    function restoreTableState(table, savedState) {
-        if (!table || !savedState) return;
+            $card.toggleClass("expanded");
 
-        try {
-            // Восстанавливаем фильтр статуса
-            if (savedState.statusFilter) {
-                $('#status-filter').val(savedState.statusFilter);
-                table.column(3).search(savedState.statusFilter);
-            }
-
-            // Восстанавливаем поиск
-            if (savedState.search) {
-                table.search(savedState.search);
-            }
-
-            // Восстанавливаем сортировку
-            if (savedState.order) {
-                table.order(savedState.order);
-            }
-
-            // Восстанавливаем размер страницы
-            if (savedState.pageLength) {
-                table.page.len(savedState.pageLength);
-            }
-
-            // Восстанавливаем номер страницы и перерисовываем
-            if (savedState.page !== undefined) {
-                table.page(savedState.page).draw(false);
+            if ($card.hasClass("expanded")) {
+              $details
+                .css({
+                  display: "block",
+                  opacity: "0",
+                  height: "0",
+                  overflow: "hidden",
+                })
+                .stop(true, true)
+                .animate(
+                  {
+                    opacity: "1",
+                    height: $details[0].scrollHeight + "px",
+                  },
+                  150,
+                  function () {
+                    $details.css({
+                      height: "auto",
+                      overflow: "visible",
+                    });
+                  }
+                );
             } else {
-                table.draw(false);
+              $details.stop(true, true).animate(
+                {
+                  opacity: "0",
+                  height: "0",
+                },
+                150,
+                function () {
+                  $details.css("display", "none");
+                }
+              );
             }
+          });
+        });
 
-            console.log('✅ Состояние таблицы восстановлено');
-        } catch (error) {
-            console.warn('⚠️ Ошибка при восстановлении состояния:', error);
-            table.draw();
+        // Инициализация кликов по статусам для фильтрации
+        $(".status-item")
+          .off("click.statusFilter")
+          .on("click.statusFilter", function (e) {
+            e.stopPropagation();
+            const $statusItem = $(this);
+            const statusText = $statusItem.find(".status-name").text().trim();
+
+            console.log("🔍 Клик по статусу:", statusText);
+
+            // Убираем активный класс со всех статусов
+            $(".status-item").removeClass("active");
+            // Добавляем активный класс к выбранному статусу
+            $statusItem.addClass("active");
+
+            // Фильтруем таблицу по статусу
+            filterTableByStatus(statusText);
+          });
+      } catch (err) {
+        console.error("Ошибка инициализации стат-карточек:", err);
+      }
+    }
+
+    // Функция фильтрации таблицы по статусу
+    function filterTableByStatus(statusText) {
+      try {
+        console.log("🔍 filterTableByStatus вызвана с:", statusText);
+        const dt = window.dataStateManager
+          ? window.dataStateManager.getDataTable()
+          : null;
+        console.log("🔍 DataTable instance:", dt);
+
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          console.log("🔍 Применяем фильтр по статусу:", statusText);
+
+          // Очищаем предыдущие фильтры
+          dt.search("").columns().search("").draw();
+
+          // Применяем фильтр по статусу (колонка 3 - статус)
+          if (statusText && statusText !== "Все") {
+            dt.column(3).search(statusText, true, false).draw();
+            console.log("🔍 Фильтр применен к колонке 3");
+          }
+
+          // Сохраняем состояние
+          if (window.dataStateManager) {
+            window.dataStateManager.saveCurrentState();
+          }
+        } else {
+          console.warn("⚠️ DataTable не найдена или не инициализирована");
         }
+      } catch (err) {
+        console.error("Ошибка фильтрации по статусу:", err);
+      }
     }
 
-    // Функция настройки автосохранения состояния
-    function setupAutoSaveState(table) {
-        if (!table) return;
+    // Функция сброса фильтров
+    function resetStatusFilter() {
+      try {
+        const dt = window.dataStateManager
+          ? window.dataStateManager.getDataTable()
+          : null;
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          // Очищаем все фильтры
+          dt.search("").columns().search("").draw();
 
-        // Сохраняем состояние при изменении страницы
-        table.on('page.dt', function() {
-            setTimeout(() => saveTableState(table), 100);
-        });
+          // Убираем активный класс со всех статусов
+          $(".status-item").removeClass("active");
 
-        // Сохраняем состояние при изменении длины страницы
-        table.on('length.dt', function() {
-            setTimeout(() => saveTableState(table), 100);
-        });
-
-        // Сохраняем состояние при поиске
-        table.on('search.dt', function() {
-            setTimeout(() => saveTableState(table), 100);
-        });
-
-        // Сохраняем состояние при сортировке
-        table.on('order.dt', function() {
-            setTimeout(() => saveTableState(table), 100);
-        });
-    }
-
-    // Функция автоскролла к определенной заявке
-    function scrollToIssue(issueId) {
-        const issueLink = $(`a[href="/my-issues/${issueId}"]`);
-        if (issueLink.length > 0) {
-            // Плавный скролл к строке с подсветкой
-            const row = issueLink.closest('tr');
-            row.addClass('highlight-return');
-
-            $('html, body').animate({
-                scrollTop: row.offset().top - 100
-            }, 800, function() {
-                // Убираем подсветку через 3 секунды
-                setTimeout(() => {
-                    row.removeClass('highlight-return');
-                }, 3000);
-            });
-
-            console.log(`🎯 Скролл к заявке #${issueId}`);
+          // Сохраняем состояние
+          if (window.dataStateManager) {
+            window.dataStateManager.saveCurrentState();
+          }
         }
+      } catch (err) {
+        console.error("Ошибка сброса фильтров:", err);
+      }
     }
 
-    // Запускаем инициализацию таблицы
-    initializeTableData();
-});
+    // Добавляем кнопку сброса фильтра в DOM
+    $(document).ready(function () {
+      // Добавляем кнопку сброса фильтра в панель управления
+      if ($("#reset-filter-btn").length === 0) {
+        $(".controls-content").append(
+          '<div class="reset-filter-container"><button id="reset-filter-btn" class="action-button secondary"><i class="fas fa-times"></i> Сбросить фильтр</button></div>'
+        );
+
+        // Обработчик клика по кнопке сброса
+        $("#reset-filter-btn").on("click", function () {
+          resetStatusFilter();
+        });
+      }
+    });
+
+    // Функции для управления таблицей при переключении темы
+    window.reinitializeTable = function () {
+      try {
+        // Сохраняем текущее состояние перед уничтожением
+        if (window.dataStateManager) {
+          window.dataStateManager.saveCurrentState();
+        }
+
+        // Уничтожаем существующую таблицу
+        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+          window.issuesTable.destroy();
+        }
+
+        // Пересоздаем таблицу
+        setTimeout(() => {
+          initializeTableData();
+
+          // Восстанавливаем состояние после пересоздания
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.restoreState();
+            }, 200);
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Ошибка при переинициализации таблицы:", error);
+      }
+    };
+
+    // Функция для безопасного уничтожения таблицы
+    window.destroyTable = function () {
+      try {
+        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+          window.issuesTable.destroy();
+          window.issuesTable = null;
+        }
+      } catch (error) {
+        console.error("Ошибка при уничтожении таблицы:", error);
+      }
+    };
+  });
+
+  // Lazy load background shapes after main content loads
+  setTimeout(() => {
+    $(".background-shapes").css("opacity", "1");
+  }, 500);
 </script>
 {% endblock %}

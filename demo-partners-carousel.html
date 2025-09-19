@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Demo: Tilda Partners Carousel</title>
+    <style>
+      /* Полная стилизация для демонстрации */
+      :root {
+        --partners-primary: #667eea;
+        --partners-secondary: #764ba2;
+        --partners-accent: #f093fb;
+        --partners-light: #f8fafc;
+        --partners-white: #ffffff;
+        --partners-shadow: rgba(0, 0, 0, 0.1);
+        --partners-glow: rgba(102, 126, 234, 0.3);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        background: #f0f0f0;
+        padding: 20px;
+      }
+
+      .tilda-partners-modern {
+        position: relative;
+        width: 100%;
+        min-height: 400px;
+        background: linear-gradient(
+          135deg,
+          var(--partners-light) 0%,
+          #e2e8f0 100%
+        );
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px var(--partners-shadow);
+      }
+
+      .partners-bg-decoration {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+      }
+
+      .bg-gradient-primary {
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(
+          circle,
+          var(--partners-glow) 0%,
+          transparent 70%
+        );
+        animation: float 6s ease-in-out infinite;
+      }
+
+      .bg-pattern-dots {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-image: radial-gradient(
+          circle,
+          rgba(102, 126, 234, 0.1) 1px,
+          transparent 1px
+        );
+        background-size: 30px 30px;
+        animation: drift 8s linear infinite;
+      }
+
+      .partners-content-wrapper {
+        position: relative;
+        z-index: 2;
+        padding: 60px 40px;
+        text-align: center;
+      }
+
+      .partners-title {
+        font-size: 3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        color: #1a202c;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 1s ease-out;
+      }
+
+      .partners-subtitle {
+        font-size: 1.2rem;
+        color: #718096;
+        margin-bottom: 3rem;
+        animation: fadeInUp 1s ease-out 0.2s both;
+      }
+
+      .logos-carousel-container {
+        position: relative;
+        width: 100%;
+        height: 280px;
+        overflow: hidden;
+        border-radius: 15px;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(10px);
+        box-shadow: inset 0 2px 10px rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 1s ease-out 0.4s both;
+      }
+
+      .carousel-gradient-left,
+      .carousel-gradient-right {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        width: 100px;
+        z-index: 3;
+        pointer-events: none;
+      }
+
+      .carousel-gradient-left {
+        left: 0;
+        background: linear-gradient(
+          to right,
+          rgba(255, 255, 255, 0.9),
+          transparent
+        );
+      }
+
+      .carousel-gradient-right {
+        right: 0;
+        background: linear-gradient(
+          to left,
+          rgba(255, 255, 255, 0.9),
+          transparent
+        );
+      }
+
+      .logos-track {
+        display: flex;
+        align-items: center;
+        height: 100%;
+        animation: smoothSlide 30s linear infinite;
+        will-change: transform;
+      }
+
+      .logos-track:hover {
+        animation-play-state: paused;
+      }
+
+      .logo-item {
+        flex-shrink: 0;
+        height: 200px;
+        margin: 0 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.3s ease;
+        filter: grayscale(30%) opacity(0.9);
+        padding: 20px;
+      }
+
+      .logo-item:hover {
+        transform: scale(1.15);
+        filter: grayscale(0%) opacity(1);
+        box-shadow: 0 15px 35px var(--partners-glow);
+      }
+
+      .logo-item img {
+        max-height: 100%;
+        max-width: 300px;
+        min-width: 150px;
+        object-fit: contain;
+        transition: all 0.3s ease;
+      }
+
+      @keyframes smoothSlide {
+        from {
+          transform: translate3d(0, 0, 0);
+        }
+        to {
+          transform: translate3d(-50%, 0, 0);
+        }
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(30px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes float {
+        0%,
+        100% {
+          transform: translateY(0px) rotate(0deg);
+        }
+        50% {
+          transform: translateY(-20px) rotate(180deg);
+        }
+      }
+
+      @keyframes drift {
+        0% {
+          transform: translateX(0);
+        }
+        100% {
+          transform: translateX(30px);
+        }
+      }
+
+      /* Адаптивность */
+      @media (max-width: 768px) {
+        .partners-content-wrapper {
+          padding: 40px 20px;
+        }
+
+        .partners-title {
+          font-size: 2rem;
+        }
+
+        .logos-carousel-container {
+          height: 200px;
+        }
+
+        .logo-item {
+          height: 150px;
+          margin: 0 40px;
+        }
+
+        .logo-item img {
+          max-width: 200px;
+          min-width: 120px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .partners-title {
+          font-size: 1.5rem;
+        }
+
+        .logos-carousel-container {
+          height: 160px;
+        }
+
+        .logo-item {
+          height: 120px;
+          margin: 0 30px;
+        }
+
+        .logo-item img {
+          max-width: 160px;
+          min-width: 100px;
+        }
+      }
+
+      /* Accessibility */
+      @media (prefers-reduced-motion: reduce) {
+        .logos-track,
+        .bg-gradient-primary,
+        .bg-pattern-dots {
+          animation: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hidden Image Container for Tilda Integration -->
+    <div id="rec1313636551-hidden-image" style="display: none">
+      <img
+        src="https://static.tildacdn.com/tild3834-3165-4865-b435-653865396434/clipboard.png"
+        alt="Partner Logo"
+        id="partners-source-image"
+      />
+    </div>
+
+    <!-- Main Partners Carousel Component -->
+    <section
+      class="tilda-partners-modern"
+      id="rec1313636551"
+      aria-label="Наши партнеры"
+    >
+      <!-- Decorative Background Elements -->
+      <div class="partners-bg-decoration" aria-hidden="true">
+        <div class="bg-gradient-primary"></div>
+        <div class="bg-pattern-dots"></div>
+      </div>
+
+      <!-- Main Content Wrapper -->
+      <div class="partners-content-wrapper">
+        <!-- Title Section -->
+        <header class="partners-header">
+          <h2 class="partners-title" id="partners-title">Наши партнеры</h2>
+          <p class="partners-subtitle" id="partners-subtitle">
+            Компании, которые доверяют нам
+          </p>
+        </header>
+
+        <!-- Logos Carousel Container -->
+        <div
+          class="logos-carousel-container"
+          aria-labelledby="partners-title"
+          aria-describedby="partners-subtitle"
+        >
+          <!-- Gradient Overlays for Smooth Edges -->
+          <div class="carousel-gradient-left" aria-hidden="true"></div>
+          <div class="carousel-gradient-right" aria-hidden="true"></div>
+
+          <!-- Main Logos Track -->
+          <div
+            class="logos-track"
+            id="logosTrack"
+            aria-label="Логотипы партнеров"
+          >
+            <!-- Динамически созданные логотипы -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <script>
+      // Демо JavaScript для создания логотипов
+      class DemoPartnersController {
+        constructor() {
+          this.logosTrack = document.getElementById("logosTrack");
+          this.sourceImage = document.getElementById("partners-source-image");
+          this.init();
+        }
+
+        init() {
+          if (document.readyState === "loading") {
+            document.addEventListener("DOMContentLoaded", () =>
+              this.createLogos()
+            );
+          } else {
+            this.createLogos();
+          }
+        }
+
+        createLogos() {
+          if (!this.logosTrack || !this.sourceImage) return;
+
+          // Создаем 5 копий логотипа для бесшовной анимации
+          const logoCount = 5;
+
+          for (let i = 0; i < logoCount; i++) {
+            const logoItem = document.createElement("div");
+            logoItem.className = "logo-item";
+            logoItem.setAttribute("role", "img");
+            logoItem.setAttribute("aria-label", `Партнер ${i + 1}`);
+
+            const logoImg = document.createElement("img");
+            logoImg.src = this.sourceImage.src;
+            logoImg.alt = `Логотип партнера ${i + 1}`;
+            logoImg.loading = "lazy";
+
+            logoItem.appendChild(logoImg);
+            this.logosTrack.appendChild(logoItem);
+          }
+
+          // Дублируем логотипы для бесшовной анимации
+          const originalLogos = this.logosTrack.innerHTML;
+          this.logosTrack.innerHTML = originalLogos + originalLogos;
+
+          console.log("Demo: Логотипы партнеров созданы");
+        }
+      }
+
+      // Инициализация демо
+      new DemoPartnersController();
+    </script>
+  </body>
+</html>

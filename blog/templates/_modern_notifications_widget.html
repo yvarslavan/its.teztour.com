@@ -71,8 +71,8 @@
     right: 20px !important;
     width: 480px;
     min-width: 400px;
-    max-width: 600px;
-    max-height: 600px;
+    max-width: min(600px, calc(100vw - 40px));
+    max-height: min(600px, calc(100vh - 140px));
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -383,6 +383,33 @@
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Swipe индикаторы */
+.notification-item::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(34, 197, 94, 0.1), transparent);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.notification-item::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.1), transparent);
+    transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
 }
 
 @keyframes slideInFromBottom {
@@ -633,57 +660,182 @@
     transform: translateY(-1px);
 }
 
-/* Responsive */
-@media (max-width: 480px) {
+/* Responsive - Улучшенная мобильная адаптация */
+@media (max-width: 320px) {
+    /* Очень маленькие экраны */
     .modern-notifications-widget {
-        width: calc(100vw - 40px) !important;
-        right: 20px !important;
-        left: 20px !important;
-        top: 110px !important; /* Увеличенный отступ на мобильных */
-        max-height: calc(100vh - 130px) !important; /* Ограничиваем высоту на мобильных */
+        width: calc(100vw - 20px) !important;
+        right: 10px !important;
+        left: 10px !important;
+        top: 100px !important;
+        max-height: calc(100vh - 120px) !important;
+        min-width: 280px !important;
     }
 
-    /* ДОБАВЛЕНО: Адаптивные стили для footer на мобильных */
+    .notifications-header {
+        padding: 16px 18px 12px !important;
+    }
+
+    .header-icon {
+        width: 40px !important;
+        height: 40px !important;
+        font-size: 18px !important;
+    }
+
+    .header-title {
+        font-size: 18px !important;
+    }
+
+    .header-subtitle {
+        font-size: 12px !important;
+    }
+
+    .action-btn {
+        width: 32px !important;
+        height: 32px !important;
+    }
+
     .notifications-footer {
-        padding: 6px 16px; /* ИСПРАВЛЕНО: минимальный padding для центрирования на мобильных */
-        gap: 8px; /* Уменьшенный gap на мобильных */
-        min-height: 60px; /* ДОБАВЛЕНО: уменьшенная минимальная высота на мобильных */
+        padding: 8px 12px !important;
+        gap: 6px !important;
+        min-height: 56px !important;
     }
 
     .footer-btn {
-        padding: 8px 10px; /* Еще более компактный padding */
-        font-size: 11px; /* Уменьшенный шрифт на мобильных */
-        min-height: 32px; /* Уменьшенная высота кнопки */
-        gap: 4px; /* Уменьшенный gap между иконкой и текстом */
+        padding: 10px 8px !important;
+        font-size: 10px !important;
+        min-height: 40px !important;
+        gap: 3px !important;
     }
 
     .footer-btn span {
-        display: none; /* ДОБАВЛЕНО: скрываем текст на очень маленьких экранах, оставляем только иконки */
+        display: none !important;
     }
 
     .footer-btn i {
-        font-size: 14px; /* Увеличиваем иконки когда текст скрыт */
+        font-size: 16px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .modern-notifications-widget {
+        width: calc(100vw - 30px) !important;
+        right: 15px !important;
+        left: 15px !important;
+        top: 105px !important;
+        max-height: calc(100vh - 125px) !important;
+        min-width: 320px !important;
+    }
+
+    .notifications-header {
+        padding: 18px 20px 14px !important;
+    }
+
+    .header-icon {
+        width: 44px !important;
+        height: 44px !important;
+        font-size: 19px !important;
+    }
+
+    .header-title {
+        font-size: 19px !important;
+    }
+
+    .header-subtitle {
+        font-size: 13px !important;
+    }
+
+    .action-btn {
+        width: 34px !important;
+        height: 34px !important;
+    }
+
+    .notifications-footer {
+        padding: 10px 16px !important;
+        gap: 8px !important;
+        min-height: 60px !important;
+    }
+
+    .footer-btn {
+        padding: 12px 10px !important;
+        font-size: 11px !important;
+        min-height: 40px !important;
+        gap: 4px !important;
+    }
+
+    .footer-btn span {
+        display: none !important;
+    }
+
+    .footer-btn i {
+        font-size: 15px !important;
+    }
+
+    /* Улучшенные стили для уведомлений на мобильных */
+    .notification-item {
+        padding: 16px !important;
+        margin-bottom: 10px !important;
+    }
+
+    .notification-icon {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 16px !important;
+    }
+
+    .notification-title {
+        font-size: 14px !important;
+    }
+
+    .notification-description {
+        font-size: 12px !important;
+    }
+
+    .notification-time {
+        font-size: 11px !important;
     }
 }
 
 @media (max-width: 768px) {
     .modern-notifications-widget {
-        top: 115px !important; /* Увеличенное значение для планшетов */
-        max-height: calc(100vh - 135px) !important;
+        width: calc(100vw - 40px) !important;
+        right: 20px !important;
+        left: 20px !important;
+        top: 110px !important;
+        max-height: calc(100vh - 130px) !important;
+        min-width: 360px !important;
     }
 
-    /* ДОБАВЛЕНО: Адаптивные стили для footer на планшетах */
+    .notifications-header {
+        padding: 20px 22px 16px !important;
+    }
+
     .notifications-footer {
-        padding: 7px 18px; /* ИСПРАВЛЕНО: минимальный padding для центрирования на планшетах */
-        gap: 10px; /* Промежуточный gap для планшетов */
-        min-height: 66px; /* ДОБАВЛЕНО: промежуточная минимальная высота для планшетов */
+        padding: 12px 18px !important;
+        gap: 10px !important;
+        min-height: 66px !important;
     }
 
     .footer-btn {
-        padding: 9px 11px; /* Промежуточный padding для планшетов */
-        font-size: 12px; /* Промежуточный размер шрифта */
-        min-height: 34px; /* Промежуточная высота кнопки */
-        gap: 5px; /* Промежуточный gap */
+        padding: 12px 14px !important;
+        font-size: 12px !important;
+        min-height: 42px !important;
+        gap: 5px !important;
+    }
+
+    .footer-btn span {
+        display: inline !important;
+    }
+
+    .footer-btn i {
+        font-size: 13px !important;
+    }
+}
+
+@media (max-width: 1024px) {
+    .modern-notifications-widget {
+        width: 420px !important;
+        max-width: calc(100vw - 40px) !important;
     }
 }
 
@@ -691,6 +843,85 @@
 @media (min-width: 1200px) {
     .modern-notifications-widget {
         top: 130px !important; /* Больший отступ на больших экранах */
+    }
+}
+
+/* Touch-friendly улучшения */
+@media (hover: none) and (pointer: coarse) {
+    /* Стили для touch-устройств */
+    .action-btn {
+        min-width: 44px !important;
+        min-height: 44px !important;
+        padding: 12px !important;
+    }
+    
+    .footer-btn {
+        min-height: 48px !important;
+        padding: 14px 16px !important;
+    }
+    
+    .notification-item {
+        padding: 20px !important;
+        margin-bottom: 16px !important;
+        cursor: pointer !important;
+        user-select: none !important;
+        -webkit-user-select: none !important;
+        -webkit-touch-callout: none !important;
+    }
+    
+    .notification-action-btn {
+        min-height: 44px !important;
+        padding: 12px 18px !important;
+    }
+    
+    /* Улучшенная прокрутка на touch-устройствах */
+    .notifications-list {
+        -webkit-overflow-scrolling: touch !important;
+        overscroll-behavior: contain !important;
+    }
+    
+    /* Предотвращение случайного выделения текста при swipe */
+    .notifications-list * {
+        -webkit-user-select: none !important;
+        -moz-user-select: none !important;
+        -ms-user-select: none !important;
+        user-select: none !important;
+    }
+}
+
+/* Улучшения для landscape ориентации на мобильных */
+@media (max-width: 768px) and (orientation: landscape) {
+    .modern-notifications-widget {
+        max-height: calc(100vh - 80px) !important;
+        top: 60px !important;
+    }
+    
+    .notifications-header {
+        padding: 12px 20px 10px !important;
+    }
+    
+    .header-icon {
+        width: 40px !important;
+        height: 40px !important;
+    }
+    
+    .header-title {
+        font-size: 18px !important;
+    }
+}
+
+/* Улучшения для высоких экранов */
+@media (min-height: 800px) {
+    .modern-notifications-widget {
+        max-height: 700px !important;
+    }
+}
+
+/* Улучшения для очень широких экранов */
+@media (min-width: 1400px) {
+    .modern-notifications-widget {
+        width: 520px !important;
+        max-width: 520px !important;
     }
 }
 
@@ -723,18 +954,68 @@
     }
 }
 
-/* Адаптивность для notifications-restore-btn (синхронизация с fab-container) */
+/* Адаптивность для notifications-restore-btn (улучшенная мобильная версия) */
+@media (max-width: 1024px) {
+  .notifications-restore-btn {
+    right: 1.5rem !important;
+    bottom: 1.5rem !important;
+  }
+  
+  .notifications-restore-btn .restore-button {
+    width: 56px !important;
+    height: 56px !important;
+  }
+  
+  .notifications-restore-btn .restore-button i {
+    font-size: 18px !important;
+  }
+}
+
 @media (max-width: 768px) {
   .notifications-restore-btn {
-    right: 2rem !important;
-    bottom: 2rem !important;
+    right: 1.25rem !important;
+    bottom: 1.25rem !important;
+  }
+  
+  .notifications-restore-btn .restore-button {
+    width: 52px !important;
+    height: 52px !important;
+  }
+  
+  .notifications-restore-btn .restore-button i {
+    font-size: 17px !important;
   }
 }
 
 @media (max-width: 480px) {
   .notifications-restore-btn {
-    right: 2rem !important;
-    bottom: 2rem !important;
+    right: 1rem !important;
+    bottom: 1rem !important;
+  }
+  
+  .notifications-restore-btn .restore-button {
+    width: 48px !important;
+    height: 48px !important;
+  }
+  
+  .notifications-restore-btn .restore-button i {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 320px) {
+  .notifications-restore-btn {
+    right: 0.75rem !important;
+    bottom: 0.75rem !important;
+  }
+  
+  .notifications-restore-btn .restore-button {
+    width: 44px !important;
+    height: 44px !important;
+  }
+  
+  .notifications-restore-btn .restore-button i {
+    font-size: 15px !important;
   }
 }
 
@@ -3496,4 +3777,552 @@ try {
 
     console.log('[ModernWidget] ⚠️ Виджет уведомлений отключен из-за ошибки. Остальной сайт должен работать нормально.');
 }
+
+// 🚀 СОВРЕМЕННЫЕ UX УЛУЧШЕНИЯ
+class ModernNotificationsUX {
+    constructor() {
+        this.widget = null;
+        this.notificationsList = null;
+        this.isRefreshing = false;
+        this.swipeThreshold = 100;
+        this.pullThreshold = 80;
+        this.init();
+    }
+
+    init() {
+        // Ждем загрузки DOM
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => this.initializeUX());
+        } else {
+            this.initializeUX();
+        }
+    }
+
+    initializeUX() {
+        this.widget = document.getElementById('modern-notifications-widget');
+        this.notificationsList = document.getElementById('notifications-list');
+        
+        if (this.widget && this.notificationsList) {
+            this.setupSwipeGestures();
+            this.setupPullToRefresh();
+            this.setupHapticFeedback();
+            this.setupImprovedAnimations();
+            console.log('[ModernUX] 🎉 Современные UX улучшения активированы!');
+        } else {
+            // Повторная попытка через 1 секунду
+            setTimeout(() => this.initializeUX(), 1000);
+        }
+    }
+
+    // 👆 SWIPE ЖЕСТЫ ДЛЯ ЗАКРЫТИЯ УВЕДОМЛЕНИЙ
+    setupSwipeGestures() {
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let isDragging = false;
+        let draggedElement = null;
+
+        this.notificationsList.addEventListener('touchstart', (e) => {
+            const notificationItem = e.target.closest('.notification-item');
+            if (!notificationItem) return;
+
+            startX = e.touches[0].clientX;
+            startY = e.touches[0].clientY;
+            isDragging = true;
+            draggedElement = notificationItem;
+            
+            // Добавляем класс для анимации
+            draggedElement.style.transition = 'none';
+            draggedElement.style.zIndex = '1000';
+            
+            this.hapticFeedback('light');
+        }, { passive: true });
+
+        this.notificationsList.addEventListener('touchmove', (e) => {
+            if (!isDragging || !draggedElement) return;
+
+            currentX = e.touches[0].clientX;
+            currentY = e.touches[0].clientY;
+            
+            const deltaX = currentX - startX;
+            const deltaY = currentY - startY;
+            
+            // Проверяем, что это горизонтальный swipe
+            if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
+                e.preventDefault();
+                
+                // Применяем трансформацию с улучшенной физикой
+                const progress = Math.min(Math.abs(deltaX) / this.swipeThreshold, 1);
+                const opacity = Math.max(0.3, 1 - progress * 0.7);
+                const rotation = deltaX * 0.05; // Уменьшенная ротация для более естественного вида
+                const scale = 1 - progress * 0.05; // Небольшое уменьшение при swipe
+                
+                draggedElement.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg) scale(${scale})`;
+                draggedElement.style.opacity = opacity;
+                
+                // Улучшенная визуальная обратная связь
+                if (deltaX > 30) {
+                    draggedElement.style.backgroundColor = 'rgba(34, 197, 94, 0.15)';
+                    draggedElement.style.borderColor = 'rgba(34, 197, 94, 0.3)';
+                    // Показываем иконку "прочитано"
+                    this.showSwipeIcon(draggedElement, 'check', 'right');
+                } else if (deltaX < -30) {
+                    draggedElement.style.backgroundColor = 'rgba(239, 68, 68, 0.15)';
+                    draggedElement.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+                    // Показываем иконку "удалить"
+                    this.showSwipeIcon(draggedElement, 'trash', 'left');
+                } else {
+                    draggedElement.style.backgroundColor = '';
+                    draggedElement.style.borderColor = '';
+                    this.hideSwipeIcon(draggedElement);
+                }
+                
+                // Haptic feedback при достижении порога
+                if (Math.abs(deltaX) > this.swipeThreshold * 0.8 && !draggedElement.dataset.hapticTriggered) {
+                    this.hapticFeedback('light');
+                    draggedElement.dataset.hapticTriggered = 'true';
+                }
+            }
+        }, { passive: false });
+
+        this.notificationsList.addEventListener('touchend', (e) => {
+            if (!isDragging || !draggedElement) return;
+
+            const deltaX = currentX - startX;
+            const shouldDismiss = Math.abs(deltaX) > this.swipeThreshold;
+
+            if (shouldDismiss) {
+                // Анимация удаления
+                draggedElement.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                draggedElement.style.transform = `translateX(${deltaX > 0 ? '100%' : '-100%'}) rotate(${deltaX > 0 ? '10deg' : '-10deg'})`;
+                draggedElement.style.opacity = '0';
+                
+                this.hapticFeedback('medium');
+                
+                // Удаляем элемент после анимации
+                setTimeout(() => {
+                    if (draggedElement && draggedElement.parentNode) {
+                        draggedElement.remove();
+                        this.showSwipeToast(deltaX > 0 ? 'Уведомление отмечено как прочитанное' : 'Уведомление удалено');
+                    }
+                }, 300);
+            } else {
+                // Возвращаем на место
+                draggedElement.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                draggedElement.style.transform = 'translateX(0) rotate(0)';
+                draggedElement.style.opacity = '1';
+                draggedElement.style.backgroundColor = '';
+            }
+
+            // Сброс состояния
+            setTimeout(() => {
+                if (draggedElement) {
+                    draggedElement.style.transition = '';
+                    draggedElement.style.zIndex = '';
+                    draggedElement.style.backgroundColor = '';
+                    draggedElement.style.borderColor = '';
+                    draggedElement.dataset.hapticTriggered = '';
+                    this.hideSwipeIcon(draggedElement);
+                }
+            }, 300);
+
+            isDragging = false;
+            draggedElement = null;
+        }, { passive: true });
+    }
+
+    // 🎯 ПОКАЗ ИКОНОК ПРИ SWIPE
+    showSwipeIcon(element, iconType, side) {
+        let icon = element.querySelector('.swipe-icon');
+        if (!icon) {
+            icon = document.createElement('div');
+            icon.className = 'swipe-icon';
+            icon.style.cssText = `
+                position: absolute;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 18px;
+                z-index: 10;
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            `;
+            element.appendChild(icon);
+        }
+
+        const icons = {
+            check: '<i class="fas fa-check" style="color: white;"></i>',
+            trash: '<i class="fas fa-trash" style="color: white;"></i>'
+        };
+
+        const colors = {
+            check: 'background: linear-gradient(135deg, #22c55e, #16a34a);',
+            trash: 'background: linear-gradient(135deg, #ef4444, #dc2626);'
+        };
+
+        icon.innerHTML = icons[iconType] || icons.check;
+        icon.style.cssText += colors[iconType] || colors.check;
+        icon.style[side] = '20px';
+        icon.style.opacity = '1';
+        icon.style.transform = 'translateY(-50%) scale(1)';
+    }
+
+    hideSwipeIcon(element) {
+        const icon = element.querySelector('.swipe-icon');
+        if (icon) {
+            icon.style.opacity = '0';
+            icon.style.transform = 'translateY(-50%) scale(0.8)';
+        }
+    }
+
+    // 🔄 PULL-TO-REFRESH ДЛЯ ОБНОВЛЕНИЯ СПИСКА
+    setupPullToRefresh() {
+        let startY = 0;
+        let currentY = 0;
+        let isPulling = false;
+        let pullIndicator = null;
+
+        // Создаем индикатор pull-to-refresh
+        this.createPullIndicator();
+
+        this.notificationsList.addEventListener('touchstart', (e) => {
+            if (this.notificationsList.scrollTop === 0) {
+                startY = e.touches[0].clientY;
+                isPulling = true;
+            }
+        }, { passive: true });
+
+        this.notificationsList.addEventListener('touchmove', (e) => {
+            if (!isPulling || this.isRefreshing) return;
+
+            currentY = e.touches[0].clientY;
+            const deltaY = currentY - startY;
+
+            if (deltaY > 0 && this.notificationsList.scrollTop === 0) {
+                e.preventDefault();
+                
+                const pullDistance = Math.min(deltaY, 120);
+                const pullIndicator = document.getElementById('pull-refresh-indicator');
+                
+                if (pullIndicator) {
+                    pullIndicator.style.transform = `translateY(${pullDistance}px)`;
+                    pullIndicator.style.opacity = Math.min(pullDistance / this.pullThreshold, 1);
+                    
+                    if (pullDistance > this.pullThreshold) {
+                        pullIndicator.innerHTML = '<i class="fas fa-arrow-up" style="color: #22c55e;"></i>';
+                        this.hapticFeedback('light');
+                    } else {
+                        pullIndicator.innerHTML = '<i class="fas fa-arrow-down" style="color: #6b7280;"></i>';
+                    }
+                }
+            }
+        }, { passive: false });
+
+        this.notificationsList.addEventListener('touchend', (e) => {
+            if (!isPulling) return;
+
+            const deltaY = currentY - startY;
+            const pullIndicator = document.getElementById('pull-refresh-indicator');
+
+            if (deltaY > this.pullThreshold && !this.isRefreshing) {
+                this.triggerRefresh();
+            } else if (pullIndicator) {
+                // Скрываем индикатор
+                pullIndicator.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+                pullIndicator.style.transform = 'translateY(-50px)';
+                pullIndicator.style.opacity = '0';
+            }
+
+            isPulling = false;
+        }, { passive: true });
+    }
+
+    createPullIndicator() {
+        const indicator = document.createElement('div');
+        indicator.id = 'pull-refresh-indicator';
+        indicator.style.cssText = `
+            position: absolute;
+            top: -50px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-50px);
+            width: 40px;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            opacity: 0;
+            z-index: 1000;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        `;
+        indicator.innerHTML = '<i class="fas fa-arrow-down" style="color: #6b7280;"></i>';
+        
+        this.notificationsList.style.position = 'relative';
+        this.notificationsList.appendChild(indicator);
+    }
+
+    async triggerRefresh() {
+        if (this.isRefreshing) return;
+        
+        this.isRefreshing = true;
+        const pullIndicator = document.getElementById('pull-refresh-indicator');
+        
+        if (pullIndicator) {
+            pullIndicator.innerHTML = '<i class="fas fa-spinner fa-spin" style="color: #3b82f6;"></i>';
+            pullIndicator.style.transform = 'translateX(-50%) translateY(20px)';
+            pullIndicator.style.opacity = '1';
+        }
+
+        this.hapticFeedback('medium');
+
+        // Симуляция загрузки (в реальном приложении здесь был бы API вызов)
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Скрываем индикатор
+        if (pullIndicator) {
+            pullIndicator.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            pullIndicator.style.transform = 'translateX(-50%) translateY(-50px)';
+            pullIndicator.style.opacity = '0';
+        }
+
+        this.isRefreshing = false;
+        this.hapticFeedback('light');
+        this.showRefreshToast('Уведомления обновлены');
+    }
+
+    // 📳 HAPTIC FEEDBACK
+    setupHapticFeedback() {
+        // Проверяем поддержку Vibration API
+        this.supportsVibration = 'vibrate' in navigator;
+        console.log(`[ModernUX] 📳 Haptic feedback: ${this.supportsVibration ? 'поддерживается' : 'не поддерживается'}`);
+    }
+
+    hapticFeedback(type = 'light') {
+        if (!this.supportsVibration) return;
+
+        const patterns = {
+            light: [10],
+            medium: [20],
+            heavy: [30],
+            success: [10, 50, 10],
+            error: [50, 100, 50]
+        };
+
+        navigator.vibrate(patterns[type] || patterns.light);
+    }
+
+    // ✨ УЛУЧШЕННЫЕ АНИМАЦИИ
+    setupImprovedAnimations() {
+        // Добавляем CSS для улучшенных анимаций
+        const style = document.createElement('style');
+        style.textContent = `
+            /* Улучшенные анимации для уведомлений */
+            .notification-item {
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            .notification-item:hover {
+                transform: translateY(-2px) scale(1.02) !important;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
+            }
+            
+            .notification-item:active {
+                transform: translateY(0) scale(0.98) !important;
+                transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            /* Анимация появления новых уведомлений */
+            @keyframes slideInFromTop {
+                from {
+                    transform: translateY(-100px) scale(0.9);
+                    opacity: 0;
+                }
+                50% {
+                    transform: translateY(10px) scale(1.05);
+                    opacity: 0.8;
+                }
+                to {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+            }
+            
+            .notification-item.new-notification {
+                animation: slideInFromTop 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            /* Улучшенные анимации кнопок */
+            .action-btn, .footer-btn {
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            .action-btn:active, .footer-btn:active {
+                transform: scale(0.95) !important;
+            }
+            
+            /* Плавные переходы для виджета */
+            .modern-notifications-widget {
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            }
+            
+            /* Toast уведомления */
+            .ux-toast {
+                position: fixed;
+                bottom: 100px;
+                right: 20px;
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 20px;
+                border-radius: 12px;
+                font-size: 14px;
+                font-weight: 500;
+                z-index: 1000000;
+                backdrop-filter: blur(10px);
+                animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+            
+            @keyframes toastSlideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes toastSlideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    // 🍞 TOAST УВЕДОМЛЕНИЯ
+    showSwipeToast(message) {
+        this.showToast(message, 'success');
+    }
+
+    showRefreshToast(message) {
+        this.showToast(message, 'info');
+    }
+
+    showToast(message, type = 'info') {
+        const toast = document.createElement('div');
+        toast.className = 'ux-toast';
+        toast.textContent = message;
+        
+        // Добавляем иконку в зависимости от типа
+        const icons = {
+            success: '✅',
+            info: 'ℹ️',
+            warning: '⚠️',
+            error: '❌'
+        };
+        
+        toast.innerHTML = `${icons[type] || icons.info} ${message}`;
+        
+        document.body.appendChild(toast);
+        
+        // Автоматическое удаление через 3 секунды
+        setTimeout(() => {
+            toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 300);
+        }, 3000);
+    }
+
+    // 🎯 ДОБАВЛЕНИЕ НОВЫХ УВЕДОМЛЕНИЙ С АНИМАЦИЕЙ
+    addNotificationWithAnimation(notificationHTML) {
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = notificationHTML;
+        const newNotification = tempDiv.firstElementChild;
+        
+        if (newNotification) {
+            newNotification.classList.add('new-notification');
+            this.notificationsList.insertBefore(newNotification, this.notificationsList.firstChild);
+            this.hapticFeedback('light');
+            
+            // Убираем класс анимации после завершения
+            setTimeout(() => {
+                newNotification.classList.remove('new-notification');
+            }, 600);
+        }
+    }
+}
+
+// 🚀 ИНИЦИАЛИЗАЦИЯ СОВРЕМЕННЫХ UX УЛУЧШЕНИЙ
+try {
+    window.modernNotificationsUX = new ModernNotificationsUX();
+    console.log('[ModernUX] 🎉 Современные UX улучшения инициализированы!');
+    
+    // 🧪 ТЕСТОВЫЕ ФУНКЦИИ ДЛЯ ДЕМОНСТРАЦИИ
+    window.testSwipeGesture = function() {
+        if (window.modernNotificationsUX) {
+            window.modernNotificationsUX.showSwipeToast('Swipe влево или вправо по уведомлению для удаления');
+        }
+    };
+    
+    window.testPullToRefresh = function() {
+        if (window.modernNotificationsUX) {
+            window.modernNotificationsUX.showRefreshToast('Потяните список вниз для обновления');
+        }
+    };
+    
+    window.testHapticFeedback = function() {
+        if (window.modernNotificationsUX) {
+            window.modernNotificationsUX.hapticFeedback('success');
+            window.modernNotificationsUX.showToast('Haptic feedback активирован!', 'success');
+        }
+    };
+    
+    window.addTestNotification = function() {
+        if (window.modernNotificationsUX) {
+            const testHTML = `
+                <div class="notification-item redmine-task">
+                    <div class="notification-content">
+                        <div class="notification-icon redmine-task">
+                            <i class="fas fa-bell"></i>
+                        </div>
+                        <div class="notification-text">
+                            <div class="notification-title">Тестовое уведомление</div>
+                            <div class="notification-description">Это тестовое уведомление для демонстрации новых возможностей</div>
+                            <div class="notification-time">Только что</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            window.modernNotificationsUX.addNotificationWithAnimation(testHTML);
+        }
+    };
+    
+    console.log('[ModernUX] 🛠️ Доступные тестовые функции:');
+    console.log('[ModernUX] 🛠️ testSwipeGesture() - тест swipe жестов');
+    console.log('[ModernUX] 🛠️ testPullToRefresh() - тест pull-to-refresh');
+    console.log('[ModernUX] 🛠️ testHapticFeedback() - тест haptic feedback');
+    console.log('[ModernUX] 🛠️ addTestNotification() - добавить тестовое уведомление');
+    
+} catch (error) {
+    console.error('[ModernUX] ❌ Ошибка инициализации UX улучшений:', error);
+}
+
 </script>
