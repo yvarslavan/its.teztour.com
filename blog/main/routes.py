@@ -2079,6 +2079,13 @@ def questionable_email():
     )
 
 
+@main.route("/safe_internet")
+def safe_internet():
+    return render_template(
+        "safe_internet.html", title="Безопасное использование интернета"
+    )
+
+
 @main.route("/ciscoanyconnect")
 def ciscoanyconnect():
     return render_template(
