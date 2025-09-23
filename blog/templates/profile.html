@@ -64,7 +64,7 @@
             <div
               class="avatar-container"
               data-bs-toggle="modal"
-              data-bs-target="#avatarModal"
+              data-bs-target="#avatarZoomModal"
             >
               <img
                 src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
@@ -296,20 +296,20 @@
   </div>
 </div>
 
-<!-- Avatar Modal -->
+<!-- Модальное окно для увеличенного аватара -->
 <div
   class="modal fade"
-  id="avatarModal"
+  id="avatarZoomModal"
   tabindex="-1"
-  aria-labelledby="avatarModalLabel"
+  aria-labelledby="avatarZoomModalLabel"
   aria-hidden="true"
 >
-  <div class="modal-dialog modal-dialog-centered modal-lg">
-    <div class="modal-content modal-modern">
+  <div class="modal-dialog modal-dialog-centered modal-fullscreen">
+    <div class="modal-content modal-zoom">
       <div class="modal-header">
         <div class="modal-title-wrapper">
-          <h5 class="modal-title" id="avatarModalLabel">
-            {{ user.full_name or user.username }}
+          <h5 class="modal-title" id="avatarZoomModalLabel">
+            {{ user.full_name or user.username }} - Увеличенное фото
           </h5>
           <p class="modal-subtitle">@{{ user.username }}</p>
         </div>
@@ -323,11 +323,12 @@
         </button>
       </div>
       <div class="modal-body">
-        <div class="modal-avatar-container">
+        <div class="zoom-avatar-container">
           <img
             src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
-            alt="Аватар {{ user.full_name }}"
-            class="modal-avatar"
+            alt="Увеличенный аватар {{ user.full_name }}"
+            class="zoom-avatar"
+            id="zoomAvatar"
           />
         </div>
       </div>
@@ -345,14 +346,25 @@
       });
     });
 
-    // Enhanced modal animations
-    const avatarModal = document.getElementById("avatarModal");
-    if (avatarModal) {
-      avatarModal.addEventListener("show.bs.modal", function () {
+    // Zoom modal animations
+    const avatarZoomModal = document.getElementById("avatarZoomModal");
+
+    if (avatarZoomModal) {
+      avatarZoomModal.addEventListener("show.bs.modal", function () {
         document.body.style.overflow = "hidden";
+        // Анимация появления увеличенного изображения
+        const zoomAvatar = document.getElementById("zoomAvatar");
+        if (zoomAvatar) {
+          zoomAvatar.style.transform = "scale(0.8)";
+          zoomAvatar.style.opacity = "0";
+          setTimeout(() => {
+            zoomAvatar.style.transform = "scale(1)";
+            zoomAvatar.style.opacity = "1";
+          }, 100);
+        }
       });
 
-      avatarModal.addEventListener("hidden.bs.modal", function () {
+      avatarZoomModal.addEventListener("hidden.bs.modal", function () {
         document.body.style.overflow = "";
       });
     }
@@ -1339,6 +1351,85 @@
     border-radius: 50%;
     object-fit: cover;
     box-shadow: var(--shadow-3);
+    transition: all var(--transition-normal);
+  }
+
+  .modal-avatar:hover {
+    transform: scale(1.05);
+    box-shadow: var(--shadow-3), 0 0 20px rgba(99, 102, 241, 0.3);
+  }
+
+  /* Стили для модального окна с увеличенным изображением */
+  .modal-zoom .modal-content {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-3);
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+
+  .modal-zoom .modal-header {
+    border-bottom: 1px solid var(--border-light);
+    padding: var(--spacing-xl);
+  }
+  .modal-zoom .modal-subtitle {
+    color: var(--text-secondary);
+    opacity: 0.85;
+  }
+  body.light-theme .modal-zoom .modal-subtitle {
+    color: #475569; /* slate-600 */
+    opacity: 1;
+  }
+  body:not(.light-theme) .modal-zoom .modal-subtitle {
+    color: #0f172a; /* тёмный цвет для подписи в тёмной теме по запросу */
+    opacity: 1;
+  }
+  .modal-zoom .modal-title {
+    color: #0f172a; /* всегда тёмный цвет для высокой читабельности */
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    text-shadow: none;
+  }
+  body.light-theme .modal-zoom .modal-header {
+    /* лёгкий тёмный градиент под заголовком для контраста на светлом фоне */
+    background: linear-gradient(180deg, rgba(0,0,0,0.08), rgba(0,0,0,0));
+  }
+
+  .modal-zoom .modal-body {
+    padding: var(--spacing-xxl);
+    text-align: center;
+    max-height: calc(100vh - 2 * var(--spacing-xxl) - 70px);
+    overflow: hidden;
+  }
+
+  .zoom-avatar-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    max-width: 100%;
+    max-height: 100%;
+    min-height: calc(100vh - 180px);
+  }
+
+  .zoom-avatar {
+    max-width: 100vw;
+    max-height: calc(100vh - 180px);
+    width: auto;
+    height: auto;
+    border-radius: var(--radius-lg);
+    object-fit: contain;
+    box-shadow: var(--shadow-3);
+    transition: all var(--transition-normal);
+    cursor: zoom-out;
+  }
+
+  .zoom-avatar:hover {
+    transform: scale(1.02);
+    box-shadow: var(--shadow-3), 0 0 30px rgba(99, 102, 241, 0.4);
   }
 
   @media (max-width: 1200px) {
@@ -1406,6 +1497,9 @@
       width: 250px;
       height: 250px;
     }
+    .zoom-avatar {
+      max-height: calc(100vh - 220px);
+    }
   }
   @media (max-width: 480px) {
     .profile-header {
@@ -1432,6 +1526,12 @@
     .modal-avatar {
       width: 200px;
       height: 200px;
+    }
+    .zoom-avatar {
+      max-height: calc(100vh - 240px);
+    }
+    .modal-zoom .modal-body {
+      padding: var(--spacing-lg);
     }
   }
   @media (prefers-contrast: high) {
