@@ -195,25 +195,3 @@ def register_template_helpers(app: Flask):
 
     # Регистрация пользовательского фильтра
     app.jinja_env.filters['datetimeformat'] = datetimeformat
-    
-    # HTMX helper функции
-    from blog.utils.htmx_helpers import get_htmx_attrs
-    
-    @app.template_global()
-    def htmx_attrs(**attrs):
-        """Генерирует HTMX атрибуты для использования в шаблонах"""
-        return get_htmx_attrs(**attrs)
-    
-    @app.template_filter()
-    def htmx_safe(value):
-        """Безопасная сериализация значений для использования в HTMX атрибутах"""
-        if value is None:
-            return ''
-        if isinstance(value, bool):
-            return 'true' if value else 'false'
-        if isinstance(value, (int, float)):
-            return str(value)
-        if isinstance(value, str):
-            # Экранируем кавычки для безопасного использования в атрибутах
-            return value.replace('"', '&quot;').replace("'", '&#x27;')
-        return str(value)
