@@ -98,4 +98,3 @@ yarl==1.9.4
 zipp==3.21.0
 python-json-logger==3.3.0
 concurrent-log-handler==0.9.28
-flask-htmx==0.4.0
