@@ -2107,6 +2107,12 @@ def setup_mail_forwarding():
     )
 
 
+@main.route('/email-setup')
+def email_setup():
+    """Страница с инструкцией по настройке корпоративной почты на мобильных устройствах"""
+    return render_template('email_setup.html', title='Настройка почты на мобильных устройствах')
+
+
 @main.route("/adress_book")
 def adress_book():
     return render_template("address_book.html", title="Корпоративная адресная книга")
