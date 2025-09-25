@@ -1,0 +1,517 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+<!-- Material Design Email Setup Page -->
+<div class="modern-helpdesk-container">
+    <div class="modern-container">
+        <!-- Page Header -->
+        <div class="page-header">
+            <h1 class="page-title">Настройка корпоративной почты на мобильном устройстве</h1>
+            <p class="page-subtitle">Доступ к email с телефона/планшета</p>
+        </div>
+
+        <!-- General Requirements Card -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">info</i>
+                <h2>Общие требования</h2>
+            </div>
+            <div class="material-card-content">
+                <ul class="material-list">
+                    <li><i class="material-icons">check_circle</i> Поддерживаемые устройства: iOS 12+ / Android 8+</li>
+                    <li><i class="material-icons">check_circle</i> Устройство должно быть зарегистрировано в корпоративной системе управления</li>
+                    <li><i class="material-icons">check_circle</i> Используйте свои корпоративные учетные данные tez-tour.com</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- iOS Setup Section -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="fab fa-apple"></i>
+                <h2>Настройка на iPhone/iPad</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="setup-method">
+                    <h3>Способ 1: Автоматическая настройка через профиль</h3>
+                    <ol class="material-list">
+                        <li>Получите почтовый логин и пароль в службе техподдержки</li>
+                        <li>Установите профиль через <strong>Настройки → Основные → Профили</strong></li>
+                        <li>Введите пароль от учетной записи при запросе</li>
+                        <li>Подтвердите установку сертификатов безопасности</li>
+                    </ol>
+                </div>
+
+                <div class="setup-method">
+                    <h3>Способ 2: Ручная настройка через приложение Mail</h3>
+                    <ol class="material-list">
+                        <li>Перейдите в <strong>Настройки → Mail → Аккаунты</strong></li>
+                        <li>Выберите <strong>Добавить аккаунт → Другое → Добавить почтовый аккаунт</strong></li>
+                        <li>Введите данные:
+                            <ul class="nested-list">
+                                <li><strong>Имя:</strong> Ваше полное имя</li>
+                                <li><strong>Email:</strong> ваш_логин@tez-tour.com</li>
+                                <li><strong>Пароль:</strong> Ваш корпоративный почтовый пароль</li>
+                                <li><strong>Описание:</strong> Рабочая почта TEZ TOUR</li>
+                            </ul>
+                        </li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Android Setup Section -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="fab fa-android"></i>
+                <h2>Настройка на Android</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="setup-method">
+                    <h3>Способ 1: Через приложение Gmail</h3>
+                    <ol class="material-list">
+                        <li>Откройте приложение Gmail</li>
+                        <li>Нажмите ☰ (меню) → <strong>Настройки → Добавить аккаунт</strong></li>
+                        <li>Выберите <strong>Другой (POP3/IMAP)</strong></li>
+                        <li>Введите email: ваш_логин@tez-tour.com</li>
+                        <li>Выберите <strong>Личный (IMAP)</strong></li>
+                        <li>Введите пароль и дождитесь автоматической настройки</li>
+                    </ol>
+                </div>
+
+                <div class="setup-method">
+                    <h3>Способ 2: Через встроенное приложение Email</h3>
+                    <ol class="material-list">
+                        <li>Откройте приложение Email или Почта</li>
+                        <li>Нажмите <strong>Добавить аккаунт → Настройка вручную</strong></li>
+                        <li>Выберите <strong>IMAP</strong></li>
+                        <li>Введите параметры сервера (см. ниже)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Settings Table -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">dns</i>
+                <h2>Параметры серверов TEZ TOUR</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="table-responsive">
+                    <table class="material-table">
+                        <thead>
+                            <tr>
+                                <th>Параметр</th>
+                                <th>Значение</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Тип учетной записи</td>
+                                <td>IMAP (рекомендуется)</td>
+                            </tr>
+                            <tr>
+                                <td>Сервер входящей почты</td>
+                                <td>imap.tez-tour.com</td>
+                            </tr>
+                            <tr>
+                                <td>Порт IMAP</td>
+                                <td>993</td>
+                            </tr>
+                            <tr>
+                                <td>Безопасность IMAP</td>
+                                <td>SSL/TLS</td>
+                            </tr>
+                            <tr>
+                                <td>Сервер исходящей почты</td>
+                                <td>smtp.tez-tour.com</td>
+                            </tr>
+                            <tr>
+                                <td>Порт SMTP</td>
+                                <td>465</td>
+                            </tr>
+                            <tr>
+                                <td>Безопасность SMTP</td>
+                                <td>SSL/TLS</td>
+                            </tr>
+                            <tr>
+                                <td>Аутентификация</td>
+                                <td>Требуется</td>
+                            </tr>
+                            <tr>
+                                <td>Имя пользователя</td>
+                                <td>только логин (без @tez-tour.com)</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Security Settings -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">security</i>
+                <h2>Настройки безопасности</h2>
+            </div>
+            <div class="material-card-content">
+                <h3>Обязательные требования корпоративной политики:</h3>
+                <ul class="material-list">
+                    <li><i class="material-icons">lock</i> PIN-код/биометрия на устройстве обязательны</li>
+                    <li><i class="material-icons">timer_off</i> Автоблокировка не более 15 минут</li>
+                    <li><i class="material-icons">enhanced_encryption</i> Шифрование всех корпоративных данных</li>
+                    <li><i class="material-icons">no_photography</i> Запрет скриншотов в почтовых приложениях</li>
+                    <li><i class="material-icons">phone_android</i> Удаленное управление через MDM-систему</li>
+                </ul>
+
+                <h3>Рекомендуемые настройки для экономии трафика:</h3>
+                <ul class="material-list">
+                    <li><i class="material-icons">sync</i> Синхронизация: Только последние 30 дней</li>
+                    <li><i class="material-icons">storage</i> Размер сообщений: Ограничить до 100 КБ в мобильных сетях</li>
+                    <li><i class="material-icons">notifications</i> Уведомления: Настроить по потребности (рабочие часы)</li>
+                    <li><i class="material-icons">file_download</i> Автозагрузка вложений: Отключить для экономии трафика</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Recommended Apps -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">apps</i>
+                <h2>Рекомендуемые приложения</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="app-grid">
+                    <div class="app-item">
+                        <i class="fab fa-microsoft"></i>
+                        <h4>Microsoft Outlook</h4>
+                        <p>Полная интеграция с корпоративными сервисами</p>
+                    </div>
+                    <div class="app-item">
+                        <i class="fab fa-google"></i>
+                        <h4>Gmail</h4>
+                        <p>Надежность и удобство интерфейса</p>
+                    </div>
+                    <div class="app-item">
+                        <i class="material-icons">mail_outline</i>
+                        <h4>Встроенный Mail (iOS)</h4>
+                        <p>Нативная интеграция с системой</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">error_outline</i>
+                <h2>Возможные проблемы и решения</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="troubleshooting-item">
+                    <h3>❌ Ошибка "Не удается проверить настройки сервера"</h3>
+                    <p><strong>Решение:</strong></p>
+                    <ul class="material-list">
+                        <li>Проверьте правильность адресов серверов (imap.tez-tour.com, smtp.tez-tour.com)</li>
+                        <li>Убедитесь в использовании правильных портов (993 для IMAP, 465 для SMTP)</li>
+                        <li>Проверьте подключение к интернету</li>
+                    </ul>
+                </div>
+
+                <div class="troubleshooting-item">
+                    <h3>❌ Ошибка аутентификации "Неверный пароль"</h3>
+                    <p><strong>Решение:</strong></p>
+                    <ul class="material-list">
+                        <li>Для домена tez-tour.com используйте только логин без @tez-tour.com</li>
+                        <li>Для других доменов используйте полный email</li>
+                        <li>Проверьте раскладку клавиатуры при вводе пароля</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Support Contacts -->
+        <div class="material-card">
+            <div class="material-card-header">
+                <i class="material-icons">support_agent</i>
+                <h2>Контакты поддержки</h2>
+            </div>
+            <div class="material-card-content">
+                <div class="contact-grid">
+                    <div class="contact-item">
+                        <i class="material-icons">phone</i>
+                        <p><strong>Техподдержка:</strong> внутренний номер 1000</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="material-icons">email</i>
+                        <p><strong>Email:</strong> help@tez-tour.com</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="material-icons">chat</i>
+                        <p><strong>Корпоративный чат:</strong> Vacuum-IM</p>
+                    </div>
+                    <div class="contact-item">
+                        <i class="material-icons">schedule</i>
+                        <p><strong>Время работы:</strong> Пн-Пт, 10:00-19:00 MSK</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- Add Material Icons -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+
+<!-- Custom CSS for Material Design -->
+<style>
+:root {
+    --primary-color: #1976d2;
+    --primary-light: #63a4ff;
+    --primary-dark: #004ba0;
+    --text-primary: #212121;
+    --text-secondary: #757575;
+    --divider: #e0e0e0;
+    --background: #f5f5f5;
+    --card-bg: #ffffff;
+    --error: #d32f2f;
+    --success: #388e3c;
+    --warning: #f57c00;
+}
+
+body {
+    font-family: 'Roboto', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--background);
+    margin: 0;
+    padding: 0;
+}
+
+.modern-helpdesk-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.page-header {
+    text-align: center;
+    margin-bottom: 40px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--divider);
+}
+
+.page-title {
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.page-subtitle {
+    color: var(--text-secondary);
+    font-size: 1.2em;
+    margin-top: 0;
+}
+
+.material-card {
+    background: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 24px;
+    overflow: hidden;
+    transition: box-shadow 0.3s ease;
+}
+
+.material-card:hover {
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.material-card-header {
+    background-color: var(--primary-color);
+    color: white;
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+}
+
+.material-card-header i {
+    margin-right: 16px;
+    font-size: 24px;
+}
+
+.material-card-header h2 {
+    margin: 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+}
+
+.material-card-content {
+    padding: 24px;
+}
+
+.material-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.material-list li {
+    padding: 8px 0 8px 32px;
+    position: relative;
+}
+
+.material-list li i {
+    position: absolute;
+    left: 0;
+    color: var(--primary-color);
+}
+
+.setup-method {
+    margin-bottom: 24px;
+}
+
+.setup-method:last-child {
+    margin-bottom: 0;
+}
+
+.setup-method h3 {
+    color: var(--primary-dark);
+    margin-top: 0;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--divider);
+}
+
+.nested-list {
+    margin-top: 8px;
+    padding-left: 20px;
+}
+
+.nested-list li {
+    padding: 4px 0;
+}
+
+.material-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+}
+
+.material-table th,
+.material-table td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--divider);
+}
+
+.material-table th {
+    background-color: #f5f5f5;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.material-table tr:last-child td {
+    border-bottom: none;
+}
+
+.app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    margin-top: 16px;
+}
+
+.app-item {
+    text-align: center;
+    padding: 20px;
+    border: 1px solid var(--divider);
+    border-radius: 8px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.app-item:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.app-item i {
+    font-size: 48px;
+    color: var(--primary-color);
+    margin-bottom: 16px;
+}
+
+.app-item h4 {
+    margin: 0 0 8px;
+    color: var(--primary-dark);
+}
+
+.app-item p {
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.troubleshooting-item {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--divider);
+}
+
+.troubleshooting-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+.troubleshooting-item h3 {
+    color: var(--error);
+    margin-top: 0;
+}
+
+.contact-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+}
+
+.contact-item i {
+    margin-right: 16px;
+    color: var(--primary-color);
+    font-size: 24px;
+    width: 24px;
+    text-align: center;
+}
+
+.page-footer {
+    text-align: center;
+    padding: 24px 0;
+    color: var(--text-secondary);
+    font-size: 0.9em;
+    border-top: 1px solid var(--divider);
+    margin-top: 40px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .app-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .contact-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .material-card-content {
+        padding: 16px;
+    }
+}
+</style>
+
+{% endblock %}

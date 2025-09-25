@@ -21,7 +21,7 @@ exceptiongroup==1.2.2
 Flask==2.3.3
 Flask-APScheduler==1.13.1
 Flask-Bcrypt==1.0.1
-flask-cors==6.0.1
+flask-cors==5.0.1
 Flask-Login==0.6.3
 Flask-Migrate==3.1.0
 Flask-Session==0.8.0
@@ -97,4 +97,5 @@ xmltodict==0.14.2
 yarl==1.9.4
 zipp==3.21.0
 python-json-logger==3.3.0
-concurrent-log-handler==0.9.24
+concurrent-log-handler==0.9.28
+flask-htmx==0.4.0

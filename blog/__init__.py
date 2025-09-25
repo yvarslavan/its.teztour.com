@@ -12,6 +12,7 @@ from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_session import Session
 from flask_wtf.csrf import CSRFProtect
+from flask_htmx import HTMX
 
 from .db_config import db
 from .settings import Config
@@ -45,6 +46,7 @@ def shutdown_scheduler():
 atexit.register(shutdown_scheduler)
 
 csrf = CSRFProtect()
+htmx = HTMX()
 
 # Определяем путь к базе данных
 db_path = Path(__file__).parent / "db" / "blog.db"
@@ -125,6 +127,7 @@ def create_app():
     bcrypt.init_app(app)
     login_manager.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
+    htmx.init_app(app)
 
     # Конфигурация логгера до первого использования app.logger
     configure_blog_logger()
@@ -187,6 +190,10 @@ def create_app():
     # ИСПРАВЛЕНИЕ: Регистрируем template helpers для устранения хардкода в шаблонах
     from blog.utils.template_helpers import register_template_helpers
     register_template_helpers(app)
+    
+    # Инициализация HTMX Manager
+    from blog.utils.htmx_helpers import htmx_manager
+    htmx_manager.init_app(app)
 
     # Дополнительная инициализация в контексте приложения
     with app.app_context():

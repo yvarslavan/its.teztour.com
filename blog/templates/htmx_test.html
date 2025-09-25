@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+
+{% block title %}HTMX Test{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h2>Тестирование HTMX Integration</h2>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Тест 1: Простая загрузка контента</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-primary" 
+                            hx-get="{{ url_for('tasks.htmx_test_endpoint_handler') }}"
+                            hx-target="#test-content"
+                            hx-swap="innerHTML">
+                        Загрузить контент через HTMX
+                    </button>
+                    
+                    <div id="test-content" class="mt-3 p-3 border rounded">
+                        <em>Контент будет загружен здесь...</em>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Тест 2: Динамические данные</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-success" 
+                            hx-get="{{ url_for('tasks.htmx_test_data_handler') }}"
+                            hx-target="#dynamic-content"
+                            hx-swap="innerHTML">
+                        Получить данные
+                    </button>
+                    
+                    <div id="dynamic-content" class="mt-3 p-3 border rounded">
+                        <em>Динамические данные будут показаны здесь...</em>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5>Тест 3: Автообновление каждые 5 секунд</h5>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-info" 
+                            hx-get="{{ url_for('tasks.htmx_test_data_handler') }}"
+                            hx-target="#auto-update-content"
+                            hx-swap="innerHTML"
+                            hx-trigger="click, every 5s">
+                        Запустить автообновление
+                    </button>
+                    
+                    <div id="auto-update-content" class="mt-3 p-3 border rounded">
+                        <em>Автообновляемый контент...</em>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h5>Информация о HTMX</h5>
+                </div>
+                <div class="card-body">
+                    <ul>
+                        <li><strong>HTMX Request:</strong> {{ is_htmx_request }}</li>
+                        <li><strong>HTMX Target:</strong> {{ htmx_target or 'N/A' }}</li>
+                        <li><strong>HTMX Trigger:</strong> {{ htmx_trigger or 'N/A' }}</li>
+                        <li><strong>Current URL:</strong> {{ htmx_current_url or request.url }}</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Контейнер для ошибок HTMX -->
+<div id="error-container"></div>
+
+<script>
+// Обработка ошибок HTMX
+document.body.addEventListener('htmx:responseError', function(evt) {
+    console.error('HTMX Error:', evt.detail);
+    document.getElementById('error-container').innerHTML = 
+        '<div class="alert alert-danger">Ошибка HTMX: ' + evt.detail.xhr.status + '</div>';
+});
+
+// Логирование HTMX событий для отладки
+document.body.addEventListener('htmx:beforeRequest', function(evt) {
+    console.log('HTMX Request:', evt.detail);
+});
+
+document.body.addEventListener('htmx:afterRequest', function(evt) {
+    console.log('HTMX Response:', evt.detail);
+});
+</script>
+{% endblock %}

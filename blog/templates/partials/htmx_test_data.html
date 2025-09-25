@@ -1,0 +1,14 @@
+<div class="alert alert-info">
+    <h6><i class="fas fa-info-circle me-2"></i>Динамические данные:</h6>
+    <ul class="mb-0">
+        <li><strong>Время:</strong> {{ data.current_time }}</li>
+        <li><strong>Пользователь:</strong> {{ data.user }}</li>
+        <li><strong>HTMX запрос:</strong> {{ 'Да' if data.is_htmx else 'Нет' }}</li>
+        {% if data.target %}
+        <li><strong>Target:</strong> {{ data.target }}</li>
+        {% endif %}
+        {% if data.trigger %}
+        <li><strong>Trigger:</strong> {{ data.trigger }}</li>
+        {% endif %}
+    </ul>
+</div>

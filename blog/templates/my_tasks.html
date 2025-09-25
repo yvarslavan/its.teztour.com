@@ -3,376 +3,351 @@
 {% block content %}
 <!-- Основной спинер загрузки -->
 <div id="loading-spinner" class="loading-overlay">
-    <div class="loading-content">
-        <div class="spinner-icon">
-            <i class="fas fa-rocket fa-bounce"></i>
-        </div>
-        <h3>🚀 Запуск системы управления задачами...</h3>
-        <p id="loading-message">Инициализация Kanban доски и подключение к Redmine API</p>
-        <div class="loading-progress">
-            <div class="progress-bar">
-                <div class="progress-fill"></div>
-            </div>
-            <span class="progress-text">0%</span>
-        </div>
+  <div class="loading-content">
+    <div class="spinner-icon">
+      <i class="fas fa-rocket fa-bounce"></i>
     </div>
+    <h3>🚀 Запуск системы управления задачами...</h3>
+    <p id="loading-message">Инициализация Kanban доски и подключение к Redmine API</p>
+    <div class="loading-progress">
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+      <span class="progress-text">0%</span>
+    </div>
+  </div>
 </div>
 
-<!-- <script>
-// Инициализация состояния спиннера еще до загрузки MyTasksApp
-(function() {
-    const isReturn = sessionStorage.getItem('return_from_task_id') !== null;
-    const spinner = document.getElementById('loading-spinner');
 
-    console.log('🔄 Раннее определение состояния спиннера:', {
-        isReturn: isReturn,
-        returnId: sessionStorage.getItem('return_from_task_id')
-    });
-
-    if (isReturn) {
-        // При возврате оставляем спиннер скрытым
-        console.log('🔴 Возврат: спиннер остается скрытым');
-        if (spinner) {
-            spinner.classList.remove('show');
-        }
-    } else {
-        // При первой загрузке показываем спиннер
-        console.log('🟢 Первая загрузка: показываем спиннер');
-        if (spinner) {
-            spinner.classList.add('show');
-        }
-    }
-})();
-</script> -->
 
 <!-- Заголовок страницы -->
 <header class="page-header">
-    <div class="header-content">
-        <div class="header-main">
-            <div class="header-icon">
-                <i class="fas fa-tasks"></i>
-            </div>
-            <div class="header-text">
-                <h1 class="page-title">Мои задачи в Redmine</h1>
-                <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
-            </div>
-        </div>
-        <div class="header-actions">
-            <a href="https://helpdesk.teztour.com" class="action-button secondary" target="_blank">
-                <i class="fas fa-external-link-alt"></i>
-                <span>Перейти в Redmine</span>
-            </a>
-            <a href="{{ url_for('main.my_issues') }}" class="action-button primary">
-                <i class="fas fa-ticket-alt"></i>
-                <span>Мои заявки</span>
-            </a>
-            <div class="theme-switcher-container">
-                <button id="theme-switcher" class="theme-switcher" title="Переключить тему">
-                    <i class="fas fa-sun theme-icon-light"></i>
-                    <i class="fas fa-moon theme-icon-dark"></i>
-                </button>
-            </div>
-        </div>
+  <div class="header-content">
+    <div class="header-main">
+      <div class="header-icon">
+        <i class="fas fa-tasks"></i>
+      </div>
+      <div class="header-text">
+        <h1 class="page-title">Мои задачи в Redmine</h1>
+        <p class="page-subtitle">Управление и мониторинг ваших задач в Redmine</p>
+      </div>
     </div>
+    <div class="header-actions">
+      <a href="https://helpdesk.teztour.com" class="action-button secondary" target="_blank">
+        <i class="fas fa-external-link-alt"></i>
+        <span>Перейти в Redmine</span>
+      </a>
+      <a href="{{ url_for('main.my_issues') }}" class="action-button primary">
+        <i class="fas fa-ticket-alt"></i>
+        <span>Мои заявки</span>
+      </a>
+      <div class="theme-switcher-container">
+        <button id="theme-switcher" class="theme-switcher" title="Переключить тему">
+          <i class="fas fa-sun theme-icon-light"></i>
+          <i class="fas fa-moon theme-icon-dark"></i>
+        </button>
+      </div>
+    </div>
+  </div>
 </header>
 
 <!-- Панель статистики (Status Breakdown Dashboard) -->
 <section class="status-breakdown-dashboard">
-    <div class="breakdown-header">
-        <div class="breakdown-title">
-            <i class="fas fa-tachometer-alt"></i>
-            <h2>Дашборд задач</h2>
+  <div class="breakdown-header">
+    <div class="breakdown-title">
+      <i class="fas fa-tachometer-alt"></i>
+      <h2>Дашборд задач</h2>
+    </div>
+    <div class="breakdown-summary">
+      <span class="summary-value" id="total-tasks-summary">-</span>
+      <span class="summary-label">всего задач</span>
+      <button class="global-toggle-btn" id="globalToggleBtn">
+        <i class="fas fa-expand-alt"></i>
+        <span>Развернуть все</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="status-breakdown-grid">
+    <!-- Всего задач -->
+    <div class="status-card" data-type="total">
+      <div class="card-header">
+        <div class="card-icon total">
+          <i class="fas fa-tasks"></i>
         </div>
-        <div class="breakdown-summary">
-            <span class="summary-value" id="total-tasks-summary">-</span>
-            <span class="summary-label">всего задач</span>
-            <button class="global-toggle-btn" id="globalToggleBtn">
-                <i class="fas fa-expand-alt"></i>
-                <span>Развернуть все</span>
-            </button>
+        <div class="card-title">
+          <h3>Всего задач</h3>
+          <span class="card-value" id="total-tasks">-</span>
         </div>
+      </div>
+      <div class="card-description">
+        <p>Общее количество назначенных задач</p>
+      </div>
+      <button class="toggle-details-btn" data-target="total-details">
+        <i class="fas fa-chevron-down"></i>
+        <span>Детализация</span>
+      </button>
+      <div class="card-details" id="total-details" style="display: none;">
+        <div class="details-content" id="total-details-content">
+          <div class="detail-item">
+            <span class="detail-label">Открытые:</span>
+            <span class="detail-value" id="total-open">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">В работе:</span>
+            <span class="detail-value" id="total-in-progress">-</span>
+          </div>
+          <div class="detail-item">
+            <span class="detail-label">Завершённые:</span>
+            <span class="detail-value" id="total-completed">-</span>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="status-breakdown-grid">
-        <!-- Всего задач -->
-        <div class="status-card" data-type="total">
-            <div class="card-header">
-                <div class="card-icon total">
-                    <i class="fas fa-tasks"></i>
-                </div>
-                <div class="card-title">
-                    <h3>Всего задач</h3>
-                    <span class="card-value" id="total-tasks">-</span>
-                </div>
-            </div>
-            <div class="card-description">
-                <p>Общее количество назначенных задач</p>
-            </div>
-            <button class="toggle-details-btn" data-target="total-details">
-                <i class="fas fa-chevron-down"></i>
-                <span>Детализация</span>
-            </button>
-            <div class="card-details" id="total-details" style="display: none;">
-                <div class="details-content" id="total-details-content">
-                    <div class="detail-item">
-                        <span class="detail-label">Открытые:</span>
-                        <span class="detail-value" id="total-open">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">В работе:</span>
-                        <span class="detail-value" id="total-in-progress">-</span>
-                    </div>
-                    <div class="detail-item">
-                        <span class="detail-label">Завершённые:</span>
-                        <span class="detail-value" id="total-completed">-</span>
-                    </div>
-                </div>
-            </div>
+    <!-- В работе -->
+    <div class="status-card" data-type="in-progress">
+      <div class="card-header">
+        <div class="card-icon paused">
+          <i class="fas fa-cogs"></i>
         </div>
-
-        <!-- В работе -->
-        <div class="status-card" data-type="in-progress">
-            <div class="card-header">
-                <div class="card-icon paused">
-                    <i class="fas fa-cogs"></i>
-                </div>
-                <div class="card-title">
-                    <h3>В работе</h3>
-                    <span class="card-value" id="in-progress-tasks">-</span>
-                </div>
-            </div>
-            <div class="card-description">
-                <p>В процессе выполнения, на согласовании, тестировании</p>
-            </div>
-            <button class="toggle-details-btn" data-target="in-progress-details">
-                <i class="fas fa-chevron-down"></i>
-                <span>Детализация</span>
-            </button>
-            <div class="card-details" id="in-progress-details" style="display: none;">
-                <div class="details-content" id="in-progress-details-content">
-                    <!-- Динамически заполняется JavaScript -->
-                </div>
-            </div>
+        <div class="card-title">
+          <h3>В работе</h3>
+          <span class="card-value" id="in-progress-tasks">-</span>
         </div>
-
-        <!-- Открытые задачи -->
-        <div class="status-card" data-type="open">
-            <div class="card-header">
-                <div class="card-icon open">
-                    <i class="fas fa-folder-open"></i>
-                </div>
-                <div class="card-title">
-                    <h3>Открытые задачи</h3>
-                    <span class="card-value" id="open-tasks">-</span>
-                </div>
-            </div>
-            <div class="card-description">
-                <p>Новые и ожидающие выполнения</p>
-            </div>
-            <button class="toggle-details-btn" data-target="open-details">
-                <i class="fas fa-chevron-down"></i>
-                <span>Детализация</span>
-            </button>
-            <div class="card-details" id="open-details" style="display: none;">
-                <div class="details-content" id="open-details-content">
-                    <!-- Динамически заполняется JavaScript -->
-                </div>
-            </div>
+      </div>
+      <div class="card-description">
+        <p>В процессе выполнения, на согласовании, тестировании</p>
+      </div>
+      <button class="toggle-details-btn" data-target="in-progress-details">
+        <i class="fas fa-chevron-down"></i>
+        <span>Детализация</span>
+      </button>
+      <div class="card-details" id="in-progress-details" style="display: none;">
+        <div class="details-content" id="in-progress-details-content">
+          <!-- Динамически заполняется JavaScript -->
         </div>
-
-        <!-- Завершённые задачи -->
-        <div class="status-card" data-type="completed">
-            <div class="card-header">
-                <div class="card-icon closed">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="card-title">
-                    <h3>Завершённые</h3>
-                    <span class="card-value" id="completed-tasks">-</span>
-                </div>
-            </div>
-            <div class="card-description">
-                <p>Фактически закрытые задачи</p>
-            </div>
-            <button class="toggle-details-btn" data-target="completed-details">
-                <i class="fas fa-chevron-down"></i>
-                <span>Детализация</span>
-            </button>
-            <div class="card-details" id="completed-details" style="display: none;">
-                <div class="details-content" id="completed-details-content">
-                    <!-- Динамически заполняется JavaScript -->
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
+
+    <!-- Открытые задачи -->
+    <div class="status-card" data-type="open">
+      <div class="card-header">
+        <div class="card-icon open">
+          <i class="fas fa-folder-open"></i>
+        </div>
+        <div class="card-title">
+          <h3>Открытые задачи</h3>
+          <span class="card-value" id="open-tasks">-</span>
+        </div>
+      </div>
+      <div class="card-description">
+        <p>Новые и ожидающие выполнения</p>
+      </div>
+      <button class="toggle-details-btn" data-target="open-details">
+        <i class="fas fa-chevron-down"></i>
+        <span>Детализация</span>
+      </button>
+      <div class="card-details" id="open-details" style="display: none;">
+        <div class="details-content" id="open-details-content">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Завершённые задачи -->
+    <div class="status-card" data-type="completed">
+      <div class="card-header">
+        <div class="card-icon closed">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="card-title">
+          <h3>Завершённые</h3>
+          <span class="card-value" id="completed-tasks">-</span>
+        </div>
+      </div>
+      <div class="card-description">
+        <p>Фактически закрытые задачи</p>
+      </div>
+      <button class="toggle-details-btn" data-target="completed-details">
+        <i class="fas fa-chevron-down"></i>
+        <span>Детализация</span>
+      </button>
+      <div class="card-details" id="completed-details" style="display: none;">
+        <div class="details-content" id="completed-details-content">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
 <!-- Панель фильтров -->
 <div class="filters-section">
-    <div class="filter-container">
-        <label class="filter-label">Статус:</label>
-        <select id="status-filter" class="filter-select">
-            <option value="">Все статусы</option>
-        </select>
-        <button class="clear-filter-btn" id="clear-status-filter" style="display: none;">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+  <div class="filter-container">
+    <label class="filter-label">Статус:</label>
+    <select id="status-filter" class="filter-select">
+      <option value="">Все статусы</option>
+    </select>
+    <button class="clear-filter-btn" id="clear-status-filter" style="display: none;">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 
-    <div class="filter-container">
-        <label class="filter-label">Проект:</label>
-        <select id="project-filter" class="filter-select">
-            <option value="">Все проекты</option>
-        </select>
-        <button class="clear-filter-btn" id="clear-project-filter" style="display: none;">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+  <div class="filter-container">
+    <label class="filter-label">Проект:</label>
+    <select id="project-filter" class="filter-select">
+      <option value="">Все проекты</option>
+    </select>
+    <button class="clear-filter-btn" id="clear-project-filter" style="display: none;">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 
-    <div class="filter-container">
-        <label class="filter-label">Приоритет:</label>
-        <select id="priority-filter" class="filter-select">
-            <option value="">Все приоритеты</option>
-        </select>
-        <button class="clear-filter-btn" id="clear-priority-filter" style="display: none;">
-            <i class="fas fa-times"></i>
-        </button>
-    </div>
+  <div class="filter-container">
+    <label class="filter-label">Приоритет:</label>
+    <select id="priority-filter" class="filter-select">
+      <option value="">Все приоритеты</option>
+    </select>
+    <button class="clear-filter-btn" id="clear-priority-filter" style="display: none;">
+      <i class="fas fa-times"></i>
+    </button>
+  </div>
 </div>
 
 <!-- Переключатель видов -->
 <div class="view-toggle-section">
-    <div class="view-toggle-container">
-        <button class="view-toggle-btn active" data-view="list">
-            <i class="fas fa-list"></i>
-            <span>Список</span>
-        </button>
-        <button class="view-toggle-btn" data-view="kanban">
-            <i class="fas fa-columns"></i>
-            <span>Kanban</span>
-        </button>
-    </div>
+  <div class="view-toggle-container">
+    <button class="view-toggle-btn active" data-view="list">
+      <i class="fas fa-list"></i>
+      <span>Список</span>
+    </button>
+    <button class="view-toggle-btn" data-view="kanban">
+      <i class="fas fa-columns"></i>
+      <span>Kanban</span>
+    </button>
+  </div>
 </div>
 
 <!-- Kanban доска -->
 <section class="kanban-board" id="kanban-board" style="display: none;">
-    <div class="kanban-header">
-        <h2><i class="fas fa-columns"></i> Kanban доска</h2>
-        <div class="kanban-summary">
-            <div class="kanban-stats">
-                <div class="stat-card active">
-                    <i class="fas fa-play-circle"></i>
-                    <span class="stat-value" id="kanban-active-count">0</span>
-                    <span class="stat-label">Активных</span>
-                </div>
-                <div class="stat-card completed">
-                    <i class="fas fa-check-circle"></i>
-                    <span class="stat-value" id="kanban-completed-today">0</span>
-                    <span class="stat-label">Завершено</span>
-                </div>
-                <div class="stat-card overdue">
-                    <i class="fas fa-exclamation-triangle"></i>
-                    <span class="stat-value" id="kanban-overdue-count">0</span>
-                    <span class="stat-label">Просрочено</span>
-                </div>
-            </div>
+  <div class="kanban-header">
+    <h2><i class="fas fa-columns"></i> Kanban доска</h2>
+    <div class="kanban-summary">
+      <div class="kanban-stats">
+        <div class="stat-card active">
+          <i class="fas fa-play-circle"></i>
+          <span class="stat-value" id="kanban-active-count">0</span>
+          <span class="stat-label">Активных</span>
         </div>
+        <div class="stat-card completed">
+          <i class="fas fa-check-circle"></i>
+          <span class="stat-value" id="kanban-completed-today">0</span>
+          <span class="stat-label">Завершено</span>
+        </div>
+        <div class="stat-card overdue">
+          <i class="fas fa-exclamation-triangle"></i>
+          <span class="stat-value" id="kanban-overdue-count">0</span>
+          <span class="stat-label">Просрочено</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <div class="kanban-columns" id="kanban-columns">
-        <!-- Динамические колонки будут созданы JavaScript -->
-        <div class="kanban-loading">
-            <i class="fas fa-spinner fa-spin"></i>
-            <span>Загрузка колонок...</span>
-        </div>
+  <div class="kanban-columns" id="kanban-columns">
+    <!-- Динамические колонки будут созданы JavaScript -->
+    <div class="kanban-loading">
+      <i class="fas fa-spinner fa-spin"></i>
+      <span>Загрузка колонок...</span>
     </div>
+  </div>
 </section>
 
 <!-- Таблица задач -->
 <div class="table-container">
-    <div class="table-header">
-        <h3 class="table-title">
-            <i class="fas fa-tasks"></i>
-            Список задач
-        </h3>
-    </div>
-    <div class="table-wrapper">
-        <table id="tasksTable" class="display modern-datatable-redesigned">
-            <thead>
-                <tr>
-                    <th data-column="id" class="col-id">
-                        <div class="th-content">
-                            <i class="fas fa-hashtag"></i>
-                            <span>ID</span>
-                        </div>
-                    </th>
-                    <th data-column="easy_email_to" class="col-email">
-                        <div class="th-content">
-                            <i class="fas fa-envelope"></i>
-                            <span>Email отправителя</span>
-                        </div>
-                    </th>
-                    <th data-column="subject" class="col-subject">
-                        <div class="th-content">
-                            <i class="fas fa-file-text"></i>
-                            <span>Тема задачи</span>
-                        </div>
-                    </th>
-                    <th data-column="status" class="col-status">
-                        <div class="th-content">
-                            <i class="fas fa-flag"></i>
-                            <span>Статус</span>
-                        </div>
-                    </th>
-                    <th data-column="priority" class="col-priority">
-                        <div class="th-content">
-                            <i class="fas fa-exclamation-triangle"></i>
-                            <span>Приоритет</span>
-                        </div>
-                    </th>
-                    <th data-column="created_on" class="col-created">
-                        <div class="th-content">
-                            <i class="fas fa-calendar-plus"></i>
-                            <span>Создана</span>
-                        </div>
-                    </th>
-                    <th data-column="updated_on" class="col-updated">
-                        <div class="th-content">
-                            <i class="fas fa-calendar-check"></i>
-                            <span>Обновлена</span>
-                        </div>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <!-- Данные загружаются динамически -->
-            </tbody>
-        </table>
-    </div>
+  <div class="table-header">
+    <h3 class="table-title">
+      <i class="fas fa-tasks"></i>
+      Список задач
+    </h3>
+  </div>
+  <div class="table-wrapper">
+    <table id="tasksTable" class="display modern-datatable-redesigned">
+      <thead>
+        <tr>
+          <th data-column="id" class="col-id">
+            <div class="th-content">
+              <i class="fas fa-hashtag"></i>
+              <span>ID</span>
+            </div>
+          </th>
+          <th data-column="easy_email_to" class="col-email">
+            <div class="th-content">
+              <i class="fas fa-envelope"></i>
+              <span>Email отправителя</span>
+            </div>
+          </th>
+          <th data-column="subject" class="col-subject">
+            <div class="th-content">
+              <i class="fas fa-file-text"></i>
+              <span>Тема задачи</span>
+            </div>
+          </th>
+          <th data-column="status" class="col-status">
+            <div class="th-content">
+              <i class="fas fa-flag"></i>
+              <span>Статус</span>
+            </div>
+          </th>
+          <th data-column="priority" class="col-priority">
+            <div class="th-content">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>Приоритет</span>
+            </div>
+          </th>
+          <th data-column="created_on" class="col-created">
+            <div class="th-content">
+              <i class="fas fa-calendar-plus"></i>
+              <span>Создана</span>
+            </div>
+          </th>
+          <th data-column="updated_on" class="col-updated">
+            <div class="th-content">
+              <i class="fas fa-calendar-check"></i>
+              <span>Обновлена</span>
+            </div>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Данные загружаются динамически -->
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <!-- Индикатор обработки DataTables -->
 <div class="dt-processing" style="display: none;">
-    <div class="processing-content">
-        <i class="fas fa-rocket fa-bounce"></i>
-        <span>🚀 Загрузка данных...</span>
-    </div>
+  <div class="processing-content">
+    <i class="fas fa-rocket fa-bounce"></i>
+    <span>🚀 Загрузка данных...</span>
+  </div>
 </div>
 
 <!-- Состояние пустого списка -->
 <div class="empty-state" id="empty-state" style="display: none;">
-    <i class="fas fa-inbox empty-icon"></i>
-    <h3>Задач не найдено</h3>
-    <p>По вашим критериям поиска задачи не найдены</p>
-    <button class="btn btn-secondary" id="reset-filters-btn">Сбросить фильтры</button>
+  <i class="fas fa-inbox empty-icon"></i>
+  <h3>Задач не найдено</h3>
+  <p>По вашим критериям поиска задачи не найдены</p>
+  <button class="btn btn-secondary" id="reset-filters-btn">Сбросить фильтры</button>
 </div>
 
 <!-- Состояние ошибки -->
 <div class="error-state" id="error-state" style="display: none;">
-    <i class="fas fa-exclamation-triangle error-icon"></i>
-    <h3>Ошибка загрузки данных</h3>
-    <p id="error-message">Не удалось подключиться к системе Redmine</p>
-    <button class="btn btn-primary" id="retry-btn">Попробовать снова</button>
+  <i class="fas fa-exclamation-triangle error-icon"></i>
+  <h3>Ошибка загрузки данных</h3>
+  <p id="error-message">Не удалось подключиться к системе Redmine</p>
+  <button class="btn btn-primary" id="retry-btn">Попробовать снова</button>
 </div>
 
 {% endblock %}
@@ -380,30 +355,38 @@
 {% block scripts %}
 <!-- DataTables CSS -->
 <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap4.min.css">
-<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
+<link rel="stylesheet" type="text/css"
+  href="https://cdn.datatables.net/responsive/2.2.9/css/responsive.bootstrap4.min.css">
 
 <!-- Кастомные CSS для страницы -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_enhanced.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/my_tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/tasks_modern_ui.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/status_accordion.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/modern-status-indicators.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/tasks_enhanced.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
 <!-- Современный редизайн шапки таблицы DataTables -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/tasks_table_header_redesign.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/tasks_table_header_redesign.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
 <!-- Стили для страницы задач -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks/tasks.css') }}?v={{ cache_buster or '999' }}&t={{ range(1, 1000000) | random }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/tasks/tasks.css') }}?v={{ cache_buster or '999' }}&t={{ range(1, 1000000) | random }}&force={{ range(1, 999999) | random }}">
 
 <!-- Улучшенные стили для email-ссылок -->
 <style>
-/* Компактные статистики Kanban */
-.kanban-stats {
+  /* Компактные статистики Kanban */
+  .kanban-stats {
     display: flex !important;
     align-items: center !important;
     gap: 8px !important;
     flex-direction: row !important;
-}
+  }
 
-.stat-card {
+  .stat-card {
     display: flex !important;
     align-items: center !important;
     gap: 6px !important;
@@ -416,139 +399,146 @@
     font-size: 12px !important;
     min-width: auto !important;
     flex-direction: row !important;
-}
+  }
 
-.stat-card i {
+  .stat-card i {
     font-size: 14px !important;
     color: #6b7280 !important;
     margin-right: 4px !important;
-}
+  }
 
-.stat-card.active i {
+  .stat-card.active i {
     color: #3b82f6 !important;
-}
+  }
 
-.stat-card.completed i {
+  .stat-card.completed i {
     color: #10b981 !important;
-}
+  }
 
-.stat-card.overdue i {
+  .stat-card.overdue i {
     color: #ef4444 !important;
-}
+  }
 
-.stat-value {
+  .stat-value {
     font-size: 14px !important;
     font-weight: 700 !important;
     color: #1f2937 !important;
     margin: 0 4px !important;
-}
+  }
 
-.stat-label {
+  .stat-label {
     font-size: 11px !important;
     font-weight: 500 !important;
     color: #6b7280 !important;
     text-transform: none !important;
     letter-spacing: 0 !important;
-}
+  }
 
-    @media (max-width: 768px) {
-        .kanban-stats {
-            flex-direction: row !important;
-            gap: 6px !important;
-            flex-wrap: wrap !important;
-        }
-
-        .stat-card {
-            padding: 4px 8px !important;
-            font-size: 11px !important;
-        }
-
-        .stat-value {
-            font-size: 12px !important;
-        }
-
-        .stat-label {
-            font-size: 10px !important;
-        }
+  @media (max-width: 768px) {
+    .kanban-stats {
+      flex-direction: row !important;
+      gap: 6px !important;
+      flex-wrap: wrap !important;
     }
 
-    /* Улучшенная видимость заголовка Kanban */
-    .kanban-header {
-        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%) !important;
-        padding: 15px 20px !important;
-        border-radius: 8px !important;
-        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+    .stat-card {
+      padding: 4px 8px !important;
+      font-size: 11px !important;
     }
 
-    .kanban-header h2 {
-        color: #ffffff !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    .stat-value {
+      font-size: 12px !important;
     }
 
-    .kanban-header h2 i {
-        color: #ffffff !important;
-        text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+    .stat-label {
+      font-size: 10px !important;
+    }
+  }
+
+  /* Улучшенная видимость заголовка Kanban */
+  .kanban-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%) !important;
+    padding: 15px 20px !important;
+    border-radius: 8px !important;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3) !important;
+  }
+
+  .kanban-header h2 {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  .kanban-header h2 i {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* 🎬 Анимация загрузки */
+  #loading-message {
+    transition: opacity 0.3s ease;
+    font-size: 14px;
+    color: #6b7280;
+    margin: 10px 0;
+    min-height: 20px;
+  }
+
+  .loading-progress {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  .progress-text {
+    font-size: 12px;
+    color: #6b7280;
+    font-weight: 500;
+  }
+
+  /* Улучшенная иконка загрузки */
+  .spinner-icon i {
+    font-size: 2.5rem;
+    color: #3b82f6;
+    animation: rocket-bounce 2s infinite;
+  }
+
+  @keyframes rocket-bounce {
+
+    0%,
+    20%,
+    50%,
+    80%,
+    100% {
+      transform: translateY(0);
     }
 
-    /* 🎬 Анимация загрузки */
-    #loading-message {
-        transition: opacity 0.3s ease;
-        font-size: 14px;
-        color: #6b7280;
-        margin: 10px 0;
-        min-height: 20px;
+    40% {
+      transform: translateY(-10px);
     }
 
-    .loading-progress {
-        margin-top: 20px;
-        width: 100%;
-        max-width: 300px;
+    60% {
+      transform: translateY(-5px);
     }
+  }
 
-    .progress-bar {
-        width: 100%;
-        height: 6px;
-        background: rgba(255, 255, 255, 0.2);
-        border-radius: 3px;
-        overflow: hidden;
-        margin-bottom: 8px;
-    }
-
-    .progress-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #3b82f6, #1d4ed8);
-        border-radius: 3px;
-        transition: width 0.5s ease;
-        width: 0%;
-    }
-
-    .progress-text {
-        font-size: 12px;
-        color: #6b7280;
-        font-weight: 500;
-    }
-
-    /* Улучшенная иконка загрузки */
-    .spinner-icon i {
-        font-size: 2.5rem;
-        color: #3b82f6;
-        animation: rocket-bounce 2s infinite;
-    }
-
-    @keyframes rocket-bounce {
-        0%, 20%, 50%, 80%, 100% {
-            transform: translateY(0);
-        }
-        40% {
-            transform: translateY(-10px);
-        }
-        60% {
-            transform: translateY(-5px);
-        }
-    }
-    }
-/* Вариант 1: Современный Tech-стиль */
-.email-link {
+  /* Вариант 1: Современный Tech-стиль */
+  .email-link {
     font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
     font-size: 13px;
     font-weight: 500;
@@ -562,50 +552,50 @@
     display: inline-block;
     position: relative;
     letter-spacing: 0.02em;
-}
+  }
 
-/* Убираем дублирующуюся иконку - используем только FontAwesome иконку из HTML */
+  /* Убираем дублирующуюся иконку - используем только FontAwesome иконку из HTML */
 
-.email-link:hover {
+  .email-link:hover {
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     color: #ffffff !important;
     transform: translateY(-2px) scale(1.02);
     box-shadow: 0 8px 25px rgba(79, 70, 229, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
     border-color: #4f46e5;
-}
+  }
 
-.email-link:active {
+  .email-link:active {
     transform: translateY(-1px) scale(1.01);
-}
+  }
 
-.email-link:focus {
+  .email-link:focus {
     outline: none;
     box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
     background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
     color: #ffffff !important;
-}
+  }
 
-/* Стили для FontAwesome иконки в email-контейнере */
-.email-container {
+  /* Стили для FontAwesome иконки в email-контейнере */
+  .email-container {
     display: flex;
     align-items: center;
     gap: 6px;
-}
+  }
 
-.email-container .fa-envelope {
+  .email-container .fa-envelope {
     flex-shrink: 0;
     font-size: 14px;
     opacity: 0.8;
     transition: all 0.2s ease;
-}
+  }
 
-.email-container:hover .fa-envelope {
+  .email-container:hover .fa-envelope {
     opacity: 1;
     transform: scale(1.1);
-}
+  }
 
-/* Альтернативный стиль для компактного отображения */
-.email-link.compact {
+  /* Альтернативный стиль для компактного отображения */
+  .email-link.compact {
     font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
     font-size: 12px;
     font-weight: 600;
@@ -613,15 +603,15 @@
     background: #f0f9ff;
     border: 1px solid #0ea5e9;
     color: #0ea5e9 !important;
-}
+  }
 
-.email-link.compact:hover {
+  .email-link.compact:hover {
     background: #0ea5e9;
     color: #ffffff !important;
-}
+  }
 
-/* Дополнительные утилиты для быстрого переключения стилей */
-.email-style-selector {
+  /* Дополнительные утилиты для быстрого переключения стилей */
+  .email-style-selector {
     position: fixed;
     top: 10px;
     right: 10px;
@@ -631,1046 +621,1082 @@
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     font-size: 12px;
-}
+  }
 
-.email-style-selector select {
+  .email-style-selector select {
     padding: 4px 8px;
     border: 1px solid #e2e8f0;
     border-radius: 4px;
     font-size: 11px;
-}
-
-/* Выделение активной страницы пагинации */
-.dataTables_paginate .paginate_button.active-page {
-  background: #22c55e !important; /* зелёный */
-  color: #ffffff !important;
-  border: 1px solid #16a34a !important;
-}
-
-/* Подсветка строки при возврате */
-tr.return-selected {
-  background: rgba(249, 115, 22, 0.25) !important;
-  border-left: 4px solid #f97316 !important;
-}
-
-/* CSS Variables for Theme Support */
-:root {
-  --primary-50: #eef2ff; --primary-100: #e0e7ff; --primary-200: #c7d2fe; --primary-300: #a5b4fc; --primary-400: #818cf8; --primary-500: #6366f1; --primary-600: #4f46e5; --primary-700: #4338ca; --primary-800: #3730a3; --primary-900: #312e81;
-  --success: #22c55e; --success-bg: rgba(34, 197, 94, 0.15); --error: #ef4444; --error-bg: rgba(239, 68, 68, 0.15); --warning: #f97316; --info: #06b6d4;
-  --surface-0: #111827; --surface-1: #1f2937; --surface-2: #374151; --surface-3: #4b5563; --surface-glass: rgba(31, 41, 55, 0.7); --surface-card: rgba(55, 65, 81, 0.6);
-  --text-primary: #f9fafb; --text-secondary: #e5e7eb; --text-muted: #9ca3af; --text-disabled: #6b7280; --text-on-primary: #ffffff;
-  --border-light: #374151; --border-medium: #4b5563; --border-focus: var(--primary-400);
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4); --shadow-2: 0 3px 6px rgba(0,0,0,0.3), 0 3px 6px rgba(0,0,0,0.4); --shadow-3: 0 10px 20px rgba(0,0,0,0.3), 0 6px 6px rgba(0,0,0,0.4);
-  --spacing-xs: 0.25rem; --spacing-sm: 0.5rem; --spacing-md: 1rem; --spacing-lg: 1.5rem; --spacing-xl: 2rem; --spacing-xxl: 3rem;
-  --radius-sm: 4px; --radius-md: 8px; --radius-lg: 12px; --radius-xl: 16px; --radius-xxl: 24px;
-  --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1); --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1); --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Light theme overrides */
-body.light-theme {
-  --surface-0: #ffffff; --surface-1: #f8fafc; --surface-2: #e2e8f0; --surface-3: #cbd5e1; --surface-glass: rgba(248, 250, 252, 0.8); --surface-card: rgba(255, 255, 255, 0.9);
-  --text-primary: #0f172a; --text-secondary: #334155; --text-muted: #64748b; --text-disabled: #94a3b8; --text-on-primary: #ffffff;
-  --border-light: #e2e8f0; --border-medium: #cbd5e1; --border-focus: var(--primary-500);
-  --shadow-1: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06); --shadow-2: 0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06); --shadow-3: 0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05);
-  --success-bg: rgba(34, 197, 94, 0.1); --error-bg: rgba(239, 68, 68, 0.1);
-
-  /* Принудительно применяем светлую тему */
-  background-color: #ffffff !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .page-header {
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%) !important;
-  border-bottom: 1px solid #1e40af !important;
-  color: #ffffff !important;
-}
-
-body.light-theme .page-header .page-title {
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-theme .page-header .page-subtitle {
-  color: #e0e7ff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-theme .page-header .header-icon {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
-}
-
-body.light-theme .status-breakdown-dashboard {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .status-card {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .status-card h3 {
-  color: #0f172a !important;
-}
-
-body.light-theme .status-card .card-value {
-  color: #3b82f6 !important;
-}
-
-body.light-theme .status-card .card-description p {
-  color: #64748b !important;
-}
-
-body.light-theme .status-card .detail-label {
-  color: #64748b !important;
-}
-
-body.light-theme .status-card .detail-value {
-  color: #0f172a !important;
-}
-
-body.light-theme .filters-section {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .filter-label {
-  color: #0f172a !important;
-}
-
-body.light-theme .view-toggle-section {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .kanban-board {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .kanban-header h2 {
-  color: #ffffff !important;
-}
-
-body.light-theme .kanban-column {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .kanban-column-header {
-  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
-  color: #ffffff !important;
-}
-
-body.light-theme .kanban-card {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
-}
-
-body.light-theme .kanban-card:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-body.light-theme .kanban-card-id {
-  color: #3b82f6 !important;
-}
-
-body.light-theme .kanban-card-subject {
-  color: #0f172a !important;
-}
-
-body.light-theme .kanban-card-date {
-  color: #64748b !important;
-}
-
-body.light-theme .kanban-card-priority {
-  color: #ffffff !important;
-}
-
-body.light-theme .table-container {
-  background: #f8fafc !important;
-  border: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .table-title {
-  color: #0f172a !important;
-}
-
-/* Кнопки в светлой теме */
-body.light-theme .action-button {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .action-button:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-body.light-theme .action-button.primary {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-body.light-theme .action-button.primary:hover {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
-}
-
-body.light-theme .action-button.secondary {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: #ffffff !important;
-  border-color: rgba(255, 255, 255, 0.3) !important;
-}
-
-body.light-theme .action-button.secondary:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-/* Переключатели видов в светлой теме */
-body.light-theme .view-toggle-btn {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .view-toggle-btn:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-body.light-theme .view-toggle-btn.active {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-/* Фильтры в светлой теме */
-body.light-theme .filter-select {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .filter-select:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
-}
-
-/* Кнопки детализации в светлой теме */
-body.light-theme .toggle-details-btn {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border: 1px solid #3b82f6 !important;
-}
-
-body.light-theme .toggle-details-btn:hover {
-  background: #2563eb !important;
-  border-color: #2563eb !important;
-}
-
-/* Глобальная кнопка развернуть все */
-body.light-theme .global-toggle-btn {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .global-toggle-btn:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-/* Статистика в светлой теме */
-body.light-theme .summary-value {
-  color: #3b82f6 !important;
-}
-
-body.light-theme .summary-label {
-  color: #64748b !important;
-}
-
-/* Иконки в светлой теме */
-body.light-theme .card-icon {
-  background: #f1f5f9 !important;
-  color: #3b82f6 !important;
-}
-
-body.light-theme .card-icon.total {
-  background: #dbeafe !important;
-  color: #3b82f6 !important;
-}
-
-body.light-theme .card-icon.paused {
-  background: #fef3c7 !important;
-  color: #d97706 !important;
-}
-
-body.light-theme .card-icon.open {
-  background: #d1fae5 !important;
-  color: #059669 !important;
-}
-
-body.light-theme .card-icon.closed {
-  background: #e0e7ff !important;
-  color: #6366f1 !important;
-}
-
-/* Основные стили для темной темы (по умолчанию) */
-body {
-  background-color: var(--surface-0);
-  color: var(--text-primary);
-  transition: background-color 0.3s ease, color 0.3s ease;
-}
-
-/* Убеждаемся, что темная тема применяется по умолчанию */
-body:not(.light-theme) {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-}
-
-/* Принудительно применяем темную тему до загрузки JavaScript */
-body {
-  background-color: #111827 !important;
-  color: #f9fafb !important;
-}
-
-/* Принудительные стили для переключателя темы в начальном состоянии */
-.theme-switcher .theme-icon-light {
-  display: block !important;
-  color: #fbbf24 !important;
-}
-
-.theme-switcher .theme-icon-dark {
-  display: none !important;
-  color: #60a5fa !important;
-}
-
-/* Принудительные стили для светлой темы */
-body.light-theme .theme-switcher .theme-icon-light {
-  display: none !important;
-  color: #fbbf24 !important;
-}
-
-body.light-theme .theme-switcher .theme-icon-dark {
-  display: block !important;
-  color: #ffffff !important;
-}
-
-body:not(.light-theme) .page-header {
-  background: #1f2937;
-  border-bottom: 1px solid #374151;
-}
-
-body:not(.light-theme) .status-breakdown-dashboard {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-body:not(.light-theme) .status-card {
-  background: rgba(55, 65, 81, 0.6);
-  border: 1px solid #374151;
-}
-
-body:not(.light-theme) .status-card .detail-label {
-  color: #e5e7eb !important;
-}
-
-body:not(.light-theme) .status-card .detail-value {
-  color: #f9fafb !important;
-}
-
-body:not(.light-theme) .card-details {
-  background: rgba(31, 41, 55, 0.8) !important;
-  border: 1px solid #4b5563 !important;
-  color: #f9fafb !important;
-}
-
-body:not(.light-theme) .details-content {
-  background: rgba(31, 41, 55, 0.9) !important;
-  border: 1px solid #4b5563 !important;
-  color: #f9fafb !important;
-}
-
-body:not(.light-theme) .detail-item {
-  color: #f9fafb !important;
-  border-bottom: 1px solid #4b5563 !important;
-}
-
-body:not(.light-theme) .detail-item:last-child {
-  border-bottom: none !important;
-}
-
-/* Дополнительные стили для детализации в темной теме */
-body:not(.light-theme) .status-card .card-details {
-  background: #1f2937 !important;
-  border: 1px solid #4b5563 !important;
-  border-radius: 8px !important;
-  margin-top: 10px !important;
-  padding: 15px !important;
-}
-
-body:not(.light-theme) .status-card .details-content {
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  border-radius: 12px !important;
-  padding: 16px !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-}
-
-body:not(.light-theme) .status-card .detail-item {
-  display: flex !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  padding: 8px 0 !important;
-  color: #f9fafb !important;
-  border-bottom: 1px solid #374151 !important;
-}
-
-body:not(.light-theme) .status-card .detail-item:last-child {
-  border-bottom: none !important;
-  padding-bottom: 0 !important;
-}
-
-body:not(.light-theme) .status-card .detail-label {
-  font-weight: 500 !important;
-  color: #f9fafb !important;
-}
-
-/* Принудительные стили для названий статусов в темной теме */
-body:not(.light-theme) .card-details .detail-item .detail-label,
-body:not(.light-theme) .details-content .detail-item .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-label,
-body:not(.light-theme) .status-card .details-content .detail-label {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
-}
-
-body:not(.light-theme) .status-card .detail-value {
-  font-weight: 600 !important;
-  color: #ffffff !important;
-  background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
-  padding: 6px 12px !important;
-  border-radius: 8px !important;
-  min-width: 40px !important;
-  text-align: center !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
-  border: 1px solid #4b5563 !important;
-}
-
-/* Максимально принудительные стили для всех возможных селекторов */
-body:not(.light-theme) .detail-label,
-body:not(.light-theme) .status-card .detail-label,
-body:not(.light-theme) .card-details .detail-label,
-body:not(.light-theme) .details-content .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-label,
-body:not(.light-theme) .status-card .details-content .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-item .detail-label,
-body:not(.light-theme) .status-card .details-content .detail-item .detail-label {
-  color: #ffffff !important;
-  font-weight: 600 !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-body:not(.light-theme) .filters-section {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-body:not(.light-theme) .view-toggle-section {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-body:not(.light-theme) .kanban-board {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-body:not(.light-theme) .kanban-card {
-  background: #374151 !important;
-  border: 1px solid #4b5563 !important;
-  color: #f9fafb !important;
-}
-
-body:not(.light-theme) .kanban-card:hover {
-  background: #4b5563 !important;
-  border-color: #6b7280 !important;
-}
-
-body:not(.light-theme) .kanban-card-id {
-  color: #60a5fa !important;
-}
-
-body:not(.light-theme) .kanban-card-subject {
-  color: #f9fafb !important;
-}
-
-body:not(.light-theme) .kanban-card-date {
-  color: #d1d5db !important;
-}
-
-body:not(.light-theme) .kanban-card-priority {
-  color: #ffffff !important;
-}
-
-body:not(.light-theme) .table-container {
-  background: #1f2937;
-  border: 1px solid #374151;
-}
-
-/* Стили для основных компонентов страницы */
-.page-header {
-  background: var(--surface-1);
-  border-bottom: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.status-breakdown-dashboard {
-  background: var(--surface-1);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.status-card {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.status-card:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-.filters-section {
-  background: var(--surface-1);
-  border: 1px solid var(--border-light);
-}
-
-.filter-select {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.filter-select:focus {
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-}
-
-.view-toggle-section {
-  background: var(--surface-1);
-  border: 1px solid var(--border-light);
-}
-
-.view-toggle-btn {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.view-toggle-btn:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-.view-toggle-btn.active {
-  background: var(--primary-500);
-  color: var(--text-on-primary);
-  border-color: var(--primary-500);
-}
-
-.kanban-board {
-  background: var(--surface-1);
-  border: 1px solid var(--border-light);
-}
-
-.kanban-column {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-}
-
-.kanban-card {
-  background: var(--surface-0);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.kanban-card:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-.table-container {
-  background: var(--surface-1);
-  border: 1px solid var(--border-light);
-}
-
-.table-title {
-  color: var(--text-primary);
-}
-
-/* DataTables стили */
-.modern-datatable-redesigned {
-  background: var(--surface-card);
-  color: var(--text-primary);
-}
-
-.modern-datatable-redesigned thead th {
-  background: var(--surface-2);
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.modern-datatable-redesigned tbody tr {
-  background: var(--surface-card);
-  color: var(--text-primary);
-  border-bottom: 1px solid var(--border-light);
-}
-
-.modern-datatable-redesigned tbody tr:hover {
-  background: var(--surface-2);
-}
-
-.modern-datatable-redesigned tbody tr:nth-child(even) {
-  background: var(--surface-1);
-}
-
-.modern-datatable-redesigned tbody tr:nth-child(even):hover {
-  background: var(--surface-2);
-}
-
-/* Кнопки */
-.action-button {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.action-button:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-.action-button.primary {
-  background: var(--primary-500);
-  color: var(--text-on-primary);
-  border-color: var(--primary-500);
-}
-
-.action-button.primary:hover {
-  background: var(--primary-600);
-  border-color: var(--primary-600);
-}
-
-.action-button.secondary {
-  background: var(--surface-card);
-  color: var(--text-primary);
-  border-color: var(--border-light);
-}
-
-.action-button.secondary:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-/* Состояния загрузки и ошибок */
-.loading-overlay {
-  background: var(--surface-glass);
-  color: var(--text-primary);
-}
-
-.empty-state, .error-state {
-  background: var(--surface-card);
-  color: var(--text-primary);
-}
-
-.empty-icon, .error-icon {
-  color: var(--text-muted);
-}
-
-/* Состояния загрузки и ошибок в светлой теме */
-body.light-theme .loading-overlay {
-  background: rgba(248, 250, 252, 0.8) !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .empty-state,
-body.light-theme .error-state {
-  background: #ffffff !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .empty-icon,
-body.light-theme .error-icon {
-  color: #64748b !important;
-}
-
-body.light-theme .empty-state h3,
-body.light-theme .error-state h3 {
-  color: #0f172a !important;
-}
-
-body.light-theme .empty-state p,
-body.light-theme .error-state p {
-  color: #64748b !important;
-}
-
-/* Пагинация DataTables */
-.dataTables_wrapper .dataTables_paginate .paginate_button {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-}
-
-.dataTables_wrapper .dataTables_paginate .paginate_button.current {
-  background: var(--primary-500);
-  color: var(--text-on-primary);
-  border-color: var(--primary-500);
-}
-
-/* Фильтры и поиск */
-.dataTables_wrapper .dataTables_filter input {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-.dataTables_wrapper .dataTables_length select {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  color: var(--text-primary);
-}
-
-/* Информация о записях */
-.dataTables_wrapper .dataTables_info {
-  color: var(--text-muted);
-}
-
-/* DataTables в светлой теме */
-body.light-theme .modern-datatable-redesigned {
-  background: #ffffff !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .modern-datatable-redesigned thead th {
-  background: #f8fafc !important;
-  color: #0f172a !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .modern-datatable-redesigned tbody tr {
-  background: #ffffff !important;
-  color: #0f172a !important;
-  border-bottom: 1px solid #e2e8f0 !important;
-}
-
-body.light-theme .modern-datatable-redesigned tbody tr:hover {
-  background: #f8fafc !important;
-}
-
-body.light-theme .modern-datatable-redesigned tbody tr:nth-child(even) {
-  background: #f8fafc !important;
-}
-
-body.light-theme .modern-datatable-redesigned tbody tr:nth-child(even):hover {
-  background: #f1f5f9 !important;
-}
-
-/* Пагинация DataTables в светлой теме */
-body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-  background: #f8fafc !important;
-  border-color: #cbd5e1 !important;
-}
-
-body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-  background: #3b82f6 !important;
-  color: #ffffff !important;
-  border-color: #3b82f6 !important;
-}
-
-/* Фильтры и поиск DataTables в светлой теме */
-body.light-theme .dataTables_wrapper .dataTables_filter input {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-body.light-theme .dataTables_wrapper .dataTables_length select {
-  background: #ffffff !important;
-  border: 1px solid #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-/* Информация о записях в светлой теме */
-body.light-theme .dataTables_wrapper .dataTables_info {
-  color: #64748b !important;
-}
-
-/* Theme Switcher Styles */
-.theme-switcher-container {
-  flex-shrink: 0;
-  margin-left: var(--spacing-md);
-}
-
-.theme-switcher {
-  background: var(--surface-card);
-  border: 1px solid var(--border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--spacing-sm);
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all var(--transition-normal);
-  position: relative;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.theme-switcher:hover {
-  background: var(--surface-2);
-  border-color: var(--border-medium);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-1);
-}
-
-.theme-switcher:active {
-  transform: translateY(0);
-}
-
-.theme-switcher * {
-  pointer-events: none;
-}
-
-.theme-switcher .theme-icon-light,
-.theme-switcher i.theme-icon-light,
-.theme-switcher .fas.theme-icon-light {
-  display: block !important;
-  color: #fbbf24 !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  font-size: 1.1rem;
-  transition: all var(--transition-normal);
-  position: absolute;
-}
-
-.theme-switcher .theme-icon-dark,
-.theme-switcher i.theme-icon-dark,
-.theme-switcher .fas.theme-icon-dark {
-  display: none !important;
-  color: #60a5fa !important;
-  font-size: 1.1rem;
-  transition: all var(--transition-normal);
-  position: absolute;
-}
-
-/* Начальное состояние для светлой темы (до применения JavaScript) */
-body.light-theme .theme-switcher .theme-icon-light,
-body.light-theme .theme-switcher i.theme-icon-light,
-body.light-theme .theme-switcher .fas.theme-icon-light {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-
-body.light-theme .theme-switcher .theme-icon-dark,
-body.light-theme .theme-switcher i.theme-icon-dark,
-body.light-theme .theme-switcher .fas.theme-icon-dark {
-  display: block !important;
-  color: #ffffff !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-body.light-theme .theme-switcher {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-}
-
-body.light-theme .theme-switcher:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-}
-
-body.light-theme .theme-switcher .theme-icon-light,
-body.light-theme .theme-switcher i.theme-icon-light,
-body.light-theme .theme-switcher .fas.theme-icon-light {
-  display: none !important;
-  opacity: 0 !important;
-  visibility: hidden !important;
-}
-
-body.light-theme .theme-switcher .theme-icon-dark,
-body.light-theme .theme-switcher i.theme-icon-dark,
-body.light-theme .theme-switcher .fas.theme-icon-dark {
-  display: block !important;
-  color: #ffffff !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-}
-
-/* Дополнительные стили для переключателя темы в светлой теме */
-body.light-theme .theme-switcher-container .theme-switcher {
-  background: rgba(255, 255, 255, 0.2) !important;
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  backdrop-filter: blur(10px) !important;
-  -webkit-backdrop-filter: blur(10px) !important;
-}
-
-body.light-theme .theme-switcher-container .theme-switcher:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  transform: translateY(-1px) !important;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
-}
-
-body.light-theme .theme-switcher-container .theme-switcher * {
-  color: #ffffff !important;
-}
-
-body.light-theme .theme-switcher-container .theme-switcher .fa-moon {
-  color: #ffffff !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
-}
-
-/* КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ ДЛЯ НАЗВАНИЙ СТАТУСОВ В ТЕМНОЙ ТЕМЕ */
-body:not(.light-theme) .detail-label {
-  color: #000000 !important;
-  font-weight: 600 !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: block !important;
-}
-
-/* Принудительное переопределение всех возможных стилей */
-body:not(.light-theme) * .detail-label {
-  color: #000000 !important;
-  font-weight: 600 !important;
-  text-shadow: none !important;
-}
-
-/* МАКСИМАЛЬНО ПРИНУДИТЕЛЬНЫЕ СТИЛИ */
-body:not(.light-theme) .detail-label,
-body:not(.light-theme) .status-card .detail-label,
-body:not(.light-theme) .card-details .detail-label,
-body:not(.light-theme) .details-content .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-label,
-body:not(.light-theme) .status-card .details-content .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-item .detail-label,
-body:not(.light-theme) .status-card .details-content .detail-item .detail-label,
-body:not(.light-theme) .status-card .card-details .detail-item span.detail-label,
-body:not(.light-theme) .status-card .details-content .detail-item span.detail-label {
-  color: #000000 !important;
-  font-weight: 700 !important;
-  text-shadow: none !important;
-  opacity: 1 !important;
-  visibility: visible !important;
-  display: inline-block !important;
-}
+  }
+
+  /* Выделение активной страницы пагинации */
+  .dataTables_paginate .paginate_button.active-page {
+    background: #22c55e !important;
+    /* зелёный */
+    color: #ffffff !important;
+    border: 1px solid #16a34a !important;
+  }
+
+  /* Подсветка строки при возврате */
+  tr.return-selected {
+    background: rgba(249, 115, 22, 0.25) !important;
+    border-left: 4px solid #f97316 !important;
+  }
+
+  /* CSS Variables for Theme Support */
+  :root {
+    --primary-50: #eef2ff;
+    --primary-100: #e0e7ff;
+    --primary-200: #c7d2fe;
+    --primary-300: #a5b4fc;
+    --primary-400: #818cf8;
+    --primary-500: #6366f1;
+    --primary-600: #4f46e5;
+    --primary-700: #4338ca;
+    --primary-800: #3730a3;
+    --primary-900: #312e81;
+    --success: #22c55e;
+    --success-bg: rgba(34, 197, 94, 0.15);
+    --error: #ef4444;
+    --error-bg: rgba(239, 68, 68, 0.15);
+    --warning: #f97316;
+    --info: #06b6d4;
+    --surface-0: #111827;
+    --surface-1: #1f2937;
+    --surface-2: #374151;
+    --surface-3: #4b5563;
+    --surface-glass: rgba(31, 41, 55, 0.7);
+    --surface-card: rgba(55, 65, 81, 0.6);
+    --text-primary: #f9fafb;
+    --text-secondary: #e5e7eb;
+    --text-muted: #9ca3af;
+    --text-disabled: #6b7280;
+    --text-on-primary: #ffffff;
+    --border-light: #374151;
+    --border-medium: #4b5563;
+    --border-focus: var(--primary-400);
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.3), 0 3px 6px rgba(0, 0, 0, 0.4);
+    --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.3), 0 6px 6px rgba(0, 0, 0, 0.4);
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Light theme overrides */
+  body.light-theme {
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #e2e8f0;
+    --surface-3: #cbd5e1;
+    --surface-glass: rgba(248, 250, 252, 0.8);
+    --surface-card: rgba(255, 255, 255, 0.9);
+    --text-primary: #0f172a;
+    --text-secondary: #334155;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+    --border-light: #e2e8f0;
+    --border-medium: #cbd5e1;
+    --border-focus: var(--primary-500);
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.1), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --success-bg: rgba(34, 197, 94, 0.1);
+    --error-bg: rgba(239, 68, 68, 0.1);
+
+    /* Принудительно применяем светлую тему */
+    background-color: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .page-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #1d4ed8 100%) !important;
+    border-bottom: 1px solid #1e40af !important;
+    color: #ffffff !important;
+  }
+
+  body.light-theme .page-header .page-title {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  body.light-theme .page-header .page-subtitle {
+    color: #e0e7ff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  body.light-theme .page-header .header-icon {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  body.light-theme .status-breakdown-dashboard {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .status-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .status-card h3 {
+    color: #0f172a !important;
+  }
+
+  body.light-theme .status-card .card-value {
+    color: #3b82f6 !important;
+  }
+
+  body.light-theme .status-card .card-description p {
+    color: #64748b !important;
+  }
+
+  body.light-theme .status-card .detail-label {
+    color: #64748b !important;
+  }
+
+  body.light-theme .status-card .detail-value {
+    color: #0f172a !important;
+  }
+
+  body.light-theme .filters-section {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .filter-label {
+    color: #0f172a !important;
+  }
+
+  body.light-theme .view-toggle-section {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .kanban-board {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .kanban-header h2 {
+    color: #ffffff !important;
+  }
+
+  body.light-theme .kanban-column {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .kanban-column-header {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+    color: #ffffff !important;
+  }
+
+  body.light-theme .kanban-card {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  body.light-theme .kanban-card:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  body.light-theme .kanban-card-id {
+    color: #3b82f6 !important;
+  }
+
+  body.light-theme .kanban-card-subject {
+    color: #0f172a !important;
+  }
+
+  body.light-theme .kanban-card-date {
+    color: #64748b !important;
+  }
+
+  body.light-theme .kanban-card-priority {
+    color: #ffffff !important;
+  }
+
+  body.light-theme .table-container {
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .table-title {
+    color: #0f172a !important;
+  }
+
+  /* Кнопки в светлой теме */
+  body.light-theme .action-button {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .action-button:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  body.light-theme .action-button.primary {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+  }
+
+  body.light-theme .action-button.primary:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+  }
+
+  body.light-theme .action-button.secondary {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: #ffffff !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  body.light-theme .action-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  /* Переключатели видов в светлой теме */
+  body.light-theme .view-toggle-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .view-toggle-btn:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  body.light-theme .view-toggle-btn.active {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+  }
+
+  /* Фильтры в светлой теме */
+  body.light-theme .filter-select {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .filter-select:focus {
+    border-color: #3b82f6 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+  }
+
+  /* Кнопки детализации в светлой теме */
+  body.light-theme .toggle-details-btn {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border: 1px solid #3b82f6 !important;
+  }
+
+  body.light-theme .toggle-details-btn:hover {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+  }
+
+  /* Глобальная кнопка развернуть все */
+  body.light-theme .global-toggle-btn {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .global-toggle-btn:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  /* Статистика в светлой теме */
+  body.light-theme .summary-value {
+    color: #3b82f6 !important;
+  }
+
+  body.light-theme .summary-label {
+    color: #64748b !important;
+  }
+
+  ight-theme .summary-label {
+    color: #64748b !important;
+  }
+
+  /* Иконки в светлой теме */
+  body.light-theme .card-icon {
+    background: #f1f5f9 !important;
+    color: #3b82f6 !important;
+  }
+
+  body.light-theme .card-icon.total {
+    background: #dbeafe !important;
+    color: #3b82f6 !important;
+  }
+
+  body.light-theme .card-icon.paused {
+    background: #fef3c7 !important;
+    color: #d97706 !important;
+  }
+
+  body.light-theme .card-icon.open {
+    background: #d1fae5 !important;
+    color: #059669 !important;
+  }
+
+  body.light-theme .card-icon.closed {
+    background: #e0e7ff !important;
+    color: #6366f1 !important;
+  }
+
+  /* Основные стили для темной темы (по умолчанию) */
+  body {
+    background-color: var(--surface-0);
+    color: var(--text-primary);
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Убеждаемся, что темная тема применяется по умолчанию */
+  body:not(.light-theme) {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  /* Принудительно применяем темную тему до загрузки JavaScript */
+  body {
+    background-color: #111827 !important;
+    color: #f9fafb !important;
+  }
+
+  /* Принудительные стили для переключателя темы в начальном состоянии */
+  .theme-switcher .theme-icon-light {
+    display: block !important;
+    color: #fbbf24 !important;
+  }
+
+  .theme-switcher .theme-icon-dark {
+    display: none !important;
+    color: #60a5fa !important;
+  }
+
+  /* Принудительные стили для светлой темы */
+  body.light-theme .theme-switcher .theme-icon-light {
+    display: none !important;
+    color: #fbbf24 !important;
+  }
+
+  body.light-theme .theme-switcher .theme-icon-dark {
+    display: block !important;
+    color: #ffffff !important;
+  }
+
+  body:not(.light-theme) .page-header {
+    background: #1f2937;
+    border-bottom: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .status-breakdown-dashboard {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .status-card {
+    background: rgba(55, 65, 81, 0.6);
+    border: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .status-card .detail-label {
+    font-weight: 500 !important;
+    color: #e5e7eb !important;
+  }
+
+  body:not(.light-theme) .status-card .detail-value {
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .card-details {
+    background: rgba(31, 41, 55, 0.8) !important;
+    border: 1px solid #4b5563 !important;
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .details-content {
+    background: rgba(31, 41, 55, 0.9) !important;
+    border: 1px solid #4b5563 !important;
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .detail-item {
+    color: #f9fafb !important;
+    border-bottom: 1px solid #4b5563 !important;
+  }
+
+  body:not(.light-theme) .detail-item:last-child {
+    border-bottom: none !important;
+  }
+
+  /* Дополнительные стили для детализации в темной теме */
+  body:not(.light-theme) .status-card .card-details {
+    background: #1f2937 !important;
+    border: 1px solid #4b5563 !important;
+    border-radius: 8px !important;
+    margin-top: 10px !important;
+    padding: 15px !important;
+  }
+
+  body:not(.light-theme) .status-card .details-content {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 12px !important;
+    padding: 16px !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  body:not(.light-theme) .status-card .detail-item {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    color: #f9fafb !important;
+    border-bottom: 1px solid #374151 !important;
+  }
+
+  body:not(.light-theme) .status-card .detail-item:last-child {
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+  }
+
+
+
+  /* Принудительные стили для названий статусов в темной теме */
+  body:not(.light-theme) .card-details .detail-item .detail-label,
+  body:not(.light-theme) .details-content .detail-item .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+  }
+
+  body:not(.light-theme) .status-card .detail-value {
+    font-weight: 600 !important;
+    color: #ffffff !important;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%) !important;
+    padding: 6px 12px !important;
+    border-radius: 8px !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid #4b5563 !important;
+  }
+
+  /* Максимально принудительные стили для всех возможных селекторов */
+  body:not(.light-theme) .detail-label,
+  body:not(.light-theme) .status-card .detail-label,
+  body:not(.light-theme) .card-details .detail-label,
+  body:not(.light-theme) .details-content .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-item .detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-item .detail-label {
+    color: #ffffff !important;
+    font-weight: 600 !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5) !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  body:not(.light-theme) .filters-section {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .view-toggle-section {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .kanban-board {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+
+  body:not(.light-theme) .kanban-card {
+    background: #374151 !important;
+    border: 1px solid #4b5563 !important;
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .kanban-card:hover {
+    background: #4b5563 !important;
+    border-color: #6b7280 !important;
+  }
+
+  body:not(.light-theme) .kanban-card-id {
+    color: #60a5fa !important;
+  }
+
+  body:not(.light-theme) .kanban-card-subject {
+    color: #f9fafb !important;
+  }
+
+  body:not(.light-theme) .kanban-card-date {
+    color: #d1d5db !important;
+  }
+
+  body:not(.light-theme) .kanban-card-priority {
+    color: #ffffff !important;
+  }
+
+  body:not(.light-theme) .table-container {
+    background: #1f2937;
+    border: 1px solid #374151;
+  }
+
+  /* Стили для основных компонентов страницы */
+  .page-header {
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .status-breakdown-dashboard {
+    background: var(--surface-1);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .status-card {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .status-card:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  .filters-section {
+    background: var(--surface-1);
+    border: 1px solid var(--border-light);
+  }
+
+  .filter-select {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .filter-select:focus {
+    border-color: var(--border-focus);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+  }
+
+  .view-toggle-section {
+    background: var(--surface-1);
+    border: 1px solid var(--border-light);
+  }
+
+  .view-toggle-btn {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .view-toggle-btn:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  .view-toggle-btn.active {
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    border-color: var(--primary-500);
+  }
+
+  .kanban-board {
+    background: var(--surface-1);
+    border: 1px solid var(--border-light);
+  }
+
+  .kanban-column {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+  }
+
+  .kanban-card {
+    background: var(--surface-0);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .kanban-card:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  .table-container {
+    background: var(--surface-1);
+    border: 1px solid var(--border-light);
+  }
+
+  .table-title {
+    color: var(--text-primary);
+  }
+
+  /* DataTables стили */
+  .modern-datatable-redesigned {
+    background: var(--surface-card);
+    color: var(--text-primary);
+  }
+
+  .modern-datatable-redesigned thead th {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .modern-datatable-redesigned tbody tr {
+    background: var(--surface-card);
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .modern-datatable-redesigned tbody tr:hover {
+    background: var(--surface-2);
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background: var(--surface-1);
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even):hover {
+    background: var(--surface-2);
+  }
+
+  /* Кнопки */
+  .action-button {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .action-button:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  .action-button.primary {
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    border-color: var(--primary-500);
+  }
+
+  .action-button.primary:hover {
+    background: var(--primary-600);
+    border-color: var(--primary-600);
+  }
+
+  .action-button.secondary {
+    background: var(--surface-card);
+    color: var(--text-primary);
+    border-color: var(--border-light);
+  }
+
+  .action-button.secondary:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  /* Состояния загрузки и ошибок */
+  .loading-overlay {
+    background: var(--surface-glass);
+    color: var(--text-primary);
+  }
+
+  .empty-state,
+  .error-state {
+    background: var(--surface-card);
+    color: var(--text-primary);
+  }
+
+  .empty-icon,
+  .error-icon {
+    color: var(--text-muted);
+  }
+
+  /* Состояния загрузки и ошибок в светлой теме */
+  body.light-theme .loading-overlay {
+    background: rgba(248, 250, 252, 0.8) !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .empty-state,
+  body.light-theme .error-state {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .empty-icon,
+  body.light-theme .error-icon {
+    color: #64748b !important;
+  }
+
+  body.light-theme .empty-state h3,
+  body.light-theme .error-state h3 {
+    color: #0f172a !important;
+  }
+
+  body.light-theme .empty-state p,
+  body.light-theme .error-state p {
+    color: #64748b !important;
+  }
+
+  /* Пагинация DataTables */
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    border-color: var(--primary-500);
+  }
+
+  /* Фильтры и поиск */
+  .dataTables_wrapper .dataTables_filter input {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  .dataTables_wrapper .dataTables_length select {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    color: var(--text-primary);
+  }
+
+  /* Информация о записях */
+  .dataTables_wrapper .dataTables_info {
+    color: var(--text-muted);
+  }
+
+  /* DataTables в светлой теме */
+  body.light-theme .modern-datatable-redesigned {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .modern-datatable-redesigned thead th {
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .modern-datatable-redesigned tbody tr {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+  }
+
+  body.light-theme .modern-datatable-redesigned tbody tr:hover {
+    background: #f8fafc !important;
+  }
+
+  body.light-theme .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+
+  body.light-theme .modern-datatable-redesigned tbody tr:nth-child(even):hover {
+    background: #f1f5f9 !important;
+  }
+
+  /* Пагинация DataTables в светлой теме */
+  body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  body.light-theme .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #3b82f6 !important;
+    color: #ffffff !important;
+    border-color: #3b82f6 !important;
+  }
+
+  /* Фильтры и поиск DataTables в светлой теме */
+  body.light-theme .dataTables_wrapper .dataTables_filter input {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  body.light-theme .dataTables_wrapper .dataTables_length select {
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #0f172a !important;
+  }
+
+  /* Информация о записях в светлой теме */
+  body.light-theme .dataTables_wrapper .dataTables_info {
+    color: #64748b !important;
+  }
+
+  /* Theme Switcher Styles */
+  .theme-switcher-container {
+    flex-shrink: 0;
+    margin-left: var(--spacing-md);
+  }
+
+  .theme-switcher {
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-sm);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+
+  .theme-switcher:hover {
+    background: var(--surface-2);
+    border-color: var(--border-medium);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
+
+  .theme-switcher:active {
+    transform: translateY(0);
+  }
+
+  .theme-switcher * {
+    pointer-events: none;
+  }
+
+  .theme-switcher .theme-icon-light,
+  .theme-switcher i.theme-icon-light,
+  .theme-switcher .fas.theme-icon-light {
+    display: block !important;
+    color: #fbbf24 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    position: absolute;
+  }
+
+  .theme-switcher .theme-icon-dark,
+  .theme-switcher i.theme-icon-dark,
+  .theme-switcher .fas.theme-icon-dark {
+    display: none !important;
+    color: #60a5fa !important;
+    font-size: 1.1rem;
+    transition: all var(--transition-normal);
+    position: absolute;
+  }
+
+  /* Начальное состояние для светлой темы (до применения JavaScript) */
+  body.light-theme .theme-switcher .theme-icon-light,
+  body.light-theme .theme-switcher i.theme-icon-light,
+  body.light-theme .theme-switcher .fas.theme-icon-light {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  body.light-theme .theme-switcher .theme-icon-dark,
+  body.light-theme .theme-switcher i.theme-icon-dark,
+  body.light-theme .theme-switcher .fas.theme-icon-dark {
+    display: block !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  body.light-theme .theme-switcher {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+  }
+
+  body.light-theme .theme-switcher:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+  }
+
+  body.light-theme .theme-switcher .theme-icon-light,
+  body.light-theme .theme-switcher i.theme-icon-light,
+  body.light-theme .theme-switcher .fas.theme-icon-light {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+
+  body.light-theme .theme-switcher .theme-icon-dark,
+  body.light-theme .theme-switcher i.theme-icon-dark,
+  body.light-theme .theme-switcher .fas.theme-icon-dark {
+    display: block !important;
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+
+  /* Дополнительные стили для переключателя темы в светлой теме */
+  body.light-theme .theme-switcher-container .theme-switcher {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+  }
+
+  body.light-theme .theme-switcher-container .theme-switcher:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+    border-color: rgba(255, 255, 255, 0.5) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2) !important;
+  }
+
+  body.light-theme .theme-switcher-container .theme-switcher * {
+    color: #ffffff !important;
+  }
+
+  body.light-theme .theme-switcher-container .theme-switcher .fa-moon {
+    color: #ffffff !important;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ ДЛЯ НАЗВАНИЙ СТАТУСОВ В ТЕМНОЙ ТЕМЕ */
+  body:not(.light-theme) .detail-label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: block !important;
+  }
+
+  /* Принудительное переопределение всех возможных стилей */
+  body:not(.light-theme) * .detail-label {
+    color: #000000 !important;
+    font-weight: 600 !important;
+    text-shadow: none !important;
+  }
+
+  /* МАКСИМАЛЬНО ПРИНУДИТЕЛЬНЫЕ СТИЛИ */
+  body:not(.light-theme) .detail-label,
+  body:not(.light-theme) .status-card .detail-label,
+  body:not(.light-theme) .card-details .detail-label,
+  body:not(.light-theme) .details-content .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-item .detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-item .detail-label,
+  body:not(.light-theme) .status-card .card-details .detail-item span.detail-label,
+  body:not(.light-theme) .status-card .details-content .detail-item span.detail-label {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    text-shadow: none !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+  }
 </style>
 
-<!-- Селектор стилей для демонстрации (можно удалить в продакшене) -->
-<div class="email-style-selector" style="display: none;">
-    <label>Email стиль:</label>
-    <select id="emailStyleSelector">
-        <option value="">Tech (по умолчанию)</option>
-        <option value="minimal">Минималистичный</option>
-        <option value="glass">Glassmorphism</option>
-        <option value="neomorphic">Неоморфизм</option>
-    </select>
-</div>
 
-<!-- <script>
-// Функция переключения стилей email-ссылок (для демонстрации)
-function switchEmailStyle(newStyle) {
-    const emailLinks = document.querySelectorAll('.email-link');
-    emailLinks.forEach(link => {
-        // Удаляем все классы стилей
-        link.classList.remove('minimal', 'glass', 'neomorphic');
-        // Добавляем новый стиль если указан
-        if (newStyle) {
-            link.classList.add(newStyle);
-        }
-    });
-}
 
-// Обработчик для селектора стилей
-document.addEventListener('DOMContentLoaded', function() {
-    const selector = document.getElementById('emailStyleSelector');
-    if (selector) {
-        selector.addEventListener('change', function() {
-            switchEmailStyle(this.value);
-        });
-    }
-});
-</script> -->
+
 
 <!-- Проверяем наличие jQuery и загружаем если нужно -->
 <script>
-if (typeof jQuery === 'undefined') {
+  if (typeof jQuery === 'undefined') {
     document.write('<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"><\/script>');
-}
+  }
 </script>
 
 <!-- DataTables JS -->
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
-<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
+<script type="text/javascript" charset="utf8"
+  src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script type="text/javascript" charset="utf8"
+  src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap4.min.js"></script>
+<script type="text/javascript" charset="utf8"
+  src="https://cdn.datatables.net/responsive/2.2.9/js/dataTables.responsive.min.js"></script>
+<script type="text/javascript" charset="utf8"
+  src="https://cdn.datatables.net/responsive/2.2.9/js/responsive.bootstrap4.min.js"></script>
 
 <!-- Кастомные JS для страницы -->
-                        <!-- Подключение стилей подсказок и всплывающих подсказок -->
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks/kanban-tips.css') }}?v={{ cache_buster or '1753017000' }}">
-        <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/tasks/kanban-tooltips.css') }}?v={{ cache_buster or '1753017000' }}">
+<!-- Подключение стилей подсказок и всплывающих подсказок -->
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/tasks/kanban-tips.css') }}?v={{ cache_buster or '1753017000' }}">
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/pages/tasks/kanban-tooltips.css') }}?v={{ cache_buster or '1753017000' }}">
 
-        <script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster or '1753017000' }}"></script>
-        <script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster or '1753017000' }}"></script>
-        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanOnboarding.js') }}?v={{ cache_buster or '1753017000' }}"></script>
-        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
-        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTooltips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
-        <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
-        <script src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
+<script src="{{ url_for('static', filename='js/my_tasks_app.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+<script src="{{ url_for('static', filename='js/status_accordion.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+<script
+  src="{{ url_for('static', filename='js/pages/tasks/components/KanbanOnboarding.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+<script
+  src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+<script
+  src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTooltips.js') }}?v={{ cache_buster or '1753017000' }}"></script>
+<script
+  src="{{ url_for('static', filename='js/pages/tasks/components/KanbanManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
+<script
+  src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
 
-        <!-- Theme Manager -->
-        <script src="{{ url_for('static', filename='js/theme-manager.js') }}?v={{ cache_buster or '1753018000' }}&force={{ range(1, 999999) | random }}"></script>
+<!-- Theme Manager -->
+<script
+  src="{{ url_for('static', filename='js/theme-manager.js') }}?v={{ cache_buster or '1753018000' }}&force={{ range(1, 999999) | random }}"></script>
 
 <script>
-// Глобальная переменная с настройкой показа баннера Kanban
-window.showKanbanTips = {{ show_kanban_tips | tojson }};
-
-// Диагностическая функция для проверки состояния подсказок
-window.checkKanbanTipsStatus = function() {
+  // Глобальная переменная с настройкой показа баннера Kanban
+  if (typeof window.showKanbanTips === 'undefined') window.showKanbanTips = false;
+  // Диагностическая функция для проверки состояния подсказок
+  window.checkKanbanTipsStatus = function () {
     console.log('=== ДИАГНОСТИКА KANBAN ПОДСКАЗОК ===');
     console.log('🔧 showKanbanTips:', window.showKanbanTips);
     console.log('🔧 kanbanTooltipsDisabled:', window.kanbanTooltipsDisabled);
@@ -1685,16 +1711,16 @@ window.checkKanbanTipsStatus = function() {
     console.log('🔧 Баннер на странице:', banner ? 'да' : 'нет');
 
     console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
-};
+  };
 
-// Диагностическая функция для проверки состояния обработчиков кликов
-window.checkClickHandlers = function() {
+  // Диагностическая функция для проверки состояния обработчиков кликов
+  window.checkClickHandlers = function () {
     console.log('=== ДИАГНОСТИКА ОБРАБОТЧИКОВ КЛИКОВ ===');
     console.log('🔧 KanbanManager доступен:', typeof window.kanbanManager !== 'undefined');
 
     if (window.kanbanManager) {
-        console.log('🔧 KanbanManager инициализирован:', window.kanbanManager.isInitialized);
-        console.log('🔧 Обработчики событий инициализированы:', window.kanbanManager.eventListenersInitialized);
+      console.log('🔧 KanbanManager инициализирован:', window.kanbanManager.isInitialized);
+      console.log('🔧 Обработчики событий инициализированы:', window.kanbanManager.eventListenersInitialized);
     }
 
     const kanbanCards = document.querySelectorAll('.kanban-card');
@@ -1707,20 +1733,20 @@ window.checkClickHandlers = function() {
     console.log('ℹ️ Клики по остальной части карточки игнорируются');
 
     console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
-};
+  };
 
-// УДАЛЕНО: Функция saveViewAndOpenTask была неиспользуемой и потенциально конфликтовала
-// Теперь открытие задач обрабатывается только через KanbanManager.js
+  // УДАЛЕНО: Функция saveViewAndOpenTask была неиспользуемой и потенциально конфликтовала
+  // Теперь открытие задач обрабатывается только через KanbanManager.js
 
-// 🎬 Динамическая анимация загрузки
-function initLoadingAnimation() {
+  // 🎬 Динамическая анимация загрузки
+  function initLoadingAnimation() {
     const loadingMessages = [
-        "🚀 Инициализация Kanban доски и подключение к Redmine API",
-        "📊 Анализ статусов задач и формирование колонок",
-        "🔍 Загрузка данных о приоритетах и исполнителях",
-        "⚡ Оптимизация производительности и кэширование",
-        "🎯 Подготовка интерактивных элементов управления",
-        "✨ Финальная настройка интерфейса и анимаций"
+      "🚀 Инициализация Kanban доски и подключение к Redmine API",
+      "📊 Анализ статусов задач и формирование колонок",
+      "🔍 Загрузка данных о приоритетах и исполнителях",
+      "⚡ Оптимизация производительности и кэширование",
+      "🎯 Подготовка интерактивных элементов управления",
+      "✨ Финальная настройка интерфейса и анимаций"
     ];
 
     const progressSteps = [15, 30, 45, 60, 80, 95];
@@ -1733,53 +1759,53 @@ function initLoadingAnimation() {
     if (!messageElement || !progressFill || !progressText) return;
 
     const updateProgress = () => {
+      if (currentStep < progressSteps.length) {
+        const progress = progressSteps[currentStep];
+        const message = loadingMessages[currentStep];
+
+        // Плавная анимация прогресса
+        progressFill.style.width = progress + '%';
+        progressText.textContent = progress + '%';
+
+        // Плавная смена сообщения
+        messageElement.style.opacity = '0';
+        setTimeout(() => {
+          messageElement.textContent = message;
+          messageElement.style.opacity = '1';
+        }, 200);
+
+        currentStep++;
+
         if (currentStep < progressSteps.length) {
-            const progress = progressSteps[currentStep];
-            const message = loadingMessages[currentStep];
-
-            // Плавная анимация прогресса
-            progressFill.style.width = progress + '%';
-            progressText.textContent = progress + '%';
-
-            // Плавная смена сообщения
-            messageElement.style.opacity = '0';
-            setTimeout(() => {
-                messageElement.textContent = message;
-                messageElement.style.opacity = '1';
-            }, 200);
-
-            currentStep++;
-
-            if (currentStep < progressSteps.length) {
-                setTimeout(updateProgress, 800);
-            }
+          setTimeout(updateProgress, 800);
         }
+      }
     };
 
     // Запускаем анимацию через небольшую задержку
     setTimeout(updateProgress, 500);
-}
+  }
 
-// Функция инициализации с проверкой зависимостей
-function initializeMyTasksPage() {
+  // Функция инициализации с проверкой зависимостей
+  function initializeMyTasksPage() {
     console.log('🚀 Инициализация страницы "Мои задачи"');
 
     if (typeof $ === 'undefined') {
-        console.error('❌ jQuery не загружен');
-        showError('jQuery не загружен. Перезагрузите страницу.');
-        return;
+      console.error('❌ jQuery не загружен');
+      showError('jQuery не загружен. Перезагрузите страницу.');
+      return;
     }
 
     if (typeof $.fn.DataTable === 'undefined') {
-        console.error('❌ DataTables не загружен');
-        showError('DataTables не загружен. Перезагрузите страницу.');
-        return;
+      console.error('❌ DataTables не загружен');
+      showError('DataTables не загружен. Перезагрузите страницу.');
+      return;
     }
 
     if (typeof MyTasksApp === 'undefined') {
-        console.error('❌ MyTasksApp не загружен');
-        showError('MyTasksApp не загружен. Перезагрузите страницу.');
-        return;
+      console.error('❌ MyTasksApp не загружен');
+      showError('MyTasksApp не загружен. Перезагрузите страницу.');
+      return;
     }
 
     // Очищаем sessionStorage только если это не возврат от детализации
@@ -1788,12 +1814,12 @@ function initializeMyTasksPage() {
     const isReturnFromTask = urlParams.has('return') || document.referrer.includes('/tasks/');
 
     if (!isReturnFromTask) {
-        // Это первоначальная загрузка - очищаем sessionStorage
-        sessionStorage.removeItem('return_from_task_id');
-        sessionStorage.removeItem('return_from_task_page');
-        console.log('🧹 Очищен sessionStorage (первоначальная загрузка)');
+      // Это первоначальная загрузка - очищаем sessionStorage
+      sessionStorage.removeItem('return_from_task_id');
+      sessionStorage.removeItem('return_from_task_page');
+      console.log('🧹 Очищен sessionStorage (первоначальная загрузка)');
     } else {
-        console.log('🔄 Возврат от детализации - сохраняем sessionStorage для подсветки');
+      console.log('🔄 Возврат от детализации - сохраняем sessionStorage для подсветки');
     }
 
     // Запускаем анимацию загрузки
@@ -1801,98 +1827,71 @@ function initializeMyTasksPage() {
 
     // Инициализация приложения
     MyTasksApp.init();
-}
+  }
 
-// Функция для показа ошибок
-function showError(message) {
+  // Функция для показа ошибок
+  function showError(message) {
     if (typeof showNotification === 'function') {
-        showNotification(message, 'error');
+      showNotification(message, 'error');
     } else {
-        alert(message);
+      alert(message);
     }
-}
+  }
 
-$(document).ready(function() {
+  $(document).ready(function () {
     console.log('📄 DOM готов');
 
     // Небольшая задержка для загрузки всех зависимостей
-    setTimeout(function() {
-        initializeMyTasksPage();
+    setTimeout(function () {
+      initializeMyTasksPage();
     }, 100);
-});
+  });
 
-// Интеграция ThemeManager с компонентами страницы
-document.addEventListener('themeChanged', function(event) {
+  // Интеграция ThemeManager с компонентами страницы
+  document.addEventListener('themeChanged', function (event) {
     const theme = event.detail.theme;
     console.log(`🎨 Тема изменена на: ${theme}`);
 
     // Обновляем DataTables если он инициализирован
     if (typeof $.fn.DataTable !== 'undefined' && $('#tasksTable').length && $('#tasksTable').hasClass('dataTable')) {
-        try {
-            $('#tasksTable').DataTable().draw();
-        } catch (e) {
-            console.log('DataTables не готов для обновления');
-        }
+      try {
+        $('#tasksTable').DataTable().draw();
+      } catch (e) {
+        console.log('DataTables не готов для обновления');
+      }
     }
 
     // Обновляем Kanban доску если она активна
     if (window.kanbanManager && window.kanbanManager.isInitialized) {
-        try {
-            window.kanbanManager.refreshKanbanBoard();
-        } catch (e) {
-            console.log('Kanban не готов для обновления');
-        }
+      try {
+        window.kanbanManager.refreshKanbanBoard();
+      } catch (e) {
+        console.log('Kanban не готов для обновления');
+      }
     }
 
     // Обновляем дашборд если он активен
     if (window.dashboardManager && window.dashboardManager.isInitialized) {
-        try {
-            window.dashboardManager.refreshDashboard();
-        } catch (e) {
-            console.log('Dashboard не готов для обновления');
-        }
+      try {
+        window.dashboardManager.refreshDashboard();
+      } catch (e) {
+        console.log('Dashboard не готов для обновления');
+      }
     }
-});
+  });
 
-// Функция для получения текущей темы (для использования в других компонентах)
-window.getCurrentTheme = function() {
+  // Функция для получения текущей темы (для использования в других компонентах)
+  window.getCurrentTheme = function () {
     return window.themeManager ? window.themeManager.getCurrentTheme() : 'light';
-};
+  };
 
-// Функция для установки темы (для использования в других компонентах)
-window.setTheme = function(theme) {
+  // Функция для установки темы (для использования в других компонентах)
+  window.setTheme = function (theme) {
     if (window.themeManager) {
-        window.themeManager.setTheme(theme);
+      window.themeManager.setTheme(theme);
     }
-};
+  };
 </script>
 
-<!-- <script>
-$(document).ready(function() {
-    // ... существующий код и инициализация таблицы ...
 
-    // После инициализации DataTable
-    $(document).on('datatables-initialized', function() {
-        const returnId = sessionStorage.getItem('return_from_task_id');
-        if (returnId && returnId.trim() !== '' && !isNaN(returnId)) {
-            // Найти строку с нужным ID
-            const $row = $("#tasksTable tbody tr").filter(function() {
-                return $(this).find('.task-id-link').text().replace('#','') == returnId;
-            });
-            if ($row.length && $row.is(':visible')) {
-                $row.addClass('highlight-return');
-                // ОТКЛЮЧЕНО: Автоматическая прокрутка к строке
-                // $('html, body').animate({
-                //     scrollTop: $row.offset().top - 100
-                // }, 800);
-                // Убрать выделение через 3 секунды
-                setTimeout(function() {
-                    $row.removeClass('highlight-return');
-                }, 3000);
-            }
-            sessionStorage.removeItem('return_from_task_id');
-        }
-    });
-});
-</script> -->
 {% endblock %}

@@ -1,7 +1,6 @@
 # blog/tasks/routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
-import time
 import time # Перенесен в начало файла из функций
 import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
@@ -229,6 +228,65 @@ tasks_bp = Blueprint('tasks', __name__, template_folder='templates')
 
 # Константы
 MY_TASKS_PAGE_ENDPOINT = ".my_tasks_page"
+
+# ===== HTMX TESTING ROUTES =====
+
+@tasks_bp.route("/htmx-test", methods=["GET"])
+@login_required
+def htmx_test_page():
+    """HTMX тестовая страница"""
+    # Получаем информацию о HTMX запросе
+    is_htmx_request = request.headers.get('HX-Request') == 'true'
+    htmx_target = request.headers.get('HX-Target')
+    htmx_trigger = request.headers.get('HX-Trigger')
+    htmx_current_url = request.headers.get('HX-Current-URL')
+    
+    return render_template("htmx_test.html", 
+                         title="HTMX Test",
+                         is_htmx_request=is_htmx_request,
+                         htmx_target=htmx_target,
+                         htmx_trigger=htmx_trigger,
+                         htmx_current_url=htmx_current_url)
+
+@tasks_bp.route("/htmx-test-endpoint", methods=["GET"])
+@login_required
+def htmx_test_endpoint_handler():
+    """Обработчик для тестирования базовой HTMX функциональности"""
+    is_htmx_request = request.headers.get('HX-Request') == 'true'
+    
+    if is_htmx_request:
+        # Возвращаем HTML фрагмент для HTMX запроса
+        return render_template("partials/htmx_test_partial.html", 
+                             message="Контент успешно загружен через HTMX!",
+                             timestamp=time.strftime("%Y-%m-%d %H:%M:%S"))
+    else:
+        # Для обычного запроса возвращаем полную страницу
+        return render_template("htmx_test.html", 
+                             title="HTMX Test",
+                             is_htmx_request=is_htmx_request)
+
+@tasks_bp.route("/htmx-test-data", methods=["GET"])
+@login_required
+def htmx_test_data_handler():
+    """Обработчик для тестирования динамических данных через HTMX"""
+    is_htmx_request = request.headers.get('HX-Request') == 'true'
+    
+    # Генерируем тестовые данные в формате, ожидаемом шаблоном
+    test_data = {
+        'current_time': time.strftime("%Y-%m-%d %H:%M:%S"),
+        'user': current_user.username if current_user.is_authenticated else 'Anonymous',
+        'is_htmx': is_htmx_request,
+        'target': request.headers.get('HX-Target'),
+        'trigger': request.headers.get('HX-Trigger')
+    }
+    
+    if is_htmx_request:
+        # Возвращаем HTML фрагмент с данными
+        return render_template("partials/htmx_test_data.html", 
+                             data=test_data)
+    else:
+        # Для обычного запроса возвращаем JSON
+        return jsonify(test_data)
 
 # ===== МОДУЛЬ "МОИ ЗАДАЧИ" (перенесено из main) =====
 
@@ -2560,3 +2618,34 @@ def send_task_email_api(task_id):
             "success": False,
             "error": f"Внутренняя ошибка сервера: {str(e)}"
         }), 500
+
+# ===== HTMX TEST ENDPOINTS (REMOVED DUPLICATES) =====
+# ===== HTMX TEST ROUTES =====
+
+# Дублирующий маршрут htmx_test_page удален - используется версия выше
+
+# Дублирующий маршрут htmx_test_endpoint_handler удален - используется версия выше
+
+# Дублирующий маршрут удален - используется версия выше
+
+@tasks_bp.route("/htmx-error-test", methods=["GET"])
+@login_required
+def htmx_error_test_handler():
+    """HTMX endpoint для тестирования обработки ошибок"""
+    current_app.logger.info(f"[HTMX ERROR TEST] Request from {current_user.username}")
+    
+    # Симулируем ошибку
+    error_type = request.args.get('type', '500')
+    
+    if error_type == '404':
+        return render_template("errors/htmx_error.html", 
+                             error_code=404,
+                             error_message="Запрашиваемый ресурс не найден"), 404
+    elif error_type == '403':
+        return render_template("errors/htmx_error.html", 
+                             error_code=403,
+                             error_message="Доступ запрещен"), 403
+    else:
+        return render_template("errors/htmx_error.html", 
+                             error_code=500,
+                             error_message="Внутренняя ошибка сервера"), 500
