@@ -579,8 +579,14 @@ const MyTasksApp = {
             if (statusObj.count > 0) {
                 const item = document.createElement('div');
                 item.className = 'detail-item';
+                const hasId = typeof statusObj.id !== 'undefined' && statusObj.id !== null && statusObj.id !== '';
+                const href = hasId ? (`/tasks/my-tasks?status_id=${encodeURIComponent(statusObj.id)}`) : null;
+                const labelHtml = hasId
+                    ? `<a href="${href}" class="detail-link" title="Показать задачи со статусом: ${this.escapeHtml(statusObj.name)}">${this.escapeHtml(statusObj.name)}</a>`
+                    : `${this.escapeHtml(statusObj.name)}`;
+
                 item.innerHTML = `
-                    <span class="detail-label">${this.escapeHtml(statusObj.name)}:</span>
+                    <span class="detail-label">${labelHtml}:</span>
                     <span class="detail-value">${statusObj.count}</span>
                 `;
                 container.appendChild(item);
@@ -643,6 +649,43 @@ const MyTasksApp = {
         }
 
         console.log('✅ События привязаны');
+    },
+
+    // Применяем стартовые фильтры из URL (?status_id=..&project_id=..&priority_id=..)
+    applyInitialFiltersFromURL: function() {
+        try {
+            const qp = new URLSearchParams(window.location.search);
+            const statusId = qp.get('status_id') || qp.get('status');
+            const projectId = qp.get('project_id') || qp.get('project');
+            const priorityId = qp.get('priority_id') || qp.get('priority');
+
+            const setIf = (key, val) => {
+                if (val && String(val).trim() !== '') {
+                    this.state.currentFilters[key] = String(val);
+                    const el = document.getElementById(`${key}-filter`);
+                    if (el) {
+                        el.value = String(val);
+                    }
+                    const clearBtn = document.getElementById(`clear-${key}-filter`);
+                    if (clearBtn) {
+                        clearBtn.style.display = 'block';
+                    }
+                }
+            };
+
+            setIf('status', statusId);
+            setIf('project', projectId);
+            setIf('priority', priorityId);
+
+            if (statusId || projectId || priorityId) {
+                if (this.state.dataTable) {
+                    this.state.dataTable.ajax.reload();
+                }
+                this.loadStatistics();
+            }
+        } catch (e) {
+            console.warn('URL filters parse error:', e);
+        }
     },
 
     // Обработка изменения фильтров

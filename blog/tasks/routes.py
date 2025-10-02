@@ -589,6 +589,17 @@ def get_my_tasks_paginated_api():
 def get_my_tasks_statistics_optimized():
     """API для получения статистики задач"""
     try:
+        # === In-memory cache (60s) per-user and query string ===
+        try:
+            import time as _t
+            if not hasattr(current_app, '_tasks_stats_cache'):
+                current_app._tasks_stats_cache = {}
+            _key = (current_user.id, bytes(request.query_string))
+            _entry = current_app._tasks_stats_cache.get(_key)
+            if _entry and (_t.time() - _entry['ts'] < 60):
+                return jsonify(_entry['data'])
+        except Exception:
+            pass
         if not current_user.is_redmine_user:
             return jsonify({
                 "error": "У вас нет доступа к модулю 'Мои задачи'.",
@@ -606,13 +617,14 @@ def get_my_tasks_statistics_optimized():
         )
 
         if not redmine_connector or not hasattr(redmine_connector, 'redmine'):
-            return jsonify({
+            payload = {
                 "error": "Не удалось создать коннектор Redmine",
                 "total_tasks": 0,
                 "new_tasks": 0,
                 "in_progress_tasks": 0,
                 "closed_tasks": 0
-            }), 500
+            }
+            return jsonify(payload), 500
 
         # Получаем ID пользователя Redmine из SQLite (НЕ из Redmine API!)
         redmine_user_id = current_user.id_redmine_user
@@ -791,7 +803,7 @@ def get_my_tasks_statistics_optimized():
         if total_tasks > 0:
             additional_stats["completion_rate"] = round((closed_tasks / total_tasks) * 100, 1)
 
-        return jsonify({
+        data = {
             "success": True,
             "total_tasks": total_tasks,
             "open_tasks": new_tasks,
@@ -832,7 +844,12 @@ def get_my_tasks_statistics_optimized():
                     }
                 }
             }
-        })
+        }
+        try:
+            current_app._tasks_stats_cache[_key] = { 'ts': _t.time(), 'data': data }
+        except Exception:
+            pass
+        return jsonify(data)
 
     except Exception as e:
         current_app.logger.error(f"Ошибка в get_my_tasks_statistics_optimized: {e}")
