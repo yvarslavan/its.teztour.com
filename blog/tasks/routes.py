@@ -280,7 +280,7 @@ def task_detail(task_id):
     current_app.logger.info(f"📧 [TASK_DETAIL] support_email для задачи {task_id}: {support_email}")
 
     try:
-        # Получаем коннектор Redmine (без изменений)
+        # Получаем коннектор Redmine, используя локально сохранённый синхронный ERP-пароль
         redmine_conn_obj = create_redmine_connector(
             is_redmine_user=current_user.is_redmine_user,
             user_login=current_user.username,
@@ -456,7 +456,7 @@ def get_my_tasks_paginated_api():
         per_page = request.args.get("length", 25, type=int)
 
         search_value = request.args.get("search[value]", "", type=str).strip()
-        current_app.logger.info(f"🔍 ПОИСК API: получен search_value='{search_value}' от пользователя {current_user.username}")
+        current_app.logger.debug(f"🔍 ПОИСК API: получен search_value='{search_value}' от пользователя {current_user.username}")
 
         order_column_index = request.args.get('order[0][column]', 0, type=int)
         order_column_name_dt = request.args.get(f'columns[{order_column_index}][data]', 'updated_on', type=str)
@@ -501,13 +501,13 @@ def get_my_tasks_paginated_api():
         force_load = request.args.get('force_load', '0') == '1'
         exclude_completed = request.args.get('exclude_completed', '0') == '1'
         is_kanban_view = request.args.get('view') == 'kanban'
-        current_app.logger.info(f"🔍 [API] Параметры: force_load={force_load}, exclude_completed={exclude_completed}, is_kanban_view={is_kanban_view}")
+        current_app.logger.debug(f"🔍 [API] Параметры: force_load={force_load}, exclude_completed={exclude_completed}, is_kanban_view={is_kanban_view}")
 
         # Оптимизация для Kanban: уменьшаем количество загружаемых задач
         if is_kanban_view:
             # Для Kanban загружаем меньше задач, но с лучшей оптимизацией
             per_page = min(per_page, 500)  # Ограничиваем до 500 задач для Kanban
-            current_app.logger.info(f"🔍 [API] Kanban оптимизация: per_page={per_page}")
+            current_app.logger.debug(f"🔍 [API] Kanban оптимизация: per_page={per_page}")
 
         issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
             redmine_connector_instance,
@@ -542,39 +542,17 @@ def get_my_tasks_paginated_api():
 
             current_app.logger.info(f"🔍 [KANBAN DEBUG] Все уникальные статусы в данных: {sorted(unique_statuses)}")
 
-            # Маппинг английских названий статусов из Redmine API на русские названия
-            status_mapping = {
-                'Closed': 'Закрыта',
-                'New': 'Новая',
-                'In Progress': 'В работе',
-                'Rejected': 'Отклонена',
-                'Executed': 'Выполнена',
-                'The request specification': 'Запрошено уточнение',
-                'Paused': 'Приостановлена',
-                'Tested': 'Протестирована',
-                'Redirected': 'Перенаправлена',
-                'On the coordination': 'На согласовании',
-                'Frozen': 'Заморожена',
-                'Open': 'Открыта',
-                'On testing': 'На тестировании',
-                'In queue': 'В очереди'
-            }
-
             for task in tasks_data:
                 status_name = task.get('status_name', '')
                 status_id = task.get('status_id', '')
 
-                # Преобразуем английское название в русское
-                russian_status_name = status_mapping.get(status_name, status_name)
-
-                current_app.logger.info(f"🔍 [KANBAN DEBUG] Задача {task.get('id')}: статус '{status_name}' -> '{russian_status_name}' (ID: {status_id})")
-
-                if russian_status_name == 'Закрыта':
+                # Считаем закрытой по ID статуса (реальные ID хранятся в MySQL локализации)
+                if str(status_id) in {'5', '6', '14'}:
                     closed_tasks.append(task)
-                    current_app.logger.info(f"✅ [KANBAN DEBUG] Задача {task.get('id')} добавлена в закрытые (статус: '{russian_status_name}')")
+                    current_app.logger.debug(f"[KANBAN] Closed task {task.get('id')} (status_id={status_id}, status_name='{status_name}')")
                 else:
                     active_tasks.append(task)
-                    current_app.logger.info(f"✅ [KANBAN DEBUG] Задача {task.get('id')} добавлена в активные (статус: '{russian_status_name}')")
+                    current_app.logger.debug(f"[KANBAN] Active task {task.get('id')} (status_id={status_id}, status_name='{status_name}')")
 
             # Объединяем активные задачи с ограниченными закрытыми
             tasks_data = active_tasks + closed_tasks
@@ -2561,4 +2539,3 @@ def send_task_email_api(task_id):
             "success": False,
             "error": f"Внутренняя ошибка сервера: {str(e)}"
         }), 500
-
