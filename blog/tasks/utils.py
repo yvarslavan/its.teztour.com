@@ -343,12 +343,17 @@ def get_user_assigned_tasks_paginated_optimized(
         else:
             per_page = min(max(1, per_page), 100)   # Обычный лимит 100
 
+        # По умолчанию не тянем тяжелое поле description в списках
+        includes_base = ['status', 'priority', 'project', 'tracker', 'author', 'easy_email_to']
+        if request.args.get('with_description') == '1':
+            includes_base.append('description')
+
         filter_params = {
             'assigned_to_id': redmine_user_id,
             'sort': f'{sort_column}:{sort_direction}',
             'limit': per_page,
             'offset': (page - 1) * per_page,
-            'include': ['status', 'priority', 'project', 'tracker', 'author', 'description', 'easy_email_to']
+            'include': includes_base
         }
 
         # Если есть ID фильтров, добавляем их в запрос к Redmine API
