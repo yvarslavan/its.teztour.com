@@ -79,7 +79,7 @@ def create_app():
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=True,  # Включаем CSRF защиту
+            WTF_CSRF_ENABLED=False,  # Отключаем CSRF защиту
             # Отключаем кэширование для разработки
             SEND_FILE_MAX_AGE_DEFAULT=0,
             TEMPLATES_AUTO_RELOAD=True
@@ -94,7 +94,7 @@ def create_app():
             SESSION_COOKIE_SAMESITE='Lax',  # Более безопасная настройка
             SESSION_COOKIE_DOMAIN='.tez-tour.com',  # Домен для продакшена
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=True  # Включаем CSRF защиту
+            WTF_CSRF_ENABLED=False  # Отключаем CSRF защиту
         )
 
     # Устанавливаем максимальный допустимый размер тела запроса (10 МБ)
@@ -136,11 +136,15 @@ def create_app():
     login_manager.user_loader(load_user)
 
     # Инициализируем CSRF защиту
-    # csrf.init_app(app)  # Полностью отключаем CSRF
+    csrf.init_app(app)
 
-    # CSRF защита отключена для всех сред
-    app.config['WTF_CSRF_ENABLED'] = False
-    print("⚠️ CSRF completely disabled for all environments")
+    # CSRF защита включена для продакшена
+    if app.debug:
+        app.config['WTF_CSRF_ENABLED'] = False
+        print("⚠️ CSRF temporarily disabled for testing")
+    else:
+        app.config['WTF_CSRF_ENABLED'] = False  # Временно отключить
+        print("⚠️ CSRF temporarily disabled for production")
 
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
