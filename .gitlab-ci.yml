@@ -1,3 +1,9 @@
+default:
+  image: python:3.12-slim
+  tags:
+    - linux
+    - docker
+
 stages:
   - test
   - build
@@ -8,65 +14,72 @@ variables:
   SERVICE_NAME: "flask-helpdesk"
   DEPLOY_DOMAIN: "its.tez-tour.com"
 
-# Простое тестирование
 test_application:
   stage: test
-  image: python:3.12-slim
-  script:
-    - echo "🧪 Тестирование приложения..."
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+  before_script:
     - python --version
     - pip install --upgrade pip
     - pip install -r requirements.txt
-    - echo "✅ Тестирование завершено"
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "main"'
+  script:
+    - echo "🧪 Проверка импорта модулей..."
+    - python -m py_compile app.py wsgi.py secure_config.py config.py
+    - python -c "import wsgi; print('WSGI импортируется')"
+    - echo "✅ Тесты завершены"
 
-# Простая сборка
 build_application:
   stage: build
-  image: python:3.12-slim
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
   script:
-    - echo "📦 Сборка приложения..."
+    - echo "📦 Сборка deployment пакета..."
     - mkdir -p deployment_package
-    - cp app.py deployment_package/ 2>/dev/null || echo "app.py не найден"
-    - cp wsgi.py deployment_package/ 2>/dev/null || echo "wsgi.py не найден"
-    - cp requirements.txt deployment_package/ 2>/dev/null || echo "requirements.txt не найден"
-    - cp -r blog/ deployment_package/ 2>/dev/null || echo "blog/ не найден"
-    - echo "✅ Сборка завершена"
+    - cp -r blog/ deployment_package/ 2>/dev/null || echo "ℹ️ blog/ нет"
+    - cp -r migrations/ deployment_package/ 2>/dev/null || echo "ℹ️ migrations/ нет"
+    - cp app.py wsgi.py requirements.txt secure_config.py config.py logging_config.py deployment_package/ 2>/dev/null || true
+    - mkdir -p deployment_package/static deployment_package/templates
+    - cp -r blog/static/* deployment_package/static/ 2>/dev/null || true
+    - cp -r blog/templates/* deployment_package/templates/ 2>/dev/null || true
+    - tar -czf deployment.tar.gz -C deployment_package .
+    - ls -lh deployment.tar.gz
   artifacts:
+    when: always
     paths:
+      - deployment.tar.gz
       - deployment_package/
     expire_in: 1 day
-  rules:
-    - if: '$CI_COMMIT_REF_NAME == "main"'
 
-# Простой деплой
 deploy_to_server:
   stage: deploy
-  script:
-    - echo "🚀 Деплой приложения..."
-    - echo "🔍 Проверка переменных окружения..."
-    - |
-      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
-        echo ""
-        echo "❌ Переменные деплоя НЕ настроены"
-        echo ""
-        echo "📋 Для автоматического деплоя добавьте в GitLab:"
-        echo "   Settings → CI/CD → Variables:"
-        echo ""
-        echo "   🔑 SSH_PRIVATE_KEY"
-        echo "      Value: (содержимое ~/.ssh/flask_helpdesk_deploy)"
-        echo ""
-        echo "   🌐 DEPLOY_SERVER"
-        echo "      Value: its.tez-tour.com"
-        echo ""
-        echo "   👤 DEPLOY_USER"
-        echo "      Value: yvarslavan"
-        echo ""
-        echo "📦 Пакет готов к ручному деплою"
-        exit 0
-      fi
-    - echo "✅ Переменные деплоя найдены"
-    - echo "🎉 Деплой завершен успешно!"
   rules:
     - if: '$CI_COMMIT_REF_NAME == "main"'
+  before_script:
+    - apt-get update -y && apt-get install -y openssh-client
+    - |
+      if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
+        echo "❌ Переменные деплоя не заданы. Требуются: SSH_PRIVATE_KEY, DEPLOY_SERVER, DEPLOY_USER"; exit 0;
+      fi
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh && chmod 700 ~/.ssh
+    - ssh-keyscan -H "$DEPLOY_SERVER" >> ~/.ssh/known_hosts
+  script:
+    - |
+      echo "📤 Передача и деплой..."
+      test -f deployment.tar.gz || { echo "❌ Нет deployment.tar.gz"; exit 1; }
+      scp -o StrictHostKeyChecking=no deployment.tar.gz "$DEPLOY_USER@$DEPLOY_SERVER:/tmp/deployment.tar.gz"
+      ssh -o StrictHostKeyChecking=no "$DEPLOY_USER@$DEPLOY_SERVER" "
+        set -e
+        mkdir -p /tmp/flask-deploy && cd /tmp/flask-deploy
+        tar -xzf /tmp/deployment.tar.gz
+        sudo mkdir -p $DEPLOY_PATH
+        sudo rsync -a --delete ./ $DEPLOY_PATH/
+        python3 -m venv $DEPLOY_PATH/venv || true
+        . $DEPLOY_PATH/venv/bin/activate
+        pip install --upgrade pip
+        pip install -r $DEPLOY_PATH/requirements.txt
+        sudo systemctl daemon-reload || true
+        sudo systemctl restart $SERVICE_NAME || true
+      "
+    - echo "🎉 Деплой завершен"
