@@ -137,11 +137,11 @@ def create_app():
     login_manager.user_loader(load_user)
 
             # Инициализируем CSRF защиту
-    csrf.init_app(app)
+    # csrf.init_app(app)  # Временно отключить CSRF
 
-    # ВРЕМЕННО: Отключаем CSRF для тестирования
+    # CSRF защита отключена для всех сред
     app.config['WTF_CSRF_ENABLED'] = False
-    print("⚠️ CSRF temporarily disabled for testing")
+    print("⚠️ CSRF temporarily disabled for all environments")
 
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
@@ -207,39 +207,37 @@ def create_app():
 
     # Дополнительная инициализация в контексте приложения
     with app.app_context():
-        # ВРЕМЕННО ОТКЛЮЧЕНА - Простая миграция базы данных для добавления недостающих полей
-        # try:
-        #     import sqlite3
-        #     # Правильный путь к базе данных
-        #     db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
-        #     if db_uri.startswith('sqlite:///'):
-        #         db_path = db_uri.replace('sqlite:///', '')
-        #         if os.path.exists(db_path):
-        #             conn = sqlite3.connect(db_path)
-        #             cursor = conn.cursor()
-        #
-        #             # Проверяем, есть ли поле notifications_widget_enabled
-        #             cursor.execute("PRAGMA table_info(users)")
-        #             columns = [col[1] for col in cursor.fetchall()]
-        #
-        #             if 'notifications_widget_enabled' not in columns:
-        #                 cursor.execute("ALTER TABLE users ADD COLUMN notifications_widget_enabled BOOLEAN DEFAULT 1 NOT NULL")
-        #                 cursor.execute("UPDATE users SET notifications_widget_enabled = 1")
-        #                 conn.commit()
-        #                 print("[INIT] Добавлено поле notifications_widget_enabled в таблицу users", flush=True)
-        #             else:
-        #                 print("[INIT] Поле notifications_widget_enabled уже существует", flush=True)
-        #
-        #             conn.close()
-        #         else:
-        #             print(f"[INIT] База данных не найдена: {db_path}", flush=True)
-        #     else:
-        #         print("[INIT] Миграция работает только с SQLite", flush=True)
-        # except Exception as e:
-        #     print(f"[INIT] Ошибка при миграции БД: {e}", flush=True)
-        #     # НЕ прерываем инициализацию приложения из-за ошибки миграции
+        # Простая миграция базы данных для добавления недостающих полей
+        try:
+            import sqlite3
+            # Правильный путь к базе данных
+            db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
+            if db_uri.startswith('sqlite:///'):
+                db_path = db_uri.replace('sqlite:///', '').split('?')[0]
+                if os.path.exists(db_path):
+                    conn = sqlite3.connect(db_path)
+                    cursor = conn.cursor()
 
-        print("[INIT] Миграция БД временно отключена для отладки", flush=True)
+                    # Проверяем, есть ли поле notifications_widget_enabled
+                    cursor.execute("PRAGMA table_info(users)")
+                    columns = [col[1] for col in cursor.fetchall()]
+
+                    if 'notifications_widget_enabled' not in columns:
+                        cursor.execute("ALTER TABLE users ADD COLUMN notifications_widget_enabled BOOLEAN DEFAULT 1 NOT NULL")
+                        cursor.execute("UPDATE users SET notifications_widget_enabled = 1")
+                        conn.commit()
+                        print("[INIT] Добавлено поле notifications_widget_enabled в таблицу users", flush=True)
+                    else:
+                        print("[INIT] Поле notifications_widget_enabled уже существует", flush=True)
+
+                    conn.close()
+                else:
+                    print(f"[INIT] База данных не найдена: {db_path}", flush=True)
+            else:
+                print("[INIT] Миграция работает только с SQLite", flush=True)
+        except Exception as e:
+            print(f"[INIT] Ошибка при миграции БД: {e}", flush=True)
+            # НЕ прерываем инициализацию приложения из-за ошибки миграции
 
         # Push-уведомления больше не используются, CSRF исключения удалены
         print("[INIT] Инициализация завершена без push API.", flush=True)
