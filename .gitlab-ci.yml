@@ -82,4 +82,4 @@ deploy_to_server:
         sudo systemctl daemon-reload || true
         sudo systemctl restart $SERVICE_NAME || true
       "
-    - echo "🎉 Деплой завершен"
+    - echo "�� Деплой завершен"
