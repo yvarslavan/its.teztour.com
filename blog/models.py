@@ -48,7 +48,7 @@ class User(db.Model, UserMixin):
     def __repr__(self):
         return (f"User({self.id}, {self.username}, {self.email}, {self.image_file}, {self.last_seen}, "
                 f"is_admin={self.is_admin}, full_name={self.full_name}, department={self.department}, "
-                f"position={self.position}, internal_phone={self.internal_phone}, mobile_phone={self.mobile_phone}, "
+                f"position={self.position}, phone={self.phone}, "
                 f"is_redmine_user={self.is_redmine_user}, id_redmine_user={self.id_redmine_user}, "
                 f"can_access_quality_control={self.can_access_quality_control}, "
                 f"can_access_contact_center_moscow={self.can_access_contact_center_moscow}, "

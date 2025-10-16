@@ -44,10 +44,15 @@ const MyTasksApp = {
         this.state.isReturn = sessionStorage.getItem('return_from_task_id') !== null;
         this.state.showSpinnerFirstLoad = !this.state.isReturn; // если возврат — спиннер не нужен
 
+        // Очищаем данные выделения строки при загрузке страницы
+        sessionStorage.removeItem('return_from_task_id');
+        sessionStorage.removeItem('return_from_task_page');
+        sessionStorage.removeItem('return_from_task_view');
+
         console.log('🔄 Логика спиннера:', {
             isReturn: this.state.isReturn,
             showSpinnerFirstLoad: this.state.showSpinnerFirstLoad,
-            returnId: sessionStorage.getItem('return_from_task_id')
+            returnId: 'очищен'
         });
 
         // Спиннер уже управляется ранним скриптом в template
@@ -363,9 +368,9 @@ const MyTasksApp = {
             this.showError('Ошибка инициализации таблицы');
         }
 
-        // После каждого draw управляем состоянием (подсветка строки + пагинация)
+        // После каждого draw управляем состоянием (пагинация)
         $(tableElement).on('draw.dt', () => {
-            this.highlightReturnRow(); // Восстанавливаем подсветку при возврате
+            // this.highlightReturnRow(); // ОТКЛЮЧЕНО - подсветка строки при возврате
             this.highlightPagination();
         });
 
@@ -579,14 +584,8 @@ const MyTasksApp = {
             if (statusObj.count > 0) {
                 const item = document.createElement('div');
                 item.className = 'detail-item';
-                const hasId = typeof statusObj.id !== 'undefined' && statusObj.id !== null && statusObj.id !== '';
-                const href = hasId ? (`/tasks/my-tasks?status_id=${encodeURIComponent(statusObj.id)}`) : null;
-                const labelHtml = hasId
-                    ? `<a href="${href}" class="detail-link" title="Показать задачи со статусом: ${this.escapeHtml(statusObj.name)}">${this.escapeHtml(statusObj.name)}</a>`
-                    : `${this.escapeHtml(statusObj.name)}`;
-
                 item.innerHTML = `
-                    <span class="detail-label">${labelHtml}:</span>
+                    <span class="detail-label">${this.escapeHtml(statusObj.name)}:</span>
                     <span class="detail-value">${statusObj.count}</span>
                 `;
                 container.appendChild(item);
@@ -627,6 +626,8 @@ const MyTasksApp = {
             globalToggleBtn.addEventListener('click', () => this.toggleAllDetails());
         }
 
+        // Кнопка очистки выделения строки - ОТКЛЮЧЕНО
+
         // Кнопки детализации карточек
         document.addEventListener('click', (e) => {
             if (e.target.closest('.toggle-details-btn')) {
@@ -649,43 +650,6 @@ const MyTasksApp = {
         }
 
         console.log('✅ События привязаны');
-    },
-
-    // Применяем стартовые фильтры из URL (?status_id=..&project_id=..&priority_id=..)
-    applyInitialFiltersFromURL: function() {
-        try {
-            const qp = new URLSearchParams(window.location.search);
-            const statusId = qp.get('status_id') || qp.get('status');
-            const projectId = qp.get('project_id') || qp.get('project');
-            const priorityId = qp.get('priority_id') || qp.get('priority');
-
-            const setIf = (key, val) => {
-                if (val && String(val).trim() !== '') {
-                    this.state.currentFilters[key] = String(val);
-                    const el = document.getElementById(`${key}-filter`);
-                    if (el) {
-                        el.value = String(val);
-                    }
-                    const clearBtn = document.getElementById(`clear-${key}-filter`);
-                    if (clearBtn) {
-                        clearBtn.style.display = 'block';
-                    }
-                }
-            };
-
-            setIf('status', statusId);
-            setIf('project', projectId);
-            setIf('priority', priorityId);
-
-            if (statusId || projectId || priorityId) {
-                if (this.state.dataTable) {
-                    this.state.dataTable.ajax.reload();
-                }
-                this.loadStatistics();
-            }
-        } catch (e) {
-            console.warn('URL filters parse error:', e);
-        }
     },
 
     // Обработка изменения фильтров
@@ -895,40 +859,11 @@ const MyTasksApp = {
         return text.toString().replace(/[&<>"']/g, function(m) { return map[m]; });
     },
 
-    // Подсветка строки при возврате (без автоматической прокрутки)
-    highlightReturnRow: function() {
-        const returnId = sessionStorage.getItem('return_from_task_id');
-
-        if (!returnId || returnId.trim() === '' || isNaN(returnId)) {
-            return;
-        }
-
-        const tableApi = this.state.dataTable;
-        if (!tableApi) {
-            return;
-        }
-
-        // Ищем строку с нужным ID
-        const $row = $(tableApi.rows({ page: 'current' }).nodes()).filter(function() {
-            const $this = $(this);
-            const idFromNumber = $this.find('.task-id-number').text().replace('#','');
-            const idFromLink = $this.find('.task-id-link').text().replace('#','');
-            const idFromAny = $this.find('[class*="task-id"]').text().replace('#','');
-
-            return idFromNumber === returnId || idFromLink === returnId || idFromAny === returnId;
-        });
-
-        if ($row.length && $row.is(':visible')) {
-            // Убираем прошлое выделение
-            $(tableApi.rows().nodes()).removeClass('return-selected');
-
-            // Добавляем класс
-            $row.addClass('return-selected');
-
-            // Очищаем ключ после подсветки
-            sessionStorage.removeItem('return_from_task_id');
-        }
-    },
+    // Подсветка строки при возврате - ОТКЛЮЧЕНО
+    // highlightReturnRow: function() { ... },
+    // clearRowHighlighting: function() { ... },
+    // showClearHighlightButton: function() { ... },
+    // hideClearHighlightButton: function() { ... },
 
     formatDate: function(dateString) {
         if (!dateString) return '-';

@@ -96,6 +96,22 @@ ENV/
 env.bak/
 venv.bak/
 
+# Безопасность - конфигурационные файлы с чувствительными данными
+config.ini
+config.local.ini
+*.local.ini
+.env.local
+.env.production
+.env.development
+
+# Дополнительные логи и временные файлы
+app_err.log
+error.log
+access.log
+debug.log
+*.tmp
+*.temp
+
 # Spyder project settings
 .spyderproject
 .spyproject

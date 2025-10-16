@@ -1,141 +1,356 @@
 stages:
+  - test
   - build
   - deploy
 
 variables:
-  DEPLOY_PATH: "/opt/www"
+  DEPLOY_PATH: "/opt/www/its.teztour.com"
   SERVICE_NAME: "flask-helpdesk"
   DEPLOY_DOMAIN: "its.tez-tour.com"
+  PYTHON_VERSION: "3.12"
 
-# Простая сборка без Docker
-simple_build:
-  stage: build
+# Тестирование приложения
+test_application:
+  stage: test
+  image: python:3.12-slim
+  before_script:
+    - echo "🧪 Подготовка к тестированию..."
+    - python --version
+    - pip install --upgrade pip
+    - pip install -r requirements.txt
   script:
-    - echo "📦 Простая сборка проекта..."
-    - echo "📁 Текущая директория $(pwd)"
-    - echo "📋 Содержимое проекта:"
-    - ls -la
+    - echo "🔍 Проверка синтаксиса Python файлов..."
+    - python -m py_compile app.py
+    - python -m py_compile wsgi.py
+    - python -m py_compile secure_config.py
+    - python -m py_compile config.py
+
+    - echo "🔍 Проверка импортов..."
+    - python -c "import app; print('✅ app.py импортируется корректно')"
+    - python -c "import wsgi; print('✅ wsgi.py импортируется корректно')"
+    - python -c "from secure_config import get_config; print('✅ secure_config.py импортируется корректно')"
+
+    - echo "🔍 Проверка конфигурации..."
+    - python -c "from secure_config import get_config; config = get_config(); print('✅ Конфигурация загружается')"
+
+    - echo "✅ Все тесты пройдены успешно"
+  rules:
+    - if: '$CI_COMMIT_REF_NAME == "main"'
+  allow_failure: false
+
+# Сборка проекта
+build_application:
+  stage: build
+  image: python:3.12-slim
+  before_script:
+    - echo "📦 Подготовка к сборке..."
+    - python --version
+  script:
+    - echo "📁 Создание структуры для деплоя..."
     - mkdir -p deployment_package
-    - echo "📋 Копируем файлы проекта:"
 
-    # Копируем основные файлы
-    - cp app.py deployment_package/ 2>/dev/null && echo "✅ app.py" || echo "⚠️ app.py не найден"
-    - cp requirements.txt deployment_package/ 2>/dev/null && echo "✅ requirements.txt" || echo "⚠️ requirements.txt не найден"
-    - cp config.ini deployment_package/ 2>/dev/null && echo "✅ config.ini" || echo "⚠️ config.ini не найден"
-    - cp *.py deployment_package/ 2>/dev/null && echo "✅ Python файлы скопированы" || echo "ℹ️ Дополнительные .py файлы не найдены"
+    # Основные файлы приложения
+    - echo "📋 Копирование основных файлов..."
+    - cp app.py deployment_package/
+    - cp wsgi.py deployment_package/
+    - cp requirements.txt deployment_package/
+    - cp secure_config.py deployment_package/
+    - cp config.py deployment_package/
+    - cp logging_config.py deployment_package/
 
-    # Копируем директории
-    - cp -r blog/ deployment_package/ 2>/dev/null && echo "✅ blog/" || echo "ℹ️ blog/ не найдена"
-    - cp -r static/ deployment_package/ 2>/dev/null && echo "✅ static/" || echo "ℹ️ static/ не найдена"
-    - cp -r templates/ deployment_package/ 2>/dev/null && echo "✅ templates/" || echo "ℹ️ templates/ не найдена"
-    - cp -r migrations/ deployment_package/ 2>/dev/null && echo "✅ migrations/" || echo "ℹ️ migrations/ не найдена"
+    # Копирование основных директорий
+    - echo "📁 Копирование директорий..."
+    - cp -r blog/ deployment_package/
+    - cp -r migrations/ deployment_package/
 
-    # Конфигурационные файлы
-    - cp flask-helpdesk.service.redhat deployment_package/flask-helpdesk.service 2>/dev/null && echo "✅ service файл" || echo "ℹ️ service файл не найден"
-    - cp flask-helpdesk.nginx.conf deployment_package/ 2>/dev/null && echo "✅ nginx конфиг" || echo "ℹ️ nginx конфиг не найден"
+    # Создание директорий для статических файлов
+    - mkdir -p deployment_package/static
+    - mkdir -p deployment_package/templates
 
-    # Создаем архив (если есть tar)
-    - |
-      if command -v tar >/dev/null 2>&1; then
-        cd deployment_package
-        tar -czf ../deployment_simple.tar.gz .
-        cd ..
-        echo "✅ Архив создан:"
-        ls -lh deployment_simple.tar.gz 2>/dev/null || echo "⚠️ Проблема с архивом"
-      else
-        echo "⚠️ tar не найден, архив не создан"
-      fi
+    # Копирование статических файлов
+    - echo "🎨 Копирование статических файлов..."
+    - cp -r blog/static/* deployment_package/static/ 2>/dev/null || echo "ℹ️ Статические файлы из blog/static не найдены"
+    - cp -r blog/templates/* deployment_package/templates/ 2>/dev/null || echo "ℹ️ Шаблоны из blog/templates не найдены"
 
-    - echo "📦 Содержимое deployment_package:"
-    - ls -la deployment_package/ 2>/dev/null || echo "⚠️ deployment_package не найдена"
-    - echo "✅ Простая сборка завершена"
+    # Создание production конфигурации
+    - echo "⚙️ Создание production конфигурации..."
+    - cat > deployment_package/.env.production << EOF
+FLASK_ENV=production
+FLASK_DEBUG=False
+WTF_CSRF_ENABLED=True
+SECRET_KEY=\$(python -c 'import secrets; print(secrets.token_hex(32))')
+LOG_LEVEL=INFO
+LOG_PATH=/opt/www/its.teztour.com/logs/app.log
+DB_PATH=/opt/www/its.teztour.com/blog/db/blog.db
+EOF
+
+    # Создание systemd service файла
+    - echo "🔧 Создание systemd service файла..."
+    - cat > deployment_package/flask-helpdesk.service << EOF
+[Unit]
+Description=Flask Helpdesk Application
+After=network.target
+
+[Service]
+Type=exec
+User=deploy
+Group=deploy
+WorkingDirectory=$DEPLOY_PATH
+Environment=PATH=$DEPLOY_PATH/venv/bin
+Environment=FLASK_ENV=production
+Environment=PYTHONPATH=$DEPLOY_PATH
+ExecStart=$DEPLOY_PATH/venv/bin/gunicorn \\
+          --workers 3 --threads 2 --timeout 120 \\
+          --bind unix:/run/gunicorn/gunicorn.sock \\
+          wsgi:app
+ExecReload=/bin/kill -s HUP \$MAINPID
+Restart=always
+RestartSec=3
+StandardOutput=journal
+StandardError=journal
+
+RuntimeDirectory=gunicorn
+RuntimeDirectoryMode=0755
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+    # Создание nginx конфигурации
+    - echo "🌐 Создание nginx конфигурации..."
+    - cat > deployment_package/flask-helpdesk.nginx.conf << EOF
+server {
+    listen 80;
+    server_name $DEPLOY_DOMAIN;
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name $DEPLOY_DOMAIN;
+
+    ssl_certificate /etc/letsencrypt/live/$DEPLOY_DOMAIN/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$DEPLOY_DOMAIN/privkey.pem;
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_ciphers ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA256:ECDHE-RSA-AES256-SHA384;
+    ssl_prefer_server_ciphers off;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+    client_max_body_size 20M;
+    keepalive_timeout 65;
+
+    access_log /var/log/nginx/flask-helpdesk-access.log;
+    error_log /var/log/nginx/flask-helpdesk-error.log;
+
+    location / {
+        proxy_pass http://unix:/run/gunicorn/gunicorn.sock;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+        proxy_set_header X-Forwarded-Host \$server_name;
+
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade \$http_upgrade;
+        proxy_set_header Connection "upgrade";
+
+        proxy_buffering off;
+    }
+
+    location /static/ {
+        alias $DEPLOY_PATH/static/;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        access_log off;
+
+        gzip on;
+        gzip_vary on;
+        gzip_min_length 1024;
+        gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json;
+    }
+
+    location = /favicon.ico {
+        alias $DEPLOY_PATH/static/favicon.ico;
+        expires 1y;
+        access_log off;
+    }
+
+    location ~ /\\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~ \\.(py|pyc|pyo|pyd|db)\$ {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    location ~ ^/(venv|migrations|instance|__pycache__)/ {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+}
+EOF
+
+    # Создание скрипта деплоя
+    - echo "📜 Создание скрипта деплоя..."
+    - cat > deployment_package/deploy.sh << 'EOF'
+#!/bin/bash
+set -e
+
+DEPLOY_PATH="/opt/www/its.teztour.com"
+SERVICE_NAME="flask-helpdesk"
+DEPLOY_USER="deploy"
+
+echo "🚀 Начало деплоя Flask Helpdesk..."
+
+# Создание директории приложения
+sudo mkdir -p $DEPLOY_PATH
+sudo chown $DEPLOY_USER:$DEPLOY_USER $DEPLOY_PATH
+
+# Создание виртуального окружения
+echo "🐍 Создание виртуального окружения..."
+cd $DEPLOY_PATH
+python3 -m venv venv
+source venv/bin/activate
+
+# Установка зависимостей
+echo "📦 Установка зависимостей..."
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Создание необходимых директорий
+echo "📁 Создание директорий..."
+mkdir -p logs
+mkdir -p blog/db
+mkdir -p static
+mkdir -p templates
+
+# Установка прав доступа
+echo "🔐 Настройка прав доступа..."
+chown -R $DEPLOY_USER:$DEPLOY_USER $DEPLOY_PATH
+chmod -R 755 $DEPLOY_PATH
+chmod 600 .env.production 2>/dev/null || echo "ℹ️ .env.production не найден"
+
+# Копирование systemd service файла
+echo "⚙️ Настройка systemd service..."
+sudo cp flask-helpdesk.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable $SERVICE_NAME
+
+# Копирование nginx конфигурации
+echo "🌐 Настройка nginx..."
+sudo cp flask-helpdesk.nginx.conf /etc/nginx/sites-available/$SERVICE_NAME
+sudo ln -sf /etc/nginx/sites-available/$SERVICE_NAME /etc/nginx/sites-enabled/
+sudo nginx -t && sudo systemctl reload nginx
+
+# Перезапуск сервиса
+echo "🔄 Перезапуск сервиса..."
+sudo systemctl restart $SERVICE_NAME
+sudo systemctl status $SERVICE_NAME --no-pager
+
+echo "✅ Деплой завершен успешно!"
+echo "🌐 Приложение доступно по адресу: https://its.tez-tour.com"
+EOF
+
+    - chmod +x deployment_package/deploy.sh
+
+    # Создание архива
+    - echo "📦 Создание архива..."
+    - cd deployment_package
+    - tar -czf ../deployment.tar.gz .
+    - cd ..
+    - ls -lh deployment.tar.gz
+
+    - echo "✅ Сборка завершена успешно"
   artifacts:
     paths:
-      - deployment_simple.tar.gz
+      - deployment.tar.gz
       - deployment_package/
     expire_in: 1 day
     when: always
   rules:
     - if: '$CI_COMMIT_REF_NAME == "main"'
 
-# Простой деплой без Docker
-simple_deploy:
+# Деплой на сервер
+deploy_to_server:
   stage: deploy
-  script:
-    - echo "🚀 Простой деплой на сервер..."
+  before_script:
+    - echo "🚀 Подготовка к деплою..."
     - echo "🔍 Проверка переменных окружения..."
     - |
       if [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$DEPLOY_SERVER" ] || [ -z "$DEPLOY_USER" ]; then
         echo ""
-        echo "ℹ️ Переменные деплоя НЕ настроены"
+        echo "❌ Переменные деплоя НЕ настроены"
         echo ""
         echo "📋 Для автоматического деплоя добавьте в GitLab:"
         echo "   Settings → CI/CD → Variables:"
         echo ""
         echo "   🔑 SSH_PRIVATE_KEY"
-        echo "      Value: (приватный SSH ключ, начинающийся с -----BEGIN)"
+        echo "      Value: (содержимое ~/.ssh/flask_helpdesk_deploy)"
         echo ""
         echo "   🌐 DEPLOY_SERVER"
-        echo "      Value: 10.7.74.252"
+        echo "      Value: its.tez-tour.com"
         echo ""
         echo "   👤 DEPLOY_USER"
-        echo "      Value: deploy"
+        echo "      Value: yvarslavan"
         echo ""
         echo "📦 Пакет готов к ручному деплою"
-        echo ""
-        echo "🔧 Ручной деплой:"
-        echo "   1. Скачайте artifacts из этого pipeline"
-        echo "   2. scp deployment_simple.tar.gz deploy@10.7.74.252:/tmp/"
-        echo "   3. ssh deploy@10.7.74.252"
-        echo "   4. cd /opt/www && sudo tar -xzf /tmp/deployment_simple.tar.gz"
-        echo "   5. sudo systemctl restart flask-helpdesk"
-        echo ""
         exit 0
       fi
-
     - echo "✅ Переменные деплоя найдены"
     - echo "🔐 Настройка SSH..."
-
-    # Проверяем SSH утилиты
-    - command -v ssh >/dev/null 2>&1 || echo "⚠️ ssh не найден"
-    - command -v ssh-agent >/dev/null 2>&1 || echo "⚠️ ssh-agent не найден"
-    - command -v ssh-add >/dev/null 2>&1 || echo "⚠️ ssh-add не найден"
-
-    # Настройка SSH
-    - eval $(ssh-agent -s) 2>/dev/null || echo "⚠️ Проблема с ssh-agent"
-    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - 2>/dev/null || echo "⚠️ Проблема с SSH ключом"
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
     - mkdir -p ~/.ssh
     - chmod 700 ~/.ssh
-    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts 2>/dev/null || echo "⚠️ ssh-keyscan проблема"
-
-    - echo "🔍 Тест SSH подключения..."
-    - ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no $DEPLOY_USER@$DEPLOY_SERVER "echo 'SSH OK'" 2>/dev/null || echo "⚠️ SSH тест не прошел"
-
-    - echo "📁 Деплой файлов..."
+    - ssh-keyscan -H $DEPLOY_SERVER >> ~/.ssh/known_hosts
+    - echo "🔑 SSH ключ настроен"
+  script:
+    - echo "📤 Передача файлов на сервер..."
     - |
-      if [ -f "deployment_simple.tar.gz" ]; then
-        echo "📤 Передаем архив на сервер..."
-        cat deployment_simple.tar.gz | ssh -o ConnectTimeout=30 $DEPLOY_USER@$DEPLOY_SERVER "
-          sudo mkdir -p /opt/www 2>/dev/null
-          cd /opt/www
-          sudo tar -xzf - 2>/dev/null && echo '✅ Архив распакован в /opt/www' || echo '⚠️ Проблема с распаковкой'
-          echo '📋 Файлы в /opt/www:'
-          sudo ls -la /opt/www/ 2>/dev/null | head -10
-        " 2>/dev/null || echo "⚠️ Проблема с передачей файлов"
-      else
-        echo "❌ deployment_simple.tar.gz не найден"
-        echo "📋 Доступные файлы:"
-        ls -la . 2>/dev/null || echo "⚠️ Не удалось показать файлы"
-      fi
+      if [ -f "deployment.tar.gz" ]; then
+        echo "📦 Передача архива на сервер..."
+        cat deployment.tar.gz | ssh -o ConnectTimeout=30 $DEPLOY_USER@$DEPLOY_SERVER "
+          echo '📁 Создание временной директории...'
+          mkdir -p /tmp/flask-deploy
+          cd /tmp/flask-deploy
 
+          echo '📦 Распаковка архива...'
+          tar -xzf - && echo '✅ Архив распакован' || echo '❌ Ошибка распаковки'
+
+          echo '🚀 Запуск скрипта деплоя...'
+          chmod +x deploy.sh
+          ./deploy.sh
+
+          echo '🧹 Очистка временных файлов...'
+          cd /
+          rm -rf /tmp/flask-deploy
+
+          echo '✅ Деплой завершен!'
+        "
+      else
+        echo "❌ deployment.tar.gz не найден"
+        exit 1
+      fi
     - echo ""
-    - echo "🎉 Деплой завершен!"
+    - echo "🎉 Деплой завершен успешно!"
     - echo ""
     - echo "🔧 Проверьте на сервере:"
-    - echo "   ssh deploy@10.7.74.252"
-    - echo "   sudo systemctl restart flask-helpdesk"
+    - echo "   ssh $DEPLOY_USER@$DEPLOY_SERVER"
     - echo "   sudo systemctl status flask-helpdesk"
-    - echo "   curl -I http://its.tez-tour.com"
+    - echo "   curl -I https://$DEPLOY_DOMAIN"
     - echo ""
   rules:
     - if: '$CI_COMMIT_REF_NAME == "main"'

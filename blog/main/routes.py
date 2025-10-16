@@ -146,19 +146,18 @@ MY_TASKS_REDIRECT = "main.my_tasks"
 logger = logging.getLogger(__name__) # Локальный логгер для текущего модуля
 
 
-config = ConfigParser()
-config_path = os.path.join(os.getcwd(), "config.ini")
-config.read(config_path)
-redmine_url = config.get("redmine", "url")
-redmine_api_key = config.get("redmine", "api_key")
-redmine_login_admin = config.get("redmine", "login_admin")
-redmine_password_admin = config.get("redmine", "password_admin")
-ANONYMOUS_USER_ID = int(config.get("redmine", "anonymous_user_id"))
+# Используем безопасную конфигурацию из переменных окружения
+from config import get
+redmine_url = get("redmine", "url")
+redmine_api_key = get("redmine", "api_key")
+redmine_login_admin = get("redmine", "login_admin")
+redmine_password_admin = get("redmine", "password_admin")
+ANONYMOUS_USER_ID = int(get("redmine", "anonymous_user_id"))
 
-DB_REDMINE_HOST = config.get("mysql", "host")
-DB_REDMINE_DB = config.get("mysql", "database")
-DB_REDMINE_USER = config.get("mysql", "user")
-DB_REDMINE_PASSWORD = config.get("mysql", "password")
+DB_REDMINE_HOST = get("mysql", "host")
+DB_REDMINE_DB = get("mysql", "database")
+DB_REDMINE_USER = get("mysql", "user")
+DB_REDMINE_PASSWORD = get("mysql", "password")
 
 # Глобальная переменная для хранения статуса подключения
 db_connection_status = {
@@ -830,6 +829,13 @@ def api_clear_redmine_notifications():
 @main.route("/index")
 def home():
     return render_template("index.html", title="Главная")
+
+
+@main.route("/theme-test")
+@login_required
+def theme_test():
+    """Test page for theme system"""
+    return render_template("theme_test.html", title="Theme System Test")
 
 
 @main.route("/my-issues", methods=["GET"])
@@ -1570,6 +1576,112 @@ def task_detail_redirect(task_id):
     """Перенаправление со старого URL детализации на новый tasks blueprint"""
     return redirect(url_for('tasks.task_detail', task_id=task_id))
 
+@main.route("/my-issues/api/recent-activity", methods=['GET'])
+@login_required
+def get_my_issues_recent_activity():
+    """
+    API endpoint для получения последней активности по заявкам пользователя
+    Для страницы "Мои заявки"
+    """
+    current_app.logger.info("🚀 API endpoint /my-issues/api/recent-activity вызван!")
+    try:
+        # Определяем user_id для запроса
+        # ИСПРАВЛЕНИЕ: Если у пользователя нет аккаунта в Redmine или id_redmine_user не установлен,
+        # используем значение по умолчанию = 4 (Аноним)
+        user_id = 4  # По умолчанию - анонимный пользователь
+
+        if hasattr(current_user, 'id_redmine_user') and current_user.id_redmine_user:
+            user_id = current_user.id_redmine_user
+
+        # Дополнительная проверка через is_redmine_user
+        if hasattr(current_user, 'is_redmine_user') and not current_user.is_redmine_user:
+            user_id = 4  # Принудительно устанавливаем 4 для пользователей без аккаунта
+
+        # Импортируем функции из blog.redmine.py
+        from blog.redmine import get_recent_activity
+
+        # Получаем данные активности
+        current_app.logger.info(f"Запрашиваем активность для пользователя: id_redmine_user={user_id}, email={current_user.email}, is_redmine_user={getattr(current_user, 'is_redmine_user', False)}")
+
+        activity_data = get_recent_activity(
+            user_id=user_id,
+            user_email=current_user.email
+        )
+
+        current_app.logger.info(f"Получены данные активности: {len(activity_data) if activity_data else 0} записей")
+
+        # Проверяем, что activity_data не None (в случае ошибки БД)
+        if activity_data is None:
+            return jsonify({
+                "success": False,
+                "error": "Ошибка подключения к базе данных",
+                "data": [],
+                "count": 0
+            }), 500
+
+        # Обрабатываем данные активности
+        if not activity_data:
+            return jsonify({
+                "success": True,
+                "data": [],
+                "count": 0
+            })
+
+        # Конвертируем datetime объекты в строки для JSON
+        import pytz
+        from datetime import datetime
+
+        moscow_tz = pytz.timezone('Europe/Moscow')
+        now = datetime.now(moscow_tz)
+
+        for item in activity_data:
+            # Конвертируем updated_on в московское время
+            if isinstance(item['updated_on'], datetime):
+                updated_on = item['updated_on']
+                if updated_on.tzinfo is None:
+                    updated_on = moscow_tz.localize(updated_on)
+                else:
+                    updated_on = updated_on.astimezone(moscow_tz)
+
+                # Вычисляем разницу во времени
+                time_diff = now - updated_on
+
+                # Форматируем "время назад"
+                if time_diff.total_seconds() < 60:
+                    item['time_ago'] = 'только что'
+                elif time_diff.total_seconds() < 3600:
+                    minutes = int(time_diff.total_seconds() / 60)
+                    item['time_ago'] = f'{minutes} мин назад'
+                elif time_diff.total_seconds() < 86400:
+                    hours = int(time_diff.total_seconds() / 3600)
+                    item['time_ago'] = f'{hours} ч назад'
+                elif time_diff.days == 1:
+                    item['time_ago'] = 'вчера'
+                elif time_diff.days < 7:
+                    item['time_ago'] = f'{time_diff.days} дн назад'
+                else:
+                    item['time_ago'] = updated_on.strftime('%d.%m.%Y')
+
+                # Конвертируем datetime в строку для JSON
+                item['updated_on'] = updated_on.isoformat()
+
+        return jsonify({
+            "success": True,
+            "data": activity_data,
+            "count": len(activity_data)
+        })
+
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при получении активности заявок: {e}")
+        import traceback
+        current_app.logger.error(traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "error": f"Ошибка при получении данных активности: {str(e)}",
+            "data": [],
+            "count": 0
+        }), 500
+
 @main.route("/my-issues/<int:issue_id>", methods=["GET", "POST"])
 @login_required
 def issue(issue_id):
@@ -2161,14 +2273,11 @@ def vdi():
 @login_required
 def reports():
     try:
-        config = ConfigParser()
-        config_path = os.path.join(os.getcwd(), "config.ini")
-        config.read(config_path)
-
-        DB_REDMINE_HOST = config.get("mysql", "host")
-        DB_REDMINE_DB = config.get("mysql", "database")
-        DB_REDMINE_USER = config.get("mysql", "user")
-        DB_REDMINE_PASSWORD = config.get("mysql", "password")
+        # Используем безопасную конфигурацию из переменных окружения
+        DB_REDMINE_HOST = get("mysql", "host")
+        DB_REDMINE_DB = get("mysql", "database")
+        DB_REDMINE_USER = get("mysql", "user")
+        DB_REDMINE_PASSWORD = get("mysql", "password")
 
         conn = get_connection(
             DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB

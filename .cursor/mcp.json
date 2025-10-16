@@ -7,7 +7,7 @@
         "@modelcontextprotocol/server-gitlab"
       ],
       "env": {
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "glpat-7z62kxkDsSBugixvVQrv",
+        "GITLAB_PERSONAL_ACCESS_TOKEN": "glpat-zvLc-eu3ByYXDFgmf98s",
         "GITLAB_API_URL": "https://gitlab.com/api/v4"
       }
     },

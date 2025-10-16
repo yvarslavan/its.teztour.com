@@ -92,7 +92,7 @@ class TaskAssigneeChanger {
                         <div class="row">
                             <div class="col-md-6">
                                 <select class="form-select" id="new-assignee-select">
-                                    <option value="">Выберите нового исполнителя</option>
+                                    <option value="__placeholder__" selected disabled>Выберите нового исполнителя</option>
                                     <option value="">Снять назначение</option>
                                     ${usersData.users.map(user =>
                                         `<option value="${user.id}" ${user.id === currentAssigneeId ? 'disabled' : ''}>${user.name}</option>`
@@ -150,7 +150,8 @@ class TaskAssigneeChanger {
         const changeAssigneeBtn = document.getElementById('change-assignee-btn');
 
         if (newAssigneeSelect && changeAssigneeBtn) {
-            changeAssigneeBtn.disabled = !newAssigneeSelect.value;
+            // Активируем кнопку, когда выбран любой вариант, кроме плейсхолдера
+            changeAssigneeBtn.disabled = (newAssigneeSelect.value === '__placeholder__');
         }
     }
 
@@ -163,10 +164,7 @@ class TaskAssigneeChanger {
         const newAssigneeSelect = document.getElementById('new-assignee-select');
         const commentField = document.getElementById('assignee-comment');
 
-        if (!newAssigneeSelect || !newAssigneeSelect.value) {
-            this.showError('Выберите нового исполнителя');
-            return;
-        }
+        if (!newAssigneeSelect) return;
 
         const newAssigneeId = newAssigneeSelect.value === '' ? null : parseInt(newAssigneeSelect.value);
         const comment = commentField ? commentField.value.trim() : '';

@@ -1,0 +1,141 @@
+/**
+ * @file: theme-toggle-integration.css
+ * @description: Integration styles for theme toggle button with existing navigation
+ * @created: 2025-01-06
+ */
+
+/* Theme toggle button integration with existing nav */
+.theme-toggle-item {
+    display: flex;
+    align-items: center;
+    margin-left: 0.5rem;
+}
+
+.theme-toggle-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(10px);
+}
+
+.theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px);
+}
+
+.theme-toggle-btn:focus {
+    outline: 2px solid rgba(59, 130, 246, 0.5);
+    outline-offset: 2px;
+}
+
+.theme-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.theme-icon {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    width: 20px;
+    height: 20px;
+    pointer-events: none;
+}
+
+/* Fallback - показываем солнце по умолчанию */
+.theme-icon-light {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+.theme-icon-dark {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.8);
+}
+
+/* Show sun icon in dark mode, moon icon in light mode */
+[data-theme="light"] .theme-icon-light {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.8);
+}
+
+[data-theme="light"] .theme-icon-dark {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-light {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-dark {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.8);
+}
+
+/* Дополнительная совместимость с классами body */
+body.light-theme .theme-icon-light {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(90deg) scale(0.8);
+}
+
+body.light-theme .theme-icon-dark {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+body.dark-theme .theme-icon-light {
+    opacity: 1;
+    transform: translate(-50%, -50%) rotate(0deg) scale(1);
+}
+
+body.dark-theme .theme-icon-dark {
+    opacity: 0;
+    transform: translate(-50%, -50%) rotate(-90deg) scale(0.8);
+}
+
+/* Mobile responsive */
+@media (max-width: 968px) {
+    .theme-toggle-item {
+        margin: 0.5rem 0;
+    }
+    
+    .theme-toggle-btn {
+        width: 100%;
+        height: 48px;
+        border-radius: 12px;
+        justify-content: flex-start;
+        padding: 0 1rem;
+    }
+    
+    .theme-toggle-btn::after {
+        content: 'Переключить тему';
+        margin-left: 0.75rem;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+}
+
+/* Dark theme adjustments for the button itself */
+[data-theme="dark"] .theme-toggle-btn {
+    border-color: rgba(255, 255, 255, 0.3);
+    background-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-color: rgba(255, 255, 255, 0.5);
+}

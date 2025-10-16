@@ -43,22 +43,14 @@ class Config:
 
     # ИСПРАВЛЕНИЕ: Добавляем конфигурацию MySQL Redmine из config.ini
     @classmethod
-    def _load_config_ini(cls):
-        """Загружает настройки из config.ini"""
-        config = ConfigParser()
-        config_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'config.ini')
-        config.read(config_path)
-        return config
-
-    @classmethod
     def get_db_redmine_config(cls):
-        """Возвращает конфигурацию MySQL Redmine"""
-        config = cls._load_config_ini()
+        """Возвращает конфигурацию MySQL Redmine из безопасной конфигурации"""
+        from config import get
         return {
-            'host': config.get('mysql', 'host'),
-            'database': config.get('mysql', 'database'),
-            'user': config.get('mysql', 'user'),
-            'password': config.get('mysql', 'password')
+            'host': get('mysql', 'host'),
+            'database': get('mysql', 'database'),
+            'user': get('mysql', 'user'),
+            'password': get('mysql', 'password')
         }
 
     # Константы для доступа к конфигурации Redmine

@@ -9,25 +9,43 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+
 def setup_development_environment():
     """Настройка переменных окружения для разработки"""
     # Устанавливаем режим разработки
-    os.environ['FLASK_ENV'] = 'development'
-    os.environ['FLASK_DEBUG'] = '1'
+    os.environ["FLASK_ENV"] = "development"
+    os.environ["FLASK_DEBUG"] = "1"
+
+    # Настраиваем безопасное логирование
+    try:
+        from logging_config import setup_logging
+        logger, error_logger = setup_logging()
+        print("✅ Используется безопасное логирование с ротацией")
+    except ImportError:
+        print("⚠️ Используется стандартное логирование (logging_config не найден)")
 
     # Загружаем переменные из .flaskenv (если есть)
     BASE_DIR = Path(__file__).resolve().parent
-    flaskenv_path = BASE_DIR / '.flaskenv'
+    flaskenv_path = BASE_DIR / ".flaskenv"
 
     if flaskenv_path.exists():
         load_dotenv(flaskenv_path)
         print(f"✅ Загружены настройки из {flaskenv_path}")
 
     # Загружаем dev конфигурацию
-    env_dev_path = BASE_DIR / '.env.development'
+    env_dev_path = BASE_DIR / ".env.development"
     if env_dev_path.exists():
         load_dotenv(env_dev_path)
         print(f"✅ Загружены настройки разработки из {env_dev_path}")
+
+    # Загружаем основной .env файл
+    env_path = BASE_DIR / ".env"
+    if env_path.exists():
+        load_dotenv(env_path)
+        print(f"✅ Загружены переменные окружения из {env_path}")
+    else:
+        print("⚠️ Файл .env не найден. Используйте .env.example для создания")
+
 
 def main():
     """Основная функция запуска"""
@@ -59,13 +77,15 @@ def main():
     # Запускаем сервер с оптимальными настройками для разработки
     try:
         app.run(
-            debug=True,              # DEBUG режим
-            host='0.0.0.0',          # Доступ извне (для тестирования на других устройствах)
-            port=int(os.environ.get('FLASK_RUN_PORT', 5000)),  # Порт из переменных или 5000
-            use_reloader=True,       # Автоперезагрузка при изменениях
-            use_debugger=True,       # Встроенный отладчик
-            threaded=True,           # Многопоточность
-            load_dotenv=False        # Мы уже загрузили переменные
+            debug=True,  # DEBUG режим
+            host="0.0.0.0",  # Доступ извне (для тестирования на других устройствах)
+            port=int(
+                os.environ.get("FLASK_RUN_PORT", 5000)
+            ),  # Порт из переменных или 5000
+            use_reloader=True,  # Автоперезагрузка при изменениях
+            use_debugger=True,  # Встроенный отладчик
+            threaded=True,  # Многопоточность
+            load_dotenv=False,  # Мы уже загрузили переменные
         )
     except KeyboardInterrupt:
         print("\n🛑 Сервер остановлен пользователем")
@@ -74,5 +94,6 @@ def main():
         print(f"❌ Ошибка запуска сервера: {e}")
         sys.exit(1)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

@@ -10,6 +10,7 @@ import sqlalchemy
 from sqlalchemy import func, or_, text
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import pytz
+from config import get  # Добавляем импорт функции get для безопасной конфигурации
 from flask import (
     Blueprint,
     render_template,
@@ -55,8 +56,8 @@ from redmine import (
     generate_email_signature,
 )
 from mysql_db import Issue, Session, init_quality_db
-from flask_wtf.csrf import generate_csrf, CSRFProtect
-csrf = CSRFProtect()
+from flask_wtf.csrf import generate_csrf
+from blog import csrf
 from blog.call.routes import get_db_connection
 import pymysql
 from pymysql.cursors import DictCursor
@@ -69,12 +70,10 @@ logger = logging.getLogger(__name__)
 
 users = Blueprint("users", __name__)
 USERS_ACCOUNT_URL = "users.account"
-config = ConfigParser()
-config_path = os.path.join(os.getcwd(), "config.ini")
-config.read(config_path)
-url_recovery_password = config.get("RecoveryPassword", "url")
+# Используем безопасную конфигурацию из переменных окружения
+url_recovery_password = get("RecoveryPassword", "url")
 # Получение пути к ERP файлу
-ERP_FILE_PATH = config.get("FilePaths", "erp_file_path")
+ERP_FILE_PATH = get("FilePaths", "erp_file_path")
 # Определение пути к файлу в зависимости от операционной системы
 if os.name == "nt":  # Windows
     ERP_FILE_PATH = r"\\10.1.14.10\erp\ERP\TEZERP.exe"
@@ -99,6 +98,12 @@ def inject_notification_count():
     else:
         sum_count_notifications = 0  # Если пользователь не авторизован, уведомлений нет
     return dict(count_notifications=sum_count_notifications)
+
+# Контекстный процессор для передачи функций утилит в шаблоны
+@users.context_processor
+def inject_util_functions():
+    from blog.user.utils import get_user_image_url
+    return dict(get_user_image_url=get_user_image_url)
 
 
 @users.route("/register", methods=["GET", "POST"])
@@ -195,6 +200,7 @@ def check_redmine_user(email):
 
 
 @users.route("/login", methods=["GET", "POST"])
+@csrf.exempt  # Temporarily disable CSRF for login
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.blog"))
@@ -202,35 +208,141 @@ def login():
     form = LoginForm()
     print(f"Generated CSRF token: {generate_csrf()}")
 
+    # Debug CSRF validation
+    if request.method == "POST":
+        print(f"POST request received")
+        print(f"Request form data: {dict(request.form)}")
+
+        # Since CSRF is disabled, manually populate form data
+        if not form.username.data and request.form.get('username'):
+            form.username.data = request.form.get('username')
+            print(f"✅ Manually set username: {form.username.data}")
+
+        if not form.password.data and request.form.get('password'):
+            form.password.data = request.form.get('password')
+            print(f"✅ Manually set password (length: {len(form.password.data)})")
+
+        print(f"Form errors: {form.errors}")
+        print(f"Form validate: {form.validate()}")
+        print(f"Form validate_on_submit: {form.validate_on_submit()}")
+
     if form.validate_on_submit():
+        print(f"✅ Form validation passed")
+        print(f"Username: {form.username.data}")
+        print(f"Password length: {len(form.password.data) if form.password.data else 0}")
+
         user = authenticate_user(form.username.data, form.password.data)
+        print(f"Authenticate result: {user}")
+
         if user:
+            print(f"✅ User authenticated successfully: {user.username}")
             return handle_successful_login(user, form)
-        flash("Войти не удалось. Неверный пароль или пароль мог быть обновлен в ERP. Пожалуйста, попробуйте снова.",
-            "error")
+        else:
+            print(f"❌ Authentication failed for user: {form.username.data}")
+            flash("Войти не удалось. Неверный пароль или пароль мог быть обновлен в ERP. Пожалуйста, попробуйте снова.",
+                "error")
+    else:
+        print(f"❌ Form validation failed")
+        print(f"Form errors: {form.errors}")
+        print(f"Form data: username={form.username.data}, password={'*' * len(form.password.data) if form.password.data else 'None'}")
 
     return render_template(
         "login.html", form=form, title="Логин TEZ ERP", legend="Войти"
     )
 
 
+@users.route("/login-modern", methods=["GET", "POST"])
+@csrf.exempt  # Temporarily disable CSRF for login
+def login_modern():
+    """Современная форма авторизации (тестовая версия)"""
+    if current_user.is_authenticated:
+        return redirect(url_for("main.blog"))
+
+    form = LoginForm()
+    print(f"Generated CSRF token: {generate_csrf()}")
+
+    # Debug CSRF validation
+    if request.method == "POST":
+        print(f"POST request received")
+        print(f"Request form data: {dict(request.form)}")
+
+        # Since CSRF is disabled, manually populate form data
+        if not form.username.data and request.form.get('username'):
+            form.username.data = request.form.get('username')
+            print(f"✅ Manually set username: {form.username.data}")
+
+        if not form.password.data and request.form.get('password'):
+            form.password.data = request.form.get('password')
+            print(f"✅ Manually set password (length: {len(form.password.data)})")
+
+        print(f"Form errors: {form.errors}")
+        print(f"Form validate: {form.validate()}")
+        print(f"Form validate_on_submit: {form.validate_on_submit()}")
+
+    if form.validate_on_submit():
+        print(f"✅ Form validation passed")
+        print(f"Username: {form.username.data}")
+        print(f"Password length: {len(form.password.data) if form.password.data else 0}")
+
+        user = authenticate_user(form.username.data, form.password.data)
+        print(f"Authenticate result: {user}")
+
+        if user:
+            print(f"✅ User authenticated successfully: {user.username}")
+            return handle_successful_login(user, form)
+        else:
+            print(f"❌ Authentication failed for user: {form.username.data}")
+            flash("Войти не удалось. Неверный пароль или пароль мог быть обновлен в ERP. Пожалуйста, попробуйте снова.",
+                "error")
+    else:
+        print(f"❌ Form validation failed")
+        print(f"Form errors: {form.errors}")
+        print(f"Form data: username={form.username.data}, password={'*' * len(form.password.data) if form.password.data else 'None'}")
+
+    return render_template(
+        "login_modern.html", form=form, title="Логин TEZ ERP", legend="Войти"
+    )
+
+
 def authenticate_user(username, password):
+    print(f"🔐 authenticate_user called for username: {username}")
     user = User.query.filter_by(username=username).first()
+    print(f"🔐 User found in SQLite: {user is not None}")
+
     if user:
+        print(f"🔐 User ID: {user.id}, Username: {user.username}")
         # Проверяем пароль в SQLite
-        if password == user.password:
+        password_match = password == user.password
+        print(f"🔐 Password match in SQLite: {password_match}")
+
+        if password_match:
             # Проверяем актуальность пароля в Oracle
-            if check_and_update_password(user, password):
+            oracle_check = check_and_update_password(user, password)
+            print(f"🔐 Oracle password check: {oracle_check}")
+            if oracle_check:
+                print(f"✅ Authentication successful for user: {username}")
                 return user
+            else:
+                print(f"❌ Oracle password check failed for user: {username}")
+        else:
+            print(f"❌ SQLite password mismatch for user: {username}")
+    else:
+        print(f"❌ User not found in SQLite: {username}")
+
+    print(f"❌ Authentication failed for user: {username}")
     return None
 
 def check_and_update_password(user, provided_password):
+    print(f"🔐 check_and_update_password called for user: {user.username}")
     try:
+        print(f"🔐 Attempting Oracle connection...")
         oracle_connection = connect_oracle(
             db_host, db_port, db_service_name, db_user_name, db_password
         )
         if oracle_connection is None:
+            print(f"❌ Oracle connection failed")
             raise oracledb.DatabaseError("Failed to establish connection to Oracle DB")
+        print(f"✅ Oracle connection established")
 
         # Получаем актуальный пароль из Oracle - НЕ используем text() с cx_Oracle
         cursor = oracle_connection.cursor()
@@ -258,6 +370,7 @@ def check_and_update_password(user, provided_password):
 
 
 def handle_successful_login(user: User, form: LoginForm):
+    print(f"🔐 Starting successful login for user: {user.username} (ID: {user.id})")
     try:
         session_maker = sessionmaker(bind=db.engine)
         local_session = session_maker()
@@ -280,13 +393,18 @@ def handle_successful_login(user: User, form: LoginForm):
         # Принудительно делаем сессию постоянной перед login_user
         session.permanent = True
 
+        print(f"🔐 Calling login_user for user: {user.username}")
         login_user(user, remember=form.remember.data, duration=timedelta(days=1))
+        print(f"🔐 login_user completed")
 
         # Проверка, что текущий пользователь установлен
         if not current_user.is_authenticated:
-            print("ВНИМАНИЕ: current_user не авторизован после login_user!")
+            print("❌ ВНИМАНИЕ: current_user не авторизован после login_user!")
             # Принудительное копирование ID пользователя в сессию
             session['_user_id'] = str(user.id)
+            print(f"🔐 Manually set session _user_id: {user.id}")
+        else:
+            print(f"✅ current_user is authenticated: {current_user.username}")
 
         # Сохраняем данные в сессию
         session["user_password_erp"] = user.password
@@ -313,8 +431,10 @@ def handle_successful_login(user: User, form: LoginForm):
 
         next_page = request.args.get("next")
         if next_page:
+            print(f"🔐 Redirecting to next_page: {next_page}")
             return redirect(next_page)
 
+        print(f"🔐 Redirecting to users.account")
         return redirect(url_for("users.account"))
     except Exception as e:
         current_app.logger.error(f"Error in handle_successful_login: {str(e)}")

@@ -1,0 +1,441 @@
+/**
+ * @file: profile_theme_fix.css
+ * @description: Исправленные стили для страницы профиля с поддержкой тем
+ * @dependencies: theme.css
+ * @created: 2025-01-06
+ */
+
+/* ============================================
+   PROFILE PAGE THEME SUPPORT
+   ============================================ */
+
+/* Profile Page Wrapper */
+.profile-page-wrapper {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    min-height: 100vh;
+}
+
+/* Background Shapes */
+.background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.background-shapes .shape {
+    position: absolute;
+    background: var(--color-accent-light);
+    opacity: 0.1;
+    border-radius: 50%;
+}
+
+.background-shapes .shape-1 {
+    width: 300px;
+    height: 300px;
+    top: 10%;
+    left: 10%;
+    animation: float 6s ease-in-out infinite;
+}
+
+.background-shapes .shape-2 {
+    width: 200px;
+    height: 200px;
+    top: 60%;
+    right: 15%;
+    animation: float 8s ease-in-out infinite reverse;
+}
+
+.background-shapes .shape-3 {
+    width: 150px;
+    height: 150px;
+    bottom: 20%;
+    left: 20%;
+    animation: float 7s ease-in-out infinite;
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+}
+
+/* Profile Container */
+.profile-container {
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+/* Profile Header */
+.profile-header {
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.back-btn {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+}
+
+.back-btn:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+}
+
+.page-title {
+    color: var(--color-text-primary);
+}
+
+.page-subtitle {
+    color: var(--color-text-secondary);
+}
+
+/* User Profile Card */
+.user-profile-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    color: var(--color-text-primary);
+}
+
+/* Online/Offline Status */
+.online-status {
+    color: var(--color-success);
+}
+
+.offline-status {
+    color: var(--color-text-muted);
+}
+
+.online-dot {
+    background-color: var(--color-success);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.offline-dot {
+    background-color: var(--color-text-muted);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+/* Avatar */
+.avatar-container {
+    position: relative;
+    cursor: pointer;
+}
+
+.user-avatar {
+    border: 3px solid var(--color-border-primary);
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    color: white;
+}
+
+.avatar-container:hover .avatar-overlay {
+    opacity: 1;
+}
+
+/* User Info */
+.user-full-name {
+    color: var(--color-text-primary);
+    font-weight: 700;
+}
+
+.user-position {
+    color: var(--color-text-secondary);
+}
+
+/* Quick Actions */
+.action-btn {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.action-btn:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+    color: var(--color-text-primary);
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
+}
+
+.action-btn.primary-btn {
+    background: var(--color-accent-primary);
+    border-color: var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+}
+
+.action-btn.primary-btn:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+    color: var(--color-text-on-primary);
+}
+
+.action-btn.secondary-btn {
+    background: var(--color-bg-tertiary);
+    border-color: var(--color-border-secondary);
+}
+
+/* Meta Info */
+.meta-info {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--color-border-primary);
+}
+
+.meta-item:last-child {
+    border-bottom: none;
+}
+
+.meta-icon {
+    color: var(--color-accent-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.meta-label {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.meta-value {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+/* Contact Info */
+.contact-info {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+.contact-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--color-border-primary);
+}
+
+.contact-item:last-child {
+    border-bottom: none;
+}
+
+.contact-icon {
+    color: var(--color-accent-primary);
+    width: 20px;
+    text-align: center;
+}
+
+.contact-label {
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    min-width: 80px;
+}
+
+.contact-value {
+    color: var(--color-text-primary);
+    font-weight: 600;
+}
+
+.contact-value a {
+    color: var(--color-accent-primary);
+    text-decoration: none;
+}
+
+.contact-value a:hover {
+    color: var(--color-accent-hover);
+    text-decoration: underline;
+}
+
+/* Modal Styles */
+.modal-content {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.modal-header {
+    background: var(--color-bg-secondary);
+    border-bottom: 1px solid var(--color-border-primary);
+}
+
+.modal-title {
+    color: var(--color-text-primary);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.modal-subtitle {
+    color: var(--color-text-secondary);
+    opacity: 1;
+}
+
+.modal-body {
+    background: var(--color-bg-primary);
+}
+
+.btn-close {
+    background: var(--color-bg-tertiary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.btn-close:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+}
+
+/* Theme Switcher in Profile */
+.theme-switcher {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    border-radius: var(--radius-lg);
+    padding: 0.5rem;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-switcher:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-sm);
+}
+
+.theme-switcher .theme-icon-light {
+    display: block;
+    color: var(--color-warning);
+    opacity: 1;
+    visibility: visible;
+}
+
+.theme-switcher .theme-icon-dark {
+    display: none;
+    color: var(--color-info);
+}
+
+[data-theme="dark"] .theme-switcher .theme-icon-light,
+.dark-theme .theme-switcher .theme-icon-light {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+}
+
+[data-theme="dark"] .theme-switcher .theme-icon-dark,
+.dark-theme .theme-switcher .theme-icon-dark {
+    display: block;
+    color: var(--color-info);
+    opacity: 1;
+    visibility: visible;
+}
+
+[data-theme="light"] .theme-switcher .theme-icon-light,
+.light-theme .theme-switcher .theme-icon-light {
+    display: none;
+    opacity: 0;
+    visibility: hidden;
+}
+
+[data-theme="light"] .theme-switcher .theme-icon-dark,
+.light-theme .theme-switcher .theme-icon-dark {
+    display: block;
+    color: var(--color-info);
+    opacity: 1;
+    visibility: visible;
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+    :root {
+        --color-border-primary: var(--color-text-primary);
+        --color-text-secondary: var(--color-text-primary);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+    
+    .user-profile-card {
+        margin-bottom: 1rem;
+    }
+    
+    .action-btn {
+        width: 100%;
+        justify-content: center;
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* ============================================
+   FORCE THEME APPLICATION
+   ============================================ */
+
+/* Ensure body theme is applied */
+body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
