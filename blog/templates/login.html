@@ -66,7 +66,7 @@
                                 <circle cx="12" cy="7" r="4"></circle>
                             </svg>
                         </div>
-                        {{ form.username(class="modern-input", placeholder="Введите логин ERP", id="username", autocomplete="username") }}
+                        <input autocomplete="username" class="modern-input" id="username" maxlength="20" minlength="3" name="username" placeholder="Введите логин ERP" required type="text" value="">
                     </div>
                     {% if form.username.errors %}
                         <div class="field-error">
@@ -89,7 +89,7 @@
                                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                             </svg>
                         </div>
-                        {{ form.password(class="modern-input", placeholder="Введите пароль ERP", type="password", id="passwordField", autocomplete="current-password") }}
+                        <input autocomplete="current-password" class="modern-input" id="passwordField" name="password" placeholder="Введите пароль ERP" required type="password" value="">
                         <button type="button" class="toggle-password" id="togglePassword">
                             <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
