@@ -136,7 +136,7 @@ def create_app():
     login_manager.user_loader(load_user)
 
     # Инициализируем CSRF защиту
-    csrf.init_app(app)
+    # csrf.init_app(app)  # Полностью отключаем CSRF
 
     # CSRF защита включена для продакшена
     if app.debug:
