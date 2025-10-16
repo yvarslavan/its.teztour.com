@@ -18,6 +18,7 @@ from .db_config import db
 from .settings import Config
 from blog.scheduler_tasks import scheduled_check_all_user_notifications
 from blog.notification_service import BrowserPushService
+from blog.models import load_user
 from blog.utils.logger import configure_blog_logger
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', force=True)
@@ -133,10 +134,9 @@ def create_app():
     configure_blog_logger()
 
     # Регистрируем user_loader здесь, после инициализации login_manager
-    from blog.models import load_user
     login_manager.user_loader(load_user)
 
-            # Инициализируем CSRF защиту
+    # Инициализируем CSRF защиту
     # csrf.init_app(app)  # Временно отключить CSRF
 
     # CSRF защита отключена для всех сред
