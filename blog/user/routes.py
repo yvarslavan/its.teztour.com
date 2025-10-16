@@ -1113,7 +1113,7 @@ def auth_status():
 
 @users.route('/session_debug')
 def session_debug():
-    csrf_token = generate_csrf()
+    # csrf_token = generate_csrf()  # CSRF отключен
 
     return jsonify({
         'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE'),
@@ -1121,7 +1121,7 @@ def session_debug():
         'wtf_csrf_ssl_strict': current_app.config.get('WTF_CSRF_SSL_STRICT'),
         'wtf_csrf_enabled': current_app.config.get('WTF_CSRF_ENABLED'),
         'wtf_csrf_time_limit': current_app.config.get('WTF_CSRF_TIME_LIMIT'),
-        'csrf_token_available': True,
+        'csrf_token_available': False,  # CSRF отключен
         'secret_key_set': current_app.secret_key is not None,
     })
 
