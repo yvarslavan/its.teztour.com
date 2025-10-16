@@ -136,15 +136,11 @@ def create_app():
     login_manager.user_loader(load_user)
 
     # Инициализируем CSRF защиту
-    csrf.init_app(app)
+    # csrf.init_app(app)  # Полностью отключаем CSRF
 
-    # CSRF защита включена для продакшена
-    if app.debug:
-        app.config['WTF_CSRF_ENABLED'] = False
-        print("⚠️ CSRF temporarily disabled for testing")
-    else:
-        app.config['WTF_CSRF_ENABLED'] = False  # Временно отключить
-        print("⚠️ CSRF temporarily disabled for production")
+    # CSRF защита отключена для всех сред
+    app.config['WTF_CSRF_ENABLED'] = False
+    print("⚠️ CSRF completely disabled for all environments")
 
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
