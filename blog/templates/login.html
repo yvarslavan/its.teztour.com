@@ -26,33 +26,8 @@
             <form method="POST" action="" class="modern-form">
                 {{ form.hidden_tag() }}
 
-                <!-- CSRF Token Debug (удалить в production) -->
-                <script>
-                    document.addEventListener('DOMContentLoaded', function() {
-                        const csrfInputs = document.querySelectorAll('input[name="csrf_token"]');
-                        console.log('CSRF inputs found:', csrfInputs.length);
-
-                        csrfInputs.forEach((input, index) => {
-                            console.log(`CSRF Token ${index + 1}:`, input.value);
-                        });
-
-                        const metaToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-                        console.log('CSRF Token from meta:', metaToken);
-
-                        // Если CSRF токен не найден, добавляем из meta
-                        if (csrfInputs.length === 0 || !csrfInputs[0].value) {
-                            console.log('No CSRF token found, creating one from meta...');
-                            if (metaToken) {
-                                const hiddenInput = document.createElement('input');
-                                hiddenInput.type = 'hidden';
-                                hiddenInput.name = 'csrf_token';
-                                hiddenInput.value = metaToken;
-                                document.querySelector('.modern-form').appendChild(hiddenInput);
-                                console.log('CSRF token added to form from meta');
-                            }
-                        }
-                    });
-                </script>
+                <!-- CSRF Token Debug - DISABLED -->
+                <!-- CSRF полностью отключен в приложении -->
 
                 <!-- Username Field -->
                 <div class="form-field-group">
