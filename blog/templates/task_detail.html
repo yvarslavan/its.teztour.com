@@ -569,25 +569,24 @@
 }
 </style>
 
-<div class="modern-task-detail">
-  <!-- Floating Action Button -->
-  <div class="fab-container">
-    <button class="fab theme-toggle" onclick="toggleTheme()" title="Переключить тему">
-      <i class="fas fa-moon" id="theme-icon"></i>
-    </button>
-  </div>
+<div class="modern-task-detail compact-mode">
+  <!-- Compact Mode Toggle Button -->
+  <button class="compact-mode-toggle" id="compactModeToggle" title="Переключить компактный режим">
+    <i class="fas fa-compress-alt"></i>
+  </button>
 
+  <!-- Floating Action Button -->
   <!-- Hero Section -->
   <div class="hero-section">
     <div class="hero-content">
       <div class="breadcrumb">
-        <a href="/my-tasks" class="breadcrumb-link">
+       <a href="/tasks/my-tasks" class="breadcrumb-link">
           <i class="fas fa-tasks"></i>
           <span>Мои задачи</span>
-        </a>
+       </a>
         <i class="fas fa-chevron-right breadcrumb-separator"></i>
         <span class="breadcrumb-current">Задача #{{task.id}}</span>
-        <button class="action-btn back-btn" id="go-back-btn" data-task-id="{{ task.id }}">
+       <button class="action-btn back-btn" id="go-back-btn" data-task-id="{{ task.id }}">
           <i class="fas fa-arrow-left"></i>
           <span>Назад к списку</span>
         </button>
@@ -2698,12 +2697,264 @@
 .card:nth-child(3) { animation-delay: 0.3s; }
 .card:nth-child(4) { animation-delay: 0.4s; }
 
+/* ========================================
+   COMPACT MODE - Reduced vertical spacing
+   ======================================== */
+.modern-task-detail.compact-mode .hero-section {
+  padding: 1.5rem 2rem !important;
+  margin-bottom: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .breadcrumb {
+  margin-bottom: 1rem !important;
+  font-size: 0.8rem !important;
+}
+
+.modern-task-detail.compact-mode .hero-title {
+  font-size: 1.75rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+.modern-task-detail.compact-mode .hero-subtitle {
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .task-status-large {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.modern-task-detail.compact-mode .task-status-large .status-indicator {
+  width: 48px !important;
+  height: 48px !important;
+}
+
+.modern-task-detail.compact-mode .task-status-large i {
+  font-size: 1.5rem !important;
+}
+
+.modern-task-detail.compact-mode .hero-actions {
+  gap: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .action-btn {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .action-btn i {
+  font-size: 0.875rem !important;
+}
+
+/* Compact Cards */
+.modern-task-detail.compact-mode .card {
+  margin-bottom: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .card-header {
+  padding: 1rem 1.5rem !important;
+}
+
+.modern-task-detail.compact-mode .card-title h2 {
+  font-size: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .card-title i {
+  font-size: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .card-content {
+  padding: 1rem 1.5rem !important;
+}
+
+/* Compact Detail Sections */
+.modern-task-detail.compact-mode .details-grid {
+  gap: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-section {
+  gap: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .section-title {
+  font-size: 0.95rem !important;
+  padding-bottom: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-items {
+  gap: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-item {
+  padding: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-icon {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-label {
+  font-size: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .detail-value {
+  font-size: 0.875rem !important;
+}
+
+/* Compact Timeline */
+.modern-task-detail.compact-mode .timeline-items {
+  gap: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .timeline-item {
+  padding: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .timeline-dot {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.modern-task-detail.compact-mode .timeline-label {
+  font-size: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .date-main {
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .date-time {
+  font-size: 0.75rem !important;
+}
+
+/* Compact Badges */
+.modern-task-detail.compact-mode .status-badge,
+.modern-task-detail.compact-mode .priority-badge .badge {
+  padding: 4px 10px !important;
+  font-size: 0.75rem !important;
+}
+
+/* Compact History */
+.modern-task-detail.compact-mode .history-item {
+  padding: 0.75rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .history-header {
+  margin-bottom: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .history-user {
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .history-date {
+  font-size: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .history-content {
+  font-size: 0.875rem !important;
+}
+
+/* Compact Comment Section */
+.modern-task-detail.compact-mode .comment-section {
+  margin-bottom: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .comment-button,
+.modern-task-detail.compact-mode .email-button {
+  padding: 0.5rem 1rem !important;
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .form-group {
+  margin-bottom: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .form-label {
+  font-size: 0.875rem !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* Compact Attachments */
+.modern-task-detail.compact-mode .attachment-item {
+  padding: 0.5rem !important;
+}
+
+.modern-task-detail.compact-mode .attachment-icon {
+  width: 32px !important;
+  height: 32px !important;
+  font-size: 1rem !important;
+}
+
+.modern-task-detail.compact-mode .attachment-name {
+  font-size: 0.875rem !important;
+}
+
+.modern-task-detail.compact-mode .attachment-size {
+  font-size: 0.75rem !important;
+}
+
+/* Compact Status/Priority Management */
+.modern-task-detail.compact-mode .task-status-changer,
+.modern-task-detail.compact-mode .task-priority-changer,
+.modern-task-detail.compact-mode .task-assignee-changer {
+  padding: 0.75rem !important;
+}
+
+.modern-task-detail.compact-mode .loading-placeholder {
+  font-size: 0.75rem !important;
+}
+
+/* Toggle Button for Compact Mode */
+.compact-mode-toggle {
+  position: fixed;
+  top: 80px;
+  right: 2rem;
+  z-index: 999;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-color);
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+  transition: all 0.3s ease;
+  color: var(--text-primary);
+}
+
+.compact-mode-toggle:hover {
+  background: var(--primary-color);
+  color: white;
+  transform: scale(1.05);
+}
+
+.compact-mode-toggle i {
+  font-size: 1rem;
+}
+
+@media (max-width: 768px) {
+  .compact-mode-toggle {
+    top: 70px;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+  }
+}
+
 /* Print Styles */
 @media print {
   .fab-container,
   .hero-actions,
   .filter-btn,
-  .history-filters {
+  .history-filters,
+  .compact-mode-toggle {
     display: none !important;
   }
 
@@ -2833,7 +3084,7 @@
 .menu-item.delete-btn i {
   color: #dc2626;
 }
-}
+
 
 .custom-menu-item.delete-item i {
   color: #dc2626 !important;
@@ -3403,16 +3654,6 @@ document.addEventListener('click', function(e) {
     }
     return;
   }
-
-  // Обработка кнопки "Назад"
-  const backBtn = e.target.closest('#go-back-btn');
-  if (backBtn) {
-    const id = backBtn.dataset.taskId;
-    if (id) {
-      goBackToTasksList(id);
-    }
-    return;
-  }
 });
 async function deleteComment(journalId) {
   if (!confirm('Вы уверены, что хотите удалить этот комментарий?')) {
@@ -3743,9 +3984,6 @@ async function downloadAttachment(attachmentId) {
 }
 
 function goBackToTasksList(taskId) {
-    // Очищаем сохраненный ID задачи, чтобы не выделять неправильную строку
-    sessionStorage.removeItem('return_from_task_id');
-
     // Получаем сохраненный режим просмотра или используем 'list' по умолчанию
     const savedView = sessionStorage.getItem('return_from_task_view') || 'list';
 
@@ -3753,8 +3991,15 @@ function goBackToTasksList(taskId) {
     console.log(`[goBackToTasksList] 💾 Сохраненный режим просмотра: ${savedView}`);
     console.log(`[goBackToTasksList] 📋 Все sessionStorage:`, Object.fromEntries(Object.entries(sessionStorage)));
 
+    // Очищаем выделение строки при возврате
+    sessionStorage.removeItem('return_from_task_id');
+    sessionStorage.removeItem('return_from_task_page');
+    sessionStorage.removeItem('return_from_task_view');
+
+    console.log(`[goBackToTasksList] 🧹 Очищены данные выделения строки`);
+
     // Переходим обратно с параметром режима
-    const returnUrl = `/tasks/my-tasks?view=${savedView}`;
+    const returnUrl = `/tasks/my-tasks?view=${savedView}&return=1`;
     console.log(`[goBackToTasksList] 🚀 Переход по URL: ${returnUrl}`);
 
     window.location.href = returnUrl;
@@ -4047,6 +4292,35 @@ document.addEventListener('DOMContentLoaded', function() {
       showNotification('Ошибка при сохранении: ' + e, 'error');
     }
   };
+
+  // Добавляем прямой обработчик клика для кнопки "Назад к списку"
+  const goBackBtn = document.getElementById('go-back-btn');
+  if (goBackBtn) {
+    console.log('🔙 Найдена кнопка "Назад к списку", добавляем обработчик клика');
+    goBackBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const taskId = this.getAttribute('data-task-id');
+      console.log('🔙 Клик по кнопке "Назад к списку", ID задачи:', taskId);
+
+      if (taskId) {
+        goBackToTasksList(taskId);
+      } else {
+        console.error('❌ Не найден ID задачи в атрибуте data-task-id');
+        // Если ID не найден, используем резервный метод
+        const taskIdFromUrl = getTaskIdFromUrl();
+        if (taskIdFromUrl) {
+          goBackToTasksList(taskIdFromUrl);
+        } else {
+          console.error('❌ Не удалось определить ID задачи');
+          showNotification('Ошибка: не удалось определить ID задачи', 'error');
+        }
+      }
+    });
+  } else {
+    console.error('❌ Кнопка "Назад к списку" не найдена');
+  }
 });
 </script>
 
@@ -4649,5 +4923,101 @@ document.addEventListener('DOMContentLoaded', function() {
                 hyphens: auto !important;
               }
             </style>
+
+<script>
+// Compact Mode Toggle Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const toggleBtn = document.getElementById('compactModeToggle');
+    const taskDetail = document.querySelector('.modern-task-detail');
+    const toggleIcon = toggleBtn.querySelector('i');
+
+    // Check if user preference is stored in localStorage
+    const savedMode = localStorage.getItem('taskDetailCompactMode');
+
+    // Apply saved preference or default to compact mode
+    if (savedMode === 'normal') {
+        taskDetail.classList.remove('compact-mode');
+        toggleIcon.classList.remove('fa-compress-alt');
+        toggleIcon.classList.add('fa-expand-alt');
+    }
+
+    // Toggle compact mode on button click
+    toggleBtn.addEventListener('click', function() {
+        const isCompact = taskDetail.classList.contains('compact-mode');
+
+        if (isCompact) {
+            // Switch to normal mode
+            taskDetail.classList.remove('compact-mode');
+            toggleIcon.classList.remove('fa-compress-alt');
+            toggleIcon.classList.add('fa-expand-alt');
+            toggleBtn.title = 'Включить компактный режим';
+            localStorage.setItem('taskDetailCompactMode', 'normal');
+
+            // Show notification
+            showNotification('Обычный режим включен', 'info');
+        } else {
+            // Switch to compact mode
+            taskDetail.classList.add('compact-mode');
+            toggleIcon.classList.remove('fa-expand-alt');
+            toggleIcon.classList.add('fa-compress-alt');
+            toggleBtn.title = 'Выключить компактный режим';
+            localStorage.setItem('taskDetailCompactMode', 'compact');
+
+            // Show notification
+            showNotification('Компактный режим включен', 'success');
+        }
+    });
+
+    // Helper function to show notifications
+    function showNotification(message, type) {
+        // Check if there's a notification system in place
+        if (typeof window.showToast === 'function') {
+            window.showToast(message, type);
+        } else {
+            // Simple fallback notification
+            const notification = document.createElement('div');
+            notification.textContent = message;
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: ${type === 'success' ? '#28a745' : '#17a2b8'};
+                color: white;
+                padding: 12px 20px;
+                border-radius: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 9999;
+                animation: slideIn 0.3s ease;
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s ease';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+    }
+
+    // Add animation styles if they don't exist
+    if (!document.getElementById('compact-mode-animations')) {
+        const style = document.createElement('style');
+        style.id = 'compact-mode-animations';
+        style.textContent = `
+            @keyframes slideIn {
+                from { transform: translateX(100%); opacity: 0; }
+                to { transform: translateX(0); opacity: 1; }
+            }
+            @keyframes slideOut {
+                from { transform: translateX(0); opacity: 1; }
+                to { transform: translateX(100%); opacity: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    console.log('✅ Compact mode toggle initialized');
+});
+</script>
 
 {% endblock %}

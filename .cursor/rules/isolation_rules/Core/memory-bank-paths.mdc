@@ -1,6 +1,9 @@
 ---
+description: Defines canonical paths for core Memory Bank files.
+globs: memory-bank-paths.mdc
 alwaysApply: true
 ---
+
 # CORE MEMORY BANK FILE LOCATIONS
 
 **CRITICAL:** All core Memory Bank files reside within the `memory-bank/` directory at the project root. Do NOT create or modify these files outside this directory unless explicitly instructed for archiving purposes.

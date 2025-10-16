@@ -6,15 +6,37 @@ import oracledb
 
 os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 
-config = ConfigParser()
-config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.ini")
+# Импорт безопасной конфигурации
+try:
+    from secure_config import get_config
+    secure_config = get_config()
 
-config.read(config_path)
-db_host = config.get("oracle", "host")
-db_port = config.get("oracle", "port")
-db_service_name = config.get("oracle", "service_name")
-db_user_name = config.get("oracle", "user_name")
-db_password = config.get("oracle", "password")
+    # Проверяем наличие обязательных переменных
+    missing = secure_config.validate_required_vars()
+    if not missing:
+        logging.info("✅ Используется безопасная конфигурация из переменных окружения")
+
+        # Получаем конфигурацию из безопасного источника
+        db_host = secure_config.oracle_host
+        db_port = secure_config.oracle_port
+        db_service_name = secure_config.oracle_service_name
+        db_user_name = secure_config.oracle_user
+        db_password = secure_config.oracle_password
+
+    else:
+        logging.warning(f"⚠️ Отсутствуют переменные окружения: {', '.join(missing)}")
+        raise ImportError("Неполная конфигурация")
+
+except ImportError:
+    logging.warning("⚠️ Используется устаревшая конфигурация config.ini")
+    from config import get
+
+    # Используем безопасную конфигурацию из переменных окружения
+    db_host = get("oracle", "host")
+    db_port = get("oracle", "port")
+    db_service_name = get("oracle", "service_name")
+    db_user_name = get("oracle", "user_name")
+    db_password = get("oracle", "password")
 
 
 def connect_oracle(

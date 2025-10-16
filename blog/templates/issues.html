@@ -1,25 +1,18 @@
 {% extends 'layout.html' %}
 
 <!-- Preload critical resources -->
-<link
-  rel="preload"
+<link rel="preload"
   href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
-  as="style"
-  onload="this.onload=null;this.rel='stylesheet'"
-/>
-<noscript
-  ><link
-    rel="stylesheet"
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
-/></noscript>
+  as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" />
+</noscript>
 
 {% block main_page %}
 <div class="issues-page-container">
   <!-- Background Shapes - Lazy loaded -->
-  <div
-    class="background-shapes"
-    style="opacity: 0; transition: opacity 0.5s ease"
-  >
+  <div class="background-shapes" style="opacity: 0; transition: opacity 0.5s ease">
     <div class="shape shape-1"></div>
     <div class="shape shape-2"></div>
     <div class="shape shape-3"></div>
@@ -51,24 +44,10 @@
         </div>
       </div>
       <div class="header-actions">
-        <a
-          href="https://helpdesk.teztour.com"
-          target="_blank"
-          class="action-button secondary"
-        >
-          <i class="fas fa-external-link-alt"></i>
-          <span>Перейти в Helpdesk</span>
-        </a>
         <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
           <i class="fas fa-plus"></i>
           <span>Создать заявку</span>
         </a>
-        <div class="theme-switcher-container">
-          <button id="theme-switcher" class="theme-switcher">
-            <i class="fas fa-sun"></i>
-            <i class="fas fa-moon"></i>
-          </button>
-        </div>
       </div>
     </div>
   </header>
@@ -79,7 +58,7 @@
       <div class="stat-card total expandable" data-category="total">
         <div class="stat-header">
           <div class="stat-icon">
-            <i class="fas fa-list-alt"></i>
+            <i class="fas fa-chart-pie"></i>
           </div>
           <div class="stat-content">
             <span class="stat-value" id="totalIssues">-</span>
@@ -96,11 +75,14 @@
       <div class="stat-card open expandable" data-category="open">
         <div class="stat-header">
           <div class="stat-icon">
-            <i class="fas fa-folder-open"></i>
+            <i class="fas fa-rocket"></i>
           </div>
           <div class="stat-content">
             <span class="stat-value" id="openIssues">-</span>
             <span class="stat-label">Открытых</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Новая • Открыта • Выполнена</span>
+            </div>
           </div>
           <div class="expand-arrow">
             <i class="fas fa-chevron-down"></i>
@@ -113,11 +95,14 @@
       <div class="stat-card progress expandable" data-category="progress">
         <div class="stat-header">
           <div class="stat-icon">
-            <i class="fas fa-clock"></i>
+            <i class="fas fa-cogs"></i>
           </div>
           <div class="stat-content">
             <span class="stat-value" id="inProgressIssues">-</span>
             <span class="stat-label">В работе</span>
+            <div class="stat-status-list">
+              <span class="status-hint">В работе • Приостановлена<br>На тестировании • В очереди</span>
+            </div>
           </div>
           <div class="expand-arrow">
             <i class="fas fa-chevron-down"></i>
@@ -127,14 +112,37 @@
           <!-- Детализация заполняется JS -->
         </div>
       </div>
+      <div class="stat-card awaiting expandable" data-category="awaiting">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="awaitingResponseIssues">-</span>
+            <span class="stat-label">Ожидают ответа</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Запрошено уточнение • Протестирована • На согласовании</span>
+            </div>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="awaitingResponseDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
       <div class="stat-card closed expandable" data-category="closed">
         <div class="stat-header">
           <div class="stat-icon">
-            <i class="fas fa-check-circle"></i>
+            <i class="fas fa-check-double"></i>
           </div>
           <div class="stat-content">
             <span class="stat-value" id="closedIssues">-</span>
             <span class="stat-label">Закрытых</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Закрыта • Отклонена • Перенаправлена</span>
+            </div>
           </div>
           <div class="expand-arrow">
             <i class="fas fa-chevron-down"></i>
@@ -142,6 +150,60 @@
         </div>
         <div class="stat-details" id="closedDetails">
           <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Блок "Активные заявки" - Аккордеон -->
+  <section class="recent-activity-section">
+    <div class="activity-accordion">
+      <!-- Заголовок аккордеона (кликабельный) -->
+      <div class="activity-accordion-header" id="activity-accordion-toggle">
+        <div class="activity-header-content">
+          <div class="activity-title">
+            <i class="fas fa-history activity-icon"></i>
+            <h2>Активные заявки</h2>
+            <span class="activity-badge" id="activity-count-badge" style="display: none;">0</span>
+          </div>
+          <div class="activity-subtitle">
+            <span>Изменения в ваших заявках за последние 10 дней</span>
+          </div>
+        </div>
+        <div class="activity-toggle-icon">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- Содержимое аккордеона (раскрывающееся) -->
+      <div class="activity-accordion-content" id="activity-accordion-content">
+        <div class="activity-container" id="recent-activity-container">
+          <!-- Спиннер загрузки -->
+          <div class="activity-loading" id="activity-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Загрузка активности...</span>
+          </div>
+
+          <!-- Список активности (заполняется через JavaScript) -->
+          <div class="activity-list" id="activity-list" style="display: none;">
+            <!-- Элементы активности будут добавлены через JS -->
+          </div>
+
+          <!-- Сообщение об отсутствии данных -->
+          <div class="activity-empty" id="activity-empty" style="display: none;">
+            <i class="far fa-calendar-times"></i>
+            <p>Нет активных заявок</p>
+           <span class="activity-empty-hint">Заявки появятся здесь после обновления</span>
+          </div>
+
+          <!-- Сообщение об ошибке -->
+          <div class="activity-error" id="activity-error" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Ошибка загрузки данных</p>
+            <button class="retry-btn" onclick="loadRecentActivity()">
+              <i class="fas fa-redo"></i> Повторить
+           </button>
+          </div>
         </div>
       </div>
     </div>
@@ -214,6 +276,7 @@
                   <span>Статус</span>
                 </div>
               </th>
+              <th style="display:none;">Status ID</th>
             </tr>
           </thead>
           <tbody id="table-body">
@@ -239,6 +302,15 @@
   </section>
 </div>
 {% endblock main_page %} {% block styles %}
+
+<!-- Theme-aware styles for Issues page -->
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/issues_theme_fix.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+
+<!-- Стили для блока "Активные заявки" -->
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/my_issues_activity.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+
 <!-- Base Styles (Always Active) -->
 <style id="base-styles">
   /* Fonts will be loaded via preload link in head */
@@ -516,9 +588,11 @@
     0% {
       opacity: 0;
     }
+
     50% {
       opacity: 1;
     }
+
     100% {
       opacity: 0;
     }
@@ -573,6 +647,7 @@ tyles */
     left: -10%;
     animation-delay: 0s;
   }
+
   .shape-2 {
     width: 250px;
     height: 250px;
@@ -580,6 +655,7 @@ tyles */
     right: -5%;
     animation-delay: 7s;
   }
+
   .shape-3 {
     width: 200px;
     height: 200px;
@@ -589,10 +665,12 @@ tyles */
   }
 
   @keyframes float {
+
     0%,
     100% {
       transform: translate3d(0, 0, 0) rotate(0deg);
     }
+
     50% {
       transform: translate3d(-20px, -20px, 0) rotate(3deg);
     }
@@ -623,6 +701,7 @@ tyles */
     box-shadow: var(--shadow-3);
     border: 1px solid var(--border-light);
   }
+
   .spinner-icon {
     font-size: 3rem;
     color: var(--primary-600);
@@ -636,6 +715,7 @@ tyles */
     0% {
       transform: rotate(0deg) translateZ(0);
     }
+
     100% {
       transform: rotate(360deg) translateZ(0);
     }
@@ -672,6 +752,7 @@ tyles */
       opacity: 0;
       transform: translateY(-30px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -685,11 +766,9 @@ tyles */
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-      135deg,
-      rgba(255, 255, 255, 0.1) 0%,
-      rgba(255, 255, 255, 0.05) 100%
-    );
+    background: linear-gradient(135deg,
+        rgba(255, 255, 255, 0.1) 0%,
+        rgba(255, 255, 255, 0.05) 100%);
     pointer-events: none;
   }
 
@@ -867,11 +946,9 @@ tyles */
     left: -1px;
     right: -1px;
     bottom: -1px;
-    background: linear-gradient(
-      135deg,
-      rgba(0, 0, 0, 0.1),
-      rgba(0, 0, 0, 0.05)
-    );
+    background: linear-gradient(135deg,
+        rgba(0, 0, 0, 0.1),
+        rgba(0, 0, 0, 0.05));
     border-radius: 9px;
     z-index: -2;
   }
@@ -985,7 +1062,9 @@ tatistics Dashboard */
     border-left: 4px solid transparent;
     position: relative;
     overflow: hidden;
-    min-height: 120px;
+    height: 140px;
+    display: flex;
+    flex-direction: column;
     z-index: 1;
   }
 
@@ -1000,10 +1079,11 @@ tatistics Dashboard */
 
   .stat-header {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: var(--spacing-md);
     width: 100%;
     padding: var(--spacing-lg);
+    flex: 1;
   }
 
   .expand-arrow {
@@ -1078,12 +1158,10 @@ tatistics Dashboard */
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(
-      45deg,
-      transparent 30%,
-      rgba(255, 255, 255, 0.1) 50%,
-      transparent 70%
-    );
+    background: linear-gradient(45deg,
+        transparent 30%,
+        rgba(255, 255, 255, 0.1) 50%,
+        transparent 70%);
     transform: translateX(-100%);
     transition: transform 0.6s ease;
   }
@@ -1165,11 +1243,9 @@ tatistics Dashboard */
   }
 
   #reset-filter-btn {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.1),
-      rgba(239, 68, 68, 0.15)
-    );
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.1),
+        rgba(239, 68, 68, 0.15));
     border: 1px solid rgba(239, 68, 68, 0.3);
     color: #ef4444;
     transition: all var(--transition-normal);
@@ -1185,11 +1261,9 @@ tatistics Dashboard */
   }
 
   #reset-filter-btn:hover {
-    background: linear-gradient(
-      135deg,
-      rgba(239, 68, 68, 0.2),
-      rgba(239, 68, 68, 0.25)
-    );
+    background: linear-gradient(135deg,
+        rgba(239, 68, 68, 0.2),
+        rgba(239, 68, 68, 0.25));
     border-color: rgba(239, 68, 68, 0.5);
     transform: translateY(-2px);
     box-shadow: var(--shadow-3);
@@ -1228,6 +1302,15 @@ tatistics Dashboard */
     box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
   }
 
+  .status-item.awaiting-status::before {
+    background: #f59e0b;
+  }
+
+  .status-item.awaiting-status:hover::before {
+    background: #f59e0b;
+    box-shadow: 0 0 8px rgba(245, 158, 11, 0.4);
+  }
+
   .status-name {
     font-weight: 600;
     color: var(--text-primary);
@@ -1253,6 +1336,7 @@ tatistics Dashboard */
     justify-content: center;
     height: 28px;
   }
+
   .stat-card::before {
     content: "";
     position: absolute;
@@ -1272,37 +1356,49 @@ tatistics Dashboard */
   }
 
   .stat-card.total {
-    border-left-color: var(--primary-500);
-    color: var(--primary-500);
+    border-left-color: #6366f1;
+    color: #6366f1;
+    border-left-width: 6px;
   }
 
   .stat-card.open {
-    border-left-color: var(--status-open);
-    color: var(--status-open);
+    border-left-color: #10b981;
+    color: #10b981;
+    border-left-width: 6px;
   }
 
   .stat-card.progress {
-    border-left-color: var(--status-progress);
-    color: var(--status-progress);
+    border-left-color: #f59e0b;
+    color: #f59e0b;
+    border-left-width: 6px;
+  }
+
+  .stat-card.awaiting {
+    border-left-color: #8b5cf6;
+    color: #8b5cf6;
+    border-left-width: 6px;
   }
 
   .stat-card.closed {
-    border-left-color: var(--status-closed);
-    color: var(--status-closed);
+    border-left-color: #06b6d4;
+    color: #06b6d4;
+    border-left-width: 6px;
   }
 
   .stat-icon {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: currentColor;
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, currentColor, rgba(255, 255, 255, 0.1));
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     color: var(--text-on-primary);
-    border-radius: var(--radius-lg);
-    font-size: 1.25rem;
-    opacity: 0.9;
+    font-size: 1.5rem;
+    opacity: 0.95;
     flex-shrink: 0;
+    transition: all 0.3s ease;
   }
 
   .stat-content {
@@ -1327,7 +1423,26 @@ tatistics Dashboard */
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.025em;
-  } /* C
+  }
+
+  .stat-status-list {
+    margin-top: var(--spacing-xs);
+  }
+
+  .status-hint {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    font-weight: 400;
+    line-height: 1.3;
+    opacity: 0.8;
+    font-style: italic;
+    display: block;
+    max-height: 2.6em;
+    overflow: hidden;
+    word-wrap: break-word;
+  }
+
+  /* C
 ontrols Panel */
   .controls-panel {
     background: var(--surface-glass);
@@ -1395,6 +1510,7 @@ ontrols Panel */
     font-size: 0.875rem;
     transition: all var(--transition-fast);
   }
+
   .f ilter-container select:focus,
   .search-container input:focus,
   .length-container select:focus {
@@ -1464,14 +1580,12 @@ ontrols Panel */
 
   .issues-table th {
     /* Современный градиентный фон с яркими акцентами */
-    background: linear-gradient(
-      135deg,
-      #667eea 0%,
-      #764ba2 25%,
-      #6b73ff 50%,
-      #9644ff 75%,
-      #667eea 100%
-    ) !important;
+    background: linear-gradient(135deg,
+        #667eea 0%,
+        #764ba2 25%,
+        #6b73ff 50%,
+        #9644ff 75%,
+        #667eea 100%) !important;
 
     /* Цвет текста и типографика */
     color: #ffffff !important;
@@ -1502,6 +1616,7 @@ ontrols Panel */
   .issues-table th:first-child {
     border-top-left-radius: var(--radius-lg);
   }
+
   .issues-table th:last-child {
     border-top-right-radius: var(--radius-lg);
     border-right: none !important;
@@ -1509,14 +1624,12 @@ ontrols Panel */
 
   /* Эффект при наведении на заголовки */
   .issues-table th:hover {
-    background: linear-gradient(
-      135deg,
-      #5a67d8 0%,
-      #6b46c1 25%,
-      #5b21b6 50%,
-      #7c3aed 75%,
-      #5a67d8 100%
-    ) !important;
+    background: linear-gradient(135deg,
+        #5a67d8 0%,
+        #6b46c1 25%,
+        #5b21b6 50%,
+        #7c3aed 75%,
+        #5a67d8 100%) !important;
 
     color: #f8fafc !important;
 
@@ -1569,6 +1682,7 @@ ontrols Panel */
   .issues-table th.column-id .column-header i {
     color: #10b981 !important;
   }
+
   .issues-table th.column-id:hover .column-header i {
     color: #34d399 !important;
     filter: drop-shadow(0 0 8px rgba(52, 211, 153, 0.8));
@@ -1577,6 +1691,7 @@ ontrols Panel */
   .issues-table th.column-date .column-header i {
     color: #06b6d4 !important;
   }
+
   .issues-table th.column-date:hover .column-header i {
     color: #22d3ee !important;
     filter: drop-shadow(0 0 8px rgba(34, 211, 238, 0.8));
@@ -1585,6 +1700,7 @@ ontrols Panel */
   .issues-table th.column-subject .column-header i {
     color: #8b5cf6 !important;
   }
+
   .issues-table th.column-subject:hover .column-header i {
     color: #a78bfa !important;
     filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.8));
@@ -1593,6 +1709,7 @@ ontrols Panel */
   .issues-table th.column-status .column-header i {
     color: #ef4444 !important;
   }
+
   .issues-table th.column-status:hover .column-header i {
     color: #f87171 !important;
     filter: drop-shadow(0 0 8px rgba(248, 113, 113, 0.8));
@@ -1608,6 +1725,7 @@ ontrols Panel */
       opacity: 0;
       transform: translateY(-20px);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0);
@@ -1625,6 +1743,7 @@ ontrols Panel */
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.3),
         0 4px 12px rgba(102, 126, 234, 0.25);
     }
+
     100% {
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4),
         0 6px 20px rgba(102, 126, 234, 0.4), 0 0 20px rgba(139, 92, 246, 0.3);
@@ -1755,6 +1874,7 @@ ontrols Panel */
       opacity: 0;
       transform: translateY(10px);
     }
+
     100% {
       opacity: 1;
       transform: translateY(0);
@@ -1802,7 +1922,9 @@ ontrols Panel */
   .issue-id-link i {
     font-size: 0.75rem;
     opacity: 0.7;
-  } /* Iss
+  }
+
+  /* Iss
 ue Subject */
   .issue-subject {
     font-weight: 500;
@@ -1876,6 +1998,7 @@ ue Subject */
     color: var(--status-progress);
     border-color: var(--status-progress);
   }
+
   .st atus-closed .status-badge {
     background: var(--status-closed-bg);
     color: var(--status-closed);
@@ -1931,12 +2054,10 @@ ue Subject */
     justify-content: space-between;
     align-items: flex-start;
     padding: var(--spacing-lg);
-    background: linear-gradient(
-      135deg,
-      rgba(102, 126, 234, 0.1) 0%,
-      rgba(139, 92, 246, 0.1) 50%,
-      rgba(102, 126, 234, 0.1) 100%
-    );
+    background: linear-gradient(135deg,
+        rgba(102, 126, 234, 0.1) 0%,
+        rgba(139, 92, 246, 0.1) 50%,
+        rgba(102, 126, 234, 0.1) 100%);
     border-top: 1px solid rgba(102, 126, 234, 0.3);
     gap: var(--spacing-lg);
     flex-wrap: wrap;
@@ -1951,6 +2072,7 @@ ue Subject */
     flex: 0 0 auto;
     min-width: 200px;
   }
+
   .table-pagination {
     display: flex;
     align-items: center;
@@ -2035,7 +2157,9 @@ ue Subject */
   .empty-state p {
     font-size: 1rem;
     margin-bottom: var(--spacing-xl);
-  } /* Error
+  }
+
+  /* Error
  State */
   .error-state {
     text-align: center;
@@ -2191,115 +2315,434 @@ ue Subject */
   .theme-switching * {
     transition: none !important;
   }
+
+  /* Стили для кнопок переключения режимов */
+  .view-toggle-wrapper {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+    padding: 15px;
+    background: var(--surface-1);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+  }
+
+  .view-toggle-buttons {
+    display: flex;
+    background: var(--surface-0);
+    border-radius: 8px;
+    padding: 4px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .view-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 100px;
+    justify-content: center;
+  }
+
+  .view-toggle-btn:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+  }
+
+  .view-toggle-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+  }
+
+  .view-toggle-btn i {
+    font-size: 16px;
+  }
+
+  /* Стили для канбан-доски */
+  .kanban-container {
+    margin-top: 20px;
+    display: none;
+  }
+
+  .kanban-board {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+    padding: 20px;
+  }
+
+  .kanban-column {
+    background: var(--surface-1);
+    border-radius: 12px;
+    border: 1px solid var(--border-color);
+    overflow: hidden;
+  }
+
+  .kanban-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px;
+    background: var(--surface-2);
+    border-bottom: 2px solid var(--border-color);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kanban-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    transition: opacity 0.3s ease;
+  }
+
+  .header-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .header-icon {
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 18px;
+    transition: all 0.3s ease;
+  }
+
+  .kanban-header h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .kanban-count {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    min-width: 28px;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: all 0.3s ease;
+  }
+
+  /* Цветовые схемы для колонок */
+  .header-open::before {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  }
+
+  .header-open .header-icon {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+  }
+
+  .count-open {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+  }
+
+  .header-progress::before {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  }
+
+  .header-progress .header-icon {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+  }
+
+  .count-progress {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+  }
+
+  .header-awaiting::before {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+  }
+
+  .header-awaiting .header-icon {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    color: white;
+  }
+
+  .count-awaiting {
+    background: linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%);
+    color: white;
+  }
+
+  .header-closed::before {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  }
+
+  .header-closed .header-icon {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+  }
+
+  .count-closed {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+  }
+
+  /* Анимация при наведении на колонку */
+  .kanban-column:hover .kanban-header::before {
+    opacity: 1;
+  }
+
+  .kanban-column:hover .header-icon {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  .kanban-column:hover .kanban-count {
+    transform: scale(1.1);
+  }
+
+  .kanban-cards {
+    padding: 16px;
+    min-height: 200px;
+    max-height: 600px;
+    overflow-y: auto;
+    scroll-behavior: smooth;
+  }
+
+  /* Стильный скроллбар для канбан-карточек */
+  .kanban-cards::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .kanban-cards::-webkit-scrollbar-track {
+    background: var(--surface-2);
+    border-radius: 10px;
+  }
+
+  .kanban-cards::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: all 0.3s ease;
+  }
+
+  .kanban-cards::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  }
+
+  /* Современный дизайн карточек */
+  .kanban-card {
+    background: var(--surface-0);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 0;
+    margin-bottom: 16px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .kanban-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .kanban-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+    border-color: var(--primary-color);
+  }
+
+  .kanban-card:hover::before {
+    opacity: 1;
+  }
+
+  .kanban-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface-1);
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .card-id-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  }
+
+  .card-id-badge i {
+    font-size: 11px;
+  }
+
+  .card-date {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 4px 8px;
+    background: var(--surface-2);
+    border-radius: 6px;
+  }
+
+  .card-date i {
+    font-size: 11px;
+  }
+
+  .kanban-card-body {
+    padding: 16px;
+  }
+
+  .kanban-card-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.5;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-height: 42px;
+  }
+
+  .kanban-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    background: var(--surface-1);
+    border-top: 1px solid var(--border-color);
+  }
+
+  .kanban-card-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.3s ease;
+  }
+
+  .card-action-hint {
+    color: var(--text-muted);
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .kanban-card:hover .card-action-hint {
+    opacity: 1;
+  }
+
+  /* Цветовая индикация статусов */
+  .status-open {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+  }
+
+  .status-progress {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+    color: white;
+  }
+
+  .status-awaiting {
+    background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+    color: #5a67d8;
+  }
+
+  .status-closed {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #48bb78;
+  }
+
+  .status-default {
+    background: var(--surface-2);
+    color: var(--text-secondary);
+  }
+
+  /* Темная тема */
+  [data-theme="dark"] .view-toggle-wrapper {
+    background: var(--surface-1);
+    border-color: var(--border-color);
+  }
+
+  [data-theme="dark"] .view-toggle-buttons {
+    background: var(--surface-0);
+  }
+
+  [data-theme="dark"] .kanban-column {
+    background: var(--surface-1);
+    border-color: var(--border-color);
+  }
+
+  [data-theme="dark"] .kanban-header {
+    background: var(--surface-2);
+    border-color: var(--border-color);
+  }
+
+  [data-theme="dark"] .kanban-card {
+    background: var(--surface-0);
+    border-color: var(--border-color);
+  }
+
+  /* Адаптивность для канбан-доски */
+  @media (max-width: 768px) {
+    .kanban-board {
+      grid-template-columns: 1fr;
+      padding: 10px;
+      gap: 15px;
+    }
+
+    .view-toggle-wrapper {
+      margin: 15px 0;
+      padding: 10px;
+    }
+
+    .view-toggle-btn {
+      padding: 10px 16px;
+      min-width: 80px;
+      font-size: 13px;
+    }
+
+    .kanban-cards {
+      max-height: 400px;
+    }
+  }
 </style>
 {% endblock %}{% block scripts %}
 <script>
-  // ThemeManager - компонент для управления переключением темы
-  class ThemeManager {
-    constructor() {
-      this.currentTheme = this.loadTheme();
-      this.themeToggle = document.getElementById("theme-switcher");
-      this.init();
-    }
-
-    init() {
-      // Применяем сохраненную тему при инициализации
-      this.applyTheme(this.currentTheme);
-
-      // Добавляем обработчик события для переключения темы
-      if (this.themeToggle) {
-        this.themeToggle.addEventListener("click", (e) => {
-          e.preventDefault();
-          this.switchTheme();
-        });
-      }
-    }
-
-    switchTheme() {
-      try {
-        // Определяем новую тему
-        const newTheme = this.currentTheme === "light" ? "dark" : "light";
-
-        // Сохраняем состояние данных перед переключением
-        if (window.dataStateManager) {
-          window.dataStateManager.saveCurrentState();
-        }
-
-        // Применяем новую тему
-        this.applyTheme(newTheme);
-
-        // Сохраняем выбор темы
-        this.saveTheme(newTheme);
-
-        // Восстанавливаем состояние данных после переключения
-        setTimeout(() => {
-          if (window.dataStateManager) {
-            window.dataStateManager.restoreState();
-          }
-        }, 100);
-      } catch (error) {
-        console.error("Ошибка при переключении темы:", error);
-        // Fallback - перезагружаем страницу при критической ошибке
-        if (error.critical) {
-          window.location.reload();
-        }
-      }
-    }
-
-    applyTheme(theme) {
-      try {
-        const body = document.body;
-
-        // Удаляем предыдущие классы темы
-        body.classList.remove("light-theme", "dark-theme");
-
-        // Добавляем класс новой темы
-        body.classList.add(`${theme}-theme`);
-
-        // Обновляем иконку переключателя
-        this.updateToggleIcon(theme);
-
-        // Сохраняем текущую тему
-        this.currentTheme = theme;
-
-        // Добавляем плавный переход
-        body.style.transition = "background-color 0.3s ease, color 0.3s ease";
-      } catch (error) {
-        console.error("Ошибка при применении темы:", error);
-      }
-    }
-
-    updateToggleIcon(theme) {
-      if (this.themeToggle) {
-        // Не изменяем иконки через JavaScript - используем только CSS
-        if (theme === "dark") {
-          this.themeToggle.title = "Переключить на светлую тему";
-        } else {
-          this.themeToggle.title = "Переключить на темную тему";
-        }
-      }
-    }
-
-    saveTheme(theme) {
-      try {
-        localStorage.setItem("selectedTheme", theme);
-      } catch (error) {
-        console.warn("Не удалось сохранить тему в localStorage:", error);
-        // Graceful degradation - продолжаем работу без сохранения
-      }
-    }
-
-    loadTheme() {
-      try {
-        const savedTheme = localStorage.getItem("selectedTheme");
-        return savedTheme || "light"; // По умолчанию светлая тема
-      } catch (error) {
-        console.warn("Не удалось загрузить тему из localStorage:", error);
-        return "light"; // Fallback к светлой теме
-      }
-    }
-  }
-
   // DataStateManager - компонент для сохранения состояния данных
   class DataStateManager {
     constructor() {
@@ -2489,7 +2932,7 @@ ue Subject */
     // Performance optimization: Use requestAnimationFrame for smooth initialization
     requestAnimationFrame(() => {
       // Инициализируем менеджеры
-      window.themeManager = new ThemeManager();
+      // ThemeManager уже инициализирован глобально в layout.html
       window.dataStateManager = new DataStateManager();
 
       // Загружаем сохраненное состояние
@@ -2534,9 +2977,11 @@ ue Subject */
         style.tooltip = "Заявка выполнена, ожидает закрытия";
       } else if (
         normalizedStatus.includes("в работе") ||
-        normalizedStatus.includes("in progress") ||
-        normalizedStatus.includes("назначена") ||
-        normalizedStatus.includes("assigned")
+        normalizedStatus.includes("приостановлена") ||
+        normalizedStatus.includes("на тестировании") ||
+        normalizedStatus.includes("в очереди") ||
+        normalizedStatus.includes("заморожена") ||
+        normalizedStatus.includes("in progress")
       ) {
         style.trClass = "status-progress";
         style.iconClass = "fas fa-clock";
@@ -2757,6 +3202,13 @@ ue Subject */
         "closed-status"
       );
 
+      // Ожидают ответа
+      totalDetailsHTML += buildCategoryBlock(
+        "⏳ Ожидают ответа",
+        stats.detailsByCategory.awaiting,
+        "awaiting-status"
+      );
+
       if (totalDetailsHTML === "") {
         totalDetailsHTML =
           '<div class="status-item"><span class="status-name">Нет данных</span></div>';
@@ -2793,8 +3245,22 @@ ue Subject */
         closedDetailsHTML =
           '<div class="status-item"><span class="status-name">Нет данных</span></div>';
       $("#closedDetails").html(closedDetailsHTML);
+
+      let awaitingDetailsHTML = buildCategoryBlock(
+        "⏳ Ожидают ответа",
+        stats.detailsByCategory.awaiting,
+        "awaiting-status"
+      );
+      if (awaitingDetailsHTML === "")
+        awaitingDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#awaitingResponseDetails").html(awaitingDetailsHTML);
     } // Функция обработки данных таблицы (общая для кеша и сервера)
     function processTableData(response, savedState, fromIssueId) {
+      // 🔧 ИСПРАВЛЕНИЕ: Сохраняем данные для Канбан-доски
+      window.issuesData = response.issues || [];
+      console.log('💾 Сохранено заявок для Канбан:', window.issuesData.length);
+
       // Создаем фильтр статусов
       let statusFilter =
         '<select id="status-filter" class="form-control">' +
@@ -2813,19 +3279,34 @@ ue Subject */
         open: 0,
         inProgress: 0,
         closed: 0,
+        awaitingResponse: 0,
         detailsByCategory: {
           open: {},
           progress: {},
           closed: {},
+          awaiting: {},
           other: {},
         },
       };
 
+      // Отладка: выводим все заявки для проверки
+      console.log('📊 Всего заявок для анализа:', response.issues.length);
+      console.log('🔍 Ищем заявки со статусами 9, 13, 15...');
+
       response.issues.forEach(function (issue) {
         const normalizedStatus = String(issue.status_name).toLowerCase();
         const statusName = issue.status_name;
+        const statusId = parseInt(issue.status_id); // Преобразуем в число
 
-        if (
+        // Отладка: выводим каждую заявку
+        // Преобразуем statusId в число для корректного сравнения
+        const statusIdNum = parseInt(statusId, 10);
+        if (statusIdNum === 9 || statusIdNum === 13 || statusIdNum === 15) {
+          console.log(`⏳ НАЙДЕНА! Заявка #${issue.id} "${statusName}" (ID: ${statusId}, тип: ${typeof statusId}) → Ожидают ответа`);
+          stats.awaitingResponse++;
+          stats.detailsByCategory.awaiting[statusName] =
+            (stats.detailsByCategory.awaiting[statusName] || 0) + 1;
+        } else if (
           normalizedStatus.includes("закрыта") ||
           normalizedStatus.includes("отклонена") ||
           normalizedStatus.includes("перенаправлена") ||
@@ -2838,9 +3319,11 @@ ue Subject */
             (stats.detailsByCategory.closed[statusName] || 0) + 1;
         } else if (
           normalizedStatus.includes("в работе") ||
-          normalizedStatus.includes("in progress") ||
-          normalizedStatus.includes("назначена") ||
-          normalizedStatus.includes("assigned")
+          normalizedStatus.includes("приостановлена") ||
+          normalizedStatus.includes("на тестировании") ||
+          normalizedStatus.includes("в очереди") ||
+          normalizedStatus.includes("заморожена") ||
+          normalizedStatus.includes("in progress")
         ) {
           stats.inProgress++;
           stats.detailsByCategory.progress[statusName] =
@@ -2865,11 +3348,22 @@ ue Subject */
         }
       });
 
+      // Отладка: выводим итоговую статистику
+      console.log('📊 Итоговая статистика:', {
+        total: stats.total,
+        open: stats.open,
+        inProgress: stats.inProgress,
+        closed: stats.closed,
+        awaitingResponse: stats.awaitingResponse
+      });
+      console.log('📋 Детализация "Ожидают ответа":', stats.detailsByCategory.awaiting);
+
       // Обновляем статистику с анимацией
       animateNumber($("#totalIssues"), stats.total);
       animateNumber($("#openIssues"), stats.open);
       animateNumber($("#inProgressIssues"), stats.inProgress);
       animateNumber($("#closedIssues"), stats.closed);
+      animateNumber($("#awaitingResponseIssues"), stats.awaitingResponse);
 
       // Заполняем детализацию карточек
       populateCardDetails(stats);
@@ -2901,44 +3395,40 @@ ue Subject */
         response.issues.forEach(function (issue) {
           let statusInfo = getStatusStyle(issue.status_name);
           tableBody += `
-                      <tr class="${statusInfo.trClass}">
+                      <tr class="${statusInfo.trClass}" data-status-id="${issue.status_id || 0}" data-issue-id="${issue.id}" data-status-name="${issue.status_name}">
                           <td>
-                              <a href="/my-issues/${
-                                issue.id
-                              }" class="issue-id-link" title="Посмотреть детали заявки">
+                              <a href="/my-issues/${issue.id
+            }" class="issue-id-link" title="Посмотреть детали заявки">
                                   <i class="fas fa-external-link-alt"></i>
                                   <span>#${issue.id}</span>
                               </a>
                           </td>
                           <td data-sort="${issue.updated_on}">
                               <span title="${new Date(
-                                issue.updated_on
-                              ).toLocaleString("ru-RU")}">${formatDate(
-            issue.updated_on
-          )}</span>
+              issue.updated_on
+            ).toLocaleString("ru-RU")}">${formatDate(
+              issue.updated_on
+            )}</span>
                           </td>
                           <td>
-                              <a href="/my-issues/${
-                                issue.id
-                              }" class="issue-subject-link issue-subject" title="${
-            issue.subject
-          }">
+                              <a href="/my-issues/${issue.id
+            }" class="issue-subject-link issue-subject" title="${issue.subject
+            }">
                                   <i class="fas fa-external-link-alt"></i>
                                   <span>${issue.subject}</span>
                               </a>
                           </td>
                           <td>
                               <div class="status-cell">
-                                  <div class="status-badge" title="${
-                                    statusInfo.tooltip
-                                  }">
-                                      <i class="${
-                                        statusInfo.iconClass
-                                      } status-icon"></i>
+                                  <div class="status-badge" title="${statusInfo.tooltip
+            }">
+                                      <i class="${statusInfo.iconClass
+            } status-icon"></i>
                                       <span>${issue.status_name}</span>
                                   </div>
                               </div>
                           </td>
+                          <td style="display:none;">${issue.status_id || 0}</td>
                       </tr>
                   `;
         });
@@ -2987,6 +3477,54 @@ ue Subject */
 
             $(".dataTables_info").detach().appendTo("#infoContainer");
             $(".dataTables_paginate").detach().appendTo("#paginationContainer");
+
+            // Добавляем кнопки переключения режимов просмотра
+            const viewToggleHtml = `
+              <div class="view-toggle-wrapper" style="margin: 20px 0; text-align: center;">
+                <div class="view-toggle-buttons">
+                  <button class="view-toggle-btn active" data-view="list" title="Режим списка">
+                    <i class="fas fa-list"></i>
+                    <span>Список</span>
+                  </button>
+                  <button class="view-toggle-btn" data-view="kanban" title="Режим карточек">
+                    <i class="fas fa-th-large"></i>
+                    <span>Карточки</span>
+                  </button>
+                </div>
+              </div>
+            `;
+
+            // Добавляем кнопки перед таблицей
+            $('.issues-section .table-container').before(viewToggleHtml);
+
+            // Добавляем обработчики кликов
+            $('.view-toggle-btn').on('click', function () {
+              const viewMode = $(this).data('view');
+
+              // Убираем активный класс со всех кнопок
+              $('.view-toggle-btn').removeClass('active');
+
+              // Добавляем активный класс к нажатой кнопке
+              $(this).addClass('active');
+
+              // Сохраняем выбранный режим
+              localStorage.setItem('issues_view_mode', viewMode);
+
+              // Переключаем режим отображения
+              if (viewMode === 'kanban') {
+                window.showKanbanView();
+              } else {
+                window.showListView();
+              }
+
+              console.log('🔄 Переключен режим просмотра:', viewMode);
+            });
+
+            // Восстанавливаем сохраненный режим
+            const savedViewMode = localStorage.getItem('issues_view_mode');
+            if (savedViewMode === 'kanban') {
+              $('.view-toggle-btn[data-view="kanban"]').trigger('click');
+            }
           },
           paging: true,
           info: true,
@@ -3192,6 +3730,333 @@ ue Subject */
       }
     }
 
+    // Функция показа режима списка
+    window.showListView = function () {
+      $('.issues-section .table-container').show();
+      $('#kanban-container').hide();
+
+      // Показываем пагинацию в режиме списка
+      $('.table-footer').show();
+
+      console.log('📋 Показан режим списка');
+    }
+
+    // Функция показа режима канбан
+    window.showKanbanView = function () {
+      $('.issues-section .table-container').hide();
+
+      // Создаем контейнер для канбан-доски если его нет
+      if ($('#kanban-container').length === 0) {
+        const kanbanHtml = `
+          <div id="kanban-container" class="kanban-container">
+            <div class="kanban-board">
+              <div class="kanban-column column-open" data-status="open">
+                <div class="kanban-header header-open">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3>Открытые</h3>
+                  </div>
+                  <span class="kanban-count count-open">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-open"></div>
+              </div>
+              <div class="kanban-column column-progress" data-status="progress">
+                <div class="kanban-header header-progress">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-cogs fa-spin"></i>
+                    </div>
+                    <h3>В работе</h3>
+                  </div>
+                  <span class="kanban-count count-progress">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-progress"></div>
+              </div>
+              <div class="kanban-column column-awaiting" data-status="awaiting">
+                <div class="kanban-header header-awaiting">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Ожидают ответа</h3>
+                  </div>
+                  <span class="kanban-count count-awaiting">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-awaiting"></div>
+              </div>
+              <div class="kanban-column column-closed" data-status="closed">
+                <div class="kanban-header header-closed">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Закрытые</h3>
+                  </div>
+                  <span class="kanban-count count-closed">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-closed"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        $('.issues-section').append(kanbanHtml);
+      }
+
+      $('#kanban-container').show();
+
+      // Скрываем пагинацию в режиме канбан
+      $('.table-footer').hide();
+
+      populateKanbanBoard();
+      console.log('📊 Показан режим канбан');
+    }
+
+    // Функция заполнения канбан-доски
+    window.populateKanbanBoard = function () {
+      console.log('📊 Начинаем заполнение канбан-доски...');
+
+      // Очищаем все колонки
+      $('.kanban-cards').empty();
+
+      // 🔧 ИСПРАВЛЕНИЕ: Используем те же данные, что и статистика!
+      const issues = window.issuesData || [];
+      console.log('📊 Всего заявок для Канбан:', issues.length);
+
+      if (issues.length === 0) {
+        console.warn('⚠️ Нет данных для Канбан! Проверьте window.issuesData');
+        return;
+      }
+
+      // Счетчики для отладки
+      let counters = {
+        open: 0,
+        progress: 0,
+        awaiting: 0,
+        closed: 0
+      };
+
+      // Обрабатываем каждую заявку
+      issues.forEach(function (issue, index) {
+        const issueId = issue.id;
+        const statusName = issue.status_name;
+        const statusId = parseInt(issue.status_id);
+
+        // Отладка первой заявки
+        if (index === 0) {
+          console.log('📊 Первая заявка:', {
+            id: issueId,
+            subject: issue.subject,
+            status: statusName,
+            status_id: statusId
+          });
+        }
+
+        // Определяем колонку по статусу (ТОЧНО ТА ЖЕ ЛОГИКА, что и в статистике!)
+        let columnId = 'kanban-open';
+        let category = 'open';
+        const normalizedStatus = String(statusName).toLowerCase();
+
+        // Проверяем по status_id (приоритет!)
+        if (statusId === 9 || statusId === 13 || statusId === 15) {
+          columnId = 'kanban-awaiting';
+          category = 'awaiting';
+        } else if (
+          normalizedStatus.includes('закрыта') ||
+          normalizedStatus.includes('отклонена') ||
+          normalizedStatus.includes('перенаправлена') ||
+          normalizedStatus.includes('closed') ||
+          normalizedStatus.includes('rejected') ||
+          normalizedStatus.includes('redirected')
+        ) {
+          columnId = 'kanban-closed';
+          category = 'closed';
+        } else if (
+          normalizedStatus.includes('в работе') ||
+          normalizedStatus.includes('приостановлена') ||
+          normalizedStatus.includes('на тестировании') ||
+          normalizedStatus.includes('в очереди') ||
+          normalizedStatus.includes('заморожена') ||
+          normalizedStatus.includes('in progress')
+        ) {
+          columnId = 'kanban-progress';
+          category = 'progress';
+        } else if (
+          normalizedStatus.includes('открыта') ||
+          normalizedStatus.includes('выполнена') ||
+          normalizedStatus.includes('new') ||
+          normalizedStatus.includes('open') ||
+          normalizedStatus.includes('pending') ||
+          normalizedStatus.includes('resolved') ||
+          normalizedStatus.includes('создана') ||
+          normalizedStatus.includes('зарегистрирована')
+        ) {
+          columnId = 'kanban-open';
+          category = 'open';
+        }
+
+        counters[category]++;
+
+        // Создаем карточку напрямую из данных заявки
+        const card = createKanbanCardFromData(issue);
+        $(`#${columnId}`).append(card);
+      });
+
+      console.log('📊 Распределение по колонкам:', counters);
+
+      // Обновляем счетчики
+      $('.kanban-column').each(function () {
+        const count = $(this).find('.kanban-card').length;
+        $(this).find('.kanban-count').text(count);
+      });
+
+      console.log('✅ Канбан-доска заполнена!');
+    }
+
+    // 🔧 НОВАЯ ФУНКЦИЯ: Создание карточки напрямую из данных заявки
+    window.createKanbanCardFromData = function (issue) {
+      const issueId = issue.id;
+      const statusId = parseInt(issue.status_id);
+      const statusName = issue.status_name;
+      const issueDate = issue.created_on || issue.updated_on || '';
+      const issueSubject = issue.subject || 'Без темы';
+
+      // Определяем цвет статуса
+      let statusColor = 'status-default';
+      let statusIcon = 'fa-circle';
+
+      if (statusId === 9 || statusId === 13 || statusId === 15) {
+        statusColor = 'status-awaiting';
+        statusIcon = 'fa-clock';
+      } else if (statusName.toLowerCase().includes('закрыта')) {
+        statusColor = 'status-closed';
+        statusIcon = 'fa-check-circle';
+      } else if (statusName.toLowerCase().includes('в работе')) {
+        statusColor = 'status-progress';
+        statusIcon = 'fa-cog fa-spin';
+      } else if (statusName.toLowerCase().includes('открыта') || statusName.toLowerCase().includes('выполнена')) {
+        statusColor = 'status-open';
+        statusIcon = 'fa-folder-open';
+      }
+
+      // Создаем карточку
+      const $card = $('<div>')
+        .addClass('kanban-card modern-card')
+        .attr('data-issue-id', issueId)
+        .css('cursor', 'pointer')
+        .on('click', function () {
+          window.location.href = '/my-issues/' + issueId;
+        });
+
+      // Заголовок карточки
+      const $header = $('<div>').addClass('kanban-card-header');
+      $header.append(
+        $('<div>').addClass('card-id-badge').append(
+          $('<i>').addClass('fas fa-hashtag'),
+          $('<span>').text(issueId)
+        ),
+        $('<div>').addClass('card-date').append(
+          $('<i>').addClass('far fa-calendar-alt'),
+          $('<span>').text(issueDate)
+        )
+      );
+
+      // Тело карточки
+      const $body = $('<div>').addClass('kanban-card-body');
+      $body.append(
+        $('<div>').addClass('kanban-card-title').text(issueSubject)
+      );
+
+      // Подвал карточки
+      const $footer = $('<div>').addClass('kanban-card-footer');
+      $footer.append(
+        $('<div>').addClass('kanban-card-status ' + statusColor).append(
+          $('<i>').addClass('fas ' + statusIcon),
+          $('<span>').text(statusName)
+        ),
+        $('<div>').addClass('card-action-hint').append(
+          $('<i>').addClass('fas fa-external-link-alt')
+        )
+      );
+
+      $card.append($header, $body, $footer);
+      return $card;
+    }
+
+    // Функция создания карточки канбан из строки таблицы (старая, оставляем для совместимости)
+    window.createKanbanCard = function ($row) {
+      // Получаем данные из data-атрибутов строки
+      const issueId = $row.data('issue-id');
+      const statusId = parseInt($row.data('status-id'));
+      const statusName = $row.data('status-name');
+
+      // Получаем текст из ячеек (уже экранированный браузером)
+      const issueDate = $row.find('td').eq(1).text().trim();
+      const issueSubject = $row.find('td').eq(2).text().trim();
+
+      // Определяем цвет статуса
+      let statusColor = 'status-default';
+      let statusIcon = 'fa-circle';
+
+      if (statusId === 9 || statusId === 13 || statusId === 15) {
+        statusColor = 'status-awaiting';
+        statusIcon = 'fa-clock';
+      } else if (statusName.toLowerCase().includes('закрыта')) {
+        statusColor = 'status-closed';
+        statusIcon = 'fa-check-circle';
+      } else if (statusName.toLowerCase().includes('в работе')) {
+        statusColor = 'status-progress';
+        statusIcon = 'fa-cog fa-spin';
+      } else if (statusName.toLowerCase().includes('открыта')) {
+        statusColor = 'status-open';
+        statusIcon = 'fa-folder-open';
+      }
+
+      // Создаем карточку с помощью jQuery для безопасного экранирования
+      const $card = $('<div>')
+        .addClass('kanban-card modern-card')
+        .attr('data-issue-id', issueId)
+        .css('cursor', 'pointer')
+        .on('click', function () {
+          window.location.href = '/my-issues/' + issueId;
+        });
+
+      // Заголовок карточки
+      const $header = $('<div>').addClass('kanban-card-header');
+      $header.append(
+        $('<div>').addClass('card-id-badge').append(
+          $('<i>').addClass('fas fa-hashtag'),
+          $('<span>').text(issueId)
+        ),
+        $('<div>').addClass('card-date').append(
+          $('<i>').addClass('far fa-calendar-alt'),
+          $('<span>').text(issueDate)
+        )
+      );
+
+      // Тело карточки
+      const $body = $('<div>').addClass('kanban-card-body');
+      $body.append(
+        $('<div>').addClass('kanban-card-title').text(issueSubject)
+      );
+
+      // Подвал карточки
+      const $footer = $('<div>').addClass('kanban-card-footer');
+      $footer.append(
+        $('<div>').addClass('kanban-card-status ' + statusColor).append(
+          $('<i>').addClass('fas ' + statusIcon),
+          $('<span>').text(statusName)
+        ),
+        $('<div>').addClass('card-action-hint').append(
+          $('<i>').addClass('fas fa-external-link-alt')
+        )
+      );
+
+      $card.append($header, $body, $footer);
+      return $card;
+    }
+
     // Добавляем кнопку сброса фильтра в DOM
     $(document).ready(function () {
       // Добавляем кнопку сброса фильтра в панель управления
@@ -3254,4 +4119,25 @@ ue Subject */
     $(".background-shapes").css("opacity", "1");
   }, 500);
 </script>
+
+<!-- JavaScript для блока "Активные заявки" -->
+<script
+  src="{{ url_for('static', filename='js/my_issues_activity.js') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}"></script>
+
+<!-- Автоматическая загрузка активности при готовности страницы -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Issues Page] 🚀 Страница загружена, запускаем загрузку активности...');
+    // Небольшая задержка для полной загрузки всех элементов
+    setTimeout(function() {
+        if (typeof loadRecentActivity === 'function') {
+            console.log('[Issues Page] ✅ Функция loadRecentActivity найдена, вызываем...');
+            loadRecentActivity();
+        } else {
+            console.error('[Issues Page] ❌ Функция loadRecentActivity не найдена!');
+        }
+    }, 1000);
+});
+</script>
+
 {% endblock %}

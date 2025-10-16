@@ -97,6 +97,16 @@ class KanbanManager {
                     console.log('[KanbanManager] 🔒 Ограничения отключены');
                     this.isInitialized = true;
                     console.log('[KanbanManager] ✅ Инициализация завершена');
+                    
+                    // Проверяем, какой режим активен по умолчанию
+                    const activeView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+                    console.log('[KanbanManager] 🔍 Активный режим по умолчанию:', activeView);
+                    
+                    // Если активен режим "Список", инициализируем таблицу
+                    if (activeView === 'list') {
+                        console.log('[KanbanManager] 📊 Режим "Список" активен по умолчанию - инициализируем таблицу');
+                        this.switchView('list');
+                    }
                 }).catch(error => {
                     console.error('[KanbanManager] ❌ Ошибка загрузки данных Kanban:', error);
                     this.isInitialized = true;
@@ -325,6 +335,29 @@ class KanbanManager {
             if (tableContainer) {
                 tableContainer.style.display = 'block';
                 console.log('[KanbanManager] ✅ Таблица показана');
+                
+                // 🔧 ИСПРАВЛЕНИЕ: Инициализируем или перезагружаем DataTable
+                setTimeout(() => {
+                    if (typeof MyTasksApp !== 'undefined') {
+                        console.log('[KanbanManager] 🔍 Проверка состояния MyTasksApp:', {
+                            isInitialized: MyTasksApp.state.isInitialized,
+                            hasDataTable: !!MyTasksApp.state.dataTable
+                        });
+                        
+                        if (!MyTasksApp.state.isInitialized) {
+                            console.log('[KanbanManager] 🔄 MyTasksApp не инициализирован, инициализируем...');
+                            MyTasksApp.init();
+                        } else if (!MyTasksApp.state.dataTable) {
+                            console.log('[KanbanManager] 🔄 DataTable не создан, создаем...');
+                            MyTasksApp.initializeDataTable();
+                        } else {
+                            console.log('[KanbanManager] 🔄 Перезагружаем данные DataTable...');
+                            MyTasksApp.state.dataTable.ajax.reload(null, false); // false = не сбрасывать пагинацию
+                        }
+                    } else {
+                        console.error('[KanbanManager] ❌ MyTasksApp не найден!');
+                    }
+                }, 100); // Небольшая задержка для корректного отображения
             }
             if (kanbanBoard) {
                 kanbanBoard.style.display = 'none';

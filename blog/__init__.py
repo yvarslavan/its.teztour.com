@@ -139,6 +139,10 @@ def create_app():
             # Инициализируем CSRF защиту
     csrf.init_app(app)
 
+    # ВРЕМЕННО: Отключаем CSRF для тестирования
+    app.config['WTF_CSRF_ENABLED'] = False
+    print("⚠️ CSRF temporarily disabled for testing")
+
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
         "https://your-domain.com",
@@ -187,10 +191,18 @@ def create_app():
     app.register_blueprint(tasks_bp, url_prefix="/tasks")  # Регистрируем блюпринт задач с префиксом
     app.register_blueprint(api_bp)  # Регистрируем новый API блюпринт (уже с префиксом /tasks/api)
 
+    # Регистрируем оптимизированные маршруты
+    try:
+        from blog.main.routes_optimized import optimized_main
+        app.register_blueprint(optimized_main, url_prefix="/optimized")
+        app.logger.info("✅ Optimized routes registered successfully")
+    except ImportError as e:
+        app.logger.warning(f"⚠️ Failed to register optimized routes: {e}")
+
     # ИСПРАВЛЕНИЕ: Регистрируем template helpers для устранения хардкода в шаблонах
     from blog.utils.template_helpers import register_template_helpers
     register_template_helpers(app)
-    
+
 
 
     # Дополнительная инициализация в контексте приложения

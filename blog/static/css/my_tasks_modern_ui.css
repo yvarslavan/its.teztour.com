@@ -312,10 +312,20 @@
     background: linear-gradient(135deg, var(--secondary-color), var(--secondary-dark));
 }
 
+.card-icon.awaiting {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+}
+
 /* Стили для новых карточек */
 .status-card[data-type="in-progress"] .card-icon {
     background: linear-gradient(135deg, #3498db, #2980b9);
     box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+}
+
+.status-card[data-type="awaiting"] .card-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
 }
 
 .status-card[data-type="completed"] .card-icon {
@@ -336,10 +346,38 @@
     color: var(--primary-color);
 }
 
+.card-description {
+    max-height: 60px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-right: 4px;
+}
+
+.card-description::-webkit-scrollbar {
+    width: 4px;
+}
+
+.card-description::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 2px;
+}
+
+.card-description::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 2px;
+}
+
+.card-description::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
 .card-description p {
     margin: 0;
     color: var(--text-secondary);
     font-size: 0.875rem;
+    line-height: 1.5;
+    white-space: normal;
+    word-wrap: break-word;
 }
 
 .toggle-details-btn {
@@ -368,6 +406,27 @@
     background: var(--background-primary);
     border-radius: var(--radius-md);
     border: 1px solid var(--border-color);
+    max-height: 300px;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.card-details::-webkit-scrollbar {
+    width: 6px;
+}
+
+.card-details::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.card-details::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+}
+
+.card-details::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
 }
 
 .details-content {

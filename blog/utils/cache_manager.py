@@ -1,295 +1,348 @@
 """
-Модуль управления кэшированием для оптимизации производительности задач
+Enhanced cache manager for performance optimization
 """
-import json
 import time
+import json
 import hashlib
-from typing import Optional, Dict, Any, Tuple
+import logging
+from typing import Any, Optional, Dict
 from functools import wraps
-import threading
-import weakref
-from datetime import datetime, timedelta
+from flask import g
+try:
+    import redis
+except ImportError:
+    redis = None
+from threading import Lock
 
-
-def safe_log(level: str, message: str):
-    """Безопасное логирование без требования контекста Flask приложения"""
-    try:
-        from flask import current_app
-        if hasattr(current_app, 'logger'):
-            getattr(current_app.logger, level.lower())(message)
-        else:
-            print(f"[{level.upper()}] {message}")
-    except:
-        print(f"[{level.upper()}] {message}")
-
+logger = logging.getLogger(__name__)
 
 class CacheManager:
-    """Менеджер кэширования для задач пользователей"""
+    """Enhanced cache manager with Redis backend and fallback to memory cache"""
 
-    def __init__(self):
-        self._cache = {}
-        self._cache_timestamps = {}
-        self._cache_lock = threading.RLock()
-        self._max_cache_size = 100  # Максимальное количество записей в кэше
-        self._default_ttl = 300  # Время жизни кэша по умолчанию (5 минут)
+    def __init__(self, redis_url: str = None, default_ttl: int = 300):
+        self.default_ttl = default_ttl
+        self.memory_cache = {}
+        self.cache_locks = {}
+        self.lock = Lock()
 
-    def _generate_cache_key(self, user_id: int, endpoint: str, params: Dict[str, Any] = None) -> str:
-        """Генерирует ключ кэша на основе ID пользователя, эндпоинта и параметров"""
-        key_data = {
-            'user_id': user_id,
-            'endpoint': endpoint,
-            'params': params or {}
-        }
-        key_string = json.dumps(key_data, sort_keys=True)
-        return hashlib.md5(key_string.encode()).hexdigest()
+        # Try to connect to Redis
+        self.redis_client = None
+        if redis_url and redis:
+            try:
+                self.redis_client = redis.from_url(redis_url, decode_responses=True)
+                self.redis_client.ping()  # Test connection
+                logger.info("✅ Redis cache connected successfully")
+            except Exception as e:
+                logger.warning("⚠️ Redis connection failed, using memory cache: %s", e)
+                self.redis_client = None
 
-    def _is_cache_valid(self, cache_key: str, ttl: int) -> bool:
-        """Проверяет валидность кэша по времени"""
-        if cache_key not in self._cache_timestamps:
+    def _generate_key(self, key: str, namespace: str = None) -> str:
+        """Generate a cache key with optional namespace"""
+        if namespace:
+            key = f"{namespace}:{key}"
+
+        # Hash long keys to avoid Redis key length limits
+        if len(key) > 250:
+            key_hash = hashlib.md5(key.encode()).hexdigest()
+            key = f"hash:{key_hash}"
+
+        return key
+
+    def _serialize_value(self, value: Any) -> str:
+        """Serialize value for storage"""
+        try:
+            return json.dumps(value, default=str)
+        except (TypeError, ValueError) as e:
+            logger.error("❌ Failed to serialize cache value: %s", e)
+            return json.dumps(str(value))
+
+    def _deserialize_value(self, value: str) -> Any:
+        """Deserialize value from storage"""
+        try:
+            return json.loads(value)
+        except (TypeError, ValueError) as e:
+            logger.error("❌ Failed to deserialize cache value: %s", e)
+            return value
+
+    def get(self, key: str, namespace: str = None) -> Optional[Any]:
+        """Get value from cache"""
+        cache_key = self._generate_key(key, namespace)
+
+        try:
+            if self.redis_client:
+                value = self.redis_client.get(cache_key)
+                if value:
+                    return self._deserialize_value(value)
+            else:
+                # Fallback to memory cache
+                with self.lock:
+                    if cache_key in self.memory_cache:
+                        cached_item = self.memory_cache[cache_key]
+                        if time.time() < cached_item['expires']:
+                            return cached_item['value']
+                        else:
+                            # Expired, remove it
+                            del self.memory_cache[cache_key]
+
+            return None
+
+        except Exception as e:
+            logger.error("❌ Cache get error for key %s: %s", cache_key, e)
+            return None
+
+    def set(self, key: str, value: Any, ttl: int = None, namespace: str = None) -> bool:
+        """Set value in cache"""
+        cache_key = self._generate_key(key, namespace)
+        ttl = ttl or self.default_ttl
+
+        try:
+            serialized_value = self._serialize_value(value)
+
+            if self.redis_client:
+                return self.redis_client.setex(cache_key, ttl, serialized_value)
+            else:
+                # Fallback to memory cache
+                with self.lock:
+                    self.memory_cache[cache_key] = {
+                        'value': value,
+                        'expires': time.time() + ttl
+                    }
+                return True
+
+        except Exception as e:
+            logger.error("❌ Cache set error for key %s: %s", cache_key, e)
             return False
 
-        timestamp = self._cache_timestamps[cache_key]
-        return (time.time() - timestamp) < ttl
+    def delete(self, key: str, namespace: str = None) -> bool:
+        """Delete value from cache"""
+        cache_key = self._generate_key(key, namespace)
 
-    def _cleanup_cache(self):
-        """Очищает устаревшие записи кэша"""
-        current_time = time.time()
-        expired_keys = []
-
-        for key, timestamp in self._cache_timestamps.items():
-            if (current_time - timestamp) > self._default_ttl * 2:  # Двойное время для очистки
-                expired_keys.append(key)
-
-        for key in expired_keys:
-            self._cache.pop(key, None)
-            self._cache_timestamps.pop(key, None)
-
-    def _evict_lru(self):
-        """Удаляет наименее недавно использованные записи при превышении лимита"""
-        if len(self._cache) <= self._max_cache_size:
-            return
-
-        # Сортируем по времени и удаляем самые старые
-        sorted_items = sorted(self._cache_timestamps.items(), key=lambda x: x[1])
-        items_to_remove = len(self._cache) - self._max_cache_size + 10  # Удаляем 10 дополнительных
-
-        for i in range(min(items_to_remove, len(sorted_items))):
-            key = sorted_items[i][0]
-            self._cache.pop(key, None)
-            self._cache_timestamps.pop(key, None)
-
-    def get(self, user_id: int, endpoint: str, params: Dict[str, Any] = None, ttl: int = None) -> Optional[Any]:
-        """Получает данные из кэша"""
-        ttl = ttl or self._default_ttl
-        cache_key = self._generate_cache_key(user_id, endpoint, params)
-
-        with self._cache_lock:
-            if self._is_cache_valid(cache_key, ttl):
-                safe_log('debug', f"Cache HIT для ключа: {cache_key[:8]}...")
-                return self._cache.get(cache_key)
+        try:
+            if self.redis_client:
+                return bool(self.redis_client.delete(cache_key))
             else:
-                safe_log('debug', f"Cache MISS для ключа: {cache_key[:8]}...")
-                return None
+                # Fallback to memory cache
+                with self.lock:
+                    if cache_key in self.memory_cache:
+                        del self.memory_cache[cache_key]
+                        return True
+                return False
 
-    def set(self, user_id: int, endpoint: str, data: Any, params: Dict[str, Any] = None, ttl: int = None):
-        """Сохраняет данные в кэш"""
-        cache_key = self._generate_cache_key(user_id, endpoint, params)
+        except Exception as e:
+            logger.error("❌ Cache delete error for key %s: %s", cache_key, e)
+            return False
 
-        with self._cache_lock:
-            # Очистка и проверка размера кэша
-            self._cleanup_cache()
-            self._evict_lru()
+    def exists(self, key: str, namespace: str = None) -> bool:
+        """Check if key exists in cache"""
+        cache_key = self._generate_key(key, namespace)
 
-            self._cache[cache_key] = data
-            self._cache_timestamps[cache_key] = time.time()
+        try:
+            if self.redis_client:
+                return bool(self.redis_client.exists(cache_key))
+            else:
+                # Fallback to memory cache
+                with self.lock:
+                    if cache_key in self.memory_cache:
+                        cached_item = self.memory_cache[cache_key]
+                        if time.time() < cached_item['expires']:
+                            return True
+                        else:
+                            # Expired, remove it
+                            del self.memory_cache[cache_key]
+                return False
 
-            safe_log('debug', f"Данные сохранены в кэш для ключа: {cache_key[:8]}...")
+        except Exception as e:
+            logger.error("❌ Cache exists error for key %s: %s", cache_key, e)
+            return False
 
-    def invalidate_user_cache(self, user_id: int):
-        """Инвалидирует весь кэш для конкретного пользователя"""
-        with self._cache_lock:
-            keys_to_remove = []
-            for key in self._cache.keys():
-                # Проверяем, принадлежит ли ключ пользователю
-                try:
-                    for endpoint in ['tasks', 'statistics', 'filters']:
-                        test_key = self._generate_cache_key(user_id, endpoint)
-                        if key.startswith(test_key[:16]):  # Проверяем префикс
-                            keys_to_remove.append(key)
-                            break
-                except:
-                    continue
+    def clear_namespace(self, namespace: str) -> int:
+        """Clear all keys in a namespace"""
+        try:
+            if self.redis_client:
+                pattern = f"{namespace}:*"
+                keys = self.redis_client.keys(pattern)
+                if keys:
+                    return self.redis_client.delete(*keys)
+                return 0
+            else:
+                # Fallback to memory cache
+                with self.lock:
+                    keys_to_delete = [
+                        key for key in self.memory_cache.keys()
+                        if key.startswith(f"{namespace}:")
+                    ]
+                    for key in keys_to_delete:
+                        del self.memory_cache[key]
+                    return len(keys_to_delete)
 
-            for key in keys_to_remove:
-                self._cache.pop(key, None)
-                self._cache_timestamps.pop(key, None)
+        except Exception as e:
+            logger.error("❌ Cache clear namespace error for %s: %s", namespace, e)
+            return 0
 
-            safe_log('info', f"Инвалидировано {len(keys_to_remove)} записей кэша для пользователя {user_id}")
+    def get_or_set(self, key: str, func, ttl: int = None, namespace: str = None) -> Any:
+        """Get value from cache or set it using function"""
+        cached_value = self.get(key, namespace)
+        if cached_value is not None:
+            return cached_value
 
-    def clear_all(self):
-        """Полностью очищает весь кэш"""
-        with self._cache_lock:
-            entries_count = len(self._cache)
-            self._cache.clear()
-            self._cache_timestamps.clear()
-            safe_log('info', f"Полностью очищен кэш - удалено {entries_count} записей")
+        # Value not in cache, compute it
+        try:
+            value = func()
+            self.set(key, value, ttl, namespace)
+            return value
+        except Exception as e:
+            logger.error("❌ Error in get_or_set for key %s: %s", key, e)
+            raise
 
-    def get_cache_stats(self) -> Dict[str, Any]:
-        """Возвращает статистику кэша"""
-        with self._cache_lock:
-            return {
-                'entries_count': len(self._cache),
-                'oldest_entry': min(self._cache_timestamps.values()) if self._cache_timestamps else None,
-                'newest_entry': max(self._cache_timestamps.values()) if self._cache_timestamps else None,
-                'memory_usage_estimate': sum(len(str(data)) for data in self._cache.values())
-            }
+    def invalidate_pattern(self, pattern: str, namespace: str = None) -> int:
+        """Invalidate keys matching pattern"""
+        try:
+            if self.redis_client:
+                search_pattern = f"{namespace}:{pattern}" if namespace else pattern
+                keys = self.redis_client.keys(search_pattern)
+                if keys:
+                    return self.redis_client.delete(*keys)
+                return 0
+            else:
+                # Fallback to memory cache
+                with self.lock:
+                    keys_to_delete = []
+                    for key in self.memory_cache.keys():
+                        if namespace and not key.startswith(f"{namespace}:"):
+                            continue
+                        if pattern in key:
+                            keys_to_delete.append(key)
 
+                    for key in keys_to_delete:
+                        del self.memory_cache[key]
+                    return len(keys_to_delete)
 
-# Глобальный экземпляр менеджера кэша
-cache_manager = CacheManager()
+        except Exception as e:
+            logger.error("❌ Cache invalidate pattern error for %s: %s", pattern, e)
+            return 0
 
+    def get_stats(self) -> Dict[str, Any]:
+        """Get cache statistics"""
+        try:
+            if self.redis_client:
+                info = self.redis_client.info()
+                return {
+                    'backend': 'redis',
+                    'connected_clients': info.get('connected_clients', 0),
+                    'used_memory': info.get('used_memory_human', '0B'),
+                    'keyspace_hits': info.get('keyspace_hits', 0),
+                    'keyspace_misses': info.get('keyspace_misses', 0),
+                    'total_commands_processed': info.get('total_commands_processed', 0)
+                }
+            else:
+                with self.lock:
+                    return {
+                        'backend': 'memory',
+                        'total_keys': len(self.memory_cache),
+                        'memory_usage': f"{len(str(self.memory_cache))} bytes"
+                    }
 
-def cached_response(endpoint: str, ttl: int = 300, use_params: bool = True):
-    """
-    Декоратор для кэширования ответов API
+        except Exception as e:
+            logger.error("❌ Cache stats error: %s", e)
+            return {'error': str(e)}
 
-    Args:
-        endpoint: Название эндпоинта для кэширования
-        ttl: Время жизни кэша в секундах
-        use_params: Учитывать ли параметры запроса в ключе кэша
-    """
+    def health_check(self) -> bool:
+        """Check cache health"""
+        try:
+            if self.redis_client:
+                self.redis_client.ping()
+                return True
+            else:
+                # Memory cache is always "healthy"
+                return True
+        except Exception as e:
+            logger.error("❌ Cache health check failed: %s", e)
+            return False
+
+# Cache decorator
+def cached(ttl: int = 300, namespace: str = None, key_func=None):
+    """Decorator for caching function results"""
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            from flask_login import current_user
-            from flask import request
-
-            # Пропускаем кэширование для неаутентифицированных пользователей
-            if not current_user.is_authenticated:
-                return func(*args, **kwargs)
-
-            # Собираем параметры для ключа кэша
-            params = {}
-            if use_params:
-                params.update(request.args.to_dict())
-                params.update(kwargs)
-
-            # Пытаемся получить из кэша
-            cached_data = cache_manager.get(
-                user_id=current_user.id,
-                endpoint=endpoint,
-                params=params,
-                ttl=ttl
-            )
-
-            if cached_data is not None:
-                return cached_data
-
-            # Если кэша нет, выполняем функцию
-            result = func(*args, **kwargs)
-
-            # Сохраняем результат в кэш (только успешные ответы)
-            if hasattr(result, 'status_code'):
-                if result.status_code == 200:
-                    cache_manager.set(
-                        user_id=current_user.id,
-                        endpoint=endpoint,
-                        data=result,
-                        params=params,
-                        ttl=ttl
-                    )
+            # Generate cache key
+            if key_func:
+                cache_key = key_func(*args, **kwargs)
             else:
-                # Для прямых возвратов данных
-                cache_manager.set(
-                    user_id=current_user.id,
-                    endpoint=endpoint,
-                    data=result,
-                    params=params,
-                    ttl=ttl
-                )
+                # Default key generation
+                key_parts = [func.__name__]
+                key_parts.extend(str(arg) for arg in args)
+                key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
+                cache_key = ":".join(key_parts)
+
+            # Get cache manager from app context
+            cache_mgr = getattr(g, 'cache_manager', None)
+            if not cache_mgr:
+                cache_mgr = CacheManager()
+                g.cache_manager = cache_mgr
+
+            # Try to get from cache
+            cached_result = cache_mgr.get(cache_key, namespace)
+            if cached_result is not None:
+                logger.debug("📦 Cache hit for %s", func.__name__)
+                return cached_result
+
+            # Execute function and cache result
+            result = func(*args, **kwargs)
+            cache_mgr.set(cache_key, result, ttl, namespace)
+            logger.debug("💾 Cached result for %s", func.__name__)
 
             return result
+
         return wrapper
     return decorator
 
+# Global cache manager instance
+cache_manager = CacheManager()
 
+# Legacy classes for backward compatibility
 class TasksCacheOptimizer:
-    """Специализированный оптимизатор кэша для задач"""
-
+    """Legacy cache optimizer for tasks - placeholder for backward compatibility"""
     def __init__(self):
-        self._user_connection_cache = {}
-        self._connection_timestamps = {}
-        self._connection_lock = threading.RLock()
-        self.CONNECTION_TTL = 1800  # 30 минут для соединений
+        self.cache_manager = cache_manager
 
-    def cache_user_connection(self, user_id: int, redmine_connector, password: str):
-        """Кэширует соединение пользователя с Redmine"""
-        with self._connection_lock:
-            self._user_connection_cache[user_id] = {
-                'connector': redmine_connector,
-                'password': password
-            }
-            self._connection_timestamps[user_id] = time.time()
+    def get_cached_tasks(self, user_id, *args, **kwargs):
+        """Get cached tasks for user"""
+        return self.cache_manager.get(f"tasks_{user_id}", namespace="tasks")
 
-    def get_cached_connection(self, user_id: int) -> Optional[Tuple[Any, str]]:
-        """Получает кэшированное соединение пользователя"""
-        with self._connection_lock:
-            if user_id not in self._user_connection_cache:
-                return None
+    def cache_tasks(self, user_id, tasks, ttl=300):
+        """Cache tasks for user"""
+        return self.cache_manager.set(f"tasks_{user_id}", tasks, ttl, namespace="tasks")
 
-            timestamp = self._connection_timestamps.get(user_id, 0)
-            if (time.time() - timestamp) > self.CONNECTION_TTL:
-                # Соединение устарело
-                self._user_connection_cache.pop(user_id, None)
-                self._connection_timestamps.pop(user_id, None)
-                return None
+def cached_response(func):
+    """Legacy decorator for cached responses"""
+    return cached(ttl=300)(func)
 
-            cached_data = self._user_connection_cache[user_id]
-            return cached_data['connector'], cached_data['password']
+def weekend_performance_optimizer(func=None):
+    """Legacy weekend performance optimizer - decorator for backward compatibility"""
+    if func is None:
+        # Called as decorator without arguments
+        def decorator(f):
+            return cached(ttl=300)(f)
+        return decorator
+    else:
+        # Called as decorator with function
+        return cached(ttl=300)(func)
 
-    def invalidate_user_connection(self, user_id: int):
-        """Инвалидирует кэшированное соединение пользователя"""
-        with self._connection_lock:
-            self._user_connection_cache.pop(user_id, None)
-            self._connection_timestamps.pop(user_id, None)
-
-    def cleanup_expired_connections(self):
-        """Очищает устаревшие соединения"""
-        current_time = time.time()
-        expired_users = []
-
-        with self._connection_lock:
-            for user_id, timestamp in self._connection_timestamps.items():
-                if (current_time - timestamp) > self.CONNECTION_TTL:
-                    expired_users.append(user_id)
-
-            for user_id in expired_users:
-                self._user_connection_cache.pop(user_id, None)
-                self._connection_timestamps.pop(user_id, None)
-
-
-# Глобальный экземпляр оптимизатора задач
+# Create instance for backward compatibility
 tasks_cache_optimizer = TasksCacheOptimizer()
 
+# Cache key generators
+def user_cache_key(user_id: int, *args) -> str:
+    """Generate cache key for user-specific data"""
+    return f"user_{user_id}_{'_'.join(str(arg) for arg in args)}"
 
-def weekend_performance_optimizer(func):
-    """
-    Декоратор для оптимизации производительности в выходные дни
-    Увеличивает время кэширования и снижает частоту обновлений
-    """
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        from datetime import datetime
+def api_cache_key(endpoint: str, **params) -> str:
+    """Generate cache key for API responses"""
+    param_str = "_".join(f"{k}_{v}" for k, v in sorted(params.items()))
+    return f"api_{endpoint}_{param_str}"
 
-        now = datetime.now()
-        is_weekend = now.weekday() >= 5  # Суббота (5) и воскресенье (6)
-
-        if is_weekend:
-            # В выходные увеличиваем время кэширования
-            if hasattr(func, '__cache_ttl__'):
-                func.__cache_ttl__ *= 2
-
-            safe_log('info', "Применена оптимизация для выходных дней")
-
-        return func(*args, **kwargs)
-    return wrapper
+def database_cache_key(table: str, **conditions) -> str:
+    """Generate cache key for database queries"""
+    condition_str = "_".join(f"{k}_{v}" for k, v in sorted(conditions.items()))
+    return f"db_{table}_{condition_str}"

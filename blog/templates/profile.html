@@ -22,22 +22,6 @@
           <h1 class="page-title">Профиль пользователя</h1>
           <p class="page-subtitle">Детальная информация и контакты</p>
         </div>
-        <div class="theme-switcher-container">
-          <button
-            id="theme-switcher"
-            class="theme-switcher"
-            title="Переключить тему"
-          >
-            <i
-              class="fas fa-sun theme-icon-light"
-              style="color: #fbbf24 !important; display: block !important"
-            ></i>
-            <i
-              class="fas fa-moon theme-icon-dark"
-              style="color: #60a5fa !important; display: none !important"
-            ></i>
-          </button>
-        </div>
       </div>
     </div>
 
@@ -514,6 +498,11 @@
   new ProfileThemeManager();
 </script>
 {% endblock %} {% block styles %}
+
+<!-- Theme-aware styles for Profile page -->
+<link rel="stylesheet" 
+  href="{{ url_for('static', filename='css/profile_theme_fix.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+
 <style>
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
 

@@ -1,6 +1,9 @@
 ---
-alwaysApply: true
+description: 
+globs: archive-intermediate.mdc
+alwaysApply: false
 ---
+
 # LEVEL 3 ARCHIVE: INTERMEDIATE FEATURE DOCUMENTATION
 
 > **TL;DR:** This guide outlines the archiving process for a completed Level 3 intermediate feature. The aim is to create a self-contained, easily accessible record of the feature's development lifecycle, including its planning, design decisions, implementation summary, and reflection.

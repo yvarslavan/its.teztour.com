@@ -134,90 +134,116 @@ Base = declarative_base()
 
 def get_database_config():
     """
-    Получает конфигурацию базы данных из переменных окружения или config.ini.
-    Приоритет отдается переменным окружения, что идеально для продакшена.
+    Получает конфигурацию базы данных из безопасного источника или config.ini.
+    Приоритет отдается безопасной конфигурации из переменных окружения.
     Файл config.ini используется как фоллбэк для локальной разработки.
     """
-    # Проверка наличия основных переменных окружения для MySQL
-    mysql_host_env = os.getenv('MYSQL_HOST')
-    mysql_quality_host_env = os.getenv('MYSQL_QUALITY_HOST')
+    # Сначала пробуем безопасную конфигурацию
+    try:
+        from secure_config import get_config
+        secure_config = get_config()
 
-    if mysql_host_env and mysql_quality_host_env:
-        print("✅ Конфигурация MySQL загружается из переменных окружения (Production mode).")
+        # Проверяем наличие обязательных переменных
+        missing = secure_config.validate_required_vars()
+        if not missing:
+            print("✅ Используется безопасная конфигурация из переменных окружения")
+
+            return {
+                'mysql': secure_config.get_mysql_config(),
+                'mysql_quality': {
+                    'host': secure_config.mysql_quality_host,
+                    'database': secure_config.mysql_quality_database,
+                    'user': secure_config.mysql_quality_user,
+                    'password': secure_config.mysql_quality_password
+                }
+            }
+        else:
+            print(f"⚠️ Отсутствуют переменные окружения: {', '.join(missing)}")
+            raise ImportError("Неполная безопасная конфигурация")
+
+    except ImportError:
+        print("⚠️ Используется устаревшая конфигурация config.ini")
+
+        # Проверка наличия основных переменных окружения для MySQL
+        mysql_host_env = os.getenv('MYSQL_HOST')
+        mysql_quality_host_env = os.getenv('MYSQL_QUALITY_HOST')
+
+        if mysql_host_env and mysql_quality_host_env:
+            print("✅ Конфигурация MySQL загружается из переменных окружения (Production mode).")
+            return {
+                'mysql': {
+                    'host': mysql_host_env,
+                    'database': os.getenv('MYSQL_DATABASE'),
+                    'user': os.getenv('MYSQL_USER'),
+                    'password': os.getenv('MYSQL_PASSWORD')
+                },
+                'mysql_quality': {
+                    'host': mysql_quality_host_env,
+                    'database': os.getenv('MYSQL_QUALITY_DATABASE'),
+                    'user': os.getenv('MYSQL_QUALITY_USER'),
+                    'password': os.getenv('MYSQL_QUALITY_PASSWORD')
+                }
+            }
+
+        print("ℹ️ Переменные окружения для БД не найдены, используется config.ini (Development mode).")
+        config = configparser.ConfigParser()
+
+        # Пробуем найти config.ini в нескольких стандартных местах
+        possible_paths = [
+            os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'),
+            os.path.join(os.getcwd(), 'config.ini'),
+            'config.ini'
+        ]
+
+        config_path = None
+        for path in possible_paths:
+            if os.path.exists(path):
+                config_path = path
+                break
+
+        # Если файл не найден, вызываем ошибку
+        if not config_path:
+            print("--- [DIAGNOSTIC ERROR] ---")
+            print("❌ Файл config.ini не найден ни по одному из путей:")
+            for path in possible_paths:
+                print(f"  - {path}")
+            print(f"Текущая рабочая директория: {os.getcwd()}")
+            print(f"Содержимое директории: {os.listdir('.')}")
+            print("--------------------------")
+            raise FileNotFoundError("Не найден файл конфигурации config.ini")
+
+        # Читаем найденный файл
+        config.read(config_path, encoding='utf-8')
+
+        # Проверяем наличие секции [mysql] и выводим содержимое файла при ошибке
+        if not config.has_section('mysql'):
+            print("--- [DIAGNOSTIC ERROR] ---")
+            print(f"❌ Секция [mysql] не найдена в файле: {config_path}")
+            print("🔍 Полное содержимое файла:")
+            with open(config_path, 'r', encoding='utf-8') as f:
+                print(f.read())
+            print(f"Найденные секции: {config.sections()}")
+            print("--------------------------")
+            raise configparser.NoSectionError('mysql')
+
+        print(f"✅ Конфигурация успешно загружена из {config_path}")
+        print(f"ℹ️ Найдены секции: {config.sections()}")
+
+        # Возвращаем конфигурацию из файла
         return {
             'mysql': {
-                'host': mysql_host_env,
-                'database': os.getenv('MYSQL_DATABASE'),
-                'user': os.getenv('MYSQL_USER'),
-                'password': os.getenv('MYSQL_PASSWORD')
+                'host': config.get('mysql', 'host'),
+                'database': config.get('mysql', 'database'),
+                'user': config.get('mysql', 'user'),
+                'password': config.get('mysql', 'password')
             },
             'mysql_quality': {
-                'host': mysql_quality_host_env,
-                'database': os.getenv('MYSQL_QUALITY_DATABASE'),
-                'user': os.getenv('MYSQL_QUALITY_USER'),
-                'password': os.getenv('MYSQL_QUALITY_PASSWORD')
+                'host': config.get('mysql_quality', 'host'),
+                'database': config.get('mysql_quality', 'database'),
+                'user': config.get('mysql_quality', 'user'),
+                'password': config.get('mysql_quality', 'password')
             }
         }
-
-    print("ℹ️ Переменные окружения для БД не найдены, используется config.ini (Development mode).")
-    config = configparser.ConfigParser()
-
-    # Пробуем найти config.ini в нескольких стандартных местах
-    possible_paths = [
-        os.path.join(os.path.dirname(os.path.abspath(__file__)), 'config.ini'),
-        os.path.join(os.getcwd(), 'config.ini'),
-        'config.ini'
-    ]
-
-    config_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            config_path = path
-            break
-
-    # Если файл не найден, вызываем ошибку
-    if not config_path:
-        print("--- [DIAGNOSTIC ERROR] ---")
-        print("❌ Файл config.ini не найден ни по одному из путей:")
-        for path in possible_paths:
-            print(f"  - {path}")
-        print(f"Текущая рабочая директория: {os.getcwd()}")
-        print(f"Содержимое директории: {os.listdir('.')}")
-        print("--------------------------")
-        raise FileNotFoundError("Не найден файл конфигурации config.ini")
-
-    # Читаем найденный файл
-    config.read(config_path, encoding='utf-8')
-
-    # Проверяем наличие секции [mysql] и выводим содержимое файла при ошибке
-    if not config.has_section('mysql'):
-        print("--- [DIAGNOSTIC ERROR] ---")
-        print(f"❌ Секция [mysql] не найдена в файле: {config_path}")
-        print("🔍 Полное содержимое файла:")
-        with open(config_path, 'r', encoding='utf-8') as f:
-            print(f.read())
-        print(f"Найденные секции: {config.sections()}")
-        print("--------------------------")
-        raise configparser.NoSectionError('mysql')
-
-    print(f"✅ Конфигурация успешно загружена из {config_path}")
-    print(f"ℹ️ Найдены секции: {config.sections()}")
-
-    # Возвращаем конфигурацию из файла
-    return {
-        'mysql': {
-            'host': config.get('mysql', 'host'),
-            'database': config.get('mysql', 'database'),
-            'user': config.get('mysql', 'user'),
-            'password': config.get('mysql', 'password')
-        },
-        'mysql_quality': {
-            'host': config.get('mysql_quality', 'host'),
-            'database': config.get('mysql_quality', 'database'),
-            'user': config.get('mysql_quality', 'user'),
-            'password': config.get('mysql_quality', 'password')
-        }
-    }
 
 # Получаем конфигурацию
 db_config = get_database_config()

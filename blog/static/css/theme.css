@@ -1,0 +1,279 @@
+/**
+ * @file: theme.css
+ * @description: Global theme system using CSS custom properties
+ * @dependencies: None
+ * @created: 2025-01-06
+ */
+
+/* ============================================
+   CSS CUSTOM PROPERTIES (CSS Variables)
+   ============================================ */
+
+:root {
+    /* Light theme colors (default) */
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f7fafc;
+    --color-bg-tertiary: #edf2f7;
+    --color-bg-hover: #e2e8f0;
+    
+    --color-text-primary: #1a202c;
+    --color-text-secondary: #4a5568;
+    --color-text-tertiary: #718096;
+    --color-text-muted: #a0aec0;
+    
+    --color-border-primary: #e2e8f0;
+    --color-border-secondary: #cbd5e0;
+    
+    --color-accent-primary: #3b82f6;
+    --color-accent-hover: #2563eb;
+    --color-accent-light: #eff6ff;
+    
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Dark theme colors - support both data-theme and class-based approaches */
+[data-theme="dark"],
+.dark-theme,
+body.dark-theme,
+html.dark-theme {
+    --color-bg-primary: #1a202c;
+    --color-bg-secondary: #2d3748;
+    --color-bg-tertiary: #4a5568;
+    --color-bg-hover: #374151;
+    
+    --color-text-primary: #f7fafc;
+    --color-text-secondary: #e2e8f0;
+    --color-text-tertiary: #cbd5e0;
+    --color-text-muted: #a0aec0;
+    
+    --color-border-primary: #4a5568;
+    --color-border-secondary: #2d3748;
+    
+    --color-accent-primary: #60a5fa;
+    --color-accent-hover: #3b82f6;
+    --color-accent-light: #1e3a8a;
+    
+    --color-success: #34d399;
+    --color-warning: #fbbf24;
+    --color-error: #f87171;
+    --color-info: #60a5fa;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+
+body {
+    background-color: var(--color-bg-primary) !important;
+    color: var(--color-text-primary) !important;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* ============================================
+   THEME TOGGLE BUTTON
+   ============================================ */
+
+.theme-toggle-btn {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid var(--color-border-primary);
+    border-radius: 8px;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.theme-toggle-btn:hover {
+    background-color: var(--color-bg-hover);
+    border-color: var(--color-accent-primary);
+}
+
+.theme-toggle-btn:focus {
+    outline: 2px solid var(--color-accent-primary);
+    outline-offset: 2px;
+}
+
+.theme-icon {
+    position: absolute;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+/* Show sun icon in dark mode, moon icon in light mode - support both approaches */
+[data-theme="light"] .theme-icon-light,
+.light-theme .theme-icon-light,
+body.light-theme .theme-icon-light {
+    opacity: 0;
+    transform: rotate(90deg) scale(0.8);
+}
+
+[data-theme="light"] .theme-icon-dark,
+.light-theme .theme-icon-dark,
+body.light-theme .theme-icon-dark {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-light,
+.dark-theme .theme-icon-light,
+body.dark-theme .theme-icon-light {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+}
+
+[data-theme="dark"] .theme-icon-dark,
+.dark-theme .theme-icon-dark,
+body.dark-theme .theme-icon-dark {
+    opacity: 0;
+    transform: rotate(-90deg) scale(0.8);
+}
+
+/* ============================================
+   COMPONENT STYLES (Examples)
+   ============================================ */
+
+/* Cards */
+.card {
+    background-color: var(--color-bg-secondary) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.card-header {
+    background-color: var(--color-bg-tertiary) !important;
+    border-bottom-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* Timeline components */
+.timeline-content {
+    background-color: var(--color-bg-secondary) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.timeline-marker {
+    background-color: var(--color-bg-primary) !important;
+    border-color: var(--color-accent-primary) !important;
+    color: var(--color-accent-primary) !important;
+}
+
+.timeline-user {
+    color: var(--color-text-primary) !important;
+}
+
+.timeline-date {
+    color: var(--color-text-tertiary) !important;
+}
+
+.change-item {
+    color: var(--color-text-secondary) !important;
+}
+
+.change-item i {
+    color: var(--color-accent-primary) !important;
+}
+
+/* Notes */
+.timeline-notes {
+    background-color: var(--color-bg-tertiary) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.note-content {
+    color: var(--color-text-primary) !important;
+}
+
+/* Description */
+.description-content {
+    background-color: var(--color-bg-tertiary) !important;
+    border-color: var(--color-border-primary) !important;
+}
+
+.description-text {
+    color: var(--color-text-primary) !important;
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--color-accent-primary) !important;
+    border-color: var(--color-accent-primary) !important;
+    color: #ffffff !important;
+}
+
+.btn-primary:hover {
+    background-color: var(--color-accent-hover) !important;
+    border-color: var(--color-accent-hover) !important;
+}
+
+/* Forms */
+.form-control {
+    background-color: var(--color-bg-primary) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.form-control:focus {
+    border-color: var(--color-accent-primary) !important;
+    box-shadow: 0 0 0 0.2rem var(--color-accent-light) !important;
+}
+
+/* Tables */
+.table {
+    color: var(--color-text-primary) !important;
+}
+
+.table thead th {
+    background-color: var(--color-bg-tertiary) !important;
+    border-color: var(--color-border-primary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+.table tbody tr {
+    border-color: var(--color-border-primary) !important;
+}
+
+.table tbody tr:hover {
+    background-color: var(--color-bg-hover) !important;
+}
+
+/* Badges */
+.badge {
+    background-color: var(--color-bg-tertiary) !important;
+    color: var(--color-text-primary) !important;
+}
+
+/* Empty states */
+.empty-state {
+    color: var(--color-text-tertiary) !important;
+}
+
+.empty-state h3 {
+    color: var(--color-text-primary) !important;
+}
+
+/* ============================================
+   PREVENT FLICKER - CRITICAL
+   ============================================ */
+
+/* Disable all transitions during theme initialization */
+.theme-transitioning * {
+    transition: none !important;
+}

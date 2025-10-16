@@ -74,7 +74,28 @@ def get_redmine_connector(current_user_obj, user_password_erp):
         redmine_login = getattr(current_user_obj, 'redmine_username', None) or username
         current_app.logger.info(f"Попытка аутентификации для пользователя {username}, логин в Redmine: {redmine_login}")
 
-        # Попытка 1: Аутентификация по паролю из ERP
+        # Если у пользователя нет Redmine аккаунта, сразу используем системный API ключ
+        if not current_user_obj.is_redmine_user:
+            current_app.logger.info(f"Пользователь {username} не имеет Redmine аккаунта, используем системный API ключ")
+            system_api_key = get('redmine', 'api_key', None)
+            if system_api_key:
+                redmine_conn_system = create_redmine_connector(
+                    is_redmine_user=False,
+                    user_login=None,
+                    password=None,
+                    api_key_param=system_api_key
+                )
+
+                if redmine_conn_system and hasattr(redmine_conn_system, 'redmine') and redmine_conn_system.redmine:
+                    current_app.logger.info(f"✅ Системный API ключ успешно использован для пользователя {username}")
+                    return redmine_conn_system
+                else:
+                    current_app.logger.warning(f"⚠️ Не удалось создать коннектор с системным API ключом для пользователя {username}")
+            else:
+                current_app.logger.error(f"❌ Системный API ключ не найден для пользователя {username}")
+                return None
+
+        # Попытка 1: Аутентификация по паролю из ERP (только для пользователей с Redmine аккаунтом)
         current_app.logger.info(f"Попытка аутентификации по паролю для пользователя {username}")
         redmine_conn = create_redmine_connector(
             is_redmine_user=current_user_obj.is_redmine_user,
@@ -118,12 +139,13 @@ def get_redmine_connector(current_user_obj, user_password_erp):
                 api_key_param=system_api_key
             )
 
-            if redmine_conn_system and hasattr(redmine_conn_system, 'is_user_authenticated'):
-                if redmine_conn_system.is_user_authenticated():
+            if redmine_conn_system:
+                # Для системного API ключа проверяем наличие Redmine объекта
+                if hasattr(redmine_conn_system, 'redmine') and redmine_conn_system.redmine:
                     current_app.logger.info(f"✅ Fallback к системному API успешен для пользователя {username} (режим только чтения)")
                     return redmine_conn_system
                 else:
-                    current_app.logger.warning(f"⚠️ Fallback к системному API не прошел для пользователя {username}")
+                    current_app.logger.warning(f"⚠️ Fallback к системному API не прошел для пользователя {username} - Redmine объект не создан")
 
         current_app.logger.error(f"❌ Все попытки аутентификации не удались для пользователя {username}")
         return None

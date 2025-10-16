@@ -986,9 +986,9 @@ def update_task_assignee(task_id):
                     "success": False
                 }), 400
 
-            # Подготавливаем данные для обновления
+            # Подготавливаем данные для обновления (поддержка снятия назначения)
             update_data = {
-                "assigned_to_id": new_assignee_id
+                "assigned_to_id": new_assignee_id  # None приведет к снятию исполнителя
             }
 
             # Добавляем комментарий если указан
@@ -1003,27 +1003,31 @@ def update_task_assignee(task_id):
             # Получаем обновленную задачу для возврата актуальных данных
             updated_task = redmine_connector.redmine.issue.get(task_id, include=['assigned_to'])
 
-            # Получаем локализованное название нового исполнителя
-            mysql_conn = get_connection(
-                db_redmine_host,
-                db_redmine_user_name,
-                db_redmine_password,
-                db_redmine_name
-            )
+            # Если исполнитель снят, имя = "Не назначен" и пропускаем запрос к БД
+            if new_assignee_id is None:
+                new_assignee_name = "Не назначен"
+            else:
+                # Получаем локализованное название нового исполнителя
+                mysql_conn = get_connection(
+                    db_redmine_host,
+                    db_redmine_user_name,
+                    db_redmine_password,
+                    db_redmine_name
+                )
 
-            new_assignee_name = "Неизвестен"
-            if mysql_conn:
-                cursor = mysql_conn.cursor()
-                try:
-                    cursor.execute("SELECT CONCAT(IFNULL(lastname, ''), ' ', IFNULL(firstname, '')) as full_name FROM users WHERE id = %s", (new_assignee_id,))
-                    result_row = cursor.fetchone()
-                    if result_row:
-                        new_assignee_name = result_row['full_name'].strip()
-                    else:
-                        new_assignee_name = updated_task.assigned_to.name if hasattr(updated_task, 'assigned_to') and updated_task.assigned_to else "Неизвестен"
-                finally:
-                    cursor.close()
-                    mysql_conn.close()
+                new_assignee_name = "Неизвестен"
+                if mysql_conn:
+                    cursor = mysql_conn.cursor()
+                    try:
+                        cursor.execute("SELECT CONCAT(IFNULL(lastname, ''), ' ', IFNULL(firstname, '')) as full_name FROM users WHERE id = %s", (new_assignee_id,))
+                        result_row = cursor.fetchone()
+                        if result_row:
+                            new_assignee_name = result_row['full_name'].strip()
+                        else:
+                            new_assignee_name = updated_task.assigned_to.name if hasattr(updated_task, 'assigned_to') and updated_task.assigned_to else "Неизвестен"
+                    finally:
+                        cursor.close()
+                        mysql_conn.close()
 
             response_data = {
                 "success": True,
@@ -1033,7 +1037,7 @@ def update_task_assignee(task_id):
                 "new_assignee_name": new_assignee_name,
                 "comment": comment,
                 "updated_at": datetime.now().isoformat(),
-                "message": f"Исполнитель задачи успешно изменен на '{new_assignee_name}'"
+                "message": ("Назначение исполнителя снято" if new_assignee_id is None else f"Исполнитель задачи успешно изменен на '{new_assignee_name}'")
             }
 
             # Обрабатываем уведомления после изменения исполнителя
