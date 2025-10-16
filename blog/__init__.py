@@ -129,7 +129,6 @@ def create_app():
     login_manager.init_app(app)
     migrate.init_app(app, db, render_as_batch=True)
 
-
     # Конфигурация логгера до первого использования app.logger
     configure_blog_logger()
 
