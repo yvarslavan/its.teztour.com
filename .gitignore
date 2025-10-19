@@ -151,11 +151,4 @@ node_modules/
 *_temp.py
 # Flask session files
 flask_session/
-blog/flask_session/
-
-# Secret files and tokens
-.cursor/mcp.json
-*.token
-*.key
-*secret*
-*password*
+app_err.log
