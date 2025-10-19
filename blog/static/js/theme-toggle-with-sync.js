@@ -13,7 +13,7 @@ class ThemeManagerWithSync {
             LIGHT: 'light',
             DARK: 'dark'
         };
-        
+
         // Initialize theme immediately to prevent flicker
         this.initTheme();
     }
@@ -27,12 +27,12 @@ class ThemeManagerWithSync {
         if (stored) {
             return stored;
         }
-        
+
         // Fallback to system preference
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             return this.THEMES.DARK;
         }
-        
+
         return this.THEMES.LIGHT;
     }
 
@@ -44,35 +44,35 @@ class ThemeManagerWithSync {
     async applyTheme(theme, sync = true) {
         const html = document.documentElement;
         const body = document.body;
-        
+
         // Set data-theme attribute on HTML (new system)
         html.setAttribute('data-theme', theme);
-        
+
         // Remove old theme classes
         body.classList.remove('light-theme', 'dark-theme');
         html.classList.remove('light-theme', 'dark-theme');
-        
+
         // Add new theme class (for compatibility with old system)
         body.classList.add(`${theme}-theme`);
         html.classList.add(`${theme}-theme`);
-        
+
         // Save to localStorage
         localStorage.setItem(this.STORAGE_KEY, theme);
-        
+
         // Sync with server if enabled
         if (sync) {
             await this.syncThemeWithServer(theme);
         }
-        
+
         // Update theme toggle button icons
         this.updateToggleButtonIcons(theme);
-        
+
         // Dispatch custom event for other components to react
-        window.dispatchEvent(new CustomEvent('themeChanged', { 
-            detail: { theme } 
+        window.dispatchEvent(new CustomEvent('themeChanged', {
+            detail: { theme }
         }));
-        
-        console.log(`🎨 Theme applied: ${theme}`);
+
+
     }
 
     /**
@@ -88,12 +88,12 @@ class ThemeManagerWithSync {
                 },
                 body: JSON.stringify({ theme })
             });
-            
+
             if (!response.ok) {
-                console.warn('Failed to sync theme with server');
+
             }
         } catch (error) {
-            console.warn('Error syncing theme with server:', error);
+
             // Don't throw - theme still works locally
         }
     }
@@ -103,10 +103,10 @@ class ThemeManagerWithSync {
      */
     async toggleTheme() {
         const currentTheme = this.getStoredTheme();
-        const newTheme = currentTheme === this.THEMES.LIGHT 
-            ? this.THEMES.DARK 
+        const newTheme = currentTheme === this.THEMES.LIGHT
+            ? this.THEMES.DARK
             : this.THEMES.LIGHT;
-        
+
         await this.applyTheme(newTheme);
     }
 
@@ -126,12 +126,12 @@ class ThemeManagerWithSync {
     updateToggleButtonIcons(theme) {
         const toggleButton = document.getElementById('theme-toggle');
         if (!toggleButton) return;
-        
+
         const lightIcon = toggleButton.querySelector('.theme-icon-light');
         const darkIcon = toggleButton.querySelector('.theme-icon-dark');
-        
+
         if (!lightIcon || !darkIcon) return;
-        
+
         // Force update icons based on theme
         if (theme === this.THEMES.DARK) {
             // Dark theme - show sun icon (light icon)
@@ -146,10 +146,10 @@ class ThemeManagerWithSync {
             darkIcon.style.opacity = '1';
             darkIcon.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
         }
-        
+
         // Update tooltip
-        const tooltip = theme === this.THEMES.DARK 
-            ? 'Переключить на светлую тему' 
+        const tooltip = theme === this.THEMES.DARK
+            ? 'Переключить на светлую тему'
             : 'Переключить на темную тему';
         toggleButton.setAttribute('title', tooltip);
         toggleButton.setAttribute('aria-label', tooltip);
@@ -160,9 +160,9 @@ class ThemeManagerWithSync {
      */
     watchSystemTheme() {
         if (!window.matchMedia) return;
-        
+
         const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        
+
         darkModeQuery.addEventListener('change', (e) => {
             // Only auto-switch if user hasn't manually set a preference
             if (!localStorage.getItem(this.STORAGE_KEY)) {

@@ -62,10 +62,10 @@ try:
     WebPushException = PyWebPushException  # Алиас для совместимости  # type: ignore
     WEBPUSH_AVAILABLE = True
     logger.info("pywebpush успешно импортирован")
-    print("[INIT] pywebpush успешно импортирован", flush=True)
+    logger.info("[INIT] pywebpush успешно импортирован")
 except ImportError as e:
     logger.error(f"Ошибка импорта pywebpush: {e}")
-    print(f"[CRITICAL_ERROR] Ошибка импорта pywebpush: {e}", flush=True)
+    logger.critical(f"[CRITICAL_ERROR] Ошибка импорта pywebpush: {e}")
 
     # Заглушки для типизации
     class WebPushException(Exception):

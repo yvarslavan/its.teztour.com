@@ -1806,76 +1806,57 @@
   // Notifications Theme Manager
   class NotificationsThemeManager {
     constructor() {
+      this.themeToggle = document.getElementById("theme-switcher");
+      this.lightIcon = document.querySelector(".theme-icon-light");
+      this.darkIcon = document.querySelector(".theme-icon-dark");
+      this.handleThemeChange = this.handleThemeChange.bind(this);
       this.init();
     }
 
     init() {
-      this.loadTheme();
-      this.bindEvents();
+      const initialTheme = this.getCurrentTheme();
+      this.handleThemeChange(initialTheme);
+
+      if (this.themeToggle) {
+        this.themeToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (window.themeManager && typeof window.themeManager.toggleTheme === "function") {
+            window.themeManager.toggleTheme();
+          } else {
+            this.toggleThemeFallback();
+          }
+        });
+      }
+
+      window.addEventListener("themeChanged", (event) => {
+        this.handleThemeChange(event.detail.theme);
+      });
     }
 
-    loadTheme() {
-      const savedTheme = localStorage.getItem("theme");
-      const lightIcon = document.querySelector(".theme-icon-light");
-      const darkIcon = document.querySelector(".theme-icon-dark");
+    getCurrentTheme() {
+      if (window.themeManager && typeof window.themeManager.getStoredTheme === "function") {
+        return window.themeManager.getStoredTheme();
+      }
+      return document.documentElement.getAttribute("data-theme") ||
+        (document.body.classList.contains("dark-theme") ? "dark" : "light");
+    }
 
-      if (savedTheme === "light") {
-        document.body.classList.add("light-theme");
-        // Светлая тема - показываем луну
-        if (lightIcon) {
-          lightIcon.style.display = "none";
-        }
-        if (darkIcon) {
-          darkIcon.style.display = "block";
-          darkIcon.style.color = "#60a5fa";
-        }
-      } else {
-        // Темная тема - показываем солнце
-        if (lightIcon) {
-          lightIcon.style.display = "block";
-          lightIcon.style.color = "#fbbf24";
-        }
-        if (darkIcon) {
-          darkIcon.style.display = "none";
-        }
+    handleThemeChange(theme) {
+      if (this.lightIcon && this.darkIcon) {
+        const showLightIcon = theme === "dark";
+        this.lightIcon.style.opacity = showLightIcon ? "1" : "0";
+        this.darkIcon.style.opacity = showLightIcon ? "0" : "1";
       }
     }
 
-    bindEvents() {
-      const themeSwitcher = document.getElementById("theme-switcher");
-      if (themeSwitcher) {
-        themeSwitcher.addEventListener("click", () => this.toggleTheme());
-      }
-    }
-
-    toggleTheme() {
-      const isLight = document.body.classList.contains("light-theme");
-      const lightIcon = document.querySelector(".theme-icon-light");
-      const darkIcon = document.querySelector(".theme-icon-dark");
-
-      if (isLight) {
-        document.body.classList.remove("light-theme");
-        localStorage.setItem("theme", "dark");
-        // Показываем солнце (светлая иконка) в темной теме
-        if (lightIcon) {
-          lightIcon.style.display = "block";
-          lightIcon.style.color = "#fbbf24";
-        }
-        if (darkIcon) {
-          darkIcon.style.display = "none";
-        }
-      } else {
-        document.body.classList.add("light-theme");
-        localStorage.setItem("theme", "light");
-        // Показываем луну (темная иконка) в светлой теме
-        if (lightIcon) {
-          lightIcon.style.display = "none";
-        }
-        if (darkIcon) {
-          darkIcon.style.display = "block";
-          darkIcon.style.color = "#60a5fa";
-        }
-      }
+    toggleThemeFallback() {
+      const html = document.documentElement;
+      const nextTheme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      html.setAttribute("data-theme", nextTheme);
+      document.body.classList.toggle("dark-theme", nextTheme === "dark");
+      document.body.classList.toggle("light-theme", nextTheme === "light");
+      localStorage.setItem("site-theme", nextTheme);
+      this.handleThemeChange(nextTheme);
     }
   }
 

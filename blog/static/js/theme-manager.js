@@ -14,7 +14,7 @@ class ThemeManager {
      * Инициализация менеджера тем
      */
     init() {
-        console.log('🎨 Инициализация ThemeManager');
+
 
         // Применяем сохраненную тему или темную по умолчанию
         this.applyTheme(this.currentTheme);
@@ -28,7 +28,7 @@ class ThemeManager {
         // Слушаем изменения системной темы
         this.watchSystemTheme();
 
-        console.log(`🎨 Тема установлена: ${this.currentTheme}`);
+
     }
 
     /**
@@ -38,7 +38,7 @@ class ThemeManager {
         try {
             return localStorage.getItem('preferred-theme');
         } catch (e) {
-            console.warn('Не удалось получить сохраненную тему:', e);
+
             return null;
         }
     }
@@ -60,7 +60,7 @@ class ThemeManager {
         try {
             localStorage.setItem('preferred-theme', theme);
         } catch (e) {
-            console.warn('Не удалось сохранить тему:', e);
+
         }
     }
 
@@ -91,7 +91,7 @@ class ThemeManager {
         // Уведомляем другие компоненты об изменении темы
         this.notifyThemeChange(theme);
 
-        console.log(`🎨 Тема применена: ${theme}`);
+
     }
 
     /**
@@ -101,7 +101,7 @@ class ThemeManager {
         this.themeSwitcher = document.getElementById('theme-switcher');
 
         if (!this.themeSwitcher) {
-            console.warn('Переключатель темы не найден');
+
             return;
         }
 
@@ -123,7 +123,7 @@ class ThemeManager {
         this.themeSwitcher.setAttribute('tabindex', '0');
         this.themeSwitcher.setAttribute('aria-label', 'Переключить тему');
 
-        console.log('🎨 Переключатель темы инициализирован');
+
     }
 
     /**
@@ -136,7 +136,7 @@ class ThemeManager {
         // Анимация переключения
         this.animateThemeSwitch();
 
-        console.log(`🎨 Тема переключена: ${this.currentTheme} → ${newTheme}`);
+
     }
 
     /**
@@ -201,7 +201,7 @@ class ThemeManager {
                 if (!storedTheme) {
                     const systemTheme = e.matches ? 'dark' : 'light';
                     this.applyTheme(systemTheme);
-                    console.log(`🎨 Применена системная тема: ${systemTheme}`);
+
                 }
             });
         }
@@ -234,7 +234,7 @@ class ThemeManager {
         if (theme === 'light' || theme === 'dark') {
             this.applyTheme(theme);
         } else {
-            console.warn('Неподдерживаемая тема:', theme);
+
         }
     }
 
@@ -245,7 +245,7 @@ class ThemeManager {
         const systemTheme = this.getSystemTheme();
         this.applyTheme(systemTheme);
         localStorage.removeItem('preferred-theme');
-        console.log(`🎨 Тема сброшена к системной: ${systemTheme}`);
+
     }
 }
 
@@ -276,5 +276,3 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
-
-console.log('🎨 ThemeManager загружен и готов к работе');

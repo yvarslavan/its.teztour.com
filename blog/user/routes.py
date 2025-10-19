@@ -62,6 +62,7 @@ from blog.call.routes import get_db_connection
 import pymysql
 from pymysql.cursors import DictCursor
 from blog.notification_service import check_notifications_improved
+from blog.utils.decorators import debug_only, development_only
 
 
 # Настройка логгирования
@@ -208,154 +209,102 @@ def login():
 
     # Детальная отладка CSRF
     if request.method == "POST":
-        print("\n" + "="*80)
-        print("🔍 [LOGIN DEBUG] POST Request Analysis")
-        print("="*80)
-        print(f"📝 Request form data: {dict(request.form)}")
-        print(f"🔒 CSRF enabled: {current_app.config.get('WTF_CSRF_ENABLED')}")
-        print(f"🔒 CSRF token in form: {request.form.get('csrf_token', 'NOT FOUND')}")
-        print(f"🍪 Session ID: {session.get('_id', 'No session ID')}")
-        print(f"🍪 Session keys: {list(session.keys())}")
-        print(f"🍪 Cookies: {list(request.cookies.keys())}")
-        print(f"🌐 Request headers: Origin={request.headers.get('Origin')}, Referer={request.headers.get('Referer')}")
+        logger.debug("🔍 [LOGIN DEBUG] POST Request Analysis")
+        logger.debug(f"📝 Request form data: {dict(request.form)}")
+        logger.debug(f"🔒 CSRF enabled: {current_app.config.get('WTF_CSRF_ENABLED')}")
+        logger.debug(f"🔒 CSRF token in form: {request.form.get('csrf_token', 'NOT FOUND')}")
+        logger.debug(f"🍪 Session ID: {session.get('_id', 'No session ID')}")
+        logger.debug(f"🍪 Session keys: {list(session.keys())}")
+        logger.debug(f"🍪 Cookies: {list(request.cookies.keys())}")
+        logger.debug(f"🌐 Request headers: Origin={request.headers.get('Origin')}, Referer={request.headers.get('Referer')}")
 
         # Генерируем новый CSRF токен для отладки
         try:
             debug_csrf = generate_csrf()
-            print(f"🔐 Generated CSRF token: {debug_csrf[:20]}...")
+            logger.debug(f"🔐 Generated CSRF token: {debug_csrf[:20]}...")
         except Exception as e:
-            print(f"❌ Error generating CSRF token: {e}")
+            logger.error(f"❌ Error generating CSRF token: {e}")
 
         # Populate form data if not already set
         if not form.username.data and request.form.get('username'):
             form.username.data = request.form.get('username')
-            print(f"✅ Manually set username: {form.username.data}")
+            logger.debug(f"✅ Manually set username: {form.username.data}")
 
         if not form.password.data and request.form.get('password'):
             form.password.data = request.form.get('password')
-            print(f"✅ Manually set password (length: {len(form.password.data)})")
+            logger.debug(f"✅ Manually set password (length: {len(form.password.data)})")
 
-        print(f"📋 Form errors: {form.errors}")
-        print(f"✔️ Form validate: {form.validate()}")
-        print(f"✔️ Form validate_on_submit: {form.validate_on_submit()}")
-        print("="*80 + "\n")
+        logger.debug(f"📋 Form errors: {form.errors}")
+        logger.debug(f"✔️ Form validate: {form.validate()}")
+        logger.debug(f"✔️ Form validate_on_submit: {form.validate_on_submit()}")
 
     if form.validate_on_submit():
-        print(f"✅ Form validation passed")
-        print(f"Username: {form.username.data}")
-        print(f"Password length: {len(form.password.data) if form.password.data else 0}")
+        logger.debug(f"✅ Form validation passed")
+        logger.debug(f"Username: {form.username.data}")
+        logger.debug(f"Password length: {len(form.password.data) if form.password.data else 0}")
 
         user = authenticate_user(form.username.data, form.password.data)
-        print(f"Authenticate result: {user}")
+        logger.debug(f"Authenticate result: {user}")
 
         if user:
-            print(f"✅ User authenticated successfully: {user.username}")
+            logger.debug(f"✅ User authenticated successfully: {user.username}")
             return handle_successful_login(user, form)
         else:
-            print(f"❌ Authentication failed for user: {form.username.data}")
+            logger.debug(f"❌ Authentication failed for user: {form.username.data}")
             flash("Войти не удалось. Неверный пароль или пароль мог быть обновлен в ERP. Пожалуйста, попробуйте снова.",
                 "error")
     else:
-        print(f"❌ Form validation failed")
-        print(f"Form errors: {form.errors}")
-        print(f"Form data: username={form.username.data}, password={'*' * len(form.password.data) if form.password.data else 'None'}")
+        logger.debug(f"❌ Form validation failed")
+        logger.debug(f"Form errors: {form.errors}")
+        logger.debug(f"Form data: username={form.username.data}, password={'*' * len(form.password.data) if form.password.data else 'None'}")
 
     return render_template(
         "login.html", form=form, title="Логин TEZ ERP", legend="Войти"
     )
 
 
-@users.route("/login-modern", methods=["GET", "POST"])
-def login_modern():
-    """Современная форма авторизации (тестовая версия)"""
-    if current_user.is_authenticated:
-        return redirect(url_for("main.blog"))
-
-    form = LoginForm()
-    # print(f"Generated CSRF token: {generate_csrf()}")  # CSRF отключен
-
-    # Debug CSRF validation
-    if request.method == "POST":
-        print(f"POST request received")
-        print(f"Request form data: {dict(request.form)}")
-
-        # Populate form data if not already set
-        if not form.username.data and request.form.get('username'):
-            form.username.data = request.form.get('username')
-            print(f"✅ Manually set username: {form.username.data}")
-
-        if not form.password.data and request.form.get('password'):
-            form.password.data = request.form.get('password')
-            print(f"✅ Manually set password (length: {len(form.password.data)})")
-
-        print(f"Form errors: {form.errors}")
-        print(f"Form validate: {form.validate()}")
-        print(f"Form validate_on_submit: {form.validate_on_submit()}")
-
-    if form.validate_on_submit():
-        print(f"✅ Form validation passed")
-        print(f"Username: {form.username.data}")
-        print(f"Password length: {len(form.password.data) if form.password.data else 0}")
-
-        user = authenticate_user(form.username.data, form.password.data)
-        print(f"Authenticate result: {user}")
-
-        if user:
-            print(f"✅ User authenticated successfully: {user.username}")
-            return handle_successful_login(user, form)
-        else:
-            print(f"❌ Authentication failed for user: {form.username.data}")
-            flash("Войти не удалось. Неверный пароль или пароль мог быть обновлен в ERP. Пожалуйста, попробуйте снова.",
-                "error")
-    else:
-        print(f"❌ Form validation failed")
-        print(f"Form errors: {form.errors}")
-        print(f"Form data: username={form.username.data}, password={'*' * len(form.password.data) if form.password.data else 'None'}")
-
-    return render_template(
-        "login_modern.html", form=form, title="Логин TEZ ERP", legend="Войти"
-    )
+# Тестовый эндпоинт login-modern удален
 
 
 def authenticate_user(username, password):
-    print(f"🔐 authenticate_user called for username: {username}")
+    logger.debug(f"🔐 authenticate_user called for username: {username}")
     user = User.query.filter_by(username=username).first()
-    print(f"🔐 User found in SQLite: {user is not None}")
+    logger.debug(f"🔐 User found in SQLite: {user is not None}")
 
     if user:
-        print(f"🔐 User ID: {user.id}, Username: {user.username}")
+        logger.debug(f"🔐 User ID: {user.id}, Username: {user.username}")
         # Проверяем пароль в SQLite
         password_match = password == user.password
-        print(f"🔐 Password match in SQLite: {password_match}")
+        logger.debug(f"🔐 Password match in SQLite: {password_match}")
 
         if password_match:
             # Проверяем актуальность пароля в Oracle
             oracle_check = check_and_update_password(user, password)
-            print(f"🔐 Oracle password check: {oracle_check}")
+            logger.debug(f"🔐 Oracle password check: {oracle_check}")
             if oracle_check:
-                print(f"✅ Authentication successful for user: {username}")
+                logger.debug(f"✅ Authentication successful for user: {username}")
                 return user
             else:
-                print(f"❌ Oracle password check failed for user: {username}")
+                logger.debug(f"❌ Oracle password check failed for user: {username}")
         else:
-            print(f"❌ SQLite password mismatch for user: {username}")
+            logger.debug(f"❌ SQLite password mismatch for user: {username}")
     else:
-        print(f"❌ User not found in SQLite: {username}")
+        logger.debug(f"❌ User not found in SQLite: {username}")
 
-    print(f"❌ Authentication failed for user: {username}")
+    logger.debug(f"❌ Authentication failed for user: {username}")
     return None
 
 def check_and_update_password(user, provided_password):
-    print(f"🔐 check_and_update_password called for user: {user.username}")
+    logger.debug(f"🔐 check_and_update_password called for user: {user.username}")
     try:
-        print(f"🔐 Attempting Oracle connection...")
+        logger.debug(f"🔐 Attempting Oracle connection...")
         oracle_connection = connect_oracle(
             db_host, db_port, db_service_name, db_user_name, db_password
         )
         if oracle_connection is None:
-            print(f"❌ Oracle connection failed")
+            logger.error(f"❌ Oracle connection failed")
             raise oracledb.DatabaseError("Failed to establish connection to Oracle DB")
-        print(f"✅ Oracle connection established")
+        logger.debug(f"✅ Oracle connection established")
 
         # Получаем актуальный пароль из Oracle - НЕ используем text() с cx_Oracle
         cursor = oracle_connection.cursor()
@@ -383,7 +332,7 @@ def check_and_update_password(user, provided_password):
 
 
 def handle_successful_login(user: User, form: LoginForm):
-    print(f"🔐 Starting successful login for user: {user.username} (ID: {user.id})")
+    logger.debug(f"🔐 Starting successful login for user: {user.username} (ID: {user.id})")
     try:
         session_maker = sessionmaker(bind=db.engine)
         local_session = session_maker()
@@ -406,18 +355,18 @@ def handle_successful_login(user: User, form: LoginForm):
         # Принудительно делаем сессию постоянной перед login_user
         session.permanent = True
 
-        print(f"🔐 Calling login_user for user: {user.username}")
+        logger.debug(f"🔐 Calling login_user for user: {user.username}")
         login_user(user, remember=form.remember.data, duration=timedelta(days=1))
-        print(f"🔐 login_user completed")
+        logger.debug(f"🔐 login_user completed")
 
         # Проверка, что текущий пользователь установлен
         if not current_user.is_authenticated:
-            print("❌ ВНИМАНИЕ: current_user не авторизован после login_user!")
+            logger.warning("❌ ВНИМАНИЕ: current_user не авторизован после login_user!")
             # Принудительное копирование ID пользователя в сессию
             session['_user_id'] = str(user.id)
-            print(f"🔐 Manually set session _user_id: {user.id}")
+            logger.debug(f"🔐 Manually set session _user_id: {user.id}")
         else:
-            print(f"✅ current_user is authenticated: {current_user.username}")
+            logger.debug(f"✅ current_user is authenticated: {current_user.username}")
 
         # Сохраняем данные в сессию
         session["user_password_erp"] = user.password
@@ -444,10 +393,10 @@ def handle_successful_login(user: User, form: LoginForm):
 
         next_page = request.args.get("next")
         if next_page:
-            print(f"🔐 Redirecting to next_page: {next_page}")
+            logger.debug(f"🔐 Redirecting to next_page: {next_page}")
             return redirect(next_page)
 
-        print(f"🔐 Redirecting to users.account")
+        logger.debug(f"🔐 Redirecting to users.account")
         return redirect(url_for("users.account"))
     except Exception as e:
         current_app.logger.error(f"Error in handle_successful_login: {str(e)}")
@@ -456,35 +405,35 @@ def handle_successful_login(user: User, form: LoginForm):
 
 
 def check_notifications_and_start_scheduler(email, user_id):
-    print(f"[DEBUG] Запуск функции check_notifications_and_start_scheduler для пользователя ID: {user_id}, Email: {email}")
+    logger.debug(f"[DEBUG] Запуск функции check_notifications_and_start_scheduler для пользователя ID: {user_id}, Email: {email}")
 
     # Добавляем диагностику уведомлений
     try:
         from blog.notification_service import debug_notifications_for_user
         debug_result = debug_notifications_for_user(email, user_id)
-        print(f"[DEBUG] Результат диагностики уведомлений: {debug_result}")
+        logger.debug(f"[DEBUG] Результат диагностики уведомлений: {debug_result}")
     except Exception as e:
-        print(f"[DEBUG] Ошибка при диагностике уведомлений: {e}")
+        logger.error(f"[DEBUG] Ошибка при диагностике уведомлений: {e}")
 
     # Добавляем подробное логирование перед вызовом функции check_notifications
     try:
-        print(f"[DEBUG] Попытка вызова check_notifications_improved({email}, {user_id})")
+        logger.debug(f"[DEBUG] Попытка вызова check_notifications_improved({email}, {user_id})")
         # Используем улучшенную функцию проверки уведомлений
         result = check_notifications_improved(email, user_id)
-        print(f"[DEBUG] Результат вызова check_notifications_improved: {result}")
+        logger.debug(f"[DEBUG] Результат вызова check_notifications_improved: {result}")
     except Exception as e:
-        print(f"[DEBUG] Ошибка при вызове check_notifications_improved: {e}")
+        logger.error(f"[DEBUG] Ошибка при вызове check_notifications_improved: {e}")
         import traceback
-        print(traceback.format_exc())
+        logger.error(traceback.format_exc())
 
     # Запускаем задачу планировщика
     try:
-        print(f"[DEBUG] Запуск планировщика start_user_job({email}, {user_id}, 60)")
+        logger.debug(f"[DEBUG] Запуск планировщика start_user_job({email}, {user_id}, 60)")
         start_user_job(email, user_id, 60)
     except Exception as e:
-        print(f"[DEBUG] Ошибка при запуске планировщика: {e}")
+        logger.error(f"[DEBUG] Ошибка при запуске планировщика: {e}")
         import traceback
-        print(traceback.format_exc())
+        logger.error(traceback.format_exc())
 
 
 def setup_user_as_online(user):
@@ -526,13 +475,13 @@ def setup_user_as_offline(user):
 
 def start_user_job(current_user_email, current_user_id, timeout):
     job_id = f"notification_job_{current_user_id}"
-    print(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
+    logger.debug(f"[SCHEDULER] Попытка добавить/обновить задачу: {job_id} с интервалом {timeout} сек.")
     try:
 
         # Проверяем доступ к планировщику и модулю notification_service
         from blog.notification_service import check_notifications_improved
-        print(f"[DEBUG] Модуль notification_service доступен, импортирован успешно")
-        print(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
+        logger.debug(f"[DEBUG] Модуль notification_service доступен, импортирован успешно")
+        logger.debug(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
 
         # Создаем обертку, которая будет выполняться в контексте приложения
         def job_function():
@@ -547,19 +496,19 @@ def start_user_job(current_user_email, current_user_id, timeout):
             id=job_id,  # Уникальный идентификатор для задачи этого пользователя
             replace_existing=True,  # Заменяем предыдущую задачу, если она существовала
         )
-        print(f"[SCHEDULER] Задача {job_id} успешно добавлена/обновлена.")
+        logger.debug(f"[SCHEDULER] Задача {job_id} успешно добавлена/обновлена.")
     except Exception as e:
-        print(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}")
+        logger.error(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}")
         import traceback
-        print(traceback.format_exc())
+        logger.error(traceback.format_exc())
         logger.error(f"[SCHEDULER] Ошибка при добавлении/обновлении задачи {job_id}: {e}", exc_info=True)
 
     if not scheduler.running: # <--- Используем импортированный scheduler
         try:
             scheduler.start() # <--- Используем импортированный scheduler
-            print("[SCHEDULER] Планировщик стартовал.")
+            logger.debug("[SCHEDULER] Планировщик стартовал.")
         except Exception as e:
-            print(f"[SCHEDULER] Ошибка при старте планировщика: {e}")
+            logger.error(f"[SCHEDULER] Ошибка при старте планировщика: {e}")
             logger.error(f"[SCHEDULER] Ошибка при старте планировщика: {e}", exc_info=True)
 
     # Это сообщение теперь должно появляться благодаря изменению уровня логирования
@@ -570,11 +519,11 @@ def stop_user_job(user_id):
     """Остановка задачи планировщика для конкретного пользователя"""
     try:
         job_id = f"notification_job_{user_id}"
-        print(f"[SCHEDULER] Попытка остановить задачу: {job_id}")
+        logger.debug(f"[SCHEDULER] Попытка остановить задачу: {job_id}")
 
         # global scheduler_instance # Больше не нужна
         if scheduler is None: # <--- Проверяем импортированный scheduler
-            print(f"[SCHEDULER] Планировщик не инициализирован, задача {job_id} не может быть остановлена")
+            logger.warning(f"[SCHEDULER] Планировщик не инициализирован, задача {job_id} не может быть остановлена")
             return
 
         # Проверяем, существует ли задача
@@ -582,17 +531,17 @@ def stop_user_job(user_id):
             job = scheduler.get_job(job_id) # <--- Используем импортированный scheduler
             if job:
                 scheduler.remove_job(job_id) # <--- Используем импортированный scheduler
-                print(f"[SCHEDULER] Задача {job_id} успешно остановлена")
+                logger.debug(f"[SCHEDULER] Задача {job_id} успешно остановлена")
                 logging.info(f"User-specific job {job_id} successfully stopped.")
         except JobLookupError:
-            print(f"[SCHEDULER] Задача {job_id} не найдена (JobLookupError)")
+            logger.warning(f"[SCHEDULER] Задача {job_id} не найдена (JobLookupError)")
             logging.warning(f"User-specific job {job_id} was not found when attempting to stop it.")
         except Exception as e:
-            print(f"[SCHEDULER] Ошибка при остановке задачи {job_id}: {e}")
+            logger.error(f"[SCHEDULER] Ошибка при остановке задачи {job_id}: {e}")
             logging.error(f"Error stopping user-specific job {job_id}: {e}")
 
     except Exception as e:
-        print(f"[SCHEDULER] Общая ошибка при остановке задачи пользователя {user_id}: {e}")
+        logger.error(f"[SCHEDULER] Общая ошибка при остановке задачи пользователя {user_id}: {e}")
         logging.error(f"General error stopping user-specific job for user {user_id}: {e}")
 
 
@@ -811,7 +760,7 @@ def delete_user(username):
             full_path = os.path.join(
                 os.getcwd(), "blog/static", "profile_pics", user.username
             )
-            # print(full_path)
+
             shutil.rmtree(full_path)
 
             flash(f"Пользователь {username} был удалён!", "info")
@@ -969,13 +918,13 @@ def send_password():
             return jsonify({"message": "Ошибка при отправке запроса"}), 500
 
         if "Ваш пароль отправлен по E-mail" in response.text:
-            print("Письмо с восстановлением пароля отправлено на:", username)
+            logger.info("Письмо с восстановлением пароля отправлено на:", username)
             return jsonify({"message": "Пароль отправлен на вашу почту"}), 200
         else:
-            print(f"Ошибка при отправке письма: {response.text}")
+            logger.error(f"Ошибка при отправке письма: {response.text}")
             return jsonify({"message": f"{response.text}"}), 500
     except Exception as e:
-        print("Произошла ошибка:", e)
+        logger.error("Произошла ошибка:", e)
         return jsonify({"message": "Произошла ошибка"}), 500
 
 
@@ -987,7 +936,7 @@ def send_request(payload):
         response.raise_for_status()  # Проверка на ошибки HTTP
         return response
     except Exception as e:
-        print("Произошла ошибка при отправке письма:", e)
+        logger.error("Произошла ошибка при отправке письма:", e)
 
 
 @users.route("/update_vpn_date", methods=["POST"])
@@ -1113,78 +1062,7 @@ def quality_control():
     return render_template('quality/quality_control.html')
 
 
-@users.route('/auth_status')
-def auth_status():
-    return jsonify({
-        'is_authenticated': current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else False,
-        'user_id': current_user.id if hasattr(current_user, 'id') and current_user.is_authenticated else None,
-        'session_keys': list(session.keys()) if session else [],
-        'secure_cookie': current_app.config.get('SESSION_COOKIE_SECURE', False),
-        'samesite_setting': current_app.config.get('SESSION_COOKIE_SAMESITE', None)
-    })
-
-
-@users.route('/session_debug')
-def session_debug():
-    try:
-        csrf_token = generate_csrf()
-        csrf_token_available = True
-        csrf_token_preview = csrf_token[:20] + "..." if csrf_token else "N/A"
-    except Exception:
-        csrf_token_available = False
-        csrf_token_preview = "Error generating token"
-
-    return jsonify({
-        'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE'),
-        'session_cookie_samesite': current_app.config.get('SESSION_COOKIE_SAMESITE'),
-        'session_cookie_domain': current_app.config.get('SESSION_COOKIE_DOMAIN'),
-        'wtf_csrf_ssl_strict': current_app.config.get('WTF_CSRF_SSL_STRICT'),
-        'wtf_csrf_enabled': current_app.config.get('WTF_CSRF_ENABLED'),
-        'wtf_csrf_time_limit': current_app.config.get('WTF_CSRF_TIME_LIMIT'),
-        'csrf_token_available': csrf_token_available,
-        'csrf_token_preview': csrf_token_preview,
-        'secret_key_set': current_app.secret_key is not None,
-        'debug_mode': current_app.debug,
-    })
-
-
-@users.route('/check_session')
-def check_session():
-    """Отладочный метод для проверки сессии"""
-    try:
-        # Пробуем принудительно создать сессию
-        if '_id' not in session:
-            session['test_value'] = 'проверка сессии'
-            session.modified = True
-
-        # Безопасное получение данных о пользователе
-        is_authenticated = current_user.is_authenticated if hasattr(current_user, 'is_authenticated') else False
-        user_id = current_user.id if is_authenticated else None
-
-        # Безопасное получение настроек Flask
-        flask_session_enabled = current_app.config.get('SESSION_TYPE') == 'filesystem'
-
-        session_data = {
-            'authenticated': is_authenticated,
-            'user_id': user_id,
-            'session_keys': list(session.keys()) if session else [],
-            'session_values': {k: str(v) for k, v in session.items()} if session else {},
-            'session_id': request.cookies.get('helpdesk_session', None),
-            'cookies': {k: v for k, v in request.cookies.items()},
-            'flask_session_enabled': flask_session_enabled
-        }
-        return jsonify(session_data)
-    except Exception as e:
-        return jsonify({'error': str(e), 'message': 'Ошибка при проверке сессии'})
-
-
-@users.route('/login_check')
-def login_check():
-    """Простая проверка авторизации"""
-    if current_user.is_authenticated:
-        return f"Вы авторизованы как {current_user.username}"
-    else:
-        return "Вы не авторизованы"
+# Тестовые эндпоинты auth_status, session_debug, check_session и login_check удалены
 
 
 @users.route("/api/system/status")
@@ -1349,177 +1227,4 @@ def get_notifications_status():
         return jsonify({'success': False, 'error': 'Database error'}), 500
 
 
-@users.route("/test_xmpp_message", methods=["GET"])
-@login_required
-def test_xmpp_message():
-    # Этот роут будет удален или закомментирован
-    return "Функция недоступна", 404
-
-
-@users.route("/debug-photo-upload", methods=["GET"])
-@login_required
-def debug_photo_upload():
-    """Диагностика загрузки фото профиля"""
-    import os
-    import stat
-
-    results = []
-    username = current_user.username
-
-    # Проверяем базовую директорию
-    base_path = os.path.join(current_app.root_path, 'static', 'profile_pics')
-    results.append(f"🔍 Базовая директория: {base_path}")
-    results.append(f"   Существует: {os.path.exists(base_path)}")
-
-    if os.path.exists(base_path):
-        try:
-            base_perms = oct(os.stat(base_path).st_mode)[-3:]
-            results.append(f"   Права доступа: {base_perms}")
-        except Exception as e:
-            results.append(f"   Ошибка получения прав: {e}")
-
-    # Проверяем директорию пользователя
-    user_path = os.path.join(base_path, username)
-    results.append(f"🔍 Директория пользователя: {user_path}")
-    results.append(f"   Существует: {os.path.exists(user_path)}")
-
-    if os.path.exists(user_path):
-        try:
-            user_perms = oct(os.stat(user_path).st_mode)[-3:]
-            results.append(f"   Права доступа: {user_perms}")
-        except Exception as e:
-            results.append(f"   Ошибка получения прав: {e}")
-
-    # Проверяем директорию account_img
-    account_img_path = os.path.join(user_path, 'account_img')
-    results.append(f"🔍 Директория account_img: {account_img_path}")
-    results.append(f"   Существует: {os.path.exists(account_img_path)}")
-
-    if os.path.exists(account_img_path):
-        try:
-            account_perms = oct(os.stat(account_img_path).st_mode)[-3:]
-            results.append(f"   Права доступа: {account_perms}")
-
-            # Список файлов в директории
-            files = os.listdir(account_img_path)
-            results.append(f"   Файлы в директории: {files}")
-
-            for file in files:
-                file_path = os.path.join(account_img_path, file)
-                try:
-                    file_perms = oct(os.stat(file_path).st_mode)[-3:]
-                    file_size = os.path.getsize(file_path)
-                    results.append(f"   {file}: права {file_perms}, размер {file_size} байт")
-                except Exception as e:
-                    results.append(f"   {file}: ошибка {e}")
-
-        except Exception as e:
-            results.append(f"   Ошибка получения прав: {e}")
-
-    # Проверяем текущий image_file
-    results.append(f"🔍 Текущий image_file в БД: {current_user.image_file}")
-
-    # Проверяем полный путь к файлу
-    if current_user.image_file and current_user.image_file != 'default.jpg':
-        full_image_path = os.path.join(account_img_path, current_user.image_file)
-        results.append(f"🔍 Полный путь к файлу: {full_image_path}")
-        results.append(f"   Существует: {os.path.exists(full_image_path)}")
-
-        if os.path.exists(full_image_path):
-            try:
-                file_perms = oct(os.stat(full_image_path).st_mode)[-3:]
-                file_size = os.path.getsize(full_image_path)
-                results.append(f"   Права доступа: {file_perms}, размер: {file_size} байт")
-            except Exception as e:
-                results.append(f"   Ошибка получения информации: {e}")
-
-    # Проверяем права на запись
-    results.append(f"🔍 Проверка прав на запись:")
-    try:
-        test_file = os.path.join(account_img_path, 'test_write.tmp')
-        with open(test_file, 'w') as f:
-            f.write('test')
-        os.remove(test_file)
-        results.append("   ✅ Права на запись есть")
-    except Exception as e:
-        results.append(f"   ❌ Ошибка записи: {e}")
-
-    return f"""
-    <html>
-    <head><title>Диагностика загрузки фото</title></head>
-    <body style="font-family: Arial; margin: 20px;">
-        <h2>Диагностика загрузки фото для {username}</h2>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-            {'<br>'.join(results)}
-        </div>
-        <hr>
-        <h3>Действия:</h3>
-        <p><a href="/fix-image-file" style="background: #007bff; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Исправить image_file в БД</a></p>
-    </body>
-    </html>
-    """
-
-
-@users.route("/fix-image-file", methods=["GET"])
-@login_required
-def fix_image_file():
-    """Исправление image_file в базе данных"""
-    import os
-
-    username = current_user.username
-    results = []
-
-    try:
-        # Получаем пользователя из БД
-        user = User.query.filter_by(username=username).first()
-        if not user:
-            return "Пользователь не найден", 404
-
-        results.append(f"🔍 Исправление image_file для пользователя {username}")
-        results.append(f"   Текущий image_file в БД: {user.image_file}")
-
-        # Проверяем директорию с файлами
-        account_img_path = os.path.join(current_app.root_path, 'static', 'profile_pics', username, 'account_img')
-
-        if os.path.exists(account_img_path):
-            files = os.listdir(account_img_path)
-            results.append(f"   Файлы в директории: {files}")
-
-            if files:
-                # Берем самый новый файл (по времени изменения)
-                newest_file = max(files, key=lambda f: os.path.getmtime(os.path.join(account_img_path, f)))
-                results.append(f"   Самый новый файл: {newest_file}")
-
-                # Обновляем в БД
-                old_image_file = user.image_file
-                user.image_file = newest_file
-                db.session.commit()
-
-                results.append(f"   ✅ Обновлено в БД: {old_image_file} → {newest_file}")
-
-                # Обновляем current_user
-                current_user.image_file = newest_file
-
-                results.append("   ✅ current_user также обновлен")
-            else:
-                results.append("   ❌ Файлы не найдены в директории")
-        else:
-            results.append("   ❌ Директория не существует")
-
-    except Exception as e:
-        results.append(f"   ❌ Ошибка: {e}")
-        current_app.logger.error(f"Ошибка при исправлении image_file для {username}: {e}")
-
-    return f"""
-    <html>
-    <head><title>Исправление image_file</title></head>
-    <body style="font-family: Arial; margin: 20px;">
-        <h2>Исправление image_file</h2>
-        <div style="background: #f5f5f5; padding: 15px; border-radius: 5px;">
-            {'<br>'.join(results)}
-        </div>
-        <hr>
-        <p><a href="/account" style="background: #28a745; color: white; padding: 10px; text-decoration: none; border-radius: 5px;">Вернуться в профиль</a></p>
-    </body>
-    </html>
-    """
+# Тестовые эндпоинты test_xmpp_message, debug-photo-upload и fix-image-file удалены

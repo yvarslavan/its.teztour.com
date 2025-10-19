@@ -4,50 +4,50 @@
  * Дата: 26.12.2023
  */
 
-console.log('[DEBUG] Скрипт отладки загружен');
+
 
 // Функция для проверки состояния спиннера
 function debugSpinner() {
     // Проверяем наличие элемента спиннера
     const spinner = document.getElementById('loading-spinner');
-    console.log('[DEBUG] Элемент спиннера найден:', !!spinner);
+
 
     if (spinner) {
-        console.log('[DEBUG] Классы спиннера:', spinner.className);
-        console.log('[DEBUG] Видимость спиннера:', window.getComputedStyle(spinner).display);
+
+
 
         // Проверяем наличие фильтров
         const statusFilter = document.getElementById('status-filter');
         const projectFilter = document.getElementById('project-filter');
         const priorityFilter = document.getElementById('priority-filter');
 
-        console.log('[DEBUG] Фильтр статуса найден:', !!statusFilter);
-        console.log('[DEBUG] Фильтр проекта найден:', !!projectFilter);
-        console.log('[DEBUG] Фильтр приоритета найден:', !!priorityFilter);
+
+
+
 
         // Проверяем наличие кнопок очистки
         const clearStatusBtn = document.getElementById('clear-status-filter');
         const clearProjectBtn = document.getElementById('clear-project-filter');
         const clearPriorityBtn = document.getElementById('clear-priority-filter');
 
-        console.log('[DEBUG] Кнопка сброса статуса найдена:', !!clearStatusBtn);
-        console.log('[DEBUG] Кнопка сброса проекта найдена:', !!clearProjectBtn);
-        console.log('[DEBUG] Кнопка сброса приоритета найдена:', !!clearPriorityBtn);
+
+
+
 
         // Проверяем загруженные CSS файлы
         const styleSheets = Array.from(document.styleSheets);
-        console.log('[DEBUG] Загруженные стили:', styleSheets);
+
 
         // Проверяем наличие CSS файла спиннера
         const spinnerCssLoaded = styleSheets.some(sheet =>
             sheet.href && sheet.href.includes('modern_spinner_and_filters.css'));
-        console.log('[DEBUG] CSS файл спиннера загружен:', spinnerCssLoaded);
+
     }
 }
 
 // Функция для принудительного применения стилей к спиннеру
 function forceShowSpinner() {
-    console.log('[DEBUG] Применяем стили спиннера принудительно');
+
 
     const spinner = document.getElementById('loading-spinner');
     if (spinner) {
@@ -66,7 +66,7 @@ function forceShowSpinner() {
         spinner.style.alignItems = 'center';
     } else {
         // Если элемент не найден, создаем новый
-        console.log('[DEBUG] Элемент modern-spinner НЕ найден, создаем заново');
+
 
         const newSpinner = document.createElement('div');
         newSpinner.id = 'modern-spinner';
@@ -101,7 +101,7 @@ function forceShowSpinner() {
 
 // Функция для принудительного применения стилей к кнопкам фильтров
 function forceStyleFilterButtons() {
-    console.log('[DEBUG] Применяем стили кнопок фильтров принудительно');
+
 
     const clearButtons = [
         document.getElementById('clear-status-filter'),

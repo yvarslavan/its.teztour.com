@@ -3,6 +3,9 @@ import logging
 import os
 from pathlib import Path
 
+# Получаем логгер для текущего модуля
+logger = logging.getLogger(__name__)
+
 from apscheduler.triggers.interval import IntervalTrigger
 from flask import Flask, request, session, Blueprint
 from flask_apscheduler import APScheduler
@@ -39,9 +42,9 @@ def shutdown_scheduler():
     if scheduler.running:
         try:
             scheduler.shutdown()
-            print("Scheduler shutdown successfully.")
+            logger.info("Scheduler shutdown successfully.")
         except Exception as e:
-            print(f"Error during scheduler shutdown: {e}")
+            logger.error(f"Error during scheduler shutdown: {e}")
 
 # Регистрируем функцию для выполнения при выходе из приложения
 atexit.register(shutdown_scheduler)
@@ -59,7 +62,7 @@ if not db_path.parent.exists():
 # Инициализация Oracle Client отключена - используем Thin Mode
 # python-oracledb работает в Thin Mode (чистый Python) без Oracle Client
 # Thick Mode отключен, так как не требует установки Oracle Instant Client
-print("🟢 [INIT] Oracle DB работает в Thin Mode (без Oracle Client)")
+logger.info("🟢 [INIT] Oracle DB работает в Thin Mode (без Oracle Client)")
 
 def create_app():
     app = Flask(__name__)
@@ -84,7 +87,7 @@ def create_app():
             SEND_FILE_MAX_AGE_DEFAULT=0,
             TEMPLATES_AUTO_RELOAD=True
         )
-        print("🔧 [INIT] Режим отладки активен - настройки разработки применены")
+        app.logger.info("🔧 [INIT] Режим отладки активен - настройки разработки применены")
     else:
         # Для продакшена
         app.config.update(
@@ -98,7 +101,7 @@ def create_app():
             WTF_CSRF_TIME_LIMIT=None,  # Отключаем ограничение времени для CSRF токенов
             WTF_CSRF_SSL_STRICT=False  # Отключаем строгую проверку SSL для CSRF (если за прокси)
         )
-        print("✅ [INIT] Продакшен режим активен - настройки безопасности применены")
+        app.logger.info("✅ [INIT] Продакшен режим активен - настройки безопасности применены")
 
     # Устанавливаем максимальный допустимый размер тела запроса (10 МБ)
     app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 мегабайт
@@ -107,7 +110,7 @@ def create_app():
     for key in ["SQLALCHEMY_DATABASE_URI", "SQLALCHEMY_DATABASE_URI_ORACLE_CRM",
                 "SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES"]:
         if app.config.get(key) is None:
-            print(f"ВНИМАНИЕ: Переменная {key} не определена в конфигурации!")
+            app.logger.warning(f"ВНИМАНИЕ: Переменная {key} не определена в конфигурации!")
 
     # НОВОЕ: Минимальный набор настроек для SQLAlchemy
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
@@ -121,10 +124,10 @@ def create_app():
     app.jinja_env.auto_reload = True
     app.jinja_env.cache = {}  # Очищаем кэш шаблонов
 
-    print(f"🔧 [INIT] Принудительные настройки шаблонов:")
-    print(f"🔧 [INIT] TEMPLATES_AUTO_RELOAD: {app.config.get('TEMPLATES_AUTO_RELOAD')}")
-    print(f"🔧 [INIT] jinja_env.auto_reload: {app.jinja_env.auto_reload}")
-    print(f"🔧 [INIT] DEBUG: {app.debug}")
+    app.logger.info(f"🔧 [INIT] Принудительные настройки шаблонов:")
+    app.logger.info(f"🔧 [INIT] TEMPLATES_AUTO_RELOAD: {app.config.get('TEMPLATES_AUTO_RELOAD')}")
+    app.logger.info(f"🔧 [INIT] jinja_env.auto_reload: {app.jinja_env.auto_reload}")
+    app.logger.info(f"🔧 [INIT] DEBUG: {app.debug}")
 
     # Инициализация компонентов
     db.init_app(app)
@@ -148,9 +151,9 @@ def create_app():
         return dict(csrf_token=generate_csrf)
 
     # Логируем состояние CSRF защиты
-    print(f"🔒 [INIT] CSRF Protection: WTF_CSRF_ENABLED = {app.config.get('WTF_CSRF_ENABLED')}")
-    print(f"🔒 [INIT] CSRF Time Limit: {app.config.get('WTF_CSRF_TIME_LIMIT')}")
-    print(f"🔒 [INIT] CSRF SSL Strict: {app.config.get('WTF_CSRF_SSL_STRICT')}")
+    app.logger.info(f"🔒 [INIT] CSRF Protection: WTF_CSRF_ENABLED = {app.config.get('WTF_CSRF_ENABLED')}")
+    app.logger.info(f"🔒 [INIT] CSRF Time Limit: {app.config.get('WTF_CSRF_TIME_LIMIT')}")
+    app.logger.info(f"🔒 [INIT] CSRF SSL Strict: {app.config.get('WTF_CSRF_SSL_STRICT')}")
 
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
@@ -179,7 +182,7 @@ def create_app():
             }
         }
     )
-    print(f"🌐 [INIT] CORS настроен для origins: {cors_origins}")
+    app.logger.info(f"🌐 [INIT] CORS настроен для origins: {cors_origins}")
 
     # Регистрируем blueprint'ы
     from blog.main.routes import main
@@ -235,21 +238,21 @@ def create_app():
                         cursor.execute("ALTER TABLE users ADD COLUMN notifications_widget_enabled BOOLEAN DEFAULT 1 NOT NULL")
                         cursor.execute("UPDATE users SET notifications_widget_enabled = 1")
                         conn.commit()
-                        print("[INIT] Добавлено поле notifications_widget_enabled в таблицу users", flush=True)
+                        app.logger.info("[INIT] Добавлено поле notifications_widget_enabled в таблицу users")
                     else:
-                        print("[INIT] Поле notifications_widget_enabled уже существует", flush=True)
+                        app.logger.info("[INIT] Поле notifications_widget_enabled уже существует")
 
                     conn.close()
                 else:
-                    print(f"[INIT] База данных не найдена: {db_path}", flush=True)
+                    app.logger.warning(f"[INIT] База данных не найдена: {db_path}")
             else:
-                print("[INIT] Миграция работает только с SQLite", flush=True)
+                app.logger.warning("[INIT] Миграция работает только с SQLite")
         except Exception as e:
-            print(f"[INIT] Ошибка при миграции БД: {e}", flush=True)
+            app.logger.error(f"[INIT] Ошибка при миграции БД: {e}")
             # НЕ прерываем инициализацию приложения из-за ошибки миграции
 
         # Push-уведомления больше не используются, CSRF исключения удалены
-        print("[INIT] Инициализация завершена без push API.", flush=True)
+        app.logger.info("[INIT] Инициализация завершена без push API.")
 
     # Инициализация и запуск планировщика только в основном процессе Werkzeug
     # Это предотвратит запуск нескольких экземпляров планировщика в режиме отладки с автоперезагрузкой
@@ -285,7 +288,7 @@ def create_app():
     # Убедимся, что SESSION_TYPE установлен (например, из Config)
     if not app.config.get("SESSION_TYPE"):
         app.config["SESSION_TYPE"] = "filesystem" # Устанавливаем значение по умолчанию, если не задано
-        print("WARNING: SESSION_TYPE not set in Config, defaulting to 'filesystem'")
+        app.logger.warning("WARNING: SESSION_TYPE not set in Config, defaulting to 'filesystem'")
     Session(app)
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 

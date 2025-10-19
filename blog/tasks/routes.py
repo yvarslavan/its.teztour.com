@@ -1,6 +1,7 @@
 # blog/tasks/routes.py
 from flask import Blueprint, render_template, request, flash, redirect, url_for, jsonify, current_app
 from flask_login import login_required, current_user
+from blog.utils.decorators import debug_only
 import time # Перенесен в начало файла из функций
 import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
@@ -1085,88 +1086,7 @@ def get_my_tasks_paginated_api_old():
     """Старый API для получения задач (для совместимости)"""
     return get_my_tasks_paginated_api()
 
-# ===== МАРШРУТЫ ДЛЯ ТЕСТОВЫХ ФАЙЛОВ =====
-
-@tasks_bp.route("/test-statistics-debug")
-def test_statistics_debug():
-    """Отладочная страница для тестирования API статистики"""
-    try:
-        with open('test_statistics_debug.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_statistics_debug.html не найден", 404
-
-@tasks_bp.route("/test-statistics-fix")
-def test_statistics_fix():
-    """Тестовая страница для проверки исправленной статистики"""
-    try:
-        with open('test_statistics_fix.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_statistics_fix.html не найден", 404
-
-@tasks_bp.route("/test-closed-tasks-api")
-def test_closed_tasks_api():
-    """Тестовая страница для отладки проблемы с закрытыми задачами"""
-    try:
-        with open('test_closed_tasks_api.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_closed_tasks_api.html не найден", 404
-
-@tasks_bp.route("/test-statistics-direct")
-def test_statistics_direct():
-    """Тестовая страница для прямой отладки API статистики"""
-    try:
-        with open('test_statistics_direct.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_statistics_direct.html не найден", 404
-
-@tasks_bp.route("/test-search-debug")
-def test_search_debug():
-    """Тестовая страница для отладки поиска по описанию задач"""
-    try:
-        with open('test_search_debug.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_search_debug.html не найден", 404
-
-@tasks_bp.route("/test-auth-status")
-def test_auth_status():
-    """Диагностическая страница для проверки состояния авторизации"""
-    try:
-        with open('test_auth_status.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_auth_status.html не найден", 404
-
-@tasks_bp.route("/test-search-enhanced")
-def test_search_enhanced():
-    """Улучшенная тестовая страница для отладки поиска с двумя API"""
-    try:
-        with open('test_search_enhanced.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_search_enhanced.html не найден", 404
-
-@tasks_bp.route("/test-status-api")
-@login_required
-def test_status_api():
-    """Тестовая страница для API изменения статуса"""
-    try:
-        with open('test_status_api.html', 'r', encoding='utf-8') as f:
-            content = f.read()
-        return content, 200, {'Content-Type': 'text/html; charset=utf-8'}
-    except FileNotFoundError:
-        return "Файл test_status_api.html не найден", 404
+# ===== МАРШРУТЫ ДЛЯ ТЕСТОВЫХ ФАЙЛОВ УДАЛЕНЫ =====
 
 def get_my_tasks_statuses_localized():
     """API для получения локализованных статусов задач с правильной сортировкой по position
@@ -1488,6 +1408,7 @@ def get_my_tasks_filters_hierarchical():
 
 @tasks_bp.route("/debug-search-api", methods=["GET"])
 @login_required
+@debug_only
 def debug_search_api():
     """Специальный API для отладки поиска по описанию"""
     current_app.logger.info(f"🔍 DEBUG SEARCH API: Запрос от {current_user.username}")
@@ -2108,42 +2029,7 @@ def get_my_tasks_statuses():
         current_app.logger.error(f"Ошибка получения статусов для {current_user.username}: {str(e)}")
         return jsonify({"success": False, "error": f"Ошибка получения статусов: {str(e)}"}), 500
 
-@tasks_bp.route("/debug-statuses", methods=["GET"])
-@login_required
-def debug_statuses():
-    """Временный endpoint для отладки статусов"""
-    try:
-        if not current_user.is_redmine_user:
-            return jsonify({"success": False, "error": "Доступ запрещён"}), 403
-
-        # Получаем статусы напрямую из базы
-        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
-        if not mysql_conn:
-            return jsonify({"success": False, "error": "Не удалось подключиться к базе данных"}), 500
-
-        cursor = mysql_conn.cursor()
-
-        try:
-            cursor.execute("SELECT id, name FROM u_statuses ORDER BY id")
-            statuses = [{"id": row["id"], "name": row["name"]} for row in cursor.fetchall()]
-
-            current_app.logger.info(f"🔍 [DEBUG] Найдено статусов в u_statuses: {len(statuses)}")
-            for status in statuses:
-                current_app.logger.info(f"  - ID: {status['id']}, Name: '{status['name']}'")
-
-            return jsonify({
-                "success": True,
-                "data": statuses,
-                "count": len(statuses)
-            })
-
-        finally:
-            cursor.close()
-            mysql_conn.close()
-
-    except Exception as e:
-        current_app.logger.error(f"Ошибка отладки статусов: {str(e)}")
-        return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
+# debug_statuses endpoint удален
 
 @tasks_bp.route("/get-my-tasks-direct-sql", methods=["GET"])
 @login_required
@@ -2309,87 +2195,9 @@ def get_my_tasks_direct_sql():
         current_app.logger.error(f"Ошибка получения задач через SQL: {str(e)}")
         return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
 
-@tasks_bp.route("/test-direct-sql", methods=["GET"])
-def test_direct_sql():
-    """Временный тестовый endpoint без авторизации"""
-    try:
-        # Подключаемся к базе данных
-        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
-        if not mysql_conn:
-            return jsonify({"success": False, "error": "Не удалось подключиться к базе данных"}), 500
+# test-direct-sql endpoint удален
 
-        cursor = mysql_conn.cursor()
-        try:
-            # Простой тестовый запрос
-            cursor.execute("SELECT COUNT(*) as count FROM issues")
-            result = cursor.fetchone()
-            count = result['count'] if result else 0
-
-            return jsonify({
-                "success": True,
-                "message": "Подключение к базе данных успешно",
-                "issues_count": count
-            })
-        finally:
-            cursor.close()
-            mysql_conn.close()
-    except Exception as e:
-        return jsonify({"success": False, "error": f"Ошибка: {str(e)}"}), 500
-
-@tasks_bp.route("/test-closed-tasks-count", methods=["GET"])
-@login_required
-def test_closed_tasks_count():
-    """Тестовый API для проверки количества задач в закрытых статусах"""
-    try:
-        if not current_user.is_redmine_user:
-            return jsonify({"error": "Доступ запрещен"}), 403
-
-        mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name)
-        if not mysql_conn:
-            return jsonify({"error": "Ошибка подключения к БД"}), 500
-
-        cursor = mysql_conn.cursor()
-
-        # Получаем все закрытые статусы
-        cursor.execute("""
-            SELECT id, name FROM u_statuses
-            WHERE name LIKE '%закрыт%' OR name LIKE '%отклонен%' OR name LIKE '%выполнен%'
-            OR name LIKE '%перенаправлен%' OR name LIKE '%завершен%'
-        """)
-        closed_statuses = cursor.fetchall()
-
-        # Подсчитываем задачи по каждому закрытому статусу
-        status_counts = {}
-        total_closed = 0
-
-        for status in closed_statuses:
-            status_id = status['id']
-            status_name = status['name']
-
-            cursor.execute("""
-                SELECT COUNT(*) as count
-                FROM issues
-                WHERE assigned_to_id = %s AND status_id = %s
-            """, (current_user.id_redmine_user, status_id))
-
-            result = cursor.fetchone()
-            count = result['count'] if result else 0
-            status_counts[status_name] = count
-            total_closed += count
-
-        cursor.close()
-        mysql_conn.close()
-
-        return jsonify({
-            "success": True,
-            "total_closed_tasks": total_closed,
-            "status_breakdown": status_counts,
-            "closed_statuses": [{"id": s['id'], "name": s['name']} for s in closed_statuses]
-        })
-
-    except Exception as e:
-        current_app.logger.error(f"Ошибка в test_closed_tasks_count: {e}")
-        return jsonify({"error": str(e)}), 500
+# test-closed-tasks-count endpoint удален
 
 @tasks_bp.route("/upload_image", methods=["POST"])
 @login_required

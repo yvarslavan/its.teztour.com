@@ -11,6 +11,8 @@ netmonitor = Blueprint("netmonitor", __name__)
 
 # Настройка логгирования
 logging.basicConfig(level=logging.DEBUG)
+# Импортируем декораторы для защиты отладочных эндпоинтов
+from blog.utils.decorators import debug_only, development_only, admin_required_in_production
 logger = logging.getLogger(__name__)
 
 # Глобальные переменные для хранения истории пингов
@@ -78,6 +80,7 @@ def ping(host):
 
 
 @netmonitor.route("/network-monitor")
+@admin_required_in_production
 def network_monitor():
     """Страница мониторинга сети"""
     return render_template(
@@ -88,6 +91,7 @@ def network_monitor():
 
 
 @netmonitor.route("/api/ping", methods=["GET"])
+@admin_required_in_production
 def api_ping():
     """API для выполнения пинга"""
     target = request.args.get("target", DEFAULT_TARGET)
@@ -102,6 +106,7 @@ def api_ping():
 
 
 @netmonitor.route("/api/ping-history", methods=["GET"])
+@admin_required_in_production
 def api_ping_history():
     """API для получения истории пингов"""
     target = request.args.get("target", DEFAULT_TARGET)
@@ -122,6 +127,7 @@ def api_ping_history():
 
 
 @netmonitor.route("/api/status", methods=["GET"])
+@admin_required_in_production
 def api_status():
     """API для получения текущего статуса соединения"""
     statuses = {}

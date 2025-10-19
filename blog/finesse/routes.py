@@ -1,8 +1,12 @@
 import os
 import json
+import logging
 from flask import Blueprint, render_template, jsonify, current_app, request, Response
 from flask_cors import CORS
 import requests
+
+# Получаем логгер для текущего модуля
+logger = logging.getLogger(__name__)
 
 finesse = Blueprint(
     "finesse", __name__, static_folder="static", template_folder="templates"
@@ -30,18 +34,18 @@ def get_config():
         config_path = os.path.join(
             current_app.root_path, "finesse", "static", "config", "config.json"
         )
-        print(f"Путь к конфигурационному файлу: {config_path}")  # Для отладки
+        logger.debug(f"Путь к конфигурационному файлу: {config_path}")
         with open(config_path, "r", encoding="utf-8") as config_file:
             config_data = json.load(config_file)
         return jsonify(config_data)
     except FileNotFoundError:
-        print("Конфигурационный файл не найден")  # Для отладки
+        logger.error("Конфигурационный файл не найден")
         return jsonify({"error": "Configuration file not found"}), 404
     except json.JSONDecodeError:
-        print("Некорректный формат конфигурационного файла")  # Для отладки
+        logger.error("Некорректный формат конфигурационного файла")
         return jsonify({"error": "Invalid configuration file"}), 500
     except Exception as e:
-        print(f"Ошибка: {str(e)}")  # Для отладки
+        logger.error(f"Ошибка: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 

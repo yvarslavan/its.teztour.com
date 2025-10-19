@@ -150,14 +150,14 @@ class PerformanceOptimizer:
     def create_database_indexes(self, session):
         """Create performance indexes for frequently queried columns"""
         try:
-            # Create indexes for better query performance
+            # Create indexes for better query performance (MySQL compatible syntax)
             indexes_to_create = [
-                "CREATE INDEX IF NOT EXISTS idx_issues_email_updated ON issues(easy_email_to, updated_on DESC)",
-                "CREATE INDEX IF NOT EXISTS idx_issues_author_updated ON issues(author_id, updated_on DESC)",
-                "CREATE INDEX IF NOT EXISTS idx_issues_status ON issues(status_id)",
-                "CREATE INDEX IF NOT EXISTS idx_issues_priority ON issues(priority_id)",
-                "CREATE INDEX IF NOT EXISTS idx_issues_tracker ON issues(tracker_id)",
-                "CREATE INDEX IF NOT EXISTS idx_issues_created ON issues(created_on)",
+                "CREATE INDEX idx_issues_email_updated ON issues(easy_email_to, updated_on DESC)",
+                "CREATE INDEX idx_issues_author_updated ON issues(author_id, updated_on DESC)",
+                "CREATE INDEX idx_issues_status ON issues(status_id)",
+                "CREATE INDEX idx_issues_priority ON issues(priority_id)",
+                "CREATE INDEX idx_issues_tracker ON issues(tracker_id)",
+                "CREATE INDEX idx_issues_created ON issues(created_on)",
             ]
 
             for index_sql in indexes_to_create:
