@@ -2,9 +2,13 @@ import os
 import random
 import secrets
 import shutil
+import logging
 
 from PIL import Image
 from flask import current_app
+
+# Получаем логгер для текущего модуля
+logger = logging.getLogger(__name__)
 from flask_login import current_user
 from functools import wraps
 from flask import flash, redirect, url_for
@@ -20,9 +24,9 @@ def random_avatar(user):
     list_avatars = os.listdir(full_path_avatar)
     lst = random.choice(list_avatars)
     random_image_file = os.path.join(full_path_avatar, lst)
-    print('random_image_file', random_image_file)
+    logger.debug('random_image_file', random_image_file)
     shutil.copy(random_image_file, full_path)
-    print('full_path', full_path)
+    logger.debug('full_path', full_path)
     return lst
 
 

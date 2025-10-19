@@ -69,6 +69,8 @@ logging.basicConfig(
     force=True,  # Добавляем force=True для перенастройки, если basicConfig уже был вызван где-то еще
 )
 logger = logging.getLogger(__name__)
+# Импортируем декораторы для защиты отладочных эндпоинтов
+from blog.utils.decorators import debug_only, development_only, admin_required_in_production
 
 calls = Blueprint("calls", __name__, template_folder="templates")
 
@@ -107,7 +109,7 @@ try:
         # например, Column("some_other_column", String)
         schema="SALES",  # Указываем схему
     )
-    print("DEBUG: Таблица T_CALL_INFO определена вручную.")
+
 except Exception as e:
     call_info_table = None  # Оставляем None в случае ошибки определения
     detailed_error = traceback.format_exc()
@@ -505,8 +507,7 @@ def show_agency_data(agency_name: str):
                 last_call = calls[1]
                 last_calls = calls[1:6]
         except Exception as e:
-            print(f"Error getting call info: {e}")
-            # Здесь можно добавить логирование ошибки
+            logger.error(f"Error getting calls for agency: {str(e)}")
 
     return render_template(
         "agency_data.html",
@@ -625,7 +626,7 @@ def extract_agency_data(pk_record, root: etree.Element, value: defaultdict) -> N
             else:
                 logger.warning("XPath %s returned no results for %s", xpath, key)
         except Exception as e:
-            logger.error("Error processing XPath %s for %s: %s", xpath, key, e)
+            logger.error(f"Error processing XPath {xpath} for {key}: {e}")
 
 
 def extract_contact_info(
@@ -1565,22 +1566,7 @@ def get_call_stats():
         return jsonify({"total_calls": 42, "avg_time": "3:15"})
 
 
-@calls.route("/finesse/test-connection", methods=["GET"])
-def test_finesse_connection():
-    finesse_url = "http://uccx1.teztour.com:8082/finesse/api/SystemInfo"
-    auth = ("test", "test")
 
-    try:
-        response = requests.get(finesse_url, auth=auth, timeout=10)
-
-        # Возвращаем ответ в формате XML
-        return Response(
-            response.text, content_type="application/xml", status=response.status_code
-        )
-    except requests.Timeout:
-        return jsonify({"error": "Request to Finesse timed out"}), 504
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
 
 @calls.route("/finesse/proxy/agents", methods=["GET"])
@@ -1610,17 +1596,17 @@ def get_agents_status():
     try:
         response = requests.get(finesse_url, auth=auth, timeout=10)
 
-        print(f"Запрос к Finesse API, статус: {response.status_code}")
+        logger.debug(f"Запрос к Finesse API, статус: {response.status_code}")
 
         if response.status_code != 200:
             error_message = f"Finesse API вернул код {response.status_code}"
-            print(error_message)
+            logger.error(error_message)
             if response.status_code == 401:
                 error_message = "Ошибка авторизации в API Finesse. Требуются учетные данные с правами на просмотр операторов."
             return jsonify({"error": error_message}), response.status_code
 
         # Добавим отладочную информацию
-        print(f"Ответ от Finesse API: {response.text[:200]}...")
+        logger.debug(f"Ответ от Finesse API: {response.text[:200]}...")
 
         # Преобразуем XML в JSON для удобства обработки
         xml_content = response.text
@@ -1629,13 +1615,13 @@ def get_agents_status():
             # Возвращаем данные в формате JSON
             return jsonify(data_dict)
         except Exception as e:
-            print(f"Ошибка при парсинге XML: {str(e)}")
+            logger.error(f"Ошибка при парсинге XML: {str(e)}")
             return jsonify({"error": f"Ошибка парсинга XML: {str(e)}"}), 500
 
     except requests.Timeout:
         return jsonify({"error": "Превышено время ожидания запроса к Finesse API"}), 504
     except Exception as e:
-        print(f"Общая ошибка: {str(e)}")
+        logger.error(f"Общая ошибка: {str(e)}")
         return jsonify({"error": str(e)}), 500
 
 
@@ -1659,30 +1645,30 @@ def get_finesse_calls():
             f"http://uccx1.teztour.com:8082/finesse/api/User/{username}/Dialogs"
         )
 
-        print(f"Отправка запроса к API: {finesse_url}")
+        logger.debug(f"Отправка запроса к API: {finesse_url}")
 
         response = requests.get(finesse_url, auth=(username, password), timeout=10)
 
-        print(f"Получен ответ с кодом: {response.status_code}")
+        logger.debug(f"Получен ответ с кодом: {response.status_code}")
 
         if response.status_code == 200:
             # Обрабатываем XML ответ
             data = xmltodict.parse(response.text)
 
             # Логирование данных для отладки
-            print(f"Получены данные о звонках: {data}")
+            logger.debug(f"Получены данные о звонках: {data}")
 
             return jsonify(data)
         elif response.status_code == 404:
             # Пробуем альтернативный URL для всех диалогов
             alt_url = "http://uccx1.teztour.com:8082/finesse/api/Team/1/Dialogs"
-            print(f"Попытка запроса к альтернативному API: {alt_url}")
+            logger.debug(f"Попытка запроса к альтернативному API: {alt_url}")
 
             alt_response = requests.get(alt_url, auth=(username, password), timeout=10)
 
             if alt_response.status_code == 200:
                 data = xmltodict.parse(alt_response.text)
-                print(f"Получены данные из альтернативного API: {data}")
+                logger.debug(f"Получены данные из альтернативного API: {data}")
                 return jsonify(data)
             else:
                 return (
@@ -1706,14 +1692,12 @@ def get_finesse_calls():
             )
 
     except Exception as e:
-        print(f"Ошибка при получении звонков: {str(e)}")
+        logger.error(f"Ошибка при получении звонков: {str(e)}")
         traceback.print_exc()  # Вывод полного стека ошибки
         return jsonify({"error": str(e)}), 500
 
 
-@calls.route("/finesse-auth-test")
-def finesse_auth_test():
-    return render_template("finesse_auth_test.html")
+
 
 
 @calls.route("/finesse/login", methods=["POST"])
@@ -2255,61 +2239,7 @@ def setup_session_cleaner():
     threading.Timer(3600, clean_old_sessions).start()
 
 
-# Новая функция для тестирования соединений
-@calls.route("/test-oracle-connections")
-def test_oracle_connections():
-    results = {}
-    try:
-        with SessionOracleCRM() as session:
-            results["crm_test"] = str(
-                session.execute(text("SELECT 1 FROM DUAL")).fetchone()
-            )
-            tables_result = session.execute(
-                text("SELECT table_name FROM user_tables")
-            ).fetchall()
-            results["crm_tables"] = (
-                [t[0] for t in tables_result] if tables_result else []
-            )
-    except Exception as e:
-        results["crm_error"] = str(e)
 
-    try:
-        with SessionSalesSchema() as session:
-            results["sales_test"] = str(
-                session.execute(text("SELECT 1 FROM DUAL")).fetchone()
-            )
-            tables_result = session.execute(
-                text("SELECT table_name FROM user_tables")
-            ).fetchall()
-            results["sales_tables"] = (
-                [t[0] for t in tables_result] if tables_result else []
-            )
-
-            # Проверка существования и структуры таблицы T_CALL_INFO
-            try:
-                column_result = session.execute(
-                    text(
-                        """
-                    SELECT column_name FROM all_tab_columns
-                    WHERE table_name = 'T_CALL_INFO'
-                    """
-                    )
-                ).fetchall()
-                results["call_info_columns"] = (
-                    [c[0] for c in column_result] if column_result else []
-                )
-
-                # Проверка наличия данных
-                count_result = session.execute(
-                    text("SELECT COUNT(*) FROM T_CALL_INFO")
-                ).fetchone()
-                results["call_info_count"] = count_result[0] if count_result else 0
-            except Exception as e:
-                results["call_info_error"] = str(e)
-    except Exception as e:
-        results["sales_error"] = str(e)
-
-    return jsonify(results)
 
 
 @calls.route("/contact-center/vilnius/tel/", methods=["GET"])

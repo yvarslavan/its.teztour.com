@@ -14,14 +14,14 @@ class ThemeSwitcher {
     init() {
         // Загружаем сохраненную тему из localStorage
         this.loadSavedTheme();
-        
+
         // Применяем тему к body
         this.applyTheme();
-        
+
         // Инициализируем обработчики событий
         this.initEventListeners();
-        
-        console.log('🎨 ThemeSwitcher инициализирован, текущая тема:', this.currentTheme);
+
+
     }
 
     loadSavedTheme() {
@@ -33,13 +33,13 @@ class ThemeSwitcher {
 
     applyTheme() {
         const body = document.body;
-        
+
         if (this.currentTheme === 'light') {
             body.classList.add('light-theme');
         } else {
             body.classList.remove('light-theme');
         }
-        
+
         // Обновляем иконки переключателя
         this.updateSwitcherIcons();
     }
@@ -47,7 +47,7 @@ class ThemeSwitcher {
     updateSwitcherIcons() {
         const lightIcons = document.querySelectorAll('.theme-icon-light');
         const darkIcons = document.querySelectorAll('.theme-icon-dark');
-        
+
         if (this.currentTheme === 'light') {
             // Показываем иконку луны (для переключения на темную тему)
             lightIcons.forEach(icon => {
@@ -77,22 +77,22 @@ class ThemeSwitcher {
 
     toggleTheme() {
         this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
-        
+
         // Сохраняем выбор в localStorage
         localStorage.setItem('preferred-theme', this.currentTheme);
-        
+
         // Применяем новую тему
         this.applyTheme();
-        
+
         // Показываем уведомление
         this.showNotification();
-        
-        console.log('🎨 Тема переключена на:', this.currentTheme);
+
+
     }
 
     showNotification() {
         const themeName = this.currentTheme === 'light' ? 'светлую' : 'темную';
-        
+
         // Создаем уведомление
         const notification = document.createElement('div');
         notification.className = 'theme-notification';
@@ -102,7 +102,7 @@ class ThemeSwitcher {
                 <span>Переключено на ${themeName} тему</span>
             </div>
         `;
-        
+
         // Добавляем стили для уведомления
         notification.style.cssText = `
             position: fixed;
@@ -121,16 +121,16 @@ class ThemeSwitcher {
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
         `;
-        
+
         // Добавляем на страницу
         document.body.appendChild(notification);
-        
+
         // Анимация появления
         setTimeout(() => {
             notification.style.opacity = '1';
             notification.style.transform = 'translateX(0)';
         }, 10);
-        
+
         // Удаляем через 3 секунды
         setTimeout(() => {
             notification.style.opacity = '0';

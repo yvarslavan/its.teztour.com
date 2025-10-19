@@ -28,11 +28,11 @@
                 updateStatusCards(data.targets);
                 return data.targets;
             } else {
-                console.error('Error fetching status:', data);
+
                 return null;
             }
         } catch (error) {
-            console.error('Failed to fetch status:', error);
+
             showError('Не удалось получить статус соединения: ' + error.message);
             return null;
         }
@@ -56,11 +56,11 @@
                 updateChart(data.history);
                 return data.history;
             } else {
-                console.error('Error fetching ping history:', data);
+
                 return [];
             }
         } catch (error) {
-            console.error('Failed to fetch ping history:', error);
+
             showError('Не удалось получить историю пингов: ' + error.message);
             return [];
         }
@@ -85,7 +85,7 @@
 
             return pingResult;
         } catch (error) {
-            console.error('Failed to perform ping:', error);
+
             return null;
         }
     }
@@ -233,7 +233,7 @@
                 showConfirmButton: false
             });
         } else {
-            console.error('Error:', message);
+
             alert('Ошибка: ' + message);
         }
     }

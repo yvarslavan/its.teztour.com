@@ -12,7 +12,7 @@ class ThemeManager {
             LIGHT: 'light',
             DARK: 'dark'
         };
-        
+
         // Initialize theme immediately to prevent flicker
         this.initTheme();
     }
@@ -26,12 +26,12 @@ class ThemeManager {
         if (stored) {
             return stored;
         }
-        
+
         // Fallback to system preference
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             return this.THEMES.DARK;
         }
-        
+
         return this.THEMES.LIGHT;
     }
 
@@ -42,27 +42,27 @@ class ThemeManager {
     applyTheme(theme) {
         const html = document.documentElement;
         const body = document.body;
-        
+
         // Set data-theme attribute on HTML (new system)
         html.setAttribute('data-theme', theme);
-        
+
         // Remove old theme classes
         body.classList.remove('light-theme', 'dark-theme');
         html.classList.remove('light-theme', 'dark-theme');
-        
+
         // Add new theme class (for compatibility with old system)
         body.classList.add(`${theme}-theme`);
         html.classList.add(`${theme}-theme`);
-        
+
         // Save to localStorage
         localStorage.setItem(this.STORAGE_KEY, theme);
-        
+
         // Dispatch custom event for other components to react
-        window.dispatchEvent(new CustomEvent('themeChanged', { 
-            detail: { theme } 
+        window.dispatchEvent(new CustomEvent('themeChanged', {
+            detail: { theme }
         }));
-        
-        console.log(`🎨 Theme applied: ${theme}`);
+
+
     }
 
     /**
@@ -70,10 +70,10 @@ class ThemeManager {
      */
     toggleTheme() {
         const currentTheme = this.getStoredTheme();
-        const newTheme = currentTheme === this.THEMES.LIGHT 
-            ? this.THEMES.DARK 
+        const newTheme = currentTheme === this.THEMES.LIGHT
+            ? this.THEMES.DARK
             : this.THEMES.LIGHT;
-        
+
         this.applyTheme(newTheme);
     }
 
@@ -90,9 +90,9 @@ class ThemeManager {
      */
     watchSystemTheme() {
         if (!window.matchMedia) return;
-        
+
         const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        
+
         darkModeQuery.addEventListener('change', (e) => {
             // Only auto-switch if user hasn't manually set a preference
             if (!localStorage.getItem(this.STORAGE_KEY)) {

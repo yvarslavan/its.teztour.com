@@ -47,16 +47,16 @@ const CACHE_STRATEGIES = {
 
 // Install event - cache static files
 self.addEventListener('install', event => {
-  console.log('🔧 Service Worker installing...');
+
 
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => {
-        console.log('📦 Caching static files...');
+
         return cache.addAll(STATIC_FILES);
       })
       .then(() => {
-        console.log('✅ Static files cached successfully');
+
         return self.skipWaiting();
       })
       .catch(error => {
@@ -67,7 +67,7 @@ self.addEventListener('install', event => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', event => {
-  console.log('🚀 Service Worker activating...');
+
 
   event.waitUntil(
     caches.keys()
@@ -75,14 +75,14 @@ self.addEventListener('activate', event => {
         return Promise.all(
           cacheNames.map(cacheName => {
             if (cacheName !== STATIC_CACHE && cacheName !== DYNAMIC_CACHE) {
-              console.log('🗑️ Deleting old cache:', cacheName);
+
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('✅ Service Worker activated');
+
         return self.clients.claim();
       })
   );
@@ -150,7 +150,7 @@ async function cacheFirst(request, cacheName) {
   const cachedResponse = await caches.match(request);
 
   if (cachedResponse) {
-    console.log('📦 Serving from cache:', request.url);
+
     return cachedResponse;
   }
 
@@ -159,7 +159,7 @@ async function cacheFirst(request, cacheName) {
   if (networkResponse.ok) {
     const cache = await caches.open(cacheName);
     cache.put(request, networkResponse.clone());
-    console.log('💾 Cached response:', request.url);
+
   }
 
   return networkResponse;
@@ -174,12 +174,12 @@ async function networkFirst(request, cacheName, ttl = 300) {
       const cache = await caches.open(cacheName);
       const responseWithTimestamp = addTimestamp(networkResponse.clone(), ttl);
       cache.put(request, responseWithTimestamp);
-      console.log('🌐 Network response cached:', request.url);
+
     }
 
     return networkResponse;
   } catch (error) {
-    console.log('🔄 Network failed, trying cache:', request.url);
+
 
     const cachedResponse = await caches.match(request);
 
@@ -188,10 +188,10 @@ async function networkFirst(request, cacheName, ttl = 300) {
       const isExpired = timestamp && (Date.now() - parseInt(timestamp)) > (ttl * 1000);
 
       if (!isExpired) {
-        console.log('📦 Serving stale cache:', request.url);
+
         return cachedResponse;
       } else {
-        console.log('⏰ Cache expired, removing:', request.url);
+
         const cache = await caches.open(cacheName);
         cache.delete(request);
       }
@@ -210,14 +210,14 @@ async function staleWhileRevalidate(request, cacheName) {
     if (networkResponse.ok) {
       const cache = caches.open(cacheName);
       cache.then(c => c.put(request, networkResponse.clone()));
-      console.log('🔄 Background cache update:', request.url);
+
     }
     return networkResponse;
   });
 
   // Return cached response immediately if available
   if (cachedResponse) {
-    console.log('📦 Serving stale while revalidating:', request.url);
+
     return cachedResponse;
   }
 
@@ -241,7 +241,7 @@ function addTimestamp(response, ttl) {
 // Background sync for offline actions
 self.addEventListener('sync', event => {
   if (event.tag === 'background-sync') {
-    console.log('🔄 Background sync triggered');
+
     event.waitUntil(doBackgroundSync());
   }
 });
@@ -256,7 +256,7 @@ async function doBackgroundSync() {
       try {
         await syncAction(action);
         await removePendingAction(action.id);
-        console.log('✅ Synced action:', action.id);
+
       } catch (error) {
         console.error('❌ Failed to sync action:', action.id, error);
       }
@@ -296,7 +296,7 @@ async function removePendingAction(actionId) {
 self.addEventListener('push', event => {
   if (event.data) {
     const data = event.data.json();
-    console.log('📱 Push notification received:', data);
+
 
     const options = {
       body: data.body,
@@ -358,7 +358,7 @@ async function clearAllCaches() {
   await Promise.all(
     cacheNames.map(cacheName => caches.delete(cacheName))
   );
-  console.log('🗑️ All caches cleared');
+
 }
 
 // Get total cache size
@@ -400,5 +400,3 @@ self.addEventListener('fetch', event => {
       })
   );
 });
-
-console.log('✅ Service Worker loaded successfully');

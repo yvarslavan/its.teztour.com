@@ -142,8 +142,7 @@ def get_my_issues_optimized():
             # Cache the response for 5 minutes
             cache_manager.set(cache_key, response_data, ttl=300)
 
-            logger.info("✅ Optimized API response: %s issues, page %s/%s",
-                       len(issues_data), page, response_data['pagination']['total_pages'])
+            logger.info(f"✅ Optimized API response: {len(issues_data)} issues, page {page}/{response_data['pagination']['total_pages']}")
 
             return jsonify(response_data)
 

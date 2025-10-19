@@ -1,9 +1,13 @@
 import os
 from pathlib import Path
 import sys
+import logging
 from configparser import ConfigParser
 
 from dotenv import load_dotenv
+
+# Получаем логгер для текущего модуля
+logger = logging.getLogger(__name__)
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, ".env"))
@@ -26,7 +30,7 @@ class Config:
     if _oracle_crm:
         SQLALCHEMY_DATABASE_URI_ORACLE_CRM = _oracle_crm
     else:
-        print("ВНИМАНИЕ: SQLALCHEMY_DATABASE_URI_ORACLE_CRM не установлена!")
+        logger.warning("ВНИМАНИЕ: SQLALCHEMY_DATABASE_URI_ORACLE_CRM не установлена!")
         # Фиктивное соединение для безопасного импорта (не будет использоваться)
         SQLALCHEMY_DATABASE_URI_ORACLE_CRM = "sqlite:///db/dummy_oracle.db"
 
@@ -35,7 +39,7 @@ class Config:
     if _oracle_sales:
         SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES = _oracle_sales
     else:
-        print("ВНИМАНИЕ: SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES не установлена!")
+        logger.warning("ВНИМАНИЕ: SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES не установлена!")
         # Фиктивное соединение для безопасного импорта (не будет использоваться)
         SQLALCHEMY_SALES_SCHEMA_URI_ORACLE_SALES = "sqlite:///db/dummy_sales.db"
 

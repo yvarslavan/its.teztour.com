@@ -18,32 +18,6 @@
     </div>
 </div>
 
-<!-- <script>
-// Инициализация состояния спиннера еще до загрузки MyTasksApp
-(function() {
-    const isReturn = sessionStorage.getItem('return_from_task_id') !== null;
-    const spinner = document.getElementById('loading-spinner');
-
-    console.log('🔄 Раннее определение состояния спиннера:', {
-        isReturn: isReturn,
-        returnId: sessionStorage.getItem('return_from_task_id')
-    });
-
-    if (isReturn) {
-        // При возврате оставляем спиннер скрытым
-        console.log('🔴 Возврат: спиннер остается скрытым');
-        if (spinner) {
-            spinner.classList.remove('show');
-        }
-    } else {
-        // При первой загрузке показываем спиннер
-        console.log('🟢 Первая загрузка: показываем спиннер');
-        if (spinner) {
-            spinner.classList.add('show');
-        }
-    }
-})();
-</script> -->
 
 <!-- Заголовок страницы -->
 <header class="page-header">
@@ -648,41 +622,7 @@
 } */
 </style>
 
-<!-- Селектор стилей для демонстрации (можно удалить в продакшене) -->
-<div class="email-style-selector" style="display: none;">
-    <label>Email стиль:</label>
-    <select id="emailStyleSelector">
-        <option value="">Tech (по умолчанию)</option>
-        <option value="minimal">Минималистичный</option>
-        <option value="glass">Glassmorphism</option>
-        <option value="neomorphic">Неоморфизм</option>
-    </select>
-</div>
 
-<!-- <script>
-// Функция переключения стилей email-ссылок (для демонстрации)
-function switchEmailStyle(newStyle) {
-    const emailLinks = document.querySelectorAll('.email-link');
-    emailLinks.forEach(link => {
-        // Удаляем все классы стилей
-        link.classList.remove('minimal', 'glass', 'neomorphic');
-        // Добавляем новый стиль если указан
-        if (newStyle) {
-            link.classList.add(newStyle);
-        }
-    });
-}
-
-// Обработчик для селектора стилей
-document.addEventListener('DOMContentLoaded', function() {
-    const selector = document.getElementById('emailStyleSelector');
-    if (selector) {
-        selector.addEventListener('change', function() {
-            switchEmailStyle(this.value);
-        });
-    }
-});
-</script> -->
 
 <!-- Проверяем наличие jQuery и загружаем если нужно -->
 <script>
@@ -754,8 +694,6 @@ window.checkClickHandlers = function() {
     console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
 };
 
-// УДАЛЕНО: Функция saveViewAndOpenTask была неиспользуемой и потенциально конфликтовала
-// Теперь открытие задач обрабатывается только через KanbanManager.js
 
 // 🎬 Динамическая анимация загрузки
 function initLoadingAnimation() {
