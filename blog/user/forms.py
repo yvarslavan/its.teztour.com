@@ -76,8 +76,8 @@ class RegistrationForm(FlaskForm):
 
 
 class LoginForm(FlaskForm):
-    class Meta:
-        csrf = False  # Отключаем CSRF для формы логина
+    # Убираем Meta класс, чтобы использовать стандартную обработку CSRF
+    # CSRF будет управляться глобально через конфигурацию приложения
     # email = StringField('Email', validators=[DataRequired(), Email('Некорректный email')])
     username = StringField(
         "Имя пользователя",

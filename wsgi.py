@@ -86,9 +86,23 @@ if environment == 'production':
         SESSION_COOKIE_DOMAIN='.tez-tour.com',
         REMEMBER_COOKIE_SECURE=True,
         REMEMBER_COOKIE_HTTPONLY=True,
-        REMEMBER_COOKIE_SAMESITE='Lax'
+        REMEMBER_COOKIE_SAMESITE='Lax',
+        # Настройки файловой системы для сессий
+        SESSION_TYPE='filesystem',
+        SESSION_FILE_DIR='/tmp/flask_sessions',
+        SESSION_PERMANENT=True,
+        PERMANENT_SESSION_LIFETIME=86400,  # 24 часа
+        # Включаем CSRF защиту
+        WTF_CSRF_ENABLED=True,
+        WTF_CSRF_TIME_LIMIT=None,  # Отключаем время жизни токена для долгих сессий
     )
+
+    # Создаем директорию для сессий, если она не существует
+    import os
+    os.makedirs(app.config['SESSION_FILE_DIR'], exist_ok=True)
+
     print("🔒 Применены настройки безопасности для продакшена")
+    print(f"📁 Директория для сессий: {app.config['SESSION_FILE_DIR']}")
 
 # Информация о конфигурации для отладки
 if app.debug or environment == 'development':

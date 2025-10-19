@@ -200,20 +200,33 @@ def check_redmine_user(email):
 
 
 @users.route("/login", methods=["GET", "POST"])
-@csrf.exempt  # Temporarily disable CSRF for login
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.blog"))
 
     form = LoginForm()
-    print(f"Generated CSRF token: {generate_csrf()}")
 
-    # Debug CSRF validation
+    # Детальная отладка CSRF
     if request.method == "POST":
-        print(f"POST request received")
-        print(f"Request form data: {dict(request.form)}")
+        print("\n" + "="*80)
+        print("🔍 [LOGIN DEBUG] POST Request Analysis")
+        print("="*80)
+        print(f"📝 Request form data: {dict(request.form)}")
+        print(f"🔒 CSRF enabled: {current_app.config.get('WTF_CSRF_ENABLED')}")
+        print(f"🔒 CSRF token in form: {request.form.get('csrf_token', 'NOT FOUND')}")
+        print(f"🍪 Session ID: {session.get('_id', 'No session ID')}")
+        print(f"🍪 Session keys: {list(session.keys())}")
+        print(f"🍪 Cookies: {list(request.cookies.keys())}")
+        print(f"🌐 Request headers: Origin={request.headers.get('Origin')}, Referer={request.headers.get('Referer')}")
 
-        # Since CSRF is disabled, manually populate form data
+        # Генерируем новый CSRF токен для отладки
+        try:
+            debug_csrf = generate_csrf()
+            print(f"🔐 Generated CSRF token: {debug_csrf[:20]}...")
+        except Exception as e:
+            print(f"❌ Error generating CSRF token: {e}")
+
+        # Populate form data if not already set
         if not form.username.data and request.form.get('username'):
             form.username.data = request.form.get('username')
             print(f"✅ Manually set username: {form.username.data}")
@@ -222,9 +235,10 @@ def login():
             form.password.data = request.form.get('password')
             print(f"✅ Manually set password (length: {len(form.password.data)})")
 
-        print(f"Form errors: {form.errors}")
-        print(f"Form validate: {form.validate()}")
-        print(f"Form validate_on_submit: {form.validate_on_submit()}")
+        print(f"📋 Form errors: {form.errors}")
+        print(f"✔️ Form validate: {form.validate()}")
+        print(f"✔️ Form validate_on_submit: {form.validate_on_submit()}")
+        print("="*80 + "\n")
 
     if form.validate_on_submit():
         print(f"✅ Form validation passed")
@@ -252,21 +266,20 @@ def login():
 
 
 @users.route("/login-modern", methods=["GET", "POST"])
-@csrf.exempt  # Temporarily disable CSRF for login
 def login_modern():
     """Современная форма авторизации (тестовая версия)"""
     if current_user.is_authenticated:
         return redirect(url_for("main.blog"))
 
     form = LoginForm()
-    print(f"Generated CSRF token: {generate_csrf()}")
+    # print(f"Generated CSRF token: {generate_csrf()}")  # CSRF отключен
 
     # Debug CSRF validation
     if request.method == "POST":
         print(f"POST request received")
         print(f"Request form data: {dict(request.form)}")
 
-        # Since CSRF is disabled, manually populate form data
+        # Populate form data if not already set
         if not form.username.data and request.form.get('username'):
             form.username.data = request.form.get('username')
             print(f"✅ Manually set username: {form.username.data}")
@@ -1113,16 +1126,25 @@ def auth_status():
 
 @users.route('/session_debug')
 def session_debug():
-    # csrf_token = generate_csrf()  # CSRF отключен
+    try:
+        csrf_token = generate_csrf()
+        csrf_token_available = True
+        csrf_token_preview = csrf_token[:20] + "..." if csrf_token else "N/A"
+    except Exception:
+        csrf_token_available = False
+        csrf_token_preview = "Error generating token"
 
     return jsonify({
         'session_cookie_secure': current_app.config.get('SESSION_COOKIE_SECURE'),
         'session_cookie_samesite': current_app.config.get('SESSION_COOKIE_SAMESITE'),
+        'session_cookie_domain': current_app.config.get('SESSION_COOKIE_DOMAIN'),
         'wtf_csrf_ssl_strict': current_app.config.get('WTF_CSRF_SSL_STRICT'),
         'wtf_csrf_enabled': current_app.config.get('WTF_CSRF_ENABLED'),
         'wtf_csrf_time_limit': current_app.config.get('WTF_CSRF_TIME_LIMIT'),
-        'csrf_token_available': False,  # CSRF отключен
+        'csrf_token_available': csrf_token_available,
+        'csrf_token_preview': csrf_token_preview,
         'secret_key_set': current_app.secret_key is not None,
+        'debug_mode': current_app.debug,
     })
 
 

@@ -11,7 +11,7 @@ from flask_cors import CORS
 from flask_login import LoginManager
 from flask_migrate import Migrate
 from flask_session import Session
-from flask_wtf.csrf import CSRFProtect
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 
 from .db_config import db
@@ -92,10 +92,13 @@ def create_app():
             SESSION_COOKIE_SECURE=True,  # Включено для HTTPS
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',  # Более безопасная настройка
-            SESSION_COOKIE_DOMAIN='.tez-tour.com',  # Домен для продакшена
+            SESSION_COOKIE_DOMAIN='.tez-tour.com',  # Поддомены с точкой в начале
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=False  # Отключаем CSRF защиту
+            WTF_CSRF_ENABLED=True,  # Включаем CSRF защиту
+            WTF_CSRF_TIME_LIMIT=None,  # Отключаем ограничение времени для CSRF токенов
+            WTF_CSRF_SSL_STRICT=False  # Отключаем строгую проверку SSL для CSRF (если за прокси)
         )
+        print("✅ [INIT] Продакшен режим активен - настройки безопасности применены")
 
     # Устанавливаем максимальный допустимый размер тела запроса (10 МБ)
     app.config['MAX_CONTENT_LENGTH'] = 10 * 1024 * 1024  # 10 мегабайт
@@ -136,15 +139,18 @@ def create_app():
     login_manager.user_loader(load_user)
 
     # Инициализируем CSRF защиту
-    # csrf.init_app(app)  # Полностью отключаем CSRF
+    csrf.init_app(app)
 
-    # CSRF защита включена для продакшена
-    if app.debug:
-        app.config['WTF_CSRF_ENABLED'] = False
-        print("⚠️ CSRF temporarily disabled for testing")
-    else:
-        app.config['WTF_CSRF_ENABLED'] = False  # Временно отключить
-        print("⚠️ CSRF temporarily disabled for production")
+    # Добавляем CSRF в контекст шаблонов для всех режимов
+    @app.context_processor
+    def inject_csrf_functions():
+        # Передаем функцию, а не значение, чтобы можно было вызывать csrf_token()
+        return dict(csrf_token=generate_csrf)
+
+    # Логируем состояние CSRF защиты
+    print(f"🔒 [INIT] CSRF Protection: WTF_CSRF_ENABLED = {app.config.get('WTF_CSRF_ENABLED')}")
+    print(f"🔒 [INIT] CSRF Time Limit: {app.config.get('WTF_CSRF_TIME_LIMIT')}")
+    print(f"🔒 [INIT] CSRF SSL Strict: {app.config.get('WTF_CSRF_SSL_STRICT')}")
 
     # Настройка CORS - универсальная для всех сред
     cors_origins = ["*"] if app.debug else [
