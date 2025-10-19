@@ -152,3 +152,10 @@ node_modules/
 # Flask session files
 flask_session/
 blog/flask_session/
+
+# Secret files and tokens
+.cursor/mcp.json
+*.token
+*.key
+*secret*
+*password*
