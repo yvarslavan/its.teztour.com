@@ -25,9 +25,7 @@
         <div class="login-card">
             <form method="POST" action="" class="modern-form">
                 {{ form.hidden_tag() }}
-
-                <!-- CSRF Token Debug - DISABLED -->
-                <!-- CSRF полностью отключен в приложении -->
+                <!-- form.hidden_tag() автоматически включает CSRF токен, если WTF_CSRF_ENABLED=True -->
 
                 <!-- Username Field -->
                 <div class="form-field-group">
