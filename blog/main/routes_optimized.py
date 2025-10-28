@@ -11,7 +11,7 @@ from blog.utils.performance_optimizer import perf_optimizer
 from blog.utils.cache_manager import CacheManager
 from mysql_db import Session
 from redmine import check_user_active_redmine, get_connection
-from config import get
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -83,10 +83,10 @@ def get_my_issues_optimized():
 
             # Get database connection
             conn = get_connection(
-                get('mysql_redmine', 'host'),
-                get('mysql_redmine', 'user'),
-                get('mysql_redmine', 'password'),
-                get('mysql_redmine', 'database')
+                os.getenv('MYSQL_HOST'),
+                os.getenv('MYSQL_USER'),
+                os.getenv('MYSQL_PASSWORD'),
+                os.getenv('MYSQL_DATABASE')
             )
 
             if conn is None:
@@ -170,10 +170,10 @@ def get_issues_statistics():
     try:
         with Session() as session:
             conn = get_connection(
-                get('mysql_redmine', 'host'),
-                get('mysql_redmine', 'user'),
-                get('mysql_redmine', 'password'),
-                get('mysql_redmine', 'database')
+                os.getenv('MYSQL_HOST'),
+                os.getenv('MYSQL_USER'),
+                os.getenv('MYSQL_PASSWORD'),
+                os.getenv('MYSQL_DATABASE')
             )
 
             if conn is None:

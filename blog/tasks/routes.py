@@ -7,14 +7,13 @@ import traceback # Добавлен traceback
 # from datetime import datetime, date # Закомментируем, если не используется напрямую
 
 # === НЕОБХОДИМЫЕ ИМПОРТЫ ИЗ blog.main.routes (НУЖНО БУДЕТ ТЩАТЕЛЬНО ПРОВЕРИТЬ И ДОПОЛНИТЬ) ===
-from config import get # Предполагаем, что config.py в корне проекта
+import os
 # from redmine import RedmineConnector, ... (и другие из redmine.py)
 # from erp_oracle import connect_oracle, ... (и другие из erp_oracle.py)
 from blog.utils.cache_manager import weekend_performance_optimizer, tasks_cache_optimizer # Добавлен tasks_cache_optimizer
 from blog.models import User, Notifications, NotificationsAddNotes # Исправлены имена моделей
 from redmine import RedmineConnector # Правильный путь импорта
 from erp_oracle import connect_oracle, get_user_erp_password, db_host, db_port, db_service_name, db_user_name, db_password # Правильный путь импорта
-from config import get # Для доступа к config.ini
 # Используем logger через current_app
 import logging
 logger = logging.getLogger(__name__)
@@ -49,9 +48,6 @@ from blog.user.forms import AddCommentRedmine, SendEmailForm
 # Импорт для отправки email
 from blog.utils.email_sender import email_sender
 
-# Импорт для работы с конфигом
-from config import get
-
 # Импорт для работы с файлами
 import os
 import uuid
@@ -72,9 +68,9 @@ def get_support_email():
         str: Email службы технической поддержки
     """
     try:
-        email = get('ender_email', 'sender_email')
+        email = os.getenv('SENDER_EMAIL')
         if email is None:
-            current_app.logger.warning("❌ [CONFIG] Не удалось получить sender_email из конфига, используем fallback")
+            current_app.logger.warning("❌ [CONFIG] Не удалось получить SENDER_EMAIL из переменных окружения, используем fallback")
             return 'help@tez-tour.com'
         current_app.logger.info(f"✅ [CONFIG] Получен email из конфига: {email}")
         return email

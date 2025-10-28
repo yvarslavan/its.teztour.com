@@ -17,11 +17,11 @@ class EmailSender:
         self.smtp_server = "mail.tez-tour.com"  # SMTP сервер TEZ TOUR
         self.smtp_port = 587  # Порт для TLS (более надежный)
 
-        # Читаем настройки из конфига
+        # Читаем настройки из переменных окружения
         try:
-            from config import get
-            self.sender_email = get('ender_email', 'sender_email') or "help@tez-tour.com"
-            self.sender_password = get('ender_email', 'sender_password') or "$GjvjoM%"
+            import os
+            self.sender_email = os.getenv('SENDER_EMAIL') or "help@tez-tour.com"
+            self.sender_password = os.getenv('SENDER_PASSWORD') or "$GjvjoM%"
         except:
             # Fallback значения
             self.sender_email = "help@tez-tour.com"
@@ -261,9 +261,9 @@ class EmailSender:
                 current_app.logger.info(f"📝 [TASK] Используем Redmine user_id: {user_id} для пользователя {current_user.username}")
             else:
                 # Для анонимных пользователей используем системный ID
-                from config import get
+                import os
                 try:
-                    user_id = get('redmine', 'anonymous_user_id')
+                    user_id = int(os.getenv('REDMINE_ANONYMOUS_USER_ID', '13'))
                 except:
                     user_id = 13  # Значение по умолчанию
                 current_app.logger.info(f"📝 [TASK] Используем анонимный user_id: {user_id}")

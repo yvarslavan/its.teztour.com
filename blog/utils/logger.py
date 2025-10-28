@@ -9,7 +9,6 @@ except ModuleNotFoundError:
     # fallback на официальный пакет python-json-logger, который устанавливается как 'pythonjsonlogger'
     from pythonjsonlogger import jsonlogger as _jsonlogger  # type: ignore
     JsonFormatter = _jsonlogger.JsonFormatter
-from config import get
 
 # Попытка использовать потокобезопасный обработчик, если доступен
 try:
@@ -47,7 +46,8 @@ except ModuleNotFoundError:
 
 def configure_blog_logger():
     """Конфигурирует логгер для всего пакета 'blog'."""
-    log_level_str = get("logging", "level", "INFO").upper()
+    import os
+    log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
     log_level = getattr(logging, log_level_str, logging.INFO)
 
     blog_package_logger = logging.getLogger('blog')

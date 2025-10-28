@@ -48,13 +48,13 @@ class Config:
     # ИСПРАВЛЕНИЕ: Добавляем конфигурацию MySQL Redmine из config.ini
     @classmethod
     def get_db_redmine_config(cls):
-        """Возвращает конфигурацию MySQL Redmine из безопасной конфигурации"""
-        from config import get
+        """Возвращает конфигурацию MySQL Redmine из переменных окружения"""
+        import os
         return {
-            'host': get('mysql', 'host'),
-            'database': get('mysql', 'database'),
-            'user': get('mysql', 'user'),
-            'password': get('mysql', 'password')
+            'host': os.getenv('MYSQL_HOST'),
+            'database': os.getenv('MYSQL_DATABASE'),
+            'user': os.getenv('MYSQL_USER'),
+            'password': os.getenv('MYSQL_PASSWORD')
         }
 
     # Константы для доступа к конфигурации Redmine

@@ -39,57 +39,58 @@ os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 
 # Импорт безопасной конфигурации
 try:
-    from secure_config import get_config
-    secure_config = get_config()
-
+    # Прямое чтение переменных окружения
+    db_redmine_host = os.getenv('MYSQL_HOST')
+    db_redmine_name = os.getenv('MYSQL_DATABASE')
+    db_redmine_user_name = os.getenv('MYSQL_USER')
+    db_redmine_password = os.getenv('MYSQL_PASSWORD')
+    
     # Проверяем наличие обязательных переменных
-    missing = secure_config.validate_required_vars()
-    if not missing:
-        logger.info("✅ Используется безопасная конфигурация из переменных окружения")
-
-        # Получаем конфигурацию из безопасного источника
-        db_redmine_host = secure_config.mysql_host
-        db_redmine_name = secure_config.mysql_database
-        db_redmine_user_name = secure_config.mysql_user
-        db_redmine_password = secure_config.mysql_password
-
-        # Получаем путь к текущему каталогу
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        db_absolute_path = secure_config.db_path
-        ERROR_MESSAGE = "An error occurred:"
-
-        # Глобальные переменные для URL и API ключа администратора Redmine
-        REDMINE_URL = secure_config.redmine_url
-        REDMINE_ADMIN_API_KEY = secure_config.redmine_api_key
-        ANONYMOUS_USER_ID_CONFIG = int(secure_config.redmine_anonymous_user_id)
-
-    else:
+    if not all([db_redmine_host, db_redmine_name, db_redmine_user_name, db_redmine_password]):
+        missing = [k for k, v in [
+            ('MYSQL_HOST', db_redmine_host),
+            ('MYSQL_DATABASE', db_redmine_name),
+            ('MYSQL_USER', db_redmine_user_name),
+            ('MYSQL_PASSWORD', db_redmine_password)
+        ] if not v]
         logger.warning(f"⚠️ Отсутствуют переменные окружения: {', '.join(missing)}")
         raise ImportError("Неполная конфигурация")
-
-except ImportError:
-    logger.warning("⚠️ Используется устаревшая конфигурация config.ini")
-    from config import get
-
-    # Используем безопасную конфигурацию из переменных окружения
-    db_redmine_host = get("mysql", "host")
-    db_redmine_name = get("mysql", "database")
-    db_redmine_user_name = get("mysql", "user")
-    db_redmine_password = get("mysql", "password")
+    
+    logger.info("✅ Используется безопасная конфигурация из переменных окружения")
 
     # Получаем путь к текущему каталогу
     current_dir = os.path.dirname(os.path.abspath(__file__))
-    # Получаем относительный путь к базе данных из конфигурации
-    db_relative_path = get("database", "db_path")
+    db_absolute_path = os.getenv('DB_PATH', 'blog/db/blog.db')
+    ERROR_MESSAGE = "An error occurred:"
+
+    # Глобальные переменные для URL и API ключа администратора Redmine
+    REDMINE_URL = os.getenv('REDMINE_URL')
+    REDMINE_ADMIN_API_KEY = os.getenv('REDMINE_API_KEY')
+    ANONYMOUS_USER_ID_CONFIG = int(os.getenv('REDMINE_ANONYMOUS_USER_ID', '4'))
+
+except ImportError:
+    logger.warning("⚠️ Используется устаревшая конфигурация config.ini")
+    import os
+
+    # Используем переменные окружения напрямую
+    db_redmine_host = os.getenv('MYSQL_HOST')
+    db_redmine_name = os.getenv('MYSQL_DATABASE')
+    db_redmine_user_name = os.getenv('MYSQL_USER')
+    db_redmine_password = os.getenv('MYSQL_PASSWORD')
+
+    # Получаем путь к текущему каталогу
+    current_dir = os.path.dirname(os.path.abspath(__file__))
+    # Получаем относительный путь к базе данных из переменных окружения
+    db_relative_path = os.getenv('DB_PATH', 'blog/db/blog.db')
     # Формируем абсолютный путь к базе данных
     db_absolute_path = os.path.join(current_dir, db_relative_path)
     ERROR_MESSAGE = "An error occurred:"
 
     # Глобальные переменные для URL и API ключа администратора Redmine
-    REDMINE_URL = get("redmine", "url")
-    REDMINE_ADMIN_API_KEY = get("redmine", "api_key")
+    REDMINE_URL = os.getenv('REDMINE_URL')
+    REDMINE_ADMIN_API_KEY = os.getenv('REDMINE_API_KEY')
     # ANONYMOUS_USER_ID также уже определен глобально в routes.py, но может понадобиться здесь
-    ANONYMOUS_USER_ID_CONFIG = int(get("redmine", "anonymous_user_id", fallback="0"))
+    ANONYMOUS_USER_ID_CONFIG = int(os.getenv('REDMINE_ANONYMOUS_USER_ID', '4'))
 
 
 def get_connection(host, user_name, password, name, max_attempts=3):

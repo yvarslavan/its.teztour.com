@@ -37,16 +37,19 @@ def setup_production_environment():
     env = 'production' if os.name != 'nt' else 'development'
     os.environ.setdefault('FLASK_ENV', env)
 
-    # Выбираем файл конфигурации
-    if env == 'production':
-        env_file = BASE_DIR / '.env.production'
-    else:
-        env_file = BASE_DIR / '.env.development'
-
-    # Загружаем переменные окружения
+    # Загружаем основной .env файл
+    env_file = BASE_DIR / '.env'
+    
     if env_file.exists():
         load_dotenv(env_file)
         print(f"📦 Загружены настройки из {env_file}")
+        
+        # Переопределяем настройки для production
+        if env == 'production':
+            os.environ['FLASK_ENV'] = 'production'
+            os.environ['FLASK_DEBUG'] = 'False'
+            os.environ['WTF_CSRF_ENABLED'] = 'True'
+            print("✅ Установлены настройки для продакшена")
     else:
         print(f"⚠️  Файл {env_file} не найден, используются переменные системы")
         # Устанавливаем базовые переменные для продакшена

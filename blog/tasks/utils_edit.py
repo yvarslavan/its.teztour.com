@@ -1,11 +1,11 @@
 # blog/tasks/utils.py
 import traceback
+import os
 from flask import current_app
 from flask import request
 from datetime import date, datetime
 
 # Импорты из корневой директории проекта
-from config import get
 from redmine import RedmineConnector # Исправленный импорт
 
 # ANONYMOUS_USER_ID будет браться из get('redmine', 'api_key') в create_redmine_connector для анонимных случаев,
@@ -13,11 +13,11 @@ from redmine import RedmineConnector # Исправленный импорт
 # Пока что логика create_redmine_connector полагается на общий api_key для "анонимов".
 
 def create_redmine_connector(is_redmine_user, user_login, password=None, api_key_param=None):
-    url = get('redmine', 'url')
+    url = os.getenv('REDMINE_URL')
     effective_api_key = api_key_param
 
     if not is_redmine_user and not api_key_param:
-        effective_api_key = get('redmine', 'api_key', None)
+        effective_api_key = os.getenv('REDMINE_API_KEY')
 
     if is_redmine_user:
         return RedmineConnector(

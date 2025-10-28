@@ -16,30 +16,22 @@ def setup_development_environment():
     os.environ["FLASK_ENV"] = "development"
     os.environ["FLASK_DEBUG"] = "1"
 
-    # Настраиваем безопасное логирование
-    try:
-        from logging_config import setup_logging
-        logger, error_logger = setup_logging()
-        print("✅ Используется безопасное логирование с ротацией")
-    except ImportError:
-        print("⚠️ Используется стандартное логирование (logging_config не найден)")
-
-    # Загружаем переменные из .flaskenv (если есть)
-    BASE_DIR = Path(__file__).resolve().parent
-    flaskenv_path = BASE_DIR / ".flaskenv"
-
-    if flaskenv_path.exists():
-        load_dotenv(flaskenv_path)
-        print(f"✅ Загружены настройки из {flaskenv_path}")
-
-    # Загружаем dev конфигурацию
-    env_dev_path = BASE_DIR / ".env.development"
-    if env_dev_path.exists():
-        load_dotenv(env_dev_path)
-        print(f"✅ Загружены настройки разработки из {env_dev_path}")
+    # Настраиваем простое логирование
+    import logging
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+        handlers=[
+            logging.FileHandler('logs/app.log'),
+            logging.StreamHandler()
+        ]
+    )
+    print("✅ Логирование настроено")
 
     # Загружаем основной .env файл
+    BASE_DIR = Path(__file__).resolve().parent
     env_path = BASE_DIR / ".env"
+    
     if env_path.exists():
         load_dotenv(env_path)
         print(f"✅ Загружены переменные окружения из {env_path}")

@@ -29,14 +29,14 @@ try:
 
 except ImportError:
     logging.warning("⚠️ Используется устаревшая конфигурация config.ini")
-    from config import get
+    import os
 
-    # Используем безопасную конфигурацию из переменных окружения
-    db_host = get("oracle", "host")
-    db_port = get("oracle", "port")
-    db_service_name = get("oracle", "service_name")
-    db_user_name = get("oracle", "user_name")
-    db_password = get("oracle", "password")
+    # Используем переменные окружения напрямую
+    db_host = os.getenv('ORACLE_HOST')
+    db_port = os.getenv('ORACLE_PORT')
+    db_service_name = os.getenv('ORACLE_SERVICE_NAME')
+    db_user_name = os.getenv('ORACLE_USER')
+    db_password = os.getenv('ORACLE_PASSWORD')
 
 
 def connect_oracle(

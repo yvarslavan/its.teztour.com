@@ -10,7 +10,7 @@ import sqlalchemy
 from sqlalchemy import func, or_, text
 from sqlalchemy.exc import SQLAlchemyError, IntegrityError
 import pytz
-from config import get  # Добавляем импорт функции get для безопасной конфигурации
+from blog.user.forms import LoginForm, RegistrationForm, UpdateAccountForm, AddCommentRedmine
 from flask import (
     Blueprint,
     render_template,
@@ -71,10 +71,11 @@ logger = logging.getLogger(__name__)
 
 users = Blueprint("users", __name__)
 USERS_ACCOUNT_URL = "users.account"
-# Используем безопасную конфигурацию из переменных окружения
-url_recovery_password = get("RecoveryPassword", "url")
+# Используем переменные окружения напрямую
+import os
+url_recovery_password = os.getenv('RECOVERY_PASSWORD_URL') or ""
 # Получение пути к ERP файлу
-ERP_FILE_PATH = get("FilePaths", "erp_file_path")
+ERP_FILE_PATH = os.getenv('ERP_FILE_PATH') or ""
 # Определение пути к файлу в зависимости от операционной системы
 if os.name == "nt":  # Windows
     ERP_FILE_PATH = r"\\10.1.14.10\erp\ERP\TEZERP.exe"
@@ -232,7 +233,7 @@ def login():
 
         if not form.password.data and request.form.get('password'):
             form.password.data = request.form.get('password')
-            logger.debug(f"✅ Manually set password (length: {len(form.password.data)})")
+            logger.debug(f"✅ Manually set password (length: {len(form.password.data) if form.password.data else 0})")
 
         logger.debug(f"📋 Form errors: {form.errors}")
         logger.debug(f"✔️ Form validate: {form.validate()}")

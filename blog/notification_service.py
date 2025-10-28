@@ -34,14 +34,18 @@ import redmine
 # Настраиваем логгер сразу
 logger = logging.getLogger(__name__)
 
-# Читаем конфигурацию для доступа к БД Redmine из безопасных переменных окружения
+# Читаем конфигурацию для доступа к БД Redmine из переменных окружения
 try:
-    from config import get
-    DB_REDMINE_HOST = get("mysql", "host")
-    DB_REDMINE_DB = get("mysql", "database")
-    DB_REDMINE_USER = get("mysql", "user")
-    DB_REDMINE_PASSWORD = get("mysql", "password")
-    logger.info("Конфигурация для Redmine DB успешно загружена из безопасных переменных окружения.")
+    import os
+    DB_REDMINE_HOST = os.getenv('MYSQL_HOST')
+    DB_REDMINE_DB = os.getenv('MYSQL_DATABASE')
+    DB_REDMINE_USER = os.getenv('MYSQL_USER')
+    DB_REDMINE_PASSWORD = os.getenv('MYSQL_PASSWORD')
+    
+    if not all([DB_REDMINE_HOST, DB_REDMINE_DB, DB_REDMINE_USER, DB_REDMINE_PASSWORD]):
+        raise ValueError("Неполная конфигурация MySQL")
+    
+    logger.info("Конфигурация для Redmine DB успешно загружена из переменных окружения.")
 except Exception as e:
     logger.critical(
         f"Не удалось прочитать конфигурацию БД Redmine из переменных окружения: {e}"

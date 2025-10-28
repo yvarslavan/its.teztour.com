@@ -1,11 +1,11 @@
 # blog/tasks/utils.py
 import traceback
+import os
 from flask import current_app
 from flask import request
 from datetime import date, datetime
 
 # Импорты из корневой директории проекта
-from config import get
 from redmine import RedmineConnector # Исправленный импорт
 from redmine import get_connection, db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name
 
@@ -15,18 +15,18 @@ from redmine import get_connection, db_redmine_host, db_redmine_user_name, db_re
 
 def create_redmine_connector(is_redmine_user, user_login, password=None, api_key_param=None):
     try:
-        # Получаем URL Redmine из конфигурации
-        url = get('redmine', 'url')
+        # Получаем URL Redmine из переменных окружения
+        url = os.getenv('REDMINE_URL')
         if not url:
-            current_app.logger.error("URL Redmine не найден в конфигурации")
+            current_app.logger.error("REDMINE_URL не установлен в переменных окружения")
             return None
 
         current_app.logger.info(f"Создание коннектора Redmine для URL: {url}")
         effective_api_key = api_key_param
 
         if not is_redmine_user and not api_key_param:
-            effective_api_key = get('redmine', 'api_key', None)
-            current_app.logger.info(f"Используется API ключ из конфигурации: {'Да' if effective_api_key else 'Нет'}")
+            effective_api_key = os.getenv('REDMINE_API_KEY')
+            current_app.logger.info(f"Используется API ключ из переменных окружения: {'Да' if effective_api_key else 'Нет'}")
 
         # Логируем параметры создания коннектора
         current_app.logger.info(f"Параметры коннектора - is_redmine_user: {is_redmine_user}, user_login: {user_login}, password: {'***' if password else 'None'}")
@@ -77,7 +77,7 @@ def get_redmine_connector(current_user_obj, user_password_erp):
         # Если у пользователя нет Redmine аккаунта, сразу используем системный API ключ
         if not current_user_obj.is_redmine_user:
             current_app.logger.info(f"Пользователь {username} не имеет Redmine аккаунта, используем системный API ключ")
-            system_api_key = get('redmine', 'api_key', None)
+            system_api_key = os.getenv('REDMINE_API_KEY')
             if system_api_key:
                 redmine_conn_system = create_redmine_connector(
                     is_redmine_user=False,
@@ -129,7 +129,7 @@ def get_redmine_connector(current_user_obj, user_password_erp):
                     current_app.logger.warning(f"⚠️ Аутентификация по API ключу не прошла для пользователя {username}")
 
         # Попытка 3: Fallback к общему API ключу системы (только для чтения)
-        system_api_key = get('redmine', 'api_key', None)
+        system_api_key = os.getenv('REDMINE_API_KEY')
         if system_api_key:
             current_app.logger.info(f"Попытка fallback к системному API ключу для пользователя {username}")
             redmine_conn_system = create_redmine_connector(

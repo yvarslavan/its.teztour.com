@@ -27,7 +27,6 @@ from blog import csrf
 from sqlalchemy import or_, desc, text, inspect
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import count
-from config import get
 from blog import db
 from blog.utils.connection_monitor import check_database_connections, get_connection_health
 from blog.models import Post, User, Notifications, NotificationsAddNotes, PushSubscription
@@ -148,18 +147,18 @@ MY_TASKS_REDIRECT = "main.my_tasks"
 logger = logging.getLogger(__name__) # Локальный логгер для текущего модуля
 
 
-# Используем безопасную конфигурацию из переменных окружения
-from config import get
-redmine_url = get("redmine", "url")
-redmine_api_key = get("redmine", "api_key")
-redmine_login_admin = get("redmine", "login_admin")
-redmine_password_admin = get("redmine", "password_admin")
-ANONYMOUS_USER_ID = int(get("redmine", "anonymous_user_id"))
+# Используем переменные окружения напрямую
+import os
+redmine_url = os.getenv('REDMINE_URL')
+redmine_api_key = os.getenv('REDMINE_API_KEY')
+redmine_login_admin = os.getenv('REDMINE_LOGIN_ADMIN')
+redmine_password_admin = os.getenv('REDMINE_PASSWORD_ADMIN')
+ANONYMOUS_USER_ID = int(os.getenv('REDMINE_ANONYMOUS_USER_ID', '4'))
 
-DB_REDMINE_HOST = get("mysql", "host")
-DB_REDMINE_DB = get("mysql", "database")
-DB_REDMINE_USER = get("mysql", "user")
-DB_REDMINE_PASSWORD = get("mysql", "password")
+DB_REDMINE_HOST = os.getenv('MYSQL_HOST')
+DB_REDMINE_DB = os.getenv('MYSQL_DATABASE')
+DB_REDMINE_USER = os.getenv('MYSQL_USER')
+DB_REDMINE_PASSWORD = os.getenv('MYSQL_PASSWORD')
 
 # Глобальная переменная для хранения статуса подключения
 db_connection_status = {
@@ -1588,6 +1587,13 @@ def questionable_email():
 def safe_internet():
     return render_template(
         "safe_internet.html", title="Безопасное использование интернета"
+    )
+
+
+@main.route("/calls_and_conferences")
+def calls_and_conferences():
+    return render_template(
+        "telephony_tez_tour.html", title="Руководство по звонкам и конференциям"
     )
 
 
