@@ -411,8 +411,8 @@
   /* Page Header */
   .users-page-wrapper .page-header {
     background: var(--surface-glass);
-    backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
+    backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xxl);
     box-shadow: var(--shadow-header);
@@ -563,6 +563,7 @@
     cursor: pointer;
     padding: var(--spacing-sm);
     transition: all var(--transition-normal);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     width: 40px !important;
     height: 40px !important;
@@ -804,8 +805,8 @@
   /* User Cards */
   .users-page-wrapper .user-card {
     background: var(--surface-card);
-    backdrop-filter: blur(16px) saturate(180%);
     -webkit-backdrop-filter: blur(16px) saturate(180%);
+    backdrop-filter: blur(16px) saturate(180%);
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-card);
@@ -1103,6 +1104,7 @@
     text-align: center;
     padding: var(--spacing-xxl);
     background: var(--surface-card);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
@@ -1193,7 +1195,7 @@
     }
 
     .users-page-wrapper .user-card {
-      min-height: auto;
+      min-height: unset;
     }
 
     .users-page-wrapper .user-count-container {

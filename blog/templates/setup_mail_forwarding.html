@@ -15,7 +15,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" class="action-button primary">
+        <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" rel="noopener" class="action-button primary">
           <i class="fas fa-external-link-alt"></i>
           <span>Открыть веб-почту</span>
         </a>
@@ -86,7 +86,7 @@
           <div class="step-number">1</div>
           <div class="step-content">
             <h4>Переход к веб-интерфейсу</h4>
-            <p>Откройте браузер и перейдите по <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" class="external-link">данному адресу</a>. Появится страница входа в почтовую систему.</p>
+            <p>Откройте браузер и перейдите по <a href="https://mail.tez-tour.com/?Skin=hPronto-" target="_blank" rel="noopener" class="external-link">данному адресу</a>. Появится страница входа в почтовую систему.</p>
             <div class="access-highlight">
               <i class="fas fa-info-circle"></i>
               <span>Рекомендуется использовать современный браузер для корректной работы интерфейса</span>
@@ -499,6 +499,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(10px); /* For Safari support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -543,6 +544,7 @@
 .action-button.primary {
   background: rgba(255, 255, 255, 0.2);
   color: white;
+  -webkit-backdrop-filter: blur(10px); /* For Safari support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
 }

@@ -138,7 +138,13 @@
                                 <div class="step-number">2</div>
                                 <h4>Переход на портал</h4>
                             </div>
-                            <p>Перейдите на ресурс: <a href="https://srvdi.moscow.teztour.com/rdweb" target="_blank" class="portal-link">https://srvdi.moscow.teztour.com/rdweb</a></p>
+                            <p>
+                                Перейдите на ресурс:
+                                <a href="https://srvdi.moscow.teztour.com/rdweb"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="portal-link">https://srvdi.moscow.teztour.com/rdweb</a>
+                            </p>
                         </div>
 
                         <div class="portal-step">
@@ -425,26 +431,33 @@
                             <div class="tool-item">
                                 <h5>Проверка подключения</h5>
                                 <div class="command-box">
-                                    <code>ping srvdi.moscow.teztour.com</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('ping srvdi.moscow.teztour.com')">
+                                    <code id="ping-command">ping srvdi.moscow.teztour.com</code>
+                                    <button class="copy-btn" 
+                                            onclick="copyToClipboard('ping srvdi.moscow.teztour.com')"
+                                            aria-label="Скопировать команду ping"
+                                            title="Скопировать команду ping">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
-                            </div>
                             <div class="tool-item">
                                 <h5>Проверка DNS</h5>
                                 <div class="command-box">
-                                    <code>nslookup srvdi.moscow.teztour.com</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('nslookup srvdi.moscow.teztour.com')">
+                                    <code id="dns-command">nslookup srvdi.moscow.teztour.com</code>
+                                    <button class="copy-btn"
+                                            onclick="copyToClipboard('nslookup srvdi.moscow.teztour.com')"
+                                            aria-label="Скопировать команду nslookup"
+                                            title="Скопировать команду nslookup">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
-                            </div>
                             <div class="tool-item">
                                 <h5>Проверка маршрута</h5>
                                 <div class="command-box">
                                     <code>tracert srvdi.moscow.teztour.com</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('tracert srvdi.moscow.teztour.com')">
+                                    <button class="copy-btn"
+                                            onclick="copyToClipboard('tracert srvdi.moscow.teztour.com')"
+                                            aria-label="Скопировать команду tracert"
+                                            title="Скопировать команду tracert">
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>

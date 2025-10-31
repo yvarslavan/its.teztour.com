@@ -15,7 +15,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="https://www.mozilla.org/ru/thunderbird/" target="_blank" class="action-button primary">
+        <a href="https://www.mozilla.org/ru/thunderbird/" target="_blank" rel="noopener" class="action-button primary">
           <i class="fas fa-download"></i>
           <span>Скачать Thunderbird</span>
         </a>
@@ -56,7 +56,7 @@
           <i class="fas fa-exclamation-triangle"></i>
           <div>
             <strong>Перед установкой:</strong>
-            <p>Убедитесь, что ваш компьютер соответствует <a href="https://www.thunderbird.net/en-US/thunderbird/115.9.0/system-requirements" target="_blank" class="external-link">системным требованиям</a>. Если вы обновляетесь с предыдущей версии, прочтите статью <a href="https://support.mozilla.org/ru/kb/obnovlenie-thunderbird" target="_blank" class="external-link">Обновление Thunderbird</a>.</p>
+            <p>Убедитесь, что ваш компьютер соответствует <a href="https://www.thunderbird.net/en-US/thunderbird/115.9.0/system-requirements" target="_blank" rel="noopener" class="external-link">системным требованиям</a>. Если вы обновляетесь с предыдущей версии, прочтите статью <a href="https://support.mozilla.org/ru/kb/obnovlenie-thunderbird" target="_blank" rel="noopener" class="external-link">Обновление Thunderbird</a>.</p>
           </div>
         </div>
       </div>
@@ -86,7 +86,7 @@
           <div class="step-number">1</div>
           <div class="step-content">
             <h4>Переход на официальный сайт</h4>
-            <p>Откройте <a href="http://www.mozilla.org/ru/thunderbird/" target="_blank" class="external-link">страницу загрузки Thunderbird</a> в любом браузере. Страница автоматически определит наилучшую версию для вашей операционной системы.</p>
+            <p>Откройте <a href="http://www.mozilla.org/ru/thunderbird/" target="_blank" rel="noopener" class="external-link">страницу загрузки Thunderbird</a> в любом браузере. Страница автоматически определит наилучшую версию для вашей операционной системы.</p>
             <div class="image-container">
               <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/thunderbird_download_page.jpg') }}" alt="Страница загрузки Thunderbird" class="instruction-image clickable-image" onclick="openImageModal(this)">
               <div class="image-caption">Официальная страница загрузки Mozilla Thunderbird (нажмите для увеличения)</div>
@@ -708,16 +708,17 @@
                 <h5>Проверка доступности сервера</h5>
                 <div class="command-box">
                   <code>ping imap.tez-tour.com</code>
-                  <button onclick="copyToClipboard('ping imap.tez-tour.com')" class="copy-btn">
+                  <button onclick="copyToClipboard('ping imap.tez-tour.com')" class="copy-btn" title="Скопировать команду ping">
+                    <span class="sr-only">Скопировать команду ping imap.tez-tour.com</span>
                     <i class="fas fa-copy"></i>
                   </button>
                 </div>
-              </div>
               <div class="tool-item">
                 <h5>Проверка портов</h5>
                 <div class="command-box">
                   <code>telnet imap.tez-tour.com 993</code>
-                  <button onclick="copyToClipboard('telnet imap.tez-tour.com 993')" class="copy-btn">
+                  <button onclick="copyToClipboard('telnet imap.tez-tour.com 993')" class="copy-btn" title="Скопировать команду telnet">
+                    <span class="sr-only">Скопировать команду telnet imap.tez-tour.com 993</span>
                     <i class="fas fa-copy"></i>
                   </button>
                 </div>
@@ -726,7 +727,8 @@
                 <h5>Проверка DNS</h5>
                 <div class="command-box">
                   <code>nslookup imap.tez-tour.com</code>
-                  <button onclick="copyToClipboard('nslookup imap.tez-tour.com')" class="copy-btn">
+                  <button onclick="copyToClipboard('nslookup imap.tez-tour.com')" class="copy-btn" title="Скопировать команду nslookup">
+                    <span class="sr-only">Скопировать команду nslookup imap.tez-tour.com</span>
                     <i class="fas fa-copy"></i>
                   </button>
                 </div>
@@ -1296,6 +1298,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(10px); /* Fix: Safari support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -1340,6 +1343,7 @@
 .action-button.primary {
   background: rgba(255, 255, 255, 0.2);
   color: white;
+  -webkit-backdrop-filter: blur(10px); /* Fix: Safari support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
 }

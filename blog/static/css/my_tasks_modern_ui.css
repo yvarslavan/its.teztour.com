@@ -65,6 +65,7 @@
     justify-content: center;
     align-items: center;
     z-index: 200;
+    -webkit-backdrop-filter: blur(5px);
     backdrop-filter: blur(5px);
 }
 
@@ -1380,7 +1381,6 @@
 }
 
 .subject-text {
-    display: block;
     word-wrap: break-word;
     overflow-wrap: break-word;
     hyphens: auto;
@@ -1389,9 +1389,10 @@
     max-height: 3.9em; /* Максимум 3 строки для лучшей читаемости */
     overflow: hidden;
     text-overflow: ellipsis;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
     display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
 }
 
 /* Статус столбец - расширенный */

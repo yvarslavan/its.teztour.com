@@ -25,6 +25,7 @@
 .status-breakdown-card {
   /* Glassmorphism дизайн */
   background: rgba(255, 255, 255, 0.95) !important;
+  -webkit-backdrop-filter: blur(10px) !important; /* Safari support */
   backdrop-filter: blur(10px) !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
   border-radius: 16px !important;
@@ -133,6 +134,7 @@
   justify-content: center !important;
   min-width: 28px !important; /* Уменьшено */
   min-height: 28px !important; /* Уменьшено */
+  -webkit-backdrop-filter: blur(10px) !important; /* Safari support */
   backdrop-filter: blur(10px) !important;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
   z-index: 10 !important;

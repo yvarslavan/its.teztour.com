@@ -26,7 +26,7 @@
                     <h2>Персональное облачное хранилище</h2>
                 </div>
                 <div class="intro-content">
-                    <p>Персональное облачное хранилище <a href="https://cloud.teztour.com/" target="_blank">CLOUD TEZ TOUR</a> - это ваш персональный облачный центр хранения, обработки, общего доступа к файлам и синхронизации данных. Данными могут быть различные файлы, графическая и мультимедийная информация, контакты, задачи и события календаря.</p>
+                    <p>Персональное облачное хранилище <a href="https://cloud.teztour.com/" target="_blank" rel="noopener">CLOUD TEZ TOUR</a> - это ваш персональный облачный центр хранения, обработки, общего доступа к файлам и синхронизации данных. Данными могут быть различные файлы, графическая и мультимедийная информация, контакты, задачи и события календаря.</p>
 
                     <div class="benefits-grid">
                         <div class="benefit-card">
@@ -146,7 +146,9 @@
                         <div class="setup-step">
                             <div class="step-number">2</div>
                             <div class="step-content">
-                                <h4>Введите адрес сервера: <a href="https://cloud.teztour.com/" target="_blank">https://cloud.teztour.com</a></h4>
+                                <h4>Введите адрес сервера: 
+                                    <a href="https://cloud.teztour.com/" target="_blank" rel="noopener">https://cloud.teztour.com</a>
+                                </h4>
                             </div>
                         </div>
                         <div class="setup-step">
@@ -292,11 +294,11 @@
                                 <div class="client-steps">
                                     <div class="client-step">
                                         <span class="step-num">1.</span>
-                                        <span>Установите и запустите клиент с <a href="https://nextcloud.com/install/#install-clients" target="_blank">официального сайта</a></span>
+                                        <span>Установите и запустите клиент с <a href="https://nextcloud.com/install/#install-clients" target="_blank" rel="noopener">официального сайта</a></span>
                                     </div>
                                     <div class="client-step">
                                         <span class="step-num">2.</span>
-                                        <span>Введите адрес сервера <a href="https://cloud.teztour.com/" target="_blank">https://cloud.teztour.com</a></span>
+                                        <span>Введите адрес сервера <a href="https://cloud.teztour.com/" target="_blank" rel="noopener">https://cloud.teztour.com</a></span>
                                     </div>
                                     <div class="client-step">
                                         <span class="step-num">3.</span>
@@ -347,7 +349,7 @@
                                 <h4>Android и iOS</h4>
                             </div>
                             <div class="client-content">
-                                <p>Клиент для iPhone есть в официальном <a href="https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8" target="_blank">AppStore</a>, для Android — в <a href="https://play.google.com/store/apps/details?id=com.nextcloud.client8" target="_blank">Google Play</a> и на <a href="#" target="_blank">F-Droid</a>.</p>
+                                <p>Клиент для iPhone есть в официальном <a href="https://itunes.apple.com/us/app/nextcloud/id1125420102?mt=8" target="_blank" rel="noopener">AppStore</a>, для Android — в <a href="https://play.google.com/store/apps/details?id=com.nextcloud.client8" target="_blank" rel="noopener">Google Play</a> и на <a href="#" target="_blank" rel="noopener">F-Droid</a>.</p>
 
                                 <div class="mobile-steps">
                                     <div class="mobile-step">
@@ -356,7 +358,7 @@
                                     </div>
                                     <div class="mobile-step">
                                         <div class="step-icon">2</div>
-                                        <span>Введите адрес сервера <a href="https://cloud.teztour.com/" target="_blank">https://cloud.teztour.com</a></span>
+                                        <span>Введите адрес сервера <a href="https://cloud.teztour.com/" target="_blank" rel="noopener">https://cloud.teztour.com</a></span>
                                     </div>
                                     <div class="mobile-step">
                                         <div class="step-icon">3</div>
@@ -551,16 +553,23 @@
                                 <h5>Проверка подключения</h5>
                                 <div class="command-box">
                                     <code>ping cloud.teztour.com</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('ping cloud.teztour.com')">
+                                    <button class="copy-btn"
+                                            onclick="copyToClipboard('ping cloud.teztour.com')"
+                                            aria-label="Скопировать команду ping cloud.teztour.com"
+                                            title="Скопировать команду">
+                                        <span class="sr-only">Скопировать команду ping cloud.teztour.com</span>
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
-                            </div>
                             <div class="tool-item">
                                 <h5>Проверка DNS</h5>
                                 <div class="command-box">
                                     <code>nslookup cloud.teztour.com</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('nslookup cloud.teztour.com')">
+                                    <button class="copy-btn" 
+                                            onclick="copyToClipboard('nslookup cloud.teztour.com')" 
+                                            aria-label="Скопировать команду nslookup cloud.teztour.com" 
+                                            title="Скопировать команду">
+                                        <span class="sr-only">Скопировать команду nslookup cloud.teztour.com</span>
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>
@@ -569,7 +578,11 @@
                                 <h5>Проверка SSL сертификата</h5>
                                 <div class="command-box">
                                     <code>openssl s_client -connect cloud.teztour.com:443</code>
-                                    <button class="copy-btn" onclick="copyToClipboard('openssl s_client -connect cloud.teztour.com:443')">
+                                    <button class="copy-btn" 
+                                            onclick="copyToClipboard('openssl s_client -connect cloud.teztour.com:443')" 
+                                            aria-label="Скопировать команду openssl для проверки SSL сертификата" 
+                                            title="Скопировать команду">
+                                        <span class="sr-only">Скопировать команду openssl для проверки SSL сертификата</span>
                                         <i class="fas fa-copy"></i>
                                     </button>
                                 </div>

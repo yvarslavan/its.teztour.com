@@ -57,11 +57,10 @@
                                 <div class="input-container">
                                     <i class="fas fa-lock input-icon"></i>
                                     {{ form.password(class="form-control", placeholder="Введите пароль ERP", type="password", id="passwordField") }}
-                                    <button type="button" class="password-toggle" id="passwordToggle">
-                                        <i class="fas fa-eye"></i>
+                                    <button type="button" class="password-toggle" id="passwordToggle" aria-label="Показать/скрыть пароль" title="Показать/скрыть пароль">
+                                        <i class="fas fa-eye" aria-hidden="true"></i>
                                     </button>
                                     <div class="input-focus-line"></div>
-                                </div>
                                 {% if form.password.errors %}
                                     <div class="field-errors">
                                         {% for error in form.password.errors %}
@@ -419,8 +418,8 @@ $(document).ready(function() {
     /* Login Form Container */
     .login-form-container {
         background: var(--surface-glass);
-        backdrop-filter: blur(20px);
         -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
         border: 1px solid rgba(255, 255, 255, 0.2);
         border-radius: var(--radius-xxl);
         box-shadow: var(--shadow-form);
@@ -874,8 +873,8 @@ $(document).ready(function() {
 
     /* Toast Customization */
     .modern-toast {
-        backdrop-filter: blur(10px);
         -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
     }
 
     /* Responsive Design */

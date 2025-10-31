@@ -957,8 +957,9 @@
               <span class="attachment-name">{{ attachment.filename }}</span>
               <span class="attachment-size">{{ (attachment.filesize / 1024)|round(1) }} KB</span>
             </div>
-            <button class="attachment-download" onclick="downloadAttachment('{{ attachment.id }}')">
-              <i class="fas fa-download"></i>
+            <button class="attachment-download" onclick="downloadAttachment('{{ attachment.id }}')" title="Скачать {{ attachment.filename }}">
+              <i class="fas fa-download" aria-hidden="true"></i>
+              <span class="sr-only">Скачать {{ attachment.filename }}</span>
             </button>
           </div>
           {% endfor %}
@@ -1148,7 +1149,7 @@
 
                 {% if user_check and journal.notes %}
                   <div class="action-button-container">
-                    <button class="action-btn" data-journal-id="{{ journal.id }}">
+                    <button class="action-btn" data-journal-id="{{ journal.id }}" title="Действия с комментарием" aria-label="Действия с комментарием">
                       <i class="fas fa-ellipsis-v"></i>
                     </button>
                     <div class="action-menu" id="menu-{{ journal.id }}">
@@ -1426,6 +1427,7 @@
   height: 4rem;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
@@ -1488,7 +1490,8 @@
   cursor: pointer !important;
   white-space: nowrap !important;
   flex-shrink: 0 !important;
-  min-width: fit-content !important;
+  min-width: -webkit-fill-available !important; /* For Samsung Internet 5.0+ */
+  /* min-width: fit-content; -- Not supported by Samsung Internet */
   font-size: 0.9rem !important;
   max-width: none !important;
   flex: 0 0 auto !important;
@@ -1497,6 +1500,7 @@
 .action-btn.primary {
   background: rgba(255, 255, 255, 0.9) !important;
   color: var(--primary-color) !important;
+  -webkit-backdrop-filter: blur(10px) !important;
   backdrop-filter: blur(10px) !important;
   padding: 0.75rem 2rem !important;
 }
@@ -2549,6 +2553,7 @@
   justify-content: center !important;
   width: 24px !important;
   height: 24px !important;
+  -webkit-backdrop-filter: blur(8px) !important;
   backdrop-filter: blur(8px) !important;
 }
 
@@ -2975,6 +2980,7 @@
   background: rgba(255, 255, 255, 0.9) !important; /* светлый полупрозрачный */
   color: var(--primary-color) !important;
   border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  -webkit-backdrop-filter: blur(6px) !important;
   backdrop-filter: blur(6px) !important;
 }
 

@@ -15,7 +15,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="https://www.mozilla.org/ru/thunderbird/" target="_blank" class="action-button primary">
+        <a href="https://www.mozilla.org/ru/thunderbird/" target="_blank" rel="noopener noreferrer" class="action-button primary">
           <i class="fas fa-download"></i>
           <span>Скачать Thunderbird</span>
         </a>
@@ -621,6 +621,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(10px); /* Safari Support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -665,6 +666,7 @@
 .action-button.primary {
   background: rgba(255, 255, 255, 0.2);
   color: white;
+  -webkit-backdrop-filter: blur(10px); /* Safari Support */
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
 }

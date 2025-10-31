@@ -15,7 +15,7 @@
         </div>
       </div>
       <div class="header-actions">
-        <a href="https://vpn.teztour.com" target="_blank" class="action-button primary">
+        <a href="https://vpn.teztour.com" target="_blank" rel="noopener" class="action-button primary">
           <i class="fas fa-globe"></i>
           <span>Веб-портал VPN</span>
         </a>
@@ -89,7 +89,9 @@
           <div class="step-number">1</div>
           <div class="step-content">
             <h4>Перейдите на веб-портал</h4>
-            <p>Откройте браузер и перейдите по ссылке: <a href="https://vpn.teztour.com" target="_blank" class="external-link">vpn.teztour.com</a></p>
+            <p>Откройте браузер и перейдите по ссылке: 
+              <a href="https://vpn.teztour.com" target="_blank" rel="noopener" class="external-link">vpn.teztour.com</a>
+            </p>
             <div class="info-box">
               <i class="fas fa-info-circle"></i>
               <div>
@@ -919,6 +921,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.2);
 }
@@ -965,6 +968,7 @@
 .action-button.primary {
   background: rgba(255, 255, 255, 0.2);
   color: white;
+  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
   border: 2px solid rgba(255, 255, 255, 0.3);
 }

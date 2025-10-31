@@ -90,7 +90,7 @@
                             </svg>
                         </div>
                         {{ form.password(class="modern-input", placeholder="Введите пароль ERP", type="password", id="passwordField", autocomplete="current-password") }}
-                        <button type="button" class="toggle-password" id="togglePassword">
+                        <button type="button" class="toggle-password" id="togglePassword" aria-label="Показать или скрыть пароль" title="Показать или скрыть пароль">
                             <svg class="eye-open" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                 <circle cx="12" cy="12" r="3"></circle>
@@ -627,6 +627,7 @@ $(document).ready(function() {
         font-size: 0.875rem;
         font-weight: 500;
         color: var(--gray-700);
+        -webkit-user-select: none;
         user-select: none;
     }
 

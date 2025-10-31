@@ -74,6 +74,7 @@
     max-width: min(600px, calc(100vw - 40px));
     max-height: min(600px, calc(100vh - 140px));
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%) !important;
+    -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
@@ -180,6 +181,7 @@
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     background: linear-gradient(135deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
     border-radius: 24px 24px 0 0;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -301,6 +303,7 @@
     position: relative;
     z-index: 10;
     flex-shrink: 0;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -382,6 +385,7 @@
     border-radius: 16px;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     animation: slideInFromBottom 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
     position: relative;
     overflow: hidden;
@@ -529,6 +533,7 @@
     cursor: pointer;
     transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
     white-space: nowrap;
+    -webkit-backdrop-filter: blur(10px);
     backdrop-filter: blur(10px);
 }
 
@@ -608,6 +613,7 @@
     gap: 12px; /* ИСПРАВЛЕНО: увеличен gap между кнопками */
     background: rgba(248, 250, 252, 0.8); /* ДОБАВЛЕНО: фон для footer */
     border-radius: 0 0 20px 20px; /* ИСПРАВЛЕНО: скругленные углы снизу */
+    -webkit-backdrop-filter: blur(10px); /* ДОБАВЛЕНО: размытие фона */
     backdrop-filter: blur(10px); /* ДОБАВЛЕНО: размытие фона */
     margin: 0; /* ДОБАВЛЕНО: убираем возможные отступы */
     box-sizing: border-box; /* ДОБАВЛЕНО: правильный расчет размеров */
@@ -4060,6 +4066,7 @@ class ModernNotificationsUX {
             font-size: 16px;
             opacity: 0;
             z-index: 1000;
+            -webkit-backdrop-filter: blur(10px);
             backdrop-filter: blur(10px);
             border: 1px solid rgba(255, 255, 255, 0.2);
         `;
@@ -4185,6 +4192,7 @@ class ModernNotificationsUX {
                 font-size: 14px;
                 font-weight: 500;
                 z-index: 1000000;
+                -webkit-backdrop-filter: blur(10px);
                 backdrop-filter: blur(10px);
                 animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }

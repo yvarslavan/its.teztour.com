@@ -693,7 +693,7 @@
     <div class="header-section">
         <h4>
             <i class="fas fa-chart-line"></i>
-            <a href="https://quality.teztour.com/projects/quality/issues" target="_blank" style="color: #007bff; text-decoration: none;">
+            <a href="https://quality.teztour.com/projects/quality/issues" target="_blank" rel="noopener" style="color: #007bff; text-decoration: none;">
                 Аналитика обращений quality.teztour.com
                 <i class="fas fa-external-link-alt" style="margin-left: 5px;"></i>
             </a>
@@ -851,14 +851,14 @@
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label for="assignedTo" class="form-label">На</label>
-                                    <select class="form-select" id="assignedTo">
+                                    <select class="form-select" id="assignedTo" title="Выберите пользователя">
                                         <option selected>Выберите...</option>
                                     </select>
                                 </div>
                                 <div class="d-flex flex-column gap-2">
                                     <div>
                                         <label for="requestType" class="form-label">По типу обращения</label>
-                                        <select id="requestTypeSelect" class="form-select">
+                                        <select id="requestTypeSelect" class="form-select" title="Выберите тип обращения">
                                             <option value="">Выберите...</option>
                                             {% for type in request_types %}
                                             <option value="{{ type.id }}">{{ type.name }}</option>
@@ -867,7 +867,7 @@
                                     </div>
                                     <div>
                                         <label for="countrySelect" class="form-label">Страна</label>
-                                        <select id="countrySelect" class="form-select">
+                                        <select id="countrySelect" class="form-select" title="Выберите страну">
                                             <option value="">Все страны</option>
                                         </select>
                                     </div>
@@ -1010,7 +1010,7 @@
                             </div>
                             <div class="col-md-3">
                                 <label for="resortTypesRequestTypeSelect" class="form-label">Тип обращения</label>
-                                <select id="resortTypesRequestTypeSelect" class="form-select">
+                                <select id="resortTypesRequestTypeSelect" class="form-select" title="Выберите тип обращения">
                                     <option value="">Выберите...</option>
                                     {% for type in request_types %}
                                     <option value="{{ type.id }}">{{ type.name }}</option>
@@ -1096,10 +1096,10 @@
             <span class="badge badge-light" id="comment-badge">0</span>
         </h5>
         <div class="sidebar-controls">
-            <button class="clear-all-btn" id="clearAllComments" title="Очистить все">
+            <button class="clear-all-btn" id="clearAllComments" title="Очистить все" type="button">
                 <i class="fas fa-broom"></i>
             </button>
-            <button class="close-sidebar">
+            <button class="close-sidebar" type="button" title="Закрыть">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -1906,7 +1906,7 @@ function applyFilters() {
             data.issues.forEach(issue => {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td><a href="https://quality.teztour.com/issues/${issue.id}" target="_blank">${issue.id}</a></td>
+                    <td><a href="https://quality.teztour.com/issues/${issue.id}" target="_blank" rel="noopener">${issue.id}</a></td>
                     <td>${issue.subject || 'Нет заголовка'}</td>
                 `;
                 tableBody.appendChild(row);

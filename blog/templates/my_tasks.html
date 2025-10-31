@@ -20,7 +20,7 @@
 
 
 <!-- Заголовок страницы -->
-<header class="page-header">
+<header class="page-header" data-kanban-tips="{% if show_kanban_tips | default(false) %}true{% else %}false{% endif %}">
     <div class="header-content">
         <div class="header-main">
             <div class="header-icon">
@@ -32,7 +32,7 @@
             </div>
         </div>
         <div class="header-actions">
-            <a href="https://helpdesk.teztour.com" class="action-button secondary" target="_blank">
+            <a href="https://helpdesk.teztour.com" class="action-button secondary" target="_blank" rel="noopener">
                 <i class="fas fa-external-link-alt"></i>
                 <span>Перейти в Redmine</span>
             </a>
@@ -178,31 +178,31 @@
 <!-- Панель фильтров -->
 <div class="filters-section">
     <div class="filter-container">
-        <label class="filter-label">Статус:</label>
-        <select id="status-filter" class="filter-select">
+        <label class="filter-label" for="status-filter">Статус:</label>
+        <select id="status-filter" class="filter-select" name="status" title="Фильтр по статусу">
             <option value="">Все статусы</option>
         </select>
-        <button class="clear-filter-btn" id="clear-status-filter" style="display: none;">
+        <button class="clear-filter-btn" id="clear-status-filter" style="display: none;" type="button" aria-label="Сбросить фильтр статуса">
             <i class="fas fa-times"></i>
         </button>
     </div>
 
     <div class="filter-container">
-        <label class="filter-label">Проект:</label>
-        <select id="project-filter" class="filter-select">
+        <label class="filter-label" for="project-filter">Проект:</label>
+        <select id="project-filter" class="filter-select" name="project" title="Фильтр по проекту">
             <option value="">Все проекты</option>
         </select>
-        <button class="clear-filter-btn" id="clear-project-filter" style="display: none;">
+        <button class="clear-filter-btn" id="clear-project-filter" style="display: none;" type="button" aria-label="Сбросить фильтр проекта">
             <i class="fas fa-times"></i>
         </button>
     </div>
 
     <div class="filter-container">
-        <label class="filter-label">Приоритет:</label>
-        <select id="priority-filter" class="filter-select">
+        <label class="filter-label" for="priority-filter">Приоритет:</label>
+        <select id="priority-filter" class="filter-select" name="priority" title="Фильтр по приоритету">
             <option value="">Все приоритеты</option>
         </select>
-        <button class="clear-filter-btn" id="clear-priority-filter" style="display: none;">
+        <button class="clear-filter-btn" id="clear-priority-filter" style="display: none;" type="button" aria-label="Сбросить фильтр приоритета">
             <i class="fas fa-times"></i>
         </button>
     </div>
@@ -514,11 +514,11 @@
             transform: translateY(-5px);
         }
     }
-    }
-/* Вариант 1: Современный Tech-стиль */
-.email-link {
-    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
-    font-size: 13px;
+
+    /* Вариант 1: Современный Tech-стиль */
+    .email-link {
+        font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+        font-size: 13px;
     font-weight: 500;
     color: #4f46e5 !important;
     text-decoration: none;
@@ -650,9 +650,14 @@ if (typeof jQuery === 'undefined') {
         <script src="{{ url_for('static', filename='js/pages/tasks/components/KanbanManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
         <script src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1753017000' }}&force={{ range(1, 999999) | random }}"></script>
 
-<script>
+<script type="text/javascript">
 // Глобальная переменная с настройкой показа баннера Kanban
-window.showKanbanTips = {{ show_kanban_tips | tojson }};
+(function() {
+    'use strict';
+    const pageHeader = document.querySelector('.page-header');
+    const tipsValue = pageHeader ? pageHeader.getAttribute('data-kanban-tips') : 'false';
+    window.showKanbanTips = tipsValue === 'true';
+})();
 
 // Диагностическая функция для проверки состояния подсказок
 window.checkKanbanTipsStatus = function() {
@@ -672,9 +677,12 @@ window.checkKanbanTipsStatus = function() {
     console.log('=== КОНЕЦ ДИАГНОСТИКИ ===');
 };
 
+//
 // Диагностическая функция для проверки состояния обработчиков кликов
+//
 window.checkClickHandlers = function() {
     console.log('=== ДИАГНОСТИКА ОБРАБОТЧИКОВ КЛИКОВ ===');
+    
     console.log('🔧 KanbanManager доступен:', typeof window.kanbanManager !== 'undefined');
 
     if (window.kanbanManager) {

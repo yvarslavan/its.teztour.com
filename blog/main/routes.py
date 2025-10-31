@@ -19,7 +19,8 @@ from flask import (
     g,
     abort,
     current_app,
-    Response
+    Response,
+    send_file
 )
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
@@ -1595,6 +1596,29 @@ def calls_and_conferences():
     return render_template(
         "telephony_tez_tour.html", title="Руководство по звонкам и конференциям"
     )
+
+
+@main.route("/download/telephony_guide")
+def download_telephony_guide():
+    """Маршрут для скачивания инструкции по телефонии"""
+    try:
+        # Получаем корневую директорию проекта (на уровень выше blog/)
+        project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        file_path = os.path.join(project_root, "docs", "Руководство по звонкам и конференциям.docx")
+        
+        if not os.path.exists(file_path):
+            current_app.logger.error(f"File not found: {file_path}")
+            abort(404)
+        
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name="Руководство_по_звонкам_и_конференциям.docx",
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error downloading telephony guide: {str(e)}")
+        abort(500)
 
 
 @main.route("/ciscoanyconnect")

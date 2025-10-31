@@ -1,4 +1,6 @@
-{% extends 'layout.html' %} {% block content %}
+{% extends 'layout.html' %}
+
+{% block content %}
 <div class="account-page-wrapper">
   <!-- Background Elements -->
   <div class="background-shapes">
@@ -64,8 +66,8 @@
                   <i class="fas fa-upload"></i>
                   <span>Загрузить фото</span>
                 </label>
-                {{ form.picture(class="upload-input", id="pictureUpload") }} {%
-                if form.picture.errors %}
+                {{ form.picture(class="upload-input", id="pictureUpload") }}
+                {% if form.picture.errors %}
                 <div class="upload-errors">
                   {% for error in form.picture.errors %}
                   <span class="error-message">{{ error }}</span>
@@ -242,13 +244,21 @@
                     <i class="fas fa-network-wired"></i>
                   </div>
                   <div class="setting-content">
-                    <span class="setting-label">VPN статус</span>
+                    <label for="account-vpn-display" class="setting-label">VPN статус</label>
                     <div class="vpn-status-container">
                       <input
                         type="text"
                         id="account-vpn-display"
                         class="vpn-input"
-                        value="{% if user.vpn_end_date %}Включен, заканчивается {{ user.vpn_end_date }}{% elif user.vpn == 1 and not user.vpn_end_date %}Включен, заканчивается <Дата не определена>{% else %}Выключен{% endif %}"
+                        placeholder="Статус VPN"
+                        title="Текущий статус VPN"
+                        {% if user.vpn_end_date %}
+                        value="Включен, заканчивается {{ user.vpn_end_date }}"
+                        {% elif user.vpn == 1 and not user.vpn_end_date %}
+                        value="Включен, заканчивается &lt;Дата не определена&gt;"
+                        {% else %}
+                        value="Выключен"
+                        {% endif %}
                         readonly
                       />
                       <button
@@ -296,40 +306,31 @@
                     <i class="fas fa-key"></i>
                   </div>
                   <div class="setting-content">
-                    <span class="setting-label">Пароль TEZ ERP</span>
+                    <label for="password-display" class="setting-label">Пароль TEZ ERP</label>
                     <div class="password-container">
                       <input
                         type="password"
                         id="password-display"
                         class="password-input"
                         value="{{ user_password_erp if user_password_erp else '' }}"
+                        title="Пароль TEZ ERP"
+                        placeholder="Введите пароль"
                         readonly
-                      />
-                      <button
-                        type="button"
-                        id="togglePassword"
-                        class="password-toggle-btn"
-                        {%
-                        if
-                        not
-                        user_password_erp
-                        %}disabled{%
-                        endif
-                        %}
-                      >
+                        />
+                        <button
+                          type="button"
+                          id="togglePassword"
+                          class="password-toggle-btn"
+                          title="Показать/скрыть пароль"
+                          {% if not user_password_erp %}disabled{% endif %}
+                        >
                         <i id="eyeIcon" class="fas fa-eye"></i>
                       </button>
                       <button
                         type="button"
                         id="copyPassword"
                         class="password-copy-btn"
-                        {%
-                        if
-                        not
-                        user_password_erp
-                        %}disabled{%
-                        endif
-                        %}
+                        {% if not user_password_erp %}disabled{% endif %}
                       >
                         <i class="fas fa-copy"></i>
                         <span>Копировать</span>
@@ -552,12 +553,18 @@
                   </div>
                 </div>
                 <div class="notification-toggle">
-                  <label class="toggle-switch">
-                    <input type="checkbox" class="notification-toggle"
-                    id="kanbanTipsToggle" data-type="kanban_tips" {{ 'checked'
-                    if current_user.show_kanban_tips else '' }}>
+                  <label class="toggle-switch" for="kanbanTipsToggle" title="Включить или выключить подсказки Kanban">
+                    <input
+                      type="checkbox"
+                      class="notification-toggle"
+                      id="kanbanTipsToggle"
+                      data-type="kanban_tips"
+                      {% if current_user.show_kanban_tips %}checked{% endif %}
+                      aria-label="Показывать баннер с полезными советами на странице задач"
+                    >
                     <span class="toggle-slider"></span>
                   </label>
+                </div>
                 </div>
               </div>
             </div>
@@ -600,18 +607,17 @@
                     <span class="user-name">{{ u_admin.username }}</span>
                   </div>
                   <div class="user-toggle">
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" for="quality_control_toggle_{{ u_admin.id }}">
                       <input
                         type="checkbox"
                         class="permission-toggle"
+                        id="quality_control_toggle_{{ u_admin.id }}"
+                        name="quality_control_toggle_{{ u_admin.id }}"
                         data-user-id="{{ u_admin.id }}"
                         data-type="quality_control"
-                        {%
-                        if
-                        u_admin.can_access_quality_control
-                        %}checked{%
-                        endif
-                        %}
+                        aria-label="Дать права на контроль качества для пользователя {{ u_admin.username }}"
+                        title="Управление доступом к контролю качества"
+                        {% if u_admin.can_access_quality_control %}checked{% endif %}
                       />
                       <span class="toggle-slider"></span>
                     </label>
@@ -639,18 +645,17 @@
                     <span class="user-name">{{ u_admin.username }}</span>
                   </div>
                   <div class="user-toggle">
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" for="contact_center_moscow_toggle_{{ u_admin.id }}">
                       <input
                         type="checkbox"
                         class="permission-toggle"
+                        id="contact_center_moscow_toggle_{{ u_admin.id }}"
+                        name="contact_center_moscow_toggle_{{ u_admin.id }}"
                         data-user-id="{{ u_admin.id }}"
                         data-type="contact_center_moscow"
-                        {%
-                        if
-                        u_admin.can_access_contact_center_moscow
-                        %}checked{%
-                        endif
-                        %}
+                        aria-label="Дать права на контакт-центр Москва для пользователя {{ u_admin.username }}"
+                        title="Управление доступом к контакт-центру Москва"
+                        {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}
                       />
                       <span class="toggle-slider"></span>
                     </label>
@@ -679,12 +684,15 @@
                     </div>
                   </div>
                   <div class="notification-toggle">
-                    <label class="toggle-switch">
+                    <label class="toggle-switch" for="newIssuesNotifications">
                       <input
                         type="checkbox"
                         class="notification-toggle"
                         id="newIssuesNotifications"
+                        name="newIssuesNotifications"
                         data-type="new_issues_notifications"
+                        aria-label="Получать уведомления о новых заявках"
+                        title="Получать уведомления о новых заявках"
                       />
                       <span class="toggle-slider"></span>
                     </label>
@@ -701,7 +709,9 @@
     {% endif %}
   </div>
 </div>
-{% endblock %} {% block styles %}
+{% endblock %}
+
+{% block styles %}
 <style>
   /* Import Modern Fonts */
   @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
@@ -1114,6 +1124,7 @@
     cursor: pointer;
     padding: var(--spacing-sm);
     transition: all var(--transition-normal);
+    -webkit-backdrop-filter: blur(10px); /* Safari Support */
     backdrop-filter: blur(10px);
     width: 40px !important;
     height: 40px !important;
@@ -2210,6 +2221,7 @@
 
   .account-page-wrapper .interface-card {
     background: var(--surface-card);
+    -webkit-backdrop-filter: blur(20px); /* Safari support */
     backdrop-filter: blur(20px);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.2);
@@ -2246,6 +2258,7 @@
     align-items: center;
     justify-content: center;
     font-size: 1.5rem;
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
     backdrop-filter: blur(10px);
   }
 
@@ -3202,7 +3215,10 @@
     transition: background-color 0.3s ease;
   }
 </style>
-{% endblock %} {% block scripts %} {{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {

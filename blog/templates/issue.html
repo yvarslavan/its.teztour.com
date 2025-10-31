@@ -76,7 +76,7 @@
         {% endif %}
         </div>
         {% if current_user.is_redmine_user %}
-        <a href="https://helpdesk.teztour.com/issues/{{issue_detail.id}}" target="_blank" class="redmine-link-btn">
+        <a href="https://helpdesk.teztour.com/issues/{{issue_detail.id}}" target="_blank" rel="noopener" class="redmine-link-btn">
           <i class="fas fa-external-link-alt"></i>
           <span>Перейти в заявку в Redmine</span>
         </a>
@@ -812,7 +812,8 @@
   .block-header.clickable {
     cursor: pointer;
     user-select: none;
-        display: flex;
+    -webkit-user-select: none;  /* Added for Safari/iOS support */
+    display: flex;
     justify-content: space-between;
     align-items: center;
   }

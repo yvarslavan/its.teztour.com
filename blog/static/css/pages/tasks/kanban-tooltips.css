@@ -24,9 +24,12 @@
     transform: translateY(10px) scale(0.95);
     transition: all 0.2s ease;
     pointer-events: none;
+    -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+/* End of tooltip general styles */
 
 .kanban-tooltip.show {
     opacity: 1;

@@ -367,11 +367,25 @@ class RedmineConnector:
 
             # ИСПРАВЛЕНИЕ: Отключаем проверку SSL и прокси для избежания ошибок подключения
             import requests
+            # Жестко очищаем прокси из окружения (на случай если requests всё же подхватит)
+            for _k in [
+                'HTTP_PROXY','HTTPS_PROXY','NO_PROXY','ALL_PROXY',
+                'http_proxy','https_proxy','no_proxy','all_proxy'
+            ]:
+                if os.environ.get(_k) is not None:
+                    try:
+                        del os.environ[_k]
+                    except Exception:
+                        pass
 
             session = requests.Session()
             session.verify = False
+            # Полностью игнорируем прокси из env (http_proxy/https_proxy)
+            session.trust_env = False
             # Отключаем использование прокси
             session.proxies.clear()
+            # Используем пустые строки вместо None, чтобы удовлетворить типизатор
+            session.proxies.update({'http': '', 'https': ''})
             # Устанавливаем таймауты для избежания зависания запросов
             # Таймауты будут передаваться в каждый запрос
 
@@ -383,14 +397,18 @@ class RedmineConnector:
                     url,
                     username=username,
                     password=password,
-                    requests={"session": session},
+                    requests={"session": session, "timeout": 10},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием имени пользователя и пароля."
                 )
             elif api_key:
                 logger.info("Создание подключения к Redmine с API ключом")
-                self.redmine = Redmine(url, key=api_key, requests={"session": session})
+                self.redmine = Redmine(
+                    url,
+                    key=api_key,
+                    requests={"session": session, "timeout": 10},
+                )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием API ключа."
                 )
@@ -1596,6 +1614,8 @@ def get_redmine_admin_instance():
 
         session = requests.Session()
         session.verify = False
+        # Полностью игнорируем прокси из env (http_proxy/https_proxy)
+        session.trust_env = False
         session.proxies.clear()
         # Таймауты будут передаваться в каждый запрос
 

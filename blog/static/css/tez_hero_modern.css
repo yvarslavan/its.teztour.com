@@ -215,6 +215,7 @@
     position: absolute !important;
     border-radius: 50% !important;
     background: rgba(255, 255, 255, 0.12) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
     backdrop-filter: blur(10px) !important;
     animation: float 20s ease-in-out infinite !important;
 }

@@ -74,6 +74,7 @@
         background: rgba(255, 255, 255, 0.9);
         color: var(--tasks-primary);
         border: 2px solid rgba(59, 130, 246, 0.2);
+        -webkit-backdrop-filter: var(--tasks-backdrop-blur-md);
         backdrop-filter: var(--tasks-backdrop-blur-md);
 
         &:hover {

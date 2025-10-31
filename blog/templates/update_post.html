@@ -221,7 +221,7 @@
                     <i class="fas fa-eye"></i>
                     Предварительный просмотр
                 </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
             </div>
             <div class="modal-body">
                 <div class="preview-content">
@@ -255,6 +255,7 @@
     /* Левая информационная панель */
     .info-panel {
         background: rgba(255, 255, 255, 0.1);
+        -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
         border-right: 1px solid rgba(255, 255, 255, 0.2);
         position: sticky;
