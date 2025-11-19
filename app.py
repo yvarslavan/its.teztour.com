@@ -28,15 +28,40 @@ def setup_development_environment():
     )
     print("✅ Логирование настроено")
 
-    # Загружаем основной .env файл
+    # Загружаем конфигурацию в зависимости от окружения
     BASE_DIR = Path(__file__).resolve().parent
-    env_path = BASE_DIR / ".env"
+    
+    # Определяем окружение (development по умолчанию для локальной разработки)
+    env_mode = os.environ.get("FLASK_ENV", "development")
+    
+    # Проверяем что мы в WSL
+    is_wsl = False
+    try:
+        with open('/proc/version', 'r') as f:
+            is_wsl = 'microsoft' in f.read().lower()
+    except:
+        pass
+    
+    # Выбираем файл конфигурации
+    if env_mode == "production":
+        env_path = BASE_DIR / ".env.production"
+        if not env_path.exists():
+            env_path = BASE_DIR / ".env"  # Fallback на .env если production нет
+    else:
+        # В WSL всегда используем .env (создается setup_wsl_config.py)
+        if is_wsl and (BASE_DIR / ".env").exists():
+            env_path = BASE_DIR / ".env"
+        else:
+            env_path = BASE_DIR / ".env.development"
+            if not env_path.exists():
+                env_path = BASE_DIR / ".env"  # Fallback на .env если development нет
     
     if env_path.exists():
         load_dotenv(env_path)
-        print(f"✅ Загружены переменные окружения из {env_path}")
+        wsl_info = " [WSL detected]" if is_wsl else ""
+        print(f"✅ Загружены переменные окружения из {env_path.name} (режим: {env_mode}){wsl_info}")
     else:
-        print("⚠️ Файл .env не найден. Используйте .env.example для создания")
+        print("⚠️ Файл конфигурации не найден. Создайте .env.development или .env.production")
 
 
 def main():

@@ -1009,13 +1009,25 @@
                      * Копирует навигационные ссылки из десктопного меню в мобильное.
                      */
                     function cloneNavLinks() {
-                        if (!mainNav || !mobileLinksContainer) return;
+                        if (!mainNav || !mobileLinksContainer) {
+                            console.warn('Mobile menu: mainNav or mobileLinksContainer not found');
+                            return;
+                        }
 
                         mobileLinksContainer.innerHTML = '';
 
                         const navItems = mainNav.querySelectorAll(':scope > .nav-item');
+                        let themeToggleBtn = null;
 
+                        // Сначала копируем все обычные ссылки
                         navItems.forEach(item => {
+                            // Пропускаем переключатель темы - добавим его в конце
+                            if (item.classList.contains('theme-toggle-item')) {
+                                themeToggleBtn = item.querySelector('.theme-toggle-btn');
+                                console.log('Theme toggle found in nav:', themeToggleBtn);
+                                return;
+                            }
+
                             const link = item.querySelector(':scope > .nav-link:not(.dropdown-toggle)');
                             const dropdown = item.querySelector('.dropdown-menu');
 
@@ -1024,7 +1036,12 @@
                                 const newLink = document.createElement('a');
                                 newLink.href = link.href;
                                 // Используем innerHTML, чтобы скопировать и иконки, и текст
-                                newLink.innerHTML = link.querySelector('.nav-icon-wrapper').innerHTML;
+                                const iconWrapper = link.querySelector('.nav-icon-wrapper');
+                                if (iconWrapper) {
+                                    newLink.innerHTML = iconWrapper.innerHTML;
+                                } else {
+                                    newLink.innerHTML = link.innerHTML;
+                                }
 
                                 if (link.classList.contains('logout-item')) newLink.classList.add('logout-link');
 
@@ -1051,6 +1068,90 @@
                                 });
                             }
                         });
+
+                        // Если переключатель темы не найден в навигации, ищем его глобально
+                        if (!themeToggleBtn) {
+                            themeToggleBtn = document.querySelector('#theme-toggle, .theme-toggle-btn');
+                            console.log('Theme toggle searched globally:', themeToggleBtn);
+                        }
+
+                        // Добавляем переключатель темы в конец меню (даже если не найден, создадим его)
+                        const separatorLi = document.createElement('li');
+                        separatorLi.className = 'mobile-menu-separator';
+                        separatorLi.style.height = '1px';
+                        separatorLi.style.backgroundColor = '#e9ecef';
+                        separatorLi.style.margin = '0.5rem 1.5rem';
+                        mobileLinksContainer.appendChild(separatorLi);
+
+                        const newLi = document.createElement('li');
+                        newLi.className = 'mobile-theme-toggle-item';
+
+                        // Создаем кнопку с текстом и иконкой
+                        const newToggleBtn = document.createElement('button');
+                        newToggleBtn.type = 'button';
+                        newToggleBtn.id = 'mobile-theme-toggle';
+                        newToggleBtn.className = 'mobile-theme-toggle-btn';
+                        newToggleBtn.setAttribute('aria-label', 'Переключить тему');
+                        newToggleBtn.setAttribute('title', 'Переключить светлую/темную тему');
+
+                        // Клонируем SVG иконки из оригинальной кнопки, если она найдена
+                        if (themeToggleBtn) {
+                            const lightIcon = themeToggleBtn.querySelector('.theme-icon-light');
+                            const darkIcon = themeToggleBtn.querySelector('.theme-icon-dark');
+                            if (lightIcon) {
+                                newToggleBtn.appendChild(lightIcon.cloneNode(true));
+                            }
+                            if (darkIcon) {
+                                newToggleBtn.appendChild(darkIcon.cloneNode(true));
+                            }
+                        } else {
+                            // Создаем иконки вручную, если оригинальная кнопка не найдена
+                            const lightIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            lightIcon.setAttribute('class', 'theme-icon theme-icon-light');
+                            lightIcon.setAttribute('width', '20');
+                            lightIcon.setAttribute('height', '20');
+                            lightIcon.setAttribute('viewBox', '0 0 24 24');
+                            lightIcon.setAttribute('fill', 'none');
+                            lightIcon.setAttribute('stroke', 'currentColor');
+                            lightIcon.setAttribute('stroke-width', '2');
+                            lightIcon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
+                            newToggleBtn.appendChild(lightIcon);
+
+                            const darkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                            darkIcon.setAttribute('class', 'theme-icon theme-icon-dark');
+                            darkIcon.setAttribute('width', '20');
+                            darkIcon.setAttribute('height', '20');
+                            darkIcon.setAttribute('viewBox', '0 0 24 24');
+                            darkIcon.setAttribute('fill', 'none');
+                            darkIcon.setAttribute('stroke', 'currentColor');
+                            darkIcon.setAttribute('stroke-width', '2');
+                            darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
+                            newToggleBtn.appendChild(darkIcon);
+                        }
+
+                        // Добавляем текст
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'mobile-theme-toggle-text';
+                        textSpan.textContent = 'Переключить тему';
+                        newToggleBtn.appendChild(textSpan);
+
+                        newLi.appendChild(newToggleBtn);
+                        mobileLinksContainer.appendChild(newLi);
+
+                        // Добавляем обработчик события для мобильного переключателя
+                        newToggleBtn.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Mobile theme toggle clicked');
+                            if (window.themeManager && typeof window.themeManager.toggleTheme === 'function') {
+                                window.themeManager.toggleTheme();
+                            } else if (document.getElementById('theme-toggle')) {
+                                // Fallback: кликаем на основной переключатель
+                                document.getElementById('theme-toggle').click();
+                            }
+                        });
+
+                        console.log('Mobile theme toggle added to menu');
                     }
 
                     function openMenu() {

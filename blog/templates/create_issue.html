@@ -835,6 +835,271 @@
             justify-content: flex-start;
         }
     }
+
+    /* ===== ТЕМНАЯ ТЕМА ===== */
+    @media (prefers-color-scheme: dark),
+    [data-theme="dark"] {
+        /* Основной контейнер */
+        .create-issue-wrapper {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+        }
+
+        /* Левая информационная панель */
+        .info-panel {
+            background: rgba(30, 41, 59, 0.3) !important;
+            border-right-color: rgba(51, 65, 85, 0.5) !important;
+        }
+
+        .info-header {
+            color: #f8fafc !important;
+        }
+
+        .tip-item {
+            background: rgba(30, 41, 59, 0.4) !important;
+            color: #f8fafc !important;
+        }
+
+        .tip-item:hover {
+            background: rgba(51, 65, 85, 0.5) !important;
+        }
+
+        .tip-icon {
+            background: rgba(59, 130, 246, 0.2) !important;
+            border-color: rgba(59, 130, 246, 0.3) !important;
+        }
+
+        .tip-icon i {
+            color: #60a5fa !important;
+        }
+
+        .tip-content h4 {
+            color: #f8fafc !important;
+        }
+
+        .tip-content p {
+            color: #cbd5e1 !important;
+        }
+
+        .contact-info {
+            border-top-color: rgba(51, 65, 85, 0.5) !important;
+        }
+
+        .contact-item {
+            background: rgba(30, 41, 59, 0.4) !important;
+            color: #f8fafc !important;
+        }
+
+        .contact-item i {
+            color: #60a5fa !important;
+        }
+
+        .contact-item h5 {
+            color: #f8fafc !important;
+        }
+
+        .contact-item p {
+            color: #cbd5e1 !important;
+        }
+
+        /* Правая панель с формой */
+        .form-panel {
+            background: #0f172a !important;
+        }
+
+        .form-container {
+            background: #0f172a !important;
+        }
+
+        /* Хлебные крошки */
+        .breadcrumb-link {
+            color: #60a5fa !important;
+        }
+
+        .breadcrumb-link:hover {
+            color: #93c5fd !important;
+        }
+
+        .breadcrumb-nav i {
+            color: #64748b !important;
+        }
+
+        .breadcrumb-current {
+            color: #cbd5e1 !important;
+        }
+
+        /* Заголовок секции */
+        .header-text h1 {
+            background: linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
+            background-clip: text !important;
+        }
+
+        .section-subtitle {
+            color: #94a3b8 !important;
+        }
+
+        /* Стили формы */
+        .form-label-modern {
+            color: #f8fafc !important;
+        }
+
+        .form-label-modern i {
+            color: #60a5fa !important;
+        }
+
+        .form-control-modern {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        .form-control-modern::placeholder {
+            color: #64748b !important;
+        }
+
+        .form-control-modern:focus {
+            background: #1e293b !important;
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2) !important;
+        }
+
+        .description-textarea {
+            background: #1e293b !important;
+            color: #f8fafc !important;
+        }
+
+        .char-counter {
+            color: #94a3b8 !important;
+        }
+
+        .field-tips {
+            color: #60a5fa !important;
+        }
+
+        /* Загрузка файлов */
+        .file-upload-area {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        .file-upload-area:hover {
+            border-color: #3b82f6 !important;
+            background: rgba(59, 130, 246, 0.1) !important;
+        }
+
+        .file-upload-area.dragover {
+            border-color: #3b82f6 !important;
+            background: rgba(59, 130, 246, 0.15) !important;
+        }
+
+        .file-upload-content h4 {
+            color: #f8fafc !important;
+        }
+
+        .file-upload-content p {
+            color: #94a3b8 !important;
+        }
+
+        .upload-icon {
+            color: #60a5fa !important;
+        }
+
+        .format-badge {
+            background: #334155 !important;
+            color: #cbd5e1 !important;
+        }
+
+        .upload-hint {
+            color: #64748b !important;
+        }
+
+        .file-item {
+            background: #1e293b !important;
+            border-color: #334155 !important;
+        }
+
+        .file-icon {
+            background: #334155 !important;
+            color: #94a3b8 !important;
+        }
+
+        .file-name {
+            color: #f8fafc !important;
+        }
+
+        .file-size {
+            color: #94a3b8 !important;
+        }
+
+        .remove-file:hover {
+            background: rgba(239, 68, 68, 0.2) !important;
+        }
+
+        /* Сообщения об ошибках */
+        .error-message {
+            background: rgba(239, 68, 68, 0.15) !important;
+            color: #fca5a5 !important;
+            border-left-color: #ef4444 !important;
+        }
+
+        /* Кнопки действий */
+        .btn-secondary {
+            background: #334155 !important;
+            color: #f8fafc !important;
+        }
+
+        .btn-secondary:hover {
+            background: #475569 !important;
+            color: #f8fafc !important;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4) !important;
+        }
+
+        .btn-primary:hover {
+            box-shadow: 0 8px 25px rgba(59, 130, 246, 0.5) !important;
+        }
+    }
+
+    /* ===== СВЕТЛАЯ ТЕМА (явные стили для переключения) ===== */
+    @media (prefers-color-scheme: light),
+    [data-theme="light"] {
+        .create-issue-wrapper {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+
+        .info-panel {
+            background: rgba(255, 255, 255, 0.1) !important;
+            border-right-color: rgba(255, 255, 255, 0.2) !important;
+        }
+
+        .form-panel {
+            background: white !important;
+        }
+
+        .form-container {
+            background: white !important;
+        }
+
+        .form-control-modern {
+            background: #f8f9fa !important;
+            border-color: #e1e5e9 !important;
+            color: #374151 !important;
+        }
+
+        .form-control-modern:focus {
+            background: white !important;
+            border-color: #4285f4 !important;
+        }
+
+        .file-upload-area {
+            background: #f9fafb !important;
+            border-color: #d1d5db !important;
+        }
+    }
 </style>
 
 <script>

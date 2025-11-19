@@ -171,7 +171,8 @@
 }
 
 /* === ТЕМНАЯ ТЕМА === */
-@media (prefers-color-scheme: dark) {
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
   :root {
     --tasks-bg-primary: #0f172a;
     --tasks-bg-secondary: #1e293b;
@@ -218,7 +219,641 @@
   .stat-label {
     color: #94a3b8;
   }
+
+  /* Основной фон страницы */
+  body {
+    background-color: var(--tasks-bg-primary) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  /* Панель статистики */
+  .status-breakdown-dashboard {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .status-card {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .status-card .card-header {
+    background: var(--tasks-bg-tertiary) !important;
+    background-color: var(--tasks-bg-tertiary) !important;
+    color: var(--tasks-text-primary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .status-card .card-header * {
+    background-color: transparent !important;
+    color: inherit !important;
+  }
+
+  .status-card .card-title h3 {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .status-card .card-value {
+    color: var(--tasks-primary) !important;
+  }
+
+  .status-card .card-description p {
+    color: var(--tasks-text-secondary) !important;
+  }
+
+  .status-card .detail-label {
+    color: var(--tasks-text-secondary) !important;
+  }
+
+  .status-card .detail-value {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .status-card .card-details {
+    background: var(--tasks-bg-tertiary) !important;
+    background-color: var(--tasks-bg-tertiary) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .status-card .card-details * {
+    color: inherit !important;
+  }
+
+  .status-card .detail-item {
+    background: var(--tasks-surface) !important;
+    background-color: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .status-card .details-content {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  /* Кнопки "Детализация" */
+  .toggle-details-btn {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-primary) !important;
+    color: var(--tasks-primary) !important;
+  }
+
+  .toggle-details-btn:hover {
+    background: var(--tasks-primary) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  /* Панель фильтров */
+  .filters-section {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .filter-label {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .filter-select {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .filter-select:focus {
+    border-color: var(--tasks-primary) !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .filter-select option {
+    background: var(--tasks-surface) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  /* Переключатель видов */
+  .view-toggle-section {
+    background: transparent !important;
+  }
+
+  .view-toggle-container {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .view-toggle-btn {
+    background: transparent !important;
+    color: var(--tasks-text-secondary) !important;
+  }
+
+  .view-toggle-btn:hover {
+    background: var(--tasks-surface-hover) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .view-toggle-btn.active {
+    background: linear-gradient(135deg, var(--tasks-primary) 0%, var(--tasks-primary-dark) 100%) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  /* Элементы управления DataTables */
+  .dataTables_wrapper .row {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .dataTables_wrapper .dataTables_length label {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_length select {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_length select:focus {
+    border-color: var(--tasks-primary) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter label {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter input {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter input:focus {
+    border-color: var(--tasks-primary) !important;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+  }
+
+  .dataTables_wrapper .dataTables_filter input::placeholder {
+    color: var(--tasks-text-tertiary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_info {
+    background: var(--tasks-bg-tertiary) !important;
+    color: var(--tasks-text-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate {
+    background: var(--tasks-bg-tertiary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background: var(--tasks-surface-hover) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: var(--tasks-primary) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    color: var(--tasks-text-tertiary) !important;
+  }
+
+  /* Таблица */
+  .table-container {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .table-wrapper {
+    background: var(--tasks-bg-secondary) !important;
+  }
+
+  .modern-datatable-redesigned thead th {
+    background: linear-gradient(135deg, var(--tasks-bg-tertiary), var(--tasks-surface)) !important;
+    color: var(--tasks-text-primary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .modern-datatable-redesigned tbody td {
+    background: var(--tasks-surface) !important;
+    color: var(--tasks-text-primary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .modern-datatable-redesigned tbody tr {
+    background: var(--tasks-surface) !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:hover {
+    background: var(--tasks-surface-hover) !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background: var(--tasks-bg-tertiary) !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even):hover {
+    background: var(--tasks-surface-hover) !important;
+  }
+
+  /* Заголовок таблицы */
+  .table-header {
+    background: linear-gradient(135deg, var(--tasks-primary), var(--tasks-primary-dark)) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  .table-title {
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  /* Заголовок страницы */
+  .breakdown-title h2 {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .breakdown-title i {
+    color: var(--tasks-primary) !important;
+  }
+
+  .summary-value {
+    color: var(--tasks-primary) !important;
+  }
+
+  .summary-label {
+    color: var(--tasks-text-secondary) !important;
+  }
+
+  .global-toggle-btn {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .global-toggle-btn:hover {
+    background: var(--tasks-surface-hover) !important;
+    border-color: var(--tasks-border-hover) !important;
+  }
+
+  /* Кнопка очистки фильтра */
+  .clear-filter-btn {
+    background: var(--tasks-error) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  .clear-filter-btn:hover {
+    background: var(--tasks-error-hover) !important;
+  }
+
+  /* Канбан доска */
+  .kanban-board {
+    background: var(--tasks-bg-secondary) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .kanban-columns {
+    background: var(--tasks-bg-secondary) !important;
+  }
+
+  .kanban-column {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .kanban-column-content {
+    background: var(--tasks-surface) !important;
+  }
+
+  .kanban-card {
+    background: var(--tasks-surface) !important;
+    border-color: var(--tasks-border-color) !important;
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .kanban-card:hover {
+    background: var(--tasks-surface-hover) !important;
+    border-color: var(--tasks-border-hover) !important;
+  }
+
+  .kanban-card-id {
+    color: var(--tasks-primary) !important;
+  }
+
+  .kanban-card-id:hover {
+    color: var(--tasks-primary-hover) !important;
+  }
+
+  .kanban-card-subject {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  .kanban-card-project {
+    color: var(--tasks-text-secondary) !important;
+  }
+
+  .kanban-card-date {
+    color: var(--tasks-text-tertiary) !important;
+  }
+
+  .kanban-card-content {
+    color: var(--tasks-text-primary) !important;
+  }
+
+  /* Заголовки колонок канбан-доски */
+  .kanban-column-header {
+    background: linear-gradient(135deg, var(--tasks-primary), var(--tasks-primary-dark)) !important;
+    color: var(--tasks-text-inverse) !important;
+    border-color: var(--tasks-border-color) !important;
+  }
+
+  .kanban-column-title {
+    color: var(--tasks-text-inverse) !important;
+  }
+
+  .kanban-column-count {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: var(--tasks-text-inverse) !important;
+  }
 }
+
+/* === СВЕТЛАЯ ТЕМА (явные стили для переключения) === */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+  /* Основной фон страницы */
+  body {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+  }
+
+  html {
+    background-color: #f8fafc !important;
+  }
+
+  /* Основной контейнер */
+  .container,
+  .tasks-page-container {
+    background-color: transparent !important;
+  }
+
+  /* Заголовок страницы */
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+
+  .page-header .page-title {
+    color: white !important;
+  }
+
+  .page-header .page-subtitle {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  .page-header .action-button {
+    background: rgba(255, 255, 255, 0.2) !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: white !important;
+  }
+
+  .page-header .action-button:hover {
+    background: rgba(255, 255, 255, 0.3) !important;
+  }
+
+  .page-header .action-button.primary {
+    background: rgba(255, 255, 255, 0.25) !important;
+  }
+
+  /* Панель статистики */
+  .status-breakdown-dashboard {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .breakdown-header {
+    color: #1f2937 !important;
+  }
+
+  .breakdown-title h2 {
+    color: #1f2937 !important;
+  }
+
+  .breakdown-title i {
+    color: #3b82f6 !important;
+  }
+
+  .summary-value {
+    color: #1f2937 !important;
+  }
+
+  .summary-label {
+    color: #6b7280 !important;
+  }
+
+  .status-card {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-title h3 {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-value {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-description p {
+    color: #6b7280 !important;
+  }
+
+  .status-card .detail-label {
+    color: #6b7280 !important;
+  }
+
+  .status-card .detail-value {
+    color: #1f2937 !important;
+  }
+
+  /* Кнопка глобального переключения */
+  .global-toggle-btn {
+    background: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .global-toggle-btn:hover {
+    background: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  /* Фильтры */
+  .filters-section {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .filter-select {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .filter-select option {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+  }
+
+  /* Кнопки детализации */
+  .toggle-details-btn {
+    background: transparent !important;
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+  }
+
+  .toggle-details-btn:hover {
+    background: #3b82f6 !important;
+    color: white !important;
+  }
+
+  /* Кнопки переключения вида */
+  .view-toggle-section {
+    background: #ffffff !important;
+  }
+
+  .view-toggle-btn {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .view-toggle-btn:hover {
+    background: #f8fafc !important;
+    border-color: #3b82f6 !important;
+  }
+
+  .view-toggle-btn.active {
+    background: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: white !important;
+  }
+
+  /* DataTables */
+  .dataTables_wrapper .row {
+    background: #f8fafc !important;
+  }
+
+  .dataTables_wrapper .dataTables_length select,
+  .dataTables_wrapper .dataTables_filter input {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .dataTables_info {
+    color: #6b7280 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    color: #374151 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #3b82f6 !important;
+    color: white !important;
+  }
+
+  .modern-datatable-redesigned tbody tr {
+    background: #ffffff !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:hover {
+    background: #f8fafc !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background: #f8fafc !important;
+  }
+
+  .modern-datatable-redesigned thead th {
+    background: #f8fafc !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  /* Канбан доска - светлая тема */
+  .kanban-board {
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .kanban-columns {
+    background: #f8fafc !important;
+  }
+
+  .kanban-column {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  .kanban-column-content {
+    background: #ffffff !important;
+  }
+
+  .kanban-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #374151 !important;
+  }
+
+  .kanban-card:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  .kanban-card-id {
+    color: #2563eb !important;
+  }
+
+  .kanban-card-subject {
+    color: #1f2937 !important;
+  }
+
+  .kanban-card-project {
+    color: #6b7280 !important;
+  }
+
+  .kanban-card-date {
+    color: #9ca3af !important;
+  }
+
+  .kanban-card-content {
+    color: #374151 !important;
+  }
+
+  /* Заголовки колонок канбан-доски - светлая тема */
+  .kanban-column-header {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+  }
+
+  .kanban-column-title {
+    color: white !important;
+  }
+
+  .kanban-column-count {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+  }
+}
+
 /* === УМЕНЬШЕННАЯ АНИМАЦИЯ === */
 @media (prefers-reduced-motion: reduce) {
   :root {
@@ -1920,41 +2555,15 @@ table.dataTable tbody tr.return-selected td {
   }
 }
 
-/* Темная тема */
-@media (prefers-color-scheme: dark) {
-  .kanban-column {
-    background: #1f2937;
-    border-color: #374151;
-  }
-
-  .kanban-card {
-    background: #ffffff;
-    border-color: #e2e8f0;
-    color: #374151;
-  }
-
-  .kanban-card-id {
-    color: #2563eb;
-  }
-
-  .kanban-card-id:hover {
-    color: #1d4ed8;
-  }
-
-  .kanban-card-content {
-    color: #374151;
-  }
-
-  .kanban-card-date {
-    color: #6b7280;
-  }
-
+/* Темная тема для канбан-доски (старые стили - заменены выше) */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
   /* Приоритеты остаются цветными даже в темной теме */
   .priority-badge.priority-high {
-    background: linear-gradient(135deg, #dc2626, #b91c1c);
-    color: white;
-    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3);
-    border: 1px solid rgba(220, 38, 38, 0.3);
+    background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+    color: white !important;
+    box-shadow: 0 2px 6px rgba(220, 38, 38, 0.3) !important;
+    border: 1px solid rgba(220, 38, 38, 0.3) !important;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -1962,10 +2571,10 @@ table.dataTable tbody tr.return-selected td {
   }
 
   .priority-badge.priority-normal {
-    background: linear-gradient(135deg, #2563eb, #1d4ed8);
-    color: white;
-    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
-    border: 1px solid rgba(37, 99, 235, 0.3);
+    background: linear-gradient(135deg, #2563eb, #1d4ed8) !important;
+    color: white !important;
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3) !important;
+    border: 1px solid rgba(37, 99, 235, 0.3) !important;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -1973,10 +2582,10 @@ table.dataTable tbody tr.return-selected td {
   }
 
   .priority-badge.priority-low {
-    background: linear-gradient(135deg, #059669, #047857);
-    color: white;
-    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3);
-    border: 1px solid rgba(5, 150, 105, 0.3);
+    background: linear-gradient(135deg, #059669, #047857) !important;
+    color: white !important;
+    box-shadow: 0 2px 6px rgba(5, 150, 105, 0.3) !important;
+    border: 1px solid rgba(5, 150, 105, 0.3) !important;
     font-weight: 600;
     text-transform: uppercase;
     font-size: 0.75rem;
@@ -2352,4 +2961,364 @@ table.dataTable tbody tr.return-selected td {
         background: linear-gradient(135deg, #f59e0b, #ef4444);
         box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
     }
+}
+
+/* === ГЛОБАЛЬНЫЕ СТИЛИ ДЛЯ СВЕТЛОЙ ТЕМЫ (высокий приоритет) === */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+  /* Принудительное применение светлой темы ко всем элементам */
+  * {
+    --tasks-bg-primary: #f8fafc !important;
+    --tasks-bg-secondary: #ffffff !important;
+    --tasks-bg-tertiary: #f8fafc !important;
+    --tasks-surface: #ffffff !important;
+    --tasks-surface-hover: #f8fafc !important;
+    --tasks-text-primary: #1f2937 !important;
+    --tasks-text-secondary: #6b7280 !important;
+    --tasks-text-tertiary: #9ca3af !important;
+    --tasks-border-color: #e5e7eb !important;
+    --tasks-border-hover: #d1d5db !important;
+  }
+
+  /* Основной фон */
+  body,
+  html,
+  #app,
+  .app-wrapper,
+  .main-wrapper,
+  .content-wrapper {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+  }
+
+  /* Все контейнеры */
+  .container,
+  .container-fluid,
+  .tasks-page-container,
+  .table-container,
+  .table-wrapper {
+    background-color: transparent !important;
+  }
+
+  /* Заголовок страницы */
+  .page-header,
+  header.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  }
+
+  .page-header *,
+  header.page-header * {
+    color: white !important;
+  }
+
+  .page-header .page-title,
+  .page-header h1 {
+    color: white !important;
+  }
+
+  .page-header .page-subtitle,
+  .page-header p {
+    color: rgba(255, 255, 255, 0.9) !important;
+  }
+
+  /* Карточки статусов - все элементы */
+  .status-card {
+    background-color: #ffffff !important;
+  }
+
+  .status-card * {
+    background-color: transparent !important;
+  }
+
+  .status-card,
+  .status-card h3,
+  .status-card span,
+  .status-card p {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-header,
+  .card-header {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-title,
+  .card-title {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-title h3,
+  .card-title h3 {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-value,
+  .card-value {
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-description,
+  .card-description {
+    color: #6b7280 !important;
+  }
+
+  .status-card .card-description p,
+  .card-description p {
+    color: #6b7280 !important;
+  }
+
+  .status-card .card-icon,
+  .card-icon {
+    background-color: transparent !important;
+  }
+
+  .status-card .card-details {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .status-card .card-details * {
+    color: inherit !important;
+  }
+
+  .status-card .detail-item {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .status-card .detail-label {
+    color: #6b7280 !important;
+  }
+
+  .status-card .detail-value {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+  }
+
+  .status-card .details-content {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: #1f2937 !important;
+  }
+
+  /* Панель статистики */
+  .status-breakdown-dashboard {
+    background-color: #ffffff !important;
+  }
+
+  .status-breakdown-dashboard * {
+    background-color: transparent !important;
+  }
+
+  .status-breakdown-dashboard,
+  .status-breakdown-dashboard h2,
+  .status-breakdown-dashboard span,
+  .status-breakdown-dashboard p {
+    color: #1f2937 !important;
+  }
+
+  .breakdown-header,
+  .breakdown-title,
+  .breakdown-summary {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+  }
+
+  /* Фильтры - все элементы */
+  .filters-section {
+    background-color: #ffffff !important;
+  }
+
+  .filters-section * {
+    background-color: transparent !important;
+  }
+
+  .filters-section,
+  .filters-section label,
+  .filters-section span {
+    color: #1f2937 !important;
+  }
+
+  .filter-container {
+    background-color: transparent !important;
+  }
+
+  .filter-label {
+    color: #1f2937 !important;
+  }
+
+  .filter-select,
+  select.filter-select {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .filter-select option {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+  }
+
+  .clear-filter-btn {
+    background-color: #f3f4f6 !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .clear-filter-btn:hover {
+    background-color: #e5e7eb !important;
+  }
+
+  /* Кнопки переключения вида */
+  .view-toggle-section,
+  .view-toggle-container {
+    background-color: #ffffff !important;
+  }
+
+  .view-toggle-btn {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .view-toggle-btn:hover {
+    background-color: #f8fafc !important;
+    border-color: #3b82f6 !important;
+  }
+
+  .view-toggle-btn.active {
+    background-color: #3b82f6 !important;
+    border-color: #3b82f6 !important;
+    color: white !important;
+  }
+
+  /* Таблица */
+  .modern-datatable-redesigned,
+  .modern-datatable-redesigned * {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+  }
+
+  .modern-datatable-redesigned thead,
+  .modern-datatable-redesigned thead th {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .modern-datatable-redesigned tbody tr {
+    background-color: #ffffff !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:hover {
+    background-color: #f8fafc !important;
+  }
+
+  .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+  }
+
+  .modern-datatable-redesigned tbody td {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  /* DataTables элементы */
+  .dataTables_wrapper,
+  .dataTables_wrapper * {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .row {
+    background-color: #f8fafc !important;
+  }
+
+  .dataTables_wrapper .dataTables_length,
+  .dataTables_wrapper .dataTables_filter,
+  .dataTables_wrapper .dataTables_info,
+  .dataTables_wrapper .dataTables_paginate {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .dataTables_length label,
+  .dataTables_wrapper .dataTables_filter label {
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .dataTables_length select,
+  .dataTables_wrapper .dataTables_filter input {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+  }
+
+  .dataTables_wrapper .dataTables_info {
+    color: #6b7280 !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button {
+    background-color: transparent !important;
+    color: #374151 !important;
+    border-color: #e5e7eb !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    background-color: #f8fafc !important;
+  }
+
+  .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+  }
+
+  /* Канбан доска */
+  .kanban-board,
+  .kanban-columns,
+  .kanban-column,
+  .kanban-column-content {
+    background-color: #ffffff !important;
+  }
+
+  .kanban-card {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #374151 !important;
+  }
+
+  .kanban-card * {
+    color: #374151 !important;
+  }
+
+  /* Кнопки */
+  .btn-secondary,
+  .toggle-details-btn,
+  .global-toggle-btn {
+    background-color: transparent !important;
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+  }
+
+  .btn-secondary:hover,
+  .toggle-details-btn:hover {
+    background-color: #3b82f6 !important;
+    color: white !important;
+  }
+
+  .global-toggle-btn {
+    background-color: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+  }
+
+  .global-toggle-btn:hover {
+    background-color: #e5e7eb !important;
+  }
 }

@@ -501,43 +501,109 @@
 }
 
 /* Темная тема (активируется через переключатель) */
-body.dark-theme .dataTables_wrapper {
-    background: #2d3436;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+body.dark-theme .dataTables_wrapper,
+[data-theme="dark"] .dataTables_wrapper {
+    background: #2d3436 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
 }
 
-body.dark-theme .dataTable thead th {
-    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%);
+body.dark-theme .dataTable thead th,
+[data-theme="dark"] .dataTable thead th {
+    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%) !important;
 }
 
-body.dark-theme .dataTable tbody tr {
-    color: #f1f2f6;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+body.dark-theme .dataTable tbody tr,
+[data-theme="dark"] .dataTable tbody tr {
+    color: #f1f2f6 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-body.dark-theme .dataTable tbody tr:nth-child(even) {
-    background-color: rgba(255, 255, 255, 0.02);
+body.dark-theme .dataTable tbody tr:nth-child(even),
+[data-theme="dark"] .dataTable tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02) !important;
 }
 
-body.dark-theme .dataTable tbody tr:hover {
-    background-color: rgba(75, 108, 183, 0.1);
+body.dark-theme .dataTable tbody tr:hover,
+[data-theme="dark"] .dataTable tbody tr:hover {
+    background-color: rgba(75, 108, 183, 0.1) !important;
 }
 
 body.dark-theme .dataTables_wrapper .top,
-body.dark-theme .dataTables_wrapper .bottom {
-    background: #1e272e;
-    border-color: rgba(255, 255, 255, 0.05);
+body.dark-theme .dataTables_wrapper .bottom,
+[data-theme="dark"] .dataTables_wrapper .top,
+[data-theme="dark"] .dataTables_wrapper .bottom {
+    background: #1e272e !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
 }
 
-body.dark-theme .task-subject {
-    color: #f1f2f6;
+body.dark-theme .task-subject,
+[data-theme="dark"] .task-subject {
+    color: #f1f2f6 !important;
 }
 
 body.dark-theme .task-project,
 body.dark-theme .task-date,
 body.dark-theme .task-email,
-body.dark-theme .dataTables_info {
-    color: #a4b0be;
+body.dark-theme .dataTables_info,
+[data-theme="dark"] .task-project,
+[data-theme="dark"] .task-date,
+[data-theme="dark"] .task-email,
+[data-theme="dark"] .dataTables_info {
+    color: #a4b0be !important;
+}
+
+/* Светлая тема (явные стили для переключения) */
+[data-theme="light"] .dataTables_wrapper,
+html[data-theme="light"] .dataTables_wrapper {
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .dataTable thead th,
+html[data-theme="light"] .dataTable thead th {
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%) !important;
+    color: white !important;
+}
+
+[data-theme="light"] .dataTable tbody tr,
+html[data-theme="light"] .dataTable tbody tr {
+    background-color: #ffffff !important;
+    color: #333 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .dataTable tbody tr:nth-child(even),
+html[data-theme="light"] .dataTable tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme="light"] .dataTable tbody tr:hover,
+html[data-theme="light"] .dataTable tbody tr:hover {
+    background-color: rgba(91, 134, 229, 0.05) !important;
+}
+
+[data-theme="light"] .dataTables_wrapper .top,
+[data-theme="light"] .dataTables_wrapper .bottom,
+html[data-theme="light"] .dataTables_wrapper .top,
+html[data-theme="light"] .dataTables_wrapper .bottom {
+    background: #f8f9fa !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .task-subject,
+html[data-theme="light"] .task-subject {
+    color: #333 !important;
+}
+
+[data-theme="light"] .task-project,
+[data-theme="light"] .task-date,
+[data-theme="light"] .task-email,
+[data-theme="light"] .dataTables_info,
+html[data-theme="light"] .task-project,
+html[data-theme="light"] .task-date,
+html[data-theme="light"] .task-email,
+html[data-theme="light"] .dataTables_info {
+    color: #666 !important;
 }
 
 /* Переключатель темы */

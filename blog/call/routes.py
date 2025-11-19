@@ -130,13 +130,13 @@ log_file_path = os.path.join(os.getcwd(), "stat.log")
 
 # Настройки подключения к базе данных tez_tour_cc
 MYSQL_CONFIG = {
-    "host": "voipcrm.tez-tour.com",
-    "user": "root",
-    "password": "weo2ik3jc",
-    "db": "tez_tour_cc",
-    "port": 3306,
+    "host": os.getenv("MYSQL_VOIP_HOST", "voipcrm.tez-tour.com"),
+    "user": os.getenv("MYSQL_VOIP_USER", "root"),
+    "password": os.getenv("MYSQL_VOIP_PASSWORD", "weo2ik3jc"),
+    "db": os.getenv("MYSQL_VOIP_DATABASE", "tez_tour_cc"),
+    "port": int(os.getenv("MYSQL_VOIP_PORT", 3306)),
     "charset": "utf8mb4",
-    "cursorclass": DictCursor,  # Добавляем это
+    "cursorclass": DictCursor,
 }
 
 

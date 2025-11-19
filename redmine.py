@@ -18,6 +18,7 @@ from redminelib.exceptions import (
 )
 import pymysql
 import pymysql.cursors
+import urllib3
 from flask import flash, current_app
 from blog.models import User, Notifications, NotificationsAddNotes
 from blog import db
@@ -34,6 +35,9 @@ logging.basicConfig(
 )
 # Создаем объект логгера
 logger = logging.getLogger(__name__)
+
+# Отключаем предупреждения о небезопасных запросах (SSL verify=False)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 
@@ -397,7 +401,7 @@ class RedmineConnector:
                     url,
                     username=username,
                     password=password,
-                    requests={"session": session, "timeout": 10},
+                    requests={"session": session, "timeout": 10, "verify": False},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием имени пользователя и пароля."
@@ -407,7 +411,7 @@ class RedmineConnector:
                 self.redmine = Redmine(
                     url,
                     key=api_key,
-                    requests={"session": session, "timeout": 10},
+                    requests={"session": session, "timeout": 10, "verify": False},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием API ключа."

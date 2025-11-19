@@ -485,8 +485,11 @@ def start_user_job(current_user_email, current_user_id, timeout):
         logger.debug(f"[DEBUG] Функция check_notifications_improved доступна: {hasattr(check_notifications_improved, '__call__')}")
 
         # Создаем обертку, которая будет выполняться в контексте приложения
+        # Получаем реальный объект приложения, так как current_app недоступен в фоновом потоке
+        app_obj = current_app._get_current_object()
+        
         def job_function():
-            with current_app.app_context():
+            with app_obj.app_context():
                 check_notifications_improved(current_user_email, current_user_id)
 
         scheduler.add_job( # <--- Используем импортированный scheduler

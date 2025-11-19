@@ -151,4 +151,4 @@ node_modules/
 *_temp.py
 # Flask session files
 flask_session/
-app_err.log
+blog/flask_session/

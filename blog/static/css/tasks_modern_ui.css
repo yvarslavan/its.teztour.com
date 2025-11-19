@@ -1566,3 +1566,107 @@
 .kanban-card-date {
     color: #adb5bd;
 }
+
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
+    .kanban-board {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-columns {
+        background: #1e293b !important;
+    }
+
+    .kanban-column {
+        background: #334155 !important;
+        border-color: #334155 !important;
+    }
+
+    .column-header {
+        border-bottom-color: #475569 !important;
+    }
+
+    .column-header h3 {
+        color: #f8fafc !important;
+    }
+
+    .kanban-card {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f8fafc !important;
+    }
+
+    .kanban-card:hover {
+        background: #475569 !important;
+        border-color: #64748b !important;
+    }
+
+    .kanban-card-id {
+        color: #60a5fa !important;
+    }
+
+    .kanban-card-subject {
+        color: #f8fafc !important;
+    }
+
+    .kanban-card-project {
+        color: #cbd5e1 !important;
+    }
+
+    .kanban-card-footer {
+        color: #94a3b8 !important;
+    }
+
+    .kanban-card-date {
+        color: #94a3b8 !important;
+    }
+
+    /* Заголовки колонок канбан-доски */
+    .kanban-column-header,
+    .column-header {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        color: white !important;
+        border-bottom-color: #475569 !important;
+    }
+
+    .kanban-column-title,
+    .column-header h3 {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+}
+
+/* ===== СВЕТЛАЯ ТЕМА ===== */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+    .kanban-board {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .kanban-columns {
+        background: #f8fafc !important;
+    }
+
+    .kanban-column {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .kanban-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        color: #374151 !important;
+    }
+
+    .kanban-card:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+}

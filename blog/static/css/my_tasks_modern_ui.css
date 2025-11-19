@@ -943,6 +943,475 @@
     }
 }
 
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
+    .filters-section {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .filter-select {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .filter-select option {
+        background: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .toggle-details-btn {
+        background: #334155 !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .dataTables_wrapper .row {
+        background: #1e293b !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        background: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #334155 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #475569 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #1e293b !important;
+    }
+
+    /* Канбан доска */
+    .kanban-board {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-columns {
+        background: #1e293b !important;
+    }
+
+    .kanban-column {
+        background: #334155 !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-column-content {
+        background: #334155 !important;
+    }
+
+    .kanban-card {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f8fafc !important;
+    }
+
+    .kanban-card:hover {
+        background: #475569 !important;
+        border-color: #64748b !important;
+    }
+
+    .kanban-card-id {
+        color: #60a5fa !important;
+    }
+
+    .kanban-card-subject {
+        color: #f8fafc !important;
+    }
+
+    .kanban-card-project {
+        color: #cbd5e1 !important;
+    }
+
+    .kanban-card-date {
+        color: #94a3b8 !important;
+    }
+
+    /* Заголовки колонок канбан-доски */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+}
+
+/* ===== СВЕТЛАЯ ТЕМА ===== */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+    /* Основной фон */
+    body {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+    }
+
+    html {
+        background-color: #f8fafc !important;
+    }
+
+    /* Панель статистики */
+    .status-breakdown-dashboard {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .breakdown-header {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title h2 {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title i {
+        color: #3b82f6 !important;
+    }
+
+    .summary-value {
+        color: #1f2937 !important;
+    }
+
+    .summary-label {
+        color: #6b7280 !important;
+    }
+
+    .status-card {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-title h3 {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-value {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-description p {
+        color: #6b7280 !important;
+    }
+
+    /* Кнопка глобального переключения */
+    .global-toggle-btn {
+        background: #f3f4f6 !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .global-toggle-btn:hover {
+        background: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    /* Фильтры */
+    .filters-section {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .filter-select {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .filter-select option {
+        background: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    /* Кнопки детализации */
+    .toggle-details-btn {
+        background: transparent !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Кнопки переключения вида */
+    .view-toggle-section {
+        background: #ffffff !important;
+    }
+
+    .view-toggle-btn {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .view-toggle-btn:hover {
+        background: #f8fafc !important;
+        border-color: #3b82f6 !important;
+    }
+
+    .view-toggle-btn.active {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* DataTables */
+    .dataTables_wrapper .row {
+        background: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #6b7280 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #374151 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #ffffff !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned thead th {
+        background: #f8fafc !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+    }
+
+    /* Канбан доска - светлая тема */
+    .kanban-board {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .kanban-columns {
+        background: #f8fafc !important;
+    }
+
+    .kanban-column {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .kanban-column-content {
+        background: #ffffff !important;
+    }
+
+    .kanban-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        color: #374151 !important;
+    }
+
+    .kanban-card:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .kanban-card-id {
+        color: #2563eb !important;
+    }
+
+    .kanban-card-subject {
+        color: #1f2937 !important;
+    }
+
+    .kanban-card-project {
+        color: #6b7280 !important;
+    }
+
+    .kanban-card-date {
+        color: #9ca3af !important;
+    }
+
+    /* Заголовки колонок канбан-доски - светлая тема */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+}
+
 @media (max-width: 480px) {
     .loading-content {
         margin: var(--spacing-md);
@@ -1115,6 +1584,475 @@
     .dataTables_wrapper .dataTables_length,
     .dataTables_wrapper .dataTables_filter {
         margin-bottom: var(--spacing-xs);
+    }
+}
+
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
+    .filters-section {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .filter-select {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .filter-select option {
+        background: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .toggle-details-btn {
+        background: #334155 !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .dataTables_wrapper .row {
+        background: #1e293b !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        background: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #334155 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #475569 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #1e293b !important;
+    }
+
+    /* Канбан доска */
+    .kanban-board {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-columns {
+        background: #1e293b !important;
+    }
+
+    .kanban-column {
+        background: #334155 !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-column-content {
+        background: #334155 !important;
+    }
+
+    .kanban-card {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f8fafc !important;
+    }
+
+    .kanban-card:hover {
+        background: #475569 !important;
+        border-color: #64748b !important;
+    }
+
+    .kanban-card-id {
+        color: #60a5fa !important;
+    }
+
+    .kanban-card-subject {
+        color: #f8fafc !important;
+    }
+
+    .kanban-card-project {
+        color: #cbd5e1 !important;
+    }
+
+    .kanban-card-date {
+        color: #94a3b8 !important;
+    }
+
+    /* Заголовки колонок канбан-доски */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+}
+
+/* ===== СВЕТЛАЯ ТЕМА ===== */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+    /* Основной фон */
+    body {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+    }
+
+    html {
+        background-color: #f8fafc !important;
+    }
+
+    /* Панель статистики */
+    .status-breakdown-dashboard {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .breakdown-header {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title h2 {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title i {
+        color: #3b82f6 !important;
+    }
+
+    .summary-value {
+        color: #1f2937 !important;
+    }
+
+    .summary-label {
+        color: #6b7280 !important;
+    }
+
+    .status-card {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-title h3 {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-value {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-description p {
+        color: #6b7280 !important;
+    }
+
+    /* Кнопка глобального переключения */
+    .global-toggle-btn {
+        background: #f3f4f6 !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .global-toggle-btn:hover {
+        background: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    /* Фильтры */
+    .filters-section {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .filter-select {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .filter-select option {
+        background: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    /* Кнопки детализации */
+    .toggle-details-btn {
+        background: transparent !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Кнопки переключения вида */
+    .view-toggle-section {
+        background: #ffffff !important;
+    }
+
+    .view-toggle-btn {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .view-toggle-btn:hover {
+        background: #f8fafc !important;
+        border-color: #3b82f6 !important;
+    }
+
+    .view-toggle-btn.active {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* DataTables */
+    .dataTables_wrapper .row {
+        background: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #6b7280 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #374151 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #ffffff !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned thead th {
+        background: #f8fafc !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+    }
+
+    /* Канбан доска - светлая тема */
+    .kanban-board {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .kanban-columns {
+        background: #f8fafc !important;
+    }
+
+    .kanban-column {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .kanban-column-content {
+        background: #ffffff !important;
+    }
+
+    .kanban-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        color: #374151 !important;
+    }
+
+    .kanban-card:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .kanban-card-id {
+        color: #2563eb !important;
+    }
+
+    .kanban-card-subject {
+        color: #1f2937 !important;
+    }
+
+    .kanban-card-project {
+        color: #6b7280 !important;
+    }
+
+    .kanban-card-date {
+        color: #9ca3af !important;
+    }
+
+    /* Заголовки колонок канбан-доски - светлая тема */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
     }
 }
 
@@ -1722,5 +2660,474 @@
     .dataTables_wrapper .dataTables_length,
     .dataTables_wrapper .dataTables_filter {
         margin-bottom: var(--spacing-xs);
+    }
+}
+
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
+    .filters-section {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .filter-select {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .filter-select option {
+        background: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .toggle-details-btn {
+        background: #334155 !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .dataTables_wrapper .row {
+        background: #1e293b !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #334155 !important;
+        border-color: #334155 !important;
+        color: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+        background: #334155 !important;
+        color: #cbd5e1 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #334155 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #475569 !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #1e293b !important;
+    }
+
+    /* Канбан доска */
+    .kanban-board {
+        background: #1e293b !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-columns {
+        background: #1e293b !important;
+    }
+
+    .kanban-column {
+        background: #334155 !important;
+        border-color: #334155 !important;
+    }
+
+    .kanban-column-content {
+        background: #334155 !important;
+    }
+
+    .kanban-card {
+        background: #334155 !important;
+        border-color: #475569 !important;
+        color: #f8fafc !important;
+    }
+
+    .kanban-card:hover {
+        background: #475569 !important;
+        border-color: #64748b !important;
+    }
+
+    .kanban-card-id {
+        color: #60a5fa !important;
+    }
+
+    .kanban-card-subject {
+        color: #f8fafc !important;
+    }
+
+    .kanban-card-project {
+        color: #cbd5e1 !important;
+    }
+
+    .kanban-card-date {
+        color: #94a3b8 !important;
+    }
+
+    /* Заголовки колонок канбан-доски */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
+    }
+}
+
+/* ===== СВЕТЛАЯ ТЕМА ===== */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+    /* Основной фон */
+    body {
+        background-color: #f8fafc !important;
+        color: #1f2937 !important;
+    }
+
+    html {
+        background-color: #f8fafc !important;
+    }
+
+    /* Панель статистики */
+    .status-breakdown-dashboard {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .breakdown-header {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title h2 {
+        color: #1f2937 !important;
+    }
+
+    .breakdown-title i {
+        color: #3b82f6 !important;
+    }
+
+    .summary-value {
+        color: #1f2937 !important;
+    }
+
+    .summary-label {
+        color: #6b7280 !important;
+    }
+
+    .status-card {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-title h3 {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-value {
+        color: #1f2937 !important;
+    }
+
+    .status-card .card-description p {
+        color: #6b7280 !important;
+    }
+
+    /* Кнопка глобального переключения */
+    .global-toggle-btn {
+        background: #f3f4f6 !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .global-toggle-btn:hover {
+        background: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    /* Фильтры */
+    .filters-section {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .filter-select {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .filter-select option {
+        background: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    /* Кнопки детализации */
+    .toggle-details-btn {
+        background: transparent !important;
+        border-color: #3b82f6 !important;
+        color: #3b82f6 !important;
+    }
+
+    .toggle-details-btn:hover {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* Кнопки переключения вида */
+    .view-toggle-section {
+        background: #ffffff !important;
+    }
+
+    .view-toggle-btn {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #374151 !important;
+    }
+
+    .view-toggle-btn:hover {
+        background: #f8fafc !important;
+        border-color: #3b82f6 !important;
+    }
+
+    .view-toggle-btn.active {
+        background: #3b82f6 !important;
+        border-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    /* DataTables */
+    .dataTables_wrapper .row {
+        background: #f8fafc !important;
+    }
+
+    .dataTables_wrapper .dataTables_length select,
+    .dataTables_wrapper .dataTables_filter input {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+        color: #1f2937 !important;
+    }
+
+    .dataTables_wrapper .dataTables_info {
+        color: #6b7280 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button {
+        color: #374151 !important;
+    }
+
+    .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+        background: #3b82f6 !important;
+        color: white !important;
+    }
+
+    .modern-datatable-redesigned tbody tr {
+        background: #ffffff !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:hover {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned tbody tr:nth-child(even) {
+        background: #f8fafc !important;
+    }
+
+    .modern-datatable-redesigned thead th {
+        background: #f8fafc !important;
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+    }
+
+    /* Канбан доска - светлая тема */
+    .kanban-board {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    .kanban-columns {
+        background: #f8fafc !important;
+    }
+
+    .kanban-column {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+    }
+
+    .kanban-column-content {
+        background: #ffffff !important;
+    }
+
+    .kanban-card {
+        background: #ffffff !important;
+        border-color: #e2e8f0 !important;
+        color: #374151 !important;
+    }
+
+    .kanban-card:hover {
+        background: #f8fafc !important;
+        border-color: #cbd5e1 !important;
+    }
+
+    .kanban-card-id {
+        color: #2563eb !important;
+    }
+
+    .kanban-card-subject {
+        color: #1f2937 !important;
+    }
+
+    .kanban-card-project {
+        color: #6b7280 !important;
+    }
+
+    .kanban-card-date {
+        color: #9ca3af !important;
+    }
+
+    /* Заголовки колонок канбан-доски - светлая тема */
+    .kanban-column-header {
+        background: linear-gradient(135deg, #667eea, #764ba2) !important;
+        color: white !important;
+    }
+
+    .kanban-column-title {
+        color: white !important;
+    }
+
+    .kanban-column-count {
+        background: rgba(255, 255, 255, 0.2) !important;
+        color: white !important;
+    }
+
+    /* Дополнительные стили для всех элементов */
+    .card-header {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    .card-header * {
+        background-color: transparent !important;
+        color: #1f2937 !important;
+    }
+
+    .card-icon {
+        background-color: transparent !important;
+    }
+
+    .card-icon i {
+        color: inherit !important;
+    }
+
+    .filter-container {
+        background-color: transparent !important;
+    }
+
+    .filter-label {
+        color: #1f2937 !important;
+    }
+
+    .table-container,
+    .table-wrapper {
+        background-color: transparent !important;
+    }
+
+    /* Заголовок страницы */
+    .page-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+
+    .page-header * {
+        color: white !important;
+    }
+
+    .page-header .page-title,
+    .page-header h1 {
+        color: white !important;
+    }
+
+    .page-header .page-subtitle,
+    .page-header p {
+        color: rgba(255, 255, 255, 0.9) !important;
+    }
+
+    .page-header .action-button {
+        background: rgba(255, 255, 255, 0.2) !important;
+        border-color: rgba(255, 255, 255, 0.3) !important;
+        color: white !important;
+    }
+
+    .page-header .action-button:hover {
+        background: rgba(255, 255, 255, 0.3) !important;
     }
 }

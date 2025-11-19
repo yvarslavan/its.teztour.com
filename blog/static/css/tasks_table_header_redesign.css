@@ -343,11 +343,12 @@
     }
 }
 
-/* ===== ТЕМНАЯ ТЕМА (опционально) ===== */
-@media (prefers-color-scheme: dark) {
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark),
+[data-theme="dark"] {
     .table-wrapper {
-        background: #1f2937;
-        border-color: #374151;
+        background: #1f2937 !important;
+        border-color: #374151 !important;
     }
 
     #tasksTable thead th {
@@ -370,5 +371,94 @@
             #6366f1 50%,
             #8b5cf6 75%,
             #1e40af 100%) !important;
+    }
+
+    #tasksTable tbody tr {
+        background-color: #1e293b !important;
+        color: #f8fafc !important;
+    }
+
+    #tasksTable tbody tr:hover {
+        background-color: #334155 !important;
+    }
+
+    #tasksTable tbody tr:nth-child(even) {
+        background-color: #0f172a !important;
+    }
+
+    #tasksTable tbody td {
+        color: #f8fafc !important;
+        border-color: #334155 !important;
+    }
+}
+
+/* ===== СВЕТЛАЯ ТЕМА ===== */
+@media (prefers-color-scheme: light),
+[data-theme="light"] {
+    .table-wrapper {
+        background: #ffffff !important;
+        border-color: #e5e7eb !important;
+    }
+
+    #tasksTable thead th {
+        background: linear-gradient(135deg,
+            #667eea 0%,
+            #764ba2 25%,
+            #6b73ff 50%,
+            #9644ff 75%,
+            #667eea 100%) !important;
+
+        color: #ffffff !important;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.3),
+            0 4px 12px rgba(102, 126, 234, 0.25) !important;
+    }
+
+    #tasksTable thead th:hover {
+        background: linear-gradient(135deg,
+            #5a67d8 0%,
+            #6b46c1 25%,
+            #5b21b6 50%,
+            #7c3aed 75%,
+            #5a67d8 100%) !important;
+    }
+
+    #tasksTable tbody tr {
+        background-color: #ffffff !important;
+        color: #1f2937 !important;
+    }
+
+    #tasksTable tbody tr:hover {
+        background-color: #f8fafc !important;
+    }
+
+    #tasksTable tbody tr:nth-child(even) {
+        background-color: #f8fafc !important;
+    }
+
+    #tasksTable tbody td {
+        color: #1f2937 !important;
+        border-color: #e5e7eb !important;
+    }
+
+    /* Стили для элементов внутри ячеек */
+    #tasksTable tbody td a {
+        color: #2563eb !important;
+    }
+
+    #tasksTable tbody td .email-link {
+        background-color: #dbeafe !important;
+        color: #1e40af !important;
+        border-color: #93c5fd !important;
+    }
+
+    #tasksTable tbody td .status-badge {
+        background-color: #3b82f6 !important;
+        color: white !important;
+    }
+
+    #tasksTable tbody td .priority-badge {
+        background-color: #60a5fa !important;
+        color: white !important;
     }
 }

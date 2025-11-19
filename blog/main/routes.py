@@ -1,5 +1,6 @@
 import traceback
 import os
+import re
 from configparser import ConfigParser
 import logging
 from logging.handlers import RotatingFileHandler
@@ -1598,6 +1599,335 @@ def calls_and_conferences():
     )
 
 
+@main.route("/guide/<int:card_number>")
+def guide(card_number):
+    """Маршрут для отображения памяток"""
+    # Маппинг номеров карточек на названия памяток
+    guide_mapping = {
+        1: {
+            "title": "Как создать конференцию за 2 минуты",
+            "docx_file": "Памятка_Как создать конференцию за 2 минуты.docx"
+        },
+        2: {
+            "title": "Подробная техническая инструкция по корпоративной телефонии и конференциям",
+            "docx_file": "Памятка_Подробная техническая инструкция.docx"
+        },
+        3: {
+            "title": "Как позвонить в офис без Cisco Jabber",
+            "docx_file": "Памятка_позвонить_в_офис_без_Jabber.docx"
+        },
+        4: {
+            "title": "Присоединиться к конференции без Jabber",
+            "docx_file": "Памятка_присоединиться_к_конференции_без_Jabber.docx"
+        },
+        5: {
+            "title": "Установка Jabber на телефон",
+            "docx_file": "Памятка_Установка_Jabber_на_телефон.docx"
+        },
+        6: {
+            "title": "Установка VPN клиента Cisco Secure Client",
+            "docx_file": "Памятка_Установка_VPN_клиента_Cisco_Secure_Client.docx"
+        }
+    }
+
+    if card_number not in guide_mapping:
+        abort(404)
+
+    guide_info = guide_mapping[card_number]
+
+    # Для карточек 3, 4, 5 и 6 используем статический шаблон, пропускаем чтение контента
+    if card_number == 3:
+        return render_template(
+            "guide3.html",
+            title=f"Памятка: {guide_info['title']}",
+            guide_title=guide_info["title"],
+            card_number=card_number,
+            total_guides=6
+        )
+    elif card_number == 4:
+        return render_template(
+            "guide4.html",
+            title=f"Памятка: {guide_info['title']}",
+            guide_title=guide_info["title"],
+            card_number=card_number,
+            total_guides=6
+        )
+    elif card_number == 5:
+        return render_template(
+            "guide5.html",
+            title=f"Памятка: {guide_info['title']}",
+            guide_title=guide_info["title"],
+            card_number=card_number,
+            total_guides=6
+        )
+    elif card_number == 6:
+        return render_template(
+            "guide6.html",
+            title=f"Памятка: {guide_info['title']}",
+            guide_title=guide_info["title"],
+            card_number=card_number,
+            total_guides=6
+        )
+
+    # Получаем путь к документу
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    docx_path = os.path.join(project_root, "docs", guide_info["docx_file"])
+    json_path = os.path.join(project_root, "docs", "guides_content.json")
+
+    # Пытаемся прочитать из JSON (предобработанный контент)
+    content = None
+    if os.path.exists(json_path):
+        try:
+            import json
+            with open(json_path, 'r', encoding='utf-8') as f:
+                guides_data = json.load(f)
+                # Принудительная проверка для карточки 3
+                if card_number == 3:
+                    print(f"DEBUG: JSON file loaded. Available keys: {list(guides_data.keys())}")
+                    print(f"DEBUG: Looking for card_number: {card_number} (as string: '{str(card_number)}')")
+                    print(f"DEBUG: Card 3 in guides_data: {str(card_number) in guides_data}")
+
+                current_app.logger.info(f"JSON file loaded. Available keys: {list(guides_data.keys())}")
+                current_app.logger.info(f"Looking for card_number: {card_number} (as string: '{str(card_number)}')")
+                if str(card_number) in guides_data:
+                    card_data = guides_data[str(card_number)]
+                    if "content" in card_data and card_data["content"]:
+                        content = card_data["content"]
+                        if card_number == 3:
+                            print(f"DEBUG: Content loaded from JSON for card {card_number}. Items: {len(content)}")
+                            print(f"DEBUG: First content item: {content[0] if content else 'Empty'}")
+                        current_app.logger.info(f"Content loaded from JSON for card {card_number}. Items: {len(content)}")
+                    else:
+                        if card_number == 3:
+                            print(f"DEBUG: Card {card_number} found in JSON but has no content")
+                        current_app.logger.warning(f"Card {card_number} found in JSON but has no content")
+                else:
+                    if card_number == 3:
+                        print(f"DEBUG: Card {card_number} not found in JSON. Available keys: {list(guides_data.keys())}")
+                    current_app.logger.warning(f"Card {card_number} not found in JSON. Available keys: {list(guides_data.keys())}")
+        except Exception as e:
+            if card_number == 3:
+                print(f"DEBUG: Error reading JSON file: {str(e)}")
+            current_app.logger.error(f"Error reading JSON file: {str(e)}")
+            import traceback
+            current_app.logger.error(traceback.format_exc())
+            if card_number == 3:
+                print(f"DEBUG: Traceback: {traceback.format_exc()}")
+
+    # Если JSON не найден или не содержит контент, пытаемся прочитать из Word документа
+    # Но только если это не markdown файл (для markdown файлов контент должен быть только в JSON)
+    if not content:
+        if card_number == 3:
+            print(f"DEBUG: Content is None, trying to read from docx. File: {guide_info['docx_file']}")
+            print(f"DEBUG: Is markdown file: {guide_info['docx_file'].endswith('.md')}")
+        if not guide_info["docx_file"].endswith('.md'):
+            try:
+                from docx import Document
+                from docx.table import Table
+                from docx.text.paragraph import Paragraph
+                if os.path.exists(docx_path):
+                    try:
+                        doc = Document(docx_path)
+                        content = []
+                        table_index = 0
+                        current_list_type = None
+                        list_items = []
+
+                        def flush_list():
+                            nonlocal current_list_type, list_items, content
+                            if current_list_type and list_items:
+                                content.append({
+                                    "type": "list",
+                                    "ordered": current_list_type == "ordered",
+                                    "items": list_items.copy()
+                                })
+                            current_list_type = None
+                            list_items = []
+
+                        for element in doc.element.body:
+                            tag = element.tag.split('}')[-1]
+
+                            if tag == 'tbl':
+                                flush_list()
+                                if table_index < len(doc.tables):
+                                    table = Table(element, doc)
+                                    table_index += 1
+
+                                    table_data = {
+                                        "type": "table",
+                                        "headers": [],
+                                        "rows": []
+                                    }
+
+                                    if len(table.rows) > 0:
+                                        header_row = table.rows[0]
+                                        for cell in header_row.cells:
+                                            header_text = cell.text.strip()
+                                            header_text = re.sub(r'</?span[^>]*>', '', header_text)
+                                            header_text = ' '.join(header_text.split())
+                                            table_data["headers"].append(header_text)
+
+                                        for row in list(table.rows)[1:]:
+                                            row_data = []
+                                            for cell in row.cells:
+                                                cell_text = cell.text.strip()
+                                                cell_text = re.sub(r'</?span[^>]*>', '', cell_text)
+                                                cell_text = ' '.join(cell_text.split())
+                                                row_data.append(cell_text)
+                                            if any(item for item in row_data if item):
+                                                table_data["rows"].append(row_data)
+
+                                    if table_data["headers"]:
+                                        content.append(table_data)
+
+                            elif tag == 'p':
+                                para = Paragraph(element, doc)
+                                text = para.text.strip()
+                                if not text:
+                                    continue
+
+                                text = re.sub(r'</?span[^>]*>', '', text)
+                                text = ' '.join(text.split())
+
+                                style_name = ""
+                                try:
+                                    if para.style and para.style.name:
+                                        style_name = para.style.name
+                                except Exception:
+                                    pass
+
+                                # Определяем списки по тексту
+                                ordered_match = re.match(r'^(\d+)[\.)]\s*(.*)', text)
+                                bullet_match = re.match(r'^[\-\u2022\u2023\u25CF\u25CB\u25AA\u25AB\u25C9\u25E6\•]\s*(.*)', text)
+
+                                if ordered_match:
+                                    if current_list_type != 'ordered':
+                                        flush_list()
+                                        current_list_type = 'ordered'
+                                        list_items = []
+                                    list_items.append(ordered_match.group(2).strip())
+                                    continue
+                                elif bullet_match:
+                                    if current_list_type != 'unordered':
+                                        flush_list()
+                                        current_list_type = 'unordered'
+                                        list_items = []
+                                    list_items.append(bullet_match.group(1).strip())
+                                    continue
+                                else:
+                                    flush_list()
+
+                                # Особые типы блоков
+                                if text.lower() == 'памятка':
+                                    content.append({"type": "label", "text": text})
+                                    continue
+
+                                step_match = re.match(r'шаг\s*(\d+)[\.:]?\s*(.*)', text, re.IGNORECASE)
+                                if step_match:
+                                    content.append({
+                                        "type": "step",
+                                        "number": step_match.group(1),
+                                        "text": step_match.group(2).strip()
+                                    })
+                                    continue
+
+                                if text.startswith('⚠') or text.startswith('❗'):
+                                    content.append({
+                                        "type": "box",
+                                        "style": "warning",
+                                        "text": text.lstrip('⚠️❗ ').strip()
+                                    })
+                                    continue
+                                if text.startswith('✅') or text.startswith('☑'):
+                                    content.append({
+                                        "type": "box",
+                                        "style": "success",
+                                        "text": text.lstrip('✅☑ ').strip()
+                                    })
+                                    continue
+                                if text.startswith('ℹ') or text.startswith('💡'):
+                                    content.append({
+                                        "type": "box",
+                                        "style": "info",
+                                        "text": text.lstrip('ℹ💡 ').strip()
+                                    })
+                                    continue
+
+                                # Заголовки
+                                if "Heading" in style_name or "Заголовок" in style_name:
+                                    level = 1
+                                    if "1" in style_name or "Heading 1" in style_name:
+                                        level = 1
+                                    elif "2" in style_name or "Heading 2" in style_name:
+                                        level = 2
+                                    elif "3" in style_name or "Heading 3" in style_name:
+                                        level = 3
+
+                                    content.append({
+                                        "type": "heading",
+                                        "level": level,
+                                        "text": text
+                                    })
+                                    continue
+
+                                # Обычный параграф
+                                content.append({
+                                    "type": "paragraph",
+                                    "text": text
+                                })
+
+                        flush_list()
+
+                    except Exception as doc_error:
+                        current_app.logger.error(f"Error parsing docx file {docx_path}: {str(doc_error)}")
+                        import traceback
+                        current_app.logger.error(traceback.format_exc())
+                        content = None
+                else:
+                    current_app.logger.warning(f"Docx file not found: {docx_path}")
+                    content = None
+            except ImportError:
+                current_app.logger.warning("python-docx not installed. Install it with: pip install python-docx")
+                content = None
+            except Exception as e:
+                current_app.logger.error(f"Error reading docx file: {str(e)}")
+                import traceback
+                current_app.logger.error(traceback.format_exc())
+                content = None
+
+    # Выбираем шаблон в зависимости от номера памятки
+    if card_number == 2:
+        template_name = "guide2.html"
+    else:
+        template_name = "guide.html"
+
+    # Убеждаемся, что content - это список, даже если он пустой
+    if content is None:
+        content = []
+
+    try:
+        result = render_template(
+            template_name,
+            title=f"Памятка: {guide_info['title']}",
+            guide_title=guide_info["title"],
+            card_number=card_number,
+            content=content,
+            total_guides=6
+        )
+
+        return result
+    except Exception as e:
+        current_app.logger.error(f"Error rendering template for card {card_number}: {str(e)}")
+        import traceback
+        error_traceback = traceback.format_exc()
+        current_app.logger.error(error_traceback)
+        if card_number == 3:
+            print(f"DEBUG: Error rendering template: {str(e)}")
+            print(f"DEBUG: Traceback: {error_traceback}")
+        # Показываем более информативную ошибку
+        abort(500, description=f"Ошибка при рендеринге шаблона: {str(e)}")
+
+
 @main.route("/download/telephony_guide")
 def download_telephony_guide():
     """Маршрут для скачивания инструкции по телефонии"""
@@ -1605,11 +1935,11 @@ def download_telephony_guide():
         # Получаем корневую директорию проекта (на уровень выше blog/)
         project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         file_path = os.path.join(project_root, "docs", "Руководство по звонкам и конференциям.docx")
-        
+
         if not os.path.exists(file_path):
             current_app.logger.error(f"File not found: {file_path}")
             abort(404)
-        
+
         return send_file(
             file_path,
             as_attachment=True,
@@ -1618,6 +1948,61 @@ def download_telephony_guide():
         )
     except Exception as e:
         current_app.logger.error(f"Error downloading telephony guide: {str(e)}")
+        abort(500)
+
+
+@main.route("/download/guide/<int:card_number>")
+def download_guide(card_number):
+    """Маршрут для скачивания памяток"""
+    guide_mapping = {
+        1: {
+            "title": "Как создать конференцию за 2 минуты",
+            "docx_file": "Памятка_Как создать конференцию за 2 минуты.docx"
+        },
+        2: {
+            "title": "Подробная техническая инструкция по корпоративной телефонии и конференциям",
+            "docx_file": "Памятка_Подробная техническая инструкция.docx"
+        },
+        3: {
+            "title": "Как позвонить в офис без Cisco Jabber",
+            "docx_file": "Памятка_позвонить_в_офис_без_Jabber.docx"
+        },
+        4: {
+            "title": "Присоединиться к конференции без Jabber",
+            "docx_file": "Памятка_присоединиться_к_конференции_без_Jabber.docx"
+        },
+        5: {
+            "title": "Установка Jabber на телефон",
+            "docx_file": "Памятка_Установка_Jabber_на_телефон.docx"
+        },
+        6: {
+            "title": "Установка VPN клиента Cisco Secure Client",
+            "docx_file": "Памятка_Установка_VPN_клиента_Cisco_Secure_Client.docx"
+        }
+    }
+
+    if card_number not in guide_mapping:
+        abort(404)
+
+    guide_info = guide_mapping[card_number]
+    project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    file_path = os.path.join(project_root, "docs", guide_info["docx_file"])
+
+    if not os.path.exists(file_path):
+        current_app.logger.error(f"File not found: {file_path}")
+        abort(404)
+
+    try:
+        # Формируем имя файла для скачивания
+        safe_filename = guide_info["docx_file"].replace(" ", "_")
+        return send_file(
+            file_path,
+            as_attachment=True,
+            download_name=safe_filename,
+            mimetype="application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error downloading guide {card_number}: {str(e)}")
         abort(500)
 
 
@@ -1697,10 +2082,10 @@ def vdi():
 def reports():
     try:
         # Используем безопасную конфигурацию из переменных окружения
-        DB_REDMINE_HOST = get("mysql", "host")
-        DB_REDMINE_DB = get("mysql", "database")
-        DB_REDMINE_USER = get("mysql", "user")
-        DB_REDMINE_PASSWORD = get("mysql", "password")
+        DB_REDMINE_HOST = os.getenv('MYSQL_HOST')
+        DB_REDMINE_DB = os.getenv('MYSQL_DATABASE')
+        DB_REDMINE_USER = os.getenv('MYSQL_USER')
+        DB_REDMINE_PASSWORD = os.getenv('MYSQL_PASSWORD')
 
         conn = get_connection(
             DB_REDMINE_HOST, DB_REDMINE_USER, DB_REDMINE_PASSWORD, DB_REDMINE_DB

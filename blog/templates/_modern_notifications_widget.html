@@ -860,12 +860,12 @@
         min-height: 44px !important;
         padding: 12px !important;
     }
-    
+
     .footer-btn {
         min-height: 48px !important;
         padding: 14px 16px !important;
     }
-    
+
     .notification-item {
         padding: 20px !important;
         margin-bottom: 16px !important;
@@ -874,18 +874,18 @@
         -webkit-user-select: none !important;
         -webkit-touch-callout: none !important;
     }
-    
+
     .notification-action-btn {
         min-height: 44px !important;
         padding: 12px 18px !important;
     }
-    
+
     /* Улучшенная прокрутка на touch-устройствах */
     .notifications-list {
         -webkit-overflow-scrolling: touch !important;
         overscroll-behavior: contain !important;
     }
-    
+
     /* Предотвращение случайного выделения текста при swipe */
     .notifications-list * {
         -webkit-user-select: none !important;
@@ -901,16 +901,16 @@
         max-height: calc(100vh - 80px) !important;
         top: 60px !important;
     }
-    
+
     .notifications-header {
         padding: 12px 20px 10px !important;
     }
-    
+
     .header-icon {
         width: 40px !important;
         height: 40px !important;
     }
-    
+
     .header-title {
         font-size: 18px !important;
     }
@@ -966,12 +966,12 @@
     right: 1.5rem !important;
     bottom: 1.5rem !important;
   }
-  
+
   .notifications-restore-btn .restore-button {
     width: 56px !important;
     height: 56px !important;
   }
-  
+
   .notifications-restore-btn .restore-button i {
     font-size: 18px !important;
   }
@@ -982,12 +982,12 @@
     right: 1.25rem !important;
     bottom: 1.25rem !important;
   }
-  
+
   .notifications-restore-btn .restore-button {
     width: 52px !important;
     height: 52px !important;
   }
-  
+
   .notifications-restore-btn .restore-button i {
     font-size: 17px !important;
   }
@@ -998,12 +998,12 @@
     right: 1rem !important;
     bottom: 1rem !important;
   }
-  
+
   .notifications-restore-btn .restore-button {
     width: 48px !important;
     height: 48px !important;
   }
-  
+
   .notifications-restore-btn .restore-button i {
     font-size: 16px !important;
   }
@@ -1014,12 +1014,12 @@
     right: 0.75rem !important;
     bottom: 0.75rem !important;
   }
-  
+
   .notifications-restore-btn .restore-button {
     width: 44px !important;
     height: 44px !important;
   }
-  
+
   .notifications-restore-btn .restore-button i {
     font-size: 15px !important;
   }
@@ -1579,6 +1579,18 @@ try {
             try {
                 console.log('[ModernWidget] 🔔 Показ виджета...');
 
+                // КРИТИЧЕСКАЯ ПРОВЕРКА: Виджет должен быть включен в БД
+                const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                if (widgetDisabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен в БД, не показываем');
+                    this.widget.style.display = 'none';
+                    this.widget.classList.add('closed', 'initial-hidden');
+                    this.widget.style.visibility = 'hidden';
+                    this.widget.style.opacity = '0';
+                    this.hideRestoreButton();
+                    return;
+                }
+
                 // Принудительно сбрасываем все агрессивные CSS правила
                 this.widget.classList.remove('closed', 'hidden', 'initial-hidden');
                 this.widget.style.cssText = `
@@ -1819,7 +1831,11 @@ try {
         async startPolling() {
             try {
                 setInterval(() => this.updateNotifications(), 30000);
+                // Периодически проверяем состояние виджета из БД (каждые 60 секунд)
+                setInterval(() => this.checkNotificationStatusFromDB(), 60000);
                 this.updateNotifications();
+                // Проверяем состояние при старте
+                this.checkNotificationStatusFromDB();
             } catch (error) {
                 console.error('[ModernWidget] ❌ Ошибка в startPolling:', error);
             }
@@ -2029,6 +2045,18 @@ try {
                     minSoundInterval: minSoundInterval,
                     timestamp: new Date().toLocaleTimeString()
                 });
+
+                // КРИТИЧЕСКАЯ ПРОВЕРКА: Виджет должен быть включен в БД
+                const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                if (widgetDisabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен, не показываем и не воспроизводим звук');
+                    this.widget.style.display = 'none';
+                    this.widget.classList.add('closed', 'initial-hidden');
+                    this.widget.style.visibility = 'hidden';
+                    this.widget.style.opacity = '0';
+                    this.hideRestoreButton();
+                    return; // Прекращаем обработку, если виджет отключен
+                }
 
                 // НОВАЯ ЛОГИКА: Более либеральная проверка для продакшена
                 let shouldPlaySound = false;
@@ -2413,6 +2441,13 @@ try {
         playNotificationSound() {
             try {
                 console.log('[ModernWidget] 🔊 Попытка воспроизведения звука уведомления...');
+
+                // КРИТИЧЕСКАЯ ПРОВЕРКА: Виджет должен быть включен в БД
+                const widgetDisabled = localStorage.getItem('notificationsWidgetDisabled') === 'true';
+                if (widgetDisabled) {
+                    console.log('[ModernWidget] 🔇 Виджет отключен в БД, не воспроизводим звук');
+                    return;
+                }
 
                 // НОВОЕ: Проверка минимального интервала между воспроизведениями
                 const now = Date.now();
@@ -2891,18 +2926,32 @@ try {
                 return;
             }
 
-            const response = await fetch('/api/notifications/widget/status');
+            // Используем правильный endpoint для проверки состояния виджета
+            const response = await fetch('/api/notifications/status');
             const data = await response.json();
 
-            if (data.success && !data.enabled) {
-                console.log('[ModernWidget] Виджет отключен в настройках пользователя, пропускаем инициализацию');
-                localStorage.setItem('notificationsWidgetDisabled', 'true');
-                const widget = document.getElementById('modern-notifications-widget');
-                if (widget) {
-                    widget.style.display = 'none';
-                    widget.classList.add('closed');
+            if (data.success) {
+                if (!data.enabled) {
+                    console.log('[ModernWidget] 🔕 Виджет отключен в настройках пользователя, пропускаем инициализацию');
+                    localStorage.setItem('notificationsWidgetDisabled', 'true');
+                    const widget = document.getElementById('modern-notifications-widget');
+                    if (widget) {
+                        widget.style.display = 'none';
+                        widget.classList.add('closed', 'initial-hidden');
+                        widget.style.visibility = 'hidden';
+                        widget.style.opacity = '0';
+                    }
+                    const restoreBtn = document.getElementById('notifications-restore-btn');
+                    if (restoreBtn) {
+                        restoreBtn.style.display = 'none';
+                    }
+                    return;
+                } else {
+                    console.log('[ModernWidget] ✅ Виджет включен в настройках пользователя');
+                    localStorage.removeItem('notificationsWidgetDisabled');
                 }
-                return;
+            } else {
+                console.error('[ModernWidget] ❌ Ошибка получения состояния виджета:', data.error);
             }
 
             localStorage.setItem('notificationsWidgetDisabled', 'false');
@@ -3807,7 +3856,7 @@ class ModernNotificationsUX {
     initializeUX() {
         this.widget = document.getElementById('modern-notifications-widget');
         this.notificationsList = document.getElementById('notifications-list');
-        
+
         if (this.widget && this.notificationsList) {
             this.setupSwipeGestures();
             this.setupPullToRefresh();
@@ -3837,11 +3886,11 @@ class ModernNotificationsUX {
             startY = e.touches[0].clientY;
             isDragging = true;
             draggedElement = notificationItem;
-            
+
             // Добавляем класс для анимации
             draggedElement.style.transition = 'none';
             draggedElement.style.zIndex = '1000';
-            
+
             this.hapticFeedback('light');
         }, { passive: true });
 
@@ -3850,23 +3899,23 @@ class ModernNotificationsUX {
 
             currentX = e.touches[0].clientX;
             currentY = e.touches[0].clientY;
-            
+
             const deltaX = currentX - startX;
             const deltaY = currentY - startY;
-            
+
             // Проверяем, что это горизонтальный swipe
             if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
                 e.preventDefault();
-                
+
                 // Применяем трансформацию с улучшенной физикой
                 const progress = Math.min(Math.abs(deltaX) / this.swipeThreshold, 1);
                 const opacity = Math.max(0.3, 1 - progress * 0.7);
                 const rotation = deltaX * 0.05; // Уменьшенная ротация для более естественного вида
                 const scale = 1 - progress * 0.05; // Небольшое уменьшение при swipe
-                
+
                 draggedElement.style.transform = `translateX(${deltaX}px) rotate(${rotation}deg) scale(${scale})`;
                 draggedElement.style.opacity = opacity;
-                
+
                 // Улучшенная визуальная обратная связь
                 if (deltaX > 30) {
                     draggedElement.style.backgroundColor = 'rgba(34, 197, 94, 0.15)';
@@ -3883,7 +3932,7 @@ class ModernNotificationsUX {
                     draggedElement.style.borderColor = '';
                     this.hideSwipeIcon(draggedElement);
                 }
-                
+
                 // Haptic feedback при достижении порога
                 if (Math.abs(deltaX) > this.swipeThreshold * 0.8 && !draggedElement.dataset.hapticTriggered) {
                     this.hapticFeedback('light');
@@ -3903,9 +3952,9 @@ class ModernNotificationsUX {
                 draggedElement.style.transition = 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
                 draggedElement.style.transform = `translateX(${deltaX > 0 ? '100%' : '-100%'}) rotate(${deltaX > 0 ? '10deg' : '-10deg'})`;
                 draggedElement.style.opacity = '0';
-                
+
                 this.hapticFeedback('medium');
-                
+
                 // Удаляем элемент после анимации
                 setTimeout(() => {
                     if (draggedElement && draggedElement.parentNode) {
@@ -4011,14 +4060,14 @@ class ModernNotificationsUX {
 
             if (deltaY > 0 && this.notificationsList.scrollTop === 0) {
                 e.preventDefault();
-                
+
                 const pullDistance = Math.min(deltaY, 120);
                 const pullIndicator = document.getElementById('pull-refresh-indicator');
-                
+
                 if (pullIndicator) {
                     pullIndicator.style.transform = `translateY(${pullDistance}px)`;
                     pullIndicator.style.opacity = Math.min(pullDistance / this.pullThreshold, 1);
-                    
+
                     if (pullDistance > this.pullThreshold) {
                         pullIndicator.innerHTML = '<i class="fas fa-arrow-up" style="color: #22c55e;"></i>';
                         this.hapticFeedback('light');
@@ -4071,17 +4120,17 @@ class ModernNotificationsUX {
             border: 1px solid rgba(255, 255, 255, 0.2);
         `;
         indicator.innerHTML = '<i class="fas fa-arrow-down" style="color: #6b7280;"></i>';
-        
+
         this.notificationsList.style.position = 'relative';
         this.notificationsList.appendChild(indicator);
     }
 
     async triggerRefresh() {
         if (this.isRefreshing) return;
-        
+
         this.isRefreshing = true;
         const pullIndicator = document.getElementById('pull-refresh-indicator');
-        
+
         if (pullIndicator) {
             pullIndicator.innerHTML = '<i class="fas fa-spinner fa-spin" style="color: #3b82f6;"></i>';
             pullIndicator.style.transform = 'translateX(-50%) translateY(20px)';
@@ -4135,17 +4184,17 @@ class ModernNotificationsUX {
             .notification-item {
                 transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-            
+
             .notification-item:hover {
                 transform: translateY(-2px) scale(1.02) !important;
                 box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4) !important;
             }
-            
+
             .notification-item:active {
                 transform: translateY(0) scale(0.98) !important;
                 transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-            
+
             /* Анимация появления новых уведомлений */
             @keyframes slideInFromTop {
                 from {
@@ -4161,25 +4210,25 @@ class ModernNotificationsUX {
                     opacity: 1;
                 }
             }
-            
+
             .notification-item.new-notification {
                 animation: slideInFromTop 0.6s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-            
+
             /* Улучшенные анимации кнопок */
             .action-btn, .footer-btn {
                 transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-            
+
             .action-btn:active, .footer-btn:active {
                 transform: scale(0.95) !important;
             }
-            
+
             /* Плавные переходы для виджета */
             .modern-notifications-widget {
                 transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
             }
-            
+
             /* Toast уведомления */
             .ux-toast {
                 position: fixed;
@@ -4196,7 +4245,7 @@ class ModernNotificationsUX {
                 backdrop-filter: blur(10px);
                 animation: toastSlideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             }
-            
+
             @keyframes toastSlideIn {
                 from {
                     transform: translateX(100%);
@@ -4207,7 +4256,7 @@ class ModernNotificationsUX {
                     opacity: 1;
                 }
             }
-            
+
             @keyframes toastSlideOut {
                 from {
                     transform: translateX(0);
@@ -4235,7 +4284,7 @@ class ModernNotificationsUX {
         const toast = document.createElement('div');
         toast.className = 'ux-toast';
         toast.textContent = message;
-        
+
         // Добавляем иконку в зависимости от типа
         const icons = {
             success: '✅',
@@ -4243,11 +4292,11 @@ class ModernNotificationsUX {
             warning: '⚠️',
             error: '❌'
         };
-        
+
         toast.innerHTML = `${icons[type] || icons.info} ${message}`;
-        
+
         document.body.appendChild(toast);
-        
+
         // Автоматическое удаление через 3 секунды
         setTimeout(() => {
             toast.style.animation = 'toastSlideOut 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
@@ -4264,12 +4313,12 @@ class ModernNotificationsUX {
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = notificationHTML;
         const newNotification = tempDiv.firstElementChild;
-        
+
         if (newNotification) {
             newNotification.classList.add('new-notification');
             this.notificationsList.insertBefore(newNotification, this.notificationsList.firstChild);
             this.hapticFeedback('light');
-            
+
             // Убираем класс анимации после завершения
             setTimeout(() => {
                 newNotification.classList.remove('new-notification');
@@ -4282,27 +4331,27 @@ class ModernNotificationsUX {
 try {
     window.modernNotificationsUX = new ModernNotificationsUX();
     console.log('[ModernUX] 🎉 Современные UX улучшения инициализированы!');
-    
+
     // 🧪 ТЕСТОВЫЕ ФУНКЦИИ ДЛЯ ДЕМОНСТРАЦИИ
     window.testSwipeGesture = function() {
         if (window.modernNotificationsUX) {
             window.modernNotificationsUX.showSwipeToast('Swipe влево или вправо по уведомлению для удаления');
         }
     };
-    
+
     window.testPullToRefresh = function() {
         if (window.modernNotificationsUX) {
             window.modernNotificationsUX.showRefreshToast('Потяните список вниз для обновления');
         }
     };
-    
+
     window.testHapticFeedback = function() {
         if (window.modernNotificationsUX) {
             window.modernNotificationsUX.hapticFeedback('success');
             window.modernNotificationsUX.showToast('Haptic feedback активирован!', 'success');
         }
     };
-    
+
     window.addTestNotification = function() {
         if (window.modernNotificationsUX) {
             const testHTML = `
@@ -4322,13 +4371,13 @@ try {
             window.modernNotificationsUX.addNotificationWithAnimation(testHTML);
         }
     };
-    
+
     console.log('[ModernUX] 🛠️ Доступные тестовые функции:');
     console.log('[ModernUX] 🛠️ testSwipeGesture() - тест swipe жестов');
     console.log('[ModernUX] 🛠️ testPullToRefresh() - тест pull-to-refresh');
     console.log('[ModernUX] 🛠️ testHapticFeedback() - тест haptic feedback');
     console.log('[ModernUX] 🛠️ addTestNotification() - добавить тестовое уведомление');
-    
+
 } catch (error) {
     console.error('[ModernUX] ❌ Ошибка инициализации UX улучшений:', error);
 }

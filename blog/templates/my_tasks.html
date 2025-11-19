@@ -363,6 +363,723 @@
 
 <!-- Улучшенные стили для email-ссылок -->
 <style>
+/* === ПРИНУДИТЕЛЬНЫЕ СТИЛИ ДЛЯ СВЕТЛОЙ ТЕМЫ === */
+html[data-theme="light"] body,
+html[data-theme="light"],
+[data-theme="light"] body,
+[data-theme="light"] {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-card,
+[data-theme="light"] .status-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-card .card-header,
+[data-theme="light"] .status-card .card-header,
+html[data-theme="light"] .card-header,
+[data-theme="light"] .card-header {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-card .card-title,
+[data-theme="light"] .status-card .card-title,
+html[data-theme="light"] .status-card .card-title h3,
+[data-theme="light"] .status-card .card-title h3 {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-card .card-value,
+[data-theme="light"] .status-card .card-value {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard,
+[data-theme="light"] .status-breakdown-dashboard {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .filters-section,
+[data-theme="light"] .filters-section {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] .filter-select,
+[data-theme="light"] .filter-select {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .view-toggle-btn,
+[data-theme="light"] .view-toggle-btn {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+html[data-theme="light"] .view-toggle-btn.active,
+[data-theme="light"] .view-toggle-btn.active {
+    background-color: #3b82f6 !important;
+    color: white !important;
+}
+
+html[data-theme="light"] .status-card .card-description,
+[data-theme="light"] .status-card .card-description,
+html[data-theme="light"] .status-card .card-description p,
+[data-theme="light"] .status-card .card-description p {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .breakdown-header,
+[data-theme="light"] .breakdown-header,
+html[data-theme="light"] .breakdown-title,
+[data-theme="light"] .breakdown-title,
+html[data-theme="light"] .breakdown-title h2,
+[data-theme="light"] .breakdown-title h2 {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .summary-value,
+[data-theme="light"] .summary-value {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .summary-label,
+[data-theme="light"] .summary-label {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .global-toggle-btn,
+[data-theme="light"] .global-toggle-btn {
+    background-color: #f3f4f6 !important;
+    border-color: #e5e7eb !important;
+    color: #374151 !important;
+}
+
+html[data-theme="light"] .toggle-details-btn,
+[data-theme="light"] .toggle-details-btn {
+    background-color: transparent !important;
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+html[data-theme="light"] .filter-label,
+[data-theme="light"] .filter-label {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .filter-container,
+[data-theme="light"] .filter-container {
+    background-color: transparent !important;
+}
+
+html[data-theme="light"] .view-toggle-section,
+[data-theme="light"] .view-toggle-section,
+html[data-theme="light"] .view-toggle-container,
+[data-theme="light"] .view-toggle-container {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .table-container,
+[data-theme="light"] .table-container,
+html[data-theme="light"] .table-wrapper,
+[data-theme="light"] .table-wrapper {
+    background-color: transparent !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned,
+[data-theme="light"] .modern-datatable-redesigned {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned thead th,
+[data-theme="light"] .modern-datatable-redesigned thead th {
+    background-color: #f8fafc !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned tbody tr,
+[data-theme="light"] .modern-datatable-redesigned tbody tr {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned tbody tr:hover,
+[data-theme="light"] .modern-datatable-redesigned tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .dataTables_wrapper .row,
+[data-theme="light"] .dataTables_wrapper .row {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .dataTables_wrapper .dataTables_length select,
+[data-theme="light"] .dataTables_wrapper .dataTables_length select,
+html[data-theme="light"] .dataTables_wrapper .dataTables_filter input,
+[data-theme="light"] .dataTables_wrapper .dataTables_filter input {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+/* Стили для таблицы и заголовка - максимальная специфичность */
+html[data-theme="light"] #tasksTable,
+html[data-theme="light"] #tasksTable.display,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned,
+html[data-theme="light"] table#tasksTable,
+[data-theme="light"] #tasksTable,
+[data-theme="light"] #tasksTable.display,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned,
+[data-theme="light"] table#tasksTable {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="light"] #tasksTable thead,
+html[data-theme="light"] #tasksTable thead th,
+html[data-theme="light"] #tasksTable.display thead th,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned thead th,
+[data-theme="light"] #tasksTable thead,
+[data-theme="light"] #tasksTable thead th,
+[data-theme="light"] #tasksTable.display thead th,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #6b73ff 50%, #9644ff 75%, #667eea 100%) !important;
+    color: #ffffff !important;
+}
+
+html[data-theme="light"] #tasksTable tbody,
+html[data-theme="light"] #tasksTable tbody tr,
+html[data-theme="light"] #tasksTable.display tbody tr,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr,
+[data-theme="light"] #tasksTable tbody,
+[data-theme="light"] #tasksTable tbody tr,
+[data-theme="light"] #tasksTable.display tbody tr,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] #tasksTable tbody tr:hover,
+html[data-theme="light"] #tasksTable.display tbody tr:hover,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr:hover,
+[data-theme="light"] #tasksTable tbody tr:hover,
+[data-theme="light"] #tasksTable.display tbody tr:hover,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] #tasksTable tbody tr:nth-child(even),
+html[data-theme="light"] #tasksTable.display tbody tr:nth-child(even),
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr:nth-child(even),
+[data-theme="light"] #tasksTable tbody tr:nth-child(even),
+[data-theme="light"] #tasksTable.display tbody tr:nth-child(even),
+[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] #tasksTable tbody td,
+html[data-theme="light"] #tasksTable.display tbody td,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody td,
+[data-theme="light"] #tasksTable tbody td,
+[data-theme="light"] #tasksTable.display tbody td,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody td {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] #tasksTable tbody td *,
+[data-theme="light"] #tasksTable tbody td * {
+    color: inherit !important;
+}
+
+html[data-theme="light"] #tasksTable tbody td a,
+html[data-theme="light"] #tasksTable.display tbody td a,
+html[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody td a,
+[data-theme="light"] #tasksTable tbody td a,
+[data-theme="light"] #tasksTable.display tbody td a,
+[data-theme="light"] #tasksTable.modern-datatable-redesigned tbody td a {
+    color: #2563eb !important;
+}
+
+html[data-theme="light"] .table-wrapper,
+html[data-theme="light"] .dataTables_wrapper,
+html[data-theme="light"] .dataTable,
+html[data-theme="light"] table.dataTable,
+[data-theme="light"] .table-wrapper,
+[data-theme="light"] .dataTables_wrapper,
+[data-theme="light"] .dataTable,
+[data-theme="light"] table.dataTable {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] .dataTable tbody tr,
+html[data-theme="light"] table.dataTable tbody tr,
+[data-theme="light"] .dataTable tbody tr,
+[data-theme="light"] table.dataTable tbody tr {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .dataTable tbody tr:hover,
+html[data-theme="light"] table.dataTable tbody tr:hover,
+[data-theme="light"] .dataTable tbody tr:hover,
+[data-theme="light"] table.dataTable tbody tr:hover {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .dataTable tbody tr:nth-child(even),
+html[data-theme="light"] table.dataTable tbody tr:nth-child(even),
+[data-theme="light"] .dataTable tbody tr:nth-child(even),
+[data-theme="light"] table.dataTable tbody tr:nth-child(even) {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .dataTable tbody td,
+html[data-theme="light"] table.dataTable tbody td,
+[data-theme="light"] .dataTable tbody td,
+[data-theme="light"] table.dataTable tbody td {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+    border-color: #e5e7eb !important;
+}
+
+/* Элементы внутри ячеек таблицы */
+html[data-theme="light"] #tasksTable .task-id-number,
+[data-theme="light"] #tasksTable .task-id-number,
+html[data-theme="light"] #tasksTable .task-id-link,
+[data-theme="light"] #tasksTable .task-id-link {
+    color: #2563eb !important;
+}
+
+html[data-theme="light"] #tasksTable .email-text,
+[data-theme="light"] #tasksTable .email-text,
+html[data-theme="light"] #tasksTable .email-link,
+[data-theme="light"] #tasksTable .email-link {
+    color: #1e40af !important;
+}
+
+html[data-theme="light"] #tasksTable .email-link,
+[data-theme="light"] #tasksTable .email-link {
+    background-color: #dbeafe !important;
+    border-color: #93c5fd !important;
+    color: #1e40af !important;
+}
+
+html[data-theme="light"] #tasksTable .subject-text,
+[data-theme="light"] #tasksTable .subject-text {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] #tasksTable .status-badge,
+[data-theme="light"] #tasksTable .status-badge,
+html[data-theme="light"] #tasksTable .status-badge-redesigned,
+[data-theme="light"] #tasksTable .status-badge-redesigned {
+    background-color: #3b82f6 !important;
+    color: white !important;
+    border-color: #2563eb !important;
+}
+
+html[data-theme="light"] #tasksTable .status-badge.status-closed,
+[data-theme="light"] #tasksTable .status-badge.status-closed,
+html[data-theme="light"] #tasksTable .status-badge-redesigned.status-closed,
+[data-theme="light"] #tasksTable .status-badge-redesigned.status-closed {
+    background: linear-gradient(135deg, #d1fae5, #a7f3d0) !important;
+    color: #047857 !important;
+    border-color: #6ee7b7 !important;
+}
+
+html[data-theme="light"] #tasksTable .priority-badge,
+[data-theme="light"] #tasksTable .priority-badge,
+html[data-theme="light"] #tasksTable .priority-badge-redesigned,
+[data-theme="light"] #tasksTable .priority-badge-redesigned {
+    background-color: #60a5fa !important;
+    color: white !important;
+    border-color: #3b82f6 !important;
+}
+
+html[data-theme="light"] #tasksTable .priority-badge.priority-normal,
+[data-theme="light"] #tasksTable .priority-badge.priority-normal,
+html[data-theme="light"] #tasksTable .priority-badge-redesigned.priority-normal,
+[data-theme="light"] #tasksTable .priority-badge-redesigned.priority-normal {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe) !important;
+    color: #1e40af !important;
+    border-color: #93c5fd !important;
+}
+
+html[data-theme="light"] #tasksTable .date-text,
+[data-theme="light"] #tasksTable .date-text {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] #tasksTable .date-icon,
+[data-theme="light"] #tasksTable .date-icon {
+    color: #10b981 !important;
+}
+
+html[data-theme="light"] #tasksTable .col-updated-cell .date-icon,
+[data-theme="light"] #tasksTable .col-updated-cell .date-icon {
+    color: #0ea5e9 !important;
+}
+
+html[data-theme="light"] #tasksTable .project-text,
+[data-theme="light"] #tasksTable .project-text {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .table-header,
+[data-theme="light"] .table-header {
+    background-color: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .table-header .table-title,
+[data-theme="light"] .table-header .table-title {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .table-header .table-title i,
+[data-theme="light"] .table-header .table-title i {
+    color: #3b82f6 !important;
+}
+
+/* КРИТИЧЕСКИ ВАЖНЫЕ СТИЛИ ДЛЯ ТАБЛИЦЫ - ПРИМЕНЯЮТСЯ В САМОМ КОНЦЕ */
+html[data-theme="light"] table#tasksTable tbody tr[role="row"],
+html[data-theme="light"] table#tasksTable.display tbody tr[role="row"],
+html[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"],
+html[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"],
+[data-theme="light"] table#tasksTable tbody tr[role="row"],
+[data-theme="light"] table#tasksTable.display tbody tr[role="row"],
+[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"],
+[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"] {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] table#tasksTable tbody tr[role="row"]:hover,
+html[data-theme="light"] table#tasksTable.display tbody tr[role="row"]:hover,
+html[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"]:hover,
+html[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"]:hover,
+[data-theme="light"] table#tasksTable tbody tr[role="row"]:hover,
+[data-theme="light"] table#tasksTable.display tbody tr[role="row"]:hover,
+[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"]:hover,
+[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"]:hover {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
+}
+
+html[data-theme="light"] table#tasksTable tbody tr[role="row"]:nth-child(even),
+html[data-theme="light"] table#tasksTable.display tbody tr[role="row"]:nth-child(even),
+html[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"]:nth-child(even),
+html[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"]:nth-child(even),
+[data-theme="light"] table#tasksTable tbody tr[role="row"]:nth-child(even),
+[data-theme="light"] table#tasksTable.display tbody tr[role="row"]:nth-child(even),
+[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody tr[role="row"]:nth-child(even),
+[data-theme="light"] table.dataTable#tasksTable tbody tr[role="row"]:nth-child(even) {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
+}
+
+html[data-theme="light"] table#tasksTable tbody td[role="gridcell"],
+html[data-theme="light"] table#tasksTable.display tbody td[role="gridcell"],
+html[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody td[role="gridcell"],
+html[data-theme="light"] table.dataTable#tasksTable tbody td[role="gridcell"],
+[data-theme="light"] table#tasksTable tbody td[role="gridcell"],
+[data-theme="light"] table#tasksTable.display tbody td[role="gridcell"],
+[data-theme="light"] table#tasksTable.modern-datatable-redesigned tbody td[role="gridcell"],
+[data-theme="light"] table.dataTable#tasksTable tbody td[role="gridcell"] {
+    background-color: transparent !important;
+    background: transparent !important;
+    color: #1f2937 !important;
+}
+
+/* СТИЛИ ДЛЯ CARD-HEADER В ДАШБОРДЕ - ТЕМНАЯ ТЕМА */
+html[data-theme="dark"] .status-card .card-header,
+[data-theme="dark"] .status-card .card-header {
+    background-color: #1e293b !important;
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .status-card .card-header *,
+[data-theme="dark"] .status-card .card-header * {
+    background-color: transparent !important;
+    color: inherit !important;
+}
+
+html[data-theme="dark"] .status-card .card-header .card-icon,
+[data-theme="dark"] .status-card .card-header .card-icon {
+    background-color: transparent !important;
+}
+
+html[data-theme="dark"] .status-card .card-header .card-title,
+[data-theme="dark"] .status-card .card-header .card-title {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .status-card .card-header .card-title h3,
+[data-theme="dark"] .status-card .card-header .card-title h3 {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .status-card .card-header .card-value,
+[data-theme="dark"] .status-card .card-header .card-value {
+    color: #60a5fa !important;
+}
+
+/* СТИЛИ ДЛЯ ДЕТАЛИЗАЦИИ ЗАДАЧ - ТЕМНАЯ ТЕМА */
+html[data-theme="dark"] .status-card .card-details,
+[data-theme="dark"] .status-card .card-details {
+    background-color: #334155 !important;
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .status-card .card-details *,
+[data-theme="dark"] .status-card .card-details * {
+    color: inherit !important;
+}
+
+html[data-theme="dark"] .status-card .detail-item,
+[data-theme="dark"] .status-card .detail-item {
+    background-color: #475569 !important;
+    background: #475569 !important;
+    border-color: #64748b !important;
+}
+
+html[data-theme="dark"] .status-card .detail-label,
+[data-theme="dark"] .status-card .detail-label {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .status-card .detail-value,
+[data-theme="dark"] .status-card .detail-value {
+    color: #f8fafc !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] .status-card .details-content,
+[data-theme="dark"] .status-card .details-content {
+    background-color: transparent !important;
+    color: #f8fafc !important;
+}
+
+/* СТИЛИ ДЛЯ ДЕТАЛИЗАЦИИ ЗАДАЧ - СВЕТЛАЯ ТЕМА */
+html[data-theme="light"] .status-card .card-details,
+[data-theme="light"] .status-card .card-details {
+    background-color: #f8fafc !important;
+    background: #f8fafc !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-card .card-details *,
+[data-theme="light"] .status-card .card-details * {
+    color: inherit !important;
+}
+
+html[data-theme="light"] .status-card .detail-item,
+[data-theme="light"] .status-card .detail-item {
+    background-color: #ffffff !important;
+    background: #ffffff !important;
+    border-color: #e5e7eb !important;
+}
+
+html[data-theme="light"] .status-card .detail-label,
+[data-theme="light"] .status-card .detail-label {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .status-card .detail-value,
+[data-theme="light"] .status-card .detail-value {
+    color: #1f2937 !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="light"] .status-card .details-content,
+[data-theme="light"] .status-card .details-content {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+}
+
+/* СТИЛИ ДЛЯ KANBAN ДОСКИ - СВЕТЛАЯ ТЕМА */
+html[data-theme="light"] .kanban-board,
+html[data-theme="light"] #kanban-board,
+[data-theme="light"] .kanban-board,
+[data-theme="light"] #kanban-board {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .kanban-header,
+[data-theme="light"] .kanban-header {
+    background-color: transparent !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .kanban-header h2,
+[data-theme="light"] .kanban-header h2 {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .kanban-header h2 i,
+[data-theme="light"] .kanban-header h2 i {
+    color: #3b82f6 !important;
+}
+
+html[data-theme="light"] .kanban-summary,
+[data-theme="light"] .kanban-summary {
+    background-color: transparent !important;
+}
+
+html[data-theme="light"] .kanban-stats,
+[data-theme="light"] .kanban-stats {
+    background-color: transparent !important;
+}
+
+html[data-theme="light"] .stat-card,
+[data-theme="light"] .stat-card {
+    background-color: #ffffff !important;
+    border-color: #e5e7eb !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .stat-card .stat-value,
+[data-theme="light"] .stat-card .stat-value {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .stat-card .stat-label,
+[data-theme="light"] .stat-card .stat-label {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .stat-card.active,
+[data-theme="light"] .stat-card.active {
+    background-color: #dbeafe !important;
+    border-color: #93c5fd !important;
+}
+
+html[data-theme="light"] .stat-card.active .stat-value,
+[data-theme="light"] .stat-card.active .stat-value {
+    color: #1e40af !important;
+}
+
+html[data-theme="light"] .stat-card.completed,
+[data-theme="light"] .stat-card.completed {
+    background-color: #d1fae5 !important;
+    border-color: #6ee7b7 !important;
+}
+
+html[data-theme="light"] .stat-card.completed .stat-value,
+[data-theme="light"] .stat-card.completed .stat-value {
+    color: #047857 !important;
+}
+
+html[data-theme="light"] .stat-card.overdue,
+[data-theme="light"] .stat-card.overdue {
+    background-color: #fee2e2 !important;
+    border-color: #fca5a5 !important;
+}
+
+html[data-theme="light"] .stat-card.overdue .stat-value,
+[data-theme="light"] .stat-card.overdue .stat-value {
+    color: #dc2626 !important;
+}
+
+html[data-theme="light"] .kanban-columns,
+html[data-theme="light"] #kanban-columns,
+[data-theme="light"] .kanban-columns,
+[data-theme="light"] #kanban-columns {
+    background-color: #f8fafc !important;
+}
+
+html[data-theme="light"] .kanban-column,
+[data-theme="light"] .kanban-column {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+html[data-theme="light"] .kanban-column-content,
+[data-theme="light"] .kanban-column-content {
+    background-color: #ffffff !important;
+}
+
+html[data-theme="light"] .kanban-column-header,
+html[data-theme="light"] .column-header,
+[data-theme="light"] .kanban-column-header,
+[data-theme="light"] .column-header {
+    background: linear-gradient(135deg, #667eea, #764ba2) !important;
+    color: white !important;
+    border-color: #667eea !important;
+}
+
+html[data-theme="light"] .kanban-column-title,
+html[data-theme="light"] .column-header h3,
+[data-theme="light"] .kanban-column-title,
+[data-theme="light"] .column-header h3 {
+    color: white !important;
+}
+
+html[data-theme="light"] .kanban-column-count,
+[data-theme="light"] .kanban-column-count {
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
+}
+
+html[data-theme="light"] .kanban-card,
+[data-theme="light"] .kanban-card {
+    background-color: #ffffff !important;
+    border-color: #e2e8f0 !important;
+    color: #374151 !important;
+}
+
+html[data-theme="light"] .kanban-card:hover,
+[data-theme="light"] .kanban-card:hover {
+    background-color: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+}
+
+html[data-theme="light"] .kanban-card-id,
+[data-theme="light"] .kanban-card-id {
+    color: #2563eb !important;
+}
+
+html[data-theme="light"] .kanban-card-subject,
+[data-theme="light"] .kanban-card-subject {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .kanban-card-project,
+[data-theme="light"] .kanban-card-project {
+    color: #6b7280 !important;
+}
+
+html[data-theme="light"] .kanban-card-date,
+[data-theme="light"] .kanban-card-date {
+    color: #9ca3af !important;
+}
+
+html[data-theme="light"] .kanban-loading,
+[data-theme="light"] .kanban-loading {
+    background-color: transparent !important;
+    color: #6b7280 !important;
+}
+
 /* Компактные статистики Kanban */
 .kanban-stats {
     display: flex !important;
@@ -682,7 +1399,7 @@ window.checkKanbanTipsStatus = function() {
 //
 window.checkClickHandlers = function() {
     console.log('=== ДИАГНОСТИКА ОБРАБОТЧИКОВ КЛИКОВ ===');
-    
+
     console.log('🔧 KanbanManager доступен:', typeof window.kanbanManager !== 'undefined');
 
     if (window.kanbanManager) {

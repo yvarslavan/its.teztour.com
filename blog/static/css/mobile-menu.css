@@ -206,6 +206,59 @@ body.mobile-menu-active {
 .mobile-menu-links li a .fa-sign-in-alt   { color: #3b82f6 !important; }  /* Вход */
 .mobile-menu-links li a .fa-user-plus     { color: #ea580c !important; }  /* Регистрация */
 
+/* === Цветные иконки для пунктов меню (по скриншоту) === */
+.mobile-menu-links li a .fa-phone-alt,
+.mobile-menu-links li a .fa-phone,
+.mobile-menu-links li a .fa-headset {
+    color: #10b981 !important;  /* Зеленый для Контакт-центр Москва */
+}
+
+.mobile-menu-links li a .fa-chart-line,
+.mobile-menu-links li a .fa-chart-area {
+    color: #3b82f6 !important;  /* Синий для Отчеты */
+}
+
+.mobile-menu-links li a .fa-chart-bar,
+.mobile-menu-links li a .fa-chart-bar-alt {
+    color: #8b5cf6 !important;  /* Фиолетовый для Общая статистика */
+}
+
+.mobile-menu-links li a .fa-clipboard-check,
+.mobile-menu-links li a .fa-check-square {
+    color: #f59e0b !important;  /* Оранжевый для Контроль качества */
+}
+
+/* Поддержка темной темы для цветных иконок */
+body.dark-theme .mobile-menu-links li a .fa-phone-alt,
+body.dark-theme .mobile-menu-links li a .fa-phone,
+body.dark-theme .mobile-menu-links li a .fa-headset,
+[data-theme="dark"] .mobile-menu-links li a .fa-phone-alt,
+[data-theme="dark"] .mobile-menu-links li a .fa-phone,
+[data-theme="dark"] .mobile-menu-links li a .fa-headset {
+    color: #34d399 !important;  /* Светло-зеленый для темной темы */
+}
+
+body.dark-theme .mobile-menu-links li a .fa-chart-line,
+body.dark-theme .mobile-menu-links li a .fa-chart-area,
+[data-theme="dark"] .mobile-menu-links li a .fa-chart-line,
+[data-theme="dark"] .mobile-menu-links li a .fa-chart-area {
+    color: #60a5fa !important;  /* Светло-синий для темной темы */
+}
+
+body.dark-theme .mobile-menu-links li a .fa-chart-bar,
+body.dark-theme .mobile-menu-links li a .fa-chart-bar-alt,
+[data-theme="dark"] .mobile-menu-links li a .fa-chart-bar,
+[data-theme="dark"] .mobile-menu-links li a .fa-chart-bar-alt {
+    color: #a78bfa !important;  /* Светло-фиолетовый для темной темы */
+}
+
+body.dark-theme .mobile-menu-links li a .fa-clipboard-check,
+body.dark-theme .mobile-menu-links li a .fa-check-square,
+[data-theme="dark"] .mobile-menu-links li a .fa-clipboard-check,
+[data-theme="dark"] .mobile-menu-links li a .fa-check-square {
+    color: #fbbf24 !important;  /* Светло-оранжевый/желтый для темной темы */
+}
+
 /* Стили для текста рядом с иконкой */
 .mobile-menu-links li a span,
 .mobile-menu-links li a .nav-text {
@@ -217,4 +270,121 @@ body.mobile-menu-active {
 /* Скрываем ненужные элементы, такие как стрелки выпадающих списков */
 .mobile-menu-links li a .dropdown-arrow {
     display: none;
+}
+
+/* === Mobile Theme Toggle Styles === */
+.mobile-menu-links li.mobile-theme-toggle-item {
+    padding: 0.9rem 1.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+    border-bottom: none !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    min-height: 60px !important;
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 0.75rem !important;
+    padding: 0.9rem 1rem !important;
+    background-color: rgba(0, 131, 214, 0.1) !important;
+    border: 2px solid rgba(0, 131, 214, 0.3) !important;
+    border-radius: 8px !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    font-size: 1rem !important;
+    font-weight: 500 !important;
+    color: #0083d6 !important;
+    position: relative !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    min-height: 48px !important;
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn:hover {
+    background-color: rgba(0, 131, 214, 0.2);
+    border-color: rgba(0, 131, 214, 0.5);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 131, 214, 0.2);
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn:active {
+    transform: translateY(0);
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    position: relative;
+    top: auto;
+    left: auto;
+    transform: none;
+    color: inherit;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+/* Логика показа/скрытия иконок в мобильном меню */
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-light {
+    opacity: 1;
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-dark {
+    opacity: 0;
+    position: absolute;
+}
+
+/* В светлой теме показываем луну */
+body.light-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-light,
+[data-theme="light"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-light {
+    opacity: 0;
+    position: absolute;
+}
+
+body.light-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-dark,
+[data-theme="light"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-dark {
+    opacity: 1;
+    position: relative;
+}
+
+/* В темной теме показываем солнце */
+body.dark-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-light,
+[data-theme="dark"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-light {
+    opacity: 1;
+    position: relative;
+}
+
+body.dark-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-dark,
+[data-theme="dark"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon-dark {
+    opacity: 0;
+    position: absolute;
+}
+
+.mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .mobile-theme-toggle-text {
+    flex: 1;
+    text-align: left;
+    color: inherit;
+}
+
+/* Dark theme support for mobile menu */
+body.dark-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn,
+[data-theme="dark"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+}
+
+body.dark-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn:hover,
+[data-theme="dark"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn:hover {
+    background-color: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-theme .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon,
+[data-theme="dark"] .mobile-menu-links li.mobile-theme-toggle-item .mobile-theme-toggle-btn .theme-icon {
+    color: #ffffff;
 }

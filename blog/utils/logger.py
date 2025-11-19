@@ -1,7 +1,10 @@
 import logging
 import sys
 import os
+from pathlib import Path
 from logging.handlers import RotatingFileHandler
+
+from config import get
 # Поддержка разных имён пакета: python_json_logger (fork) и python-json-logger (оригинал)
 try:
     from python_json_logger.json import JsonFormatter  # наш предпочтительный форк
@@ -61,7 +64,8 @@ def configure_blog_logger():
 
         # Файловый обработчик с ротацией (с улучшенной обработкой ошибок)
         try:
-            log_file_path = get("logging", "path", "/var/log/flask_helpdesk/app.log")
+            default_log_path = Path(__file__).resolve().parents[2] / "logs" / "app.log"
+            log_file_path = get("logging", "path", str(default_log_path))
             log_dir = os.path.dirname(log_file_path)
 
             os.makedirs(log_dir, exist_ok=True)
