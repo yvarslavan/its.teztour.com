@@ -328,6 +328,22 @@
                         <nav class="main-navigation">
                             <ul class="nav-menu">
                         {% if current_user.is_authenticated %}
+                        <!-- Search Item -->
+                            <li class="nav-item search-item me-3 d-flex align-items-center">
+                                <div class="search-wrapper position-relative" style="width: 250px;">
+                                    <!-- Иконка внутри поля с использованием position: absolute -->
+                                    <i class="fas fa-search text-muted position-absolute" 
+                                       style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
+                                    <input type="text" id="nav-search-input" class="form-control form-control-sm ps-4" 
+                                           placeholder="Поиск..." autocomplete="off" 
+                                           style="padding-left: 35px !important; border-radius: 20px;">
+                                    
+                                    <!-- Выпадающий список результатов -->
+                                    <div id="search-results" class="dropdown-menu w-100 shadow-sm mt-1" 
+                                         style="display: none; max-height: 400px; overflow-y: auto; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;"></div>
+                                </div>
+                            </li>
+
                                     <!-- Notifications -->
                             <li class="nav-item">
                                 <a class="nav-link notification-link" href="{{ url_for('main.my_notifications') }}">
@@ -1204,5 +1220,90 @@
 
             <!-- Theme Toggle System - Load with server sync -->
             <script src="{{ url_for('static', filename='js/theme-toggle-with-sync.js') }}"></script>
+            <!-- Search Functionality -->
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    const searchInput = document.getElementById('nav-search-input');
+                    const searchResults = document.getElementById('search-results');
+                    let searchTimeout;
+                    let currentQueryId = 0; // Счетчик запросов для предотвращения race conditions
+
+                    if (searchInput) {
+                        searchInput.addEventListener('input', function() {
+                            const query = this.value.trim();
+                            clearTimeout(searchTimeout);
+                            
+                            // Очищаем результаты НЕМЕДЛЕННО при изменении ввода
+                            // Это предотвращает смешивание старых и новых результатов
+                            if (query.length < 2) {
+                                searchResults.style.display = 'none';
+                                searchResults.innerHTML = '';
+                                return;
+                            }
+
+                            // Увеличиваем счетчик запроса
+                            const thisQueryId = ++currentQueryId;
+
+                            searchTimeout = setTimeout(() => {
+                                fetch(`/search?q=${encodeURIComponent(query)}`)
+                                    .then(response => response.json())
+                                    .then(data => {
+                                        // Проверяем, является ли этот ответ ответом на ПОСЛЕДНИЙ запрос
+                                        if (thisQueryId !== currentQueryId) {
+                                            console.log(`[Search] Ignoring stale result for query ID ${thisQueryId}`);
+                                            return;
+                                        }
+
+                                        // Очищаем контейнер перед добавлением новых результатов (на всякий случай еще раз)
+                                        searchResults.innerHTML = '';
+
+                                        if (data.length > 0) {
+                                            let html = '';
+                                            data.forEach(item => {
+                                                let icon = 'fa-file-alt';
+                                                if (item.type === 'page') icon = 'fa-desktop';
+                                                
+                                                html += `
+                                                    <a href="${item.url}" class="dropdown-item py-2 border-bottom">
+                                                        <div class="d-flex align-items-center">
+                                                            <div class="me-3 text-primary bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                                <i class="fas ${icon}"></i>
+                                                            </div>
+                                                            <div>
+                                                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">${item.title}</div>
+                                                            </div>
+                                                        </div>
+                                                    </a>
+                                                `;
+                                            });
+                                            searchResults.innerHTML = html;
+                                            searchResults.style.display = 'block';
+                                        } else {
+                                            searchResults.innerHTML = '<div class="dropdown-item text-muted small py-2">Ничего не найдено</div>';
+                                            searchResults.style.display = 'block';
+                                        }
+                                    })
+                                    .catch(error => {
+                                        console.error('Search error:', error);
+                                    });
+                            }, 200); // Уменьшили задержку с 300мс до 200мс для более быстрого отклика
+                        });
+
+                        // Hide results when clicking outside
+                        document.addEventListener('click', function(e) {
+                            if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                                searchResults.style.display = 'none';
+                            }
+                        });
+                        
+                        // Show results on focus if there's text
+                        searchInput.addEventListener('focus', function() {
+                            if (this.value.trim().length >= 2 && searchResults.innerHTML.trim() !== '') {
+                                searchResults.style.display = 'block';
+                            }
+                        });
+                    }
+                });
+            </script>
         </body>
 </html>

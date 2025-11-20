@@ -1,64 +1,17 @@
 {
   "mcpServers": {
-    "gitlab": {
-      "command": "npx",
+      "context7": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "wsl.exe",
       "args": [
-        "-y",
-        "@modelcontextprotocol/server-gitlab"
+        "/home/yvarslavan/.nvm/versions/node/v20.19.5/bin/node",
+        "/home/yvarslavan/.nvm/versions/node/v20.19.5/lib/node_modules/@upstash/context7-mcp/dist/index.js"
       ],
       "env": {
-        "GITLAB_PERSONAL_ACCESS_TOKEN": "glpat-zvLc-eu3ByYXDFgmf98s",
-        "GITLAB_API_URL": "https://gitlab.com/api/v4"
+        "HOME": "/home/yvarslavan"
       }
-    },
-    "context7": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "@upstash/context7-mcp@latest"
-      ],
-      "env": {}
-    },
-    "its.teztour.com Docs": {
-      "url": "https://gitmcp.io/yvarslavan/its.teztour.com"
-    },
-    "playwright-mcp": {
-      "command": "npx",
-      "args": [
-        "-y",
-        "playwright-mcp"
-      ]
-    },
-    "sequential-thinking-simplified-fork": {
-      "command": "npx",
-      "args": [
-        "sequential-thinking-simplified-fork"
-      ]
-    },
-    "pieces-memorybank-mcp": {
-      "command": "npx",
-      "args": [
-        "pieces-memorybank-mcp"
-      ]
-    },
-    "sql-mcp": {
-      "command": "npx",
-      "args": [
-        "sql-mcp"
-      ]
-    },
-    "figma-mcp": {
-      "command": "npx",
-      "args": [
-        "figma-mcp"
-      ]
-    },
-    "shadcn": {
-      "command": "npx",
-      "args": [
-        "shadcn@latest",
-        "mcp"
-      ]
     }
   }
 }
