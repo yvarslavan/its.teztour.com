@@ -1,0 +1,862 @@
+/* Modern DataTables Styling
+ * Современный стиль для таблиц задач
+ */
+
+/* Основной контейнер таблицы */
+.dataTables_wrapper {
+    font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+    background: #fff;
+}
+
+/* Заголовок таблицы */
+.dataTable thead th {
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%);
+    color: white;
+    border: none;
+    padding: 15px 10px;
+    font-weight: 500;
+    position: relative;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+}
+
+.dataTable thead th:hover {
+    background: linear-gradient(135deg, #4a75d4 0%, #25c0cb 100%);
+}
+
+/* Сортировка */
+.dataTable thead .sorting:after,
+.dataTable thead .sorting_asc:after,
+.dataTable thead .sorting_desc:after {
+    font-family: 'Font Awesome 5 Free';
+    font-weight: 900;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.7;
+    font-size: 0.8rem;
+}
+
+.dataTable thead .sorting:after {
+    content: "\f0dc"; /* fa-sort */
+    opacity: 0.3;
+}
+
+.dataTable thead .sorting_asc:after {
+    content: "\f0de"; /* fa-sort-up */
+}
+
+.dataTable thead .sorting_desc:after {
+    content: "\f0dd"; /* fa-sort-down */
+}
+
+/* Строки таблицы */
+.dataTable tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.dataTable tbody tr:hover {
+    background-color: rgba(91, 134, 229, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Ячейки таблицы */
+.dataTable tbody td {
+    padding: 14px 10px;
+    vertical-align: middle;
+    border: none;
+    font-size: 0.95rem;
+}
+
+/* Чередование строк */
+.dataTable tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .dataTable {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .dataTable thead th {
+        padding: 12px 8px;
+        font-size: 0.8rem;
+    }
+
+    .dataTable tbody td {
+        padding: 10px 8px;
+        font-size: 0.85rem;
+    }
+
+    /* Панель инструментов */
+    .dataTables_length,
+    .dataTables_filter {
+        text-align: center !important;
+        float: none !important;
+        margin-bottom: 10px;
+    }
+}
+
+/* Панель инструментов */
+.dataTables_wrapper .top {
+    padding: 20px 20px 10px;
+    background: #f8f9fa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dataTables_wrapper .bottom {
+    padding: 15px 20px;
+    background: #f8f9fa;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Элементы поиска */
+.dataTables_filter input {
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    padding: 8px 15px 8px 35px;
+    transition: all 0.3s ease;
+    outline: none;
+    box-shadow: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(0, 0, 0, 0.3)" d="M505 442.7L405.3 343c-4.5-4.5-10.6-7-17-7h-16.3c27.6-35.3 44-79.7 44-128C416 93.1 322.9 0 208 0S0 93.1 0 208s93.1 208 208 208c48.3 0 92.7-16.4 128-44v16.3c0 6.4 2.5 12.5 7 17l99.7 99.7c9.4 9.4 24.6 9.4 33.9 0l28.3-28.3c9.4-9.4 9.4-24.6.1-34zM208 336c-70.7 0-128-57.2-128-128 0-70.7 57.2-128 128-128 70.7 0 128 57.2 128 128 0 70.7-57.2 128-128 128z"></path></svg>');
+    background-repeat: no-repeat;
+    background-position: 12px center;
+    background-size: 14px;
+    width: 250px !important;
+}
+
+.dataTables_filter input:focus {
+    border-color: #5b86e5;
+    box-shadow: 0 0 0 2px rgba(91, 134, 229, 0.25);
+}
+
+/* Dropdown выбора количества записей */
+.dataTables_length select {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 25px 6px 10px;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(0, 0, 0, 0.3)" d="M128 192l128 128 128-128z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+}
+
+.dataTables_length select:focus {
+    border-color: #5b86e5;
+    outline: none;
+}
+
+/* Пагинация */
+.dataTables_paginate {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.dataTables_paginate .paginate_button {
+    min-width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    margin: 0 2px;
+    padding: 0;
+    border: none !important;
+    background: transparent !important;
+    color: #555 !important;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background: rgba(91, 134, 229, 0.1) !important;
+    color: #5b86e5 !important;
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: #5b86e5 !important;
+    color: white !important;
+    font-weight: 500;
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Информация о записях */
+.dataTables_info {
+    color: #666;
+    font-size: 0.85rem;
+    padding-top: 10px;
+}
+
+/* Статус-индикаторы */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 6px 10px;
+    border-radius: 30px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.status-badge.new {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+}
+
+.status-badge.in-progress {
+    background-color: rgba(241, 196, 15, 0.15);
+    color: #f39c12;
+}
+
+.status-badge.completed {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+}
+
+.status-badge.closed {
+    background-color: rgba(149, 165, 166, 0.15);
+    color: #7f8c8d;
+}
+
+.status-badge i {
+    margin-right: 5px;
+    font-size: 0.8rem;
+}
+
+/* Приоритет-индикаторы */
+.priority-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.priority-badge.high {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #e74c3c;
+}
+
+.priority-badge.normal {
+    background-color: rgba(52, 152, 219, 0.15);
+    color: #3498db;
+}
+
+.priority-badge.low {
+    background-color: rgba(46, 204, 113, 0.15);
+    color: #27ae60;
+}
+
+.priority-badge i {
+    margin-right: 5px;
+    font-size: 0.75rem;
+}
+
+/* ID задачи */
+.task-id-link {
+    font-weight: 600;
+    color: #5b86e5;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.task-id-link:hover {
+    color: #36d1dc;
+    text-decoration: none;
+}
+
+/* Тема задачи */
+.task-subject {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 3px;
+}
+
+.task-project {
+    font-size: 0.8rem;
+    color: #777;
+}
+
+/* Даты */
+.task-date {
+    font-size: 0.85rem;
+    color: #666;
+}
+
+/* Email */
+.task-email {
+    font-size: 0.9rem;
+    color: #555;
+}
+
+/* Анимация для загрузки */
+.dt-processing {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.dt-processing .spinner-border {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+/* Кнопки действий */
+.task-action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: #f8f9fa;
+    border: 1px solid #eee;
+    color: #666;
+    transition: all 0.2s ease;
+    margin-right: 3px;
+}
+
+.task-action-btn:hover {
+    background: #5b86e5;
+    color: white;
+    border-color: #5b86e5;
+}
+
+/* Кнопки фильтров */
+.filter-clear-btn {
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+    margin-left: 5px;
+}
+
+.filter-clear-btn:hover {
+    color: #e74c3c;
+    opacity: 1;
+}
+
+/* Фильтры */
+.task-filter-wrapper {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 20px;
+}
+
+.task-filter-wrapper select {
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 8px 30px 8px 12px;
+    transition: all 0.3s ease;
+    appearance: none;
+    background-image: url('data:image/svg+xml;charset=UTF-8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><path fill="rgba(0, 0, 0, 0.3)" d="M128 192l128 128 128-128z"/></svg>');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+}
+
+.task-filter-wrapper select:focus {
+    border-color: #5b86e5;
+    box-shadow: 0 0 0 2px rgba(91, 134, 229, 0.15);
+    outline: none;
+}
+
+/* Статистика */
+.task-stats-card {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.task-stats-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.task-stats-card .card-header {
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%);
+    color: white;
+    padding: 15px;
+    border: none;
+}
+
+.task-stats-card .card-body {
+    padding: 20px;
+}
+
+.task-stats-value {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #333;
+    margin: 10px 0;
+}
+
+/* Интерактивные элементы и подсказки */
+.task-tooltip {
+    position: relative;
+}
+
+.task-tooltip:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    white-space: nowrap;
+    z-index: 10;
+}
+
+.task-tooltip:hover::before {
+    content: '';
+    position: absolute;
+    top: -5px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-width: 5px;
+    border-style: solid;
+    border-color: #333 transparent transparent transparent;
+    z-index: 10;
+}
+
+/* Фильтр счетчик */
+.filter-counter {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 24px;
+    background: #5b86e5;
+    color: white;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0 8px;
+    margin-left: 8px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(91, 134, 229, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(91, 134, 229, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(91, 134, 229, 0);
+    }
+}
+
+/* Анимация для новых записей */
+@keyframes newRowHighlight {
+    0% {
+        background-color: rgba(91, 134, 229, 0.2);
+    }
+    100% {
+        background-color: transparent;
+    }
+}
+
+.new-row {
+    animation: newRowHighlight 2s ease-out;
+}
+
+/* Темная тема (активируется через переключатель) */
+body.dark-theme .dataTables_wrapper,
+[data-theme="dark"] .dataTables_wrapper {
+    background: #2d3436 !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-theme .dataTable thead th,
+[data-theme="dark"] .dataTable thead th {
+    background: linear-gradient(135deg, #4b6cb7 0%, #182848 100%) !important;
+}
+
+body.dark-theme .dataTable tbody tr,
+[data-theme="dark"] .dataTable tbody tr {
+    color: #f1f2f6 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-theme .dataTable tbody tr:nth-child(even),
+[data-theme="dark"] .dataTable tbody tr:nth-child(even) {
+    background-color: rgba(255, 255, 255, 0.02) !important;
+}
+
+body.dark-theme .dataTable tbody tr:hover,
+[data-theme="dark"] .dataTable tbody tr:hover {
+    background-color: rgba(75, 108, 183, 0.1) !important;
+}
+
+body.dark-theme .dataTables_wrapper .top,
+body.dark-theme .dataTables_wrapper .bottom,
+[data-theme="dark"] .dataTables_wrapper .top,
+[data-theme="dark"] .dataTables_wrapper .bottom {
+    background: #1e272e !important;
+    border-color: rgba(255, 255, 255, 0.05) !important;
+}
+
+body.dark-theme .task-subject,
+[data-theme="dark"] .task-subject {
+    color: #f1f2f6 !important;
+}
+
+body.dark-theme .task-project,
+body.dark-theme .task-date,
+body.dark-theme .task-email,
+body.dark-theme .dataTables_info,
+[data-theme="dark"] .task-project,
+[data-theme="dark"] .task-date,
+[data-theme="dark"] .task-email,
+[data-theme="dark"] .dataTables_info {
+    color: #a4b0be !important;
+}
+
+/* Светлая тема (явные стили для переключения) */
+[data-theme="light"] .dataTables_wrapper,
+html[data-theme="light"] .dataTables_wrapper {
+    background: #ffffff !important;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1) !important;
+}
+
+[data-theme="light"] .dataTable thead th,
+html[data-theme="light"] .dataTable thead th {
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%) !important;
+    color: white !important;
+}
+
+[data-theme="light"] .dataTable tbody tr,
+html[data-theme="light"] .dataTable tbody tr {
+    background-color: #ffffff !important;
+    color: #333 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .dataTable tbody tr:nth-child(even),
+html[data-theme="light"] .dataTable tbody tr:nth-child(even) {
+    background-color: rgba(0, 0, 0, 0.02) !important;
+}
+
+[data-theme="light"] .dataTable tbody tr:hover,
+html[data-theme="light"] .dataTable tbody tr:hover {
+    background-color: rgba(91, 134, 229, 0.05) !important;
+}
+
+[data-theme="light"] .dataTables_wrapper .top,
+[data-theme="light"] .dataTables_wrapper .bottom,
+html[data-theme="light"] .dataTables_wrapper .top,
+html[data-theme="light"] .dataTables_wrapper .bottom {
+    background: #f8f9fa !important;
+    border-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+[data-theme="light"] .task-subject,
+html[data-theme="light"] .task-subject {
+    color: #333 !important;
+}
+
+[data-theme="light"] .task-project,
+[data-theme="light"] .task-date,
+[data-theme="light"] .task-email,
+[data-theme="light"] .dataTables_info,
+html[data-theme="light"] .task-project,
+html[data-theme="light"] .task-date,
+html[data-theme="light"] .task-email,
+html[data-theme="light"] .dataTables_info {
+    color: #666 !important;
+}
+
+/* Переключатель темы */
+.theme-switch {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #5b86e5 0%, #36d1dc 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    z-index: 100;
+    transition: all 0.3s ease;
+}
+
+.theme-switch:hover {
+    transform: scale(1.1);
+}
+
+/* Адаптивность для элементов фильтрации */
+@media (max-width: 992px) {
+    .task-filter-wrapper .col-md-4 {
+        margin-bottom: 15px;
+    }
+}
+
+/* Модификатор для строк с просроченным дедлайном */
+.overdue-task {
+    background-color: rgba(231, 76, 60, 0.05) !important;
+}
+
+.overdue-task:hover {
+    background-color: rgba(231, 76, 60, 0.1) !important;
+}
+
+.overdue-task .task-date {
+    color: #e74c3c;
+    font-weight: 500;
+}
+
+/* Модификатор для задач с высоким приоритетом */
+.high-priority-task {
+    border-left: 3px solid #e74c3c;
+}
+
+/* Визуальные улучшения для скролла */
+.dataTable::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.dataTable::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.dataTable::-webkit-scrollbar-thumb {
+    background: #5b86e5;
+    border-radius: 3px;
+}
+
+.dataTable::-webkit-scrollbar-thumb:hover {
+    background: #4a75d4;
+}
+
+/* Интерактивные карточки статистики */
+.stats-card-interactive {
+    cursor: pointer;
+    overflow: hidden;
+    position: relative;
+}
+
+.stats-card-interactive::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stats-card-interactive:hover::after {
+    opacity: 1;
+}
+
+/* Стили для кастомного селекта с поиском */
+.custom-select-search-wrapper {
+    position: relative;
+}
+
+.custom-select-search-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px 4px 0 0;
+    border-bottom: none;
+}
+
+.custom-select-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    max-height: 250px;
+    overflow-y: auto;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 0 0 4px 4px;
+    z-index: 100;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.custom-select-option {
+    padding: 8px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.custom-select-option:hover {
+    background-color: rgba(91, 134, 229, 0.1);
+}
+
+.custom-select-option.selected {
+    background-color: rgba(91, 134, 229, 0.2);
+    font-weight: 500;
+}
+
+/* Переключатель режима списка */
+.view-toggle-wrapper {
+    display: flex;
+    margin-bottom: 15px;
+}
+
+.view-toggle-btn {
+    padding: 6px 12px;
+    background: #f8f9fa;
+    border: 1px solid #ddd;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.view-toggle-btn:first-child {
+    border-radius: 4px 0 0 4px;
+}
+
+.view-toggle-btn:last-child {
+    border-radius: 0 4px 4px 0;
+}
+
+.view-toggle-btn.active {
+    background: #5b86e5;
+    color: white;
+    border-color: #5b86e5;
+}
+
+/* Альтернативный вид - карточки */
+.task-cards-view {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.task-card {
+    flex: 1 0 300px;
+    max-width: 100%;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.task-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.task-card-header {
+    padding: 12px 15px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.task-card-body {
+    padding: 15px;
+}
+
+.task-card-footer {
+    padding: 10px 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #eee;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    color: #666;
+}
+
+.task-card-title {
+    font-weight: 500;
+    margin-bottom: 10px;
+}
+
+.task-card-project {
+    font-size: 0.85rem;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.task-card-id {
+    font-weight: 600;
+    color: #5b86e5;
+}
+
+/* Кнопка перехода вверх таблицы */
+.scroll-top-btn {
+    position: fixed;
+    bottom: 80px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(91, 134, 229, 0.9);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 99;
+}
+
+.scroll-top-btn.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.scroll-top-btn:hover {
+    background: #4a75d4;
+}

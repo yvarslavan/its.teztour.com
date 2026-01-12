@@ -1,0 +1,718 @@
+/**
+ * @file: my_tasks_theme_fix.css
+ * @description: Исправленные стили для страницы "Мои задачи" с поддержкой тем
+ * @dependencies: theme.css
+ * @created: 2025-01-06
+ */
+
+/* ============================================
+   KANBAN STATISTICS - THEME AWARE
+   ============================================ */
+
+.kanban-stats {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-direction: row;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--color-border-primary);
+    transition: all 0.2s ease;
+    font-size: 12px;
+    min-width: auto;
+    flex-direction: row;
+}
+
+.stat-card i {
+    font-size: 16px;
+    color: var(--color-text-secondary);
+    margin-right: 6px;
+    flex-shrink: 0;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stat-card.active i {
+    color: var(--color-accent-primary);
+}
+
+.stat-card.completed i {
+    color: var(--color-success);
+}
+
+.stat-card.overdue i {
+    color: var(--color-error);
+}
+
+/* Убедимся что иконки FontAwesome отображаются правильно */
+.stat-card i.fas,
+.stat-card i.far,
+.stat-card i.fab {
+    font-family: "Font Awesome 5 Free", "Font Awesome 5 Brands";
+    font-weight: 900;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+.stat-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin: 0 4px;
+}
+
+.stat-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-tertiary);
+    text-transform: none;
+    letter-spacing: 0;
+}
+
+/* ==============================
+   STATUS CARD DETAILS SCROLL
+   Прокрутка для блока детализации,
+   когда контента больше, чем высота
+   ============================== */
+.stat-card .stat-details {
+    max-height: 300px !important;
+    height: 300px !important; /* фиксированная высота, чтобы не растягивала карточку */
+    overflow-y: scroll !important; /* всегда отображать полосу */
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    -ms-overflow-style: scrollbar;
+    scrollbar-width: thin;
+    padding-right: 6px; /* место под полосу */
+    box-sizing: border-box;
+}
+
+.stat-card .stat-details::-webkit-scrollbar {
+    width: 6px;
+}
+
+.stat-card .stat-details::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.stat-card .stat-details::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+}
+
+.stat-card .stat-details::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}
+.status-card .card-details {
+    max-height: 300px !important;
+    overflow-y: scroll !important; /* всегда показывать полосу прокрутки */
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-gutter: stable both-edges;
+    -ms-overflow-style: scrollbar; /* IE/Edge legacy */
+    scrollbar-width: thin; /* Firefox */
+    scrollbar-color: rgba(59,130,246,0.5) rgba(0,0,0,0.08);
+}
+
+.status-card .details-content {
+    max-height: inherit !important;
+    overflow-y: scroll !important; /* всегда показывать полосу прокрутки */
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-gutter: stable both-edges;
+    -ms-overflow-style: scrollbar;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(59,130,246,0.5) rgba(0,0,0,0.08);
+}
+
+/* Дополнительно: если длинный текст в описании карточки до раскрытия */
+.status-card .card-description {
+    max-height: 60px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+}
+
+/* Повышенная специфичность для возможных конфликтов */
+.status-breakdown-dashboard .status-card .card-details,
+.status-breakdown-dashboard .status-card .details-content,
+.status-breakdown-dashboard .status-card .card-description {
+    scrollbar-width: thin;
+    -ms-overflow-style: scrollbar;
+}
+
+/* Нативные полосы прокрутки (поддерживаемые браузеры) */
+.status-card .card-details::-webkit-scrollbar,
+.status-card .details-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.status-card .card-details::-webkit-scrollbar-track,
+.status-card .details-content::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+    border-radius: 3px;
+}
+
+.status-card .card-details::-webkit-scrollbar-thumb,
+.status-card .details-content::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3);
+    border-radius: 3px;
+}
+
+.status-card .card-details::-webkit-scrollbar-thumb:hover,
+.status-card .details-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5);
+}
+
+@media (max-width: 768px) {
+    .kanban-stats {
+        flex-direction: row;
+        gap: 6px;
+        flex-wrap: wrap;
+    }
+
+    .stat-card {
+        padding: 4px 8px;
+        font-size: 11px;
+    }
+
+    .stat-value {
+        font-size: 12px;
+    }
+
+    .stat-label {
+        font-size: 10px;
+    }
+}
+
+/* ============================================
+   KANBAN HEADER - THEME AWARE
+   ============================================ */
+
+.kanban-header {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-hover) 100%);
+    padding: 15px 20px;
+    border-radius: 8px;
+    box-shadow: var(--shadow-md);
+}
+
+.kanban-header h2 {
+    color: var(--color-text-on-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.kanban-header h2 i {
+    color: var(--color-text-on-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   LOADING ANIMATION - THEME AWARE
+   ============================================ */
+
+#loading-message {
+    transition: opacity 0.3s ease;
+    font-size: 14px;
+    color: var(--color-text-tertiary);
+    margin: 10px 0;
+    min-height: 20px;
+}
+
+.loading-progress {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 300px;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--color-bg-tertiary);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 8px;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-accent-primary), var(--color-accent-hover));
+    border-radius: 3px;
+    transition: width 0.5s ease;
+    width: 0%;
+}
+
+.progress-text {
+    font-size: 12px;
+    color: var(--color-text-tertiary);
+    font-weight: 500;
+}
+
+.spinner-icon i {
+    font-size: 2.5rem;
+    color: var(--color-accent-primary);
+    animation: rocket-bounce 2s infinite;
+}
+
+@keyframes rocket-bounce {
+    0%, 20%, 50%, 80%, 100% {
+        transform: translateY(0);
+    }
+    40% {
+        transform: translateY(-10px);
+    }
+    60% {
+        transform: translateY(-5px);
+    }
+}
+
+/* ============================================
+   EMAIL LINKS - THEME AWARE
+   ============================================ */
+
+.email-link {
+    font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', 'Source Code Pro', monospace;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-accent-primary);
+    text-decoration: none;
+    padding: 4px 8px;
+    border-radius: 6px;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-block;
+    position: relative;
+    letter-spacing: 0.02em;
+}
+
+.email-link:hover {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-hover) 100%);
+    color: var(--color-text-on-primary);
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+    border-color: var(--color-accent-primary);
+}
+
+.email-link:active {
+    transform: translateY(-1px) scale(1.01);
+}
+
+.email-link:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-hover) 100%);
+    color: var(--color-text-on-primary);
+}
+
+.email-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.email-container .fa-envelope {
+    flex-shrink: 0;
+    font-size: 14px;
+    opacity: 0.8;
+    transition: all 0.2s ease;
+}
+
+.email-container:hover .fa-envelope {
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.email-link.compact {
+    font-family: 'Inter', 'Segoe UI', 'Roboto', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 3px 6px;
+    background: var(--color-accent-light);
+    border: 1px solid var(--color-accent-primary);
+    color: var(--color-accent-primary);
+}
+
+.email-link.compact:hover {
+    background: var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+}
+
+/* ============================================
+   PAGINATION - THEME AWARE
+   ============================================ */
+
+.dataTables_paginate .paginate_button.active-page {
+    background: var(--color-success);
+    color: var(--color-text-on-primary);
+    border: 1px solid var(--color-success);
+}
+
+tr.return-selected {
+    background: var(--color-warning);
+    border-left: 4px solid var(--color-warning);
+}
+
+/* ============================================
+   PAGE SPECIFIC THEME OVERRIDES
+   ============================================ */
+
+/* Page Header */
+.page-header {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-hover) 100%);
+    border-bottom: 1px solid var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+}
+
+.page-header .page-title {
+    color: var(--color-text-on-primary);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .page-subtitle {
+    color: var(--color-accent-light);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.page-header .header-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-on-primary);
+    box-shadow: var(--shadow-md);
+}
+
+/* Status Dashboard */
+.status-breakdown-dashboard {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.status-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.status-card h3 {
+    color: var(--color-text-primary);
+}
+.status-card .card-value {
+    color: var(--color-accent-primary);
+}
+
+.status-card .card-description {
+    max-height: 60px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding-right: 4px !important;
+}
+
+.status-card .card-description::-webkit-scrollbar {
+    width: 4px !important;
+}
+
+.status-card .card-description::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 2px !important;
+}
+
+.status-card .card-description::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-radius: 2px !important;
+}
+
+.status-card .card-description::-webkit-scrollbar-thumb:hover {
+    background: rgba(0, 0, 0, 0.3) !important;
+}
+
+.status-card .card-description p {
+    color: var(--color-text-secondary);
+    line-height: 1.5 !important;
+    white-space: normal !important;
+    word-wrap: break-word !important;
+}
+
+.status-card .detail-label {
+    color: var(--color-text-secondary);
+}
+
+.status-card .detail-value {
+    color: var(--color-text-primary);
+}
+
+/* Прокрутка для детализации карточек */
+.status-card .card-details {
+    max-height: 300px !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+}
+
+.status-card .card-details::-webkit-scrollbar {
+    width: 6px !important;
+}
+
+.status-card .card-details::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05) !important;
+    border-radius: 3px !important;
+}
+
+.status-card .card-details::-webkit-scrollbar-thumb {
+    background: rgba(59, 130, 246, 0.3) !important;
+    border-radius: 3px !important;
+}
+
+.status-card .card-details::-webkit-scrollbar-thumb:hover {
+    background: rgba(59, 130, 246, 0.5) !important;
+}
+
+/* Точная привязка к блоку из вашего DOM */
+#totalDetails.stat-details {
+    max-height: 300px !important;
+    height: 300px !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+/* Карточки статистики при раскрытии */
+.stats-dashboard .stat-card.expandable.expanded > .stat-details {
+    height: 300px !important;
+    max-height: 300px !important;
+    overflow-y: scroll !important;
+    overflow-x: hidden !important;
+}
+
+/* Filters */
+.filters-section {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+}
+
+.filter-label {
+    color: var(--color-text-primary);
+}
+
+.filter-select {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.filter-select:focus {
+    border-color: var(--color-accent-primary);
+    box-shadow: 0 0 0 3px var(--color-accent-light);
+}
+
+/* View Toggle */
+.view-toggle-section {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+}
+
+.view-toggle-btn {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.view-toggle-btn:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+}
+
+.view-toggle-btn.active {
+    background: var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+    border-color: var(--color-accent-primary);
+}
+
+/* Kanban Board */
+.kanban-board {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+}
+
+.kanban-column {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+}
+
+.kanban-column-header {
+    background: linear-gradient(135deg, var(--color-accent-primary) 0%, var(--color-accent-hover) 100%);
+    color: var(--color-text-on-primary);
+}
+
+.kanban-card {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+.kanban-card:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+}
+
+.kanban-card-id {
+    color: var(--color-accent-primary);
+}
+
+.kanban-card-subject {
+    color: var(--color-text-primary);
+}
+
+.kanban-card-date {
+    color: var(--color-text-secondary);
+}
+
+.kanban-card-priority {
+    color: var(--color-text-on-primary);
+}
+
+/* Table */
+.table-container {
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border-primary);
+}
+
+.table-title {
+    color: var(--color-text-primary);
+}
+
+/* Buttons */
+.action-button {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.action-button:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+}
+
+.action-button.primary {
+    background: var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+    border-color: var(--color-accent-primary);
+}
+
+.action-button.primary:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+}
+
+.action-button.secondary {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--color-text-on-primary);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.action-button.secondary:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+/* Toggle Buttons */
+.toggle-details-btn {
+    background: var(--color-accent-primary);
+    color: var(--color-text-on-primary);
+    border: 1px solid var(--color-accent-primary);
+}
+
+.toggle-details-btn:hover {
+    background: var(--color-accent-hover);
+    border-color: var(--color-accent-hover);
+}
+
+.global-toggle-btn {
+    background: var(--color-bg-primary);
+    border: 1px solid var(--color-border-primary);
+    color: var(--color-text-primary);
+}
+
+.global-toggle-btn:hover {
+    background: var(--color-bg-hover);
+    border-color: var(--color-border-secondary);
+}
+
+/* Summary */
+.summary-value {
+    color: var(--color-accent-primary);
+}
+
+.summary-label {
+    color: var(--color-text-secondary);
+}
+
+/* Icons */
+.card-icon {
+    background: var(--color-bg-tertiary);
+    color: var(--color-accent-primary);
+}
+
+.card-icon.total {
+    background: var(--color-accent-light);
+    color: var(--color-accent-primary);
+}
+
+.card-icon.paused {
+    background: var(--color-warning);
+    color: var(--color-text-on-primary);
+}
+
+.card-icon.open {
+    background: var(--color-success);
+    color: var(--color-text-on-primary);
+}
+
+.card-icon.closed {
+    background: var(--color-info);
+    color: var(--color-text-on-primary);
+}
+
+/* ============================================
+   THEME TOGGLE INTEGRATION
+   ============================================ */
+
+/* Ensure theme toggle works properly */
+.theme-switcher .theme-icon-light {
+    display: block;
+    color: var(--color-warning);
+}
+
+.theme-switcher .theme-icon-dark {
+    display: none;
+    color: var(--color-info);
+}
+
+[data-theme="dark"] .theme-switcher .theme-icon-light,
+.dark-theme .theme-switcher .theme-icon-light {
+    display: none;
+}
+
+[data-theme="dark"] .theme-switcher .theme-icon-dark,
+.dark-theme .theme-switcher .theme-icon-dark {
+    display: block;
+}
+
+/* ============================================
+   FORCE THEME APPLICATION
+   ============================================ */
+
+/* Ensure body theme is applied */
+body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
+}

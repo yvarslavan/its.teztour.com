@@ -1,0 +1,239 @@
+/* Modern Spinner and Filter Buttons - v1.0 */
+
+/* ================ MODERN SPINNER ================ */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.9);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+      z-index: 200;
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+/* Модернизированный спиннер загрузки */
+.modern-spinner {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.spinner-ring {
+  position: absolute;
+  width: 64px;
+  height: 64px;
+  border: 4px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.5s cubic-bezier(0.68, -0.55, 0.27, 1.55) infinite;
+}
+
+.spinner-ring-1 {
+  border-top-color: #3B82F6;
+  animation-delay: 0s;
+}
+
+.spinner-ring-2 {
+  width: 54px;
+  height: 54px;
+  border-right-color: #10B981;
+  animation-delay: 0.2s;
+}
+
+.spinner-ring-3 {
+  width: 44px;
+  height: 44px;
+  border-bottom-color: #F59E0B;
+  animation-delay: 0.4s;
+}
+
+.spinner-dot {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  background-color: #6366F1;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.6);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8);
+    opacity: 0.6;
+  }
+}
+
+.loading-text {
+  margin-top: 28px;
+  font-family: 'Inter', sans-serif;
+  text-align: center;
+}
+
+.loading-text h3 {
+  color: #1E3A8A;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+.loading-text p {
+  color: #64748B;
+  font-size: 1rem;
+  max-width: 280px;
+}
+
+/* Маленький спиннер для таблицы */
+.table-loading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.85);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 998;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.table-loading-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.table-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.table-spinner {
+  position: relative;
+  width: 40px;
+  height: 40px;
+}
+
+.table-spinner-ring {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border: 3px solid transparent;
+  border-radius: 50%;
+  animation: spin 1.2s cubic-bezier(0.5, 0.1, 0.5, 0.9) infinite;
+}
+
+.table-spinner-ring-1 {
+  border-top-color: #3B82F6;
+  animation-delay: 0s;
+}
+
+.table-spinner-ring-2 {
+  width: 26px;
+  height: 26px;
+  border-right-color: #10B981;
+  animation-delay: 0.15s;
+}
+
+/* ================ FILTER BUTTONS ================ */
+/* Обновленный стиль кнопок сброса фильтров */
+.filter-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Сам селект */
+.filter-container select {
+  width: 100%;
+  padding-right: 40px; /* Увеличиваем отступ справа для кнопки */
+}
+
+/* Кнопка сброса фильтра - нейтральная */
+.filter-clear-btn {
+  position: absolute;
+  top: 100%; /* Размещаем под селектом */
+  right: 0;
+  margin-top: 8px;
+  height: 30px;
+  width: 30px;
+  border: none;
+  background-color: #EFF6FF; /* Светлый фон */
+  color: #3B82F6; /* Синий цвет иконки */
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0;
+  visibility: hidden;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  font-size: 0.75rem;
+}
+
+/* Класс для подсвечивания контейнера при наличии значения */
+.filter-container.has-value {
+  margin-bottom: 38px; /* Добавляем отступ снизу для кнопки */
+}
+
+/* Показываем кнопку только когда в фильтре есть значение */
+.filter-container.has-value .filter-clear-btn {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* Ховер-эффект для кнопки */
+.filter-clear-btn:hover {
+  background-color: #DBEAFE;
+  color: #2563EB;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.2);
+}
+
+/* Активное состояние кнопки */
+.filter-clear-btn:active {
+  background-color: #BFDBFE;
+  transform: translateY(1px);
+}
+
+/* Добавляем иконку текстом 'Сбросить' рядом с крестиком */
+.filter-clear-btn::after {
+  content: 'Сбросить';
+  margin-left: 4px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+/* Увеличиваем ширину для текста */
+.filter-clear-btn {
+  width: auto;
+  padding: 0 10px;
+}

@@ -1,0 +1,488 @@
+/* Редизайн страницы настроек уведомлений */
+
+/* Современный дизайн страницы настроек уведомлений */
+.notifications-settings.modern-redesign {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+    padding: 4rem 2rem !important;
+    min-height: 100vh !important;
+    max-width: 1400px !important;
+    margin: 0 auto !important;
+    position: relative !important;
+}
+
+/* Стильные карточки с четким выделением разделов */
+.notifications-settings.modern-redesign .settings-card {
+    background: #ffffff !important;
+    border-radius: 16px !important;
+    padding: 2.5rem !important;
+    margin-bottom: 2rem !important;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(0, 0, 0, 0.05) !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    position: relative !important;
+    overflow: visible !important;
+}
+
+.notifications-settings.modern-redesign .settings-card:hover {
+    box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05),
+        0 0 0 1px rgba(37, 99, 235, 0.1) !important;
+    transform: translateY(-2px) !important;
+    border-color: rgba(37, 99, 235, 0.2) !important;
+}
+
+/* Заголовки карточек */
+.notifications-settings.modern-redesign .card-header {
+    margin-bottom: 1.5rem !important;
+    padding-bottom: 1rem !important;
+    border-bottom: 2px solid rgba(241, 245, 249, 1) !important;
+}
+
+.notifications-settings.modern-redesign .card-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    margin: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.75rem !important;
+}
+
+.notifications-settings.modern-redesign .card-icon {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-size: 1.25rem !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25) !important;
+    flex-shrink: 0 !important;
+}
+
+/* Элементы статуса */
+.notifications-settings.modern-redesign .status-item {
+    background: #f8fafc !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 12px !important;
+    padding: 1.25rem !important;
+    margin-bottom: 0.75rem !important;
+    transition: all 0.2s ease !important;
+}
+
+.notifications-settings.modern-redesign .status-item:hover {
+    background: #f1f5f9 !important;
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    transform: translateX(4px) !important;
+}
+
+.notifications-settings.modern-redesign .status-item-icon {
+    width: 2.5rem !important;
+    height: 2.5rem !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border-radius: 10px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    color: white !important;
+    font-size: 1rem !important;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2) !important;
+}
+
+.notifications-settings.modern-redesign .status-item-content h4 {
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    color: #1e293b !important;
+    margin: 0 0 0.25rem 0 !important;
+}
+
+.notifications-settings.modern-redesign .status-item-content p {
+    font-size: 0.875rem !important;
+    color: #64748b !important;
+    margin: 0 !important;
+}
+
+/* Карточки статистики */
+.notifications-settings.modern-redesign .stat-card {
+    background: #ffffff !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.notifications-settings.modern-redesign .stat-card:hover {
+    border-color: rgba(37, 99, 235, 0.3) !important;
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.1) !important;
+    transform: translateY(-2px) !important;
+}
+
+.notifications-settings.modern-redesign .stat-value {
+    font-size: 2rem !important;
+    font-weight: 800 !important;
+    color: #2563eb !important;
+    margin-bottom: 0.5rem !important;
+}
+
+.notifications-settings.modern-redesign .stat-label {
+    font-size: 0.75rem !important;
+    color: #64748b !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    font-weight: 600 !important;
+}
+
+/* Список информации */
+.notifications-settings.modern-redesign .info-list li {
+    padding: 1rem 0 !important;
+    border-bottom: 1px solid rgba(241, 245, 249, 1) !important;
+    transition: all 0.2s ease !important;
+}
+
+.notifications-settings.modern-redesign .info-list li:last-child {
+    border-bottom: none !important;
+}
+
+.notifications-settings.modern-redesign .info-list li:hover {
+    padding-left: 0.5rem !important;
+    background: linear-gradient(90deg, rgba(37, 99, 235, 0.03), transparent) !important;
+}
+
+.notifications-settings.modern-redesign .info-icon {
+    color: #2563eb !important;
+    font-size: 1.25rem !important;
+}
+
+.notifications-settings.modern-redesign .info-content {
+    color: #475569 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.6 !important;
+}
+
+.notifications-settings.modern-redesign .info-content strong {
+    color: #1e293b !important;
+    font-weight: 600 !important;
+}
+
+/* Виджет управления */
+.notifications-settings.modern-redesign .widget-control {
+    background: #f8fafc !important;
+    border: 1px solid rgba(226, 232, 240, 0.8) !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    margin-bottom: 1rem !important;
+}
+
+.notifications-settings.modern-redesign .widget-description {
+    color: #64748b !important;
+    font-size: 0.9rem !important;
+    line-height: 1.6 !important;
+    margin-top: 0.75rem !important;
+}
+
+/* Системный статус */
+.notifications-settings.modern-redesign .system-status {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%) !important;
+    border: 1px solid rgba(16, 185, 129, 0.2) !important;
+    border-radius: 12px !important;
+    padding: 1.5rem !important;
+    margin-top: 1rem !important;
+}
+
+.notifications-settings.modern-redesign .system-status-title {
+    color: #065f46 !important;
+    font-weight: 700 !important;
+    font-size: 1.125rem !important;
+}
+
+.notifications-settings.modern-redesign .system-status-content {
+    color: #047857 !important;
+    font-size: 0.95rem !important;
+}
+
+.notifications-settings.modern-redesign .system-status-content strong {
+    color: #065f46 !important;
+    font-weight: 600 !important;
+}
+
+.notifications-settings.modern-redesign .settings-header {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    color: white !important;
+    padding: 2rem 3.5rem !important;
+    border-radius: 24px !important;
+    text-align: center !important;
+    margin: 0 1rem 4rem 1rem !important;
+}
+
+/* ============================================
+   DARK THEME STYLES
+   ============================================ */
+body.dark-theme .notifications-settings.modern-redesign,
+[data-theme="dark"] .notifications-settings.modern-redesign,
+html.dark-theme .notifications-settings.modern-redesign {
+    background: linear-gradient(135deg, #0a0f14 0%, #111922 100%) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .settings-header,
+[data-theme="dark"] .notifications-settings.modern-redesign .settings-header,
+html.dark-theme .notifications-settings.modern-redesign .settings-header {
+    background: linear-gradient(135deg, #1a2332 0%, #242d3d 100%) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .settings-header h1,
+[data-theme="dark"] .notifications-settings.modern-redesign .settings-header h1,
+html.dark-theme .notifications-settings.modern-redesign .settings-header h1 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .settings-header p,
+[data-theme="dark"] .notifications-settings.modern-redesign .settings-header p,
+html.dark-theme .notifications-settings.modern-redesign .settings-header p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .settings-card,
+[data-theme="dark"] .notifications-settings.modern-redesign .settings-card,
+html.dark-theme .notifications-settings.modern-redesign .settings-card {
+    background: rgba(26, 35, 50, 0.95) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+    color: #e2e8f0 !important;
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.3),
+        0 2px 4px -1px rgba(0, 0, 0, 0.2),
+        0 0 0 1px rgba(100, 116, 139, 0.1) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .settings-card:hover,
+[data-theme="dark"] .notifications-settings.modern-redesign .settings-card:hover,
+html.dark-theme .notifications-settings.modern-redesign .settings-card:hover {
+    border-color: rgba(59, 130, 246, 0.3) !important;
+    box-shadow:
+        0 10px 15px -3px rgba(0, 0, 0, 0.4),
+        0 4px 6px -2px rgba(0, 0, 0, 0.3),
+        0 0 0 1px rgba(59, 130, 246, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .card-header,
+[data-theme="dark"] .notifications-settings.modern-redesign .card-header,
+html.dark-theme .notifications-settings.modern-redesign .card-header {
+    border-bottom: 2px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-item,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-item,
+html.dark-theme .notifications-settings.modern-redesign .status-item {
+    background: rgba(17, 25, 34, 0.6) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-item:hover,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-item:hover,
+html.dark-theme .notifications-settings.modern-redesign .status-item:hover {
+    background: rgba(26, 35, 50, 0.8) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .stat-card,
+[data-theme="dark"] .notifications-settings.modern-redesign .stat-card,
+html.dark-theme .notifications-settings.modern-redesign .stat-card {
+    background: rgba(26, 35, 50, 0.95) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .info-list li,
+[data-theme="dark"] .notifications-settings.modern-redesign .info-list li,
+html.dark-theme .notifications-settings.modern-redesign .info-list li {
+    border-bottom: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .info-list li:hover,
+[data-theme="dark"] .notifications-settings.modern-redesign .info-list li:hover,
+html.dark-theme .notifications-settings.modern-redesign .info-list li:hover {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .widget-control,
+[data-theme="dark"] .notifications-settings.modern-redesign .widget-control,
+html.dark-theme .notifications-settings.modern-redesign .widget-control {
+    background: rgba(17, 25, 34, 0.6) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .card-title,
+[data-theme="dark"] .notifications-settings.modern-redesign .card-title,
+html.dark-theme .notifications-settings.modern-redesign .card-title {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .widget-control,
+[data-theme="dark"] .notifications-settings.modern-redesign .widget-control,
+html.dark-theme .notifications-settings.modern-redesign .widget-control {
+    background: linear-gradient(135deg, rgba(17, 25, 34, 0.9) 0%, rgba(26, 35, 50, 0.8) 100%) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-text,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-text,
+html.dark-theme .notifications-settings.modern-redesign .status-text {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .widget-description,
+[data-theme="dark"] .notifications-settings.modern-redesign .widget-description,
+html.dark-theme .notifications-settings.modern-redesign .widget-description {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-item,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-item,
+html.dark-theme .notifications-settings.modern-redesign .status-item {
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.95) 0%, rgba(17, 25, 34, 0.9) 100%) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-item-content h4,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-item-content h4,
+html.dark-theme .notifications-settings.modern-redesign .status-item-content h4 {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .status-item-content p,
+[data-theme="dark"] .notifications-settings.modern-redesign .status-item-content p,
+html.dark-theme .notifications-settings.modern-redesign .status-item-content p {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .stat-card,
+[data-theme="dark"] .notifications-settings.modern-redesign .stat-card,
+html.dark-theme .notifications-settings.modern-redesign .stat-card {
+    background: linear-gradient(135deg, rgba(26, 35, 50, 0.98) 0%, rgba(17, 25, 34, 0.95) 100%) !important;
+    border: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .stat-label,
+[data-theme="dark"] .notifications-settings.modern-redesign .stat-label,
+html.dark-theme .notifications-settings.modern-redesign .stat-label {
+    color: #94a3b8 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .btn-secondary,
+[data-theme="dark"] .notifications-settings.modern-redesign .btn-secondary,
+html.dark-theme .notifications-settings.modern-redesign .btn-secondary {
+    background: rgba(26, 35, 50, 0.9) !important;
+    color: #e2e8f0 !important;
+    border: 1px solid rgba(100, 116, 139, 0.3) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .btn-secondary:hover,
+[data-theme="dark"] .notifications-settings.modern-redesign .btn-secondary:hover,
+html.dark-theme .notifications-settings.modern-redesign .btn-secondary:hover {
+    background: rgba(36, 45, 61, 0.95) !important;
+    border-color: rgba(59, 130, 246, 0.4) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .info-content,
+[data-theme="dark"] .notifications-settings.modern-redesign .info-content,
+html.dark-theme .notifications-settings.modern-redesign .info-content {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .info-content strong,
+[data-theme="dark"] .notifications-settings.modern-redesign .info-content strong,
+html.dark-theme .notifications-settings.modern-redesign .info-content strong {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .system-status,
+[data-theme="dark"] .notifications-settings.modern-redesign .system-status,
+html.dark-theme .notifications-settings.modern-redesign .system-status {
+    background: linear-gradient(135deg, rgba(6, 78, 59, 0.3), rgba(5, 46, 22, 0.3)) !important;
+    border: 1px solid rgba(16, 185, 129, 0.3) !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .system-status-title,
+[data-theme="dark"] .notifications-settings.modern-redesign .system-status-title,
+html.dark-theme .notifications-settings.modern-redesign .system-status-title {
+    color: #4ade80 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .system-status-content,
+[data-theme="dark"] .notifications-settings.modern-redesign .system-status-content,
+html.dark-theme .notifications-settings.modern-redesign .system-status-content {
+    color: #86efac !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .system-status-content p,
+[data-theme="dark"] .notifications-settings.modern-redesign .system-status-content p,
+html.dark-theme .notifications-settings.modern-redesign .system-status-content p {
+    color: #86efac !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .system-status-content strong,
+[data-theme="dark"] .notifications-settings.modern-redesign .system-status-content strong,
+html.dark-theme .notifications-settings.modern-redesign .system-status-content strong {
+    color: #4ade80 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .toast,
+[data-theme="dark"] .notifications-settings.modern-redesign .toast,
+html.dark-theme .notifications-settings.modern-redesign .toast {
+    background: rgba(26, 35, 50, 0.95) !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .toast-message,
+[data-theme="dark"] .notifications-settings.modern-redesign .toast-message,
+html.dark-theme .notifications-settings.modern-redesign .toast-message {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign .action-buttons,
+[data-theme="dark"] .notifications-settings.modern-redesign .action-buttons,
+html.dark-theme .notifications-settings.modern-redesign .action-buttons {
+    border-top: 1px solid rgba(100, 116, 139, 0.2) !important;
+}
+
+/* Общие стили для текста в темной теме */
+body.dark-theme .notifications-settings.modern-redesign,
+[data-theme="dark"] .notifications-settings.modern-redesign,
+html.dark-theme .notifications-settings.modern-redesign {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign *,
+[data-theme="dark"] .notifications-settings.modern-redesign *,
+html.dark-theme .notifications-settings.modern-redesign * {
+    color: inherit;
+}
+
+/* Переопределение для конкретных элементов */
+body.dark-theme .notifications-settings.modern-redesign p,
+[data-theme="dark"] .notifications-settings.modern-redesign p,
+html.dark-theme .notifications-settings.modern-redesign p {
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme .notifications-settings.modern-redesign h1,
+body.dark-theme .notifications-settings.modern-redesign h2,
+body.dark-theme .notifications-settings.modern-redesign h3,
+body.dark-theme .notifications-settings.modern-redesign h4,
+[data-theme="dark"] .notifications-settings.modern-redesign h1,
+[data-theme="dark"] .notifications-settings.modern-redesign h2,
+[data-theme="dark"] .notifications-settings.modern-redesign h3,
+[data-theme="dark"] .notifications-settings.modern-redesign h4,
+html.dark-theme .notifications-settings.modern-redesign h1,
+html.dark-theme .notifications-settings.modern-redesign h2,
+html.dark-theme .notifications-settings.modern-redesign h3,
+html.dark-theme .notifications-settings.modern-redesign h4 {
+    color: #e2e8f0 !important;
+}

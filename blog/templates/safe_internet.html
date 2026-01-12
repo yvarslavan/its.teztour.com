@@ -1,0 +1,470 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+<div class="safe-internet-container content-with-header-offset">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-user-shield"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Безопасное использование интернета</h1>
+          <p class="page-subtitle">Рекомендации по безопасному просмотру веб-страниц и загрузке файлов</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-ticket-alt"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Alert Section -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon warning">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="section-info">
+          <h2>Важное предупреждение</h2>
+          <p>Большинство инцидентов ИБ начинается с небезопасных сайтов и загрузок. Следуйте рекомендациям ниже.</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="tips-grid">
+          <div class="tip-item">
+            <i class="fas fa-lock"></i>
+            <div>
+              <h4>Всегда проверяйте адрес сайта</h4>
+              <p>Поддельные сайты маскируются под известные бренды: заменяют буквы, используют поддомены.</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+              <h4>Используйте только доверенные источники</h4>
+              <p>Скачивайте ПО с официальных сайтов или корпоративного портала.</p>
+            </div>
+          </div>
+          <div class="tip-item">
+            <i class="fas fa-virus-slash"></i>
+            <div>
+              <h4>Запрещено запускать неизвестные файлы</h4>
+              <p>Особенно .exe, .bat, .scr, .js, .vbs, а также архивы с паролем из неизвестных источников.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safe Browsing Checklist -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon info">
+          <i class="fas fa-globe"></i>
+        </div>
+        <div class="section-info">
+          <h2>Проверка сайта перед вводом данных</h2>
+          <p>Быстрый чек-лист безопасности</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="steps-container">
+          <div class="step-item success">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Проверяйте домен вручную</h4>
+              <p>В адресной строке должны быть правильное название и зона. Избегайте кликов по коротким ссылкам.</p>
+            </div>
+          </div>
+
+          <div class="step-item success">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Ищите HTTPS и сертификат</h4>
+              <p>Нажмите на значок замка → проверьте, кому выдан сертификат. Отсутствие HTTPS — повод уйти с сайта.</p>
+            </div>
+          </div>
+
+          <div class="step-item success">
+            <div class="step-number">3</div>
+            <div class="step-content">
+              <h4>Остерегайтесь всплывающих окон</h4>
+              <p>Не разрешайте уведомления и доступ к камере/микрофону без необходимости. Закрывайте подозрительные попапы.</p>
+            </div>
+          </div>
+
+          <div class="step-item success">
+            <div class="step-number">4</div>
+            <div class="step-content">
+              <h4>Не вводите корпоративные пароли на незнакомых сайтах</h4>
+              <p>SSO выполняйте только через корпоративные порталы/ссылки.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Safe Downloads -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon success">
+          <i class="fas fa-download"></i>
+        </div>
+        <div class="section-info">
+          <h2>Безопасная загрузка файлов</h2>
+          <p>Как скачать и открыть файл без риска</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="warning-box">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Никогда не отключайте антивирус ради установки!</strong>
+            <p>Если ПО блокируется — обратитесь в ИТ, мы проверим и предложим безопасный способ установки.</p>
+          </div>
+        </div>
+
+        <div class="protection-grid">
+          <div class="protection-item">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <h5>Источник загрузки</h5>
+              <p>Только официальный сайт производителя или корпоративный портал.</p>
+            </div>
+          </div>
+          <div class="protection-item">
+            <i class="fas fa-file-archive"></i>
+            <div>
+              <h5>Формат файла</h5>
+              <p>Предпочтительно .msi/.pkg/.dmg. Избегайте «кряков», архивов с паролем и скриптов.</p>
+            </div>
+          </div>
+          <div class="protection-item">
+            <i class="fas fa-shield-alt"></i>
+            <div>
+              <h5>Проверка перед открытием</h5>
+              <p>Сканируйте файлы встроенным антивирусом/EDR. Для офисных документов используйте «Защищенный просмотр».</p>
+            </div>
+          </div>
+          <div class="protection-item">
+            <i class="fas fa-cloud"></i>
+            <div>
+              <h5>Хранение</h5>
+              <p>Храните рабочие файлы в корпоративном облаке/сетевых папках, не используйте личные облака.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Browser Settings -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon primary">
+          <i class="fas fa-globe"></i>
+        </div>
+        <div class="section-info">
+          <h2>Рекомендованные настройки браузера</h2>
+          <p>Улучшите защиту одним кликом</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="settings-list">
+          <div class="setting-item">
+            <i class="fas fa-sync"></i>
+            <div>
+              <h5>Держите браузер в актуальной версии</h5>
+              <p>Обновления содержат патчи безопасности. Перезапускайте браузер для завершения обновлений.</p>
+            </div>
+          </div>
+          <div class="setting-item">
+            <i class="fas fa-ban"></i>
+            <div>
+              <h5>Блокируйте всплывающие окна и автозапуск</h5>
+              <p>Отключите автозапуск медиа, блокируйте всплывающие окна и непрошенные уведомления.</p>
+            </div>
+          </div>
+          <div class="setting-item">
+            <i class="fas fa-puzzle-piece"></i>
+            <div>
+              <h5>Осторожно с расширениями</h5>
+              <p>Устанавливайте только необходимые и проверенные расширения из официальных магазинов.</p>
+            </div>
+          </div>
+          <div class="setting-item">
+            <i class="fas fa-trash"></i>
+            <div>
+              <h5>Очищайте кэш/куки при проблемах</h5>
+              <p>Комбинация Ctrl+Shift+Del — быстрый способ очистки (см. инструкцию «Проблемы с загрузкой сайтов?»).</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Phishing and Malicious Links -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon warning">
+          <i class="fas fa-link"></i>
+        </div>
+        <div class="section-info">
+          <h2>Подозрительные ссылки и переадресации</h2>
+          <p>Как распознать и избежать</p>
+        </div>
+      </div>
+
+      <div class="section-content">
+        <div class="warning-grid">
+          <div class="warning-item">
+            <div class="warning-icon"><i class="fas fa-external-link-alt"></i></div>
+            <div class="warning-text">
+              <h4>Проверяйте URL перед переходом</h4>
+              <p>Наведите курсор на ссылку и убедитесь, что домен совпадает с ожидаемым. Не переходите по сокращенным ссылкам без проверки.</p>
+            </div>
+          </div>
+          <div class="warning-item">
+            <div class="warning-icon"><i class="fas fa-qrcode"></i></div>
+            <div class="warning-text">
+              <h4>Осторожно с QR-кодами</h4>
+              <p>QR может вести на фишинговый сайт. Открывайте только от проверенных источников.</p>
+            </div>
+          </div>
+          <div class="warning-item">
+            <div class="warning-icon"><i class="fas fa-bullhorn"></i></div>
+            <div class="warning-text">
+              <h4>Не кликайте по рекламе «Скачать сейчас»</h4>
+              <p>Злоумышленники маскируют рекламу под кнопки загрузки. Ищите настоящую ссылку на официальной странице.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Incident Actions -->
+  <section class="content-section">
+    <div class="section-card">
+      <div class="section-header">
+        <div class="section-icon danger">
+          <i class="fas fa-exclamation-triangle"></i>
+        </div>
+        <div class="section-info">
+          <h2>Если вы скачали/запустили подозрительный файл</h2>
+          <p>Действуйте незамедлительно</p>
+        </div>
+      </div>
+      <div class="section-content">
+        <div class="steps-container">
+          <div class="step-item danger">
+            <div class="step-number">!</div>
+            <div class="step-content">
+              <h4>Отключите сеть</h4>
+              <p>Выдерните сетевой кабель или отключите Wi‑Fi, чтобы предотвратить распространение угрозы.</p>
+            </div>
+          </div>
+          <div class="step-item danger">
+            <div class="step-number">!</div>
+            <div class="step-content">
+              <h4>Не перезагружайтесь</h4>
+              <p>Некоторые угрозы активируются при перезагрузке. Дождитесь инструкций ИТ.</p>
+            </div>
+          </div>
+          <div class="step-item success">
+            <div class="step-number">1</div>
+            <div class="step-content">
+              <h4>Свяжитесь с ИТ-службой</h4>
+              <p>Сообщите детали: где скачали файл, имя файла, время скачивания.</p>
+            </div>
+          </div>
+          <div class="step-item success">
+            <div class="step-number">2</div>
+            <div class="step-content">
+              <h4>Не удаляйте файл</h4>
+              <p>Это может помешать анализу инцидента. Дождитесь инструкций.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="emergency-contacts">
+          <div class="contact-item">
+            <i class="fas fa-phone"></i>
+            <div>
+              <h4>Внутренний номер</h4>
+              <a href="tel:1000" class="contact-link">1000</a>
+            </div>
+          </div>
+          <div class="contact-item">
+            <i class="fas fa-ticket-alt"></i>
+            <div>
+              <h4>Создать заявку</h4>
+              <a href="{{ url_for('main.new_issue') }}" class="contact-link">Система поддержки</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock main_page %}
+
+{% block styles %}
+<style>
+  /* CSS Variables */
+  :root {
+    --primary-50: #eff6ff;
+    --primary-100: #dbeafe;
+    --primary-200: #bfdbfe;
+    --primary-300: #93c5fd;
+    --primary-400: #60a5fa;
+    --primary-500: #3b82f6;
+    --primary-600: #2563eb;
+    --primary-700: #1d4ed8;
+    --primary-800: #1e40af;
+    --primary-900: #1e3a8a;
+
+    --danger: #dc2626;
+    --warning: #f59e0b;
+    --success: #10b981;
+    --info: #3b82f6;
+
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
+
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-on-primary: #ffffff;
+
+    --border-light: #e2e8f0;
+    --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+    --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+    --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+  }
+
+  /* Container */
+  .safe-internet-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    min-height: 100vh;
+  }
+
+  /* Header */
+  .page-header {
+    background: var(--surface-0);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-2);
+    margin-bottom: var(--spacing-xl);
+    overflow: hidden;
+    position: relative;
+  }
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--primary-500), var(--primary-700));
+  }
+  .header-content { padding: var(--spacing-xl); display: flex; justify-content: space-between; align-items: center; gap: var(--spacing-lg); }
+  .header-main { display: flex; align-items: center; gap: var(--spacing-lg); flex: 1; }
+  .header-icon { width: 72px; height: 72px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-xl); background: linear-gradient(135deg, var(--primary-500), var(--primary-700)); color: var(--text-on-primary); font-size: 2rem; box-shadow: var(--shadow-1); }
+  .page-title { font-size: 2.25rem; font-weight: 700; margin: 0 0 var(--spacing-xs) 0; }
+  .page-subtitle { font-size: 1.125rem; color: var(--text-secondary); margin: 0; }
+  .header-actions { display: flex; gap: var(--spacing-md); }
+  .action-button { display: inline-flex; align-items: center; gap: var(--spacing-sm); padding: var(--spacing-md) var(--spacing-lg); border-radius: var(--radius-lg); text-decoration: none; font-weight: 600; font-size: .875rem; border: none; cursor: pointer; text-transform: uppercase; }
+  .action-button.primary { background: linear-gradient(135deg, var(--primary-500), var(--primary-700)); color: var(--text-on-primary); }
+
+  /* Sections */
+  .content-section { margin-bottom: var(--spacing-xl); display: flex; flex-direction: column; }
+  .section-card { background: var(--surface-0); border-radius: var(--radius-xl); box-shadow: var(--shadow-2); overflow: hidden; width: 100%; }
+  .section-header { padding: var(--spacing-lg); display: flex; align-items: center; gap: var(--spacing-lg); border-bottom: 1px solid var(--border-light); }
+  .section-icon { width: 56px; height: 56px; border-radius: var(--radius-xl); display: flex; align-items: center; justify-content: center; color: var(--text-on-primary); font-size: 1.25rem; }
+  .section-icon.warning { background: linear-gradient(135deg, var(--warning), #d97706); }
+  .section-icon.success { background: linear-gradient(135deg, var(--success), #059669); }
+  .section-icon.info { background: linear-gradient(135deg, var(--primary-500), var(--primary-700)); }
+  .section-icon.primary { background: linear-gradient(135deg, var(--primary-500), var(--primary-700)); }
+  .section-icon.danger { background: linear-gradient(135deg, var(--danger), #b91c1c); }
+  .section-info h2 { margin: 0 0 4px 0; font-size: 1.5rem; font-weight: 600; }
+  .section-info p { margin: 0; color: var(--text-secondary); }
+  .section-content { padding: var(--spacing-xl); }
+
+  /* Center headings and subtitles inside section headers */
+  .section-header { flex-direction: column; align-items: center; text-align: center; gap: var(--spacing-md); }
+  .section-icon { margin-bottom: 4px; }
+  .section-info { width: 100%; }
+  .section-info h2, .section-info p { text-align: center; }
+
+  /* Tips grid */
+  .tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--spacing-lg); }
+  .tip-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-lg); background: var(--surface-1); border-radius: var(--radius-lg); border-left: 4px solid var(--primary-500); }
+  .tip-item i { color: var(--primary-600); }
+
+  /* Steps */
+  .steps-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(380px, 1fr)); gap: var(--spacing-xl); }
+  .step-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-md); background: var(--surface-1); }
+  .step-item.success { border-left: 4px solid var(--success); }
+  .step-item.danger { border-left: 4px solid var(--danger); background: #fef2f2; }
+  .step-number { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--primary-600); color: #fff; font-weight: 700; }
+
+  /* Warning grid */
+  .warning-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--spacing-lg); }
+  .warning-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-lg); background: var(--surface-1); border-radius: var(--radius-lg); border-left: 4px solid var(--warning); }
+  .warning-icon { width: 40px; height: 40px; border-radius: 10px; background: var(--warning); color: #fff; display: flex; align-items: center; justify-content: center; }
+
+  /* Protection grid */
+  .protection-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--spacing-lg); }
+  .protection-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-lg); background: var(--surface-1); border-radius: var(--radius-lg); border-left: 4px solid var(--success); }
+
+  /* Settings list */
+  .settings-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: var(--spacing-lg); }
+  .setting-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-lg); background: var(--surface-1); border-radius: var(--radius-lg); border-left: 4px solid var(--primary-500); }
+
+  /* Info/Warning boxes */
+  .warning-box, .info-box { display: flex; gap: var(--spacing-md); padding: var(--spacing-md); border-radius: var(--radius-md); background: #fffbeb; border-left: 4px solid var(--warning); margin-bottom: var(--spacing-lg); }
+  .info-box { background: var(--primary-50); border-left-color: var(--primary-600); }
+
+  /* Contacts */
+  .emergency-contacts { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: var(--spacing-lg); margin-top: var(--spacing-lg); }
+  .contact-item { display: flex; gap: var(--spacing-md); padding: var(--spacing-lg); background: var(--surface-1); border-radius: var(--radius-lg); align-items: center; }
+  .contact-link { color: var(--primary-700); text-decoration: none; }
+  .contact-link:hover { text-decoration: underline; }
+
+  /* Responsive */
+  @media (max-width: 640px) {
+    .header-content { flex-direction: column; align-items: stretch; }
+    .header-actions { justify-content: flex-start; }
+  }
+</style>
+{% endblock styles %}

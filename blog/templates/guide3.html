@@ -1,0 +1,730 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>{{ guide_title }} — TEZ Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/guides-dark-theme.css') }}">
+</head>
+
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    body {
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: #2d3748;
+    }
+
+    .hero-section {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 60px 20px 80px 20px;
+        text-align: center;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .hero-section::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+                    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+        pointer-events: none;
+    }
+
+    .hero-icon {
+        font-size: 4rem;
+        margin: 0 auto 20px auto;
+        opacity: 0.95;
+        animation: fadeInDown 0.6s ease;
+        text-align: center;
+        width: fit-content;
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-text-wrapper {
+        max-width: 1400px;
+        margin-left: auto;
+        margin-right: auto;
+        padding-left: 40px;
+        padding-right: 40px;
+        box-sizing: border-box;
+        position: relative;
+        z-index: 1;
+    }
+
+    .hero-text-content {
+        padding: 0 50px;
+        box-sizing: border-box;
+        width: 100%;
+    }
+
+    .hero-title {
+        font-size: 2.8rem;
+        font-weight: 700;
+        animation: fadeInUp 0.6s ease 0.1s both;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin: 0 0 15px 0;
+        text-align: center;
+        line-height: 1.2;
+    }
+
+    .hero-badge {
+        display: block;
+        padding: 8px 20px;
+        background: rgba(255, 255, 255, 0.25);
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin: 0 auto 20px auto;
+        animation: fadeInUp 0.6s ease 0.2s both;
+        backdrop-filter: blur(10px);
+        width: fit-content;
+        text-align: center;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin-left: auto;
+        margin-right: auto;
+        margin-top: -60px;
+        margin-bottom: 60px;
+        padding-left: 20px;
+        padding-right: 20px;
+        position: relative;
+        z-index: 2;
+        box-sizing: border-box;
+    }
+
+    .content-wrapper {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+        padding: 50px;
+        animation: fadeInUp 0.6s ease 0.4s both;
+    }
+
+    .guide-intro {
+        margin-bottom: 30px;
+        padding: 20px 25px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.08) 100%);
+        border-left: 4px solid #667eea;
+        border-radius: 8px;
+    }
+
+    .guide-intro-text {
+        font-size: 1.1rem;
+        line-height: 1.8;
+        color: #4a5568;
+        text-align: justify;
+        text-justify: inter-word;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .section-card {
+        margin-bottom: 40px;
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        margin-bottom: 25px;
+        padding-bottom: 0;
+        margin-left: -50px;
+        margin-right: -50px;
+        padding-left: 50px;
+        padding-right: 50px;
+        padding-top: 15px;
+    }
+
+    .section-header i {
+        font-size: 2rem;
+        color: #667eea;
+    }
+
+    .section-header h3 {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+
+    .section-content {
+        color: #4a5568;
+        line-height: 1.8;
+        font-size: 1.05rem;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    .section-content p {
+        margin-bottom: 15px;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding-left: 0;
+        margin: 20px 0;
+    }
+
+    .feature-list li {
+        position: relative;
+        padding-left: 35px;
+        margin-bottom: 15px;
+        line-height: 1.7;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    .feature-list li::before {
+        content: '•';
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 24px;
+        height: 24px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.2rem;
+    }
+
+    .step-list {
+        margin: 25px 0;
+    }
+
+    .step-item {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 25px;
+        padding: 20px;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+    }
+
+    .step-number {
+        flex-shrink: 0;
+        width: 40px;
+        height: 40px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 1.2rem;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .step-content {
+        flex: 1;
+    }
+
+    .step-content p {
+        margin: 0 0 10px 0;
+        line-height: 1.7;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    .info-box {
+        padding: 20px 25px;
+        border-radius: 12px;
+        margin: 25px 0;
+        display: flex;
+        gap: 15px;
+        align-items: flex-start;
+    }
+
+    .info-box.success {
+        background: linear-gradient(135deg, rgba(72, 187, 120, 0.1) 0%, rgba(56, 161, 105, 0.05) 100%);
+        border-left: 4px solid #48bb78;
+    }
+
+    .info-box.warning {
+        background: linear-gradient(135deg, rgba(237, 137, 54, 0.1) 0%, rgba(221, 107, 32, 0.05) 100%);
+        border-left: 4px solid #ed8936;
+    }
+
+    .info-box.info {
+        background: linear-gradient(135deg, rgba(66, 153, 225, 0.1) 0%, rgba(49, 130, 206, 0.05) 100%);
+        border-left: 4px solid #4299e1;
+    }
+
+    .info-box i {
+        font-size: 1.5rem;
+        margin-top: 2px;
+    }
+
+    .info-box.success i {
+        color: #48bb78;
+    }
+
+    .info-box.warning i {
+        color: #ed8936;
+    }
+
+    .info-box.info i {
+        color: #4299e1;
+    }
+
+    .info-box-content {
+        flex: 1;
+        line-height: 1.7;
+        text-align: justify;
+        text-justify: inter-word;
+    }
+
+    .highlight-box {
+        background: linear-gradient(135deg, rgba(255, 212, 0, 0.15) 0%, rgba(255, 184, 0, 0.08) 100%);
+        border-left: 4px solid #ffd400;
+        padding: 18px 22px;
+        border-radius: 10px;
+        margin: 20px 0;
+        font-weight: 500;
+    }
+
+    .btn-highlight {
+        display: inline-block;
+        padding: 6px 14px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 600;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        margin: 0 4px;
+    }
+
+    .phone-number {
+        display: inline-block;
+        padding: 8px 16px;
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        box-shadow: 0 4px 12px rgba(72, 187, 120, 0.3);
+        margin: 0 4px;
+    }
+
+    .scheme-section {
+        margin-top: 30px;
+    }
+
+    .scheme-title {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 20px;
+    }
+
+    .scheme-subtitle {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #667eea;
+        margin-bottom: 15px;
+    }
+
+    .scheme-subtitle i {
+        font-size: 1.1rem;
+        color: #4a5568;
+    }
+
+    .scheme-image {
+        width: 100%;
+        max-width: 500px;
+        height: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin: 20px 0;
+        display: block;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .navigation-buttons {
+        display: flex;
+        gap: 15px;
+        justify-content: center;
+        flex-wrap: wrap;
+        margin-top: 50px;
+        padding-top: 40px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    .nav-button {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .nav-button.back {
+        background: linear-gradient(135deg, #718096 0%, #4a5568 100%);
+        color: white;
+    }
+
+    .nav-button.secondary {
+        background: white;
+        color: #667eea;
+        border: 2px solid #667eea;
+    }
+
+    .nav-button.next {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .nav-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    }
+
+    .download-button {
+        padding: 14px 28px;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 1rem;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        color: white;
+        margin-bottom: 30px;
+    }
+
+    .download-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(72, 187, 120, 0.4);
+    }
+
+    .download-section {
+        text-align: center;
+        margin-top: 40px;
+        padding-top: 30px;
+        border-top: 2px solid #e2e8f0;
+    }
+
+    @keyframes fadeInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .content-wrapper {
+            padding: 30px 20px;
+        }
+
+        .section-header h3 {
+            font-size: 1.5rem;
+        }
+
+        .step-item {
+            flex-direction: column;
+        }
+
+        .navigation-buttons {
+            flex-direction: column;
+        }
+
+        .nav-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
+
+<body>
+    <div class="hero-section">
+        <div class="hero-icon">
+            <i class="fas fa-phone-alt"></i>
+        </div>
+        <div class="hero-text-wrapper">
+            <div class="hero-text-content">
+                <h1 class="hero-title">{{ guide_title }}</h1>
+                <div class="hero-badge">Памятка</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-wrapper">
+
+            <!-- Описание инструкции -->
+            <div class="guide-intro">
+                <p class="guide-intro-text">Эта памятка предназначена для сотрудников, работающих удалённо и без установленного Cisco Jabber. Этот способ предназначен для сотрудников, у которых <strong>нет доступа к Cisco Jabber</strong>, но нужно <strong>позвонить во внутреннюю корпоративную сеть TEZ TOUR</strong>. Звонок совершается через <strong>внешний городской номер</strong>, который автоматически переводит вас на нужного сотрудника по его внутреннему номеру.</p>
+            </div>
+
+            <!-- Алгоритм звонка -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-list-ol"></i>
+                    <h3>Алгоритм звонка</h3>
+                </div>
+                <div class="section-content">
+                    <div class="step-list">
+                        <div class="step-item">
+                            <div class="step-number">1</div>
+                            <div class="step-content">
+                                <p>Наберите городской номер: <span class="phone-number">+7 (495) 660-10-08</span></p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <p>После соединения <strong>дождитесь голосового приглашения</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <p>Введите <strong>внутренний 4-значный номер</strong> (например, 1234) и нажмите <span class="btn-highlight">#</span> — это ускорит соединение</p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <p><strong>Убедитесь</strong>, что телефон работает <strong>в тональном режиме (DTMF)</strong></p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <p><strong>Готово</strong>: звонок будет переведён на сотрудника</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="highlight-box">
+                        <strong>Пример:</strong> <span class="phone-number">+7 (495) 660-10-08</span> → <span class="btn-highlight">1234#</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Как это работает -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-cogs"></i>
+                    <h3>Как это работает</h3>
+                </div>
+                <div class="section-content">
+                    <p>Номер <span class="phone-number">+7 (495) 660-10-08</span> подключён к корпоративной АТС Cisco CallManager и использует механизм <strong>DISA (Dial-In Secure Access)</strong> — это безопасный способ соединять внешние звонки с внутренней телефонной сетью.</p>
+                    <p>Таким образом, вы можете дозвониться <strong>на любой внутренний номер или конференцию</strong>, даже находясь за пределами офиса.</p>
+                </div>
+            </div>
+
+            <!-- Важно -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <h3>Важно</h3>
+                </div>
+                <div class="section-content">
+                    <ul class="feature-list">
+                        <li>Номер <span class="phone-number">+7 (495) 660-10-08</span> предназначен <strong>только</strong> для входящих вызовов <strong>во внутреннюю сеть TEZ TOUR</strong></li>
+                        <li>Можно дозвониться <strong>только</strong> на 4-значные <strong>внутренние номера</strong> сотрудников и конференций (7700 и т. д.)</li>
+                        <li><strong>Звонки на городские и междугородние номера</strong> через этот номер невозможны — <span class="phone-number">+7 (495) 660-10-08</span> используется исключительно <strong>для входящих вызовов</strong> внутри компании (DISA)</li>
+                        <li>Звонки для вас тарифицируются как обычные <strong>городские вызовы по Москве</strong></li>
+                        <li>Для абонентов из других регионов — как <strong>междугородние</strong> по тарифу вашего мобильного или стационарного оператора</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Если не получается подключиться -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-wrench"></i>
+                    <h3>Если не получается подключиться</h3>
+                </div>
+                <div class="section-content">
+                    <ul class="feature-list">
+                        <li>Проверьте правильность введённого <strong>внутреннего номера</strong></li>
+                        <li>Убедитесь, что телефон работает <strong>в тональном режиме</strong> (<strong>DTMF</strong>)</li>
+                        <li>Возможно, сотрудник временно недоступен (занят, нет на месте)</li>
+                    </ul>
+
+                    <div class="info-box info" style="margin-top: 20px;">
+                        <i class="fas fa-lightbulb"></i>
+                        <div class="info-box-content">
+                            <p><strong>Совет:</strong> При вводе каждого номера нажимайте <span class="btn-highlight">#</span>, чтобы исключить задержку ожидания.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Альтернатива: Cisco Jabber -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-mobile-alt"></i>
+                    <h3>Альтернатива: Cisco Jabber</h3>
+                </div>
+                <div class="section-content">
+                    <p>Если у вас есть интернет-доступ, используйте приложение <strong>Cisco Jabber</strong> — это основной инструмент корпоративной телефонии TEZ TOUR.</p>
+
+                    <div class="info-box success">
+                        <i class="fas fa-check-circle"></i>
+                        <div class="info-box-content">
+                            <p><strong>Преимущества:</strong></p>
+                            <ul style="margin-top: 10px; margin-left: 20px;">
+                                <li>Бесплатные внутренние звонки</li>
+                                <li>Доступ к поиску в корпоративной телефонной книге</li>
+                                <li>Возможность аудиоконференций и чатов в одном интерфейсе</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Схема звонка -->
+                    <div class="scheme-section">
+                        <h4 class="scheme-title">Схема звонка:</h4>
+                        <div class="scheme-subtitle">
+                            <i class="fas fa-cog"></i>
+                            <span>Перед началом:</span>
+                        </div>
+                        <p style="margin-bottom: 20px;">Убедитесь, что телефон работает в <strong>тональном режиме (DTMF)</strong>.</p>
+                        <img src="{{ url_for('static', filename='img/calls_sxeme.png') }}" alt="Схема звонка" class="scheme-image">
+                    </div>
+
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>Когда использовать этот способ:</strong>
+                        <ul style="margin-top: 10px; margin-left: 20px;">
+                            <li>Вы <strong>работаете вне офиса</strong> и у вас <strong>нет доступа к Cisco Jabber</strong></li>
+                            <li>Нужно <strong>позвонить коллеге или подключиться к конференции</strong> с обычного телефона</li>
+                            <li>Требуется <strong>быстро дозвониться по внутреннему номеру</strong>, не используя интернет</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- О тарифах -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-ruble-sign"></i>
+                    <h3>О тарифах</h3>
+                </div>
+                <div class="section-content">
+                    <p>Звонки на <span class="phone-number">+7 (495) 660-10-08</span> тарифицируются как <strong>обычные городские вызовы по Москве</strong>.</p>
+                    <p>Для звонков из других регионов действует <strong>междугородний тариф</strong> вашего оператора.</p>
+                </div>
+            </div>
+
+            <!-- Техническая поддержка -->
+            <div class="section-card">
+                <div class="section-header">
+                    <i class="fas fa-life-ring"></i>
+                    <h3>Контакты технической поддержки</h3>
+                </div>
+                <div class="section-content">
+                    <p>Если соединение не устанавливается или возникают ошибки при наборе, обратитесь в <strong>ИТ-отдел TEZ TOUR</strong>:</p>
+                    <ul class="feature-list">
+                        <li>через портал <a href="https://its.tez-tour.com" target="_blank" style="color: #667eea; font-weight: 600;">its.tez-tour.com</a></li>
+                        <li>напишите на почту 📧 <a href="mailto:help@tez-tour.com" style="color: #667eea; font-weight: 600;">help@tez-tour.com</a></li>
+                        <li>позвоните по внутреннему номеру 📞 <span class="phone-number">1000</span></li>
+                        <li>внешний номер: <span class="phone-number">+7 (495) 775-10-09</span></li>
+                    </ul>
+
+                    <div class="highlight-box" style="margin-top: 20px;">
+                        <strong>При обращении укажите:</strong>
+                        <ul style="margin-top: 10px; margin-left: 20px;">
+                            <li>ваш внутренний номер</li>
+                            <li>краткое описание проблемы (например: «не работает звук в Jabber»)</li>
+                            <li>время возникновения</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопка скачивания -->
+            <div class="download-section">
+                <a href="{{ url_for('main.download_guide', card_number=card_number) }}" class="download-button">
+                    <i class="fas fa-download"></i>
+                    <span>Скачать памятку</span>
+                </a>
+            </div>
+
+            <!-- Навигация -->
+            <div class="navigation-buttons">
+                {% if card_number > 1 %}
+                    <a href="{{ url_for('main.guide', card_number=card_number - 1) }}" class="nav-button back">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Предыдущая памятка</span>
+                    </a>
+                {% endif %}
+
+                <a href="{{ url_for('main.calls_and_conferences') }}" class="nav-button secondary">
+                    <i class="fas fa-home"></i>
+                    <span>К списку памяток</span>
+                </a>
+
+                {% if card_number < total_guides %}
+                    <a href="{{ url_for('main.guide', card_number=card_number + 1) }}" class="nav-button next">
+                        <span>Следующая памятка</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+</body>
+
+{% endblock %}

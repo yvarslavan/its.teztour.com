@@ -1,0 +1,511 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <title>Как настроить аккаунт Vacuum-IM?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="hero-section">
+        <div class="hero-content">
+            <div class="hero-icon">
+                <i class="fas fa-cog"></i>
+            </div>
+            <h1>Настройка аккаунта Vacuum-IM</h1>
+            <p class="hero-subtitle">Пошаговое руководство по настройке мессенджера</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="content-wrapper">
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">1</div>
+                    <h3>Открытие настроек</h3>
+                </div>
+                <div class="step-content">
+                    <p>Кликните правой клавишей мыши по иконке Vacuum-IM в области уведомлений (системный трей) в нижнем правом углу экрана. В появившемся контекстном меню выберите пункт "Настройки".</p>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/VacuumSettings.png" alt="Контекстное меню Vacuum-IM - Настройки">
+                        <div class="image-caption">Контекстное меню приложения</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">2</div>
+                    <h3>Добавление аккаунта</h3>
+                </div>
+                <div class="step-content">
+                    <p>В окне настроек перейдите на вкладку <span class="highlight">Аккаунты</span> и нажмите кнопку <span class="highlight">Добавить</span>. В появившемся диалоге введите имя для вашего аккаунта.</p>
+                    <div class="tip-box">
+                        <i class="fas fa-lightbulb"></i>
+                        <div>
+                            <strong>Совет:</strong> Используйте понятные названия, например "Основной", "Рабочий" или "Домашний"
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">3</div>
+                    <h3>Настройка параметров подключения</h3>
+                </div>
+                <div class="step-content">
+                    <p>В открывшемся окне заполните следующие поля:</p>
+                    <div class="form-fields">
+                        <div class="field-item">
+                            <strong>Имя:</strong> Ваш почтовый аккаунт (например: <code>v.tereshkova@tez-tour.com</code>)
+                        </div>
+                        <div class="field-item">
+                            <strong>Ресурс:</strong> Описание устройства (например: <code>Работа(Офис)</code> или <code>Дом</code>)
+                        </div>
+                        <div class="field-item">
+                            <strong>Пароль:</strong> Ваш пароль от системы ЕРП
+                        </div>
+                    </div>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/VacuumSetSettings.png" alt="Диалог настройки аккаунта Vacuum-IM">
+                        <div class="image-caption">Окно настройки параметров аккаунта</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">4</div>
+                    <h3>Настройка прокси (опционально)</h3>
+                </div>
+                <div class="step-content">
+                    <p>Если в вашей сети используется прокси-сервер, укажите его тип и параметры подключения в группе настроек <span class="highlight">Прокси</span>.</p>
+                    <div class="warning-box">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <div>
+                            <strong>Внимание:</strong> Обратитесь к системному администратору для получения параметров прокси-сервера
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">5</div>
+                    <h3>Дополнительные настройки</h3>
+                </div>
+                <div class="step-content">
+                    <p>На вкладке <span class="highlight">Дополнительно</span> установите флажок <span class="highlight">Автоподключение при старте</span>, если хотите, чтобы аккаунт автоматически подключался при запуске приложения.</p>
+                </div>
+            </div>
+
+            <div class="download-section">
+                <div class="download-header">
+                    <i class="fas fa-download"></i>
+                    <h3>Скачивание Vacuum-IM</h3>
+                </div>
+                <div class="download-content">
+                    <p>Последнюю версию Vacuum-IM можно скачать с официального репозитория на GitHub:</p>
+                    <div class="download-link">
+                        <a href="https://github.com/Vacuum-IM/vacuum-im/releases" target="_blank" class="btn-download">
+                            <i class="fab fa-github"></i>
+                            Скачать Vacuum-IM
+                        </a>
+                    </div>
+                    <div class="image-container">
+                        <img src="/static/profile_pics/y.varslavan/post_images/vacuum_download.jpg" alt="Страница загрузки Vacuum-IM на GitHub">
+                        <div class="image-caption">Страница релизов на GitHub</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-header">
+                    <div class="step-number">6</div>
+                    <h3>Установка и запуск</h3>
+                </div>
+                <div class="step-content">
+                    <p>Скачайте и распакуйте <strong>zip-архив</strong> приложения. После распаковки запустите файл <code>vacuum.exe</code> для начала работы с мессенджером.</p>
+                    <div class="success-box">
+                        <i class="fas fa-check-circle"></i>
+                        <div>
+                            <strong>Готово!</strong> Теперь вы можете использовать Vacuum-IM для корпоративного общения
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+{% endblock content %}
+
+{% block styles %}
+<style>
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #2d3748;
+    min-height: 100vh;
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 80px 20px;
+    text-align: center;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="60" r="1" fill="white" opacity="0.1"/><circle cx="90" cy="40" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+    pointer-events: none;
+}
+
+.hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.hero-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.9;
+}
+
+.hero-content h1 {
+    font-size: 3.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.hero-subtitle {
+    font-size: 1.3rem;
+    font-weight: 300;
+    opacity: 0.9;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.container {
+    background: #f7fafc;
+    min-height: 100vh;
+    padding: 0;
+}
+
+.content-wrapper {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 60px 20px;
+}
+
+.step-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin-bottom: 30px;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.step-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+}
+
+.step-header {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.step-number {
+    background: rgba(255,255,255,0.2);
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    backdrop-filter: blur(10px);
+}
+
+.step-header h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.step-content {
+    padding: 30px;
+}
+
+.step-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 20px;
+    color: #4a5568;
+}
+
+.highlight {
+    background: linear-gradient(120deg, #a2f2ff 0%, #a2f2ff 100%);
+    background-repeat: no-repeat;
+    background-size: 100% 0.3em;
+    background-position: 0 88%;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    color: #2d3748;
+}
+
+.form-fields {
+    background: #f7fafc;
+    border-radius: 12px;
+    padding: 25px;
+    margin: 20px 0;
+    border-left: 4px solid #4299e1;
+}
+
+.field-item {
+    margin-bottom: 15px;
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+.field-item:last-child {
+    margin-bottom: 0;
+}
+
+.field-item strong {
+    color: #2d3748;
+    font-weight: 600;
+    display: inline-block;
+    min-width: 80px;
+}
+
+code {
+    background: #edf2f7;
+    color: #e53e3e;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: 'SF Mono', Monaco, 'Cascadia Code', 'Roboto Mono', Consolas, 'Courier New', monospace;
+    font-size: 0.9em;
+    font-weight: 500;
+}
+
+.image-container {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 12px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    transition: transform 0.3s ease;
+}
+
+.image-container img:hover {
+    transform: scale(1.02);
+}
+
+.image-caption {
+    margin-top: 12px;
+    font-size: 0.9rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.tip-box, .warning-box, .success-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 20px;
+    border-radius: 12px;
+    margin: 20px 0;
+    font-size: 1rem;
+}
+
+.tip-box {
+    background: linear-gradient(135deg, #ebf8ff 0%, #bee3f8 100%);
+    border-left: 4px solid #3182ce;
+}
+
+.warning-box {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef5e7 100%);
+    border-left: 4px solid #f6ad55;
+}
+
+.success-box {
+    background: linear-gradient(135deg, #f0fff4 0%, #c6f6d5 100%);
+    border-left: 4px solid #48bb78;
+}
+
+.tip-box i {
+    color: #3182ce;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.warning-box i {
+    color: #f6ad55;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.success-box i {
+    color: #48bb78;
+    font-size: 1.2rem;
+    margin-top: 2px;
+}
+
+.download-section {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+    margin: 40px 0;
+    overflow: hidden;
+}
+
+.download-header {
+    background: linear-gradient(135deg, #38b2ac 0%, #319795 100%);
+    color: white;
+    padding: 25px 30px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.download-header i {
+    font-size: 1.5rem;
+}
+
+.download-header h3 {
+    font-size: 1.4rem;
+    font-weight: 600;
+    margin: 0;
+}
+
+.download-content {
+    padding: 30px;
+}
+
+.download-content p {
+    font-size: 1.1rem;
+    line-height: 1.7;
+    margin-bottom: 25px;
+    color: #4a5568;
+}
+
+.download-link {
+    text-align: center;
+    margin: 30px 0;
+}
+
+.btn-download {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    padding: 15px 30px;
+    border-radius: 50px;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(66, 153, 225, 0.3);
+}
+
+.btn-download:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(66, 153, 225, 0.4);
+    text-decoration: none;
+    color: white;
+}
+
+.btn-download i {
+    font-size: 1.2rem;
+}
+
+@media (max-width: 768px) {
+    .hero-content h1 {
+        font-size: 2.5rem;
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+    }
+
+    .content-wrapper {
+        padding: 40px 15px;
+    }
+
+    .step-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+
+    .step-content {
+        padding: 20px;
+    }
+
+    .form-fields {
+        padding: 20px;
+    }
+
+    .download-header {
+        padding: 20px;
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+
+    .download-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .hero-content h1 {
+        font-size: 2rem;
+    }
+
+    .step-number {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .step-header h3 {
+        font-size: 1.2rem;
+    }
+}
+</style>
+{% endblock styles %}

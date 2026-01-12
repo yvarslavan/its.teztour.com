@@ -1,0 +1,4184 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="account-page-wrapper">
+  <!-- Background Elements -->
+  <div class="background-shapes">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+    <div class="shape shape-4"></div>
+  </div>
+
+  <div class="container account-container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <div class="header-content">
+        <div class="title-section">
+          <div class="icon-wrapper">
+            <i class="fas fa-user-cog"></i>
+            <div class="icon-glow"></div>
+          </div>
+          <div class="title-content">
+            <h1 class="page-title">Мой профиль</h1>
+            <p class="page-subtitle">Управление учетной записью и настройки</p>
+          </div>
+          <div class="user-status-container">
+            <div class="status-badge online">
+              <div class="status-dot"></div>
+              <span class="status-text">Online</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Content -->
+    <form
+      method="POST"
+      action="{{ url_for('users.account') }}"
+      enctype="multipart/form-data"
+      class="account-form"
+    >
+      {{ form.hidden_tag() }}
+
+      <div class="account-grid">
+        <!-- Profile Sidebar -->
+        <div class="profile-sidebar">
+          <div class="profile-card">
+            <!-- Avatar Section -->
+            <div class="avatar-section">
+              <div class="avatar-container">
+                <img
+                  src="{{ image_file }}"
+                  alt="Аватар {{ user.full_name }}"
+                  class="profile-avatar"
+                />
+                <div class="avatar-overlay">
+                  <i class="fas fa-camera"></i>
+                </div>
+                <div class="avatar-glow"></div>
+              </div>
+
+              <!-- Avatar Upload -->
+              <div class="avatar-upload">
+                <label for="pictureUpload" class="upload-label">
+                  <i class="fas fa-upload"></i>
+                  <span>Загрузить фото</span>
+                </label>
+                {{ form.picture(class="upload-input", id="pictureUpload") }}
+                {% if form.picture.errors %}
+                <div class="upload-errors">
+                  {% for error in form.picture.errors %}
+                  <span class="error-message">{{ error }}</span>
+                  {% endfor %}
+                </div>
+                {% endif %}
+              </div>
+
+              {{ form.submit(class='update-btn') }}
+            </div>
+
+            <!-- User Info -->
+            <div class="user-info">
+              <h3 class="user-name">
+                {% set names = user.full_name.split() %} {{ names[0] }} {{
+                names[1][:1] }}.{{ names[-1][:1] if names|length > 2 else '' }}.
+              </h3>
+              <p class="user-role">{{ user.position or 'Пользователь' }}</p>
+              <div class="last-seen">
+                <i class="fas fa-clock"></i>
+                <span
+                  >Последний вход: {{ user.last_seen.strftime('%d.%m.%Y %H:%M')
+                  if user.last_seen else 'Неизвестно' }}</span
+                >
+              </div>
+            </div>
+
+            <!-- Navigation -->
+            <nav class="profile-navigation">
+              <a href="{{ url_for('users.account') }}" class="nav-item active">
+                <i class="fas fa-user-circle"></i>
+                <span>Данные профиля</span>
+              </a>
+              <a
+                href="{{ url_for('users.user_posts', username=current_user.username) }}"
+                class="nav-item"
+              >
+                <i class="fas fa-newspaper"></i>
+                <span>Мои статьи</span>
+              </a>
+              <a href="/my-issues" class="nav-item">
+                <i class="fas fa-ticket-alt"></i>
+                <span>Мои заявки</span>
+              </a>
+              {% if current_user.is_redmine_user %}
+              <a href="{{ url_for('tasks.my_tasks_page') }}" class="nav-item">
+                <i class="fas fa-tasks"></i>
+                <span>Мои задачи</span>
+              </a>
+              {% endif %}
+            </nav>
+          </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+          <!-- Personal Information Card -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="header-icon">
+                <i class="fas fa-id-card"></i>
+              </div>
+              <div class="header-content">
+                <h3 class="card-title">Личная информация</h3>
+                <p class="card-subtitle">Основные данные сотрудника в TEZ ERP</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="info-grid">
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-user"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Полное имя</span>
+                    <span class="info-value">{{ user.full_name }}</span>
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-envelope"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">E-mail</span>
+                    <a
+                      href="mailto:{{ user.email }}"
+                      class="info-value email-link"
+                      >{{ user.email }}</a
+                    >
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-at"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Имя пользователя</span>
+                    {{ form.username(class='info-input readonly-input',
+                    readonly=True) }}
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-phone"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Телефон</span>
+                    <span class="info-value"
+                      >{{ user.phone or 'Не указан' }}</span
+                    >
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-map-marker-alt"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Офис</span>
+                    <span class="info-value"
+                      >{{ user.office or 'Не указан' }}</span
+                    >
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-building"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Подразделение</span>
+                    <span class="info-value"
+                      >{{ user.department or 'Не указан' }}</span
+                    >
+                  </div>
+                </div>
+
+                <div class="info-item">
+                  <div class="info-icon">
+                    <i class="fas fa-briefcase"></i>
+                  </div>
+                  <div class="info-content">
+                    <span class="info-label">Должность</span>
+                    <span class="info-value"
+                      >{{ user.position or 'Не указана' }}</span
+                    >
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Settings & Access Card -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="header-icon">
+                <i class="fas fa-shield-alt"></i>
+              </div>
+              <div class="header-content">
+                <h3 class="card-title">Настройки и доступы</h3>
+                <p class="card-subtitle">VPN, пароли и подписи</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <!-- VPN Status -->
+              <div class="settings-item">
+                <div class="setting-header">
+                  <div class="setting-icon">
+                    <i class="fas fa-network-wired"></i>
+                  </div>
+                  <div class="setting-content">
+                    <label for="account-vpn-display" class="setting-label">VPN статус</label>
+                    <div class="vpn-status-container">
+                      <input
+                        type="text"
+                        id="account-vpn-display"
+                        class="vpn-input"
+                        placeholder="Статус VPN"
+                        title="Текущий статус VPN"
+                        {% if user.vpn_end_date %}
+                        value="Включен, заканчивается {{ user.vpn_end_date }}"
+                        {% elif user.vpn == 1 and not user.vpn_end_date %}
+                        value="Включен, заканчивается &lt;Дата не определена&gt;"
+                        {% else %}
+                        value="Выключен"
+                        {% endif %}
+                        readonly
+                      />
+                      <button
+                        type="button"
+                        id="update-vpn-date"
+                        class="vpn-update-btn"
+                        title="Обновить информацию о статусе VPN и дате окончания"
+                        data-tooltip="Обновить информацию о статусе VPN и дате окончания"
+                        aria-label="Обновить информацию о статусе VPN"
+                      >
+                        <i class="fas fa-sync-alt"></i>
+                      </button>
+                    </div>
+                    <div
+                      class="vpn-badge-container"
+                      id="vpn-status-badge-container"
+                    >
+                      {% if user.vpn == 1 and user.vpn_end_date %}
+                      <span class="status-badge active">
+                        <i class="fas fa-shield-alt"></i>
+                        Включен
+                      </span>
+                      <span class="status-info"
+                        >до {{ user.vpn_end_date }}</span
+                      >
+                      {% elif user.vpn == 1 and not user.vpn_end_date %}
+                      <span class="status-badge warning">
+                        <i class="fas fa-shield-alt"></i>
+                        Включен
+                      </span>
+                      <span class="status-info">срок не определен</span>
+                      {% else %}
+                      <span class="status-badge inactive">
+                        <i class="fas fa-shield-alt"></i>
+                        Выключен
+                      </span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- ERP Password -->
+              <div class="settings-item">
+                <div class="setting-header">
+                  <div class="setting-icon">
+                    <i class="fas fa-key"></i>
+                  </div>
+                  <div class="setting-content">
+                    <label for="password-display" class="setting-label">Пароль TEZ ERP</label>
+                    <div class="password-container">
+                      <input
+                        type="password"
+                        id="password-display"
+                        class="password-input"
+                        value="{{ user_password_erp if user_password_erp else '' }}"
+                        title="Пароль TEZ ERP"
+                        placeholder="Введите пароль"
+                        readonly
+                        />
+                        <button
+                          type="button"
+                          id="togglePassword"
+                          class="password-toggle-btn"
+                          title="Показать/скрыть пароль"
+                          {% if not user_password_erp %}disabled{% endif %}
+                        >
+                        <i id="eyeIcon" class="fas fa-eye"></i>
+                      </button>
+                      <button
+                        type="button"
+                        id="copyPassword"
+                        class="password-copy-btn"
+                        {% if not user_password_erp %}disabled{% endif %}
+                      >
+                        <i class="fas fa-copy"></i>
+                        <span>Копировать</span>
+                      </button>
+                    </div>
+                    {% if not user_password_erp %}
+                    <div class="password-status">
+                      <small class="text-muted">
+                        <i class="fas fa-info-circle"></i>
+                        Пароль не загружен. Попробуйте перезайти в систему.
+                      </small>
+                      <button
+                        type="button"
+                        id="refreshPasswordBtn"
+                        class="btn btn-sm btn-outline-primary mt-2"
+                      >
+                        <i class="fas fa-sync-alt"></i>
+                        Обновить пароль
+                      </button>
+                    </div>
+                    {% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Email Signature -->
+              <div class="settings-item">
+                <div class="setting-header">
+                  <div class="setting-icon">
+                    <i class="fas fa-signature"></i>
+                  </div>
+                  <div class="setting-content">
+                    <span class="setting-label">Email подпись</span>
+                    <div class="signature-preview">
+                      {{ email_signature_html|safe if email_signature_html else
+                      "Подпись не сформирована." }}
+                    </div>
+                    <button
+                      type="button"
+                      id="copySignatureBtnAccount"
+                      class="signature-copy-btn"
+                    >
+                      <i class="fas fa-copy"></i>
+                      <span>Копировать подпись</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Polling Notifications -->
+              <div class="settings-item notifications-system">
+                <div class="setting-header">
+                  <div class="setting-icon pulse-animation">
+                    <i class="fas fa-satellite-dish"></i>
+                  </div>
+                  <div class="setting-content">
+                    <span class="setting-label">📡 Система уведомлений</span>
+                    <div class="notification-controls">
+                      <div
+                        class="notification-status active-status"
+                        id="polling-notification-status"
+                      >
+                        <div
+                          class="status-indicator"
+                          id="polling-status-indicator"
+                        >
+                          <div class="status-badge success-badge">
+                            <i
+                              id="pollingNotificationIcon"
+                              class="fas fa-check-circle"
+                            ></i>
+                            <span id="pollingNotificationStatus"
+                              >Активна (Polling)</span
+                            >
+                          </div>
+                          <div class="connection-indicator">
+                            <span class="connection-dot"></span>
+                            <span class="connection-text">Подключено</span>
+                          </div>
+                        </div>
+                        <div
+                          class="status-description"
+                          id="polling-status-description"
+                        >
+                          <div class="description-main">
+                            Автоматическая проверка новых уведомлений каждые 30
+                            секунд
+                          </div>
+                          <div class="status-details">
+                            <span class="detail-item">
+                              <i class="fas fa-clock"></i>
+                              Интервал: 30 сек
+                            </span>
+                            <span class="detail-item">
+                              <i class="fas fa-volume-up"></i>
+                              Звук включен
+                            </span>
+                            <span class="detail-item">
+                              <i class="fas fa-bell"></i>
+                              <span id="widget-status-text-detail">Виджет активен</span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Переключатель виджета -->
+                    <div class="widget-toggle-control" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(226, 232, 240, 0.8);">
+                      <div style="display: flex; align-items: center; justify-content: space-between;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem;">
+                          <i class="fas fa-bell" style="color: #2563eb; font-size: 1.125rem;"></i>
+                          <div>
+                            <div style="font-weight: 600; color: #1e293b; font-size: 0.95rem;">Виджет уведомлений</div>
+                            <div style="font-size: 0.85rem; color: #64748b; margin-top: 0.25rem;">
+                              Показывать виджет с уведомлениями в правом нижнем углу
+                            </div>
+                          </div>
+                        </div>
+                        <label class="toggle-switch" for="widgetToggle" style="margin: 0;">
+                          <input
+                            type="checkbox"
+                            id="widgetToggle"
+                            {% if current_user.notifications_widget_enabled %}checked{% endif %}
+                            aria-label="Включить/отключить виджет уведомлений"
+                            title="Включить/отключить виджет уведомлений"
+                          />
+                          <span class="toggle-slider"></span>
+                        </label>
+                      </div>
+                      <!-- Ссылка на настройки в стиле detail-item -->
+                      <div class="settings-link-wrapper">
+                        <a
+                          href="/notifications-polling"
+                          target="_blank"
+                          class="settings-link-item"
+                        >
+                          <i class="fas fa-cogs"></i>
+                          <span>Настройки</span>
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Actions Card -->
+          <div class="content-card">
+            <div class="card-header">
+              <div class="header-icon">
+                <i class="fas fa-bolt"></i>
+              </div>
+              <div class="header-content">
+                <h3 class="card-title">Быстрые действия</h3>
+                <p class="card-subtitle">Основные операции</p>
+              </div>
+            </div>
+
+            <div class="card-content">
+              <div class="actions-grid">
+                <button
+                  type="button"
+                  id="downloadButton"
+                  class="action-btn download-btn"
+                >
+                  <div class="btn-icon">
+                    <i class="fas fa-download"></i>
+                  </div>
+                  <div class="btn-content">
+                    <span class="btn-title">Скачать TEZ ERP</span>
+                    <span class="btn-description">Последняя версия</span>
+                  </div>
+                  <div class="btn-ripple"></div>
+                </button>
+
+                <button
+                  type="button"
+                  id="sendPasswordButton"
+                  class="action-btn password-btn"
+                  data-username="{{ current_user.username }}"
+                >
+                  <div class="btn-icon">
+                    <i class="fas fa-envelope-open-text"></i>
+                  </div>
+                  <div class="btn-content">
+                    <span class="btn-title">Выслать пароль</span>
+                    <span class="btn-description">Почтовый пароль</span>
+                  </div>
+                  <div class="btn-ripple"></div>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </form>
+
+    <!-- Настройки интерфейса - доступны всем пользователям -->
+    <div class="interface-settings-panel">
+      <div class="interface-card">
+        <div class="card-header">
+          <div class="header-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="header-content">
+            <h3>Настройки интерфейса</h3>
+            <p>Персонализация интерфейса и подсказок</p>
+          </div>
+        </div>
+
+        <div class="card-content">
+          <div class="settings-section">
+            <div class="section-header">
+              <span>Подсказки и помощь</span>
+            </div>
+            <div class="notification-settings">
+              <!-- Настройка показа баннера Kanban -->
+              <div class="notification-item">
+                <div class="notification-info">
+                  <div class="notification-icon">
+                    <i class="fas fa-lightbulb"></i>
+                  </div>
+                  <div class="notification-details">
+                    <span class="notification-title">Подсказки Kanban</span>
+                    <span class="notification-description"
+                      >Показывать баннер с полезными советами на странице
+                      задач</span
+                    >
+                  </div>
+                </div>
+                <div class="notification-toggle">
+                  <label class="toggle-switch" for="kanbanTipsToggle" title="Включить или выключить подсказки Kanban">
+                    <input
+                      type="checkbox"
+                      class="notification-toggle"
+                      id="kanbanTipsToggle"
+                      data-type="kanban_tips"
+                      {% if current_user.show_kanban_tips %}checked{% endif %}
+                      aria-label="Показывать баннер с полезными советами на странице задач"
+                    >
+                    <span class="toggle-slider"></span>
+                  </label>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Admin Panel - Moved to bottom -->
+    {% if current_user.is_admin %}
+    <div class="admin-panel-bottom">
+      <div class="admin-card-bottom">
+        <div class="card-header accordion-header" id="adminPanelHeader" role="button" tabindex="0" aria-expanded="true" aria-controls="adminPanelContent">
+          <div class="header-icon">
+            <i class="fas fa-user-shield"></i>
+          </div>
+          <div class="header-content">
+            <h3 class="card-title">Панель администратора</h3>
+            <p class="card-subtitle">Управление правами и настройками</p>
+          </div>
+          <div class="accordion-icon">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+
+        <div class="card-content accordion-content" id="adminPanelContent">
+          <div class="admin-sections-grid">
+            <!-- Контроль качества -->
+            <div class="admin-section">
+              <div class="section-header">
+                <span>Контроль качества</span>
+              </div>
+              <div class="users-list">
+                {% for u_admin in all_users %}
+                <div class="user-item">
+                  <div class="user-info">
+                    <div class="user-avatar-small">
+                      <img
+                        src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                        alt="{{ u_admin.username }}"
+                      />
+                    </div>
+                    <span class="user-name">{{ u_admin.username }}</span>
+                  </div>
+                  <div class="user-toggle">
+                    <label class="toggle-switch" for="quality_control_toggle_{{ u_admin.id }}">
+                      <input
+                        type="checkbox"
+                        class="permission-toggle"
+                        id="quality_control_toggle_{{ u_admin.id }}"
+                        name="quality_control_toggle_{{ u_admin.id }}"
+                        data-user-id="{{ u_admin.id }}"
+                        data-type="quality_control"
+                        aria-label="Дать права на контроль качества для пользователя {{ u_admin.username }}"
+                        title="Управление доступом к контролю качества"
+                        {% if u_admin.can_access_quality_control %}checked{% endif %}
+                      />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Контакт-центр Москва -->
+            <div class="admin-section">
+              <div class="section-header">
+                <span>Контакт-центр Москва</span>
+              </div>
+              <div class="users-list">
+                {% for u_admin in all_users %}
+                <div class="user-item">
+                  <div class="user-info">
+                    <div class="user-avatar-small">
+                      <img
+                        src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
+                        alt="{{ u_admin.username }}"
+                      />
+                    </div>
+                    <span class="user-name">{{ u_admin.username }}</span>
+                  </div>
+                  <div class="user-toggle">
+                    <label class="toggle-switch" for="contact_center_moscow_toggle_{{ u_admin.id }}">
+                      <input
+                        type="checkbox"
+                        class="permission-toggle"
+                        id="contact_center_moscow_toggle_{{ u_admin.id }}"
+                        name="contact_center_moscow_toggle_{{ u_admin.id }}"
+                        data-user-id="{{ u_admin.id }}"
+                        data-type="contact_center_moscow"
+                        aria-label="Дать права на контакт-центр Москва для пользователя {{ u_admin.username }}"
+                        title="Управление доступом к контакт-центру Москва"
+                        {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}
+                      />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Уведомления -->
+            <div class="admin-section">
+              <div class="section-header">
+                <span>Уведомления</span>
+              </div>
+              <div class="notification-settings">
+                <div class="notification-item">
+                  <div class="notification-info">
+                    <div class="notification-icon">
+                      <i class="fas fa-bell"></i>
+                    </div>
+                    <div class="notification-details">
+                      <span class="notification-title">О новых заявках</span>
+                      <span class="notification-description"
+                        >Получать уведомления о новых заявках в Redmine</span
+                      >
+                    </div>
+                  </div>
+                  <div class="notification-toggle">
+                    <label class="toggle-switch" for="newIssuesNotifications">
+                      <input
+                        type="checkbox"
+                        class="notification-toggle"
+                        id="newIssuesNotifications"
+                        name="newIssuesNotifications"
+                        data-type="new_issues_notifications"
+                        aria-label="Получать уведомления о новых заявках"
+                        title="Получать уведомления о новых заявках"
+                      />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+
+                <!-- ПРИМЕЧАНИЕ: Настройка "Подсказки Kanban" перенесена в раздел "Настройки интерфейса" для всех пользователей -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block styles %}
+<style>
+  /* Import Modern Fonts */
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap");
+
+  /* CSS Custom Properties - DARK THEME для account страницы */
+  .account-page-wrapper {
+    /* TEZ TOUR Brand Colors - Dark Mode */
+    --primary-50: #0a1f23;
+    --primary-100: #0d2833;
+    --primary-200: #103442;
+    --primary-300: #144152;
+    --primary-400: #1a5563;
+    --primary-500: #00bcd4;
+    --primary-600: #00acc1;
+    --primary-700: #0097a7;
+    --primary-800: #00838f;
+    --primary-900: #006064;
+
+    /* Status Colors - Dark Mode */
+    --success: #4ade80;
+    --success-bg: rgba(74, 222, 128, 0.1);
+    --error: #f87171;
+    --error-bg: rgba(248, 113, 113, 0.1);
+    --warning: #fbbf24;
+    --warning-bg: rgba(251, 191, 36, 0.1);
+    --info: #60a5fa;
+    --online: #4ade80;
+
+    /* Surface Colors - Dark Mode */
+    --surface-0: #0a0f14;
+    --surface-1: #111922;
+    --surface-2: #1a2332;
+    --surface-3: #242d3d;
+    --surface-glass: rgba(17, 25, 34, 0.95);
+    --surface-card: rgba(26, 35, 50, 0.9);
+
+    /* Text Colors - Dark Mode */
+    --text-primary: #e2e8f0;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --text-disabled: #475569;
+    --text-on-primary: #0a0f14;
+
+    /* Border & Effects - Dark Mode */
+    --border-light: rgba(100, 116, 139, 0.2);
+    --border-medium: rgba(100, 116, 139, 0.3);
+    --border-focus: var(--primary-500);
+
+    /* Shadows - Dark Mode */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.5);
+    --shadow-2: 0 3px 6px rgba(0, 0, 0, 0.4), 0 3px 6px rgba(0, 0, 0, 0.6);
+
+    /* Notification System Colors - Dark Mode */
+    --notification-active: #4ade80;
+    --notification-inactive: #f87171;
+    --notification-bg: rgba(74, 222, 128, 0.05);
+    --notification-border: rgba(74, 222, 128, 0.2);
+    --shadow-3: 0 10px 20px rgba(0, 0, 0, 0.5), 0 6px 6px rgba(0, 0, 0, 0.7);
+    --shadow-card: 0 8px 25px rgba(0, 188, 212, 0.15);
+    --shadow-header: 0 4px 20px rgba(0, 188, 212, 0.2);
+
+    /* Spacing */
+    --spacing-xs: 0.25rem;
+    --spacing-sm: 0.5rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+    --spacing-xxl: 3rem;
+
+    /* Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-xxl: 24px;
+
+    /* Transitions */
+    --transition-fast: 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Typography */
+    --font-family-primary: "Inter", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, sans-serif;
+    --font-family-mono: "JetBrains Mono", "Courier New", monospace;
+  }
+
+  /* Light Theme Variables Override */
+  body:not(.dark-theme) .account-page-wrapper {
+    /* TEZ TOUR Brand Colors - Light Mode */
+    --primary-50: #f0f9ff;
+    --primary-100: #e0f2fe;
+    --primary-200: #bae6fd;
+    --primary-300: #7dd3fc;
+    --primary-400: #38bdf8;
+    --primary-500: #0ea5e9;
+    --primary-600: #0284c7;
+    --primary-700: #0369a1;
+    --primary-800: #075985;
+    --primary-900: #0c4a6e;
+
+    /* Status Colors - Light Mode */
+    --success: #059669;
+    --success-bg: rgba(5, 150, 105, 0.1);
+    --error: #dc2626;
+    --error-bg: rgba(220, 38, 38, 0.1);
+    --warning: #d97706;
+    --warning-bg: rgba(217, 119, 6, 0.1);
+    --info: #2563eb;
+    --online: #059669;
+
+    /* Surface Colors - Light Mode */
+    --surface-0: #ffffff;
+    --surface-1: #f8fafc;
+    --surface-2: #f1f5f9;
+    --surface-3: #e2e8f0;
+    --surface-glass: rgba(255, 255, 255, 0.95);
+    --surface-card: rgba(255, 255, 255, 0.9);
+
+    /* Text Colors - Light Mode */
+    --text-primary: #1e293b;
+    --text-secondary: #475569;
+    --text-muted: #64748b;
+    --text-disabled: #94a3b8;
+    --text-on-primary: #ffffff;
+
+    /* Border & Effects - Light Mode */
+    --border-light: rgba(148, 163, 184, 0.2);
+    --border-medium: rgba(148, 163, 184, 0.3);
+    --border-focus: var(--primary-500);
+
+    /* Shadows - Light Mode */
+    --shadow-1: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+    --shadow-2: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+    --shadow-3: 0 10px 15px rgba(0, 0, 0, 0.1), 0 4px 6px rgba(0, 0, 0, 0.05);
+    --shadow-card: 0 8px 25px rgba(14, 165, 233, 0.15);
+    --shadow-header: 0 4px 20px rgba(14, 165, 233, 0.2);
+
+    /* Notification System Colors - Light Mode */
+    --notification-active: #059669;
+    --notification-inactive: #dc2626;
+    --notification-bg: rgba(5, 150, 105, 0.05);
+    --notification-border: rgba(5, 150, 105, 0.2);
+  }
+
+  /* Base Styles - только для account страницы */
+  .account-page-wrapper {
+    font-family: var(--font-family-primary);
+    background: linear-gradient(135deg, #0a0f14 0%, #111922 100%);
+    min-height: 100vh;
+    padding: var(--spacing-md) 0;
+    position: relative;
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  /* Light Theme Base Styles */
+  body:not(.dark-theme) .account-page-wrapper {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  }
+
+  /* Background Shapes */
+  .account-page-wrapper .background-shapes {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .account-page-wrapper .shape {
+    position: absolute;
+    background: rgba(0, 188, 212, 0.08);
+    border-radius: 50%;
+    animation: float 15s ease-in-out infinite;
+    filter: blur(40px);
+    transition: all var(--transition-normal);
+  }
+
+  /* Light Theme Background Shapes */
+  body:not(.dark-theme) .account-page-wrapper .shape {
+    background: rgba(14, 165, 233, 0.06);
+  }
+
+  .account-page-wrapper .shape-1 {
+    width: 400px;
+    height: 400px;
+    top: 10%;
+    left: -10%;
+    animation-delay: 0s;
+  }
+
+  .account-page-wrapper .shape-2 {
+    width: 300px;
+    height: 300px;
+    top: 60%;
+    right: -5%;
+    animation-delay: 5s;
+  }
+
+  .account-page-wrapper .shape-3 {
+    width: 250px;
+    height: 250px;
+    bottom: 10%;
+    left: 20%;
+    animation-delay: 10s;
+  }
+
+  .account-page-wrapper .shape-4 {
+    width: 200px;
+    height: 200px;
+    top: 30%;
+    right: 15%;
+    animation-delay: 15s;
+  }
+
+  @keyframes float {
+    0%,
+    100% {
+      transform: translateY(0px) rotate(0deg);
+    }
+    33% {
+      transform: translateY(-30px) rotate(5deg);
+    }
+    66% {
+      transform: translateY(15px) rotate(-5deg);
+    }
+  }
+
+  /* Container */
+  .account-page-wrapper .account-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+    padding: 0 var(--spacing-lg);
+  }
+
+  /* Page Header */
+  .account-page-wrapper .page-header {
+    background: var(--surface-glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-header);
+    padding: var(--spacing-md) var(--spacing-lg);
+    margin-bottom: var(--spacing-lg);
+    animation: slideDown 0.8s ease-out;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .account-page-wrapper .header-content {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .account-page-wrapper .title-section {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+  }
+
+  .account-page-wrapper .icon-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border-radius: var(--radius-lg);
+    color: var(--text-on-primary);
+    font-size: 1.25rem;
+    box-shadow: var(--shadow-2);
+    z-index: 2;
+  }
+
+  .account-page-wrapper .icon-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 130%;
+    height: 130%;
+    background: radial-gradient(
+      circle,
+      rgba(0, 121, 140, 0.3) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: pulse 3s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  @keyframes pulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.2);
+      opacity: 0.8;
+    }
+  }
+
+  .account-page-wrapper .title-content {
+    flex: 1;
+  }
+
+  .account-page-wrapper .page-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    letter-spacing: -0.025em;
+    line-height: 1.2;
+  }
+
+  .account-page-wrapper .page-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 400;
+  }
+
+  .account-page-wrapper .user-status-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    justify-content: flex-start;
+    /* Принудительное выравнивание по центру */
+    align-content: center;
+    /* Дополнительные стили для точного выравнивания */
+    flex-wrap: nowrap;
+    min-height: 40px;
+  }
+
+  .account-page-wrapper .status-badge.online {
+    display: flex !important;
+    align-items: center !important;
+    gap: var(--spacing-xs) !important;
+    padding: var(--spacing-sm) var(--spacing-md) !important;
+    background: var(--success-bg) !important;
+    border: 1px solid var(--online) !important;
+    border-radius: var(--radius-lg) !important;
+    color: var(--online) !important;
+    font-size: 0.875rem !important;
+    font-weight: 600 !important;
+    height: 40px !important; /* Точная высота как у переключателя темы */
+    box-sizing: border-box !important; /* Включаем padding и border в общую высоту */
+    align-self: center !important; /* Принудительное выравнивание по центру */
+    text-transform: none !important; /* Отключаем uppercase из общего стиля */
+    letter-spacing: normal !important; /* Отключаем letter-spacing из общего стиля */
+    margin-bottom: 0 !important; /* Отключаем margin-bottom из общего стиля */
+    margin: 0 !important; /* Отключаем все отступы */
+  }
+
+  .account-page-wrapper .status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--online);
+    border-radius: 50%;
+    animation: pulseOnline 2s ease-in-out infinite;
+  }
+
+  @keyframes pulseOnline {
+    0%,
+    100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.2);
+      opacity: 0.8;
+    }
+  }
+
+  /* Theme Switcher */
+  .account-page-wrapper .theme-switcher-container {
+    /* Отступ теперь управляется через gap в родительском контейнере */
+    align-self: center !important; /* Принудительное выравнивание по центру */
+    display: flex;
+    align-items: center;
+    height: 40px; /* Точная высота контейнера */
+    justify-content: center;
+  }
+
+  .account-page-wrapper .theme-switcher {
+    background: rgba(255, 255, 255, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: var(--radius-md);
+    color: #ffffff;
+    cursor: pointer;
+    padding: var(--spacing-sm);
+    transition: all var(--transition-normal);
+    -webkit-backdrop-filter: blur(10px); /* Safari Support */
+    backdrop-filter: blur(10px);
+    width: 40px !important;
+    height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    position: relative;
+    overflow: hidden;
+    box-sizing: border-box !important; /* Включаем padding и border в общую высоту */
+    align-self: center !important; /* Принудительное выравнивание по центру */
+    margin: 0 !important; /* Отключаем все отступы */
+  }
+
+  .account-page-wrapper .theme-switcher:hover {
+    background: rgba(255, 255, 255, 0.25);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-1);
+  }
+
+  /* Базовые стили иконок theme-switcher */
+  .account-page-wrapper .theme-switcher i {
+    font-size: 16px;
+    transition: all var(--transition-normal);
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Логика отображения иконок theme-switcher */
+  .account-page-wrapper .theme-switcher .fa-sun {
+    display: none !important;
+  }
+
+  .account-page-wrapper .theme-switcher .fa-moon {
+    display: inline-block !important;
+  }
+
+  body.dark-theme .account-page-wrapper .theme-switcher .fa-sun {
+    display: inline-block !important;
+    color: #ffffff;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    font-weight: 900;
+  }
+
+  body.dark-theme .account-page-wrapper .theme-switcher .fa-moon {
+    display: none !important;
+  }
+
+  body.dark-theme .account-page-wrapper .theme-switcher:hover .fa-sun {
+    color: #fbbf24;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    transform: scale(1.1);
+  }
+
+  /* Стили иконок в светлой теме */
+  body:not(.dark-theme) .account-page-wrapper .theme-switcher {
+    background: rgba(0, 0, 0, 0.08);
+    border: 2px solid rgba(0, 0, 0, 0.25);
+    color: rgba(0, 0, 0, 0.8);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3);
+  }
+
+  body:not(.dark-theme) .account-page-wrapper .theme-switcher:hover {
+    background: rgba(0, 0, 0, 0.12);
+    border-color: rgba(0, 0, 0, 0.4);
+    color: rgba(0, 0, 0, 0.95);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    transform: translateY(-2px) scale(1.05);
+  }
+
+  body:not(.dark-theme) .account-page-wrapper .theme-switcher .fa-moon {
+    display: inline-block !important;
+    color: rgba(0, 0, 0, 0.8);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    font-weight: 900;
+  }
+
+  body:not(.dark-theme) .account-page-wrapper .theme-switcher:hover .fa-moon {
+    color: rgba(0, 0, 0, 0.95);
+    text-shadow: 0 1px 3px rgba(255, 255, 255, 0.7);
+    transform: scale(1.1);
+  }
+
+  /* Account Grid */
+  .account-page-wrapper .account-grid {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: var(--spacing-lg);
+    align-items: start;
+  }
+
+  /* Profile Sidebar */
+  .account-page-wrapper .profile-card {
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    box-shadow: var(--shadow-card);
+    position: sticky;
+    top: 80px;
+    text-align: center;
+    animation: fadeInLeft 0.8s ease-out;
+  }
+
+  @keyframes fadeInLeft {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .account-page-wrapper .avatar-section {
+    margin-bottom: var(--spacing-md);
+  }
+
+  .account-page-wrapper .avatar-container {
+    position: relative;
+    display: inline-block;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .account-page-wrapper .profile-avatar {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid var(--surface-0);
+    box-shadow: var(--shadow-2);
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .avatar-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 121, 140, 0.8);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-on-primary);
+    font-size: 1.125rem;
+    opacity: 0;
+    transition: all var(--transition-normal);
+    cursor: pointer;
+  }
+
+  .account-page-wrapper .avatar-container:hover .avatar-overlay {
+    opacity: 1;
+  }
+
+  .account-page-wrapper .avatar-container:hover .profile-avatar {
+    transform: scale(1.05);
+  }
+
+  .account-page-wrapper .avatar-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 120%;
+    height: 120%;
+    background: radial-gradient(
+      circle,
+      rgba(0, 121, 140, 0.2) 0%,
+      transparent 70%
+    );
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: avatarPulse 4s ease-in-out infinite;
+    z-index: -1;
+  }
+
+  @keyframes avatarPulse {
+    0%,
+    100% {
+      transform: translate(-50%, -50%) scale(1);
+      opacity: 0.6;
+    }
+    50% {
+      transform: translate(-50%, -50%) scale(1.15);
+      opacity: 0.8;
+    }
+  }
+
+  .account-page-wrapper .avatar-upload {
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .account-page-wrapper .upload-label {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: 0.4rem 0.75rem;
+    background: var(--surface-2);
+    color: var(--text-secondary);
+    border: 2px dashed var(--border-medium);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    font-size: 0.8rem;
+    font-weight: 500;
+  }
+
+  .account-page-wrapper .upload-label:hover {
+    background: var(--primary-50);
+    color: var(--primary-700);
+    border-color: var(--primary-300);
+    transform: translateY(-2px);
+  }
+
+  .account-page-wrapper .upload-input {
+    display: none;
+  }
+
+  .account-page-wrapper .upload-errors {
+    margin-top: var(--spacing-sm);
+  }
+
+  .account-page-wrapper .error-message {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--error);
+    font-weight: 500;
+  }
+
+  .account-page-wrapper .update-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border: none;
+    border-radius: var(--radius-md);
+    color: var(--text-on-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .account-page-wrapper .update-btn:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-2);
+  }
+
+  .account-page-wrapper .user-info {
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 1px solid var(--border-light);
+    display: flex; /* Добавлено */
+    flex-direction: column; /* Добавлено */
+    align-items: center; /* Добавлено */
+    text-align: center; /* Добавлено для выравнивания текста в дочерних элементах */
+  }
+
+  .account-page-wrapper .user-name {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+  }
+
+  .account-page-wrapper .user-role {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+  }
+
+  .account-page-wrapper .last-seen {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Центрируем содержимое */
+    gap: 0.25rem; /* Используем переменную для отступа */
+    font-size: 0.75rem; /* Уменьшим шрифт для компактности */
+    color: var(--text-muted);
+    padding: 0.35rem 0.5rem; /* Отступы внутри блока */
+    background: var(--surface-1); /* Легкий фон */
+    border-radius: var(--radius-sm); /* Скругление углов */
+    text-align: center; /* На всякий случай, если flex не сработает */
+    width: 100%; /* Растягиваем на всю ширину родителя */
+    box-sizing: border-box; /* Чтобы padding не влиял на общую ширину */
+    margin: 0 auto; /* Горизонтальное центрирование блока (если родитель позволяет) */
+    flex-wrap: wrap; /* Позволяем перенос на новую строку */
+    min-height: auto; /* Автоматическая высота */
+  }
+
+  .account-page-wrapper .last-seen i {
+    flex-shrink: 0; /* Иконка не будет сжиматься */
+    width: 12px; /* Фиксированная ширина иконки */
+    text-align: center; /* Центрирование иконки */
+  }
+
+  .account-page-wrapper .last-seen span {
+    white-space: normal; /* Текст может переноситься */
+    overflow: visible; /* Показываем весь текст */
+    text-overflow: clip; /* Убираем многоточие */
+    flex: 1; /* Текст занимает оставшееся пространство */
+    text-align: center; /* Центрируем текст внутри span */
+    word-break: break-word; /* Разрешаем перенос длинных слов при необходимости */
+    min-width: 0; /* Позволяем сжатие */
+  }
+
+  .account-page-wrapper .profile-navigation {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .account-page-wrapper .nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: 0.5rem 0.75rem;
+    text-decoration: none;
+    color: var(--text-secondary);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+
+  .account-page-wrapper .nav-item:hover {
+    background: var(--surface-2);
+    color: var(--text-primary);
+    transform: translateX(4px);
+  }
+
+  .account-page-wrapper .nav-item.active {
+    background: linear-gradient(135deg, var(--primary-50), var(--primary-100));
+    color: var(--primary-700);
+    font-weight: 600;
+  }
+
+  .account-page-wrapper .nav-item i {
+    width: 20px;
+    text-align: center;
+    opacity: 0.8;
+  }
+
+  /* Main Content */
+  .account-page-wrapper .main-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .account-page-wrapper .content-card {
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .content-card:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-3);
+  }
+
+  .account-page-wrapper .card-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(
+      135deg,
+      rgba(0, 188, 212, 0.1),
+      rgba(0, 188, 212, 0.05)
+    );
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .account-page-wrapper .header-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border-radius: var(--radius-md);
+    color: var(--text-on-primary);
+    font-size: 1rem;
+    box-shadow: var(--shadow-1);
+  }
+
+  .account-page-wrapper .card-title {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    line-height: 1.3;
+  }
+
+  .account-page-wrapper .card-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin: 0;
+  }
+
+  .account-page-wrapper .card-content {
+    padding: var(--spacing-lg);
+  }
+
+  /* Info Grid */
+  .account-page-wrapper .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+  }
+
+  .account-page-wrapper .info-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md);
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    transition: all var(--transition-normal);
+    border: 1px solid var(--border-light);
+  }
+
+  .account-page-wrapper .info-item:hover {
+    background: var(--surface-3);
+    border-color: var(--primary-500);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.15);
+  }
+
+  .account-page-wrapper .info-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(0, 188, 212, 0.15);
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    border-radius: var(--radius-md);
+    color: var(--primary-600);
+    font-size: 0.875rem;
+    flex-shrink: 0;
+  }
+
+  .account-page-wrapper .info-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    min-width: 0;
+  }
+
+  .account-page-wrapper .info-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .account-page-wrapper .info-value {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+
+  .account-page-wrapper .email-link {
+    color: var(--primary-500);
+    text-decoration: none;
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .email-link:hover {
+    color: var(--primary-700);
+    text-decoration: underline;
+  }
+
+  .account-page-wrapper .info-input {
+    border: none;
+    background: none;
+    padding: 0;
+    font-size: 1rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    width: 100%;
+  }
+
+  .account-page-wrapper .readonly-input {
+    cursor: default;
+  }
+
+  /* Settings Items */
+  .account-page-wrapper .settings-item {
+    margin-bottom: var(--spacing-xxl);
+  }
+
+  .account-page-wrapper .settings-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .account-page-wrapper .setting-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-lg);
+  }
+
+  .account-page-wrapper .setting-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 45px;
+    height: 45px;
+    background: rgba(0, 188, 212, 0.15);
+    border: 1px solid rgba(0, 188, 212, 0.3);
+    border-radius: var(--radius-lg);
+    color: var(--primary-600);
+    font-size: 1.125rem;
+    flex-shrink: 0;
+    margin-top: var(--spacing-xs);
+  }
+
+  .account-page-wrapper .setting-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .account-page-wrapper .setting-label {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: var(--spacing-sm);
+  }
+
+  /* VPN Status */
+  .account-page-wrapper .vpn-status-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .account-page-wrapper .vpn-input {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-family: var(--font-family-mono);
+    height: 42px;
+    box-sizing: border-box;
+  }
+
+  .account-page-wrapper .vpn-update-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    border: none;
+    border-radius: var(--radius-md);
+    color: white;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    flex-shrink: 0;
+    box-sizing: border-box;
+  }
+
+  .account-page-wrapper .vpn-update-btn:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);
+  }
+
+  .account-page-wrapper .vpn-update-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(37, 99, 235, 0.3);
+  }
+
+  .account-page-wrapper .vpn-update-btn i {
+    font-size: 1rem;
+    transition: transform 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .account-page-wrapper .vpn-update-btn:hover i {
+    transform: rotate(180deg);
+  }
+
+  /* Tooltip стили */
+  .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(15, 23, 42, 0.95);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+    border-radius: var(--radius-md);
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: tooltipFadeIn 0.2s ease-out;
+  }
+
+  .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::before {
+    content: '';
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-bottom: 0.25rem;
+    border: 5px solid transparent;
+    border-top-color: rgba(15, 23, 42, 0.95);
+    z-index: 1000;
+    pointer-events: none;
+    animation: tooltipFadeIn 0.2s ease-out;
+  }
+
+  @keyframes tooltipFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  /* Темная тема для tooltip */
+  body.dark-theme .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::after,
+  html.dark-theme .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::after,
+  [data-theme="dark"] .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::after {
+    background: rgba(255, 255, 255, 0.95);
+    color: rgba(15, 23, 42, 0.95);
+  }
+
+  body.dark-theme .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::before,
+  html.dark-theme .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::before,
+  [data-theme="dark"] .account-page-wrapper .vpn-update-btn[data-tooltip]:hover::before {
+    border-top-color: rgba(255, 255, 255, 0.95);
+  }
+
+  .account-page-wrapper .vpn-badge-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .account-page-wrapper .status-badge.active {
+    background: var(--success-bg);
+    color: var(--success);
+    border: 1px solid var(--success);
+  }
+
+  .account-page-wrapper .status-badge.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+  }
+
+  .account-page-wrapper .status-badge.inactive {
+    background: var(--error-bg);
+    color: var(--error);
+    border: 1px solid var(--error);
+  }
+
+  .account-page-wrapper .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-radius: var(--radius-lg);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .account-page-wrapper .status-info {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    font-weight: 500;
+  }
+
+  /* Password Container */
+  .account-page-wrapper .password-container {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .account-page-wrapper .password-input {
+    flex: 1;
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-family: var(--font-family-mono);
+  }
+
+  .account-page-wrapper .password-toggle-btn,
+  .account-page-wrapper .password-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: var(--surface-3);
+    border: 1px solid var(--border-medium);
+    border-radius: var(--radius-lg);
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    white-space: nowrap;
+  }
+
+  .account-page-wrapper .password-toggle-btn:hover,
+  .account-page-wrapper .password-copy-btn:hover:not(:disabled) {
+    background: rgba(0, 188, 212, 0.2);
+    color: var(--primary-500);
+    border-color: var(--primary-500);
+    transform: translateY(-1px);
+  }
+
+  .account-page-wrapper .password-copy-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  /* Signature Preview */
+  .account-page-wrapper .signature-preview {
+    padding: var(--spacing-lg);
+    background: var(--surface-2);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    margin-bottom: var(--spacing-md);
+    max-height: 200px;
+    overflow-y: auto;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: var(--text-secondary);
+  }
+
+  .account-page-wrapper .signature-copy-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-lg);
+    background: linear-gradient(135deg, var(--primary-500), var(--primary-400));
+    border: none;
+    border-radius: var(--radius-lg);
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .signature-copy-btn:hover {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-1);
+  }
+
+  /* Actions Grid - ИСПРАВЛЕНО: Увеличены размеры для полного отображения текста */
+  .account-page-wrapper .actions-grid {
+    display: grid;
+    grid-template-columns: repeat(
+      auto-fit,
+      minmax(250px, 1fr)
+    ); /* УВЕЛИЧЕНА минимальная ширина с 200px до 250px для полного отображения текста */
+    gap: var(
+      --spacing-lg
+    ); /* УВЕЛИЧЕН отступ между кнопками с md до lg для лучшего разделения */
+    max-width: 600px; /* УВЕЛИЧЕНА максимальная ширина контейнера с 450px до 600px */
+    justify-content: center; /* ДОБАВЛЕНО: Центрирование кнопок по горизонтали */
+    align-items: stretch; /* ДОБАВЛЕНО: Равная высота всех кнопок */
+  }
+
+  .account-page-wrapper .action-btn {
+    display: flex;
+    align-items: center;
+    gap: var(
+      --spacing-lg
+    ); /* УВЕЛИЧЕН внутренний отступ между элементами с md до lg для лучшего разделения */
+    padding: var(
+      --spacing-lg
+    ); /* УМЕНЬШЕН внутренний отступ с xl до lg для более компактного вида */
+    background: var(--surface-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+    text-align: left;
+    min-height: 65px; /* УМЕНЬШЕНА минимальная высота с 100px до 65px для более компактного вида */
+    width: 100%; /* ДОБАВЛЕНО: Полная ширина контейнера */
+    box-sizing: border-box; /* ДОБАВЛЕНО: Правильный расчет размеров с учетом padding и border */
+  }
+
+  .account-page-wrapper .action-btn:hover {
+    transform: translateY(
+      -2px
+    ); /* Уменьшен эффект поднятия с -4px до -2px для более деликатного эффекта */
+    box-shadow: var(--shadow-2);
+    border-color: var(--primary-200);
+  }
+
+  /* Улучшенная адаптивность для touch-устройств */
+  @media (hover: none) and (pointer: coarse) {
+    .account-page-wrapper .action-btn:hover {
+      transform: none; /* Отключаем hover-эффекты на touch-устройствах */
+    }
+
+    .account-page-wrapper .action-btn:active {
+      transform: scale(0.98); /* Добавляем эффект нажатия для touch-устройств */
+      transition: transform 0.1s ease;
+    }
+  }
+
+  .account-page-wrapper .download-btn {
+    background: linear-gradient(
+      135deg,
+      rgba(74, 222, 128, 0.1),
+      rgba(74, 222, 128, 0.05)
+    );
+    border-color: var(--success);
+  }
+
+  .account-page-wrapper .download-btn:hover {
+    background: linear-gradient(135deg, var(--success), #22c55e);
+    color: var(--text-on-primary);
+  }
+
+  .account-page-wrapper .password-btn {
+    background: linear-gradient(
+      135deg,
+      rgba(251, 191, 36, 0.1),
+      rgba(251, 191, 36, 0.05)
+    );
+    border-color: var(--warning);
+  }
+
+  .account-page-wrapper .password-btn:hover {
+    background: linear-gradient(135deg, var(--warning), #f59e0b);
+    color: var(--text-on-primary);
+  }
+
+  .account-page-wrapper .btn-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px; /* УВЕЛИЧЕНА ширина иконки с 40px до 50px для лучшей пропорции */
+    height: 50px; /* УВЕЛИЧЕНА высота иконки с 40px до 50px для лучшей пропорции */
+    border-radius: var(--radius-lg);
+    font-size: 1.4rem; /* УВЕЛИЧЕН размер шрифта иконки с 1.2rem до 1.4rem для лучшей видимости */
+    flex-shrink: 0;
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .download-btn .btn-icon {
+    background: var(--success);
+    color: white;
+  }
+
+  .account-page-wrapper .password-btn .btn-icon {
+    background: var(--warning);
+    color: white;
+  }
+
+  .account-page-wrapper .btn-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(
+      --spacing-sm
+    ); /* УВЕЛИЧЕН отступ между заголовком и описанием с xs до sm */
+    justify-content: center; /* ДОБАВЛЕНО: Вертикальное центрирование содержимого */
+    min-width: 0; /* ДОБАВЛЕНО: Позволяет flex-элементу сжиматься меньше своего содержимого */
+  }
+
+  .account-page-wrapper .btn-title {
+    font-size: 1.125rem; /* УВЕЛИЧЕН размер заголовка с 1rem до 1.125rem для лучшей читаемости */
+    font-weight: 600;
+    color: var(--text-primary);
+    transition: all var(--transition-normal);
+    line-height: 1.4; /* УВЕЛИЧЕНА высота строки с 1.3 до 1.4 для лучшего отображения */
+    white-space: nowrap; /* ДОБАВЛЕНО: Предотвращение переноса текста на новую строку */
+    overflow: hidden; /* ДОБАВЛЕНО: Скрытие переполнения */
+    text-overflow: ellipsis; /* ДОБАВЛЕНО: Многоточие при переполнении */
+  }
+
+  .account-page-wrapper .btn-description {
+    font-size: 0.875rem; /* УВЕЛИЧЕН размер описания с 0.8rem до 0.875rem для лучшей читаемости */
+    color: var(--text-secondary);
+    transition: all var(--transition-normal);
+    line-height: 1.3; /* УВЕЛИЧЕНА высота строки с 1.2 до 1.3 для лучшего отображения */
+    white-space: nowrap; /* ДОБАВЛЕНО: Предотвращение переноса текста на новую строку */
+    overflow: hidden; /* ДОБАВЛЕНО: Скрытие переполнения */
+    text-overflow: ellipsis; /* ДОБАВЛЕНО: Многоточие при переполнении */
+  }
+
+  .account-page-wrapper .action-btn:hover .btn-title,
+  .account-page-wrapper .action-btn:hover .btn-description {
+    color: white;
+  }
+
+  .account-page-wrapper .btn-ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    pointer-events: none;
+  }
+
+  /* Admin Panel */
+  .account-page-wrapper .admin-card {
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    position: sticky;
+    top: 120px;
+    animation: fadeInRight 0.8s ease-out 0.4s both;
+  }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  .account-page-wrapper .admin-table-container {
+    max-height: 500px;
+    overflow-y: auto;
+  }
+
+  .account-page-wrapper .table-header {
+    padding: var(--spacing-md) 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: var(--spacing-md);
+  }
+
+  .account-page-wrapper .users-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .account-page-wrapper .user-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md);
+    background: var(--surface-2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+    border: 1px solid var(--border-light);
+  }
+
+  .account-page-wrapper .user-item:hover {
+    background: var(--surface-3);
+    transform: translateX(4px);
+    border-color: var(--primary-500);
+  }
+
+  .account-page-wrapper .user-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+  }
+
+  .account-page-wrapper .user-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    overflow: hidden;
+    border: 2px solid var(--border-light);
+  }
+
+  .account-page-wrapper .user-avatar-small img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .account-page-wrapper .user-name {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  /* Toggle Switch */
+  .account-page-wrapper .toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+  }
+
+  .account-page-wrapper .toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .account-page-wrapper .toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--surface-3);
+    transition: var(--transition-normal);
+    border-radius: 24px;
+  }
+
+  .account-page-wrapper .toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: var(--transition-normal);
+    border-radius: 50%;
+    box-shadow: var(--shadow-1);
+  }
+
+  .account-page-wrapper input:checked + .toggle-slider {
+    background-color: var(--success);
+  }
+
+  .account-page-wrapper input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+  }
+
+  /* Notification Settings Styles */
+  .account-page-wrapper .notification-settings {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+
+  .account-page-wrapper .notification-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-lg);
+    background: var(--surface-2);
+    border-radius: var(--radius-lg);
+    transition: all var(--transition-normal);
+    border: 1px solid var(--border-light);
+  }
+
+  .account-page-wrapper .notification-item:hover {
+    background: var(--surface-3);
+    transform: translateX(4px);
+    border-color: var(--primary-500);
+  }
+
+  .account-page-wrapper .notification-info {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    flex: 1;
+  }
+
+  .account-page-wrapper .notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: rgba(0, 188, 212, 0.15);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primary-600);
+    font-size: 1rem;
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .notification-item:hover .notification-icon {
+    background: rgba(0, 188, 212, 0.25);
+    color: var(--primary-500);
+    transform: scale(1.1);
+  }
+
+  .account-page-wrapper .notification-details {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .account-page-wrapper .notification-title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .account-page-wrapper .notification-description {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+  }
+
+  .account-page-wrapper .notification-toggle {
+    margin-left: var(--spacing-md);
+  }
+
+  /* Interface Settings Panel Styles */
+  .account-page-wrapper .interface-settings-panel {
+    margin-top: var(--spacing-xxl);
+    animation: fadeInUp 0.8s ease-out 0.5s both;
+  }
+
+  .account-page-wrapper .interface-card {
+    background: var(--surface-card);
+    -webkit-backdrop-filter: blur(20px); /* Safari support */
+    backdrop-filter: blur(20px);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .account-page-wrapper .interface-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 35px rgba(0, 121, 140, 0.12);
+  }
+
+  .account-page-wrapper .interface-card .card-header {
+    background: linear-gradient(
+      135deg,
+      rgba(0, 188, 212, 0.15),
+      rgba(0, 188, 212, 0.08)
+    );
+    color: var(--text-primary);
+    padding: var(--spacing-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--border-light);
+  }
+
+  .account-page-wrapper .interface-card .header-icon {
+    width: 50px;
+    height: 50px;
+    background: rgba(0, 188, 212, 0.2);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    -webkit-backdrop-filter: blur(10px); /* Safari support */
+    backdrop-filter: blur(10px);
+  }
+
+  .account-page-wrapper .interface-card .header-content h3 {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+  }
+
+  .account-page-wrapper .interface-card .header-content p {
+    margin: 0.25rem 0 0;
+    opacity: 0.9;
+    font-size: 0.9rem;
+  }
+
+  .account-page-wrapper .interface-card .card-content {
+    padding: var(--spacing-lg);
+  }
+
+  .account-page-wrapper .settings-section {
+    margin-bottom: var(--spacing-lg);
+  }
+
+  .account-page-wrapper .settings-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .account-page-wrapper .settings-section .section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-md);
+    padding-bottom: var(--spacing-sm);
+    border-bottom: 2px solid rgba(0, 188, 212, 0.2);
+  }
+
+  .account-page-wrapper .settings-section .section-header span {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--primary-500);
+  }
+
+  /* Admin Panel Bottom Styles */
+  .account-page-wrapper .admin-panel-bottom {
+    margin-top: var(--spacing-xxl);
+    animation: fadeInUp 0.8s ease-out 0.6s both;
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .account-page-wrapper .admin-card-bottom {
+    background: var(--surface-card);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-card);
+    overflow: hidden;
+  }
+
+  /* Accordion Styles for Admin Panel */
+  .account-page-wrapper .accordion-header {
+    cursor: pointer;
+    user-select: none;
+    transition: all var(--transition-normal);
+    justify-content: space-between;
+    position: relative;
+  }
+
+  .account-page-wrapper .accordion-header .header-content {
+    flex: 1;
+  }
+
+  .account-page-wrapper .accordion-header:hover {
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .account-page-wrapper .accordion-header:focus {
+    outline: 2px solid var(--primary-500);
+    outline-offset: -2px;
+    border-radius: var(--radius-xl);
+  }
+
+  .account-page-wrapper .accordion-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    color: var(--primary-500);
+    transition: transform var(--transition-normal);
+    flex-shrink: 0;
+  }
+
+  .account-page-wrapper .accordion-header[aria-expanded="false"] .accordion-icon {
+    transform: rotate(-90deg);
+  }
+
+  .account-page-wrapper .accordion-header[aria-expanded="true"] .accordion-icon {
+    transform: rotate(0deg);
+  }
+
+  .account-page-wrapper .accordion-content {
+    max-height: 5000px;
+    overflow: hidden;
+    transition: max-height 0.4s ease-out, opacity 0.3s ease-out, padding 0.3s ease-out;
+    opacity: 1;
+  }
+
+  .account-page-wrapper .accordion-header[aria-expanded="false"] + .accordion-content {
+    max-height: 0;
+    opacity: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+  }
+
+  .account-page-wrapper .admin-sections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: var(--spacing-xl);
+    padding: var(--spacing-xl);
+  }
+
+  .account-page-wrapper .admin-section {
+    background: var(--surface-2);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-lg);
+    border: 1px solid var(--border-light);
+    transition: all var(--transition-normal);
+  }
+
+  .account-page-wrapper .admin-section:hover {
+    background: var(--surface-3);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 188, 212, 0.15);
+  }
+
+  .account-page-wrapper .section-header {
+    padding: var(--spacing-md) 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: var(--spacing-md);
+  }
+
+  /* Responsive Design */
+  @media (max-width: 1200px) {
+    .account-page-wrapper .account-grid {
+      grid-template-columns: 280px 1fr;
+      gap: var(--spacing-xl);
+    }
+  }
+
+  @media (max-width: 968px) {
+    .account-page-wrapper .account-grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-xl);
+    }
+
+    .account-page-wrapper .profile-card {
+      position: static;
+    }
+
+    .account-page-wrapper .admin-sections-grid {
+      grid-template-columns: 1fr;
+      gap: var(--spacing-lg);
+      padding: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .admin-section {
+      padding: var(--spacing-md);
+    }
+
+    .account-page-wrapper .account-container {
+      padding: 0 var(--spacing-md);
+    }
+
+    .account-page-wrapper .page-header {
+      padding: var(--spacing-lg) var(--spacing-xl);
+    }
+
+    .account-page-wrapper .header-content {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .user-status-container {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .theme-switcher-container {
+      margin-left: 0;
+    }
+
+    .account-page-wrapper .theme-switcher {
+      width: 36px;
+      height: 36px;
+    }
+
+    .account-page-wrapper .status-badge.online {
+      height: 36px !important; /* Точная высота как у переключателя на мобильных */
+    }
+
+    .account-page-wrapper .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .account-page-wrapper .actions-grid {
+      grid-template-columns: 1fr;
+      max-width: none; /* Убираем ограничение ширины на мобильных */
+    }
+
+    /* Адаптивные стили для кнопок действий на планшетах */
+    .account-page-wrapper .action-btn {
+      min-height: 55px; /* УМЕНЬШЕНА высота с 85px до 55px для более компактного вида */
+      padding: var(
+        --spacing-md
+      ); /* УМЕНЬШЕН padding с lg до md для более компактного вида */
+      gap: var(--spacing-md); /* Уменьшен gap для экономии места */
+    }
+
+    .account-page-wrapper .btn-icon {
+      width: 42px; /* УВЕЛИЧЕН размер иконки с 36px до 42px */
+      height: 42px;
+      font-size: 1.25rem; /* УВЕЛИЧЕН размер шрифта с 1.1rem до 1.25rem */
+    }
+
+    .account-page-wrapper .btn-title {
+      font-size: 1rem; /* Немного уменьшен размер заголовка для планшетов */
+    }
+
+    .account-page-wrapper .btn-description {
+      font-size: 0.8rem; /* Немного уменьшен размер описания для планшетов */
+    }
+  }
+
+  /* Дополнительные адаптивные стили для средних экранов */
+  @media (max-width: 900px) and (min-width: 769px) {
+    .account-page-wrapper .actions-grid {
+      grid-template-columns: repeat(
+        2,
+        1fr
+      ); /* Две колонки на средних экранах */
+      max-width: 500px; /* УВЕЛИЧЕНА ширина с 400px до 500px для лучшего отображения */
+      gap: var(--spacing-md); /* Уменьшен отступ для экономии места */
+    }
+
+    .account-page-wrapper .admin-sections-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .action-btn {
+      min-height: 60px; /* УМЕНЬШЕНА промежуточная высота с 90px до 60px для более компактного вида */
+      padding: var(--spacing-md); /* Уменьшен padding для экономии места */
+    }
+
+    .account-page-wrapper .btn-icon {
+      width: 45px; /* Промежуточный размер иконки */
+      height: 45px;
+      font-size: 1.3rem;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .account-page-wrapper .page-title {
+      font-size: 2rem;
+    }
+
+    .account-page-wrapper .card-content {
+      padding: var(--spacing-xl);
+    }
+
+    .account-page-wrapper .card-header {
+      padding: var(--spacing-lg) var(--spacing-xl);
+      flex-direction: column;
+      text-align: center;
+      gap: var(--spacing-md);
+    }
+
+    .account-page-wrapper .profile-avatar {
+      width: 120px;
+      height: 120px;
+    }
+
+    .account-page-wrapper .background-shapes {
+      display: none;
+    }
+
+    .account-page-wrapper .vpn-status-container,
+    .account-page-wrapper .password-container {
+      flex-direction: column;
+      align-items: stretch;
+      gap: var(--spacing-md);
+    }
+
+    /* Адаптивные стили для кнопок действий на мобильных */
+    .account-page-wrapper .action-btn {
+      min-height: 50px; /* УМЕНЬШЕНА высота с 75px до 50px для более компактного вида */
+      padding: var(
+        --spacing-sm
+      ); /* УМЕНЬШЕН padding с md до sm для более компактного вида */
+      gap: var(--spacing-sm); /* Компактный отступ между элементами */
+    }
+
+    .account-page-wrapper .btn-icon {
+      width: 38px; /* УВЕЛИЧЕН размер иконки с 32px до 38px */
+      height: 38px;
+      font-size: 1.15rem; /* УВЕЛИЧЕН размер шрифта с 1rem до 1.15rem */
+    }
+
+    .account-page-wrapper .btn-title {
+      font-size: 0.95rem; /* УВЕЛИЧЕН размер заголовка с 0.9rem до 0.95rem */
+      white-space: normal; /* РАЗРЕШЕН перенос текста на мобильных */
+      overflow: visible; /* Показываем весь текст */
+      text-overflow: initial; /* Убираем многоточие */
+    }
+
+    .account-page-wrapper .btn-description {
+      font-size: 0.8rem; /* УВЕЛИЧЕН размер описания с 0.75rem до 0.8rem */
+      white-space: normal; /* РАЗРЕШЕН перенос текста на мобильных */
+      overflow: visible; /* Показываем весь текст */
+      text-overflow: initial; /* Убираем многоточие */
+    }
+  }
+
+  @media (max-width: 480px) {
+    .account-page-wrapper .page-header {
+      padding: var(--spacing-md);
+    }
+
+    .account-page-wrapper .page-title {
+      font-size: 1.75rem;
+    }
+
+    .account-page-wrapper .card-content {
+      padding: var(--spacing-lg);
+    }
+
+    .account-page-wrapper .card-header {
+      padding: var(--spacing-md);
+    }
+
+    /* Адаптивные стили для кнопок действий на очень маленьких экранах */
+    .account-page-wrapper .actions-grid {
+      gap: var(--spacing-sm); /* Минимальные отступы между кнопками */
+      grid-template-columns: 1fr; /* ДОБАВЛЕНО: Одна колонка на очень маленьких экранах */
+    }
+
+    .account-page-wrapper .action-btn {
+      min-height: 45px; /* УМЕНЬШЕНА минимальная высота с 70px до 45px для более компактного вида */
+      padding: var(--spacing-sm); /* УМЕНЬШЕН padding с md до sm для более компактного вида */
+      gap: var(--spacing-sm); /* Компактный отступ */
+    }
+
+    .account-page-wrapper .btn-icon {
+      width: 35px; /* УВЕЛИЧЕН размер иконки с 28px до 35px */
+      height: 35px;
+      font-size: 1.1rem; /* УВЕЛИЧЕН размер шрифта с 0.9rem до 1.1rem */
+    }
+
+    .account-page-wrapper .btn-title {
+      font-size: 0.9rem; /* Компактный но читаемый размер заголовка */
+      white-space: normal; /* Разрешен перенос текста */
+      overflow: visible;
+      text-overflow: initial;
+    }
+
+    .account-page-wrapper .btn-description {
+      font-size: 0.75rem; /* Компактный размер описания */
+      white-space: normal; /* Разрешен перенос текста */
+      overflow: visible;
+      text-overflow: initial;
+    }
+  }
+
+  /* High Contrast Mode */
+  @media (prefers-contrast: high) {
+    .account-page-wrapper {
+      --border-light: #000000;
+      --text-secondary: #000000;
+    }
+  }
+
+  /* Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    .account-page-wrapper * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* Print Styles */
+  @media print {
+    .account-page-wrapper .background-shapes,
+    .account-page-wrapper .avatar-glow,
+    .account-page-wrapper .icon-glow {
+      display: none !important;
+    }
+
+    .account-page-wrapper .content-card,
+    .account-page-wrapper .profile-card,
+    .account-page-wrapper .admin-card {
+      box-shadow: none !important;
+      border: 1px solid #ddd;
+      page-break-inside: avoid;
+    }
+
+    .account-page-wrapper .action-btn {
+      display: none;
+    }
+  }
+
+  /* Browser Push Notifications Styles */
+  .account-page-wrapper .notification-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+  }
+
+  .account-page-wrapper .notification-status {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+  }
+
+  .account-page-wrapper .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-weight: 500;
+  }
+
+  .account-page-wrapper .status-indicator i {
+    font-size: 0.75rem;
+    transition: var(--transition-normal);
+  }
+
+  .account-page-wrapper .status-indicator.enabled i {
+    color: var(--success);
+    animation: pulseOnline 2s ease-in-out infinite;
+  }
+
+  .account-page-wrapper .status-indicator.disabled i {
+    color: var(--error);
+  }
+
+  .account-page-wrapper .status-indicator.checking i {
+    color: var(--warning);
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  .account-page-wrapper .status-description {
+    font-size: 0.875rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .account-page-wrapper .notification-actions {
+    display: flex;
+    gap: var(--spacing-sm);
+    flex-wrap: wrap;
+  }
+
+  .account-page-wrapper .notification-btn,
+  .account-page-wrapper .notification-test-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .account-page-wrapper .notification-btn {
+    background: var(--primary-500);
+    color: var(--text-on-primary);
+    box-shadow: var(--shadow-1);
+  }
+
+  .account-page-wrapper .notification-btn:hover:not(:disabled) {
+    background: var(--primary-600);
+    box-shadow: var(--shadow-2);
+    transform: translateY(-1px);
+  }
+
+  .account-page-wrapper .notification-btn:disabled {
+    background: var(--surface-3);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .account-page-wrapper .notification-btn.enabled {
+    background: var(--success);
+  }
+
+  .account-page-wrapper .notification-btn.enabled:hover:not(:disabled) {
+    background: #059669;
+  }
+
+  .account-page-wrapper .notification-btn.disabled-state {
+    background: var(--error);
+  }
+
+  .account-page-wrapper .notification-btn.disabled-state:hover:not(:disabled) {
+    background: #dc2626;
+  }
+
+  .account-page-wrapper .notification-test-btn {
+    background: var(--surface-3);
+    color: var(--text-secondary);
+    border: 1px solid var(--border-medium);
+  }
+
+  .account-page-wrapper .notification-test-btn:hover:not(:disabled) {
+    background: rgba(0, 188, 212, 0.1);
+    border-color: var(--primary-500);
+    transform: translateY(-1px);
+  }
+
+  .account-page-wrapper .notification-test-btn:disabled {
+    background: var(--surface-1);
+    color: var(--text-disabled);
+    border-color: var(--border-light);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .account-page-wrapper .notification-info {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--surface-2);
+    border-radius: var(--radius-md);
+    border-left: 4px solid var(--primary-500);
+  }
+
+  .account-page-wrapper .notification-info .info-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-sm);
+    margin-bottom: var(--spacing-sm);
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .account-page-wrapper .notification-info .info-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .account-page-wrapper .notification-info .info-item i {
+    color: var(--primary-500);
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .account-page-wrapper .notification-info .info-item span {
+    color: var(--text-secondary);
+  }
+
+  /* Responsive adjustments for notifications */
+  @media (max-width: 768px) {
+    .account-page-wrapper .notification-actions {
+      flex-direction: column;
+    }
+
+    .account-page-wrapper .notification-btn,
+    .account-page-wrapper .notification-test-btn {
+      justify-content: center;
+      width: 100%;
+    }
+  }
+
+  .account-page-wrapper .notification-test-btn:disabled {
+    background: var(--surface-1);
+    color: var(--text-disabled);
+    border-color: var(--border-light);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .account-page-wrapper .notification-debug-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--info);
+    color: var(--text-on-primary);
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .account-page-wrapper .notification-debug-btn:hover:not(:disabled) {
+    background: #2563eb;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
+
+  .account-page-wrapper .notification-debug-btn:disabled {
+    background: var(--surface-3);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Clear notifications button */
+  .account-page-wrapper .notification-clear-btn {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-xs);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: #dc2626;
+    color: white;
+    border: none;
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: var(--transition-normal);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .account-page-wrapper .notification-clear-btn:hover:not(:disabled) {
+    background: #b91c1c;
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-1);
+  }
+
+  .account-page-wrapper .notification-clear-btn:disabled {
+    background: var(--surface-3);
+    color: var(--text-disabled);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* Enhanced Notification System Styles */
+  .account-page-wrapper .notifications-system {
+    background: linear-gradient(
+      135deg,
+      rgba(74, 222, 128, 0.05) 0%,
+      var(--surface-2) 100%
+    );
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .account-page-wrapper .notifications-system::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      90deg,
+      var(--notification-active) 0%,
+      var(--primary-500) 100%
+    );
+    border-radius: 12px 12px 0 0;
+  }
+
+  .account-page-wrapper .notifications-system:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(34, 197, 94, 0.15);
+  }
+
+  .account-page-wrapper .pulse-animation {
+    animation: pulse-glow 2s infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%,
+    100% {
+      transform: scale(1);
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.3);
+    }
+    50% {
+      transform: scale(1.05);
+      box-shadow: 0 0 20px rgba(34, 197, 94, 0.5);
+    }
+  }
+
+  .account-page-wrapper .active-status {
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.25);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .account-page-wrapper .status-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .account-page-wrapper .success-badge {
+    color: var(--notification-active);
+    font-weight: 600;
+  }
+
+  .account-page-wrapper .success-badge i {
+    font-size: 1.1rem;
+    animation: spin-success 2s linear infinite;
+  }
+
+  @keyframes spin-success {
+    0% {
+      transform: rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg);
+    }
+  }
+
+  .account-page-wrapper .connection-indicator {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+  }
+
+  .account-page-wrapper .connection-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--notification-active);
+    border-radius: 50%;
+    animation: pulse-dot 1.5s infinite;
+  }
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.6;
+      transform: scale(1.2);
+    }
+  }
+
+  .account-page-wrapper .description-main {
+    color: var(--text-primary);
+    font-weight: 500;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+  }
+
+  .account-page-wrapper .status-details {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .account-page-wrapper .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: rgba(0, 188, 212, 0.1);
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    border: 1px solid rgba(0, 188, 212, 0.2);
+  }
+
+  .account-page-wrapper .detail-item i {
+    color: var(--notification-active);
+  }
+
+  .account-page-wrapper .action-buttons-group {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  .account-page-wrapper .modern-settings-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    border: none;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    min-width: 100px;
+  }
+
+  /* ИСПРАВЛЕНО: Еще более компактные кнопки */
+  .account-page-wrapper .modern-settings-btn.compact-btn {
+    padding: 0.35rem 0.7rem;
+    min-height: 28px;
+    min-width: auto;
+    font-size: 0.75rem;
+    line-height: 1.2;
+  }
+
+  .account-page-wrapper .modern-settings-btn.compact-btn .btn-content {
+    gap: 0.4rem;
+  }
+
+  .account-page-wrapper .modern-settings-btn.compact-btn i {
+    font-size: 0.85rem;
+  }
+
+  .account-page-wrapper .modern-settings-btn::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      rgba(255, 255, 255, 0.3),
+      transparent
+    );
+    transition: left 0.6s;
+  }
+
+  .account-page-wrapper .modern-settings-btn:hover::before {
+    left: 100%;
+  }
+
+  .account-page-wrapper .primary-btn {
+    background: linear-gradient(
+      135deg,
+      var(--primary-500) 0%,
+      var(--primary-700) 100%
+    );
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 121, 140, 0.3);
+  }
+
+  .account-page-wrapper .primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 121, 140, 0.4);
+    color: white;
+    text-decoration: none;
+  }
+
+  .account-page-wrapper .secondary-btn {
+    background: rgba(100, 116, 139, 0.15);
+    color: var(--text-secondary);
+    border: 1px solid rgba(100, 116, 139, 0.3);
+  }
+
+  .account-page-wrapper .secondary-btn:hover {
+    background: rgba(100, 116, 139, 0.25);
+    color: var(--text-primary);
+    transform: translateY(-1px);
+    text-decoration: none;
+  }
+
+  .account-page-wrapper .danger-btn {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  }
+
+  .account-page-wrapper .danger-btn:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+    color: white;
+    text-decoration: none;
+  }
+
+  .account-page-wrapper .danger-btn.disabled {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+    /* ИСПРАВЛЕНО: Принудительно делаем кнопку кликабельной */
+    cursor: pointer !important;
+    pointer-events: auto !important;
+    opacity: 1 !important;
+  }
+
+  .account-page-wrapper .danger-btn.disabled:hover {
+    background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.4);
+    transform: translateY(-2px);
+  }
+
+  .account-page-wrapper .btn-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    position: relative;
+    z-index: 2;
+  }
+
+  .account-page-wrapper .btn-content i {
+    font-size: 0.9rem;
+  }
+
+  /* Mobile responsiveness for notification system */
+  @media (max-width: 768px) {
+    .account-page-wrapper .status-details {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .account-page-wrapper .action-buttons-group {
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .account-page-wrapper .modern-settings-btn {
+      width: 100%;
+      min-width: auto;
+    }
+
+    .account-page-wrapper .modern-settings-btn.compact-btn {
+      padding: 0.4rem 0.8rem;
+      min-height: 32px;
+    }
+
+    .account-page-wrapper .detail-item {
+      flex: 1;
+      justify-content: center;
+    }
+  }
+
+  /* НОВЫЕ СТИЛИ: Состояния системы уведомлений */
+  .account-page-wrapper .notification-status.active-status .status-badge {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+    color: white;
+  }
+
+  .account-page-wrapper .notification-status.inactive-status .status-badge {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+  }
+
+  .account-page-wrapper
+    .notification-status.inactive-status
+    .connection-indicator {
+    opacity: 0.7;
+  }
+
+  .account-page-wrapper
+    .notification-status.inactive-status
+    .status-description {
+    opacity: 0.8;
+  }
+
+  .account-page-wrapper .notification-status.inactive-status .connection-dot {
+    background-color: #ef4444;
+  }
+
+  .account-page-wrapper .notification-status.inactive-status .connection-text {
+    color: #ef4444;
+  }
+
+  .account-page-wrapper .notification-status.inactive-status .detail-item {
+    opacity: 0.6;
+  }
+
+  .account-page-wrapper .connection-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #22c55e;
+    display: inline-block;
+    margin-right: 6px;
+    transition: background-color 0.3s ease;
+  }
+
+  /* Стили для ссылки настроек в стиле detail-item */
+  .account-page-wrapper .settings-link-wrapper {
+    margin-top: 0.75rem;
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .account-page-wrapper .settings-link-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #64748b;
+    text-decoration: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 12px;
+    background: rgba(0, 188, 212, 0.1);
+    border: 1px solid rgba(0, 188, 212, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .account-page-wrapper .settings-link-item:hover {
+    background: rgba(0, 188, 212, 0.15);
+    color: #007b8b;
+    text-decoration: none;
+  }
+
+  .account-page-wrapper .settings-link-item i {
+    font-size: 0.75rem;
+    color: #00bcd4;
+  }
+
+  /* Темная тема для ссылки настроек */
+  body.dark-theme .account-page-wrapper .settings-link-item,
+  html.dark-theme .account-page-wrapper .settings-link-item,
+  [data-theme="dark"] .account-page-wrapper .settings-link-item {
+    color: #cbd5e1 !important;
+    background: rgba(0, 188, 212, 0.15) !important;
+    border-color: rgba(0, 188, 212, 0.3) !important;
+  }
+
+  body.dark-theme .account-page-wrapper .settings-link-item:hover,
+  html.dark-theme .account-page-wrapper .settings-link-item:hover,
+  [data-theme="dark"] .account-page-wrapper .settings-link-item:hover {
+    background: rgba(0, 188, 212, 0.25) !important;
+    color: #00bcd4 !important;
+  }
+
+  body.dark-theme .account-page-wrapper .settings-link-item i,
+  html.dark-theme .account-page-wrapper .settings-link-item i,
+  [data-theme="dark"] .account-page-wrapper .settings-link-item i {
+    color: #00bcd4 !important;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // === ПРОСТОЙ РАБОЧИЙ СКРИПТ ДЛЯ ИКОНКИ ГЛАЗА ===
+    const togglePasswordBtn = document.getElementById("togglePassword");
+    const passwordField = document.getElementById("password-display");
+    const eyeIcon = document.getElementById("eyeIcon");
+
+    if (togglePasswordBtn && passwordField && eyeIcon) {
+      togglePasswordBtn.addEventListener("click", function () {
+        if (passwordField.type === "password") {
+          passwordField.type = "text";
+          eyeIcon.classList.remove("fa-eye");
+          eyeIcon.classList.add("fa-eye-slash");
+        } else {
+          passwordField.type = "password";
+          eyeIcon.classList.remove("fa-eye-slash");
+          eyeIcon.classList.add("fa-eye");
+        }
+      });
+    }
+
+    // === КОПИРОВАНИЕ ПАРОЛЯ ===
+    const copyPasswordBtn = document.getElementById('copyPassword');
+    if (copyPasswordBtn && passwordField) {
+        // Активируем кнопку копирования только если есть пароль
+        if (passwordField.value && passwordField.value.trim() !== '') {
+            copyPasswordBtn.disabled = false;
+            copyPasswordBtn.classList.remove('disabled');
+        } else {
+            copyPasswordBtn.disabled = true;
+            copyPasswordBtn.classList.add('disabled');
+        }
+
+        copyPasswordBtn.addEventListener('click', function() {
+            if (passwordField.value && passwordField.value.trim() !== '') {
+                if (navigator.clipboard && window.isSecureContext) {
+                    navigator.clipboard.writeText(passwordField.value).then(function() {
+                        Swal.fire('Скопировано!', 'Пароль скопирован в буфер обмена', 'success');
+                    }).catch(function(err) {
+                        fallbackCopyTextToClipboard(passwordField);
+                    });
+                } else {
+                    fallbackCopyTextToClipboard(passwordField);
+                }
+            }
+        });
+    }
+
+    // === КОПИРОВАНИЕ ПОДПИСИ ===
+    const copySignatureBtnAccount = document.getElementById('copySignatureBtnAccount');
+    if (copySignatureBtnAccount) {
+        copySignatureBtnAccount.addEventListener('click', function () {
+            const signaturePreview = document.querySelector('.signature-preview');
+            if (signaturePreview) {
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = signaturePreview.innerHTML;
+                const plainText = signaturePreview.innerText || signaturePreview.textContent;
+
+                navigator.clipboard.write([
+                    new ClipboardItem({
+                        'text/html': new Blob([tempDiv.innerHTML], { type: 'text/html' }),
+                        'text/plain': new Blob([plainText], { type: 'text/plain' })
+                    })
+                ]).then(function () {
+                    const originalText = copySignatureBtnAccount.innerHTML;
+                    copySignatureBtnAccount.innerHTML = '<i class="fas fa-check me-2"></i>Скопировано!';
+                    setTimeout(() => {
+                        copySignatureBtnAccount.innerHTML = originalText;
+                    }, 2000);
+                }).catch(function (error) {
+                    console.error('Ошибка копирования подписи: ', error);
+                    Swal.fire('Ошибка', 'Не удалось скопировать подпись. Пожалуйста, скопируйте вручную.', 'error');
+                });
+            }
+        });
+    }
+
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: ОБРАБОТКА ОШИБОК ИЗОБРАЖЕНИЙ ===
+    // const images = document.querySelectorAll('img');
+    // images.forEach(img => {
+    //     img.addEventListener('error', function() {
+    //         if (!this.src.includes('default.jpg')) {
+    //             this.src = "{{ url_for('static', filename='profile_pics/default.jpg') }}";
+    //             this.classList.add('avatar-error');
+    //         }
+    //     });
+    // });
+
+    // === ВРЕМЕННО ОТКЛЮЧЕНО: RIPPLE EFFECT ===
+    // const actionBtns = document.querySelectorAll('.action-btn');
+    // actionBtns.forEach(btn => {
+    //     btn.addEventListener('click', function(e) {
+    //         createRipple(e, this);
+    //     });
+    // });
+
+    // === ПРОСТОЕ ПОДКЛЮЧЕНИЕ КНОПКИ УВЕДОМЛЕНИЙ ===
+    console.log("=== НАЧАЛО ИНИЦИАЛИЗАЦИИ ===");
+
+    // === ОБРАБОТЧИК КНОПКИ "СКАЧАТЬ TEZ ERP" ===
+    const downloadButton = document.getElementById("downloadButton");
+    if (downloadButton) {
+      downloadButton.addEventListener("click", function () {
+        // Показываем индикатор загрузки
+        const originalContent = this.innerHTML;
+        this.innerHTML = '<i class="fas fa-spinner fa-spin"></i> <span>Загрузка...</span>';
+        this.disabled = true;
+
+        // Создаем временную ссылку для скачивания
+        const link = document.createElement("a");
+        link.href = "/download_erp";
+        link.download = "TEZERP.exe";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Возвращаем исходное состояние кнопки после небольшой задержки
+        setTimeout(() => {
+          this.innerHTML = originalContent;
+          this.disabled = false;
+        }, 2000);
+      });
+    }
+    // === КНОПКА "ОТКЛЮЧИТЬ ВСЁ" УДАЛЕНА - ФУНКЦИОНАЛ ДУБЛИРОВАЛ ПЕРЕКЛЮЧАТЕЛЬ ВИДЖЕТА ===
+
+    // === VPN: кнопка "Обновить" ===
+    const vpnUpdateBtn = document.getElementById("update-vpn-date");
+    const vpnDisplay = document.getElementById("account-vpn-display");
+    const vpnBadgeContainer = document.getElementById(
+      "vpn-status-badge-container"
+    );
+    const csrfToken =
+      document
+        .querySelector('meta[name="csrf-token"]')
+        ?.getAttribute("content") || "";
+
+    function renderVpnBadges(vpnEndDate, changed) {
+      if (!vpnBadgeContainer) return;
+      if (vpnEndDate === null) {
+        vpnBadgeContainer.innerHTML = `
+                <span class="status-badge inactive">
+                    <i class="fas fa-shield-alt"></i>
+                    Выключен
+                </span>`;
+        return;
+      }
+      const isUndefined =
+        typeof vpnEndDate === "string" &&
+        vpnEndDate.toLowerCase().includes("не определ");
+      // Если изменений нет — не трогаем класс бейджа, обновляем только текст справа
+      const currentHtml = vpnBadgeContainer.innerHTML;
+      let baseBadge = currentHtml.match(
+        /<span class=\"status-badge[^>]*>.*?<\/span>/s
+      );
+      baseBadge = baseBadge
+        ? baseBadge[0]
+        : `
+            <span class="status-badge ${isUndefined ? "warning" : "active"}">
+                <i class="fas fa-shield-alt"></i>
+                Включен
+            </span>`;
+
+      const infoText = isUndefined ? "срок не определен" : `до ${vpnEndDate}`;
+      vpnBadgeContainer.innerHTML = `${baseBadge}\n<span class="status-info">${infoText}</span>`;
+    }
+
+    if (vpnUpdateBtn && vpnDisplay) {
+      vpnUpdateBtn.addEventListener("click", async () => {
+        const original = vpnUpdateBtn.innerHTML;
+        vpnUpdateBtn.disabled = true;
+        vpnUpdateBtn.innerHTML =
+          '<i class="fas fa-spinner fa-spin"></i><span style="margin-left:6px;">Обновляем…</span>';
+        try {
+          const resp = await fetch("/update_vpn_date", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Requested-With": "XMLHttpRequest",
+              "X-CSRFToken": csrfToken,
+            },
+            body: "{}",
+          });
+          const data = await resp.json();
+          const vpnEndDate = "vpn_end_date" in data ? data.vpn_end_date : null;
+          if (vpnEndDate === null) {
+            vpnDisplay.value = "Выключен";
+          } else if (
+            typeof vpnEndDate === "string" &&
+            vpnEndDate.toLowerCase().includes("не определ")
+          ) {
+            vpnDisplay.value = "Включен, заканчивается <Дата не определена>";
+          } else {
+            vpnDisplay.value = `Включен, заканчивается ${vpnEndDate}`;
+          }
+          renderVpnBadges(vpnEndDate, data.message?.includes("обновлена"));
+        } catch (e) {
+          console.error("VPN update failed:", e);
+        } finally {
+          vpnUpdateBtn.disabled = false;
+          vpnUpdateBtn.innerHTML = original;
+        }
+      });
+    }
+  });
+
+  // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
+  function fallbackCopyTextToClipboard(inputElement) {
+    const M_IOS =
+      typeof navigator !== "undefined" &&
+      /iPad|iPhone|iPod/.test(navigator.userAgent);
+    if (M_IOS) {
+      let range = document.createRange();
+      range.selectNodeContents(inputElement);
+      let selection = window.getSelection();
+      selection.removeAllRanges();
+      selection.addRange(range);
+      inputElement.setSelectionRange(0, 999999);
+    } else {
+      inputElement.select();
+    }
+    try {
+      var successful = document.execCommand("copy");
+      if (successful) {
+        Swal.fire(
+          "Скопировано!",
+          "Пароль скопирован в буфер обмена",
+          "success"
+        );
+      } else {
+        Swal.fire("Ошибка", "Не удалось скопировать пароль", "error");
+      }
+    } catch (err) {
+      Swal.fire("Ошибка", "Не удалось скопировать пароль", "error");
+    }
+    if (M_IOS) {
+      window.getSelection().removeAllRanges();
+    }
+  }
+
+  function createRipple(event, element) {
+    const btn = element;
+    const ripple = btn.querySelector(".btn-ripple");
+
+    if (!ripple) return;
+
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = event.clientX - rect.left - size / 2;
+    const y = event.clientY - rect.top - size / 2;
+
+    ripple.style.width = ripple.style.height = size + "px";
+    ripple.style.left = x + "px";
+    ripple.style.top = y + "px";
+    ripple.style.transform = "scale(0)";
+    ripple.style.opacity = "1";
+
+    requestAnimationFrame(() => {
+      ripple.style.transform = "scale(2)";
+      ripple.style.opacity = "0";
+    });
+
+    setTimeout(() => {
+      ripple.style.transform = "scale(0)";
+      ripple.style.opacity = "0";
+    }, 600);
+  }
+
+  // === ФУНКЦИЯ toggleNotificationsAndSound УДАЛЕНА - БЫЛА СВЯЗАНА С КНОПКОЙ "ОТКЛЮЧИТЬ ВСЁ" ===
+
+  function updateNotificationUI(enabled) {
+    const notificationStatus = document.getElementById(
+      "polling-notification-status"
+    );
+    const notificationIcon = document.getElementById("pollingNotificationIcon");
+    const notificationStatusText = document.getElementById(
+      "pollingNotificationStatus"
+    );
+    const statusBadge = document.querySelector(
+      "#polling-status-indicator .status-badge"
+    );
+    const connectionDot = document.querySelector(".connection-dot");
+    const connectionText = document.querySelector(".connection-text");
+    if (enabled) {
+      // Включаем уведомления
+      notificationStatus.className = "notification-status active-status";
+      notificationStatus.setAttribute(
+        "style",
+        `
+                background: #ecfdf5 !important;
+                border: 2px solid #10b981 !important;
+                color: #10b981 !important;
+                padding: 10px !important;
+                border-radius: 8px !important;
+            `
+      );
+
+      if (notificationIcon) notificationIcon.className = "fas fa-check-circle";
+      if (notificationStatusText)
+        notificationStatusText.textContent = "Активна (Polling)";
+      if (statusBadge) {
+        statusBadge.setAttribute(
+          "style",
+          `
+                    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+                    color: white !important;
+                `
+        );
+      }
+      if (connectionDot)
+        connectionDot.setAttribute(
+          "style",
+          "background-color: #10b981 !important;"
+        );
+      if (connectionText)
+        connectionText.setAttribute("style", "color: #10b981 !important;");
+    } else {
+      // Отключаем уведомления
+      notificationStatus.className = "notification-status inactive-status";
+      notificationStatus.setAttribute(
+        "style",
+        `
+                background: #fef2f2 !important;
+                border: 2px solid #ef4444 !important;
+                color: #ef4444 !important;
+                padding: 10px !important;
+                border-radius: 8px !important;
+            `
+      );
+
+      if (notificationIcon) notificationIcon.className = "fas fa-bell-slash";
+      if (notificationStatusText)
+        notificationStatusText.textContent = "Отключена";
+      if (statusBadge) {
+        statusBadge.setAttribute(
+          "style",
+          `
+                    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+                    color: white !important;
+                `
+        );
+      }
+      if (connectionDot)
+        connectionDot.setAttribute(
+          "style",
+          "background-color: #ef4444 !important;"
+        );
+      if (connectionText)
+        connectionText.setAttribute("style", "color: #ef4444 !important;");
+    }
+  }
+
+  function showNotificationWidget() {
+    const widget = document.querySelector(".modern-notifications-widget");
+    if (widget) {
+      widget.style.display = "block";
+      widget.style.opacity = "1";
+      widget.style.visibility = "visible";
+    } else {
+      // Если виджет не найден, возможно он не загружен из-за отключенных уведомлений
+      // В этом случае нужно перезагрузить страницу, чтобы включить виджет
+      console.log("Виджет уведомлений не найден, перезагружаем страницу...");
+      window.location.reload();
+    }
+  }
+
+  function hideNotificationWidget() {
+    const widget = document.querySelector(".modern-notifications-widget");
+    if (widget) {
+      widget.style.display = "none";
+      widget.style.opacity = "0";
+      widget.style.visibility = "hidden";
+    }
+  }
+
+  // Функция для переключения виджета уведомлений
+  function toggleWidget(enabled) {
+    console.log("Переключение виджета:", enabled);
+
+    fetch("/api/notifications/toggle", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": document.querySelector('meta[name="csrf-token"]')?.getAttribute("content") || "",
+      },
+      body: JSON.stringify({
+        enabled: enabled,
+      }),
+    })
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("Виджет переключен:", data.enabled);
+
+          // Обновляем localStorage для синхронизации с виджетом
+          localStorage.setItem('notificationsWidgetDisabled', (!data.enabled).toString());
+
+          // Обновляем текст статуса
+          const statusText = document.getElementById("widget-status-text-detail");
+          if (statusText) {
+            statusText.textContent = data.enabled ? "Виджет активен" : "Виджет отключен";
+          }
+
+          // Обновляем виджет на странице
+          if (data.enabled) {
+            localStorage.removeItem('notificationsWidgetDisabled');
+            showNotificationWidget();
+          } else {
+            localStorage.setItem('notificationsWidgetDisabled', 'true');
+            hideNotificationWidget();
+            // Уведомляем виджет о изменении состояния
+            if (window.notificationsWidget) {
+              window.notificationsWidget.widget.style.display = 'none';
+              window.notificationsWidget.widget.classList.add('closed', 'initial-hidden');
+              window.notificationsWidget.widget.style.visibility = 'hidden';
+              window.notificationsWidget.widget.style.opacity = '0';
+            }
+            // Перезагружаем страницу, чтобы убрать виджет из DOM
+            setTimeout(() => {
+              window.location.reload();
+            }, 500);
+          }
+
+          // Показываем уведомление
+          if (typeof Swal !== "undefined") {
+            Swal.fire({
+              icon: data.enabled ? "success" : "info",
+              title: data.enabled ? "Виджет включен" : "Виджет отключен",
+              text: data.message || (data.enabled ? "Виджет уведомлений теперь отображается" : "Виджет уведомлений скрыт"),
+              timer: 2000,
+              showConfirmButton: false,
+            });
+          }
+        } else {
+          console.error("Ошибка переключения виджета:", data.error);
+          // Возвращаем переключатель в исходное состояние
+          const widgetToggle = document.getElementById("widgetToggle");
+          if (widgetToggle) {
+            widgetToggle.checked = !enabled;
+          }
+
+          if (typeof Swal !== "undefined") {
+            Swal.fire({
+              icon: "error",
+              title: "Ошибка",
+              text: data.error || "Не удалось переключить виджет",
+              timer: 3000,
+            });
+          }
+        }
+      })
+      .catch((error) => {
+        console.error("Ошибка запроса переключения виджета:", error);
+        // Возвращаем переключатель в исходное состояние
+        const widgetToggle = document.getElementById("widgetToggle");
+        if (widgetToggle) {
+          widgetToggle.checked = !enabled;
+        }
+
+        if (typeof Swal !== "undefined") {
+          Swal.fire({
+            icon: "error",
+            title: "Ошибка",
+            text: "Не удалось переключить виджет. Попробуйте позже.",
+            timer: 3000,
+          });
+        }
+      });
+  }
+
+  // Функция для загрузки начального состояния уведомлений
+  function loadNotificationStatus() {
+    fetch("/api/notifications/status")
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.success) {
+          console.log("Загружено состояние уведомлений:", data.enabled);
+
+          // Обновляем UI в соответствии с состоянием из БД
+          if (data.enabled) {
+            updateNotificationUI(true);
+            showNotificationWidget();
+          } else {
+            updateNotificationUI(false);
+            hideNotificationWidget();
+          }
+
+          // Обновляем переключатель виджета
+          const widgetToggle = document.getElementById("widgetToggle");
+          if (widgetToggle) {
+            widgetToggle.checked = data.enabled;
+          }
+
+          // Обновляем текст статуса
+          const statusText = document.getElementById("widget-status-text-detail");
+          if (statusText) {
+            statusText.textContent = data.enabled ? "Виджет активен" : "Виджет отключен";
+          }
+
+        } else {
+          console.error("Ошибка загрузки состояния уведомлений:", data.error);
+        }
+      })
+      .catch((error) => {
+        console.error("Ошибка запроса состояния уведомлений:", error);
+      });
+  }
+
+  // === КНОПКА "ОТКЛЮЧИТЬ ВСЁ" УДАЛЕНА - ФУНКЦИОНАЛ ДУБЛИРОВАЛ ПЕРЕКЛЮЧАТЕЛЬ ВИДЖЕТА ===
+  document.addEventListener("DOMContentLoaded", function () {
+
+    // Обработчик для переключателя виджета
+    const widgetToggle = document.getElementById("widgetToggle");
+    if (widgetToggle) {
+      widgetToggle.addEventListener("change", function (e) {
+        const enabled = e.target.checked;
+        toggleWidget(enabled);
+      });
+    }
+
+    // Загружаем начальное состояние уведомлений
+    loadNotificationStatus();
+
+    // Инициализация ThemeManager для account страницы
+    window.accountThemeManager = new AccountThemeManager();
+
+    // Обработчик для переключателя Kanban подсказок
+    const kanbanTipsToggle = document.getElementById("kanbanTipsToggle");
+    if (kanbanTipsToggle) {
+      kanbanTipsToggle.addEventListener("change", function (e) {
+        const isEnabled = e.target.checked;
+
+        // Отправляем запрос на сервер
+        fetch("/api/user/kanban-tips-preference", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": document
+              .querySelector("meta[name=csrf-token]")
+              ?.getAttribute("content"),
+          },
+          body: JSON.stringify({
+            show_kanban_tips: isEnabled,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              console.log(
+                "✅ Настройка Kanban подсказок обновлена:",
+                isEnabled
+              );
+
+              // Обновляем глобальную переменную
+              window.showKanbanTips = isEnabled;
+
+              // Управляем tooltips в зависимости от настройки
+              if (isEnabled) {
+                // Включаем tooltips если они были отключены
+                if (typeof window.enableAllKanbanTooltips === "function") {
+                  window.enableAllKanbanTooltips();
+                }
+              } else {
+                // Отключаем tooltips
+                if (typeof window.disableAllKanbanTooltips === "function") {
+                  window.disableAllKanbanTooltips();
+                }
+              }
+
+              // Показываем уведомление пользователю
+              const message = isEnabled
+                ? "Баннер с подсказками будет показываться на странице задач"
+                : "Баннер с подсказками больше не будет показываться";
+
+              // Используем SweetAlert если доступен, иначе обычный alert
+              if (typeof Swal !== "undefined") {
+                Swal.fire({
+                  icon: "success",
+                  title: "Настройка сохранена",
+                  text: message,
+                  timer: 3000,
+                  showConfirmButton: false,
+                  toast: true,
+                  position: "top-end",
+                });
+              } else {
+                alert(message);
+              }
+            } else {
+              console.error("❌ Ошибка сохранения настройки:", data.error);
+              // Возвращаем переключатель в предыдущее состояние
+              e.target.checked = !isEnabled;
+              alert("Ошибка при сохранении настройки. Попробуйте еще раз.");
+            }
+          })
+          .catch((error) => {
+            console.error("❌ Ошибка запроса:", error);
+            // Возвращаем переключатель в предыдущее состояние
+            e.target.checked = !isEnabled;
+            alert(
+              "Ошибка при сохранении настройки. Проверьте подключение к интернету."
+            );
+          });
+      });
+    }
+
+    // Проверяем доступность настроек интерфейса
+    const interfacePanel = document.querySelector(".interface-settings-panel");
+    if (interfacePanel) {
+      console.log("✅ Настройки интерфейса доступны для всех пользователей");
+    }
+
+    // Предварительный просмотр загружаемого изображения
+    const pictureUpload = document.getElementById("pictureUpload");
+    const profileAvatar = document.querySelector(".profile-avatar");
+
+    if (pictureUpload && profileAvatar) {
+      pictureUpload.addEventListener("change", function (e) {
+        const file = e.target.files[0];
+        if (file) {
+          // Проверяем тип файла
+          if (!file.type.startsWith("image/")) {
+            alert("Пожалуйста, выберите файл изображения (JPG или PNG)");
+            return;
+          }
+
+          // Проверяем размер файла (максимум 5MB)
+          if (file.size > 5 * 1024 * 1024) {
+            alert("Размер файла не должен превышать 5MB");
+            return;
+          }
+
+          // Создаем предварительный просмотр
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            profileAvatar.src = e.target.result;
+
+            // Добавляем визуальную обратную связь
+            const avatarContainer = document.querySelector(".avatar-container");
+            if (avatarContainer) {
+              avatarContainer.style.transform = "scale(1.05)";
+              setTimeout(() => {
+                avatarContainer.style.transform = "scale(1)";
+              }, 300);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+
+    // [DEBUG] Отладка загрузки скрипта
+    console.log("[AccountScript] Скрипт загружен! Начинаем инициализацию...");
+
+    // Admin Panel Accordion Functionality
+    const adminPanelHeader = document.getElementById("adminPanelHeader");
+    const adminPanelContent = document.getElementById("adminPanelContent");
+
+    if (adminPanelHeader && adminPanelContent) {
+      // Toggle accordion on click
+      adminPanelHeader.addEventListener("click", function() {
+        const isExpanded = adminPanelHeader.getAttribute("aria-expanded") === "true";
+        adminPanelHeader.setAttribute("aria-expanded", !isExpanded);
+      });
+
+      // Toggle accordion on Enter/Space key press
+      adminPanelHeader.addEventListener("keydown", function(e) {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          const isExpanded = adminPanelHeader.getAttribute("aria-expanded") === "true";
+          adminPanelHeader.setAttribute("aria-expanded", !isExpanded);
+        }
+      });
+    }
+  });
+
+  // === THEME MANAGER ДЛЯ ACCOUNT СТРАНИЦЫ ===
+  class AccountThemeManager {
+    constructor() {
+      this.themeToggle = document.getElementById("theme-switcher");
+      this.handleThemeChange = this.handleThemeChange.bind(this);
+      this.init();
+    }
+
+    init() {
+      const initialTheme = this.getCurrentTheme();
+      this.handleThemeChange(initialTheme);
+
+      if (this.themeToggle) {
+        this.themeToggle.addEventListener("click", (event) => {
+          event.preventDefault();
+          if (window.themeManager && typeof window.themeManager.toggleTheme === "function") {
+            window.themeManager.toggleTheme();
+          } else {
+            this.toggleThemeFallback();
+          }
+        });
+      }
+
+      window.addEventListener("themeChanged", (event) => {
+        this.handleThemeChange(event.detail.theme);
+      });
+    }
+
+    getCurrentTheme() {
+      if (window.themeManager && typeof window.themeManager.getStoredTheme === "function") {
+        return window.themeManager.getStoredTheme();
+      }
+      return document.documentElement.getAttribute("data-theme") ||
+        (document.body.classList.contains("dark-theme") ? "dark" : "light");
+    }
+
+    handleThemeChange(theme) {
+      this.updateToggleIcon(theme);
+    }
+
+    toggleThemeFallback() {
+      const html = document.documentElement;
+      const nextTheme = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+      html.setAttribute("data-theme", nextTheme);
+      document.body.classList.toggle("dark-theme", nextTheme === "dark");
+      document.body.classList.toggle("light-theme", nextTheme === "light");
+      localStorage.setItem("site-theme", nextTheme);
+      this.handleThemeChange(nextTheme);
+    }
+
+    updateToggleIcon(theme) {
+      if (!this.themeToggle) {
+        return;
+      }
+
+      this.themeToggle.title =
+        theme === "dark" ? "Переключить на светлую тему" : "Переключить на темную тему";
+      this.themeToggle.setAttribute(
+        "aria-label",
+        theme === "dark" ? "Переключить на светлую тему" : "Переключить на темную тему"
+      );
+    }
+  }
+</script>
+
+<!-- Подключаем отдельный файл для обработки кнопки "Выслать пароль" -->
+<script src="{{ url_for('static', filename='js/send_password.js') }}"></script>
+{% endblock %}

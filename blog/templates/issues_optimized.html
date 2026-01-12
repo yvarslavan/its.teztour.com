@@ -1,0 +1,223 @@
+{% extends 'layout.html' %}
+
+<!-- Optimized resource loading -->
+<link rel="preload" href="{{ url_for('static', filename='css/my_issues_optimized.css') }}" as="style">
+<link rel="preload" href="{{ url_for('static', filename='js/my_issues_optimized.js') }}" as="script">
+
+{% block main_page %}
+<div class="issues-optimized-container">
+  <!-- Loading Spinner - Optimized -->
+  <div id="loading-spinner" class="loading-overlay" style="display: none;">
+    <div class="loading-content">
+      <div class="spinner-icon">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h3>Загрузка заявок...</h3>
+      <p>Оптимизированная загрузка данных</p>
+    </div>
+  </div>
+
+  <!-- Error Container -->
+  <div id="error-container" class="error-container" style="display: none;"></div>
+
+  <!-- Header Section - Optimized -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-ticket-alt"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
+          <p class="page-subtitle">
+            Оптимизированное управление и отслеживание ваших обращений
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-plus"></i>
+          <span>Создать заявку</span>
+        </a>
+        <button id="refresh-btn" class="action-button secondary" title="Обновить данные">
+          <i class="fas fa-sync-alt"></i>
+        </button>
+        <button id="clear-cache-btn" class="action-button secondary" title="Очистить кеш">
+          <i class="fas fa-trash-alt"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search and Filters - Optimized -->
+  <section class="search-filters-section">
+    <div class="search-container">
+      <div class="search-input-wrapper">
+        <i class="fas fa-search search-icon"></i>
+        <input
+          type="text"
+          id="issue-search"
+          class="search-input"
+          placeholder="Поиск по номеру заявки или теме..."
+          autocomplete="off"
+        >
+        <button id="clear-search" class="clear-search-btn" style="display: none;">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="filters-container">
+      <select id="status-filter" class="filter-select" title="Фильтр по статусу">
+        <option value="">Все статусы</option>
+        <!-- Populated by JavaScript -->
+      </select>
+
+      <select id="priority-filter" class="filter-select" title="Фильтр по приоритету">
+        <option value="">Все приоритеты</option>
+        <option value="1">Низкий</option>
+        <option value="2">Обычный</option>
+        <option value="3">Высокий</option>
+        <option value="4">Срочный</option>
+      </select>
+
+      <select id="sort-select" class="filter-select" title="Сортировка заявок">
+        <option value="updated_on_desc">По дате обновления (новые)</option>
+        <option value="updated_on_asc">По дате обновления (старые)</option>
+        <option value="created_on_desc">По дате создания (новые)</option>
+        <option value="created_on_asc">По дате создания (старые)</option>
+        <option value="subject_asc">По теме (А-Я)</option>
+        <option value="subject_desc">По теме (Я-А)</option>
+      </select>
+    </div>
+  </section>
+
+  <!-- Statistics Dashboard - Optimized -->
+  <section class="stats-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card total">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="totalIssues">-</span>
+            <span class="stat-label">Всего заявок</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card open">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-rocket"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="openIssues">-</span>
+            <span class="stat-label">Новых</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card progress">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="progressIssues">-</span>
+            <span class="stat-label">В работе</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card closed">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="closedIssues">-</span>
+            <span class="stat-label">Закрытых</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Content Area -->
+  <div class="main-content">
+    <!-- Issues List - Optimized -->
+    <section class="issues-section">
+      <div class="section-header">
+        <h2>Список заявок</h2>
+        <div class="view-controls">
+          <button id="view-list" class="view-btn active" title="Список">
+            <i class="fas fa-list"></i>
+          </button>
+          <button id="view-grid" class="view-btn" title="Сетка">
+            <i class="fas fa-th"></i>
+          </button>
+        </div>
+      </div>
+
+      <div id="issues-container" class="issues-container">
+        <!-- Issues will be loaded here by JavaScript -->
+      </div>
+
+      <!-- Pagination - Optimized -->
+      <div id="pagination" class="pagination">
+        <!-- Pagination will be generated by JavaScript -->
+      </div>
+    </section>
+
+    <!-- Issue Details Sidebar - Lazy Loaded -->
+    <aside id="issue-details" class="issue-details-sidebar" style="display: none;">
+      <!-- Issue details will be loaded here -->
+    </aside>
+  </div>
+
+  <!-- Performance Info -->
+  <div class="performance-info">
+    <small>
+      <i class="fas fa-info-circle"></i>
+      Оптимизированная версия с кешированием и ленивой загрузкой
+    </small>
+  </div>
+</div>
+
+<!-- Optimized CSS -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/my_issues_optimized.css') }}">
+
+<!-- Optimized JavaScript -->
+<script src="{{ url_for('static', filename='js/my_issues_optimized.js') }}" defer></script>
+
+<!-- Performance monitoring script -->
+<script>
+// Performance monitoring
+window.addEventListener('load', function() {
+  if ('performance' in window) {
+    const perfData = performance.getEntriesByType('navigation')[0];
+    console.log('📊 Page Performance:', {
+      'DOM Ready': `${perfData.domContentLoadedEventEnd - perfData.domContentLoadedEventStart}ms`,
+      'Page Load': `${perfData.loadEventEnd - perfData.loadEventStart}ms`,
+      'Total Time': `${perfData.loadEventEnd - perfData.fetchStart}ms`
+    });
+  }
+});
+
+// Service Worker for caching
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('/sw.js')
+      .then(function(registration) {
+        console.log('✅ Service Worker registered successfully');
+      })
+      .catch(function(error) {
+        console.log('❌ Service Worker registration failed:', error);
+      });
+  });
+}
+</script>
+
+{% endblock %}

@@ -1,0 +1,226 @@
+/**
+ * Tasks Header Improvements
+ * Улучшения заголовка страницы задач согласно редизайну
+ * Версия: 1.0 - Header spacing, button styles, spinner color
+ */
+
+/* ===== 1. ИСПРАВЛЕНИЕ ОТСТУПОВ ЗАГОЛОВКА ===== */
+/* Уменьшаем верхний отступ заголовка для более компактного вида */
+.tasks-page-container .page-header {
+  padding: 1.25rem 0 1.5rem 0; /* Было 2rem 0, стало более компактно */
+  margin-bottom: 1.5rem; /* Было 2rem, чуть уменьшили */
+}
+
+/* Дополнительная коррекция для контейнера */
+.tasks-page-container.content {
+  padding-top: 0.5rem; /* Небольшой отступ сверху для контейнера */
+}
+
+/* ===== 2. УЛУЧШЕННЫЕ СТИЛИ КНОПОК ===== */
+/* Обновляем стили кнопок для более современного вида */
+
+/* Базовые улучшения для всех кнопок */
+.action-button {
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 2px solid transparent;
+  box-shadow: 0 4px 15px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Добавляем градиентную границу при наведении */
+.action-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 2px;
+  background: linear-gradient(135deg, var(--primary-color), var(--accent-color, #10b981));
+  border-radius: inherit;
+  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  mask-composite: xor;
+  -webkit-mask-composite: xor;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.action-button:hover::after {
+  opacity: 0.8;
+}
+
+/* ===== Первичная кнопка "Мои заявки" - Premium стиль ===== */
+.tasks-page-container .action-button.primary,
+.page-header .action-button.primary {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 50%, #1e40af 100%) !important;
+  color: white !important;
+  box-shadow:
+    0 4px 15px 0 rgba(59, 130, 246, 0.3),
+    0 2px 10px 0 rgba(59, 130, 246, 0.2) !important;
+  border: 2px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+.action-button.primary:hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 8px 25px 0 rgba(59, 130, 246, 0.4),
+    0 4px 15px 0 rgba(59, 130, 246, 0.3);
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 50%, #1e3a8a 100%);
+}
+
+.action-button.primary:active {
+  transform: translateY(-1px) scale(1.01);
+  transition: all 0.1s ease;
+}
+
+/* Анимация иконки в первичной кнопке */
+.action-button.primary:hover i {
+  transform: translateX(3px) scale(1.1);
+  animation: bounce 0.6s ease infinite alternate;
+}
+
+@keyframes bounce {
+  0% { transform: translateX(3px) scale(1.1); }
+  100% { transform: translateX(5px) scale(1.15); }
+}
+
+/* ===== Вторичная кнопка "Перейти в Redmine" - Glass morphism стиль ===== */
+.tasks-page-container .action-button.secondary,
+.page-header .action-button.secondary {
+  background: rgba(255, 255, 255, 0.9) !important;
+  color: #3b82f6 !important;
+  border: 2px solid rgba(59, 130, 246, 0.2) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  box-shadow:
+    0 4px 15px 0 rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
+}
+
+.action-button.secondary:hover {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: #3b82f6;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow:
+    0 6px 20px 0 rgba(59, 130, 246, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+  color: #1d4ed8;
+}
+
+.action-button.secondary:active {
+  transform: translateY(-1px) scale(1.01);
+}
+
+/* Специальная анимация для иконки внешней ссылки */
+.action-button.secondary:hover i {
+  transform: translate(3px, -3px) rotate(15deg) scale(1.1);
+  color: #1d4ed8;
+}
+
+/* ===== Адаптивные улучшения ===== */
+@media (max-width: 768px) {
+  .tasks-page-container .page-header {
+    padding: 1rem 0 1.25rem 0;
+    margin-bottom: 1.25rem;
+  }
+
+  .action-button {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.9rem;
+  }
+
+  .action-button:hover {
+    transform: translateY(-1px) scale(1.01);
+  }
+}
+
+/* ===== 3. ОБНОВЛЕНИЕ ЦВЕТА СПИНЕРА ===== */
+/* Приводим спинер к соответствию со стилем страницы "Мои заявки" */
+.tasks-page-container .loading-overlay .spinner-icon,
+#loading-spinner .spinner-icon,
+.loading-overlay .spinner-icon {
+  color: #3b82f6 !important; /* Синий цвет как на странице "Мои заявки" */
+  font-size: 4rem !important;
+  margin-bottom: 1.5rem !important;
+  animation: spin 1s linear infinite, pulse-glow 2s ease-in-out infinite !important;
+}
+
+/* Добавляем эффект свечения для спинера */
+@keyframes pulse-glow {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    text-shadow: 0 0 30px rgba(59, 130, 246, 0.6);
+    transform: scale(1.05);
+  }
+}
+
+/* Обновляем цвет текста загрузки */
+.tasks-page-container .loading-content h3 {
+  color: #1e40af; /* Темно-синий для заголовка */
+  font-weight: 600;
+}
+
+.tasks-page-container .loading-content p {
+  color: #3b82f6; /* Основной синий для описания */
+}
+
+/* ===== 4. ДОПОЛНИТЕЛЬНЫЕ УЛУЧШЕНИЯ ===== */
+/* Добавляем тонкую анимацию появления заголовка */
+.tasks-page-container .page-header {
+  animation: fadeInDown 0.6s ease-out;
+}
+
+@keyframes fadeInDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Улучшаем отзывчивость кнопок на мобильных */
+@media (max-width: 480px) {
+  .action-button.primary,
+  .action-button.secondary {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .action-button:hover {
+    transform: none; /* Отключаем 3D эффекты на маленьких экранах */
+  }
+}
+
+/* ===== Высококонтрастный режим ===== */
+@media (prefers-contrast: high) {
+  .action-button.primary {
+    background: #1d4ed8;
+    border: 2px solid #ffffff;
+  }
+
+  .action-button.secondary {
+    background: #ffffff;
+    border: 2px solid #1d4ed8;
+    color: #1d4ed8;
+  }
+}
+
+/* ===== Режим уменьшенной анимации ===== */
+@media (prefers-reduced-motion: reduce) {
+  .action-button,
+  .tasks-page-container .loading-overlay .spinner-icon,
+  .tasks-page-container .page-header {
+    animation: none;
+    transition: none;
+  }
+
+  .action-button:hover {
+    transform: none;
+  }
+}

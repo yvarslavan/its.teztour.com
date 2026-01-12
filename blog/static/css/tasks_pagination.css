@@ -1,0 +1,1775 @@
+/* Стили для пагинированной системы задач */
+
+/* ===== ОСНОВНЫЕ СТИЛИ ПАГИНАЦИИ ===== */
+
+/* Контейнер пагинации */
+.pagination-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+/* Кнопки пагинации */
+.pagination-btn {
+    background: #fff;
+    border: 1px solid #dee2e6;
+    color: #495057;
+    padding: 8px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    min-width: 40px;
+    text-align: center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.pagination-btn:hover {
+    background: #e9ecef;
+    border-color: #adb5bd;
+    color: #495057;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.pagination-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+}
+
+.pagination-btn.active {
+    background: #007bff;
+    border-color: #007bff;
+    color: #fff;
+    font-weight: 600;
+}
+
+.pagination-btn.active:hover {
+    background: #0056b3;
+    border-color: #0056b3;
+    color: #fff;
+}
+
+.pagination-btn:disabled {
+    background: #f8f9fa;
+    border-color: #dee2e6;
+    color: #6c757d;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+.pagination-btn:disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Информация о задачах */
+.tasks-info {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    padding: 8px 12px;
+    font-size: 14px;
+    color: #495057;
+    text-align: center;
+    margin: 10px 0;
+}
+
+/* Контейнеры для элементов управления */
+#tasksInfoContainer {
+    display: flex;
+    justify-content: center;
+    margin: 15px 0;
+}
+
+#tasksPaginationContainer {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+/* Индикатор загрузки */
+#loading-spinner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 200;
+}
+
+.loading-content {
+    background: #fff;
+    padding: 30px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    text-align: center;
+    max-width: 300px;
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-text {
+    color: #495057;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .pagination-wrapper {
+        gap: 4px;
+        margin: 15px 0;
+    }
+
+    .pagination-btn {
+        padding: 6px 8px;
+        font-size: 12px;
+        min-width: 32px;
+    }
+
+    .pagination-btn i {
+        font-size: 10px;
+    }
+
+    .tasks-info {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .pagination-wrapper {
+        gap: 2px;
+        margin: 10px 0;
+    }
+
+    .pagination-btn {
+        padding: 4px 6px;
+        font-size: 11px;
+        min-width: 28px;
+    }
+
+    /* Скрываем текст на очень маленьких экранах, оставляем только иконки */
+    .pagination-btn span {
+        display: none;
+    }
+}
+
+/* Анимации для строк таблицы */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.fade-in {
+    animation: fadeIn 0.3s ease-out forwards;
+}
+
+/* Улучшенные стили для ошибок */
+.error-message {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.error-content {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 30px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.error-content i {
+    font-size: 48px;
+    color: #dc3545;
+    margin-bottom: 15px;
+}
+
+.error-content h3 {
+    color: #495057;
+    margin: 0 0 10px 0;
+    font-size: 18px;
+}
+
+.error-content p {
+    color: #6c757d;
+    margin: 0 0 20px 0;
+    font-size: 14px;
+}
+
+.retry-btn {
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.retry-btn:hover {
+    background: #0056b3;
+}
+
+.retry-btn i {
+    font-size: 12px;
+}
+
+/* Стили для переключателя режимов */
+.mode-switcher {
+    background: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 4px;
+    display: inline-flex;
+    margin: 10px 0;
+}
+
+.mode-btn {
+    background: transparent;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: #495057;
+    transition: all 0.2s ease;
+}
+
+.mode-btn.active {
+    background: #007bff;
+    color: #fff;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mode-btn:hover:not(.active) {
+    background: #e9ecef;
+}
+
+/* Статистика производительности */
+.performance-stats {
+    background: #e8f4fd;
+    border: 1px solid #bee5eb;
+    border-radius: 4px;
+    padding: 10px;
+    margin: 10px 0;
+    font-size: 12px;
+    color: #0c5460;
+    text-align: center;
+}
+
+.performance-stats .stat-item {
+    display: inline-block;
+    margin: 0 10px;
+}
+
+.performance-stats .stat-value {
+    font-weight: 600;
+    color: #007bff;
+}
+
+/* Стили для улучшенного поиска */
+.dataTables_filter .input-group {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.dataTables_filter .input-group .form-control {
+    border-right: none;
+}
+
+.dataTables_filter .input-group-append .btn {
+    border-left: none;
+    padding: 0.375rem 0.75rem;
+}
+
+.dataTables_filter .input-group-append .btn:first-child {
+    border-left: 1px solid #ced4da;
+}
+
+.dataTables_filter .input-group-append .btn i {
+    font-size: 0.875rem;
+}
+
+#search-button {
+    background-color: #007bff;
+    border-color: #007bff;
+    color: white;
+}
+
+#search-button:hover {
+    background-color: #0056b3;
+    border-color: #0056b3;
+}
+
+#clear-search-button {
+    background-color: #6c757d;
+    border-color: #6c757d;
+    color: white;
+}
+
+#clear-search-button:hover {
+    background-color: #545b62;
+    border-color: #545b62;
+}
+
+/* Улучшенная пагинация */
+.dataTables_paginate .paginate_button {
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.125rem;
+    line-height: 1.25;
+    color: #007bff;
+    text-decoration: none;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    min-width: 40px;
+    text-align: center;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    color: #0056b3;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.dataTables_paginate .paginate_button.current {
+    color: #fff;
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+    cursor: not-allowed;
+    opacity: 0.65;
+}
+
+.dataTables_paginate .paginate_button.disabled:hover {
+    color: #6c757d;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+.dataTables_paginate .ellipsis {
+    display: inline-block;
+    padding: 0.5rem 0.75rem;
+    margin: 0 0.125rem;
+    color: #6c757d;
+}
+
+/* Кнопки навигации */
+.dataTables_paginate .paginate_button.first,
+.dataTables_paginate .paginate_button.previous,
+.dataTables_paginate .paginate_button.next,
+.dataTables_paginate .paginate_button.last {
+    font-weight: bold;
+}
+
+.dataTables_paginate .paginate_button.first {
+    margin-right: 0.5rem;
+}
+
+.dataTables_paginate .paginate_button.last {
+    margin-left: 0.5rem;
+}
+
+/* Адаптивность пагинации */
+@media (max-width: 768px) {
+    .dataTables_paginate .paginate_button {
+        padding: 0.375rem 0.5rem;
+        margin: 0 0.0625rem;
+        font-size: 0.875rem;
+        min-width: 35px;
+    }
+
+    .dataTables_filter .input-group {
+        max-width: 100%;
+    }
+
+    .dataTables_filter .input-group-append .btn {
+        padding: 0.375rem 0.5rem;
+    }
+}
+
+/* =====  НОВЫЕ СТИЛИ ДЛЯ УЛУЧШЕННОГО ПОИСКА ===== */
+
+.search-input-wrapper {
+    width: 100%;
+    max-width: 500px;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+    margin-bottom: 8px;
+}
+
+.search-input-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.search-input {
+    width: 100%;
+    padding: 12px 45px 12px 16px;
+    font-size: 14px;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: #fff;
+    outline: none;
+}
+
+.search-input:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.search-input::placeholder {
+    color: #6c757d;
+    font-style: italic;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #6c757d;
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 14px;
+    width: 24px;
+    height: 24px;
+}
+
+.search-clear-btn:hover {
+    background: #f8f9fa;
+    color: #dc3545;
+    transform: translateY(-50%) scale(1.1);
+}
+
+.search-clear-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Скрываем кнопки поиска и сброса */
+.search-buttons,
+.search-btn,
+#search-button,
+#reset-filters-button {
+    display: none !important;
+}
+
+.search-tips {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 12px 16px;
+    color: #64748b;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.search-tips i {
+    color: #fbbf24;
+    margin-right: 6px;
+}
+
+/* =====  УЛУЧШЕННЫЕ СТИЛИ ПАГИНАЦИИ ===== */
+
+.dataTables_paginate {
+    display: flex !important;
+    align-items: center;
+    gap: 4px;
+    margin: 0 !important;
+}
+
+.dataTables_paginate .paginate_button {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-width: 40px;
+    height: 40px;
+    padding: 8px 12px;
+    margin: 0 !important;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    color: #374151 !important;
+    text-decoration: none !important;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.dataTables_paginate .paginate_button:hover {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #1f2937 !important;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dataTables_paginate .paginate_button:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.dataTables_paginate .paginate_button.current {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+    border-color: #3b82f6 !important;
+    color: #ffffff !important;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.dataTables_paginate .paginate_button.current:hover {
+    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%) !important;
+    border-color: #2563eb !important;
+    color: #ffffff !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.dataTables_paginate .paginate_button.disabled {
+    background: #f9fafb !important;
+    border-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+    cursor: not-allowed !important;
+    opacity: 0.6;
+}
+
+.dataTables_paginate .paginate_button.disabled:hover {
+    background: #f9fafb !important;
+    border-color: #f3f4f6 !important;
+    color: #9ca3af !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+.dataTables_paginate .ellipsis {
+    display: inline-flex !important;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    margin: 0 4px !important;
+    color: #9ca3af;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: default;
+    user-select: none;
+}
+
+/* Специальные стили для навигационных кнопок */
+.dataTables_paginate .paginate_button.first,
+.dataTables_paginate .paginate_button.previous,
+.dataTables_paginate .paginate_button.next,
+.dataTables_paginate .paginate_button.last {
+    background: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+    color: #6b7280 !important;
+    font-size: 13px;
+}
+
+.dataTables_paginate .paginate_button.first:hover,
+.dataTables_paginate .paginate_button.previous:hover,
+.dataTables_paginate .paginate_button.next:hover,
+.dataTables_paginate .paginate_button.last:hover {
+    background: #ffffff !important;
+    border-color: #3b82f6 !important;
+    color: #3b82f6 !important;
+}
+
+/* Скрываем текст кнопок на мобильных */
+@media (max-width: 768px) {
+    .search-input-group {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .search-input {
+        padding: 10px 40px 10px 14px;
+        font-size: 16px; /* Предотвращает зум на iOS */
+    }
+
+    .search-clear-btn {
+        right: 10px;
+        width: 22px;
+        height: 22px;
+        font-size: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .search-input-wrapper {
+        margin-bottom: 15px;
+    }
+
+    .search-input {
+        padding: 8px 35px 8px 12px;
+        font-size: 16px;
+        border-radius: 6px;
+    }
+
+    .search-clear-btn {
+        right: 8px;
+        width: 20px;
+        height: 20px;
+        font-size: 11px;
+    }
+
+    .search-tips {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
+
+/* Анимации */
+@keyframes searchPulse {
+    0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+}
+
+.search-btn.primary:focus {
+    animation: searchPulse 1.5s infinite;
+}
+
+/* Улучшения для совместимости с существующими стилями */
+.dataTables_filter {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+.dataTables_filter label {
+    width: 100% !important;
+    margin: 0 !important;
+}
+
+/* Дополнительные стили для информации о пагинации */
+.tasks-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 16px 0;
+    padding: 0 8px;
+    color: #6b7280;
+    font-size: 14px;
+}
+
+#tasksInfoContainer {
+    flex: 1;
+}
+
+#tasksPaginationContainer {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+/* Стили для состояния загрузки */
+.pagination-loading {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.pagination-loading .paginate_button {
+    cursor: wait !important;
+}
+
+/* ===== СТИЛИ ДЛЯ СУЩЕСТВУЮЩИХ ЭЛЕМЕНТОВ ===== */
+
+.search-clear-btn:disabled {
+    color: #d1d5db !important;
+    cursor: not-allowed !important;
+}
+
+.search-clear-btn:disabled:hover {
+    background: #fff;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Стили для индикатора загрузки при прокрутке */
+.scroll-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    margin-top: 16px;
+    border-radius: 0 0 12px 12px;
+}
+
+.scroll-loading-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.scroll-loading-content i {
+    color: #3b82f6;
+    font-size: 16px;
+}
+
+/* Переключатель режимов пагинации */
+.pagination-mode-toggle {
+    display: flex;
+    gap: 4px;
+    background: #f1f5f9;
+    border-radius: 8px;
+    padding: 4px;
+}
+
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: #64748b;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.mode-btn:hover {
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.mode-btn.active {
+    background: #3b82f6;
+    color: white;
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.mode-btn.active:hover {
+    background: #2563eb;
+}
+
+.mode-btn i {
+    font-size: 12px;
+}
+
+/* Дополнительные стили для display-item */
+.display-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.display-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    white-space: nowrap;
+}
+
+/* Улучшения для адаптивности */
+@media (max-width: 768px) {
+    .pagination-mode-toggle {
+        width: 100%;
+    }
+
+    .mode-btn {
+        flex: 1;
+        justify-content: center;
+        padding: 10px 8px;
+        font-size: 12px;
+    }
+
+    .mode-btn span {
+        display: none;
+    }
+
+    .scroll-loading-content {
+        font-size: 13px;
+    }
+
+    .display-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+}
+
+@media (max-width: 480px) {
+    .scroll-loading {
+        padding: 16px;
+        margin-top: 12px;
+    }
+
+    .scroll-loading-content {
+        font-size: 12px;
+        gap: 8px;
+    }
+}
+
+/* Стили для индикаторов загрузки статистических карточек */
+.statistics-loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 60px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.statistics-loading .spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e3e3e3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 10px;
+}
+
+.statistics-card-loading {
+    position: relative;
+    opacity: 0.6;
+}
+
+.statistics-card-loading::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.375rem;
+}
+
+.statistics-card-loading::before {
+    content: 'Загрузка...';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10;
+    font-size: 12px;
+    color: #6c757d;
+    background: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Анимация пульсации для карточек статистики */
+.statistics-card-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+}
+
+/* Стили для состояния ошибки загрузки */
+.statistics-error {
+    color: #dc3545;
+    text-align: center;
+    padding: 10px;
+    font-size: 12px;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    margin: 5px 0;
+}
+
+/* Стили для успешной загрузки */
+.statistics-success {
+    transition: all 0.3s ease;
+}
+
+.statistics-number {
+    font-size: 1.5rem;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.statistics-card.loaded .statistics-number {
+    transform: scale(1.05);
+    animation: bounce 0.5s ease;
+}
+
+@keyframes bounce {
+    0%, 20%, 60%, 100% {
+        transform: scale(1);
+    }
+    40% {
+        transform: scale(1.1);
+    }
+    80% {
+        transform: scale(1.05);
+    }
+}
+
+/* Индикатор загрузки для фильтров */
+.filters-loading {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    color: #6c757d;
+    font-size: 14px;
+    background: #f8f9fa;
+    border-radius: 4px;
+    margin: 10px 0;
+}
+
+.filters-loading .spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid #e3e3e3;
+    border-top: 2px solid #007bff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+/* Улучшенная анимация spinner */
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* ==================================================
+   АНИМАЦИИ ОБНОВЛЕНИЯ СТАТИСТИЧЕСКИХ КАРТОЧЕК
+   ================================================== */
+
+/* Анимация обновления статистики */
+.statistics-updating {
+    position: relative;
+    animation: statisticsUpdate 0.8s ease-in-out;
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+}
+
+@keyframes statisticsUpdate {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    25% {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+    }
+    75% {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    }
+}
+
+/* Эффект успешного обновления */
+.statistics-updated {
+    animation: statisticsSuccess 1s ease-out;
+}
+
+@keyframes statisticsSuccess {
+    0% {
+        background-color: rgba(40, 167, 69, 0.1);
+        border: 2px solid rgba(40, 167, 69, 0.3);
+    }
+    50% {
+        background-color: rgba(40, 167, 69, 0.2);
+        border: 2px solid rgba(40, 167, 69, 0.5);
+        transform: scale(1.01);
+    }
+    100% {
+        background-color: transparent;
+        border: 2px solid transparent;
+        transform: scale(1);
+    }
+}
+
+/* Стили для highlighted элементов в модальном окне */
+.summary-item.highlighted {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%) !important;
+    border-left-width: 6px !important;
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    animation: highlightPulse 2s ease-in-out infinite alternate;
+}
+
+@keyframes highlightPulse {
+    0% {
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+    }
+    100% {
+        box-shadow: 0 12px 35px rgba(74, 144, 226, 0.25);
+    }
+}
+
+/* Стили для категорий статусов */
+.status-category {
+    margin-bottom: 25px;
+}
+
+.status-category-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    border-left: 4px solid #6c757d;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Иконка для категории */
+.status-category-title::before {
+    content: attr(data-icon);
+    font-size: 14px;
+}
+
+/* Дополнительные стили для иконок */
+.summary-item-icon {
+    font-size: 24px;
+    margin-bottom: 10px;
+    display: block;
+}
+
+/* Анимация для обновления счетчика */
+@keyframes countPulse {
+    0% {
+        transform: scale(1);
+        color: inherit;
+    }
+    25% {
+        transform: scale(1.05);
+        color: #007bff;
+    }
+    50% {
+        transform: scale(1.1);
+        color: #007bff;
+        font-weight: bold;
+    }
+    75% {
+        transform: scale(1.05);
+        color: #007bff;
+    }
+    100% {
+        transform: scale(1);
+        color: inherit;
+    }
+}
+
+/* Подсветка для активного фильтра */
+.filter-results-card.filtered {
+    border-left: 3px solid #007bff;
+    background: linear-gradient(90deg, rgba(0,123,255,0.05) 0%, transparent 100%);
+}
+
+.filter-results-card.filtered .filtered-tasks-count {
+    color: #007bff;
+    font-weight: 600;
+}
+
+/* Анимации для счетчиков и статистики */
+@keyframes countPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.2);
+        background: #28a745;
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Анимация пульсации для статистических карточек */
+.statistics-card-pulse {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.8;
+        transform: scale(1.02);
+    }
+}
+
+/* Анимация обновления статистики */
+.statistics-updating {
+    position: relative;
+    animation: statisticsUpdate 0.8s ease-in-out;
+    transform: scale(1.02);
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+}
+
+@keyframes statisticsUpdate {
+    0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    25% {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    }
+    50% {
+        transform: scale(1.05);
+        box-shadow: 0 6px 25px rgba(0, 123, 255, 0.4);
+    }
+    75% {
+        transform: scale(1.02);
+        box-shadow: 0 4px 15px rgba(0, 123, 255, 0.2);
+    }
+}
+
+/* Эффект успешного обновления */
+.statistics-updated {
+    animation: statisticsSuccess 1s ease-out;
+}
+
+@keyframes statisticsSuccess {
+    0% {
+        background-color: rgba(40, 167, 69, 0.1);
+        border: 2px solid rgba(40, 167, 69, 0.3);
+    }
+    50% {
+        background-color: rgba(40, 167, 69, 0.2);
+        border: 2px solid rgba(40, 167, 69, 0.5);
+        transform: scale(1.01);
+    }
+    100% {
+        background-color: transparent;
+        border: 2px solid transparent;
+        transform: scale(1);
+    }
+}
+
+/* Улучшенная анимация для filter results card */
+.filter-results-card.showing {
+    animation: cardSlideIn 0.4s ease-out;
+}
+
+.filter-results-card.hiding {
+    animation: cardSlideOut 0.3s ease-in;
+}
+
+@keyframes cardSlideIn {
+    0% {
+        opacity: 0;
+        transform: scale(0.3) translateY(-20px);
+    }
+    70% {
+        transform: scale(1.1) translateY(0);
+    }
+    100% {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+@keyframes cardSlideOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(0.3) translateY(-20px);
+    }
+}
+
+/* Анимация для чисел в счетчике */
+.count-number {
+    transition: all 0.3s ease;
+}
+
+.count-number.updating {
+    animation: countPulse 0.6s ease-out;
+}
+
+/* Плавные переходы для badge */
+.filter-results-badge {
+    transition: all 0.3s ease;
+    transform-origin: center;
+}
+
+.filter-results-badge.appearing {
+    animation: badgeAppear 0.4s ease-out;
+}
+
+@keyframes badgeAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateX(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateX(0);
+    }
+}
+
+/* Улучшенный стиль счетчика фильтров */
+.filter-results-card {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    border-radius: 50px;
+    padding: 10px 20px;
+    display: none;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 4px 20px rgba(0, 123, 255, 0.3);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    min-width: 120px;
+    justify-content: center;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    z-index: 1000;
+}
+
+.filter-results-card:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 30px rgba(0, 123, 255, 0.4);
+    background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.filter-results-card.showing {
+    animation: filterCardSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.filter-results-card.hiding {
+    animation: filterCardSlideOut 0.3s ease-in;
+}
+
+.filter-results-card .filtered-tasks-count {
+    font-size: 24px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    line-height: 1;
+    margin: 0;
+    min-width: 30px;
+    text-align: center;
+}
+
+.filter-results-card .filter-results-text,
+.filter-results-card .filter-active-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.9);
+    white-space: nowrap;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Адаптивные размеры */
+@media (max-width: 768px) {
+    .filter-results-card {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        padding: 0;
+        min-width: 60px;
+        top: 15px;
+        right: 15px;
+    }
+
+    .filter-results-card .filtered-tasks-count {
+        font-size: 20px;
+    }
+
+    .filter-results-card .filter-results-text {
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    .filter-results-card {
+        width: 50px;
+        height: 50px;
+        min-width: 50px;
+        top: 10px;
+        right: 10px;
+    }
+
+    .filter-results-card .filtered-tasks-count {
+        font-size: 16px;
+        font-weight: 600;
+    }
+}
+
+/* Анимации для счетчика */
+@keyframes filterCardSlideIn {
+    0% {
+        opacity: 0;
+        transform: translateX(100px) translateY(-10px) scale(0.8);
+        filter: blur(8px);
+    }
+    60% {
+        opacity: 0.8;
+        transform: translateX(-5px) translateY(0) scale(1.05);
+        filter: blur(2px);
+    }
+    100% {
+        opacity: 1;
+        transform: translateX(0) translateY(0) scale(1);
+        filter: blur(0);
+    }
+}
+
+@keyframes filterCardSlideOut {
+    0% {
+        opacity: 1;
+        transform: translateX(0) translateY(0) scale(1);
+        filter: blur(0);
+    }
+    100% {
+        opacity: 0;
+        transform: translateX(100px) translateY(-10px) scale(0.8);
+        filter: blur(8px);
+    }
+}
+
+/* Пульсация при обновлении счетчика */
+@keyframes countPulse {
+    0% {
+        transform: scale(1);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    50% {
+        transform: scale(1.2);
+        text-shadow: 0 2px 8px rgba(255, 255, 255, 0.5);
+    }
+    100% {
+        transform: scale(1);
+        text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Стили для переключателя типа пагинации */
+.pagination-type-selector {
+    display: flex;
+    gap: 8px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    overflow: hidden;
+    background: #fff;
+}
+
+.pagination-type-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    background: #fff;
+    color: #6c757d;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-right: 1px solid #e9ecef;
+}
+
+.pagination-type-btn:last-child {
+    border-right: none;
+}
+
+.pagination-type-btn:hover {
+    background: #f8f9fa;
+    color: #495057;
+}
+
+.pagination-type-btn.active {
+    background: #007bff;
+    color: white;
+}
+
+.pagination-type-btn.active:hover {
+    background: #0056b3;
+}
+
+.pagination-type-btn i {
+    font-size: 12px;
+}
+
+.display-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-left: 15px;
+}
+
+.display-label {
+    font-size: 14px;
+    font-weight: 500;
+    color: #495057;
+    white-space: nowrap;
+}
+
+/* ======================================
+ * TASKS COUNTER INDICATOR STYLES
+ * Индикатор количества найденных задач
+ * ====================================== */
+
+/* Основной контейнер индикатора */
+.tasks-counter-indicator {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    z-index: 1050;
+    min-width: 280px;
+    max-width: 350px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 12px;
+    box-shadow:
+        0 8px 32px rgba(102, 126, 234, 0.3),
+        0 4px 16px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transform: translateX(100%);
+    opacity: 0;
+}
+
+.tasks-counter-indicator.visible {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.tasks-counter-indicator.hidden {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* Основное содержимое */
+.counter-content {
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+}
+
+/* Иконка индикатора */
+.counter-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 10px;
+    flex-shrink: 0;
+}
+
+.counter-icon i {
+    font-size: 18px;
+    color: #ffffff;
+    transition: transform 0.3s ease;
+}
+
+.tasks-counter-indicator.loading .counter-icon i {
+    animation: counterSpin 1s linear infinite;
+}
+
+@keyframes counterSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Текст индикатора */
+.counter-text {
+    flex: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 6px;
+    color: #ffffff;
+    font-family: 'Inter', 'Roboto', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.counter-prefix {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.counter-number {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.counter-suffix {
+    font-size: 14px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+/* Статус загрузки */
+.counter-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.8);
+    min-height: 16px;
+}
+
+.counter-status .status-text {
+    font-weight: 500;
+}
+
+/* Кнопка закрытия */
+.counter-close-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 6px;
+    color: #ffffff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.counter-close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    opacity: 1;
+    transform: scale(1.1);
+}
+
+.counter-close-btn i {
+    font-size: 12px;
+}
+
+/* Прогресс-бар */
+.counter-progress-bar {
+    height: 3px;
+    background: rgba(255, 255, 255, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffffff 0%, rgba(255, 255, 255, 0.8) 100%);
+    border-radius: 0 3px 3px 0;
+    transition: width 0.3s ease;
+    width: 0%;
+}
+
+/* Анимация прогресс-бара при загрузке */
+.tasks-counter-indicator.loading .progress-fill {
+    animation: progressAnimation 2s ease-in-out infinite;
+}
+
+@keyframes progressAnimation {
+    0% { width: 0%; }
+    50% { width: 100%; }
+    100% { width: 0%; }
+}
+
+/* Различные состояния индикатора */
+.tasks-counter-indicator.state-loading {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+}
+
+.tasks-counter-indicator.state-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.tasks-counter-indicator.state-empty {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+}
+
+.tasks-counter-indicator.state-error {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+}
+
+.tasks-counter-indicator.state-filtered {
+    background: linear-gradient(135deg, #007bff 0%, #6610f2 100%);
+}
+
+/* Пульсирующая анимация для привлечения внимания */
+.tasks-counter-indicator.pulse {
+    animation: pulseAnimation 2s ease-in-out infinite;
+}
+
+@keyframes pulseAnimation {
+    0% { transform: translateX(0) scale(1); }
+    50% { transform: translateX(0) scale(1.02); }
+    100% { transform: translateX(0) scale(1); }
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .tasks-counter-indicator {
+        top: 80px;
+        right: 10px;
+        left: 10px;
+        min-width: auto;
+        max-width: none;
+        transform: translateY(-100%);
+    }
+
+    .tasks-counter-indicator.visible {
+        transform: translateY(0);
+    }
+
+    .tasks-counter-indicator.hidden {
+        transform: translateY(-100%);
+    }
+
+    .counter-content {
+        padding: 12px 16px;
+    }
+
+    .counter-number {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .counter-text {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+    }
+
+    .counter-number {
+        font-size: 18px;
+    }
+
+    .counter-prefix,
+    .counter-suffix {
+        font-size: 12px;
+    }
+}
+
+/* Стили для режима скроллинга */
+.tasks-counter-indicator.scroll-mode {
+    top: 120px;
+}
+
+.tasks-counter-indicator.scroll-mode::before {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, #ffffff 50%, transparent 100%);
+    opacity: 0.6;
+}
+
+/* Интерактивные элементы */
+.tasks-counter-indicator:hover {
+    transform: translateX(0) scale(1.02);
+    box-shadow:
+        0 12px 40px rgba(102, 126, 234, 0.4),
+        0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.tasks-counter-indicator:hover .counter-close-btn {
+    opacity: 1;
+}
+
+/* Стили скроллинга удалены */
+
+/* Переключатель режимов пагинации */

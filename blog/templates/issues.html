@@ -1,0 +1,1715 @@
+{% extends 'layout.html' %}
+
+<!-- Preload critical resources -->
+<link rel="preload"
+  href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap"
+  as="style" onload="this.onload=null;this.rel='stylesheet'" />
+<noscript>
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" />
+</noscript>
+
+{% block main_page %}
+<div class="issues-page-container">
+  <!-- Background Shapes - Lazy loaded -->
+  <div class="background-shapes" style="opacity: 0; transition: opacity 0.5s ease">
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+    <div class="shape shape-3"></div>
+  </div>
+
+  <!-- Loading Spinner -->
+  <div id="loading-spinner" class="loading-overlay">
+    <div class="loading-content">
+      <div class="spinner-icon">
+        <i class="fas fa-cog fa-spin"></i>
+      </div>
+      <h3>Загрузка заявок...</h3>
+      <p>Подключение к системе HelpDesk</p>
+    </div>
+  </div>
+
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <i class="fas fa-ticket-alt"></i>
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Мои заявки в ИТ-Департамент</h1>
+          <p class="page-subtitle">
+            Управление и отслеживание ваших обращений в техническую поддержку
+          </p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+          <i class="fas fa-plus"></i>
+          <span>Создать заявку</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Statistics Dashboard -->
+  <section class="stats-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card total expandable" data-category="total">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-chart-pie"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="totalIssues">-</span>
+            <span class="stat-label">Всего заявок</span>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="totalDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card open expandable" data-category="open">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-rocket"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="openIssues">-</span>
+            <span class="stat-label">Открытых</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Новая • Открыта • Выполнена</span>
+            </div>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="openDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card progress expandable" data-category="progress">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="inProgressIssues">-</span>
+            <span class="stat-label">В работе</span>
+            <div class="stat-status-list">
+              <span class="status-hint">В работе • Приостановлена<br>На тестировании • В очереди</span>
+            </div>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="progressDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card awaiting expandable" data-category="awaiting">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="awaitingResponseIssues">-</span>
+            <span class="stat-label">Ожидают ответа</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Запрошено уточнение • Протестирована • На согласовании</span>
+            </div>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="awaitingResponseDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+      <div class="stat-card closed expandable" data-category="closed">
+        <div class="stat-header">
+          <div class="stat-icon">
+            <i class="fas fa-check-double"></i>
+          </div>
+          <div class="stat-content">
+            <span class="stat-value" id="closedIssues">-</span>
+            <span class="stat-label">Закрытых</span>
+            <div class="stat-status-list">
+              <span class="status-hint">Закрыта • Отклонена • Перенаправлена</span>
+            </div>
+          </div>
+          <div class="expand-arrow">
+            <i class="fas fa-chevron-down"></i>
+          </div>
+        </div>
+        <div class="stat-details" id="closedDetails">
+          <!-- Детализация заполняется JS -->
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Блок "Активные заявки" - Аккордеон -->
+  <section class="recent-activity-section">
+    <div class="activity-accordion">
+      <!-- Заголовок аккордеона (кликабельный) -->
+      <div class="activity-accordion-header" id="activity-accordion-toggle">
+        <div class="activity-header-content">
+          <div class="activity-title">
+            <i class="fas fa-history activity-icon"></i>
+            <h2>Активные заявки</h2>
+            <span class="activity-badge" id="activity-count-badge" style="display: none;">0</span>
+          </div>
+          <div class="activity-subtitle">
+            <span>Изменения в ваших заявках за последние 10 дней</span>
+          </div>
+        </div>
+        <div class="activity-toggle-icon">
+          <i class="fas fa-chevron-down"></i>
+        </div>
+      </div>
+
+      <!-- Содержимое аккордеона (раскрывающееся) -->
+      <div class="activity-accordion-content" id="activity-accordion-content">
+        <div class="activity-container" id="recent-activity-container">
+          <!-- Спиннер загрузки -->
+          <div class="activity-loading" id="activity-loading">
+            <i class="fas fa-spinner fa-spin"></i>
+            <span>Загрузка активности...</span>
+          </div>
+
+          <!-- Список активности (заполняется через JavaScript) -->
+          <div class="activity-list" id="activity-list" style="display: none;">
+            <!-- Элементы активности будут добавлены через JS -->
+          </div>
+
+          <!-- Сообщение об отсутствии данных -->
+          <div class="activity-empty" id="activity-empty" style="display: none;">
+            <i class="far fa-calendar-times"></i>
+            <p>Нет активных заявок</p>
+           <span class="activity-empty-hint">Заявки появятся здесь после обновления</span>
+          </div>
+
+          <!-- Сообщение об ошибке -->
+          <div class="activity-error" id="activity-error" style="display: none;">
+            <i class="fas fa-exclamation-circle"></i>
+            <p>Ошибка загрузки данных</p>
+            <button class="retry-btn" onclick="loadRecentActivity()">
+              <i class="fas fa-redo"></i> Повторить
+           </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Controls Panel -->
+  <section class="controls-panel">
+    <div class="controls-content">
+      <div class="filters-section">
+        <div class="filter-group">
+          <div class="filter-item">
+            <label class="filter-label">
+              <i class="fas fa-filter"></i>
+              Статус заявки
+            </label>
+            <div id="statusFilterContainer" class="filter-container">
+              <!-- Динамически заполняется JavaScript -->
+            </div>
+          </div>
+        </div>
+        <div class="search-section">
+          <label class="search-label">
+            <i class="fas fa-search"></i>
+            Быстрый поиск
+          </label>
+          <div id="searchBoxContainer" class="search-container">
+            <!-- Динамически заполняется JavaScript -->
+          </div>
+        </div>
+      </div>
+      <div class="display-options">
+        <div class="display-item">
+          <label class="display-label">Показать:</label>
+          <div id="lengthContainer" class="length-container">
+            <!-- Динамически заполняется JavaScript -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Issues Table -->
+  <section class="issues-section">
+    <div class="table-container">
+      <div class="table-wrapper">
+        <table id="issue" class="issues-table">
+          <thead>
+            <tr>
+              <th class="column-id">
+                <div class="column-header">
+                  <i class="fas fa-hashtag"></i>
+                  <span>ID</span>
+                </div>
+              </th>
+              <th class="column-date">
+                <div class="column-header">
+                  <i class="fas fa-calendar-alt"></i>
+                  <span>Обновлено</span>
+                </div>
+              </th>
+              <th class="column-subject">
+                <div class="column-header">
+                  <i class="fas fa-envelope"></i>
+                  <span>Тема заявки</span>
+                </div>
+              </th>
+              <th class="column-status">
+                <div class="column-header">
+                  <i class="fas fa-info-circle"></i>
+                  <span>Статус</span>
+                </div>
+              </th>
+              <th style="display:none;">Status ID</th>
+            </tr>
+          </thead>
+          <tbody id="table-body">
+            <!-- Динамически заполняется JavaScript -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Table Footer with Info and Pagination -->
+    <div class="table-footer">
+      <div class="table-info">
+        <div id="infoContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+      <div class="table-pagination">
+        <div id="paginationContainer">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+{% endblock main_page %} {% block styles %}
+
+<!-- Theme-aware styles for Issues page -->
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/issues_theme_fix.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+
+<!-- Стили для блока "Активные заявки" -->
+<link rel="stylesheet"
+  href="{{ url_for('static', filename='css/my_issues_activity.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+
+<!-- Base Styles (Always Active) -->
+<link rel="stylesheet" href="{{ url_for('static', filename='css/issues_styles.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+{% endblock %}{% block scripts %}
+<script>
+  // DataStateManager - компонент для сохранения состояния данных
+  class DataStateManager {
+    constructor() {
+      this.tableState = {};
+      this.statsState = {};
+      this.storageKey = "issuesPageState";
+    }
+
+    getDataTable() {
+      try {
+        return window.issuesTable || window.table || null;
+      } catch (e) {
+        console.warn("Ошибка получения DataTable:", e);
+        return null;
+      }
+    }
+
+    saveTableState() {
+      this.saveCurrentState();
+    }
+
+    saveCurrentState() {
+      try {
+        // Сохраняем состояние таблицы DataTables
+        const dt = this.getDataTable();
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          const tableInfo = dt.page.info();
+          const searchValue = dt.search();
+          const orderInfo = dt.order();
+
+          this.tableState = {
+            page: tableInfo.page,
+            length: tableInfo.length,
+            search: searchValue,
+            order: orderInfo,
+            timestamp: Date.now(),
+          };
+        }
+
+        // Сохраняем состояние статистических карточек
+        this.saveStatsState();
+
+        // Сохраняем в localStorage
+        this.persistState();
+      } catch (error) {
+        console.error("Ошибка при сохранении состояния:", error);
+      }
+    }
+
+    saveStatsState() {
+      try {
+        const statsCards = document.querySelectorAll(".stat-card");
+        this.statsState = {};
+
+        statsCards.forEach((card, index) => {
+          const isExpanded = card.classList.contains("expanded");
+          const cardId = card.id || `stat-card-${index}`;
+
+          this.statsState[cardId] = {
+            expanded: isExpanded,
+            visible: !card.classList.contains("hidden"),
+          };
+        });
+      } catch (error) {
+        console.error("Ошибка при сохранении состояния статистики:", error);
+      }
+    }
+
+    restoreState() {
+      try {
+        // Восстанавливаем состояние таблицы
+        this.restoreTableState();
+
+        // Восстанавливаем состояние статистики
+        this.restoreStatsState();
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния:", error);
+      }
+    }
+
+    restoreTableState() {
+      try {
+        const dt = this.getDataTable();
+        if (this.tableState && dt && $.fn.DataTable.isDataTable("#issue")) {
+          // Восстанавливаем поиск
+          if (this.tableState.search) {
+            dt.search(this.tableState.search);
+          }
+
+          // Восстанавливаем сортировку
+          if (this.tableState.order) {
+            dt.order(this.tableState.order);
+          }
+
+          // Восстанавливаем размер страницы
+          if (this.tableState.length) {
+            dt.page.len(this.tableState.length);
+          }
+
+          // Восстанавливаем текущую страницу
+          if (this.tableState.page !== undefined) {
+            dt.page(this.tableState.page);
+          }
+
+          // Перерисовываем таблицу
+          dt.draw(false);
+        }
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния таблицы:", error);
+      }
+    }
+
+    restoreStatsState() {
+      try {
+        if (this.statsState) {
+          Object.keys(this.statsState).forEach((cardId) => {
+            const card = document.getElementById(cardId);
+            if (card) {
+              const state = this.statsState[cardId];
+
+              // Восстанавливаем состояние раскрытия
+              if (state.expanded) {
+                card.classList.add("expanded");
+              } else {
+                card.classList.remove("expanded");
+              }
+
+              // Восстанавливаем видимость
+              if (state.visible) {
+                card.classList.remove("hidden");
+              } else {
+                card.classList.add("hidden");
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Ошибка при восстановлении состояния статистики:", error);
+      }
+    }
+
+    persistState() {
+      try {
+        const stateData = {
+          table: this.tableState,
+          stats: this.statsState,
+          timestamp: Date.now(),
+        };
+
+        localStorage.setItem(this.storageKey, JSON.stringify(stateData));
+      } catch (error) {
+        console.warn("Не удалось сохранить состояние в localStorage:", error);
+      }
+    }
+
+    loadPersistedState() {
+      try {
+        const savedData = localStorage.getItem(this.storageKey);
+        if (savedData) {
+          const stateData = JSON.parse(savedData);
+
+          // Проверяем, не устарели ли данные (старше 1 часа)
+          const oneHour = 60 * 60 * 1000;
+          if (Date.now() - stateData.timestamp < oneHour) {
+            this.tableState = stateData.table || {};
+            this.statsState = stateData.stats || {};
+          }
+        }
+      } catch (error) {
+        console.warn("Не удалось загрузить состояние из localStorage:", error);
+      }
+    }
+
+    clearState() {
+      try {
+        this.tableState = {};
+        this.statsState = {};
+        localStorage.removeItem(this.storageKey);
+      } catch (error) {
+        console.error("Ошибка при очистке состояния:", error);
+      }
+    }
+  }
+
+  // Optimized DOM Ready with performance improvements
+  $(document).ready(function () {
+    // Performance optimization: Use requestAnimationFrame for smooth initialization
+    requestAnimationFrame(() => {
+      // Инициализируем менеджеры
+      // ThemeManager уже инициализирован глобально в layout.html
+      window.dataStateManager = new DataStateManager();
+
+      // Загружаем сохраненное состояние
+      window.dataStateManager.loadPersistedState();
+
+      // Показываем спиннер перед отправкой запроса
+      $("#loading-spinner").show();
+
+      // Defer heavy operations
+      setTimeout(() => {
+        initializeTableData();
+      }, 0);
+    });
+
+    // Функция для определения стиля статуса
+    function getStatusStyle(statusName) {
+      let style = {
+        trClass: "status-default",
+        iconClass: "fas fa-question-circle",
+        tooltip: statusName,
+        statusTextClass: "",
+      };
+      const normalizedStatus = String(statusName).toLowerCase();
+
+      if (
+        normalizedStatus.includes("закрыта") ||
+        normalizedStatus.includes("отклонена") ||
+        normalizedStatus.includes("перенаправлена") ||
+        normalizedStatus.includes("closed") ||
+        normalizedStatus.includes("rejected") ||
+        normalizedStatus.includes("redirected")
+      ) {
+        style.trClass = "status-closed";
+        style.iconClass = "fas fa-times-circle";
+        style.tooltip = "Заявка окончательно закрыта";
+      } else if (
+        normalizedStatus.includes("выполнена") ||
+        normalizedStatus.includes("resolved")
+      ) {
+        style.trClass = "status-open";
+        style.iconClass = "fas fa-check-circle";
+        style.tooltip = "Заявка выполнена, ожидает закрытия";
+      } else if (
+        normalizedStatus.includes("в работе") ||
+        normalizedStatus.includes("приостановлена") ||
+        normalizedStatus.includes("на тестировании") ||
+        normalizedStatus.includes("в очереди") ||
+        normalizedStatus.includes("заморожена") ||
+        normalizedStatus.includes("in progress")
+      ) {
+        style.trClass = "status-progress";
+        style.iconClass = "fas fa-clock";
+        style.tooltip = "Заявка находится в процессе выполнения";
+      } else if (
+        normalizedStatus.includes("запрошено уточнение") ||
+        normalizedStatus.includes("clarification")
+      ) {
+        style.trClass = "status-clarification";
+        style.iconClass = "fas fa-exclamation-circle";
+        style.tooltip = "Требуется ваше уточнение для продолжения работы";
+      } else if (
+        normalizedStatus.includes("на согласовании") ||
+        normalizedStatus.includes("approval")
+      ) {
+        style.trClass = "status-approval";
+        style.iconClass = "fas fa-user-clock";
+        style.tooltip = "Заявка ожидает согласования";
+      } else if (
+        normalizedStatus.includes("открыта") ||
+        normalizedStatus.includes("new") ||
+        normalizedStatus.includes("open") ||
+        normalizedStatus.includes("pending") ||
+        normalizedStatus.includes("создана") ||
+        normalizedStatus.includes("зарегистрирована")
+      ) {
+        style.trClass = "status-open";
+        style.iconClass = "fas fa-folder-open";
+        style.tooltip = "Заявка зарегистрирована и ожидает обработки";
+      }
+      return style;
+    }
+
+    // Функция форматирования даты
+    function formatDate(dateString) {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return "Нет даты";
+      }
+      return date.toLocaleDateString("ru-RU", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    }
+    // Функция инициализации данных таблицы с поддержкой кеша
+    function initializeTableData() {
+      const cacheKey = "my_issues_data_v2";
+      const stateKey = "my_issues_table_state_v2";
+      const cacheTimeKey = "my_issues_cache_time_v2";
+      const cacheExpiry = 10 * 60 * 1000; // 10 минут
+
+      // Проверяем URL параметры
+      const urlParams = new URLSearchParams(window.location.search);
+      const useCached = urlParams.get("cached") === "1";
+      const fromIssueId = urlParams.get("from_issue");
+
+      // Попытка использовать кеш
+      if (useCached) {
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
+        const cachedState = sessionStorage.getItem(stateKey);
+
+        if (
+          cachedData &&
+          cacheTimestamp &&
+          Date.now() - parseInt(cacheTimestamp) < cacheExpiry
+        ) {
+          try {
+            const response = JSON.parse(cachedData);
+            const tableState = cachedState ? JSON.parse(cachedState) : null;
+
+            console.log("📚 Используем кешированные данные");
+            processTableData(response, tableState, fromIssueId);
+
+            // Очищаем URL от параметров кеша
+            window.history.replaceState({}, "", "/my-issues");
+            return;
+          } catch (error) {
+            console.warn("⚠️ Ошибка при использовании кеша:", error);
+          }
+        }
+      }
+
+      // Загрузка данных с сервера
+      console.log("🌐 Загружаем данные с сервера");
+      loadDataFromServer();
+    }
+
+    // AJAX запрос для получения данных с сервера
+    function loadDataFromServer() {
+      $.ajax({
+        url: "/get-my-issues",
+        method: "GET",
+        crossDomain: true,
+        xhrFields: {
+          withCredentials: true,
+        },
+        success: function (response) {
+          // Кешируем полученные данные
+          const cacheKey = "my_issues_data_v2";
+          const cacheTimeKey = "my_issues_cache_time_v2";
+
+          try {
+            sessionStorage.setItem(cacheKey, JSON.stringify(response));
+            sessionStorage.setItem(cacheTimeKey, Date.now().toString());
+            console.log("💾 Данные сохранены в кеш");
+          } catch (error) {
+            console.warn("⚠️ Не удалось сохранить в кеш:", error);
+          }
+
+          // Обрабатываем данные
+          processTableData(response);
+        },
+        error: function (xhr, status, error) {
+          console.error("Error:", error);
+          $("#table-body").html(`
+                      <tr>
+                          <td></td>
+                          <td></td>
+                          <td>
+                              <div class="error-state">
+                                  <i class="fas fa-exclamation-triangle"></i>
+                                  <h3>Ошибка загрузки данных</h3>
+                                  <p>Не удалось подключиться к системе HelpDesk</p>
+                                  <button onclick="location.reload()" class="action-button primary">
+                                      <i class="fas fa-refresh"></i>
+                                      <span>Попробовать снова</span>
+                                  </button>
+                              </div>
+                          </td>
+                          <td></td>
+                      </tr>
+                  `);
+        },
+        complete: function () {
+          // Скрываем спиннер после завершения запроса
+          $("#loading-spinner").hide();
+        },
+      });
+    }
+    // Функция анимации чисел - Optimized
+    function animateNumber(element, finalNumber) {
+      if (finalNumber === 0) {
+        element.text("0");
+        return;
+      }
+
+      let currentNumber = 0;
+      const steps = Math.min(20, finalNumber); // Меньше шагов для лучшей производительности
+      const increment = finalNumber / steps;
+      const duration = Math.min(1000, finalNumber * 30); // Адаптивная длительность
+      const stepTime = duration / steps;
+
+      const timer = setInterval(function () {
+        currentNumber += increment;
+        if (currentNumber >= finalNumber) {
+          currentNumber = finalNumber;
+          clearInterval(timer);
+        }
+        element.text(Math.floor(currentNumber));
+      }, stepTime);
+    }
+
+    // Функция заполнения деталей карточек
+    function populateCardDetails(stats) {
+      console.log("🔍 populateCardDetails вызвана с:", stats);
+
+      // Проверяем наличие структуры detailsByCategory
+      if (!stats || !stats.detailsByCategory) {
+        console.error("❌ stats.detailsByCategory не найден:", stats);
+        return;
+      }
+
+      console.log("📊 detailsByCategory:", stats.detailsByCategory);
+
+      // Вспомогательная функция генерации блока статусов
+      function buildCategoryBlock(titleEmojiAndText, categoryMap, itemClass) {
+        if (!categoryMap || Object.keys(categoryMap).length === 0) return "";
+        let html = `<div class="category-group"><div class="category-title">${titleEmojiAndText}</div>`;
+        Object.keys(categoryMap).forEach((status) => {
+          const count = categoryMap[status];
+          html += `
+                      <div class="status-item ${itemClass}" data-status="${status}">
+                          <span class="status-name">${status}</span>
+                          <span class="status-count">${count}</span>
+                      </div>
+                  `;
+        });
+        html += "</div>";
+        return html;
+      }
+
+      // Заполняем детализацию для всех заявок (total)
+      let totalDetailsHTML = "";
+
+      // Группируем по категориям для лучшего отображения
+      // Открытые статусы
+      totalDetailsHTML += buildCategoryBlock(
+        "📂 Открытые",
+        stats.detailsByCategory.open,
+        "open-status"
+      );
+
+      // Статусы в работе
+      totalDetailsHTML += buildCategoryBlock(
+        "⚙️ В работе",
+        stats.detailsByCategory.progress,
+        "progress-status"
+      );
+
+      // Закрытые статусы
+      totalDetailsHTML += buildCategoryBlock(
+        "✅ Закрытые",
+        stats.detailsByCategory.closed,
+        "closed-status"
+      );
+
+      // Ожидают ответа
+      totalDetailsHTML += buildCategoryBlock(
+        "⏳ Ожидают ответа",
+        stats.detailsByCategory.awaiting,
+        "awaiting-status"
+      );
+
+      if (totalDetailsHTML === "") {
+        totalDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      }
+      $("#totalDetails").html(totalDetailsHTML);
+
+      // Заполняем детализацию по отдельным карточкам
+      let openDetailsHTML = buildCategoryBlock(
+        "📂 Открытые",
+        stats.detailsByCategory.open,
+        "open-status"
+      );
+      if (openDetailsHTML === "")
+        openDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#openDetails").html(openDetailsHTML);
+
+      let progressDetailsHTML = buildCategoryBlock(
+        "⚙️ В работе",
+        stats.detailsByCategory.progress,
+        "progress-status"
+      );
+      if (progressDetailsHTML === "")
+        progressDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#progressDetails").html(progressDetailsHTML);
+
+      let closedDetailsHTML = buildCategoryBlock(
+        "✅ Закрытые",
+        stats.detailsByCategory.closed,
+        "closed-status"
+      );
+      if (closedDetailsHTML === "")
+        closedDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#closedDetails").html(closedDetailsHTML);
+
+      let awaitingDetailsHTML = buildCategoryBlock(
+        "⏳ Ожидают ответа",
+        stats.detailsByCategory.awaiting,
+        "awaiting-status"
+      );
+      if (awaitingDetailsHTML === "")
+        awaitingDetailsHTML =
+          '<div class="status-item"><span class="status-name">Нет данных</span></div>';
+      $("#awaitingResponseDetails").html(awaitingDetailsHTML);
+    } // Функция обработки данных таблицы (общая для кеша и сервера)
+    function processTableData(response, savedState, fromIssueId) {
+      // 🔧 ИСПРАВЛЕНИЕ: Сохраняем данные для Канбан-доски
+      window.issuesData = response.issues || [];
+      console.log('💾 Сохранено заявок для Канбан:', window.issuesData.length);
+
+      // Создаем фильтр статусов
+      let statusFilter =
+        '<select id="status-filter" class="form-control">' +
+        '<option value="">Все статусы</option>';
+
+      response.statuses.forEach(function (status) {
+        statusFilter += `<option value="${status.name}">${status.name}</option>`;
+      });
+
+      statusFilter += "</select>";
+      $("#statusFilterContainer").html(statusFilter);
+
+      // Подсчет и отображение статистики
+      let stats = {
+        total: response.issues.length,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+        awaitingResponse: 0,
+        detailsByCategory: {
+          open: {},
+          progress: {},
+          closed: {},
+          awaiting: {},
+          other: {},
+        },
+      };
+
+      // Отладка: выводим все заявки для проверки
+      console.log('📊 Всего заявок для анализа:', response.issues.length);
+      console.log('🔍 Ищем заявки со статусами 9, 13, 15...');
+
+      response.issues.forEach(function (issue) {
+        const normalizedStatus = String(issue.status_name).toLowerCase();
+        const statusName = issue.status_name;
+        const statusId = parseInt(issue.status_id); // Преобразуем в число
+
+        // Отладка: выводим каждую заявку
+        // Преобразуем statusId в число для корректного сравнения
+        const statusIdNum = parseInt(statusId, 10);
+        if (statusIdNum === 9 || statusIdNum === 13 || statusIdNum === 15) {
+          console.log(`⏳ НАЙДЕНА! Заявка #${issue.id} "${statusName}" (ID: ${statusId}, тип: ${typeof statusId}) → Ожидают ответа`);
+          stats.awaitingResponse++;
+          stats.detailsByCategory.awaiting[statusName] =
+            (stats.detailsByCategory.awaiting[statusName] || 0) + 1;
+        } else if (
+          normalizedStatus.includes("закрыта") ||
+          normalizedStatus.includes("отклонена") ||
+          normalizedStatus.includes("перенаправлена") ||
+          normalizedStatus.includes("closed") ||
+          normalizedStatus.includes("rejected") ||
+          normalizedStatus.includes("redirected")
+        ) {
+          stats.closed++;
+          stats.detailsByCategory.closed[statusName] =
+            (stats.detailsByCategory.closed[statusName] || 0) + 1;
+        } else if (
+          normalizedStatus.includes("в работе") ||
+          normalizedStatus.includes("приостановлена") ||
+          normalizedStatus.includes("на тестировании") ||
+          normalizedStatus.includes("в очереди") ||
+          normalizedStatus.includes("заморожена") ||
+          normalizedStatus.includes("in progress")
+        ) {
+          stats.inProgress++;
+          stats.detailsByCategory.progress[statusName] =
+            (stats.detailsByCategory.progress[statusName] || 0) + 1;
+        } else if (
+          normalizedStatus.includes("открыта") ||
+          normalizedStatus.includes("выполнена") ||
+          normalizedStatus.includes("new") ||
+          normalizedStatus.includes("open") ||
+          normalizedStatus.includes("pending") ||
+          normalizedStatus.includes("resolved") ||
+          normalizedStatus.includes("создана") ||
+          normalizedStatus.includes("зарегистрирована")
+        ) {
+          stats.open++;
+          stats.detailsByCategory.open[statusName] =
+            (stats.detailsByCategory.open[statusName] || 0) + 1;
+        } else {
+          // Другие статусы
+          stats.detailsByCategory.other[statusName] =
+            (stats.detailsByCategory.other[statusName] || 0) + 1;
+        }
+      });
+
+      // Отладка: выводим итоговую статистику
+      console.log('📊 Итоговая статистика:', {
+        total: stats.total,
+        open: stats.open,
+        inProgress: stats.inProgress,
+        closed: stats.closed,
+        awaitingResponse: stats.awaitingResponse
+      });
+      console.log('📋 Детализация "Ожидают ответа":', stats.detailsByCategory.awaiting);
+
+      // Обновляем статистику с анимацией
+      animateNumber($("#totalIssues"), stats.total);
+      animateNumber($("#openIssues"), stats.open);
+      animateNumber($("#inProgressIssues"), stats.inProgress);
+      animateNumber($("#closedIssues"), stats.closed);
+      animateNumber($("#awaitingResponseIssues"), stats.awaitingResponse);
+
+      // Заполняем детализацию карточек
+      populateCardDetails(stats);
+      // Инициализируем клики по стат-карточкам
+      initStatCards();
+
+      // Заполняем таблицу данными
+      if (response.issues.length === 0) {
+        $("#table-body").html(`
+                  <tr>
+                      <td></td>
+                      <td></td>
+                      <td>
+                          <div class="empty-state">
+                              <i class="fas fa-inbox"></i>
+                              <h3>Заявки не найдены</h3>
+                              <p>У вас пока нет заявок в системе</p>
+                              <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
+                                  <i class="fas fa-plus"></i>
+                                  <span>Создать первую заявку</span>
+                              </a>
+                          </div>
+                      </td>
+                      <td></td>
+                  </tr>
+              `);
+      } else {
+        let tableBody = "";
+        response.issues.forEach(function (issue) {
+          let statusInfo = getStatusStyle(issue.status_name);
+          tableBody += `
+                      <tr class="${statusInfo.trClass}" data-status-id="${issue.status_id || 0}" data-issue-id="${issue.id}" data-status-name="${issue.status_name}">
+                          <td>
+                              <a href="/my-issues/${issue.id
+            }" class="issue-id-link" title="Посмотреть детали заявки">
+                                  <i class="fas fa-external-link-alt"></i>
+                                  <span>#${issue.id}</span>
+                              </a>
+                          </td>
+                          <td data-sort="${issue.updated_on}">
+                              <span title="${new Date(
+              issue.updated_on
+            ).toLocaleString("ru-RU")}">${formatDate(
+              issue.updated_on
+            )}</span>
+                          </td>
+                          <td>
+                              <a href="/my-issues/${issue.id
+            }" class="issue-subject-link issue-subject" title="${issue.subject
+            }">
+                                  <i class="fas fa-external-link-alt"></i>
+                                  <span>${issue.subject}</span>
+                              </a>
+                          </td>
+                          <td>
+                              <div class="status-cell">
+                                  <div class="status-badge" title="${statusInfo.tooltip
+            }">
+                                      <i class="${statusInfo.iconClass
+            } status-icon"></i>
+                                      <span>${issue.status_name}</span>
+                                  </div>
+                              </div>
+                          </td>
+                          <td style="display:none;">${issue.status_id || 0}</td>
+                      </tr>
+                  `;
+        });
+        $("#table-body").html(tableBody);
+      }
+
+      // Инициализируем DataTables
+      let table;
+      try {
+        table = window.issuesTable = $("#issue").DataTable({
+          language: {
+            url: "/static/js/datatables/Russian.json",
+          },
+          order: [[1, "desc"]],
+          pageLength: 10,
+          lengthMenu: [
+            [5, 10, 25, 50],
+            [5, 10, 25, 50],
+          ],
+          pagingType: "full_numbers",
+          dom: '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
+          deferRender: true, // Optimize rendering
+          processing: false, // Disable processing indicator for better UX
+          stateSave: false, // We handle state manually
+          initComplete: function () {
+            // Перемещаем элементы управления
+            $(".dataTables_filter").detach().appendTo("#searchBoxContainer");
+            $("#searchBoxContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+            $('#searchBoxContainer input[type="search"]').attr(
+              "placeholder",
+              "Поиск по заявкам..."
+            );
+
+            $(".dataTables_length").detach().appendTo("#lengthContainer");
+            $("#lengthContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+
+            $(".dataTables_info").detach().appendTo("#infoContainer");
+            $(".dataTables_paginate").detach().appendTo("#paginationContainer");
+
+            // Добавляем кнопки переключения режимов просмотра
+            const viewToggleHtml = `
+              <div class="view-toggle-wrapper" style="margin: 20px 0; text-align: center;">
+                <div class="view-toggle-buttons">
+                  <button class="view-toggle-btn active" data-view="list" title="Режим списка">
+                    <i class="fas fa-list"></i>
+                    <span>Список</span>
+                  </button>
+                  <button class="view-toggle-btn" data-view="kanban" title="Режим карточек">
+                    <i class="fas fa-th-large"></i>
+                    <span>Карточки</span>
+                  </button>
+                </div>
+              </div>
+            `;
+
+            // Добавляем кнопки перед таблицей
+            $('.issues-section .table-container').before(viewToggleHtml);
+
+            // Добавляем обработчики кликов
+            $('.view-toggle-btn').on('click', function () {
+              const viewMode = $(this).data('view');
+
+              // Убираем активный класс со всех кнопок
+              $('.view-toggle-btn').removeClass('active');
+
+              // Добавляем активный класс к нажатой кнопке
+              $(this).addClass('active');
+
+              // Сохраняем выбранный режим
+              localStorage.setItem('issues_view_mode', viewMode);
+
+              // Переключаем режим отображения
+              if (viewMode === 'kanban') {
+                window.showKanbanView();
+              } else {
+                window.showListView();
+              }
+
+              console.log('🔄 Переключен режим просмотра:', viewMode);
+            });
+
+            // Восстанавливаем сохраненный режим
+            const savedViewMode = localStorage.getItem('issues_view_mode');
+            if (savedViewMode === 'kanban') {
+              $('.view-toggle-btn[data-view="kanban"]').trigger('click');
+            }
+          },
+          paging: true,
+          info: true,
+          searching: true,
+          ordering: true,
+        });
+
+        // Добавляем обработчик изменения фильтра статусов
+        $("#status-filter").on("change", function () {
+          let selectedStatus = $(this).val();
+          table.column(3).search(selectedStatus).draw();
+
+          // Сохраняем состояние при изменении фильтра
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        // Добавляем обработчики для сохранения состояния при других изменениях
+        table.on("page.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        table.on("length.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        table.on("order.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+
+        table.on("search.dt", function () {
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.saveTableState();
+            }, 100);
+          }
+        });
+      } catch (error) {
+        console.error("❌ Ошибка инициализации DataTables:", error);
+      }
+
+      // Восстанавливаем состояние таблицы после инициализации
+      if (window.dataStateManager && savedState) {
+        setTimeout(() => {
+          window.dataStateManager.restoreTableState();
+        }, 100);
+      }
+
+      // Скрываем спиннер после успешной обработки данных
+      $("#loading-spinner").hide();
+
+      // Уведомляем о загрузке данных
+      $(document).trigger("dataLoaded");
+    }
+
+    // Table initialization moved to requestAnimationFrame above
+
+    // Инициализация поведения стат-карточек - Optimized
+    function initStatCards() {
+      try {
+        $(".stat-card.expandable").each(function () {
+          const $card = $(this);
+          const $details = $card.find(".stat-details");
+
+          $card.off("click.statToggle").on("click.statToggle", function (e) {
+            if (
+              $(e.target).is(
+                "select, option, input, button, a, .action-button, .status-item"
+              )
+            )
+              return;
+
+            $card.toggleClass("expanded");
+
+            if ($card.hasClass("expanded")) {
+              $details
+                .css({
+                  display: "block",
+                  opacity: "0",
+                  height: "0",
+                  overflow: "hidden",
+                })
+                .stop(true, true)
+                .animate(
+                  {
+                    opacity: "1",
+                    height: $details[0].scrollHeight + "px",
+                  },
+                  150,
+                  function () {
+                    $details.css({
+                      height: "auto",
+                      overflow: "visible",
+                    });
+                  }
+                );
+            } else {
+              $details.stop(true, true).animate(
+                {
+                  opacity: "0",
+                  height: "0",
+                },
+                150,
+                function () {
+                  $details.css("display", "none");
+                }
+              );
+            }
+          });
+        });
+
+        // Инициализация кликов по статусам для фильтрации
+        $(".status-item")
+          .off("click.statusFilter")
+          .on("click.statusFilter", function (e) {
+            e.stopPropagation();
+            const $statusItem = $(this);
+            const statusText = $statusItem.find(".status-name").text().trim();
+
+            console.log("🔍 Клик по статусу:", statusText);
+
+            // Убираем активный класс со всех статусов
+            $(".status-item").removeClass("active");
+            // Добавляем активный класс к выбранному статусу
+            $statusItem.addClass("active");
+
+            // Фильтруем таблицу по статусу
+            filterTableByStatus(statusText);
+          });
+      } catch (err) {
+        console.error("Ошибка инициализации стат-карточек:", err);
+      }
+    }
+
+    // Функция фильтрации таблицы по статусу
+    function filterTableByStatus(statusText) {
+      try {
+        console.log("🔍 filterTableByStatus вызвана с:", statusText);
+        const dt = window.dataStateManager
+          ? window.dataStateManager.getDataTable()
+          : null;
+        console.log("🔍 DataTable instance:", dt);
+
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          console.log("🔍 Применяем фильтр по статусу:", statusText);
+
+          // Очищаем предыдущие фильтры
+          dt.search("").columns().search("").draw();
+
+          // Применяем фильтр по статусу (колонка 3 - статус)
+          if (statusText && statusText !== "Все") {
+            dt.column(3).search(statusText, true, false).draw();
+            console.log("🔍 Фильтр применен к колонке 3");
+          }
+
+          // Сохраняем состояние
+          if (window.dataStateManager) {
+            window.dataStateManager.saveCurrentState();
+          }
+        } else {
+          console.warn("⚠️ DataTable не найдена или не инициализирована");
+        }
+      } catch (err) {
+        console.error("Ошибка фильтрации по статусу:", err);
+      }
+    }
+
+    // Функция сброса фильтров
+    function resetStatusFilter() {
+      try {
+        const dt = window.dataStateManager
+          ? window.dataStateManager.getDataTable()
+          : null;
+        if (dt && $.fn.DataTable.isDataTable("#issue")) {
+          // Очищаем все фильтры
+          dt.search("").columns().search("").draw();
+
+          // Убираем активный класс со всех статусов
+          $(".status-item").removeClass("active");
+
+          // Сохраняем состояние
+          if (window.dataStateManager) {
+            window.dataStateManager.saveCurrentState();
+          }
+        }
+      } catch (err) {
+        console.error("Ошибка сброса фильтров:", err);
+      }
+    }
+
+    // Функция показа режима списка
+    window.showListView = function () {
+      $('.issues-section .table-container').show();
+      $('#kanban-container').hide();
+
+      // Показываем пагинацию в режиме списка
+      $('.table-footer').show();
+
+      console.log('📋 Показан режим списка');
+    }
+
+    // Функция показа режима канбан
+    window.showKanbanView = function () {
+      $('.issues-section .table-container').hide();
+
+      // Создаем контейнер для канбан-доски если его нет
+      if ($('#kanban-container').length === 0) {
+        const kanbanHtml = `
+          <div id="kanban-container" class="kanban-container">
+            <div class="kanban-board">
+              <div class="kanban-column column-open" data-status="open">
+                <div class="kanban-header header-open">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-folder-open"></i>
+                    </div>
+                    <h3>Открытые</h3>
+                  </div>
+                  <span class="kanban-count count-open">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-open"></div>
+              </div>
+              <div class="kanban-column column-progress" data-status="progress">
+                <div class="kanban-header header-progress">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-cogs fa-spin"></i>
+                    </div>
+                    <h3>В работе</h3>
+                  </div>
+                  <span class="kanban-count count-progress">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-progress"></div>
+              </div>
+              <div class="kanban-column column-awaiting" data-status="awaiting">
+                <div class="kanban-header header-awaiting">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-clock"></i>
+                    </div>
+                    <h3>Ожидают ответа</h3>
+                  </div>
+                  <span class="kanban-count count-awaiting">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-awaiting"></div>
+              </div>
+              <div class="kanban-column column-closed" data-status="closed">
+                <div class="kanban-header header-closed">
+                  <div class="header-content">
+                    <div class="header-icon">
+                      <i class="fas fa-check-circle"></i>
+                    </div>
+                    <h3>Закрытые</h3>
+                  </div>
+                  <span class="kanban-count count-closed">0</span>
+                </div>
+                <div class="kanban-cards" id="kanban-closed"></div>
+              </div>
+            </div>
+          </div>
+        `;
+        $('.issues-section').append(kanbanHtml);
+      }
+
+      $('#kanban-container').show();
+
+      // Скрываем пагинацию в режиме канбан
+      $('.table-footer').hide();
+
+      populateKanbanBoard();
+      console.log('📊 Показан режим канбан');
+    }
+
+    // Функция заполнения канбан-доски
+    window.populateKanbanBoard = function () {
+      console.log('📊 Начинаем заполнение канбан-доски...');
+
+      // Очищаем все колонки
+      $('.kanban-cards').empty();
+
+      // 🔧 ИСПРАВЛЕНИЕ: Используем те же данные, что и статистика!
+      const issues = window.issuesData || [];
+      console.log('📊 Всего заявок для Канбан:', issues.length);
+
+      if (issues.length === 0) {
+        console.warn('⚠️ Нет данных для Канбан! Проверьте window.issuesData');
+        return;
+      }
+
+      // Счетчики для отладки
+      let counters = {
+        open: 0,
+        progress: 0,
+        awaiting: 0,
+        closed: 0
+      };
+
+      // Обрабатываем каждую заявку
+      issues.forEach(function (issue, index) {
+        const issueId = issue.id;
+        const statusName = issue.status_name;
+        const statusId = parseInt(issue.status_id);
+
+        // Отладка первой заявки
+        if (index === 0) {
+          console.log('📊 Первая заявка:', {
+            id: issueId,
+            subject: issue.subject,
+            status: statusName,
+            status_id: statusId
+          });
+        }
+
+        // Определяем колонку по статусу (ТОЧНО ТА ЖЕ ЛОГИКА, что и в статистике!)
+        let columnId = 'kanban-open';
+        let category = 'open';
+        const normalizedStatus = String(statusName).toLowerCase();
+
+        // Проверяем по status_id (приоритет!)
+        if (statusId === 9 || statusId === 13 || statusId === 15) {
+          columnId = 'kanban-awaiting';
+          category = 'awaiting';
+        } else if (
+          normalizedStatus.includes('закрыта') ||
+          normalizedStatus.includes('отклонена') ||
+          normalizedStatus.includes('перенаправлена') ||
+          normalizedStatus.includes('closed') ||
+          normalizedStatus.includes('rejected') ||
+          normalizedStatus.includes('redirected')
+        ) {
+          columnId = 'kanban-closed';
+          category = 'closed';
+        } else if (
+          normalizedStatus.includes('в работе') ||
+          normalizedStatus.includes('приостановлена') ||
+          normalizedStatus.includes('на тестировании') ||
+          normalizedStatus.includes('в очереди') ||
+          normalizedStatus.includes('заморожена') ||
+          normalizedStatus.includes('in progress')
+        ) {
+          columnId = 'kanban-progress';
+          category = 'progress';
+        } else if (
+          normalizedStatus.includes('открыта') ||
+          normalizedStatus.includes('выполнена') ||
+          normalizedStatus.includes('new') ||
+          normalizedStatus.includes('open') ||
+          normalizedStatus.includes('pending') ||
+          normalizedStatus.includes('resolved') ||
+          normalizedStatus.includes('создана') ||
+          normalizedStatus.includes('зарегистрирована')
+        ) {
+          columnId = 'kanban-open';
+          category = 'open';
+        }
+
+        counters[category]++;
+
+        // Создаем карточку напрямую из данных заявки
+        const card = createKanbanCardFromData(issue);
+        $(`#${columnId}`).append(card);
+      });
+
+      console.log('📊 Распределение по колонкам:', counters);
+
+      // Обновляем счетчики
+      $('.kanban-column').each(function () {
+        const count = $(this).find('.kanban-card').length;
+        $(this).find('.kanban-count').text(count);
+      });
+
+      console.log('✅ Канбан-доска заполнена!');
+    }
+
+    // 🔧 НОВАЯ ФУНКЦИЯ: Создание карточки напрямую из данных заявки
+    window.createKanbanCardFromData = function (issue) {
+      const issueId = issue.id;
+      const statusId = parseInt(issue.status_id);
+      const statusName = issue.status_name;
+      const issueDate = issue.created_on || issue.updated_on || '';
+      const issueSubject = issue.subject || 'Без темы';
+
+      // Определяем цвет статуса
+      let statusColor = 'status-default';
+      let statusIcon = 'fa-circle';
+
+      if (statusId === 9 || statusId === 13 || statusId === 15) {
+        statusColor = 'status-awaiting';
+        statusIcon = 'fa-clock';
+      } else if (statusName.toLowerCase().includes('закрыта')) {
+        statusColor = 'status-closed';
+        statusIcon = 'fa-check-circle';
+      } else if (statusName.toLowerCase().includes('в работе')) {
+        statusColor = 'status-progress';
+        statusIcon = 'fa-cog fa-spin';
+      } else if (statusName.toLowerCase().includes('открыта') || statusName.toLowerCase().includes('выполнена')) {
+        statusColor = 'status-open';
+        statusIcon = 'fa-folder-open';
+      }
+
+      // Создаем карточку
+      const $card = $('<div>')
+        .addClass('kanban-card modern-card')
+        .attr('data-issue-id', issueId)
+        .css('cursor', 'pointer')
+        .on('click', function () {
+          window.location.href = '/my-issues/' + issueId;
+        });
+
+      // Заголовок карточки
+      const $header = $('<div>').addClass('kanban-card-header');
+      $header.append(
+        $('<div>').addClass('card-id-badge').append(
+          $('<i>').addClass('fas fa-hashtag'),
+          $('<span>').text(issueId)
+        ),
+        $('<div>').addClass('card-date').append(
+          $('<i>').addClass('far fa-calendar-alt'),
+          $('<span>').text(issueDate)
+        )
+      );
+
+      // Тело карточки
+      const $body = $('<div>').addClass('kanban-card-body');
+      $body.append(
+        $('<div>').addClass('kanban-card-title').text(issueSubject)
+      );
+
+      // Подвал карточки
+      const $footer = $('<div>').addClass('kanban-card-footer');
+      $footer.append(
+        $('<div>').addClass('kanban-card-status ' + statusColor).append(
+          $('<i>').addClass('fas ' + statusIcon),
+          $('<span>').text(statusName)
+        ),
+        $('<div>').addClass('card-action-hint').append(
+          $('<i>').addClass('fas fa-external-link-alt')
+        )
+      );
+
+      $card.append($header, $body, $footer);
+      return $card;
+    }
+
+    // Функция создания карточки канбан из строки таблицы (старая, оставляем для совместимости)
+    window.createKanbanCard = function ($row) {
+      // Получаем данные из data-атрибутов строки
+      const issueId = $row.data('issue-id');
+      const statusId = parseInt($row.data('status-id'));
+      const statusName = $row.data('status-name');
+
+      // Получаем текст из ячеек (уже экранированный браузером)
+      const issueDate = $row.find('td').eq(1).text().trim();
+      const issueSubject = $row.find('td').eq(2).text().trim();
+
+      // Определяем цвет статуса
+      let statusColor = 'status-default';
+      let statusIcon = 'fa-circle';
+
+      if (statusId === 9 || statusId === 13 || statusId === 15) {
+        statusColor = 'status-awaiting';
+        statusIcon = 'fa-clock';
+      } else if (statusName.toLowerCase().includes('закрыта')) {
+        statusColor = 'status-closed';
+        statusIcon = 'fa-check-circle';
+      } else if (statusName.toLowerCase().includes('в работе')) {
+        statusColor = 'status-progress';
+        statusIcon = 'fa-cog fa-spin';
+      } else if (statusName.toLowerCase().includes('открыта')) {
+        statusColor = 'status-open';
+        statusIcon = 'fa-folder-open';
+      }
+
+      // Создаем карточку с помощью jQuery для безопасного экранирования
+      const $card = $('<div>')
+        .addClass('kanban-card modern-card')
+        .attr('data-issue-id', issueId)
+        .css('cursor', 'pointer')
+        .on('click', function () {
+          window.location.href = '/my-issues/' + issueId;
+        });
+
+      // Заголовок карточки
+      const $header = $('<div>').addClass('kanban-card-header');
+      $header.append(
+        $('<div>').addClass('card-id-badge').append(
+          $('<i>').addClass('fas fa-hashtag'),
+          $('<span>').text(issueId)
+        ),
+        $('<div>').addClass('card-date').append(
+          $('<i>').addClass('far fa-calendar-alt'),
+          $('<span>').text(issueDate)
+        )
+      );
+
+      // Тело карточки
+      const $body = $('<div>').addClass('kanban-card-body');
+      $body.append(
+        $('<div>').addClass('kanban-card-title').text(issueSubject)
+      );
+
+      // Подвал карточки
+      const $footer = $('<div>').addClass('kanban-card-footer');
+      $footer.append(
+        $('<div>').addClass('kanban-card-status ' + statusColor).append(
+          $('<i>').addClass('fas ' + statusIcon),
+          $('<span>').text(statusName)
+        ),
+        $('<div>').addClass('card-action-hint').append(
+          $('<i>').addClass('fas fa-external-link-alt')
+        )
+      );
+
+      $card.append($header, $body, $footer);
+      return $card;
+    }
+
+    // Добавляем кнопку сброса фильтра в DOM
+    $(document).ready(function () {
+      // Добавляем кнопку сброса фильтра в панель управления
+      if ($("#reset-filter-btn").length === 0) {
+        $(".controls-content").append(
+          '<div class="reset-filter-container"><button id="reset-filter-btn" class="action-button secondary"><i class="fas fa-times"></i> Сбросить фильтр</button></div>'
+        );
+
+        // Обработчик клика по кнопке сброса
+        $("#reset-filter-btn").on("click", function () {
+          resetStatusFilter();
+        });
+      }
+    });
+
+    // Функции для управления таблицей при переключении темы
+    window.reinitializeTable = function () {
+      try {
+        // Сохраняем текущее состояние перед уничтожением
+        if (window.dataStateManager) {
+          window.dataStateManager.saveCurrentState();
+        }
+
+        // Уничтожаем существующую таблицу
+        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+          window.issuesTable.destroy();
+        }
+
+        // Пересоздаем таблицу
+        setTimeout(() => {
+          initializeTableData();
+
+          // Восстанавливаем состояние после пересоздания
+          if (window.dataStateManager) {
+            setTimeout(() => {
+              window.dataStateManager.restoreState();
+            }, 200);
+          }
+        }, 100);
+      } catch (error) {
+        console.error("Ошибка при переинициализации таблицы:", error);
+      }
+    };
+
+    // Функция для безопасного уничтожения таблицы
+    window.destroyTable = function () {
+      try {
+        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+          window.issuesTable.destroy();
+          window.issuesTable = null;
+        }
+      } catch (error) {
+        console.error("Ошибка при уничтожении таблицы:", error);
+      }
+    };
+  });
+
+  // Lazy load background shapes after main content loads
+  setTimeout(() => {
+    $(".background-shapes").css("opacity", "1");
+  }, 500);
+</script>
+
+<!-- JavaScript для блока "Активные заявки" -->
+<script
+  src="{{ url_for('static', filename='js/my_issues_activity.js') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}"></script>
+
+<!-- Автоматическая загрузка активности при готовности страницы -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('[Issues Page] 🚀 Страница загружена, запускаем загрузку активности...');
+    // Небольшая задержка для полной загрузки всех элементов
+    setTimeout(function() {
+        if (typeof loadRecentActivity === 'function') {
+            console.log('[Issues Page] ✅ Функция loadRecentActivity найдена, вызываем...');
+            loadRecentActivity();
+        } else {
+            console.error('[Issues Page] ❌ Функция loadRecentActivity не найдена!');
+        }
+    }, 1000);
+});
+</script>
+
+{% endblock %}

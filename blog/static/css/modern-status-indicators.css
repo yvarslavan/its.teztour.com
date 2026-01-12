@@ -1,0 +1,387 @@
+/**
+ * Современные статусные индикаторы v2.0
+ * Дизайн: Material Design + Glassmorphism + Микроанимации
+ */
+
+/* ===== БАЗОВЫЕ СТИЛИ ===== */
+.status-indicator-modern {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-backdrop-filter: blur(10px); /* Fix: Support Safari for glassmorphism effect */
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+
+.status-indicator-modern::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s;
+}
+
+.status-indicator-modern:hover::before {
+    left: 100%;
+}
+
+.status-indicator-modern:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* ===== ИКОНКИ СТАТУСОВ ===== */
+.status-icon {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.status-icon::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s ease;
+}
+
+.status-indicator-modern:hover .status-icon::after {
+    opacity: 0.3;
+    transform: scale(1.2);
+}
+
+/* ===== НОВЫЕ ЗАДАЧИ ===== */
+.status-new {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.status-new .status-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.status-new .status-icon::after {
+    background: #fff;
+}
+
+.status-new:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ===== В РАБОТЕ ===== */
+.status-in-progress {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+}
+
+.status-in-progress .status-icon {
+    background: rgba(255, 255, 255, 0.2);
+    animation: pulse 2s infinite;
+}
+
+.status-in-progress .status-icon::after {
+    background: #fff;
+}
+
+.status-in-progress:hover {
+    background: linear-gradient(135deg, #e881e9 0%, #e3455a 100%);
+    box-shadow: 0 4px 20px rgba(240, 147, 251, 0.4);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* ===== ЗАКРЫТЫЕ ===== */
+.status-closed {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.status-closed .status-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.status-closed .status-icon::after {
+    background: #fff;
+}
+
+.status-closed:hover {
+    background: linear-gradient(135deg, #3d9aec 0%, #00e0ec 100%);
+    box-shadow: 0 4px 20px rgba(79, 172, 254, 0.4);
+}
+
+/* ===== ОЖИДАНИЕ/ПРИОСТАНОВЛЕНА ===== */
+.status-waiting {
+    background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+    color: #8b4513;
+}
+
+.status-waiting .status-icon {
+    background: rgba(139, 69, 19, 0.2);
+    animation: blink 1.5s infinite;
+}
+
+.status-waiting .status-icon::after {
+    background: #8b4513;
+}
+
+.status-waiting:hover {
+    background: linear-gradient(135deg, #ffdac0 0%, #faa58d 100%);
+    box-shadow: 0 4px 20px rgba(252, 182, 159, 0.4);
+}
+
+@keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0.5; }
+}
+
+/* ===== ОТКЛОНЕНА ===== */
+.status-rejected {
+    background: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+    color: white;
+}
+
+.status-rejected .status-icon {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.status-rejected .status-icon::after {
+    background: #fff;
+}
+
+.status-rejected:hover {
+    background: linear-gradient(135deg, #ea345a 0%, #2d4ce9 100%);
+    box-shadow: 0 4px 20px rgba(252, 70, 107, 0.4);
+}
+
+/* ===== ТЕСТИРОВАНИЕ ===== */
+.status-testing {
+    background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+    color: #2c3e50;
+}
+
+.status-testing .status-icon {
+    background: rgba(44, 62, 80, 0.2);
+    animation: rotate 3s linear infinite;
+}
+
+.status-testing .status-icon::after {
+    background: #2c3e50;
+}
+
+.status-testing:hover {
+    background: linear-gradient(135deg, #96dbd8 0%, #fcc4d1 100%);
+    box-shadow: 0 4px 20px rgba(168, 237, 234, 0.4);
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* ===== СТАТУС ПО УМОЛЧАНИЮ ===== */
+.status-default {
+    background: linear-gradient(135deg, #e3e3e3 0%, #f7f7f7 100%);
+    color: #666;
+}
+
+.status-default .status-icon {
+    background: rgba(102, 102, 102, 0.2);
+}
+
+.status-default .status-icon::after {
+    background: #666;
+}
+
+.status-default:hover {
+    background: linear-gradient(135deg, #d1d1d1 0%, #e5e5e5 100%);
+    box-shadow: 0 4px 20px rgba(227, 227, 227, 0.4);
+}
+
+/* ===== ТУЛТИПЫ ===== */
+.status-tooltip {
+    position: absolute;
+    bottom: -35px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 11px;
+    white-space: nowrap;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.3s ease;
+    z-index: 1000;
+    backdrop-filter: blur(5px);
+}
+
+.status-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid rgba(0, 0, 0, 0.9);
+}
+
+.status-indicator-modern:hover .status-tooltip {
+    opacity: 1;
+    visibility: visible;
+    bottom: -40px;
+}
+
+/* ===== АДАПТИВНОСТЬ ===== */
+@media (max-width: 768px) {
+    .status-indicator-modern {
+        padding: 4px 8px;
+        font-size: 10px;
+        gap: 4px;
+    }
+
+    .status-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    .status-tooltip {
+        font-size: 10px;
+        padding: 6px 8px;
+    }
+}
+
+@media (max-width: 480px) {
+    .status-indicator-modern {
+        padding: 3px 6px;
+        font-size: 9px;
+        border-radius: 12px;
+    }
+
+    .status-icon {
+        width: 10px;
+        height: 10px;
+    }
+}
+
+/* ===== СПЕЦИАЛЬНЫЕ ЭФФЕКТЫ ===== */
+.status-indicator-modern.priority-high {
+    animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+    from {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    to {
+        box-shadow: 0 4px 16px rgba(255, 0, 0, 0.3);
+    }
+}
+
+.status-indicator-modern.urgent {
+    position: relative;
+    overflow: visible;
+}
+
+.status-indicator-modern.urgent::after {
+    content: '';
+    position: absolute;
+    top: -2px;
+    right: -2px;
+    width: 8px;
+    height: 8px;
+    background: #ff4444;
+    border-radius: 50%;
+    animation: urgentPulse 1s infinite;
+}
+
+@keyframes urgentPulse {
+    0% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 0.7;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ===== ГРУППИРОВКА СТАТУСОВ ===== */
+.status-group {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+}
+
+.status-group .status-indicator-modern {
+    margin: 0;
+}
+
+/* ===== ТЕМНАЯ ТЕМА ===== */
+@media (prefers-color-scheme: dark) {
+    .status-indicator-modern {
+        border-color: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(15px);
+    }
+
+    .status-tooltip {
+        background: rgba(255, 255, 255, 0.9);
+        color: #000;
+    }
+
+    .status-tooltip::before {
+        border-bottom-color: rgba(255, 255, 255, 0.9);
+    }
+}
+
+/* ===== АНИМАЦИЯ ПОЯВЛЕНИЯ ===== */
+.status-indicator-modern {
+    animation: slideIn 0.5s ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ===== ЭФФЕКТ CLICK ===== */
+.status-indicator-modern:active {
+    transform: translateY(-1px) scale(0.98);
+    transition: all 0.1s ease;
+}

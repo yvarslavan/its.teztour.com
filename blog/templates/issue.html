@@ -1,0 +1,1478 @@
+{% extends 'layout.html' %}
+
+{% block head %}
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<style>
+  /* Скрыть sidebar из layout.html */
+  .new-issues-sidebar {
+    display: none !important;
+  }
+</style>
+{% endblock %}
+
+{% block main_page %}
+<div class="issue-detail-page">
+
+  <!-- Breadcrumb & Actions -->
+  <div class="page-header">
+    <div class="breadcrumb-nav">
+      <a href="{{ url_for('main.my_issues') }}" class="breadcrumb-link">
+          <i class="fas fa-arrow-left"></i>
+          <span>Назад к списку</span>
+        </a>
+    </div>
+    <div class="header-actions-bar">
+      <button onclick="toggleCommentForm()" class="btn-primary">
+        <i class="fas fa-comment"></i>
+        <span>Комментарий в заявку</span>
+      </button>
+      <button onclick="window.print()" class="btn-secondary">
+          <i class="fas fa-print"></i>
+          <span>Печать</span>
+        </button>
+      </div>
+    </div>
+
+  <!-- Issue Title Section -->
+  <div class="issue-title-section">
+    <div class="issue-meta">
+      <div class="issue-header-top">
+        <div class="issue-id-container">
+          <span class="issue-id">#{{issue_detail.id}}</span>
+        </div>
+        <div class="issue-status-badges">
+        {% if issue_detail.status.name in ['Закрыта', 'Closed', 'Resolved'] %}
+          <span class="status-badge status-success">
+            <i class="fas fa-check-circle"></i> {{ issue_detail.status.name }}
+          </span>
+        {% elif issue_detail.status.name in ['Новая', 'Открыта', 'Open', 'New'] %}
+          <span class="status-badge status-info">
+            <i class="fas fa-info-circle"></i> {{ issue_detail.status.name }}
+          </span>
+        {% elif issue_detail.status.name in ['В работе', 'In Progress'] %}
+          <span class="status-badge status-warning">
+            <i class="fas fa-clock"></i> {{ issue_detail.status.name }}
+          </span>
+        {% elif issue_detail.status.name in ['Отклонена', 'Rejected'] %}
+          <span class="status-badge status-danger">
+            <i class="fas fa-times-circle"></i> {{ issue_detail.status.name }}
+          </span>
+                  {% else %}
+          <span class="status-badge status-default">
+            <i class="fas fa-circle"></i> {{ issue_detail.status.name }}
+          </span>
+                  {% endif %}
+
+        {% if issue_detail.priority.name in ['Высокий', 'Срочный', 'Неотложный'] %}
+          <span class="status-badge status-danger">
+            <i class="fas fa-exclamation-triangle"></i> {{ issue_detail.priority.name }}
+          </span>
+        {% else %}
+          <span class="status-badge status-default">
+            <i class="fas fa-flag priority-flag-icon"></i> {{ issue_detail.priority.name }}
+          </span>
+        {% endif %}
+        </div>
+        {% if current_user.is_redmine_user %}
+        <a href="https://helpdesk.teztour.com/issues/{{issue_detail.id}}" target="_blank" rel="noopener" class="redmine-link-btn">
+          <i class="fas fa-external-link-alt"></i>
+          <span>Перейти в заявку в Redmine</span>
+        </a>
+        {% endif %}
+      </div>
+    </div>
+    <h1 class="issue-title-text">{{issue_detail.subject}}</h1>
+
+    <!-- Assignee in one line -->
+    <div class="assignee-line">
+      <div class="assignee-label">
+        <i class="fas fa-user icon-assignee"></i>
+        <span>Исполнитель:</span>
+      </div>
+      <div class="assignee-value">
+        {% if issue_detail.assigned_to %}
+          {{ issue_detail.assigned_to.name }}
+        {% else %}
+          Не назначен
+        {% endif %}
+      </div>
+    </div>
+                </div>
+
+  <!-- Two Column Layout -->
+  <div class="two-column-layout">
+
+    <!-- Left Column - Main Content -->
+    <div class="left-column">
+
+      <!-- Comment Form -->
+      <div id="commentFormBlock" class="content-block" style="display: none;">
+        <div class="block-header">
+          <h2><i class="fas fa-comment-medical"></i> Добавить комментарий</h2>
+                </div>
+        <div class="block-content">
+          <form action="" method="POST" enctype="multipart/form-data" onsubmit="return disableSubmitOnSubmit()">
+            {{ form.hidden_tag() }}
+            <div class="form-field">
+              <label for="comment">{{ form.comment.label.text }}</label>
+              {{ form.comment(class="textarea-input", rows="4", id="comment", placeholder="Введите текст комментария...") }}
+                </div>
+            <div class="form-buttons">
+              <button type="button" onclick="toggleCommentForm()" class="btn-secondary">
+                <i class="fas fa-times"></i> Отмена
+              </button>
+              <button type="submit" class="btn-primary" id="submitBtn">
+                <i class="fas fa-paper-plane"></i> Отправить
+              </button>
+              </div>
+          </form>
+                </div>
+                </div>
+
+      <!-- Description Block -->
+      <div class="content-block accordion-block" data-section="description">
+        <div class="block-header clickable" onclick="toggleBlock('description')">
+          <h2><i class="fas fa-file-alt"></i> Описание</h2>
+          <i class="fas fa-chevron-down toggle-arrow"></i>
+        </div>
+        <div class="block-content collapsible">
+        {% if issue_detail.description %}
+            <div class="prose-content" id="descText">
+              {{ issue_detail.description | safe }}
+            </div>
+            {% if issue_detail.description | length > 500 %}
+              <button class="link-button" id="descToggle" onclick="toggleDesc()">
+                <i class="fas fa-chevron-down"></i> Показать полностью
+              </button>
+            {% endif %}
+        {% else %}
+            <div class="empty-message">
+            <i class="fas fa-file-alt"></i>
+              <p>Описание отсутствует</p>
+          </div>
+        {% endif %}
+      </div>
+      </div>
+
+      <!-- Attachments Block -->
+          {% if attachment_list %}
+      <div class="content-block accordion-block" data-section="attachments">
+        <div class="block-header clickable" onclick="toggleBlock('attachments')">
+          <h2>
+            <i class="fas fa-paperclip"></i> Вложения
+            <span class="count-badge">{{ attachment_list | length }}</span>
+          </h2>
+          <i class="fas fa-chevron-down toggle-arrow"></i>
+        </div>
+        <div class="block-content collapsible">
+
+          {% set files_by_type = {'eml': [], 'pdf': [], 'doc': [], 'xls': [], 'img': [], 'zip': [], 'other': []} %}
+          {% for att in attachment_list %}
+            {% set fname = att.filename.lower() %}
+            {% if '.eml' in fname %}
+              {% set _ = files_by_type['eml'].append(att) %}
+            {% elif '.pdf' in fname %}
+              {% set _ = files_by_type['pdf'].append(att) %}
+            {% elif '.doc' in fname or '.docx' in fname %}
+              {% set _ = files_by_type['doc'].append(att) %}
+            {% elif '.xls' in fname or '.xlsx' in fname %}
+              {% set _ = files_by_type['xls'].append(att) %}
+            {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname %}
+              {% set _ = files_by_type['img'].append(att) %}
+            {% elif '.zip' in fname or '.rar' in fname or '.7z' in fname %}
+              {% set _ = files_by_type['zip'].append(att) %}
+            {% else %}
+              {% set _ = files_by_type['other'].append(att) %}
+              {% endif %}
+          {% endfor %}
+
+          {% for ftype, files in files_by_type.items() if files %}
+            <div class="file-group">
+              {% if ftype == 'eml' %}
+                <div class="group-header"><i class="fas fa-envelope"></i> Email файлы ({{ files|length }})</div>
+              {% elif ftype == 'pdf' %}
+                <div class="group-header"><i class="fas fa-file-pdf"></i> PDF документы ({{ files|length }})</div>
+              {% elif ftype == 'doc' %}
+                <div class="group-header"><i class="fas fa-file-word"></i> Документы Word ({{ files|length }})</div>
+              {% elif ftype == 'xls' %}
+                <div class="group-header"><i class="fas fa-file-excel"></i> Таблицы Excel ({{ files|length }})</div>
+              {% elif ftype == 'img' %}
+                <div class="group-header"><i class="fas fa-file-image"></i> Изображения ({{ files|length }})</div>
+              {% elif ftype == 'zip' %}
+                <div class="group-header"><i class="fas fa-file-archive"></i> Архивы ({{ files|length }})</div>
+              {% else %}
+                <div class="group-header"><i class="fas fa-file"></i> Другие файлы ({{ files|length }})</div>
+              {% endif %}
+
+              {% for att in files %}
+                <div class="file-item">
+                  <div class="file-icon">
+                    {% set fname = att.filename.lower() %}
+                    {% if '.eml' in fname %}
+                      <i class="fas fa-envelope fa-2x" style="color: #1976d2;"></i>
+                    {% elif '.pdf' in fname %}
+                      <i class="fas fa-file-pdf fa-2x" style="color: #d32f2f;"></i>
+                    {% elif '.doc' in fname or '.docx' in fname %}
+                      <i class="fas fa-file-word fa-2x" style="color: #1976d2;"></i>
+                    {% elif '.xls' in fname or '.xlsx' in fname %}
+                      <i class="fas fa-file-excel fa-2x" style="color: #388e3c;"></i>
+                    {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname %}
+                      <i class="fas fa-file-image fa-2x" style="color: #7b1fa2;"></i>
+                    {% elif '.zip' in fname or '.rar' in fname or '.7z' in fname %}
+                      <i class="fas fa-file-archive fa-2x" style="color: #f57c00;"></i>
+                    {% else %}
+                      <i class="fas fa-file fa-2x" style="color: #757575;"></i>
+                    {% endif %}
+                </div>
+                  <div class="file-details">
+                    <div class="file-name" title="{{ att.filename }}">{{ att.filename }}</div>
+                    <div class="file-info">
+                      {% if att.author %}<span><i class="fas fa-user"></i> {{ att.author }}</span>{% endif %}
+                      <span><i class="fas fa-clock"></i> {{ convert_datetime_msk_format(att.created_on) }}</span>
+                  </div>
+                </div>
+                  <button onclick="downloadFile('{{ att.id }}')" class="icon-button" title="Скачать">
+                    <i class="fas fa-download"></i>
+                  </button>
+                </div>
+              {% endfor %}
+              </div>
+            {% endfor %}
+
+          </div>
+          </div>
+        {% endif %}
+
+      <!-- History Block -->
+      <div class="content-block accordion-block" data-section="history">
+        <div class="block-header clickable" onclick="toggleBlock('history')">
+          <h2>
+            <i class="fas fa-history"></i> История и комментарии
+            {% if issue_history %}<span class="count-badge">{{ issue_history|length }}</span>{% endif %}
+          </h2>
+          <i class="fas fa-chevron-down toggle-arrow"></i>
+        </div>
+        <div class="block-content collapsible">
+          {% if issue_history %}
+            <div class="history-timeline">
+              {% for entry in issue_history %}
+                <div class="timeline-entry">
+                  <div class="timeline-dot">
+                    {% if entry.notes and entry.private_notes %}
+                      <i class="fas fa-lock" style="color: #d32f2f;"></i>
+                    {% elif entry.notes %}
+                      <i class="fas fa-comment" style="color: #1976d2;"></i>
+                    {% else %}
+                      <i class="fas fa-edit" style="color: #757575;"></i>
+          {% endif %}
+        </div>
+                  <div class="timeline-card">
+                    <div class="entry-header">
+                      <div class="user-info">
+                        <div class="user-avatar">{{ (entry.user or 'S')[0] }}</div>
+                        <div>
+                          <strong>{{ entry.user or 'Система' }}</strong>
+                          <div class="entry-time">{{ convert_datetime_msk_format(entry.created_on) }}</div>
+      </div>
+            </div>
+        </div>
+
+                    {% if entry.details %}
+                      <div class="entry-changes">
+                        {% for detail in entry.details %}
+                          {% set old_val = detail.get('old_value') %}
+                          {% set new_val = detail.get('new_value') %}
+                          {% set cache_k = detail['property'] + ':' + detail['name'] + ':' + (old_val|string if old_val else '') + ':' + (new_val|string if new_val else '') %}
+                          {% set prop_desc = property_descriptions.get(cache_k) %}
+
+                          {% if prop_desc %}
+                            <div class="change-line">
+                            <i class="fas fa-arrow-right"></i>
+                              <span>{{ prop_desc | safe }}</span>
+                          </div>
+                        {% endif %}
+                      {% endfor %}
+                    </div>
+                  {% endif %}
+
+                    {% if entry.notes %}
+                      <div class="entry-comment {% if entry.private_notes %}private-comment{% endif %}">
+                        {% if entry.private_notes %}
+                          <div class="private-label">
+                            <i class="fas fa-lock"></i> Приватный комментарий
+                        </div>
+                      {% else %}
+                          {{ entry.notes | safe }}
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+            <div class="empty-message">
+            <i class="fas fa-history"></i>
+              <p>История изменений пуста</p>
+          </div>
+        {% endif %}
+      </div>
+      </div>
+
+</div>
+
+    <!-- Right Column - Sidebar -->
+    <div class="right-column">
+      <div class="content-block sidebar-sticky">
+        <div class="block-header details-header">
+          <h2><i class="fas fa-info-circle"></i> Детали</h2>
+        </div>
+        <div class="block-content">
+          <div class="details-list">
+
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-user detail-icon-author"></i> Автор</div>
+              <div class="detail-text">
+                {% if issue_detail.author %}
+                  {{ issue_detail.author.name }}
+                {% else %}
+                  <span class="muted-text">Не указан</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-user-cog detail-icon-assignee"></i> Исполнитель</div>
+              <div class="detail-text">
+                {% if issue_detail.assigned_to %}
+                  {{ issue_detail.assigned_to.name }}
+                {% else %}
+                  <span class="muted-text">Не назначен</span>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="detail-separator"></div>
+
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-calendar-plus detail-icon-created"></i> Создана</div>
+              <div class="detail-text">{{issue_detail.created_on.strftime('%d.%m.%Y %H:%M')}}</div>
+            </div>
+
+            {% if issue_detail.start_date %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-play-circle detail-icon-start"></i> Начало</div>
+              <div class="detail-text">{{issue_detail.start_date.strftime('%d.%m.%Y')}}</div>
+            </div>
+            {% endif %}
+
+            {% if issue_detail.due_date %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-calendar-times detail-icon-due"></i> Срок</div>
+              <div class="detail-text">{{issue_detail.due_date.strftime('%d.%m.%Y')}}</div>
+            </div>
+            {% endif %}
+
+            {% if issue_detail.closed_on %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-check-circle detail-icon-closed"></i> Закрыта</div>
+              <div class="detail-text">{{issue_detail.closed_on.strftime('%d.%m.%Y %H:%M')}}</div>
+            </div>
+            {% endif %}
+
+            {% if not issue_detail.closed_on %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-sync detail-icon-updated"></i> Обновлено</div>
+              <div class="detail-text">
+                {{issue_detail.updated_on.strftime('%d.%m.%Y %H:%M')}}
+                {% if issue_detail.last_updated_by_lastname %}
+                  <br><small class="muted-text">{{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}</small>
+                {% endif %}
+              </div>
+            </div>
+            {% endif %}
+
+            {% if issue_detail.easy_email_to or issue_detail.easy_email_cc %}
+            <div class="detail-separator"></div>
+
+            {% if issue_detail.easy_email_to %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-envelope detail-icon-email"></i> Email</div>
+              <div class="detail-text">
+                <a href="mailto:{{ issue_detail.easy_email_to }}" class="link-text">{{ issue_detail.easy_email_to }}</a>
+              </div>
+            </div>
+            {% endif %}
+
+            {% if issue_detail.easy_email_cc %}
+            <div class="detail-row">
+              <div class="detail-label"><i class="fas fa-envelope-square detail-icon-cc"></i> CC</div>
+              <div class="detail-text">
+                <small class="muted-text">{{ issue_detail.easy_email_cc }}</small>
+              </div>
+            </div>
+            {% endif %}
+            {% endif %}
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="notification" class="notification-toast"></div>
+
+</div>
+{% endblock main_page %}
+
+{% block styles %}
+<style>
+  /* === BASE === */
+  .issue-detail-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+  }
+
+  /* === HEADER === */
+  .page-header {
+    margin-bottom: 20px;
+        display: flex;
+    justify-content: space-between;
+        align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .breadcrumb-nav {
+    flex: 1;
+  }
+
+  .breadcrumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: #1976d2;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  .breadcrumb-link:hover {
+    text-decoration: underline;
+  }
+
+  .header-actions-bar {
+    display: flex;
+    gap: 10px;
+  }
+
+  /* === TITLE SECTION === */
+  .issue-title-section {
+    background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);
+    border: none;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(25,118,210,0.15);
+    color: #fff;
+  }
+
+  .issue-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+
+  .issue-header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .issue-id-container {
+    display: flex;
+    align-items: center;
+  }
+
+  .issue-id {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+
+  .redmine-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 12px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255,255,255,0.2);
+    white-space: nowrap;
+  }
+
+  .redmine-link-btn:hover {
+    background: rgba(255,255,255,0.25);
+    color: #fff;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+
+  .redmine-link-btn i {
+    font-size: 11px;
+  }
+
+  .issue-status-badges {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .status-success { background: #e8f5e9; color: #2e7d32; }
+  .status-info { background: #e3f2fd; color: #1976d2; }
+  .status-warning { background: #fff3e0; color: #f57c00; }
+  .status-danger { background: #ffebee; color: #c62828; }
+  .status-default { background: #f5f5f5; color: #616161; }
+
+  .priority-flag-icon {
+    color: #ffc107 !important;
+  }
+
+  .issue-title-text {
+    font-size: 24px;
+    font-weight: 600;
+    color: #fff;
+    margin: 0 0 16px 0;
+    line-height: 1.3;
+  }
+
+  /* Header Icons Explanation */
+  .header-icons-info {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .icon-explanation {
+        display: flex;
+        align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .icon-explanation i {
+    width: 16px;
+    text-align: center;
+  }
+
+  .icon-info { color: #4fc3f7; }
+  .icon-priority { color: #ffb74d; }
+  .icon-assignee { color: #81c784; }
+
+  /* Real Status Values */
+  .status-values-display {
+        display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-top: 8px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .status-value {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+    color: rgba(255,255,255,0.95);
+    font-weight: 500;
+  }
+
+  .status-value i {
+    width: 16px;
+    text-align: center;
+  }
+
+  /* Assignee in one line */
+  .assignee-line {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255,255,255,0.2);
+  }
+
+  .assignee-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: rgba(255,255,255,0.9);
+  }
+
+  .assignee-value {
+    font-size: 14px;
+    color: #fff;
+    font-weight: 500;
+  }
+
+  /* === BUTTONS === */
+  .btn-primary,
+  .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-primary {
+    background: #1976d2;
+    color: #fff;
+  }
+
+  .btn-primary:hover {
+    background: #1565c0;
+  }
+
+  .btn-secondary {
+    background: #fff;
+    color: #1976d2;
+    border: 1px solid #1976d2;
+  }
+
+  .btn-secondary:hover {
+    background: #e3f2fd;
+  }
+
+  .icon-button {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 1px solid #e0e0e0;
+    background: #fff;
+    color: #1976d2;
+    cursor: pointer;
+        display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .icon-button:hover {
+    background: #f5f5f5;
+    border-color: #1976d2;
+  }
+
+  .link-button {
+    background: none;
+    border: none;
+    color: #1976d2;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .link-button:hover {
+    text-decoration: underline;
+  }
+
+  /* === LAYOUT === */
+  .two-column-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 20px;
+  }
+
+  .left-column {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0; /* Важно для правильного overflow */
+  }
+
+  .right-column {
+    min-width: 0;
+  }
+
+  .sidebar-sticky {
+    position: sticky;
+    top: 20px;
+  }
+
+  /* === CONTENT BLOCKS === */
+  .content-block {
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+  }
+
+  .block-header {
+    padding: 14px 18px;
+    border-bottom: 1px solid #e0e0e0;
+    background: #fafafa;
+  }
+
+  /* Colorful accordion headers */
+  .content-block[data-section="description"] .block-header {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    border-left: 4px solid #1976d2;
+  }
+
+  .content-block[data-section="attachments"] .block-header {
+    background: linear-gradient(135deg, #f3e5f5 0%, #e1bee7 100%);
+    border-left: 4px solid #7b1fa2;
+  }
+
+  .content-block[data-section="history"] .block-header {
+    background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);
+    border-left: 4px solid #388e3c;
+  }
+
+  .content-block[data-section="description"] .block-header h2 {
+    color: #1976d2;
+  }
+
+  .content-block[data-section="attachments"] .block-header h2 {
+    color: #7b1fa2;
+  }
+
+  .content-block[data-section="history"] .block-header h2 {
+    color: #388e3c;
+  }
+
+  /* Details block header */
+  .details-header {
+    background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+    border-left: 4px solid #f57c00;
+  }
+
+  .details-header h2 {
+    color: #f57c00;
+  }
+
+  .details-header:hover {
+    background: linear-gradient(135deg, #ffe0b2 0%, #ffcc80 100%);
+  }
+
+  .block-header h2 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #212121;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .block-header.clickable {
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;  /* Added for Safari/iOS support */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .block-header.clickable:hover {
+    background: #f5f5f5;
+  }
+
+  /* Hover effects for colorful headers */
+  .content-block[data-section="description"] .block-header.clickable:hover {
+    background: linear-gradient(135deg, #bbdefb 0%, #90caf9 100%);
+  }
+
+  .content-block[data-section="attachments"] .block-header.clickable:hover {
+    background: linear-gradient(135deg, #e1bee7 0%, #ce93d8 100%);
+  }
+
+  .content-block[data-section="history"] .block-header.clickable:hover {
+    background: linear-gradient(135deg, #c8e6c9 0%, #a5d6a7 100%);
+  }
+
+  .toggle-arrow {
+    color: #757575;
+    transition: transform 0.3s;
+  }
+
+  .accordion-block.open .toggle-arrow {
+    transform: rotate(180deg);
+  }
+
+  .block-content {
+    padding: 18px;
+  }
+
+  .block-content.collapsible {
+    max-height: 0;
+    overflow: hidden;
+    padding: 0 18px;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+  }
+
+  .accordion-block.open .block-content.collapsible {
+    max-height: 10000px;
+    padding: 18px;
+  }
+
+  .count-badge {
+    background: #e0e0e0;
+    color: #424242;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* === PROSE CONTENT === */
+  .prose-content {
+    line-height: 1.6;
+    color: #424242;
+    max-height: 200px;
+    overflow: hidden;
+    transition: max-height 0.3s;
+  }
+
+  .prose-content.expanded {
+    max-height: none;
+  }
+
+  .prose-content p {
+    margin-bottom: 12px;
+  }
+
+  /* === FILES === */
+  .file-group {
+    margin-bottom: 20px;
+  }
+
+  .file-group:last-child {
+    margin-bottom: 0;
+  }
+
+  .group-header {
+    font-size: 14px;
+    font-weight: 600;
+    color: #212121;
+    margin-bottom: 10px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #1976d2;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    transition: all 0.2s;
+  }
+
+  .file-item:last-child {
+    margin-bottom: 0;
+  }
+
+  .file-item:hover {
+    background: #f5f5f5;
+    border-color: #1976d2;
+  }
+
+  .file-icon {
+    flex-shrink: 0;
+    width: 40px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .file-details {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .file-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #212121;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: 4px;
+  }
+
+  .file-info {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #757575;
+    flex-wrap: wrap;
+  }
+
+  .file-info span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  /* === TIMELINE === */
+  .history-timeline {
+    position: relative;
+    padding-left: 44px;
+  }
+
+  .history-timeline::before {
+        content: '';
+        position: absolute;
+    left: 14px;
+    top: 0;
+    bottom: 0;
+        width: 2px;
+    background: #e0e0e0;
+  }
+
+  .timeline-entry {
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .timeline-entry:last-child {
+    margin-bottom: 0;
+  }
+
+  .timeline-dot {
+        position: absolute;
+    left: -44px;
+    top: 0;
+    width: 30px;
+    height: 30px;
+        border-radius: 50%;
+    background: #fff;
+    border: 2px solid #1976d2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    z-index: 1;
+  }
+
+  .timeline-card {
+    background: #fafafa;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    padding: 14px;
+  }
+
+  .entry-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+
+  .user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #1976d2;
+    color: #fff;
+        display: flex;
+        align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 13px;
+  }
+
+  .entry-time {
+    font-size: 12px;
+    color: #757575;
+    margin-top: 2px;
+  }
+
+  .entry-changes {
+    margin-bottom: 10px;
+  }
+
+  .change-line {
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
+    color: #424242;
+  }
+
+  .change-line i {
+    color: #1976d2;
+    margin-top: 2px;
+    flex-shrink: 0;
+  }
+
+  .entry-comment {
+    padding: 10px;
+    background: #e3f2fd;
+    border-left: 3px solid #1976d2;
+    border-radius: 4px;
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .entry-comment.private-comment {
+    background: #ffebee;
+    border-left-color: #d32f2f;
+  }
+
+  .private-label {
+    color: #d32f2f;
+    font-weight: 600;
+    display: flex;
+        align-items: center;
+    gap: 6px;
+  }
+
+  /* === SIDEBAR DETAILS === */
+  .details-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: #757575;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .detail-text {
+    font-size: 14px;
+    color: #212121;
+    font-weight: 500;
+    word-break: break-word;
+  }
+
+  .detail-separator {
+    height: 1px;
+    background: #e0e0e0;
+    margin: 6px 0;
+  }
+
+  .link-text {
+    color: #1976d2;
+    text-decoration: none;
+  }
+
+  .link-text:hover {
+    text-decoration: underline;
+  }
+
+  .muted-text {
+    color: #9e9e9e;
+    font-style: italic;
+  }
+
+  /* Colored detail icons */
+  .detail-icon-author { color: #1976d2; }
+  .detail-icon-assignee { color: #388e3c; }
+  .detail-icon-created { color: #7b1fa2; }
+  .detail-icon-start { color: #f57c00; }
+  .detail-icon-due { color: #d32f2f; }
+  .detail-icon-closed { color: #2e7d32; }
+  .detail-icon-updated { color: #0288d1; }
+  .detail-icon-email { color: #1976d2; }
+  .detail-icon-cc { color: #757575; }
+
+  /* === FORM === */
+  .form-field {
+    margin-bottom: 14px;
+  }
+
+  .form-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #424242;
+    margin-bottom: 6px;
+  }
+
+  .textarea-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .textarea-input:focus {
+    outline: none;
+    border-color: #1976d2;
+    box-shadow: 0 0 0 3px rgba(25,118,210,0.1);
+  }
+
+  .form-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  /* === EMPTY STATE === */
+  .empty-message {
+    text-align: center;
+    padding: 40px 20px;
+    color: #9e9e9e;
+  }
+
+  .empty-message i {
+    font-size: 40px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  .empty-message p {
+    margin: 0;
+    font-size: 14px;
+  }
+
+  /* === NOTIFICATION === */
+  .notification-toast {
+    visibility: hidden;
+    min-width: 250px;
+    background: #323232;
+    color: #fff;
+    text-align: center;
+    border-radius: 6px;
+    padding: 14px;
+    position: fixed;
+    z-index: 9999;
+    left: 50%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
+
+  .notification-toast.show {
+    visibility: visible;
+    animation: fadein 0.3s, fadeout 0.3s 2.7s;
+  }
+
+  @keyframes fadein {
+    from {bottom: 0; opacity: 0;}
+    to {bottom: 30px; opacity: 1;}
+  }
+
+  @keyframes fadeout {
+    from {bottom: 30px; opacity: 1;}
+    to {bottom: 0; opacity: 0;}
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 1024px) {
+    .two-column-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .right-column {
+      order: -1;
+    }
+
+    .sidebar-sticky {
+      position: static;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .issue-detail-page {
+      padding: 12px;
+    }
+
+    .page-header {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .header-actions-bar {
+      width: 100%;
+    }
+
+    .header-actions-bar button {
+      flex: 1;
+      justify-content: center;
+    }
+
+    .issue-title-text {
+      font-size: 20px;
+    }
+
+    .two-column-layout {
+      gap: 12px;
+    }
+
+    .history-timeline {
+      padding-left: 36px;
+    }
+
+    .history-timeline::before {
+      left: 10px;
+    }
+
+    .timeline-dot {
+      left: -36px;
+      width: 22px;
+      height: 22px;
+    }
+
+    .timeline-dot i {
+      font-size: 11px;
+    }
+  }
+
+  /* === PRINT === */
+  @media print {
+    .page-header,
+    .notification-toast,
+    .icon-button,
+    .link-button,
+    #commentFormBlock {
+      display: none !important;
+    }
+
+    .content-block {
+      box-shadow: none;
+      page-break-inside: avoid;
+    }
+
+    .block-content.collapsible {
+      max-height: none !important;
+      padding: 18px !important;
+    }
+
+    .prose-content {
+      max-height: none !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Toggle accordion blocks
+  function toggleBlock(id) {
+    const block = document.querySelector(`[data-section="${id}"]`);
+    if (!block) return;
+
+    const isOpen = block.classList.contains('open');
+
+    if (isOpen) {
+      block.classList.remove('open');
+      localStorage.setItem(`block_${id}`, 'closed');
+      } else {
+      block.classList.add('open');
+      localStorage.setItem(`block_${id}`, 'open');
+    }
+  }
+
+  // Restore block states
+  function restoreBlocks() {
+    const blocks = document.querySelectorAll('.accordion-block');
+    blocks.forEach(block => {
+      const id = block.getAttribute('data-section');
+      const saved = localStorage.getItem(`block_${id}`);
+
+      // Default: open description and history
+      if (saved === 'open' || (saved === null && (id === 'description' || id === 'history'))) {
+        block.classList.add('open');
+      }
+    });
+  }
+
+  // Toggle comment form
+  function toggleCommentForm() {
+    const form = document.getElementById('commentFormBlock');
+    if (!form) return;
+
+    if (form.style.display === 'none') {
+      form.style.display = 'block';
+      form.scrollIntoView({ behavior: 'smooth' });
+      } else {
+      form.style.display = 'none';
+    }
+  }
+
+  // Toggle description
+  function toggleDesc() {
+    const text = document.getElementById('descText');
+    const btn = document.getElementById('descToggle');
+    if (!text || !btn) return;
+
+    if (text.classList.contains('expanded')) {
+      text.classList.remove('expanded');
+      btn.innerHTML = '<i class="fas fa-chevron-down"></i> Показать полностью';
+    } else {
+      text.classList.add('expanded');
+      btn.innerHTML = '<i class="fas fa-chevron-up"></i> Скрыть';
+    }
+  }
+
+  // Disable submit
+  function disableSubmit() {
+    const btn = document.getElementById('submitBtn');
+    if (!btn) return;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+  }
+
+  // Safer: disable on submit event to avoid double submit blocking default
+  function disableSubmitOnSubmit() {
+    disableSubmit();
+    return true; // allow form submit
+  }
+
+  // Download file
+  async function downloadFile(attachmentId) {
+    const issueId = window.location.pathname.match(/\/my-issues\/(\d+)/)?.[1];
+    if (!issueId) {
+      showNotif('Ошибка определения ID заявки');
+      return;
+    }
+
+    const btn = event.target.closest('.icon-button');
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    btn.disabled = true;
+
+    try {
+      const url = `/api/issue/${issueId}/attachment/${attachmentId}/download?v=${Date.now()}`;
+      const resp = await fetch(url, {
+        method: 'GET',
+        credentials: 'same-origin',
+        headers: {'Cache-Control': 'no-cache'}
+      });
+
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+      const data = await resp.json();
+
+      if (data.success && data.download_url) {
+        window.open(data.download_url, '_blank');
+        showNotif(`Файл ${data.filename} загружается`);
+      } else {
+        throw new Error('URL не получен');
+      }
+    } catch (error) {
+      console.error('Ошибка:', error);
+      showNotif(`Ошибка: ${error.message}`);
+    } finally {
+      setTimeout(() => {
+        btn.innerHTML = orig;
+        btn.disabled = false;
+      }, 1000);
+    }
+  }
+
+  // Show notification
+  function showNotif(msg) {
+    const notif = document.getElementById('notification');
+    if (!notif) return;
+    notif.textContent = msg;
+    notif.className = 'notification-toast show';
+    setTimeout(() => {
+      notif.className = 'notification-toast';
+    }, 3000);
+  }
+
+  // Back to list
+  function goBackToListOptimized() {
+    try {
+      const currentId = window.location.pathname.match(/\/my-issues\/(\d+)/)?.[1];
+      if (currentId) {
+        sessionStorage.setItem('return_from_issue_id', currentId);
+      }
+
+      const cacheTime = sessionStorage.getItem('my_issues_cache_time_v2');
+      const now = Date.now();
+
+      if (cacheTime && (now - parseInt(cacheTime)) < 600000) {
+        window.location.href = `/my-issues?cached=1&from_issue=${currentId || ''}`;
+      } else {
+        sessionStorage.removeItem('my_issues_data_v2');
+        sessionStorage.removeItem('my_issues_table_state_v2');
+        sessionStorage.removeItem('my_issues_cache_time_v2');
+        window.location.href = '/my-issues';
+      }
+    } catch (e) {
+      console.error('Ошибка:', e);
+      window.location.href = '/my-issues';
+    }
+  }
+
+  // Init
+  document.addEventListener('DOMContentLoaded', function() {
+    restoreBlocks();
+  });
+</script>
+{% endblock %}

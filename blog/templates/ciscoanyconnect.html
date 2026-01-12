@@ -1,0 +1,2414 @@
+{% extends 'layout.html' %}
+
+{% block main_page %}
+<div class="cisco-anyconnect-container">
+  <!-- Header Section -->
+  <header class="page-header">
+    <div class="header-content">
+      <div class="header-main">
+        <div class="header-icon">
+          <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/cisco.png') }}" alt="Cisco" class="cisco-logo">
+        </div>
+        <div class="header-text">
+          <h1 class="page-title">Cisco AnyConnect</h1>
+          <p class="page-subtitle">Полное руководство по установке и настройке VPN-клиента для безопасного подключения</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <a href="https://vpn.teztour.com" target="_blank" rel="noopener" class="action-button primary">
+          <i class="fas fa-globe"></i>
+          <span>Веб-портал VPN</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Introduction Section -->
+  <section class="intro-section">
+    <div class="intro-card">
+      <div class="intro-icon">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="intro-content">
+        <h2>Что такое Cisco AnyConnect?</h2>
+        <p><strong>Cisco AnyConnect Secure Mobility Client</strong> — это профессиональное VPN-решение корпоративного уровня, которое обеспечивает безопасное подключение к корпоративной сети компании из любой точки мира. Клиент автоматически устанавливает зашифрованное соединение и защищает ваши данные при работе через интернет.</p>
+
+        <div class="benefits-grid">
+          <div class="benefit-item">
+            <i class="fas fa-lock"></i>
+            <span>Банковский уровень шифрования</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-globe-americas"></i>
+            <span>Доступ из любой точки мира</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-network-wired"></i>
+            <span>Доступ к корпоративным ресурсам</span>
+          </div>
+          <div class="benefit-item">
+            <i class="fas fa-user-shield"></i>
+            <span>Защита конфиденциальности</span>
+          </div>
+        </div>
+
+        <div class="key-features">
+          <h3><i class="fas fa-star"></i> Ключевые возможности:</h3>
+          <ul class="features-list">
+            <li><i class="fas fa-check"></i> <strong>Автоматическое подключение:</strong> Клиент автоматически подключается при запуске системы</li>
+            <li><i class="fas fa-check"></i> <strong>Адаптивная безопасность:</strong> Автоматическая настройка уровня безопасности в зависимости от местоположения</li>
+            <li><i class="fas fa-check"></i> <strong>Бесшовная работа:</strong> Прозрачное переключение между сетями без потери соединения</li>
+            <li><i class="fas fa-check"></i> <strong>Централизованное управление:</strong> Все настройки управляются IT-отделом компании</li>
+            <li><i class="fas fa-check"></i> <strong>Поддержка всех платформ:</strong> Windows, macOS, iOS, Android, Linux</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Installation Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon cisco-color">
+        <i class="fas fa-download"></i>
+      </div>
+      <div class="method-info">
+        <h2>Установка Cisco AnyConnect</h2>
+        <p>Пошаговое руководство по установке VPN-клиента</p>
+      </div>
+    </div>
+
+    <!-- Step 1: Download -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cloud-download-alt"></i>
+        <h3>Шаг 1: Скачивание клиента</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Перейдите на веб-портал</h4>
+            <p>Откройте браузер и перейдите по ссылке:
+              <a href="https://vpn.teztour.com" target="_blank" rel="noopener" class="external-link">vpn.teztour.com</a>
+            </p>
+            <div class="info-box">
+              <i class="fas fa-info-circle"></i>
+              <div>
+                <strong>Важно:</strong>
+                <p>Система автоматически определит вашу операционную систему и предложит соответствующую версию клиента для загрузки.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Авторизация в системе</h4>
+            <p>Введите ваши учетные данные от TEZ ERP для доступа к загрузке:</p>
+            <div class="credentials-info">
+              <div class="credential-item">
+                <i class="fas fa-user"></i>
+                <div>
+                  <strong>Логин:</strong>
+                  <span>Ваш логин от TEZ ERP</span>
+                </div>
+              </div>
+              <div class="credential-item">
+                <i class="fas fa-key"></i>
+                <div>
+                  <strong>Пароль:</strong>
+                  <span>Ваш пароль от TEZ ERP</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Загрузка клиента</h4>
+            <p>После успешной авторизации нажмите кнопку "Download for Windows" для загрузки установочного файла.</p>
+            <div class="download-highlight">
+              <i class="fas fa-download"></i>
+              <span>Файл будет сохранен в папку "Загрузки" вашего компьютера</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: Installation -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cog"></i>
+        <h3>Шаг 2: Установка программы</h3>
+      </div>
+      <div class="card-content">
+        <div class="warning-box">
+          <i class="fas fa-exclamation-triangle"></i>
+          <div>
+            <strong>Требования к установке:</strong>
+            <p>Для установки Cisco AnyConnect могут потребоваться права администратора. Убедитесь, что вы вошли в систему под учетной записью администратора или имеете соответствующие права.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Запуск установки</h4>
+            <p>Найдите скачанный файл в папке "Загрузки" и запустите его двойным щелчком мыши.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Следуйте инструкциям мастера</h4>
+            <p>Следуйте инструкциям мастера установки, оставляя настройки по умолчанию. Процесс установки займет несколько минут.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Завершение установки</h4>
+            <p>После завершения установки Cisco AnyConnect автоматически запустится и появится в системном трее.</p>
+            <div class="success-message">
+              <i class="fas fa-check-circle"></i>
+              <span>Установка Cisco AnyConnect завершена!</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Connection Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon connect-color">
+        <i class="fas fa-plug"></i>
+      </div>
+      <div class="method-info">
+        <h2>Подключение к VPN</h2>
+        <p>Настройка и использование VPN-соединения</p>
+      </div>
+    </div>
+
+    <!-- First Connection -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-play-circle"></i>
+        <h3>Первое подключение</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Запуск клиента</h4>
+            <p>Найдите иконку Cisco AnyConnect в системном трее (правый нижний угол экрана) и кликните по ней.</p>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Ввод адреса сервера</h4>
+            <p>В поле "Connect to" введите адрес VPN-сервера: <code>vpn.teztour.com</code></p>
+            <div class="server-highlight">
+              <i class="fas fa-server"></i>
+              <code>vpn.teztour.com</code>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-container">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Авторизация</h4>
+            <p>Введите ваши учетные данные от TEZ ERP и нажмите "Connect".</p>
+            <div class="security-note">
+              <i class="fas fa-shield-alt"></i>
+              <div>
+                <strong>Безопасность:</strong>
+                <p>Cisco AnyConnect не сохраняет пароли. Вам потребуется вводить пароль при каждом подключении для обеспечения максимальной безопасности.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Connection Status -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-signal"></i>
+        <h3>Статус подключения</h3>
+      </div>
+      <div class="card-content">
+        <div class="status-indicators">
+          <div class="status-item connected">
+            <i class="fas fa-check-circle"></i>
+            <div>
+              <strong>Подключено</strong>
+              <p>VPN-соединение активно, трафик защищен</p>
+            </div>
+          </div>
+          <div class="status-item connecting">
+            <i class="fas fa-spinner"></i>
+            <div>
+              <strong>Подключение...</strong>
+              <p>Установка VPN-соединения</p>
+            </div>
+          </div>
+          <div class="status-item disconnected">
+            <i class="fas fa-times-circle"></i>
+            <div>
+              <strong>Отключено</strong>
+              <p>VPN-соединение неактивно</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Remote Desktop Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon rdp-color">
+        <i class="fas fa-desktop"></i>
+      </div>
+      <div class="method-info">
+        <h2>Подключение к удаленному рабочему столу</h2>
+        <p>Настройка Remote Desktop Connection для работы с удаленными компьютерами</p>
+      </div>
+    </div>
+
+    <!-- RDP Setup -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-play"></i>
+        <h3>Запуск приложения</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Найдите приложение</h4>
+            <p>Найдите и запустите "Подключение к удаленному рабочему столу":</p>
+            <div class="action-steps">
+              <div class="action-item">
+                <span class="action-number">1</span>
+                <p>Нажмите <kbd>Пуск</kbd></p>
+              </div>
+              <div class="action-item">
+                <span class="action-number">2</span>
+                <p>Выберите <kbd>Стандартные - Windows</kbd></p>
+              </div>
+              <div class="action-item">
+                <span class="action-number">3</span>
+                <p>Найдите <kbd>Подключение к удаленному рабочему столу</kbd></p>
+              </div>
+            </div>
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_begin.jpg') }}" alt="Окно подключения к удаленному рабочему столу" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Главное окно Remote Desktop Connection (нажмите для увеличения)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RDP Configuration -->
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-cogs"></i>
+        <h3>Настройка подключения</h3>
+      </div>
+      <div class="card-content">
+        <div class="step-container">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Параметры подключения</h4>
+            <p>Заполните параметры подключения к удаленному компьютеру:</p>
+
+            <div class="connection-params">
+              <div class="param-group">
+                <h5><i class="fas fa-server"></i> Адрес компьютера</h5>
+                <div class="address-options">
+                  <div class="address-option">
+                    <strong>IP-адрес:</strong>
+                    <code>62.67.52.250</code> или <code>10.10.10.84</code>
+                  </div>
+                  <div class="address-option">
+                    <strong>Доменное имя:</strong>
+                    <code>DESKTOPCAL-010.moscow.teztour.com</code>
+                  </div>
+                </div>
+              </div>
+
+              <div class="param-group">
+                <h5><i class="fas fa-user"></i> Учетные данные</h5>
+                <div class="login-info">
+                  <strong>Формат логина:</strong> <code>MOSCOW\v.tereshkova</code>
+                  <p>где <code>MOSCOW</code> — домен, <code>v.tereshkova</code> — ваш логин</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="image-container">
+              <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/rdp_connect.jpg') }}" alt="Настройка параметров подключения" class="instruction-image clickable-image" onclick="openImageModal(this)">
+              <div class="image-caption">Заполнение параметров подключения (нажмите для увеличения)</div>
+            </div>
+
+            <div class="tip-box">
+              <i class="fas fa-lightbulb"></i>
+              <div>
+                <strong>Полезный совет:</strong>
+                <p>Включите опцию "Разрешить мне сохранять свои учетные данные" для автоматического входа в будущем.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="important-notice">
+          <i class="fas fa-exclamation-circle"></i>
+          <div>
+            <strong>Правильное завершение работы:</strong>
+            <p>При работе с терминальным сервером всегда используйте <kbd>Пуск → Завершить сеанс</kbd>, а не кнопку закрытия окна. Это обеспечит корректное сохранение данных и освобождение ресурсов сервера.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Computer Name Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon info-color">
+        <i class="fas fa-computer"></i>
+      </div>
+      <div class="method-info">
+        <h2>Как узнать имя компьютера</h2>
+        <p>Три простых способа определить имя вашего компьютера в сети</p>
+      </div>
+    </div>
+
+    <div class="methods-grid">
+      <!-- Method 1 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-cog"></i>
+          <h3>Способ 1: Панель управления</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Нажмите <kbd>Пуск</kbd> и введите "Панель управления"</p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>Выберите раздел <kbd>Система</kbd></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Найдите пункт "Имя компьютера"</p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel.jpg') }}" alt="Поиск панели управления" class="instruction-image clickable-image" onclick="openImageModal(this)">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_system.jpg') }}" alt="Раздел Система" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Method 2 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-folder"></i>
+          <h3>Способ 2: Проводник</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Откройте проводник</p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>Нажмите правой кнопкой на <kbd>Этот компьютер</kbd></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Выберите <kbd>Свойства</kbd></p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name2.jpg') }}" alt="Контекстное меню Этот компьютер" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+
+      <!-- Method 3 -->
+      <div class="instruction-card">
+        <div class="card-header">
+          <i class="fas fa-terminal"></i>
+          <h3>Способ 3: Командная строка</h3>
+        </div>
+        <div class="card-content">
+          <div class="method-steps">
+            <div class="method-step">
+              <span class="step-number">1</span>
+              <p>Нажмите <kbd>Win + R</kbd> и введите <code>cmd</code></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">2</span>
+              <p>В командной строке введите <code>hostname</code></p>
+            </div>
+            <div class="method-step">
+              <span class="step-number">3</span>
+              <p>Нажмите <kbd>Enter</kbd></p>
+            </div>
+          </div>
+          <div class="method-images">
+            <img src="{{ url_for('static', filename='profile_pics/y.varslavan/post_images/control_panel_computer_name_cmd.jpg') }}" alt="Команда hostname в CMD" class="instruction-image clickable-image" onclick="openImageModal(this)">
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Troubleshooting Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon troubleshoot-color">
+        <i class="fas fa-tools"></i>
+      </div>
+      <div class="method-info">
+        <h2>Решение проблем подключения</h2>
+        <p>Диагностика и устранение типичных проблем с VPN</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-exclamation-triangle"></i>
+        <h3>Частые проблемы и решения</h3>
+      </div>
+      <div class="card-content">
+        <div class="troubleshooting-grid">
+          <div class="troubleshooting-category">
+            <h4>🔧 Проблемы с установкой</h4>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h5>AnyConnect не устанавливается</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте права администратора</li>
+                    <li>Отключите антивирус временно</li>
+                    <li>Запустите установку от имени администратора</li>
+                    <li>Очистите временные файлы Windows</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Ошибка "Access Denied"</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Закройте все программы</li>
+                    <li>Перезагрузите компьютер</li>
+                    <li>Проверьте настройки UAC</li>
+                    <li>Обратитесь к ИТ-службе</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="troubleshooting-category">
+            <h4>🌐 Проблемы с подключением</h4>
+            <div class="problem-items">
+              <div class="problem-item">
+                <h5>Не удается подключиться к VPN</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте интернет-соединение</li>
+                    <li>Убедитесь в правильности адреса сервера</li>
+                    <li>Проверьте учетные данные</li>
+                    <li>Попробуйте другой браузер</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Медленное соединение</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Закройте ненужные программы</li>
+                    <li>Проверьте скорость интернета</li>
+                    <li>Попробуйте другой сервер</li>
+                    <li>Обратитесь к ИТ-службе</li>
+                  </ol>
+                </div>
+              </div>
+              <div class="problem-item">
+                <h5>Соединение прерывается</h5>
+                <div class="solution-steps">
+                  <ol>
+                    <li>Проверьте стабильность интернета</li>
+                    <li>Обновите драйверы сетевой карты</li>
+                    <li>Проверьте настройки брандмауэра</li>
+                    <li>Перезапустите AnyConnect</li>
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="diagnostic-tools">
+          <h4>🔍 Диагностические команды</h4>
+          <div class="tools-grid">
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-network-wired"></i>
+              </div>
+              <div class="tool-content">
+                <h5>Проверка сети</h5>
+                <p>Команда <code>ping</code> для проверки доступности сервера</p>
+                <div class="command-example">
+                  <code>ping vpn.teztour.com</code>
+                </div>
+              </div>
+            </div>
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-terminal"></i>
+              </div>
+              <div class="tool-content">
+                <h5>Проверка DNS</h5>
+                <p>Команда <code>nslookup</code> для проверки разрешения имен</p>
+                <div class="command-example">
+                  <code>nslookup vpn.teztour.com</code>
+                </div>
+              </div>
+            </div>
+            <div class="tool-item">
+              <div class="tool-icon">
+                <i class="fas fa-info-circle"></i>
+              </div>
+              <div class="tool-content">
+                <h5>Информация о системе</h5>
+                <p>Команда <code>ipconfig</code> для проверки сетевых настроек</p>
+                <div class="command-example">
+                  <code>ipconfig /all</code>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Security Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon security-color">
+        <i class="fas fa-shield-alt"></i>
+      </div>
+      <div class="method-info">
+        <h2>Безопасность и лучшие практики</h2>
+        <p>Рекомендации по безопасному использованию VPN</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-lock"></i>
+        <h3>Меры безопасности</h3>
+      </div>
+      <div class="card-content">
+        <div class="security-grid">
+          <div class="security-category">
+            <h4>🔐 Управление паролями</h4>
+            <div class="security-items">
+              <div class="security-item">
+                <i class="fas fa-key"></i>
+                <div>
+                  <h5>Сложные пароли</h5>
+                  <p>Используйте пароли длиной не менее 12 символов с буквами, цифрами и символами</p>
+                </div>
+              </div>
+              <div class="security-item">
+                <i class="fas fa-sync-alt"></i>
+                <div>
+                  <h5>Регулярная смена</h5>
+                  <p>Меняйте пароли каждые 90 дней согласно политике безопасности</p>
+                </div>
+              </div>
+              <div class="security-item">
+                <i class="fas fa-user-secret"></i>
+                <div>
+                  <h5>Не сохраняйте пароли</h5>
+                  <p>Не используйте функцию "Запомнить пароль" на общественных компьютерах</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="security-category">
+            <h4>🛡️ Защита соединения</h4>
+            <div class="security-items">
+              <div class="security-item">
+                <i class="fas fa-wifi"></i>
+                <div>
+                  <h5>Безопасные сети</h5>
+                  <p>Избегайте подключения к VPN через публичные Wi-Fi без дополнительной защиты</p>
+                </div>
+              </div>
+              <div class="security-item">
+                <i class="fas fa-desktop"></i>
+                <div>
+                  <h5>Защита устройства</h5>
+                  <p>Убедитесь, что на устройстве установлен актуальный антивирус</p>
+                </div>
+              </div>
+              <div class="security-item">
+                <i class="fas fa-sign-out-alt"></i>
+                <div>
+                  <h5>Правильное отключение</h5>
+                  <p>Всегда корректно отключайтесь от VPN перед завершением работы</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="security-checklist">
+          <h4>✅ Чек-лист безопасности</h4>
+          <div class="checklist-items">
+            <div class="checklist-item">
+              <input type="checkbox" id="check1" disabled checked>
+              <label for="check1">Пароль содержит минимум 12 символов</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="check2" disabled checked>
+              <label for="check2">Используется актуальный антивирус</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="check3" disabled checked>
+              <label for="check3">Устройство заблокировано при уходе</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="check4" disabled checked>
+              <label for="check4">VPN отключен при завершении работы</label>
+            </div>
+            <div class="checklist-item">
+              <input type="checkbox" id="check5" disabled checked>
+              <label for="check5">Не используются публичные Wi-Fi без защиты</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- FAQ Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon faq-color">
+        <i class="fas fa-question-circle"></i>
+      </div>
+      <div class="method-info">
+        <h2>Часто задаваемые вопросы</h2>
+        <p>Ответы на популярные вопросы о VPN и удаленном доступе</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-comments"></i>
+        <h3>FAQ</h3>
+      </div>
+      <div class="card-content">
+        <div class="faq-list">
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Зачем нужен VPN для работы?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>VPN обеспечивает безопасное подключение к корпоративной сети, позволяя получить доступ к внутренним ресурсам компании (файловым серверам, базам данных, приложениям) из любой точки мира с шифрованием трафика.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Можно ли использовать VPN на личном компьютере?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, Cisco AnyConnect можно установить на личный компьютер. Это безопасно и рекомендуется для работы из дома. Убедитесь, что на компьютере установлен актуальный антивирус.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Что делать, если забыл пароль от VPN?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Пароль от VPN совпадает с паролем от TEZ ERP. Если вы забыли пароль, обратитесь в ИТ-службу для его сброса. Не используйте старые пароли для безопасности.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Почему VPN работает медленно?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Скорость VPN зависит от качества интернет-соединения. Попробуйте закрыть ненужные программы, проверить скорость интернета или обратиться в ИТ-службу для диагностики.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Можно ли подключаться к VPN с телефона?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Да, Cisco AnyConnect доступен для Android и iOS. Установите приложение из соответствующего магазина и настройте подключение к vpn.teztour.com с вашими учетными данными.</p>
+            </div>
+          </div>
+
+          <div class="faq-item">
+            <div class="faq-question">
+              <h4>Что делать, если VPN не подключается?</h4>
+              <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="faq-answer">
+              <p>Проверьте интернет-соединение, правильность адреса сервера и учетных данных. Если проблема не решается, обратитесь в ИТ-службу с описанием ошибки.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Emergency Contact Section -->
+  <section class="method-section">
+    <div class="method-header">
+      <div class="method-icon emergency-color">
+        <i class="fas fa-exclamation-triangle"></i>
+      </div>
+      <div class="method-info">
+        <h2>Экстренная помощь</h2>
+        <p>Критичные проблемы и альтернативные способы связи</p>
+      </div>
+    </div>
+
+    <div class="instruction-card">
+      <div class="card-header">
+        <i class="fas fa-phone-alt"></i>
+        <h3>Критичные ситуации</h3>
+      </div>
+      <div class="card-content">
+        <div class="emergency-info">
+          <h4>🚨 Если VPN полностью недоступен</h4>
+          <p>В случае полной недоступности VPN-сервера используйте альтернативные способы связи:</p>
+        </div>
+
+        <div class="emergency-methods">
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-phone"></i>
+            </div>
+            <div class="method-content">
+              <h5>Телефонная поддержка</h5>
+              <p>Позвоните в ИТ-службу для экстренной помощи</p>
+              <a href="tel:+74957751009" class="emergency-link">+7 (495) 775-10-09</a>
+            </div>
+          </div>
+
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-envelope"></i>
+            </div>
+            <div class="method-content">
+              <h5>Email поддержка</h5>
+              <p>Отправьте письмо с описанием проблемы</p>
+              <a href="mailto:help@tez-tour.com" class="emergency-link">help@tez-tour.com</a>
+            </div>
+          </div>
+
+          <div class="emergency-method">
+            <div class="method-icon">
+              <i class="fas fa-comments"></i>
+            </div>
+<!-- Support Section -->
+<section class="support-section">
+  <div class="support-card">
+    <div class="support-icon">
+      <i class="fas fa-headset"></i>
+    </div>
+    <div class="support-content">
+      <h3>Нужна помощь?</h3>
+      <p>Если у вас возникли проблемы с настройкой или подключением, наша служба технической поддержки готова помочь!</p>
+    </div>
+    <div class="support-actions">
+      <a href="{{ url_for('main.new_issue') }}" class="action-button primary">
+        <i class="fas fa-ticket-alt"></i>
+        <span>Создать заявку</span>
+      </a>
+    </div>
+  </div>
+</section>
+<!-- Image Modal -->
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+  <div class="image-modal-content">
+    <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+    <img id="modalImage" class="modal-image" src="" alt="">
+    <div class="image-modal-caption" id="modalCaption"></div>
+  </div>
+</div>
+
+<style>
+/* Main Container */
+.cisco-anyconnect-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Header Styles */
+.page-header {
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 50%, #60a5fa 100%);
+  border-radius: 20px;
+  padding: 3rem;
+  margin-bottom: 3rem;
+  color: white;
+  box-shadow: 0 10px 40px rgba(59, 130, 246, 0.3);
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.header-main {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  flex: 1;
+}
+
+.header-icon {
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.cisco-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+.page-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.page-subtitle {
+  font-size: 1.2rem;
+  opacity: 0.9;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.header-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+.action-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem 2rem;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.action-button.primary {
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+.action-button.primary:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+/* Introduction Section */
+.intro-section {
+  margin-bottom: 3rem;
+}
+
+.intro-card {
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.intro-icon {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.intro-content h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 1.5rem;
+}
+
+.intro-content p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #4b5563;
+  margin-bottom: 2rem;
+}
+
+.benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.benefit-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.benefit-item i {
+  color: #3b82f6;
+  font-size: 1.2rem;
+}
+
+.benefit-item span {
+  font-weight: 600;
+  color: #374151;
+}
+
+.key-features {
+  background: #f0f9ff;
+  border-radius: 16px;
+  padding: 2rem;
+  border: 2px solid #bae6fd;
+}
+
+.key-features h3 {
+  color: #0c4a6e;
+  font-size: 1.3rem;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.features-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.features-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0;
+}
+
+.features-list i {
+  color: #059669;
+  font-size: 1rem;
+  margin-top: 0.2rem;
+}
+
+/* Method Section */
+.method-section {
+  margin-bottom: 3rem;
+}
+
+.method-header {
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.method-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+}
+
+.cisco-color { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+.connect-color { background: linear-gradient(135deg, #059669, #10b981); }
+.rdp-color { background: linear-gradient(135deg, #7c3aed, #a855f7); }
+.info-color { background: linear-gradient(135deg, #dc2626, #ef4444); }
+.troubleshoot-color { background: linear-gradient(135deg, #f59e0b, #f97316); }
+.security-color { background: linear-gradient(135deg, #10b981, #059669); }
+.alternative-color { background: linear-gradient(135deg, #8b5cf6, #a855f7); }
+.mobile-color { background: linear-gradient(135deg, #06b6d4, #0891b2); }
+.faq-color { background: linear-gradient(135deg, #6366f1, #4f46e5); }
+.emergency-color { background: linear-gradient(135deg, #ef4444, #dc2626); }
+
+.method-info h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.method-info p {
+  color: #6b7280;
+  margin: 0;
+  font-size: 1.1rem;
+}
+
+/* Instruction Cards */
+.instruction-card {
+  background: white;
+  border-radius: 16px;
+  margin-bottom: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.card-header {
+  background: linear-gradient(135deg, #f8fafc, #f1f5f9);
+  padding: 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.card-header i {
+  color: #3b82f6;
+  font-size: 1.5rem;
+}
+
+.card-header h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0;
+}
+
+.card-content {
+  padding: 2rem;
+}
+
+/* Step Containers */
+.step-container {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 2rem;
+  align-items: flex-start;
+}
+
+.step-number {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+.step-content {
+  flex: 1;
+}
+
+.step-content h4 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.step-content p {
+  color: #4b5563;
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}
+
+/* Action Steps */
+.action-steps {
+  display: grid;
+  gap: 1rem;
+  margin: 1.5rem 0;
+}
+
+.action-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 12px;
+  border-left: 4px solid #3b82f6;
+}
+
+.action-number {
+  width: 30px;
+  height: 30px;
+  background: #3b82f6;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Connection Parameters */
+.connection-params {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.param-group {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 1.5rem;
+  border-left: 4px solid #059669;
+}
+
+.param-group h5 {
+  margin: 0 0 1rem 0;
+  color: #059669;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.address-options {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.address-option {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.address-option strong {
+  color: #374151;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.login-info {
+  background: white;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.login-info strong {
+  color: #374151;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Status Indicators */
+.status-indicators {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.status-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 2px solid;
+}
+
+.status-item.connected {
+  background: #f0fdf4;
+  border-color: #22c55e;
+  color: #15803d;
+}
+
+.status-item.connecting {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+.status-item.disconnected {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.status-item i {
+  font-size: 1.5rem;
+}
+
+/* Methods Grid */
+.methods-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.method-steps {
+  margin-bottom: 1.5rem;
+}
+
+.method-step {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+}
+
+.method-step .step-number {
+  width: 25px;
+  height: 25px;
+  font-size: 0.9rem;
+}
+
+/* Image Styles */
+.image-container {
+  margin: 2rem 0;
+  text-align: center;
+}
+
+.instruction-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+  border: 1px solid #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.instruction-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+}
+
+.image-caption {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: #64748b;
+  font-style: italic;
+}
+
+.method-images {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.method-images .instruction-image {
+  width: 100%;
+}
+
+/* Info Boxes */
+.info-box,
+.warning-box,
+.security-note,
+.tip-box,
+.important-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin: 1.5rem 0;
+}
+
+.info-box {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  border-left: 4px solid #3b82f6;
+}
+
+.warning-box {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  border-left: 4px solid #f59e0b;
+}
+
+.security-note {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  border-left: 4px solid #10b981;
+}
+
+.tip-box {
+  background: linear-gradient(135deg, #fae8ff, #f3e8ff);
+  border-left: 4px solid #a855f7;
+}
+
+.important-notice {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  border-left: 4px solid #ef4444;
+}
+
+.info-box i { color: #3b82f6; }
+.warning-box i { color: #f59e0b; }
+.security-note i { color: #10b981; }
+.tip-box i { color: #a855f7; }
+.important-notice i { color: #ef4444; }
+
+.info-box i,
+.warning-box i,
+.security-note i,
+.tip-box i,
+.important-notice i {
+  font-size: 1.3rem;
+  margin-top: 0.2rem;
+  flex-shrink: 0;
+}
+
+/* Highlights */
+.download-highlight,
+.server-highlight {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0f9ff;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bae6fd;
+  margin: 1rem 0;
+}
+
+.download-highlight i,
+.server-highlight i {
+  color: #0284c7;
+  font-size: 1.2rem;
+}
+
+/* Credentials Info */
+.credentials-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.credential-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.credential-item i {
+  color: #3b82f6;
+  font-size: 1.2rem;
+  width: 20px;
+  text-align: center;
+}
+
+.credential-item strong {
+  display: block;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.credential-item span {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+/* Success Message */
+.success-message {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  background: #f0fdf4;
+  color: #15803d;
+  padding: 1rem;
+  border-radius: 8px;
+  border: 1px solid #bbf7d0;
+  margin: 1rem 0;
+}
+
+.success-message i {
+  font-size: 1.2rem;
+}
+
+/* Support Section */
+.support-section {
+  margin-top: 4rem;
+}
+
+.support-card {
+  background: linear-gradient(135deg, #1f2937, #374151);
+  color: white;
+  border-radius: 20px;
+  padding: 3rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.support-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.support-content {
+  flex: 1;
+}
+
+.support-content h3 {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.support-content p {
+  font-size: 1.1rem;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.support-actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Image Modal */
+.image-modal {
+  display: none;
+  position: fixed;
+  z-index: 9999;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  justify-content: center;
+  align-items: center;
+  animation: fadeIn 0.3s ease;
+}
+
+.image-modal-content {
+  position: relative;
+  max-width: 90%;
+  max-height: 90%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.modal-image {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.image-modal-close {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  color: white;
+  font-size: 2rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.3s ease;
+}
+
+.image-modal-close:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+.image-modal-caption {
+  color: white;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 1rem;
+  max-width: 600px;
+  line-height: 1.5;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Code and Keyboard */
+code {
+  background: #f1f5f9;
+  color: #e11d48;
+  padding: 0.3rem 0.6rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.9em;
+  border: 1px solid #e2e8f0;
+  font-weight: 600;
+}
+
+kbd {
+  background: linear-gradient(135deg, #475569, #64748b);
+  color: white;
+  padding: 0.3rem 0.8rem;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', 'Courier New', monospace;
+  font-size: 0.85em;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  border: 1px solid #334155;
+  font-weight: 600;
+}
+
+/* Links */
+.external-link {
+  color: #3b82f6;
+  text-decoration: none;
+  font-weight: 600;
+  border-bottom: 1px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.external-link:hover {
+  color: #1d4ed8;
+  border-bottom-color: #1d4ed8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .cisco-anyconnect-container {
+    padding: 1rem;
+  }
+
+  .page-header {
+    padding: 2rem;
+  }
+
+  .header-content {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .page-title {
+    font-size: 2.5rem;
+  }
+
+  .methods-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .step-container {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .support-card {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .connection-params {
+    gap: 1.5rem;
+  }
+
+  .image-modal-content {
+    max-width: 95%;
+    max-height: 95%;
+  }
+
+  .modal-image {
+    max-height: 70vh;
+  }
+
+  /* Troubleshooting Section */
+  .troubleshooting-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .troubleshooting-category h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .problem-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .problem-item {
+    background: #f8fafc;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #f59e0b;
+  }
+
+  .problem-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .solution-steps ol {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .solution-steps li {
+    margin-bottom: 0.25rem;
+    color: #4b5563;
+    font-size: 0.9rem;
+  }
+
+  /* Diagnostic Tools */
+  .diagnostic-tools {
+    background: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #bae6fd;
+  }
+
+  .diagnostic-tools h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #0c4a6e;
+  }
+
+  .tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+  }
+
+  .tool-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .tool-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    background: #3b82f6;
+    color: white;
+    border-radius: 8px;
+    font-size: 1rem;
+    flex-shrink: 0;
+  }
+
+  .tool-content h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #1f2937;
+  }
+
+  .tool-content p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+
+  .command-example {
+    background: #f1f5f9;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .command-example code {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: 0.8rem;
+    color: #1f2937;
+  }
+
+  /* Security Section */
+  .security-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .security-category h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #1f2937;
+  }
+
+  .security-items {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .security-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #f8fafc;
+    border-radius: 8px;
+    border-left: 4px solid #10b981;
+  }
+
+  .security-item i {
+    color: #10b981;
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .security-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #1f2937;
+  }
+
+  .security-item p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  /* Security Checklist */
+  .security-checklist {
+    background: #f0fdf4;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #bbf7d0;
+  }
+
+  .security-checklist h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #15803d;
+  }
+
+  .checklist-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem;
+    background: white;
+    border-radius: 6px;
+    border: 1px solid #bbf7d0;
+  }
+
+  .checklist-item input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: #10b981;
+  }
+
+  .checklist-item label {
+    font-size: 0.9rem;
+    color: #374151;
+    margin: 0;
+  }
+
+  /* Alternatives Section */
+  .alternatives-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+  }
+
+  .alternative-method {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #8b5cf6;
+  }
+
+  .alternative-method .method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: #8b5cf6;
+    color: white;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .method-content h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .method-content p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+  }
+
+  .method-features {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .feature {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+
+  .feature i {
+    color: #10b981;
+    font-size: 0.8rem;
+  }
+
+  .method-instructions h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .method-instructions ol {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .method-instructions li {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Mobile Solutions */
+  .mobile-platforms {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .platform-item {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #06b6d4;
+  }
+
+  .platform-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: #06b6d4;
+    color: white;
+    border-radius: 8px;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .platform-content h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .platform-content p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 1rem;
+  }
+
+  .platform-steps ol {
+    padding-left: 1rem;
+    margin: 0;
+  }
+
+  .platform-steps li {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+  }
+
+  .mobile-features {
+    background: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #bae6fd;
+  }
+
+  .mobile-features h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #0c4a6e;
+  }
+
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .feature-card {
+    background: white;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+  }
+
+  .feature-card i {
+    color: #06b6d4;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .feature-card h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .feature-card p {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  /* FAQ Section */
+  .faq-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .faq-item {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .faq-question {
+    padding: 1rem;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+
+  .faq-question:hover {
+    background: #f1f5f9;
+  }
+
+  .faq-question h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0;
+    color: #1f2937;
+  }
+
+  .faq-question i {
+    color: #6b7280;
+    transition: transform 0.3s ease;
+  }
+
+  .faq-item.active .faq-question i {
+    transform: rotate(180deg);
+  }
+
+  .faq-answer {
+    padding: 0 1rem;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+
+  .faq-item.active .faq-answer {
+    padding: 1rem;
+    max-height: 200px;
+  }
+
+  .faq-answer p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  /* Emergency Section */
+  .emergency-info {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .emergency-info h4 {
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #dc2626;
+  }
+
+  .emergency-info p {
+    font-size: 1rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  .emergency-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .emergency-method {
+    display: flex;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: #fef2f2;
+    border-radius: 12px;
+    border-left: 4px solid #ef4444;
+  }
+
+  .emergency-method .method-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 50px;
+    height: 50px;
+    background: #ef4444;
+    color: white;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .emergency-method .method-content h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: #1f2937;
+  }
+
+  .emergency-method .method-content p {
+    font-size: 0.9rem;
+    color: #6b7280;
+    margin-bottom: 0.5rem;
+  }
+
+  .emergency-link {
+    color: #ef4444;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    border-bottom: 1px dotted #ef4444;
+    transition: all 0.3s ease;
+  }
+
+  .emergency-link:hover {
+    color: #dc2626;
+    border-bottom-style: solid;
+  }
+
+  .emergency-note {
+    font-size: 0.8rem;
+    color: #9ca3af;
+    font-style: italic;
+  }
+
+  .emergency-alternatives {
+    background: #f0f9ff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid #bae6fd;
+  }
+
+  .emergency-alternatives h4 {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #0c4a6e;
+  }
+
+  .alternatives-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .alternative-item {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+  }
+
+  .alternative-item i {
+    color: #06b6d4;
+    font-size: 1.2rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
+  }
+
+  .alternative-item h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem 0;
+    color: #1f2937;
+  }
+
+  .alternative-item p {
+    font-size: 0.85rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.4;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 2rem;
+  }
+
+  .intro-card,
+  .card-content {
+    padding: 1.5rem;
+  }
+
+  .benefits-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+
+<script>
+// Image Modal Functions
+function openImageModal(img) {
+  const modal = document.getElementById('imageModal');
+  const modalImg = document.getElementById('modalImage');
+  const caption = document.getElementById('modalCaption');
+
+  modal.style.display = 'flex';
+  modalImg.src = img.src;
+  caption.textContent = img.alt;
+
+  // Prevent body scroll when modal is open
+  document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+  const modal = document.getElementById('imageModal');
+  modal.style.display = 'none';
+
+  // Restore body scroll
+  document.body.style.overflow = 'auto';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    closeImageModal();
+  }
+});
+
+// Smooth scroll for anchor links
+document.addEventListener('DOMContentLoaded', function() {
+  const links = document.querySelectorAll('a[href^="#"]');
+
+  links.forEach(link => {
+    link.addEventListener('click', function(e) {
+      e.preventDefault();
+      const targetId = this.getAttribute('href').substring(1);
+      const targetElement = document.getElementById(targetId);
+
+      if (targetElement) {
+        targetElement.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      }
+    });
+  });
+
+  // FAQ functionality
+  document.querySelectorAll('.faq-question').forEach(question => {
+    question.addEventListener('click', function() {
+      const faqItem = this.closest('.faq-item');
+      const isActive = faqItem.classList.contains('active');
+
+      // Close all FAQ items
+      document.querySelectorAll('.faq-item').forEach(item => {
+        item.classList.remove('active');
+      });
+
+      // Open clicked item if it wasn't active
+      if (!isActive) {
+        faqItem.classList.add('active');
+      }
+    });
+  });
+
+  // Add animation for new sections
+  const observerOptions = {
+    threshold: 0.1,
+    rootMargin: '0px 0px -50px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.style.opacity = '1';
+        entry.target.style.transform = 'translateY(0)';
+      }
+    });
+  }, observerOptions);
+
+  // Add animation to new cards
+  document.querySelectorAll('.instruction-card').forEach(card => {
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(20px)';
+    card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+    observer.observe(card);
+  });
+});
+</script>
+{% endblock %}

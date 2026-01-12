@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+      "context7": {
+      "disabled": false,
+      "timeout": 60,
+      "type": "stdio",
+      "command": "wsl.exe",
+      "args": [
+        "/home/yvarslavan/.nvm/versions/node/v20.19.5/bin/node",
+        "/home/yvarslavan/.nvm/versions/node/v20.19.5/lib/node_modules/@upstash/context7-mcp/dist/index.js"
+      ],
+      "env": {
+        "HOME": "/home/yvarslavan"
+      }
+    }
+  }
+}

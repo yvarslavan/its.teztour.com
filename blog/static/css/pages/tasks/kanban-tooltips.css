@@ -1,0 +1,239 @@
+/* Kanban Tooltips Styles */
+
+.kanban-tooltip-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10000;
+}
+
+.kanban-tooltip {
+    position: absolute;
+    background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 8px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    max-width: 280px;
+    font-size: 13px;
+    line-height: 1.4;
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+    transition: all 0.2s ease;
+    pointer-events: none;
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* End of tooltip general styles */
+
+.kanban-tooltip.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+}
+
+.tooltip-header {
+    margin-bottom: 6px;
+}
+
+.tooltip-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: #f9fafb;
+    display: block;
+}
+
+.tooltip-content {
+    color: #d1d5db;
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+/* Стрелка подсказки */
+.kanban-tooltip::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 20px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 6px solid #1f2937;
+}
+
+/* Анимации */
+@keyframes tooltipFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+@keyframes tooltipFadeOut {
+    from {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(10px) scale(0.95);
+    }
+}
+
+/* Специальные стили для разных типов подсказок */
+.kanban-tooltip[data-type="kanban-card"] {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+}
+
+.kanban-tooltip[data-type="kanban-card"]::before {
+    border-bottom-color: #3b82f6;
+}
+
+.kanban-tooltip[data-type="kanban-card-id"] {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.kanban-tooltip[data-type="kanban-card-id"]::before {
+    border-bottom-color: #10b981;
+}
+
+.kanban-tooltip[data-type="priority-badge"] {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.kanban-tooltip[data-type="priority-badge"]::before {
+    border-bottom-color: #f59e0b;
+}
+
+.kanban-tooltip[data-type="view-toggle-btn"] {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+}
+
+.kanban-tooltip[data-type="view-toggle-btn"]::before {
+    border-bottom-color: #8b5cf6;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .kanban-tooltip {
+        max-width: 240px;
+        padding: 10px 14px;
+        font-size: 12px;
+    }
+
+    .tooltip-title {
+        font-size: 13px;
+    }
+
+    .tooltip-content {
+        font-size: 11px;
+    }
+}
+
+@media (max-width: 480px) {
+    .kanban-tooltip {
+        max-width: 200px;
+        padding: 8px 12px;
+        font-size: 11px;
+    }
+
+    .tooltip-title {
+        font-size: 12px;
+    }
+
+    .tooltip-content {
+        font-size: 10px;
+    }
+}
+
+/* Темная тема */
+@media (prefers-color-scheme: dark) {
+    .kanban-tooltip {
+        background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .kanban-tooltip::before {
+        border-bottom-color: #111827;
+    }
+
+    .tooltip-title {
+        color: #f9fafb;
+    }
+
+    .tooltip-content {
+        color: #d1d5db;
+    }
+}
+
+/* Анимации для элементов с подсказками */
+[data-tooltip] {
+    cursor: help;
+    transition: all 0.2s ease;
+}
+
+[data-tooltip]:hover {
+    transform: translateY(-1px);
+}
+
+/* Специальные стили для элементов канбана с подсказками */
+.kanban-card[data-tooltip]:hover {
+    box-shadow: 0 6px 20px rgba(59, 130, 246, 0.2);
+}
+
+.kanban-card-id[data-tooltip]:hover {
+    color: #10b981;
+    text-decoration: underline;
+}
+
+.priority-badge[data-tooltip]:hover {
+    transform: scale(1.05);
+}
+
+.view-toggle-btn[data-tooltip]:hover {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+/* Индикатор подсказки */
+[data-tooltip]::after {
+    content: '💡';
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    font-size: 10px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+[data-tooltip]:hover::after {
+    opacity: 1;
+}
+
+/* Отключение подсказок */
+.kanban-tooltip-container.disabled {
+    display: none;
+}
+
+/* Анимация появления контейнера */
+.kanban-tooltip-container {
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}

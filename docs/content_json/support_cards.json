@@ -1,0 +1,9 @@
+[
+  {
+    "section": "support",
+    "title": "Руководство по звонкам и конференциям",
+    "description": "Полное руководство: Cisco Jabber, VPN, звонки, конференции",
+    "icon": "fas fa-phone-volume",
+    "route_name": "main.calls_and_conferences"
+  }
+]

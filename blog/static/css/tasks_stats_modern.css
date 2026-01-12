@@ -1,0 +1,381 @@
+/* ===================================================
+   СУПЕР КОМПАКТНЫЕ СОВРЕМЕННЫЕ КАРТОЧКИ - ИТОГОВАЯ ВЕРСИЯ
+   =================================================== */
+
+/* CSS Variables для цветовых схем */
+:root {
+  --card-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --card-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  --card-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+  --card-info: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+  --card-compact-height: 75px; /* Основная компактная высота */
+  --card-mobile-height: 70px; /* Мобильная высота */
+  --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* СУПЕР КОМПАКТНАЯ СЕТКА */
+.status-breakdown-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 0.875rem !important; /* Уменьшено для компактности */
+  padding: 1.25rem 1.75rem !important; /* Компактные отступы */
+}
+
+/* ОСНОВНЫЕ КАРТОЧКИ - СУПЕР КОМПАКТНЫЕ */
+.status-breakdown-card {
+  /* Glassmorphism дизайн */
+  background: rgba(255, 255, 255, 0.95) !important;
+  -webkit-backdrop-filter: blur(10px) !important; /* Safari support */
+  backdrop-filter: blur(10px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 16px !important;
+
+  /* Супер компактные размеры */
+  min-height: var(--card-compact-height) !important; /* 75px вместо 140px */
+  max-height: 200px !important; /* Уменьшено с 280px */
+
+  /* Современные эффекты */
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.15) !important;
+  transition: var(--transition-smooth) !important;
+
+  /* Структура */
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  position: relative !important;
+}
+
+/* Цветовые схемы карточек */
+.total-card {
+  --card-accent: var(--card-primary);
+}
+
+.open-card {
+  --card-accent: var(--card-warning);
+}
+
+.closed-db-card {
+  --card-accent: var(--card-success);
+}
+
+.paused-card {
+  --card-accent: var(--card-info);
+}
+
+/* Современная цветная полоска сверху */
+.status-breakdown-card::before {
+  content: '' !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 3px !important;
+  background: var(--card-accent, #2196f3) !important;
+  transition: height 0.3s ease !important;
+}
+
+/* Эффекты при наведении */
+.status-breakdown-card:hover {
+  transform: translateY(-6px) scale(1.02) !important;
+  box-shadow: 0 16px 64px rgba(31, 38, 135, 0.25) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+.status-breakdown-card:hover::before {
+  height: 5px !important;
+}
+
+/* СУПЕР КОМПАКТНЫЙ HEADER */
+.card-header {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important; /* Уменьшено */
+  padding: 0.75rem 0.875rem 0 !important; /* Сильно уменьшено */
+  position: relative !important;
+}
+
+/* Компактные иконки */
+.card-icon {
+  width: 36px !important; /* Уменьшено с 48px */
+  height: 36px !important;
+  border-radius: 10px !important;
+  background: var(--card-accent, #2196f3) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 16px !important; /* Уменьшено с 20px */
+  color: white !important;
+  transition: var(--transition-smooth) !important;
+}
+
+/* Компактные заголовки */
+.card-title {
+  font-size: 0.875rem !important; /* Уменьшено */
+  font-weight: 600 !important;
+  color: #1e293b !important;
+  line-height: 1.2 !important;
+}
+
+/* СУПЕР КОМПАКТНАЯ КНОПКА TOGGLE */
+.card-toggle-btn {
+  position: absolute !important;
+  top: 0.75rem !important; /* Уменьшено */
+  right: 0.875rem !important; /* Уменьшено */
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(100, 116, 139, 0.2) !important;
+  color: var(--card-accent, #64748b) !important;
+  font-size: 12px !important; /* Уменьшено */
+  cursor: pointer !important;
+  padding: 6px !important; /* Уменьшено */
+  border-radius: 8px !important;
+  transition: var(--transition-smooth) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  min-width: 28px !important; /* Уменьшено */
+  min-height: 28px !important; /* Уменьшено */
+  -webkit-backdrop-filter: blur(10px) !important; /* Safari support */
+  backdrop-filter: blur(10px) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+  z-index: 10 !important;
+}
+
+.card-toggle-btn:hover {
+  background: var(--card-accent, rgba(59, 130, 246, 0.9)) !important;
+  border-color: var(--card-accent, rgba(59, 130, 246, 0.3)) !important;
+  color: white !important;
+  transform: scale(1.05) !important;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3) !important;
+}
+
+.card-toggle-btn i {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.card-toggle-btn.expanded i {
+  transform: rotate(180deg) !important;
+}
+
+/* СУПЕР КОМПАКТНЫЙ CONTENT */
+.card-content {
+  padding: 0.5rem 0.875rem 0.75rem !important; /* Сильно уменьшено */
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.card-value {
+  font-size: 1.75rem !important; /* Уменьшено с 2rem */
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  line-height: 1 !important;
+  margin-bottom: 0.125rem !important; /* Уменьшено */
+  transition: var(--transition-smooth) !important;
+}
+
+.card-description {
+  font-size: 0.75rem !important; /* Уменьшено */
+  color: #64748b !important;
+  line-height: 1.3 !important;
+  margin-bottom: 0.375rem !important; /* Уменьшено */
+}
+
+/* КОМПАКТНАЯ ДЕТАЛИЗАЦИЯ */
+.card-breakdown {
+  margin-top: 8px !important; /* Уменьшено */
+  padding-top: 6px !important; /* Уменьшено */
+  border-top: 1px solid rgba(100, 116, 139, 0.1) !important;
+  overflow: hidden !important;
+  transition: var(--transition-smooth) !important;
+}
+
+.card-breakdown.collapsed {
+  max-height: 0 !important;
+  opacity: 0 !important;
+  margin-top: 0 !important;
+  padding-top: 0 !important;
+  border-top: none !important;
+  transform: translateY(-10px) !important;
+}
+
+.card-breakdown.expanded {
+  max-height: 120px !important; /* Уменьшено */
+  opacity: 1 !important;
+  transform: translateY(0) !important;
+  overflow-y: auto !important;
+}
+
+/* Компактные элементы breakdown */
+.breakdown-item {
+  padding: 2px 0 !important; /* Уменьшено */
+  font-size: 11px !important; /* Уменьшено */
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+}
+
+.breakdown-status-count {
+  font-size: 10px !important; /* Уменьшено */
+  padding: 1px 4px !important; /* Уменьшено */
+  background: rgba(59, 130, 246, 0.1) !important;
+  color: #3b82f6 !important;
+  border-radius: 4px !important;
+  font-weight: 600 !important;
+}
+
+/* АДАПТИВНОСТЬ ДЛЯ МОБИЛЬНЫХ */
+@media (max-width: 768px) {
+  :root {
+    --card-compact-height: var(--card-mobile-height); /* 70px */
+  }
+
+  .status-breakdown-grid {
+    grid-template-columns: 1fr !important;
+    padding: 1rem !important;
+    gap: 0.75rem !important;
+  }
+
+  .card-header {
+    padding: 0.625rem 0.75rem 0 !important;
+  }
+
+  .card-content {
+    padding: 0.375rem 0.75rem 0.625rem !important;
+  }
+
+  .card-value {
+    font-size: 1.5rem !important;
+  }
+
+  .card-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+
+  .card-toggle-btn {
+    min-width: 24px !important;
+    min-height: 24px !important;
+    font-size: 10px !important;
+    padding: 4px !important;
+  }
+}
+
+/* ДОПОЛНИТЕЛЬНЫЕ ЭФФЕКТЫ */
+.status-breakdown-card {
+  animation: slideInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+.status-breakdown-card:nth-child(1) { animation-delay: 0.1s; }
+.status-breakdown-card:nth-child(2) { animation-delay: 0.2s; }
+.status-breakdown-card:nth-child(3) { animation-delay: 0.3s; }
+.status-breakdown-card:nth-child(4) { animation-delay: 0.4s; }
+
+@keyframes slideInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* HOVER ЭФФЕКТЫ ДЛЯ ИКОНОК */
+.status-breakdown-card:hover .card-icon {
+  transform: scale(1.05) rotate(5deg) !important;
+  box-shadow: 0 0 20px rgba(102, 126, 234, 0.6) !important;
+}
+
+.status-breakdown-card:hover .card-icon i {
+  transform: scale(1.1) !important;
+}
+
+/* АНИМАЦИИ ДЛЯ ЧИСЕЛ */
+.card-value.animate-count {
+  animation: countPulse 0.6s ease-out;
+}
+
+@keyframes countPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+    color: #2196f3;
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Стили для кнопки детальной разбивки */
+.expand-breakdown-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(203, 213, 225, 0.2);
+  border: 1px solid rgba(203, 213, 225, 0.3);
+  color: #64748b;
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.expand-breakdown-btn:hover {
+  background-color: rgba(203, 213, 225, 0.4);
+  color: #334155;
+}
+
+.expand-breakdown-btn i {
+  margin-right: 8px;
+  transition: transform 0.3s ease;
+}
+
+.breakdown-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 15px;
+}
+
+.breakdown-section-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #334155;
+  margin: 0;
+}
+
+/* Стили для статус-айтемов в детальной разбивке */
+.status-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.status-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.status-item-name {
+  font-weight: 500;
+  color: #334155;
+}
+
+.status-item-count {
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background-color: #e2e8f0;
+  color: #334155;
+}

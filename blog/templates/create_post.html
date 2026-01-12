@@ -1,0 +1,1159 @@
+{% extends 'layout.html' %}
+
+{% block content %}
+<div class="container-fluid create-post-wrapper">
+    <div class="row min-vh-100">
+        <!-- Левая панель с информацией -->
+        <div class="col-lg-4 d-none d-lg-block info-panel">
+            <div class="info-content">
+                <div class="info-header">
+                    <i class="fas fa-pencil-alt"></i>
+                    <h2>Создание статьи</h2>
+                </div>
+                <div class="info-list">
+                    <div class="info-item">
+                        <i class="fas fa-lightbulb"></i>
+                        <div>
+                            <h4>Советы для написания</h4>
+                            <p>Используйте четкие заголовки и структурированный контент</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-image"></i>
+                        <div>
+                            <h4>Добавьте изображение</h4>
+                            <p>Визуальный контент делает статью более привлекательной</p>
+                        </div>
+                    </div>
+                    <div class="info-item">
+                        <i class="fas fa-eye"></i>
+                        <div>
+                            <h4>Предварительный просмотр</h4>
+                            <p>Проверьте статью перед публикацией</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Правая панель с формой -->
+        <div class="col-lg-8 form-panel">
+            <div class="form-container">
+                <div class="form-header">
+                    <div class="breadcrumb-nav">
+                        <a href="{{ url_for('main.blog') }}" class="breadcrumb-link">
+                            <i class="fas fa-newspaper"></i> Статьи
+                        </a>
+                        <i class="fas fa-chevron-right"></i>
+                        <span class="current-page">Новая статья</span>
+                    </div>
+                    <h1 class="form-title">
+                        <i class="fas fa-edit"></i>
+                        Создать новую статью
+                    </h1>
+                    <p class="form-subtitle">Поделитесь своими знаниями с командой</p>
+                </div>
+
+                <form action="" method="POST" enctype="multipart/form-data" class="modern-form">
+                    {{ form.hidden_tag() }}
+
+                    <!-- Поле заголовка -->
+                    <div class="form-group-modern">
+                        <label for="{{ form.title.id }}" class="form-label-modern">
+                            <i class="fas fa-heading"></i>
+                            {{ form.title.label.text }}
+                            <span class="required">*</span>
+                        </label>
+                        {{ form.title(class="form-control-modern", placeholder="Введите заголовок статьи...", maxlength="100") }}
+                        <div class="field-feedback">
+                            <div class="char-counter">
+                                <span id="title-counter">0</span>/100
+                            </div>
+                        </div>
+                        {% for error in form.title.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Поле контента -->
+                    <div class="form-group-modern">
+                        <label for="{{ form.content.id }}" class="form-label-modern">
+                            <i class="fas fa-align-left"></i>
+                            {{ form.content.label.text }}
+                            <span class="required">*</span>
+                        </label>
+
+                        <!-- Переключатель формата текста -->
+                        <div class="format-switcher">
+                            <div class="format-options">
+                                <label class="format-option">
+                                    <input type="radio" name="content_format" value="plain" id="format_plain" checked>
+                                    <span class="format-label">
+                                        <i class="fas fa-font"></i>
+                                        Простой текст
+                                    </span>
+                                </label>
+                                <label class="format-option">
+                                    <input type="radio" name="content_format" value="html" id="format_html">
+                                    <span class="format-label">
+                                        <i class="fas fa-code"></i>
+                                        HTML
+                                    </span>
+                                </label>
+                            </div>
+                            <div class="format-tips" id="formatTips">
+                                <i class="fas fa-info-circle"></i>
+                                <span id="formatTipText">Простой текст без форматирования</span>
+                            </div>
+                        </div>
+
+                        {{ form.content(class="form-control-modern content-textarea", placeholder="Напишите содержимое статьи...", rows="12") }}
+                        <div class="field-feedback">
+                            <div class="char-counter">
+                                <span id="content-counter">0</span> символов
+                            </div>
+                        </div>
+                        {% for error in form.content.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Поле изображения -->
+                    <div class="form-group-modern">
+                        <label for="{{ form.picture.id }}" class="form-label-modern">
+                            <i class="fas fa-camera"></i>
+                            {{ form.picture.label.text }}
+                            <span class="optional">(необязательно)</span>
+                        </label>
+                        <div class="file-upload-area" id="fileUploadArea">
+                            <div class="file-upload-content">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <p class="upload-text">Перетащите изображение сюда или кликните для выбора</p>
+                                <p class="upload-hint">PNG, JPG до 10MB</p>
+                            </div>
+                            {{ form.picture(class="file-input", accept="image/*") }}
+                            <div class="image-preview" id="imagePreview" style="display: none;">
+                                <img id="previewImg" src="" alt="Предварительный просмотр">
+                                <button type="button" class="remove-image" id="removeImage">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
+                        </div>
+                        {% for error in form.picture.errors %}
+                            <div class="error-message">
+                                <i class="fas fa-exclamation-circle"></i>
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Кнопки действий -->
+                    <div class="form-actions">
+                        <button type="button" class="btn-secondary" onclick="history.back()">
+                            <i class="fas fa-arrow-left"></i>
+                            Отмена
+                        </button>
+                        <div class="action-buttons">
+                            <button type="button" class="btn-preview" id="previewBtn">
+                                <i class="fas fa-eye"></i>
+                                Предварительный просмотр
+                            </button>
+                            <button type="submit" class="btn-primary" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                Опубликовать статью
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно предварительного просмотра -->
+<div class="modal fade" id="previewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-eye"></i>
+                    Предварительный просмотр
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-content">
+                    <h2 id="previewTitle">Заголовок статьи</h2>
+                    <div class="preview-meta">
+                        <span class="author">Автор: {{ current_user.full_name }}</span>
+                        <span class="date" id="previewDate">Дата: </span>
+                    </div>
+                    <div id="previewImage" class="preview-image"></div>
+                    <div id="previewText" class="preview-text"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block styles %}
+<style>
+    /* Основные стили для страницы создания поста */
+    .create-post-wrapper {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 0;
+    }
+
+    /* Левая информационная панель */
+    .info-panel {
+        background: rgba(255, 255, 255, 0.1);
+        backdrop-filter: blur(10px);
+        border-right: 1px solid rgba(255, 255, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .info-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;
+        opacity: 0.3;
+    }
+
+    .info-content {
+        position: relative;
+        z-index: 2;
+        padding: 2rem;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .info-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+    }
+
+    .info-header i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .info-header h2 {
+        font-size: 2rem;
+        font-weight: 700;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .info-list {
+        space-y: 2rem;
+    }
+
+    .info-item {
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+        color: white;
+        opacity: 0;
+        animation: slideInLeft 0.6s ease forwards;
+    }
+
+    .info-item:nth-child(1) { animation-delay: 0.2s; }
+    .info-item:nth-child(2) { animation-delay: 0.4s; }
+    .info-item:nth-child(3) { animation-delay: 0.6s; }
+
+    .info-item i {
+        font-size: 1.5rem;
+        color: #f093fb;
+        margin-top: 0.25rem;
+        flex-shrink: 0;
+    }
+
+    .info-item h4 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin: 0 0 0.5rem 0;
+    }
+
+    .info-item p {
+        font-size: 0.9rem;
+        margin: 0;
+        opacity: 0.8;
+        line-height: 1.4;
+    }
+
+    /* Правая панель с формой */
+    .form-panel {
+        background: white;
+        padding: 0;
+        position: relative;
+    }
+
+    .form-container {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 2rem;
+        height: 100vh;
+        overflow-y: auto;
+    }
+
+    /* Хлебные крошки */
+    .breadcrumb-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+    }
+
+    .breadcrumb-link {
+        color: #6366f1;
+        text-decoration: none;
+        transition: color 0.2s;
+    }
+
+    .breadcrumb-link:hover {
+        color: #4f46e5;
+    }
+
+    .breadcrumb-nav i {
+        color: #9ca3af;
+        font-size: 0.7rem;
+    }
+
+    .current-page {
+        color: #6b7280;
+    }
+
+    /* Заголовок формы */
+    .form-header {
+        margin-bottom: 2rem;
+        opacity: 0;
+        animation: fadeInUp 0.6s ease forwards;
+        animation-delay: 0.3s;
+    }
+
+    .form-title {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .form-title i {
+        margin-right: 0.5rem;
+    }
+
+    .form-subtitle {
+        color: #6b7280;
+        font-size: 1.1rem;
+        margin: 0.5rem 0 0 0;
+    }
+
+    /* Современная форма */
+    .modern-form {
+        opacity: 0;
+        animation: fadeInUp 0.6s ease forwards;
+        animation-delay: 0.5s;
+    }
+
+    .form-group-modern {
+        margin-bottom: 2rem;
+        position: relative;
+    }
+
+    .form-label-modern {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    .form-label-modern i {
+        color: #6366f1;
+        font-size: 1rem;
+    }
+
+    .required {
+        color: #ef4444;
+        font-weight: 500;
+    }
+
+    .optional {
+        color: #6b7280;
+        font-weight: 400;
+        font-size: 0.85rem;
+    }
+
+    .form-control-modern {
+        width: 100%;
+        padding: 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        font-size: 1rem;
+        transition: all 0.3s ease;
+        background: #fafafa;
+        color: #1f2937;
+    }
+
+    .form-control-modern:focus {
+        outline: none;
+        border-color: #6366f1;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+        transform: translateY(-1px);
+    }
+
+    .content-textarea {
+        resize: vertical;
+        min-height: 200px;
+        font-family: 'Roboto', sans-serif;
+        line-height: 1.6;
+    }
+
+    /* Обратная связь полей */
+    .field-feedback {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .char-counter {
+        color: #6b7280;
+        font-weight: 500;
+    }
+
+    .char-counter.warning {
+        color: #f59e0b;
+    }
+
+    .char-counter.danger {
+        color: #ef4444;
+    }
+
+    .content-tips {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        color: #6b7280;
+    }
+
+    .content-tips i {
+        color: #6366f1;
+    }
+
+    /* Переключатель формата текста */
+    .format-switcher {
+        margin-bottom: 1rem;
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1rem;
+        border: 1px solid #e2e8f0;
+    }
+
+    .format-options {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .format-option {
+        display: flex;
+        align-items: center;
+        cursor: pointer;
+        margin: 0;
+    }
+
+    .format-option input[type="radio"] {
+        display: none;
+    }
+
+    .format-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 8px;
+        background: white;
+        color: #64748b;
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .format-label i {
+        font-size: 0.85rem;
+    }
+
+    .format-option input[type="radio"]:checked + .format-label {
+        border-color: #6366f1;
+        background: #6366f1;
+        color: white;
+        box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .format-option:hover .format-label {
+        border-color: #6366f1;
+        transform: translateY(-1px);
+    }
+
+    .format-tips {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #6366f1;
+        font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(99, 102, 241, 0.1);
+        border-radius: 6px;
+        border-left: 3px solid #6366f1;
+    }
+
+    .format-tips i {
+        font-size: 0.8rem;
+    }
+
+    /* Загрузка файлов */
+    .file-upload-area {
+        position: relative;
+        border: 2px dashed #d1d5db;
+        border-radius: 12px;
+        padding: 2rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        background: #fafafa;
+    }
+
+    .file-upload-area:hover {
+        border-color: #6366f1;
+        background: #f8faff;
+    }
+
+    .file-upload-area.dragover {
+        border-color: #6366f1;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(99, 102, 241, 0.05) 100%);
+        transform: scale(1.02);
+    }
+
+    .file-upload-content i {
+        font-size: 3rem;
+        color: #6366f1;
+        margin-bottom: 1rem;
+    }
+
+    .upload-text {
+        font-size: 1.1rem;
+        color: #374151;
+        margin: 0;
+        font-weight: 500;
+    }
+
+    .upload-hint {
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin: 0.5rem 0 0 0;
+    }
+
+    .file-input {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        opacity: 0;
+        cursor: pointer;
+    }
+
+    /* Предварительный просмотр изображения */
+    .image-preview {
+        position: relative;
+        margin-top: 1rem;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+
+    .image-preview img {
+        width: 100%;
+        height: auto;
+        max-height: 400px;
+        object-fit: contain;
+        border-radius: 12px;
+        background: white;
+    }
+
+    .remove-image {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .remove-image:hover {
+        background: #dc2626;
+        transform: scale(1.1);
+    }
+
+    /* Сообщения об ошибках */
+    .error-message {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: #ef4444;
+        font-size: 0.9rem;
+        margin-top: 0.5rem;
+        padding: 0.5rem 0.75rem;
+        background: rgba(239, 68, 68, 0.1);
+        border-radius: 8px;
+        border-left: 3px solid #ef4444;
+    }
+
+    /* Кнопки действий */
+    .form-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 3rem;
+        gap: 1rem;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+    }
+
+    .btn-secondary, .btn-preview, .btn-primary {
+        padding: 0.75rem 1.5rem;
+        border-radius: 12px;
+        font-weight: 600;
+        font-size: 0.95rem;
+        border: none;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .btn-secondary {
+        background: #f3f4f6;
+        color: #6b7280;
+    }
+
+    .btn-secondary:hover {
+        background: #e5e7eb;
+        color: #374151;
+        transform: translateY(-1px);
+    }
+
+    .btn-preview {
+        background: #f59e0b;
+        color: white;
+    }
+
+    .btn-preview:hover {
+        background: #d97706;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+        color: white;
+        position: relative;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.4);
+    }
+
+    .btn-primary::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+        transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+        left: 100%;
+    }
+
+    /* Предварительный просмотр в модальном окне */
+    .modal-content {
+        border-radius: 16px;
+        border: none;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 16px 16px 0 0;
+        border-bottom: none;
+    }
+
+    .modal-title {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-weight: 600;
+    }
+
+    .preview-content {
+        padding: 1rem;
+    }
+
+    .preview-content h2 {
+        color: #1f2937;
+        margin-bottom: 1rem;
+        font-weight: 700;
+    }
+
+    .preview-meta {
+        display: flex;
+        gap: 2rem;
+        margin-bottom: 1.5rem;
+        font-size: 0.9rem;
+        color: #6b7280;
+    }
+
+    .preview-image img {
+        width: 100%;
+        height: auto;
+        max-height: 500px;
+        object-fit: contain;
+        border-radius: 12px;
+        margin-bottom: 1rem;
+        background: white;
+    }
+
+    .preview-text {
+        line-height: 1.7;
+        color: #374151;
+    }
+
+    /* Анимации */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @keyframes slideInLeft {
+        from {
+            opacity: 0;
+            transform: translateX(-30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    /* Адаптивные стили */
+    @media (max-width: 991.98px) {
+        .create-post-wrapper {
+            background: white;
+        }
+
+        .form-container {
+            padding: 1rem;
+            height: auto;
+            min-height: 100vh;
+        }
+
+        .form-title {
+            font-size: 2rem;
+        }
+
+        .form-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .action-buttons {
+            justify-content: center;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .form-container {
+            padding: 0.5rem;
+        }
+
+        .btn-secondary, .btn-preview, .btn-primary {
+            padding: 0.75rem 1rem;
+            font-size: 0.9rem;
+        }
+
+        .action-buttons {
+            flex-direction: column;
+        }
+
+        .format-options {
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .format-label {
+            justify-content: center;
+        }
+    }
+
+    /* Улучшения для скроллбара */
+    .form-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .form-container::-webkit-scrollbar-track {
+        background: #f1f1f1;
+    }
+
+    .form-container::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 3px;
+    }
+
+    .form-container::-webkit-scrollbar-thumb:hover {
+        background: #a1a1a1;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Элементы формы
+    const titleInput = document.querySelector('input[name="title"]');
+    const contentTextarea = document.querySelector('textarea[name="content"]');
+    const fileInput = document.querySelector('input[type="file"]');
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+    const removeImageBtn = document.getElementById('removeImage');
+    const previewBtn = document.getElementById('previewBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Счетчики символов
+    const titleCounter = document.getElementById('title-counter');
+    const contentCounter = document.getElementById('content-counter');
+
+    // Элементы переключателя формата
+    const formatPlain = document.getElementById('format_plain');
+    const formatHtml = document.getElementById('format_html');
+    const formatTipText = document.getElementById('formatTipText');
+
+    // Обновление счетчика заголовка
+    if (titleInput && titleCounter) {
+        titleInput.addEventListener('input', function() {
+            const length = this.value.length;
+            const maxLength = 100;
+            titleCounter.textContent = length;
+
+            const parent = titleCounter.parentElement;
+            parent.classList.remove('warning', 'danger');
+
+            if (length > maxLength * 0.8) {
+                parent.classList.add('warning');
+            }
+            if (length >= maxLength) {
+                parent.classList.add('danger');
+            }
+        });
+    }
+
+    // Обновление счетчика контента
+    if (contentTextarea && contentCounter) {
+        contentTextarea.addEventListener('input', function() {
+            const length = this.value.length;
+            contentCounter.textContent = length;
+        });
+    }
+
+    // Обработчики переключателя формата
+    if (formatPlain && formatHtml && formatTipText) {
+        // Функция обновления подсказки
+        function updateFormatTip() {
+            if (formatPlain.checked) {
+                formatTipText.textContent = 'Простой текст без форматирования';
+                contentTextarea.placeholder = 'Напишите содержимое статьи простым текстом...';
+            } else {
+                formatTipText.textContent = 'Поддерживаются HTML теги: <strong>, <em>, <u>, <br>, <p>, <h1>-<h6>, <ul>, <ol>, <li>';
+                contentTextarea.placeholder = 'Напишите содержимое статьи с HTML разметкой...';
+            }
+        }
+
+        // Обработчики изменения формата
+        formatPlain.addEventListener('change', updateFormatTip);
+        formatHtml.addEventListener('change', updateFormatTip);
+
+        // Инициализация подсказки
+        updateFormatTip();
+    }
+
+    // Drag & Drop для загрузки файлов
+    if (fileUploadArea && fileInput) {
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            fileUploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            fileUploadArea.classList.add('dragover');
+        }
+
+        function unhighlight(e) {
+            fileUploadArea.classList.remove('dragover');
+        }
+
+        fileUploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+
+            if (files.length > 0) {
+                const file = files[0];
+                if (file.type.startsWith('image/')) {
+                    fileInput.files = files;
+                    handleImagePreview(file);
+                }
+            }
+        }
+
+        // Обработка выбора файла через input
+        fileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                handleImagePreview(this.files[0]);
+            }
+        });
+
+        // Функция предварительного просмотра изображения
+        function handleImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+
+                // Скрываем область загрузки и показываем превью
+                fileUploadArea.querySelector('.file-upload-content').style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Удаление изображения
+        if (removeImageBtn) {
+            removeImageBtn.addEventListener('click', function() {
+                fileInput.value = '';
+                imagePreview.style.display = 'none';
+                fileUploadArea.querySelector('.file-upload-content').style.display = 'block';
+            });
+        }
+    }
+
+    // Предварительный просмотр статьи
+    if (previewBtn) {
+        previewBtn.addEventListener('click', function() {
+            const title = titleInput ? titleInput.value : '';
+            const content = contentTextarea ? contentTextarea.value : '';
+
+            // Обновляем модальное окно
+            document.getElementById('previewTitle').textContent = title || 'Заголовок статьи';
+            document.getElementById('previewText').innerHTML = content || 'Содержимое статьи';
+
+            // Устанавливаем текущую дату
+            const currentDate = new Date().toLocaleDateString('ru-RU');
+            document.getElementById('previewDate').textContent = 'Дата: ' + currentDate;
+
+            // Показываем изображение если есть
+            const previewImageContainer = document.getElementById('previewImage');
+            if (fileInput && fileInput.files && fileInput.files[0]) {
+                const img = document.createElement('img');
+                img.src = previewImg.src;
+                previewImageContainer.innerHTML = '';
+                previewImageContainer.appendChild(img);
+            } else {
+                previewImageContainer.innerHTML = '';
+            }
+
+            // Показываем модальное окно
+            const modal = new bootstrap.Modal(document.getElementById('previewModal'));
+            modal.show();
+        });
+    }
+
+    // Валидация формы перед отправкой
+    const form = document.querySelector('.modern-form');
+    if (form && submitBtn) {
+        form.addEventListener('submit', function(e) {
+            const hasTitle = titleInput && titleInput.value.trim().length > 0;
+            const hasContent = contentTextarea && contentTextarea.value.trim().length > 0;
+
+            if (!hasTitle || !hasContent) {
+                e.preventDefault();
+
+                // Показываем предупреждение
+                if (!hasTitle) {
+                    titleInput.focus();
+                    titleInput.style.borderColor = '#ef4444';
+                }
+                if (!hasContent) {
+                    contentTextarea.style.borderColor = '#ef4444';
+                }
+
+                // Уведомление
+                showNotification('Пожалуйста, заполните все обязательные поля', 'error');
+                return false;
+            }
+
+            // Показываем индикатор загрузки только при успешной валидации
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Публикация...';
+            submitBtn.disabled = true;
+
+            // Очищаем черновик при успешной отправке
+            localStorage.removeItem('draft_post');
+
+            // Форма отправится автоматически, так как мы не вызываем preventDefault()
+        });
+    }
+
+    // Функция показа уведомлений
+    function showNotification(message, type = 'info') {
+        // Можно использовать SweetAlert2 или другую библиотеку
+        const alertClass = type === 'error' ? 'alert-danger' : 'alert-info';
+        const alertHtml = `
+            <div class="alert ${alertClass} alert-dismissible fade show position-fixed"
+                 style="top: 100px; right: 20px; z-index: 9999;">
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', alertHtml);
+
+        // Автоматически скрываем через 5 секунд
+        setTimeout(() => {
+            const alert = document.querySelector('.alert');
+            if (alert) {
+                alert.remove();
+            }
+        }, 5000);
+    }
+
+    // Сброс цветов полей при вводе
+    [titleInput, contentTextarea].forEach(field => {
+        if (field) {
+            field.addEventListener('input', function() {
+                this.style.borderColor = '';
+            });
+        }
+    });
+
+    // Автосохранение в localStorage (опционально)
+    function autoSave() {
+        if (titleInput && contentTextarea) {
+            const data = {
+                title: titleInput.value,
+                content: contentTextarea.value,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem('draft_post', JSON.stringify(data));
+        }
+    }
+
+    // Восстановление из localStorage
+    function loadDraft() {
+        const draft = localStorage.getItem('draft_post');
+        if (draft) {
+            try {
+                const data = JSON.parse(draft);
+                const draftDate = new Date(data.timestamp);
+                const now = new Date();
+                const hoursDiff = (now - draftDate) / (1000 * 60 * 60);
+
+                // Загружаем черновик только если он не старше 24 часов
+                if (hoursDiff < 24) {
+                    if (titleInput && !titleInput.value) titleInput.value = data.title || '';
+                    if (contentTextarea && !contentTextarea.value) contentTextarea.value = data.content || '';
+
+                    // Обновляем счетчики
+                    if (titleCounter) titleCounter.textContent = titleInput.value.length;
+                    if (contentCounter) contentCounter.textContent = contentTextarea.value.length;
+                }
+            } catch (e) {
+                console.log('Ошибка при загрузке черновика:', e);
+            }
+        }
+    }
+
+    // Автосохранение каждые 30 секунд
+    setInterval(autoSave, 30000);
+
+    // Загружаем черновик при загрузке страницы
+    loadDraft();
+});
+</script>
+{% endblock styles%}

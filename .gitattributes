@@ -1,0 +1,20 @@
+# Устанавливаем автоматическое определение текстовых файлов,
+# чтобы Git корректно обрабатывал окончания строк по умолчанию.
+* text=auto
+
+# Гарантируем, что shell-скрипты всегда будут иметь окончания строк в стиле Unix (LF).
+# Это критически важно для их корректной работы на сервере.
+*.sh text eol=lf
+
+# Рекомендуется для консистентности в Python-проектах
+*.py text eol=lf
+
+# Для других текстовых файлов также устанавливаем LF для единообразия
+*.md text eol=lf
+*.yml text eol=lf
+*.json text eol=lf
+requirements.txt text eol=lf
+.gitignore text eol=lf
+.flaskenv text eol=lf
+.env.development text eol=lf
+Procfile text eol=lf
