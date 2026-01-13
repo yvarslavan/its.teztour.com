@@ -3,7 +3,6 @@
 Заменяет небезопасный config.ini
 """
 import os
-from typing import Optional
 from dotenv import load_dotenv
 
 # Загружаем переменные окружения из .env файла
@@ -27,6 +26,7 @@ class SecureConfig:
 
         # MySQL Database Configuration
         self.mysql_host = os.getenv('MYSQL_HOST', 'localhost')
+        self.mysql_port = os.getenv('MYSQL_PORT', '3306')
         self.mysql_database = os.getenv('MYSQL_DATABASE', '')
         self.mysql_user = os.getenv('MYSQL_USER', '')
         self.mysql_password = os.getenv('MYSQL_PASSWORD', '')
@@ -40,6 +40,7 @@ class SecureConfig:
 
         # Quality MySQL Configuration
         self.mysql_quality_host = os.getenv('MYSQL_QUALITY_HOST', 'localhost')
+        self.mysql_quality_port = os.getenv('MYSQL_QUALITY_PORT', '3306')
         self.mysql_quality_database = os.getenv('MYSQL_QUALITY_DATABASE', '')
         self.mysql_quality_user = os.getenv('MYSQL_QUALITY_USER', '')
         self.mysql_quality_password = os.getenv('MYSQL_QUALITY_PASSWORD', '')
@@ -93,6 +94,7 @@ class SecureConfig:
         """Получить конфигурацию MySQL"""
         return {
             'host': self.mysql_host,
+            'port': self.mysql_port,
             'database': self.mysql_database,
             'user': self.mysql_user,
             'password': self.mysql_password
@@ -112,6 +114,7 @@ class SecureConfig:
         """Получить конфигурацию MySQL Quality"""
         return {
             'host': self.mysql_quality_host,
+            'port': self.mysql_quality_port,
             'database': self.mysql_quality_database,
             'user': self.mysql_quality_user,
             'password': self.mysql_quality_password
@@ -121,7 +124,7 @@ class SecureConfig:
         """Проверить наличие обязательных переменных окружения"""
         required_vars = [
             'ORACLE_HOST', 'ORACLE_SERVICE_NAME', 'ORACLE_USER', 'ORACLE_PASSWORD',
-            'MYSQL_HOST', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD',
+            'MYSQL_HOST', 'MYSQL_PORT', 'MYSQL_DATABASE', 'MYSQL_USER', 'MYSQL_PASSWORD',
             'REDMINE_URL', 'REDMINE_API_KEY'
         ]
 

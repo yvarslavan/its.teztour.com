@@ -21,6 +21,7 @@ print("=" * 60)
 
 mysql_vars = {
     'MYSQL_HOST': os.getenv('MYSQL_HOST'),
+    'MYSQL_PORT': os.getenv('MYSQL_PORT'),
     'MYSQL_DATABASE': os.getenv('MYSQL_DATABASE'),
     'MYSQL_USER': os.getenv('MYSQL_USER'),
     'MYSQL_PASSWORD': '***' if os.getenv('MYSQL_PASSWORD') else None,
@@ -28,6 +29,7 @@ mysql_vars = {
 
 mysql_quality_vars = {
     'MYSQL_QUALITY_HOST': os.getenv('MYSQL_QUALITY_HOST'),
+    'MYSQL_QUALITY_PORT': os.getenv('MYSQL_QUALITY_PORT'),
     'MYSQL_QUALITY_DATABASE': os.getenv('MYSQL_QUALITY_DATABASE'),
     'MYSQL_QUALITY_USER': os.getenv('MYSQL_QUALITY_USER'),
     'MYSQL_QUALITY_PASSWORD': '***' if os.getenv('MYSQL_QUALITY_PASSWORD') else None,

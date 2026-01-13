@@ -447,20 +447,26 @@ def get_last_calls(agency_id: str, limit: int = 6) -> List[Dict[str, Any]]:
         # Используем прямой SQL запрос как резервный вариант
         try:
             with SessionSalesSchema() as session:
-                query = text(
-                    """
-                SELECT CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
-                       CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME
-                FROM T_CALL_INFO
-                WHERE AGENCY_ID = :agency_id
-                ORDER BY CALL_INFO_ID DESC
-                FETCH FIRST :limit ROWS ONLY
-                """
+                # Используем SQLAlchemy для автоматической генерации правильного синтаксиса LIMIT/FETCH
+                from blog.models import CallInfo
+                query = (
+                    select(
+                        CallInfo.id.label("CALL_INFO_ID"),
+                        CallInfo.time_begin.label("TIME_BEGIN"),
+                        CallInfo.time_end.label("TIME_END"),
+                        CallInfo.phone_number.label("PHONE_NUMBER"),
+                        CallInfo.currator.label("CURRATOR"),
+                        CallInfo.theme.label("THEME"),
+                        CallInfo.region.label("REGION"),
+                        CallInfo.agency_manager.label("AGENCY_MANAGER"),
+                        CallInfo.agency_name.label("AGENCY_NAME")
+                    )
+                    .where(CallInfo.agency_id == agency_id)
+                    .order_by(desc(CallInfo.id))
+                    .limit(limit)
                 )
-                result = session.execute(
-                    query, {"agency_id": agency_id, "limit": limit}
-                ).fetchall()
-                return [dict(row) for row in result]
+                result = session.execute(query).fetchall()
+                return [dict(row._mapping) for row in result]
         except Exception as e:
             logger.error(f"Резервный SQL запрос также не удался: {str(e)}")
             return []
@@ -470,17 +476,24 @@ def get_last_calls_all(limit: int = 5) -> List[Dict[str, Any]]:
     """Получение последних N звонков для всех агентств (не зависит от call_info_table)"""
     try:
         with SessionSalesSchema() as session:
-            query = text(
-                """
-            SELECT
-                CALL_INFO_ID, TIME_BEGIN, TIME_END, PHONE_NUMBER,
-                CURRATOR, THEME, REGION, AGENCY_MANAGER, AGENCY_NAME
-            FROM T_CALL_INFO
-            ORDER BY CALL_INFO_ID DESC
-            FETCH FIRST :limit ROWS ONLY
-            """
+            # Используем SQLAlchemy для автоматической генерации правильного синтаксиса LIMIT/FETCH
+            from blog.models import CallInfo
+            query = (
+                select(
+                    CallInfo.id.label("CALL_INFO_ID"),
+                    CallInfo.time_begin.label("TIME_BEGIN"),
+                    CallInfo.time_end.label("TIME_END"),
+                    CallInfo.phone_number.label("PHONE_NUMBER"),
+                    CallInfo.currator.label("CURRATOR"),
+                    CallInfo.theme.label("THEME"),
+                    CallInfo.region.label("REGION"),
+                    CallInfo.agency_manager.label("AGENCY_MANAGER"),
+                    CallInfo.agency_name.label("AGENCY_NAME")
+                )
+                .order_by(desc(CallInfo.id))
+                .limit(limit)
             )
-            result = session.execute(query, {"limit": limit}).fetchall()
+            result = session.execute(query).fetchall()
             # Преобразуем строки в словари
             return [dict(row._mapping) for row in result]
     except Exception as e:

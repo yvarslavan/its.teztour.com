@@ -16,9 +16,9 @@ else:
     exit(1)
 
 mysql_host = os.getenv('MYSQL_HOST')
-mysql_port = 3306
+mysql_port = int(os.getenv('MYSQL_PORT', '3306'))
 
-print(f"🔍 Проверка доступности MySQL сервера:")
+print("🔍 Проверка доступности MySQL сервера:")
 print(f"   Хост: {mysql_host}")
 print(f"   Порт: {mysql_port}")
 print()
@@ -39,7 +39,7 @@ try:
     sock.settimeout(5)
     result = sock.connect_ex((mysql_host, mysql_port))
     sock.close()
-    
+
     if result == 0:
         print(f"✅ Порт {mysql_port} доступен!")
     else:
