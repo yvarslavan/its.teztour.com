@@ -1341,13 +1341,6 @@ html[data-theme="light"] .kanban-loading,
 
 
 
-<!-- Проверяем наличие jQuery и загружаем если нужно (локальный файл) -->
-<script>
-if (typeof jQuery === 'undefined') {
-    document.write('<script src="{{ url_for("static", filename="js/jquery-3.5.1.min.js") }}"><\/script>');
-}
-</script>
-
 <!-- DataTables JS (локальные файлы) -->
 <script type="text/javascript" charset="utf8" src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
 <script type="text/javascript" charset="utf8" src="{{ url_for('static', filename='js/dataTables.bootstrap4.min.js') }}"></script>
@@ -1472,10 +1465,16 @@ function initLoadingAnimation() {
 function initializeMyTasksPage() {
     console.log('🚀 Инициализация страницы "Мои задачи"');
 
-    if (typeof $ === 'undefined') {
+    if (typeof $ === 'undefined' && typeof jQuery === 'undefined') {
         console.error('❌ jQuery не загружен');
         showError('jQuery не загружен. Перезагрузите страницу.');
         return;
+    }
+
+    if (typeof $ === 'undefined') {
+        // Если jQuery загружен но $ не определен, используем jQuery
+        window.$ = window.jQuery;
+        console.log('🔧 Используем jQuery вместо $');
     }
 
     if (typeof $.fn.DataTable === 'undefined') {

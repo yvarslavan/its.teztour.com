@@ -683,6 +683,23 @@ def service_worker():
     return send_from_directory('static/js', 'sw.js', mimetype='application/javascript')
 
 
+@main.route("/test_my_tasks_app.html", methods=["GET"])
+def test_my_tasks_app():
+    """Обслуживает тестовую HTML страницу из папки static"""
+    from flask import send_from_directory, abort
+    import os
+
+    file_path = os.path.join('blog', 'static', 'test_my_tasks_app.html')
+    logger.info(f"Поиск файла: {os.path.abspath(file_path)}")
+
+    if not os.path.exists(file_path):
+        logger.error(f"Файл не найден: {file_path}")
+        abort(404)
+
+    logger.info(f"Файл найден, отправляем: {file_path}")
+    return send_from_directory('blog/static', 'test_my_tasks_app.html', mimetype='text/html')
+
+
 @main.route("/api/notifications/widget/status", methods=["GET"])
 @login_required
 def notifications_widget_status():

@@ -26,27 +26,36 @@ def setup_development_environment():
     os.environ["FLASK_ENV"] = "development"
     os.environ["FLASK_DEBUG"] = "1"
 
-    # Настраиваем простое логирование
+    # Настраиваем простое логирование - используем безопасный обработчик из blog.utils.logger
     import logging
-    from logging.handlers import RotatingFileHandler
 
-    os.makedirs('logs', exist_ok=True)
-    file_handler = RotatingFileHandler(
-        'logs/app.log',
-        maxBytes=int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024))),
-        backupCount=int(os.getenv('LOG_BACKUP_COUNT', '5')),
-        encoding='utf-8'
-    )
+    # Проверяем, уже настроен ли логгер, чтобы избежать дублирования
+    root_logger = logging.getLogger()
+    if not root_logger.handlers:
+        try:
+            from blog.utils.logger import configure_blog_logger
+            configure_blog_logger()
+        except ImportError:
+            # Fallback если blog.utils.logger недоступен
+            from logging.handlers import RotatingFileHandler
 
-    logging.basicConfig(
-        level=logging.INFO,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        handlers=[
-            file_handler,
-            logging.StreamHandler()
-        ],
-        force=True
-    )
+            os.makedirs('logs', exist_ok=True)
+            file_handler = RotatingFileHandler(
+                'logs/app.log',
+                maxBytes=int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024))),
+                backupCount=int(os.getenv('LOG_BACKUP_COUNT', '5')),
+                encoding='utf-8'
+            )
+
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                handlers=[
+                    file_handler,
+                    logging.StreamHandler()
+                ],
+                force=True
+            )
 
     # Suppress RotatingFileHandler permission errors on Windows
     import warnings
