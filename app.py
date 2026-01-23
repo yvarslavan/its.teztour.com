@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+load_dotenv()
 # ВАЖНО: Полностью отключаем прокси ДО импорта любых библиотек
 # Удаляем все прокси-переменные и устанавливаем NO_PROXY=* для гарантии
 for _proxy_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy',
