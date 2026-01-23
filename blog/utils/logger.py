@@ -72,14 +72,14 @@ def configure_blog_logger():
 
             file_handler = _SafeHandler(
                 log_file_path,
-                maxBytes=1024 * 1024 * 5,  # 5 MBP
+                maxBytes=1024 * 1024 * 5,  # 5 MB
                 backupCount=3,
                 encoding='utf-8'
             )
             file_handler.setFormatter(formatter)
             blog_package_logger.addHandler(file_handler)
         except Exception as e:
-            logging.basicConfig()
+            logging.basicConfig(level=log_level)
             logging.getLogger().critical(f"Failed to configure file logger: {e}")
 
         # Обработчик для вывода в консоль

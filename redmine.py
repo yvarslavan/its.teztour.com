@@ -1,7 +1,7 @@
 import os
 import tempfile
+import uuid
 from datetime import timedelta, datetime
-from configparser import ConfigParser
 import logging
 import functools
 import time
@@ -18,15 +18,14 @@ from redminelib.exceptions import (
 )
 import pymysql
 import pymysql.cursors
+from dbutils.pooled_db import PooledDB
 import urllib3
 from flask import flash, current_app
 from blog.models import User, Notifications, NotificationsAddNotes
 from blog import db
-import uuid
 
 # ИСПРАВЛЕНИЕ: Убираем импорт notification_service отсюда, чтобы избежать циклического импорта
 # from blog.notification_service import notification_service, NotificationData, NotificationType, WebPushException
-from typing import List, Dict, Set, Optional, Any
 
 
 # Настройка базовой конфигурации логирования
@@ -61,7 +60,7 @@ try:
             ('MYSQL_USER', db_redmine_user_name),
             ('MYSQL_PASSWORD', db_redmine_password)
         ] if not v]
-        logger.warning(f"⚠️ Отсутствуют переменные окружения: {', '.join(missing)}")
+        logger.warning("⚠️ Отсутствуют переменные окружения: %s", ', '.join(missing))
         raise ImportError("Неполная конфигурация")
 
     logger.info("✅ Используется безопасная конфигурация из переменных окружения")
@@ -78,11 +77,10 @@ try:
 
 except ImportError:
     logger.warning("⚠️ Используется устаревшая конфигурация config.ini")
-    import os
 
     # Используем переменные окружения напрямую
     db_redmine_host = os.getenv('MYSQL_HOST')
-    db_redmine_port = int(os.getenv('MYSQL_PORT', 3306))
+    db_redmine_port = int(os.getenv('MYSQL_PORT', '3306'))
     db_redmine_name = os.getenv('MYSQL_DATABASE')
     db_redmine_user_name = os.getenv('MYSQL_USER')
     db_redmine_password = os.getenv('MYSQL_PASSWORD')
@@ -102,13 +100,88 @@ except ImportError:
     ANONYMOUS_USER_ID_CONFIG = int(os.getenv('REDMINE_ANONYMOUS_USER_ID', '4'))
 
 
-def get_connection(host, user_name, password, name, port=3306, max_attempts=3):
+# Глобальный пул соединений MySQL
+_connection_pools = {}
+_pool_lock = __import__('threading').Lock()
+
+
+def _get_pool_key(host, port, name, user_name):
+    """Генерирует уникальный ключ для пула соединений"""
+    return f"{host}:{port}/{name}/{user_name}"
+
+
+def _get_or_create_pool(host, user_name, password, name, port):
+    """Получает существующий пул или создаёт новый"""
+    pool_key = _get_pool_key(host, port, name, user_name)
+
+    with _pool_lock:
+        if pool_key not in _connection_pools:
+            connect_timeout = int(os.getenv('MYSQL_CONNECT_TIMEOUT', '3'))
+            pool_size = int(os.getenv('MYSQL_POOL_SIZE', '5'))
+            max_connections = int(os.getenv('MYSQL_MAX_CONNECTIONS', '10'))
+
+            try:
+                _connection_pools[pool_key] = PooledDB(
+                    creator=pymysql,
+                    maxconnections=max_connections,
+                    mincached=2,
+                    maxcached=pool_size,
+                    blocking=True,
+                    maxusage=None,
+                    setsession=[],
+                    ping=1,  # Проверять соединение перед использованием
+                    host=host,
+                    port=int(port),
+                    user=user_name,
+                    password=password,
+                    db=name,
+                    charset="utf8mb4",
+                    cursorclass=pymysql.cursors.DictCursor,
+                    connect_timeout=connect_timeout,
+                )
+                logger.info("✅ Создан пул соединений для %s:%s/%s (размер: %s, макс: %s)", host, port, name, pool_size, max_connections)
+            except (pymysql.Error, ValueError, OSError) as e:
+                logger.error("❌ Ошибка создания пула соединений: %s", e)
+                return None
+
+        return _connection_pools[pool_key]
+
+
+def get_connection(host, user_name, password, name, port=3306, max_attempts=None, retry_delay=None):
+    """
+    Подключение к MySQL через пул соединений.
+
+    Args:
+        max_attempts: Количество попыток (по умолчанию из env MYSQL_MAX_ATTEMPTS или 1)
+        retry_delay: Задержка между попытками в секундах (по умолчанию из env MYSQL_RETRY_DELAY или 0.5)
+    """
+    # Читаем параметры из env если не переданы
+    if max_attempts is None:
+        max_attempts = int(os.getenv('MYSQL_MAX_ATTEMPTS', '1'))
+    if retry_delay is None:
+        retry_delay = float(os.getenv('MYSQL_RETRY_DELAY', '0.5'))
+
     # Если в хосте уже есть порт, отделяем его и используем вместо переданного порта
     if host and ':' in host:
         host_only, host_port = host.split(':', 1)
         host = host_only
         port = host_port
 
+    # Пробуем использовать пул соединений
+    use_pool = os.getenv('MYSQL_USE_POOL', '1') == '1'
+
+    if use_pool:
+        pool = _get_or_create_pool(host, user_name, password, name, port)
+        if pool:
+            try:
+                connection = pool.connection()
+                logger.debug("Получено соединение из пула для %s:%s/%s", host, port, name)
+                return connection
+            except (pymysql.Error, ValueError, OSError) as e:
+                logger.warning("Ошибка получения соединения из пула: %s, пробуем прямое подключение", e)
+
+    # Fallback: прямое подключение (старая логика)
+    connect_timeout = int(os.getenv('MYSQL_CONNECT_TIMEOUT', '3'))
     attempts = 0
     while attempts < max_attempts:
         try:
@@ -120,24 +193,26 @@ def get_connection(host, user_name, password, name, port=3306, max_attempts=3):
                 db=name,
                 charset="utf8mb4",
                 cursorclass=pymysql.cursors.DictCursor,
+                connect_timeout=connect_timeout,
             )
-            logger.info(f"Соединение с базой данных {host}:{port}/{name} установлено")
+            logger.info("Соединение с базой данных %s:%s/%s установлено (прямое)", host, port, name)
             return connection
         except pymysql.Error as e:
-            logger.error(f"Ошибка при установлении соединения с базой данных: {e}")
+            logger.error("Ошибка при установлении соединения с базой данных: %s", e)
             attempts += 1
             if attempts < max_attempts:
                 logger.warning(
-                    f"Повторная попытка подключения через 3 секунды (попытка {attempts + 1} из {max_attempts})..."
+                    "Повторная попытка подключения через %.1f сек (попытка %s/%s)...",
+                    retry_delay, attempts + 1, max_attempts
                 )
-                time.sleep(3)
+                time.sleep(retry_delay)
         except Exception as _:  # pylint: disable=broad-except
             logging.error(
                 "Неизвестная ошибка при подключении к базе данных", exc_info=True
             )
-            break  # или можете выбрать продолжить попытки, если считаете это целесообразным
+            break
     logger.error(
-        f"Не удалось установить соединение с базой данных после {max_attempts} попыток"
+        "Не удалось установить соединение с базой данных после %s попыток", max_attempts
     )
     return None
 
@@ -164,15 +239,13 @@ def get_user_full_name_from_id(connection, property_value):
         cursor.execute(sql, (property_value,))
         for row in cursor:
             full_name = row["full_name"]
-            return full_name  # Возвращаем полное имя пользователя после первой итерации
+            break  # Выходим из цикла после первой итерации
     except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
     finally:
         if cursor is not None:
             cursor.close()
-    return (
-        full_name  # Возвращаем None в случае ошибки или отсутствия результата запроса
-    )
+    return full_name
 
 
 def get_project_name_from_id(connection, project_id):
@@ -184,7 +257,7 @@ def get_project_name_from_id(connection, project_id):
         cursor.execute(sql, (project_id,))
         for row in cursor:
             project_name = row["name"]
-            return project_name
+            break
     except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
     finally:
@@ -202,7 +275,7 @@ def get_status_name_from_id(connection, status_id):
         cursor.execute(sql, (status_id,))
         for row in cursor:
             status_name = row["name"]
-            return status_name
+            break
     except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
     finally:
@@ -220,7 +293,7 @@ def get_priority_name_from_id(connection, priority_id):
         cursor.execute(sql, (priority_id,))
         for row in cursor:
             priority_name = row["name"]
-            return priority_name
+            break
     except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
     finally:
@@ -373,41 +446,27 @@ class RedmineConnector:
         try:
             parsed_url = urlparse(url)
             if not all([parsed_url.scheme, parsed_url.netloc]):
-                logger.error(f"Некорректный URL для подключения к Redmine: {url}")
+                logger.error("Некорректный URL для подключения к Redmine: %s", url)
                 raise ValueError("Некорректный URL для подключения к Redmine.")
 
-            logger.info(f"Инициализация RedmineConnector с URL: {url}")
+            logger.info("Инициализация RedmineConnector с URL: %s", url)
             logger.info(
-                f"Параметры: username={username}, password={'***' if password else None}, api_key={'***' if api_key else None}"
+                "Параметры: username=%s, password=%s, api_key=%s",
+                username, '***' if password else None, '***' if api_key else None
             )
 
-            # ИСПРАВЛЕНИЕ: Отключаем проверку SSL и прокси для избежания ошибок подключения
+            # Создаем сессию без прокси (NO_PROXY=* установлен глобально в app.py)
             import requests
-            # Жестко очищаем прокси из окружения (на случай если requests всё же подхватит)
-            for _k in [
-                'HTTP_PROXY','HTTPS_PROXY','NO_PROXY','ALL_PROXY',
-                'http_proxy','https_proxy','no_proxy','all_proxy'
-            ]:
-                if os.environ.get(_k) is not None:
-                    try:
-                        del os.environ[_k]
-                    except Exception:
-                        pass
 
             session = requests.Session()
             session.verify = False
-            # Полностью игнорируем прокси из env (http_proxy/https_proxy)
             session.trust_env = False
-            # Отключаем использование прокси
-            session.proxies.clear()
-            # Используем пустые строки вместо None, чтобы удовлетворить типизатор
-            session.proxies.update({'http': '', 'https': ''})
             # Устанавливаем таймауты для избежания зависания запросов
             # Таймауты будут передаваться в каждый запрос
 
             if username and password:
                 logger.info(
-                    f"Создание подключения к Redmine с именем пользователя: {username}"
+                    "Создание подключения к Redmine с именем пользователя: %s", username
                 )
                 self.redmine = Redmine(
                     url,
@@ -439,10 +498,10 @@ class RedmineConnector:
             logger.info("RedmineConnector успешно инициализирован")
 
         except Exception as e:
-            logger.error(f"Ошибка при инициализации RedmineConnector: {e}")
+            logger.error("Ошибка при инициализации RedmineConnector: %s", e)
             import traceback
 
-            logger.error(f"Трассировка: {traceback.format_exc()}")
+            logger.error("Трассировка: %s", traceback.format_exc())
             raise
 
     def is_user_authenticated(self):
@@ -450,28 +509,29 @@ class RedmineConnector:
             logger.info("Проверка аутентификации пользователя в Redmine...")
             current_user = self.redmine.user.get("current")
             logger.info(
-                f"Аутентификация успешна. Пользователь ID: {current_user.id}, Email: {getattr(current_user, 'mail', 'N/A')}"
+                "Аутентификация успешна. Пользователь ID: %s, Email: %s",
+                current_user.id, getattr(current_user, 'mail', 'N/A')
             )
             return True
         except AuthError as auth_error:
-            logger.error(f"Ошибка аутентификации (AuthError): {auth_error}")
+            logger.error("Ошибка аутентификации (AuthError): %s", auth_error)
             return False
         except ForbiddenError as forbidden_error:
-            logger.error(f"Доступ запрещен (ForbiddenError): {forbidden_error}")
+            logger.error("Доступ запрещен (ForbiddenError): %s", forbidden_error)
             return False
         except ResourceNotFoundError as not_found_error:
-            logger.error(f"Ресурс не найден (ResourceNotFoundError): {not_found_error}")
+            logger.error("Ресурс не найден (ResourceNotFoundError): %s", not_found_error)
             return False
         except BaseRedmineError as base_error:
-            logger.error(f"Общая ошибка Redmine (BaseRedmineError): {base_error}")
+            logger.error("Общая ошибка Redmine (BaseRedmineError): %s", base_error)
             return False
-        except Exception as general_error:
+        except (ValueError, TypeError, OSError, RuntimeError) as general_error:
             logger.error(
-                f"Неожиданная ошибка при проверке аутентификации: {general_error}"
+                "Неожиданная ошибка при проверке аутентификации: %s", general_error
             )
             import traceback
 
-            logger.error(f"Трассировка: {traceback.format_exc()}")
+            logger.error("Трассировка: %s", traceback.format_exc())
             return False
 
     def get_current_user(self, user_id):
@@ -573,7 +633,7 @@ class RedmineConnector:
             print(f"[add_comment] notes: {notes[:100]}...")
 
             self.redmine.issue.update(issue_id, notes=notes)
-            print(f"[add_comment] Комментарий добавлен через Redmine API")
+            print("[add_comment] Комментарий добавлен через Redmine API")
         except BaseRedmineError as e:
             print(f"[add_comment] Ошибка Redmine API: {e}")
             return False, f"Ошибка при добавлении комментария в Redmine: {e}"
@@ -657,18 +717,22 @@ def check_user_active_redmine(connection, email_address):
             INNER JOIN users u ON ea.user_id = u.id
             WHERE ea.address = %s AND u.status = 1 """
     cursor = None
+    user_id = None
     try:
         cursor = connection.cursor()
         cursor.execute(query, email_address)
         for row in cursor:
-            return row["user_id"]
-        return 4  # Если не является возвращаем user_id Аноним = 4
+            user_id = row["user_id"]
+            break
+        if user_id is None:
+            user_id = 4  # Если не является возвращаем user_id Аноним = 4
     except pymysql.Error as e:
         print(f"{ERROR_MESSAGE} {e}")
-        return None  # Возвращаем значение в случае исключения
+        user_id = None  # Возвращаем значение в случае исключения
     finally:
         if cursor is not None:
             cursor.close()
+    return user_id
 
 
 def get_issues_redmine_author_id(connection, author_id, easy_email_to):
@@ -840,7 +904,7 @@ def check_notifications(user_email, current_user_id):
                 )
                 process_notes_start_time = time.time()
                 n_count, n_ids, n_errors = process_added_notes(
-                    connection_db, cursor, email_part, current_user_id, user_email
+                    cursor, email_part, current_user_id, user_email
                 )
                 process_notes_end_time = time.time()
                 logger_main.info(
@@ -864,7 +928,7 @@ def check_notifications(user_email, current_user_id):
 
         processed_details["total_processed"] = newly_processed_count
 
-    except Exception as e:
+    except (pymysql.Error, ValueError, RuntimeError, OSError) as e:
         logger_main.error(
             f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: ГЛОБАЛЬНАЯ ОШИБКА. {e}",
             exc_info=True,
@@ -896,11 +960,12 @@ def check_notifications(user_email, current_user_id):
                     exc_info=True,
                 )
 
-        end_time_check = time.time()
-        logger_main.info(
-            f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: ЗАВЕРШЕНИЕ проверки уведомлений. Всего обработано: {newly_processed_count}. Детали: {processed_details}. Время: {end_time_check - start_time_check:.2f} сек."
-        )
-        return processed_details
+    # Код после finally блока - завершение функции
+    end_time_check = time.time()
+    logger_main.info(
+        f"CHECK_NOTIFICATIONS_RUN_ID={run_id}: UserID={current_user_id}, Email={user_email}: ЗАВЕРШЕНИЕ проверки уведомлений. Всего обработано: {newly_processed_count}. Детали: {processed_details}. Время: {end_time_check - start_time_check:.2f} сек."
+    )
+    return processed_details
 
 
 def get_database_cursor(connection):
@@ -1218,7 +1283,7 @@ def process_status_changes(
     return processed_in_this_run, processed_ids_in_this_run, errors_in_this_run
 
 
-def process_added_notes(connection, cursor, email_part, current_user_id, easy_email_to):
+def process_added_notes(cursor, email_part, current_user_id, easy_email_to):
     log = current_app.logger
     run_id = uuid.uuid4()
     func_name = "PROCESS_ADDED_NOTES"
@@ -1482,7 +1547,7 @@ def delete_notifications(connection, ids_to_delete):
 
     if not ids_to_delete:
         log.info(f"{func_name}_RUN_ID={run_id}: Список ID для удаления пуст.")
-        return
+        return 0
 
     log.info(
         f"{func_name}_RUN_ID={run_id}: НАЧАЛО удаления {len(ids_to_delete)} записей из u_its_update_status. IDs: {ids_to_delete}"
@@ -1503,6 +1568,7 @@ def delete_notifications(connection, ids_to_delete):
         log.info(
             f"{func_name}_RUN_ID={run_id}: Успешно удалено {deleted_count} записей. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек."
         )
+        return deleted_count
     except pymysql.Error as e:
         end_time = time.time()
         log.error(
@@ -1511,6 +1577,7 @@ def delete_notifications(connection, ids_to_delete):
         )
         if connection:
             connection.rollback()
+        return 0
     except Exception as e_generic:
         end_time = time.time()
         log.error(
@@ -1519,6 +1586,7 @@ def delete_notifications(connection, ids_to_delete):
         )
         if connection:
             connection.rollback()
+        return 0
     finally:
         if cursor:
             cursor.close()
@@ -1535,7 +1603,7 @@ def delete_notifications_notes(connection, ids_to_delete):
 
     if not ids_to_delete:
         log.info(f"{func_name}_RUN_ID={run_id}: Список ID для удаления пуст.")
-        return
+        return 0
 
     log.info(
         f"{func_name}_RUN_ID={run_id}: НАЧАЛО удаления {len(ids_to_delete)} записей из u_its_add_notes. IDs: {ids_to_delete}"
@@ -1556,6 +1624,7 @@ def delete_notifications_notes(connection, ids_to_delete):
         log.info(
             f"{func_name}_RUN_ID={run_id}: Успешно удалено {deleted_count} записей. IDs: {ids_to_delete}. Время: {end_time - start_time:.2f} сек."
         )
+        return deleted_count
     except pymysql.Error as e:
         end_time = time.time()
         log.error(
@@ -1564,6 +1633,7 @@ def delete_notifications_notes(connection, ids_to_delete):
         )
         if connection:
             connection.rollback()
+        return 0
     except Exception as e_generic:
         end_time = time.time()
         log.error(
@@ -1572,6 +1642,7 @@ def delete_notifications_notes(connection, ids_to_delete):
         )
         if connection:
             connection.rollback()
+        return 0
     finally:
         if cursor:
             cursor.close()
@@ -1626,18 +1697,15 @@ def get_redmine_admin_instance():
     аутентифицированный с использованием административного API ключа.
     """
     try:
-        # Создаем сессию без прокси для избежания ошибок подключения
+        # Создаем сессию без прокси (NO_PROXY=* установлен глобально в app.py)
         import requests
 
         session = requests.Session()
         session.verify = False
-        # Полностью игнорируем прокси из env (http_proxy/https_proxy)
         session.trust_env = False
-        session.proxies.clear()
-        # Таймауты будут передаваться в каждый запрос
 
         return Redmine(
-            REDMINE_URL, key=REDMINE_ADMIN_API_KEY, requests={"session": session}
+            REDMINE_URL, key=REDMINE_ADMIN_API_KEY, requests={"session": session, "timeout": 10, "verify": False}
         )
     except Exception as e:
         logger.error(f"Ошибка при создании экземпляра Redmine API: {e}")
@@ -1877,10 +1945,11 @@ def get_multiple_user_names(connection, user_ids):
         return result
     except pymysql.Error as e:
         logger.error(f"Ошибка при пакетной загрузке имен пользователей: {e}")
-        return {}
+        result = {}
     finally:
         if cursor:
             cursor.close()
+    return result
 
 
 def get_multiple_project_names(connection, project_ids):
@@ -1919,10 +1988,11 @@ def get_multiple_project_names(connection, project_ids):
         return result
     except pymysql.Error as e:
         logger.error(f"Ошибка при пакетной загрузке названий проектов: {e}")
-        return {}
+        result = {}
     finally:
         if cursor:
             cursor.close()
+    return result
 
 
 def get_multiple_status_names(connection, status_ids):
@@ -1959,10 +2029,11 @@ def get_multiple_status_names(connection, status_ids):
         return result
     except pymysql.Error as e:
         logger.error(f"Ошибка при пакетной загрузке названий статусов: {e}")
-        return {}
+        result = {}
     finally:
         if cursor:
             cursor.close()
+    return result
 
 
 def get_multiple_priority_names(connection, priority_ids):
@@ -1999,10 +2070,11 @@ def get_multiple_priority_names(connection, priority_ids):
         return result
     except pymysql.Error as e:
         logger.error(f"Ошибка при пакетной загрузке названий приоритетов: {e}")
-        return {}
+        result = {}
     finally:
         if cursor:
             cursor.close()
+    return result
 
 
 def generate_optimized_property_names(connection, issue_history):
@@ -2171,7 +2243,7 @@ def generate_optimized_property_names(connection, issue_history):
 
 
 
-def determine_activity_type(property_name, prop_key, old_value, value, notes):
+def determine_activity_type(property_name, prop_key, _old_value, _value, notes):
     """
     Определение типа активности на основе данных из journals
 

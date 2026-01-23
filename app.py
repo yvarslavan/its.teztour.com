@@ -9,6 +9,16 @@ import sys
 from pathlib import Path
 from dotenv import load_dotenv
 
+# ВАЖНО: Полностью отключаем прокси ДО импорта любых библиотек
+# Удаляем все прокси-переменные и устанавливаем NO_PROXY=* для гарантии
+for _proxy_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy',
+                   'ALL_PROXY', 'all_proxy']:
+    if _proxy_var in os.environ:
+        del os.environ[_proxy_var]
+# Устанавливаем NO_PROXY=* чтобы гарантированно отключить прокси для всех хостов
+os.environ['NO_PROXY'] = '*'
+os.environ['no_proxy'] = '*'
+
 
 def setup_development_environment():
     """Настройка переменных окружения для разработки"""
@@ -18,14 +28,30 @@ def setup_development_environment():
 
     # Настраиваем простое логирование
     import logging
+    from logging.handlers import RotatingFileHandler
+
+    os.makedirs('logs', exist_ok=True)
+    file_handler = RotatingFileHandler(
+        'logs/app.log',
+        maxBytes=int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024))),
+        backupCount=int(os.getenv('LOG_BACKUP_COUNT', '5')),
+        encoding='utf-8'
+    )
+
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         handlers=[
-            logging.FileHandler('logs/app.log', encoding='utf-8'),
+            file_handler,
             logging.StreamHandler()
-        ]
+        ],
+        force=True
     )
+
+    # Suppress RotatingFileHandler permission errors on Windows
+    import warnings
+    warnings.filterwarnings("ignore", message=".*RotatingFileHandler.*PermissionError.*", category=UserWarning)
+
     print("✅ Логирование настроено")
 
     # Загружаем конфигурацию в зависимости от окружения

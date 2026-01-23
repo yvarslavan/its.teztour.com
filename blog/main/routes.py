@@ -9,6 +9,12 @@ import time
 from datetime import datetime
 import pymysql.cursors
 from datetime import datetime, timedelta, timezone, date
+import threading
+
+# Простой кэш для счётчика уведомлений (TTL 10 секунд)
+_notification_count_cache = {}
+_notification_count_cache_lock = threading.Lock()
+NOTIFICATION_CACHE_TTL = 10  # секунд
 from flask import (
     Blueprint,
     render_template,
@@ -90,7 +96,10 @@ from blog.utils.cache_manager import (
 
 # Импорты из blog.tasks.utils
 from blog.tasks.utils import get_redmine_connector, get_user_assigned_tasks_paginated_optimized, task_to_dict
-from concurrent.futures import ThreadPoolExecutor
+try:
+    from concurrent.futures import ThreadPoolExecutor
+except ImportError:
+    from multiprocessing.pool import ThreadPool as ThreadPoolExecutor
 
 # Импортируем декораторы для защиты отладочных эндпоинтов
 from blog.utils.decorators import debug_only, development_only, admin_required_in_production
@@ -100,6 +109,44 @@ cache_manager = CacheManager()
 tasks_cache_optimizer = TasksCacheOptimizer()
 
 main = Blueprint("main", __name__)
+
+
+def get_user_password_with_fallback(user):
+    """
+    Получает пароль пользователя с fallback на кешированные данные.
+    Порядок приоритета:
+    1. Oracle ERP (если доступен)
+    2. Сессия (user_password_erp)
+    3. SQLite (user.password)
+    """
+    from flask import session
+
+    # Попытка 1: Oracle ERP
+    try:
+        oracle_conn = connect_oracle(db_host, db_port, db_service_name, db_user_name, db_password)
+        if oracle_conn:
+            password = get_user_erp_password(oracle_conn, user.username)
+            oracle_conn.close()
+            if password:
+                actual_password = password[0] if isinstance(password, tuple) else password
+                # Кешируем в сессию для будущих запросов
+                session['user_password_erp'] = actual_password
+                return actual_password
+    except Exception as e:
+        logging.warning(f"Oracle недоступен для {user.username}: {e}")
+
+    # Попытка 2: Кешированный пароль из сессии
+    cached_password = session.get('user_password_erp')
+    if cached_password:
+        logging.info(f"Используется кешированный пароль из сессии для {user.username}")
+        return cached_password
+
+    # Попытка 3: Пароль из SQLite
+    if hasattr(user, 'password') and user.password:
+        logging.info(f"Используется пароль из SQLite для {user.username}")
+        return user.password
+
+    return None
 
 @main.app_template_filter('format_datetime')
 def format_datetime_filter(value):
@@ -244,11 +291,26 @@ def inject_notification_count():
 @login_required
 def get_notification_count():
     try:
+        user_id = current_user.id
+        cache_key = f"notif_count_{user_id}"
+        now = time.time()
+
+        # Проверяем кэш
+        with _notification_count_cache_lock:
+            if cache_key in _notification_count_cache:
+                cached_count, cached_time = _notification_count_cache[cache_key]
+                if now - cached_time < NOTIFICATION_CACHE_TTL:
+                    logger.debug(f"📦 Счётчик уведомлений из кэша для {current_user.username}: {cached_count}")
+                    return jsonify({"count": cached_count})
+
         logger.info(f"🔄 Запрос количества уведомлений для пользователя {current_user.username}")
 
         # ИЗМЕНЕНО: Используем get_total_notification_count_for_page для показа всех уведомлений
-        # чтобы красный счетчик был согласован со страницей /notifications
         count = get_total_notification_count_for_page(current_user)
+
+        # Сохраняем в кэш
+        with _notification_count_cache_lock:
+            _notification_count_cache[cache_key] = (count, now)
 
         logger.info(f"✅ Получено количество уведомлений: {count}")
         return jsonify({"count": count})

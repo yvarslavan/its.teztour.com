@@ -61,7 +61,8 @@
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.7);
-    display: none; /* По умолчанию скрыт */
+    display: none;
+    /* По умолчанию скрыт */
     justify-content: center;
     align-items: center;
     z-index: 200;
@@ -1128,6 +1129,7 @@
 /* ===== СВЕТЛАЯ ТЕМА ===== */
 @media (prefers-color-scheme: light),
 [data-theme="light"] {
+
     /* Основной фон */
     body {
         background-color: #f8fafc !important;
@@ -1418,11 +1420,13 @@
         padding: var(--spacing-lg);
     }
 
-    .empty-state, .error-state {
+    .empty-state,
+    .error-state {
         padding: var(--spacing-lg);
     }
 
-    .empty-icon, .error-icon {
+    .empty-icon,
+    .error-icon {
         font-size: 3rem;
     }
 }
@@ -1772,6 +1776,7 @@
 /* ===== СВЕТЛАЯ ТЕМА ===== */
 @media (prefers-color-scheme: light),
 [data-theme="light"] {
+
     /* Основной фон */
     body {
         background-color: #f8fafc !important;
@@ -2161,7 +2166,8 @@
 }
 
 /* ===== СОСТОЯНИЯ ОШИБОК ===== */
-.empty-state, .error-state {
+.empty-state,
+.error-state {
     text-align: center;
     padding: var(--spacing-2xl);
     background: var(--background-primary);
@@ -2170,7 +2176,8 @@
     margin-bottom: var(--spacing-xl);
 }
 
-.empty-icon, .error-icon {
+.empty-icon,
+.error-icon {
     font-size: 4rem;
     margin-bottom: var(--spacing-lg);
     color: var(--text-light);
@@ -2180,14 +2187,16 @@
     color: var(--error-color);
 }
 
-.empty-state h3, .error-state h3 {
+.empty-state h3,
+.error-state h3 {
     color: var(--text-primary);
     margin-bottom: var(--spacing-sm);
     font-size: 1.25rem;
     font-weight: 600;
 }
 
-.empty-state p, .error-state p {
+.empty-state p,
+.error-state p {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-lg);
 }
@@ -2232,13 +2241,15 @@
 /* Основной контейнер таблицы */
 .table-wrapper {
     width: 100%;
-    overflow: visible; /* Убираем overflow-x: auto */
+    overflow: visible;
+    /* Убираем overflow-x: auto */
 }
 
 /* Адаптивная таблица без фиксированных ширин */
 .modern-datatable-redesigned {
     width: 100% !important;
-    table-layout: auto; /* Автоматическое распределение ширины */
+    table-layout: auto;
+    /* Автоматическое распределение ширины */
     border-collapse: collapse;
     font-size: 0.875rem;
 }
@@ -2250,7 +2261,8 @@
     border-bottom: 2px solid var(--border-color);
     font-weight: 600;
     color: var(--text-primary);
-    white-space: nowrap; /* Заголовки в одну строку */
+    white-space: nowrap;
+    /* Заголовки в одну строку */
     text-align: left;
     position: relative;
 }
@@ -2282,6 +2294,15 @@
 .task-id-number {
     font-size: 0.8rem;
     font-weight: 600;
+    color: white !important;
+}
+
+/* Override theme-specific color for task IDs */
+html[data-theme="light"] #tasksTable .task-id-number,
+[data-theme="light"] #tasksTable .task-id-number,
+html[data-theme="light"] #tasksTable .task-id-link,
+[data-theme="light"] #tasksTable .task-id-link {
+    color: white !important;
 }
 
 /* Email столбец - расширенный */
@@ -2324,7 +2345,8 @@
     hyphens: auto;
     font-size: 0.85rem;
     line-height: 1.3;
-    max-height: 3.9em; /* Максимум 3 строки для лучшей читаемости */
+    max-height: 3.9em;
+    /* Максимум 3 строки для лучшей читаемости */
     overflow: hidden;
     text-overflow: ellipsis;
     display: -webkit-box;
@@ -2408,13 +2430,15 @@
 
 /* Цветные иконки для полей дат */
 .col-created-cell .date-icon {
-    color: #10b981; /* Зеленый для "Создана" */
+    color: #10b981;
+    /* Зеленый для "Создана" */
     filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.3));
     transition: all 0.2s ease;
 }
 
 .col-updated-cell .date-icon {
-    color: #3b82f6; /* Синий для "Обновлена" */
+    color: #3b82f6;
+    /* Синий для "Обновлена" */
     filter: drop-shadow(0 0 2px rgba(59, 130, 246, 0.3));
     transition: all 0.2s ease;
 }
@@ -2422,7 +2446,8 @@
 /* Эффекты наведения для иконок дат */
 .date-container:hover .col-created-cell .date-icon,
 .col-created-cell .date-container:hover .date-icon {
-    color: #059669; /* Темнее зеленый при наведении */
+    color: #059669;
+    /* Темнее зеленый при наведении */
     filter: drop-shadow(0 0 4px rgba(16, 185, 129, 0.5));
     transform: scale(1.1);
     transition: all 0.2s ease;
@@ -2430,7 +2455,8 @@
 
 .date-container:hover .col-updated-cell .date-icon,
 .col-updated-cell .date-container:hover .date-icon {
-    color: #2563eb; /* Темнее синий при наведении */
+    color: #2563eb;
+    /* Темнее синий при наведении */
     filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.5));
     transform: scale(1.1);
     transition: all 0.2s ease;
@@ -2848,6 +2874,7 @@
 /* ===== СВЕТЛАЯ ТЕМА ===== */
 @media (prefers-color-scheme: light),
 [data-theme="light"] {
+
     /* Основной фон */
     body {
         background-color: #f8fafc !important;

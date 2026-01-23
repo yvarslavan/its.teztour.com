@@ -34,6 +34,9 @@ import redmine
 # Настраиваем логгер сразу
 logger = logging.getLogger(__name__)
 
+# Toggle for Redmine notifications (off disables DB calls)
+REDMINE_NOTIFICATIONS = os.getenv("REDMINE_NOTIFICATIONS", "on").lower()
+
 # Читаем конфигурацию для доступа к БД Redmine из переменных окружения
 try:
     import os
@@ -257,6 +260,8 @@ class NotificationService:
         Отметка о прочтении происходит отдельно по действию пользователя.
         Выполняется только для пользователей с is_redmine_user=True.
         """
+        if REDMINE_NOTIFICATIONS != "on":
+            return
         user = User.query.get(user_id)
         if not user or not user.is_redmine_user:
             # logger.info(f"Пользователь {user_id} не является пользователем Redmine, пропускаем обработку")
@@ -332,18 +337,24 @@ class NotificationService:
                         db.session.rollback()
 
                 if new_notifications_count > 0:
-                    db.session.commit()
-                    logger.info(
-                        f"Сохранено {new_notifications_count} новых Redmine уведомлений в локальную базу для user_id {user_id}."
-                    )
+                    try:
+                        db.session.commit()
+                        logger.info(
+                            f"Сохранено {new_notifications_count} новых Redmine уведомлений в локальную базу для user_id {user_id}."
+                        )
+                    except Exception as commit_error:
+                        logger.error(f"Ошибка при сохранении уведомлений: {commit_error}")
+                        db.session.rollback()
 
         except Exception as e:
             logger.error(
                 f"Критическая ошибка в _fetch_and_save_redmine_notifications для user_id {user_id}: {e}",
                 exc_info=True,
             )
-            if "db" in locals() and db.session.is_active:
+            try:
                 db.session.rollback()
+            except Exception:
+                pass
         finally:
             if source_connection:
                 source_connection.close()
@@ -952,7 +963,7 @@ class NotificationService:
             ]
 
             # ИСПРАВЛЕНО: Для виджета получаем "горячие" уведомления напрямую из MySQL Redmine
-            redmine_notifications = self.get_redmine_notifications(user_id)
+            redmine_notifications = [] if REDMINE_NOTIFICATIONS != "on" else self.get_redmine_notifications(user_id)
 
             # Преобразуем SQLAlchemy объекты в словари для JSON сериализации
             status_data = []

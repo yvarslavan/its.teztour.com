@@ -24,8 +24,11 @@ from blog.notification_service import BrowserPushService
 from blog.models import load_user
 from blog.utils.logger import configure_blog_logger
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', force=True)
-# force=True перезапишет любую существующую конфигурацию корневого логгера, что полезно для отладки.
+_root = logging.getLogger()
+if not _root.handlers:
+    _log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
+    _log_level = getattr(logging, _log_level_str, logging.INFO)
+    logging.basicConfig(level=_log_level, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 bcrypt = Bcrypt()
 migrate = Migrate()
@@ -247,6 +250,15 @@ def create_app():
                         app.logger.info("[INIT] Добавлено поле notifications_widget_enabled в таблицу users")
                     else:
                         app.logger.info("[INIT] Поле notifications_widget_enabled уже существует")
+
+                    # Проверяем, есть ли поле show_kanban_tips
+                    if 'show_kanban_tips' not in columns:
+                        cursor.execute("ALTER TABLE users ADD COLUMN show_kanban_tips BOOLEAN DEFAULT 1 NOT NULL")
+                        cursor.execute("UPDATE users SET show_kanban_tips = 1")
+                        conn.commit()
+                        app.logger.info("[INIT] Добавлено поле show_kanban_tips в таблицу users")
+                    else:
+                        app.logger.info("[INIT] Поле show_kanban_tips уже существует")
 
                     conn.close()
                 else:

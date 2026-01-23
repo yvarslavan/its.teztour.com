@@ -9,8 +9,6 @@ from flask import render_template, request, jsonify, current_app, Blueprint
 # Создаем Blueprint вместо импорта
 netmonitor = Blueprint("netmonitor", __name__)
 
-# Настройка логгирования
-logging.basicConfig(level=logging.DEBUG)
 # Импортируем декораторы для защиты отладочных эндпоинтов
 from blog.utils.decorators import debug_only, development_only, admin_required_in_production
 logger = logging.getLogger(__name__)

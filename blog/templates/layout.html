@@ -332,14 +332,14 @@
                             <li class="nav-item search-item me-3 d-flex align-items-center">
                                 <div class="search-wrapper position-relative" style="width: 250px;">
                                     <!-- Иконка внутри поля с использованием position: absolute -->
-                                    <i class="fas fa-search text-muted position-absolute" 
+                                    <i class="fas fa-search text-muted position-absolute"
                                        style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
-                                    <input type="text" id="nav-search-input" class="form-control form-control-sm ps-4" 
-                                           placeholder="Поиск..." autocomplete="off" 
+                                    <input type="text" id="nav-search-input" class="form-control form-control-sm ps-4"
+                                           placeholder="Поиск..." autocomplete="off"
                                            style="padding-left: 35px !important; border-radius: 20px;">
-                                    
+
                                     <!-- Выпадающий список результатов -->
-                                    <div id="search-results" class="dropdown-menu w-100 shadow-sm mt-1" 
+                                    <div id="search-results" class="dropdown-menu w-100 shadow-sm mt-1"
                                          style="display: none; max-height: 400px; overflow-y: auto; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;"></div>
                                 </div>
                             </li>
@@ -603,11 +603,11 @@
 
                 </div>
             </div>
-                <!-- jQuery first, then Bootstrap, then DataTables -->
-                <script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
-                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-                <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+                <!-- jQuery first, then Bootstrap, then DataTables (локальные файлы) -->
+                <script src="{{ url_for('static', filename='js/jquery-3.5.1.min.js') }}"></script>
+                <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+                <script src="{{ url_for('static', filename='js/jquery.dataTables.min.js') }}"></script>
+                <script src="{{ url_for('static', filename='js/dataTables.bootstrap5.min.js') }}"></script>
 
                 {% block scripts %}{% endblock %}
                 {% block styles %}{% endblock %}
@@ -1232,7 +1232,7 @@
                         searchInput.addEventListener('input', function() {
                             const query = this.value.trim();
                             clearTimeout(searchTimeout);
-                            
+
                             // Очищаем результаты НЕМЕДЛЕННО при изменении ввода
                             // Это предотвращает смешивание старых и новых результатов
                             if (query.length < 2) {
@@ -1262,7 +1262,7 @@
                                             data.forEach(item => {
                                                 let icon = 'fa-file-alt';
                                                 if (item.type === 'page') icon = 'fa-desktop';
-                                                
+
                                                 html += `
                                                     <a href="${item.url}" class="dropdown-item py-2 border-bottom">
                                                         <div class="d-flex align-items-center">
@@ -1295,7 +1295,7 @@
                                 searchResults.style.display = 'none';
                             }
                         });
-                        
+
                         // Show results on focus if there's text
                         searchInput.addEventListener('focus', function() {
                             if (this.value.trim().length >= 2 && searchResults.innerHTML.trim() !== '') {

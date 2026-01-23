@@ -268,22 +268,23 @@ jobs:
           pkill -f "python.*app.py" || echo "No existing processes found"
           pkill -f "gunicorn.*wsgi:app" || echo "No gunicorn processes found"
 
-          # Start application in background
-          echo "▶️ Starting application..."
-          nohup python app.py > app.log 2>&1 &
+          # Start/restart service (preferred)
+          echo "▶️ Starting application via systemd..."
+          systemctl daemon-reload || sudo -n systemctl daemon-reload || true
+          systemctl restart flask-helpdesk || systemctl restart flask-helpdesk.service || sudo -n systemctl restart flask-helpdesk || sudo -n systemctl restart flask-helpdesk.service
 
           # Wait a moment for startup
           sleep 5
 
           # Check if application started successfully
-          if pgrep -f "python.*app.py" > /dev/null; then
+          if systemctl is-active --quiet flask-helpdesk || systemctl is-active --quiet flask-helpdesk.service; then
             echo "✅ Application started successfully"
             echo "📊 Process info:"
-            ps aux | grep -E "(python.*app.py|gunicorn)" | grep -v grep
+            ps aux | grep -E "(gunicorn.*wsgi:app|flask_helpdesk)" | grep -v grep || true
           else
             echo "❌ Application failed to start"
-            echo "📋 Recent logs:"
-            tail -20 app.log
+            echo "📋 Recent journal logs:"
+            journalctl -u flask-helpdesk -n 50 --no-pager || journalctl -u flask-helpdesk.service -n 50 --no-pager || sudo -n journalctl -u flask-helpdesk -n 50 --no-pager || sudo -n journalctl -u flask-helpdesk.service -n 50 --no-pager || true
             exit 1
           fi
 

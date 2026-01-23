@@ -1,6 +1,7 @@
 import shutil
 import logging
 import os
+import traceback
 from configparser import ConfigParser
 from datetime import datetime, timedelta
 import time
@@ -8,7 +9,7 @@ from apscheduler.jobstores.base import JobLookupError
 import oracledb
 import sqlalchemy
 from sqlalchemy import func, or_, text
-from sqlalchemy.exc import SQLAlchemyError, IntegrityError
+from sqlalchemy.exc import SQLAlchemyError, IntegrityError, OperationalError
 import pytz
 from blog.user.forms import LoginForm, RegistrationForm, UpdateAccountForm, AddCommentRedmine
 from flask import (
@@ -67,7 +68,6 @@ from blog.utils.decorators import debug_only, development_only
 
 
 # Настройка логгирования
-logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 users = Blueprint("users", __name__)
@@ -122,8 +122,9 @@ def register():
                 db_host, db_port, db_service_name, db_user_name, db_password
             )
             if oracle_connection is None:
-                raise oracledb.DatabaseError(
-                    "Failed to establish connection to Oracle DB"
+                flash("Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.", "error")
+                return render_template(
+                    "register.html", form=form, title="Регистрация", legend="Регистрация"
                 )
             # hashed_password = bcrypt.generate_password_hash(form.password.data).decode('utf-8')
             # Получить данные ERP пользователя
@@ -161,7 +162,8 @@ def register():
             flash("Спасибо за регистрацию. Теперь вы можете авторизоваться.", "success")
             return redirect(url_for("users.login"))
         except oracledb.DatabaseError as e:
-            flash(f"Произошла ошибка при регистрации: {str(e)}", "error")
+            flash(f"Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.", "error")
+            logging.error(f"Oracle connection error during registration: {str(e)}")
         finally:
             if oracle_connection:
                 oracle_connection.close()
@@ -281,14 +283,16 @@ def authenticate_user(username, password):
         logger.debug(f"🔐 Password match in SQLite: {password_match}")
 
         if password_match:
-            # Проверяем актуальность пароля в Oracle
-            oracle_check = check_and_update_password(user, password)
-            logger.debug(f"🔐 Oracle password check: {oracle_check}")
-            if oracle_check:
-                logger.debug(f"✅ Authentication successful for user: {username}")
-                return user
-            else:
-                logger.debug(f"❌ Oracle password check failed for user: {username}")
+            # Oracle-проверка пароля по умолчанию отключена ради скорости логина.
+            # Включить можно через ORACLE_LOGIN_CHECK=on
+            if os.getenv("ORACLE_LOGIN_CHECK", "off").lower() == "on":
+                oracle_check = check_and_update_password(user, password)
+                logger.debug(f"🔐 Oracle password check: {oracle_check}")
+                if not oracle_check:
+                    logger.debug(f"❌ Oracle password check failed for user: {username}")
+                    return None
+            logger.debug(f"✅ Authentication successful for user: {username}")
+            return user
         else:
             logger.debug(f"❌ SQLite password mismatch for user: {username}")
     else:
@@ -300,13 +304,16 @@ def authenticate_user(username, password):
 def check_and_update_password(user, provided_password):
     logger.debug(f"🔐 check_and_update_password called for user: {user.username}")
     try:
+        if os.getenv("ORACLE_LOGIN_CHECK", "off").lower() != "on":
+            logger.info("ℹ️ Oracle password check skipped (ORACLE_LOGIN_CHECK!=on)")
+            return True
         logger.debug(f"🔐 Attempting Oracle connection...")
         oracle_connection = connect_oracle(
             db_host, db_port, db_service_name, db_user_name, db_password
         )
         if oracle_connection is None:
-            logger.error(f"❌ Oracle connection failed")
-            raise oracledb.DatabaseError("Failed to establish connection to Oracle DB")
+            logger.error(f"❌ Oracle connection failed - allowing login with cached password")
+            return True  # ВРЕМЕННО: разрешаем вход без Oracle-проверки
         logger.debug(f"✅ Oracle connection established")
 
         # Получаем актуальный пароль из Oracle - НЕ используем text() с cx_Oracle
@@ -383,14 +390,6 @@ def handle_successful_login(user: User, form: LoginForm):
         init_quality_db()
 
         check_notifications_and_start_scheduler(user.email, user.id)
-
-        # Принудительно обрабатываем уведомления при входе
-        try:
-            from blog.notification_service import check_notifications_improved
-            notifications_processed = check_notifications_improved(user.email, user.id)
-            current_app.logger.info(f"При входе обработано {notifications_processed} уведомлений для пользователя {user.username}")
-        except Exception as e:
-            current_app.logger.error(f"Ошибка при обработке уведомлений при входе: {e}")
 
         flash(f"Вы вошли как пользователь {user.username}", "success")
 
@@ -912,6 +911,12 @@ def send_password():
     if not username:
         return jsonify({"message": "Имя пользователя обязательно."}), 400
 
+    # Проверяем, что URL восстановления пароля задан
+    print(f"[DEBUG] url_recovery_password = '{url_recovery_password}'", flush=True)
+    if not url_recovery_password:
+        logger.error("RECOVERY_PASSWORD_URL не задан в конфигурации")
+        return jsonify({"message": "Сервис восстановления пароля временно недоступен"}), 503
+
     try:
         payload = {
             "FormCharset": "utf-8",
@@ -924,25 +929,47 @@ def send_password():
             return jsonify({"message": "Ошибка при отправке запроса"}), 500
 
         if "Ваш пароль отправлен по E-mail" in response.text:
-            logger.info("Письмо с восстановлением пароля отправлено на:", username)
+            logger.info("Письмо с восстановлением пароля отправлено на: %s", username)
             return jsonify({"message": "Пароль отправлен на вашу почту"}), 200
         else:
-            logger.error(f"Ошибка при отправке письма: {response.text}")
+            logger.error("Ошибка при отправке письма: %s", response.text)
             return jsonify({"message": f"{response.text}"}), 500
     except Exception as e:
-        logger.error("Произошла ошибка:", e)
-        return jsonify({"message": "Произошла ошибка"}), 500
+        logger.error(f"Произошла ошибка: {e}")
+
+        # Принудительно пишем traceback в stderr для gunicorn
+        print(f"\n=== ERROR in /send_password ===", flush=True)
+        print(f"Username: {username}", flush=True)
+        print(f"Error: {e}", flush=True)
+        traceback.print_exc()
+        print("=== END ERROR ===", flush=True)
+
+        return jsonify({"message": "Произошла ошибка", "detail": str(e)}), 500
 
 
 def send_request(payload):
     try:
+        # Для локальной разработки: отключаем прокси, если он вызывает 407
+        proxies = {}
+        if os.getenv('FLASK_ENV') == 'development':
+            proxies = {'http': None, 'https': None}
+
         response = requests.post(
-            url_recovery_password, data=payload, timeout=10
+            url_recovery_password,
+            data=payload,
+            timeout=10,
+            proxies=proxies
         )  # URL страницы восстановления пароля
         response.raise_for_status()  # Проверка на ошибки HTTP
         return response
     except Exception as e:
-        logger.error("Произошла ошибка при отправке письма:", e)
+        logger.error(f"Произошла ошибка при отправке письма: {e}")
+        print(f"\n=== ERROR in send_request ===", flush=True)
+        print(f"URL: {url_recovery_password}", flush=True)
+        print(f"Error: {e}", flush=True)
+        traceback.print_exc()
+        print("=== END ERROR ===", flush=True)
+        return None
 
 
 @users.route("/update_vpn_date", methods=["POST"])
@@ -1166,7 +1193,15 @@ def toggle_notifications():
     except Exception as e:
         db.session.rollback()
         logger.error(f"Error toggling notifications: {str(e)}")
-        return jsonify({'success': False, 'error': 'Database error'}), 500
+
+        # Принудительно пишем traceback в stderr для gunicorn
+        print(f"\n=== ERROR in /api/notifications/toggle ===", flush=True)
+        print(f"User: {getattr(current_user, 'username', None)}", flush=True)
+        print(f"Error: {e}", flush=True)
+        traceback.print_exc()
+        print("=== END ERROR ===", flush=True)
+
+        return jsonify({'success': False, 'error': 'Database error', 'detail': str(e)}), 500
 
 
 @users.route("/api/user/kanban-tips-preference", methods=["POST"])
@@ -1176,8 +1211,17 @@ def update_kanban_tips_preference():
     """Обновляет настройку показа баннера Kanban подсказок"""
     try:
         # Получаем данные из запроса
-        data = request.get_json()
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({'success': False, 'error': 'Invalid JSON body'}), 400
+
         show_kanban_tips = data.get('show_kanban_tips', None)
+
+        # Нормализуем значение к bool
+        if isinstance(show_kanban_tips, str):
+            show_kanban_tips = show_kanban_tips.strip().lower() in ('1', 'true', 'yes', 'on')
+        elif isinstance(show_kanban_tips, (int, float)):
+            show_kanban_tips = bool(show_kanban_tips)
 
         if show_kanban_tips is None:
             return jsonify({'success': False, 'error': 'Missing show_kanban_tips parameter'}), 400
@@ -1190,9 +1234,21 @@ def update_kanban_tips_preference():
         # Логируем текущее состояние
         logger.info(f"Update Kanban tips preference: user={user.username}, current_show={getattr(user, 'show_kanban_tips', True)}, new_show={show_kanban_tips}")
 
-        # Обновляем состояние в базе данных
-        user.show_kanban_tips = show_kanban_tips
-        db.session.commit()
+        # Обновляем состояние в базе данных (SQLite может отдавать 'database is locked' при нескольких воркерах)
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                user.show_kanban_tips = show_kanban_tips
+                db.session.commit()
+                break
+            except OperationalError as oe:
+                db.session.rollback()
+                msg = str(oe).lower()
+                if 'database is locked' in msg and attempt < max_attempts:
+                    logger.warning(f"SQLite database is locked while updating kanban tips (attempt {attempt}/{max_attempts})")
+                    time.sleep(0.2 * attempt)
+                    continue
+                raise
 
         # Обновляем current_user для совместимости
         if hasattr(current_user, 'show_kanban_tips'):
@@ -1209,8 +1265,25 @@ def update_kanban_tips_preference():
 
     except Exception as e:
         db.session.rollback()
-        logger.error(f"Error updating Kanban tips preference: {str(e)}")
-        return jsonify({'success': False, 'error': 'Database error'}), 500
+        # Логируем в два места: локальный logger и current_app.logger (gunicorn errorlog)
+        logger.exception("Error updating Kanban tips preference")
+        try:
+            current_app.logger.exception(
+                "Error updating Kanban tips preference (user=%s, payload=%s)",
+                getattr(current_user, 'username', None),
+                request.get_json(silent=True),
+            )
+        except Exception:
+            pass
+
+        # Принудительно пишем traceback в stderr для gunicorn
+        print(f"\n=== ERROR in /api/user/kanban-tips-preference ===", flush=True)
+        print(f"User: {getattr(current_user, 'username', None)}", flush=True)
+        print(f"Error: {e}", flush=True)
+        traceback.print_exc()
+        print("=== END ERROR ===", flush=True)
+
+        return jsonify({'success': False, 'error': 'Database error', 'detail': str(e)}), 500
 
 
 @users.route("/api/notifications/status", methods=["GET"])

@@ -1,7 +1,7 @@
 // Скрипт для обработки кнопки "Выслать пароль"
 
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener("DOMContentLoaded", function () {
 
 
     // Находим кнопку по ID
@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
 
         // Добавляем обработчик события
-        sendPasswordButton.addEventListener("click", function() {
+        sendPasswordButton.addEventListener("click", function () {
 
 
             // Получаем имя пользователя из data-атрибута
@@ -43,52 +43,55 @@ document.addEventListener("DOMContentLoaded", function() {
             formData.append('csrf_token', csrfToken || '');
 
             // Отправляем запрос на сервер
+            console.log('[send_password] Отправка запроса для пользователя:', username);
             fetch('/send_password', {
                 method: 'POST',
                 body: formData
             })
-            .then(response => {
+                .then(response => {
+                    console.log('[send_password] Получен ответ:', response.status, response.statusText);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('[send_password] Данные ответа:', data);
+                    // Восстанавливаем кнопку
+                    sendPasswordButton.disabled = false;
+                    sendPasswordButton.classList.remove("loading");
+                    sendPasswordButton.innerHTML = originalContent;
 
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Восстанавливаем кнопку
-                sendPasswordButton.disabled = false;
-                sendPasswordButton.classList.remove("loading");
-                sendPasswordButton.innerHTML = originalContent;
+
+                    // Показываем результат
+                    if (data.message) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Успешно!',
+                            text: data.message,
+                            timer: 3000,
+                            showConfirmButton: false
+                        });
+                    } else {
+                        throw new Error('Пустой ответ от сервера');
+                    }
+                })
+                .catch(error => {
+                    console.error('[send_password] Ошибка:', error);
+                    // Восстанавливаем кнопку
+                    sendPasswordButton.disabled = false;
+                    sendPasswordButton.classList.remove("loading");
+                    sendPasswordButton.innerHTML = originalContent;
 
 
-                // Показываем результат
-                if (data.message) {
+
+                    // Показываем ошибку
                     Swal.fire({
-                        icon: 'success',
-                        title: 'Успешно!',
-                        text: data.message,
-                        timer: 3000,
-                        showConfirmButton: false
+                        icon: 'error',
+                        title: 'Ошибка!',
+                        text: 'Не удалось отправить пароль. Пожалуйста, попробуйте позже.'
                     });
-                } else {
-                    throw new Error('Пустой ответ от сервера');
-                }
-            })
-            .catch(error => {
-                // Восстанавливаем кнопку
-                sendPasswordButton.disabled = false;
-                sendPasswordButton.classList.remove("loading");
-                sendPasswordButton.innerHTML = originalContent;
-
-
-
-                // Показываем ошибку
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Ошибка!',
-                    text: 'Не удалось отправить пароль. Пожалуйста, попробуйте позже.'
                 });
-            });
         });
     } else {
 

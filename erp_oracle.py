@@ -43,16 +43,22 @@ def connect_oracle(
     oracle_host, oracle_port, oracle_service_name, oracle_user_name, oracle_password
 ):
     try:
+        # Добавляем таймаут подключения (по умолчанию 3 секунды)
+        tcp_timeout = int(os.getenv("ORACLE_TCP_TIMEOUT", "3"))
         oracle_connection = oracledb.connect(
             user=oracle_user_name,
             password=oracle_password,
             host=oracle_host,
             port=oracle_port,
-            service_name=oracle_service_name
+            service_name=oracle_service_name,
+            tcp_connect_timeout=tcp_timeout  # Таймаут TCP подключения в секундах
         )
         return oracle_connection
     except oracledb.DatabaseError as e:
         logging.error("Ошибка выполнения открытия соединения: %s", str(e))
+        return None
+    except Exception as e:
+        logging.error("Неожиданная ошибка при подключении к Oracle: %s", str(e))
         return None
 
 

@@ -52,26 +52,38 @@ class RegistrationForm(FlaskForm):
             )
 
     def validate_password(self, password):
-        conn_oracle = connect_oracle(
-            db_host, db_port, db_service_name, db_user_name, db_password
-        )
-        if not conn_oracle:
-            flash(
-                "Не удалось проверить ваш аккаунт TEZ ERP, возможно нет соединения VPN.",
-                "danger",
+        try:
+            conn_oracle = connect_oracle(
+                db_host, db_port, db_service_name, db_user_name, db_password
             )
-            raise ValidationError(
-                "Your TEZ ERP account could not be verified, there may be no TEZ TOUR VPN connection"
-            )
+            if not conn_oracle:
+                flash(
+                    "Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.",
+                    "danger",
+                )
+                raise ValidationError(
+                    "Registration service temporarily unavailable"
+                )
 
-        check_user_erp = verify_credentials(conn_oracle, login_erp, password.data)
-        if not check_user_erp:
+            check_user_erp = verify_credentials(conn_oracle, login_erp, password.data)
+            conn_oracle.close()
+            if not check_user_erp:
+                flash(
+                    "Не удалось завершить регистрацию. Ваши данные не соответствуют аккаунту в TEZ ERP.",
+                    "danger",
+                )
+                raise ValidationError(
+                    "Registration could not be completed. Your data does not match your TEZ ERP account"
+                )
+        except ValidationError:
+            raise
+        except Exception as e:
             flash(
-                "Не удалось завершить регистрацию. Ваши данные не соответствуют аккаунту в TEZ ERP.",
+                "Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.",
                 "danger",
             )
             raise ValidationError(
-                "Registration could not be completed. Your data does not match your TEZ ERP account"
+                "Registration service temporarily unavailable"
             )
 
 

@@ -35,7 +35,6 @@ from flask import (
 import requests
 from lxml import etree  # type: ignore
 from blog.models import AgencyPhone, CallInfo
-
 from flask_cors import CORS
 import pymysql
 from pymysql.cursors import DictCursor
@@ -49,7 +48,7 @@ from blog.migrations import (
     engine_oracle_crm,
     engine_sales_schema,
 )  # Использовать готовые движки
-
+from logging.handlers import RotatingFileHandler
 
 # Константы для работы с XML API
 XML_AUTH_URL = "http://xml.teztour.com/xmlgate/auth_data.jsp?j_login_request=1&j_login=cmcrm&j_passwd=eGUEbmsQA"
@@ -58,18 +57,26 @@ XML_AUTH_URL = "http://xml.teztour.com/xmlgate/auth_data.jsp?j_login_request=1&j
 active_sessions = {}
 
 # Глобальные переменные для путей логов
-stat_log_path = os.path.join(os.getcwd(), "stat.log")
-error_log_path = os.path.join(os.getcwd(), "app_err.log")
+log_dir = os.path.join(os.getcwd(), "logs")
+os.makedirs(log_dir, exist_ok=True)
+stat_log_path = os.path.join(log_dir, "stat.log")
+error_log_path = os.path.join(log_dir, "app_err.log")
 
-# Настройка логирования ошибок
-logging.basicConfig(
-    filename=error_log_path,
-    level=logging.DEBUG,  # <<< Меняем уровень на DEBUG
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    encoding='utf-8',
-    force=True,  # Добавляем force=True для перенастройки, если basicConfig уже был вызван где-то еще
-)
 logger = logging.getLogger(__name__)
+if not logger.handlers:
+    _log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
+    _log_level = getattr(logging, _log_level_str, logging.INFO)
+    logger.setLevel(_log_level)
+    _stat_handler = RotatingFileHandler(
+        stat_log_path,
+        maxBytes=int(os.getenv('STAT_LOG_MAX_BYTES', str(5 * 1024 * 1024))),
+        backupCount=int(os.getenv('STAT_LOG_BACKUP_COUNT', '3')),
+        encoding='utf-8'
+    )
+    _stat_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
+    logger.addHandler(_stat_handler)
+    logger.propagate = True
+
 # Импортируем декораторы для защиты отладочных эндпоинтов
 from blog.utils.decorators import debug_only, development_only, admin_required_in_production
 
@@ -114,20 +121,17 @@ try:
 except Exception as e:
     call_info_table = None  # Оставляем None в случае ошибки определения
     detailed_error = traceback.format_exc()
-    logging.error(
+    logger.error(
         "Ошибка при ручном определении таблицы T_CALL_INFO. "
         "Продолжаем запуск приложения. Ошибка: %s\nTraceback:\n%s",
         e,
         detailed_error,
     )
-# Настройка логгера
-logging.basicConfig(level=logging.INFO)
-# logger = logging.getLogger(__name__)
 # URL с параметрами запроса
 # url_with_params = "http://xml.teztour.com/xmlgate/auth_data.jsp?j_login_request=1&j_login=cmcrm&j_passwd=eGUEbmsQA"
 
-# Определяем путь к файлу лога относительно текущей директории
-log_file_path = os.path.join(os.getcwd(), "stat.log")
+# Определяем путь к файлу лога
+log_file_path = stat_log_path
 
 # Настройки подключения к базе данных tez_tour_cc
 MYSQL_CONFIG = {
@@ -169,10 +173,9 @@ def write_log(message):
         ct = datetime.datetime.now()
         curt = ct.strftime("%Y-%m-%d %H:%M:%S")
         mess_log = f"{curt} tel: '{message}'\n"
-        with open(stat_log_path, "a", encoding="utf-8") as f:
-            f.write(mess_log)
+        logger.info(mess_log.rstrip("\n"))
     except IOError as e:
-        logger.error("Не удалось записать в файл лога stat.log: %s", {str(e)})
+        logger.error("Не удалось записать в файл лога stat.log: %s", str(e))
 
 
 def get_agency_id_by_ani(ani) -> Union[Any, Literal["0"]]:
@@ -929,6 +932,13 @@ def write_agency_manager(call_id, manager_name, engine):
 @calls.route("/get_latest_calls")
 def get_latest_calls():
     try:
+        # Проверяем, доступна ли Oracle Sales Schema
+        # Если используется фиктивный SQLite, возвращаем пустой результат
+        from blog.migrations import oracle_sales_uri
+        if not oracle_sales_uri or 'sqlite' in str(engine_sales_schema.url):
+            logger.warning("Oracle Sales Schema недоступна, возвращаем пустой список звонков")
+            return jsonify({"calls": [], "warning": "Oracle Sales Schema temporarily unavailable"})
+
         # Используем безопасную версию получения истории звонков
         calls_data = []
 
@@ -2304,6 +2314,12 @@ def contact_center_vilnius_tel():
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
     try:
+        # Проверяем доступность Oracle CRM
+        from blog.migrations import oracle_crm_uri
+        if not oracle_crm_uri or 'sqlite' in str(engine_oracle_crm.url):
+            logger.warning("Oracle CRM недоступна, невозможно найти агентство по телефону")
+            return render_template("agency_not_found.html", ani=ani)
+
         # Получаем данные агентства
         with SessionOracleCRM() as session_crm:
             # Поиск агентства по телефону с улучшенным поиском

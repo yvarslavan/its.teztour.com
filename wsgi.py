@@ -7,28 +7,36 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import logging
+from logging.handlers import RotatingFileHandler
 
+log_dir = 'logs'
+os.makedirs(log_dir, exist_ok=True)
 
+_log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
+_log_level = getattr(logging, _log_level_str, logging.INFO)
 
-logging.basicConfig(
-    filename='logs/flask_debug.log',
-    level=logging.INFO,
-    format='%(asctime)s %(levelname)s %(name)s %(message)s'
+file_handler = RotatingFileHandler(
+    os.path.join(log_dir, 'flask_debug.log'),
+    maxBytes=int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024))),
+    backupCount=int(os.getenv('LOG_BACKUP_COUNT', '5')),
+    encoding='utf-8'
 )
+file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
 
 # Настройка логгера Flask
 flask_logger = logging.getLogger('werkzeug')
-flask_logger.setLevel(logging.INFO)
-for handler in flask_logger.handlers:
+flask_logger.setLevel(_log_level)
+for handler in flask_logger.handlers[:]:
     flask_logger.removeHandler(handler)
-file_handler = logging.FileHandler('logs/flask_debug.log')
-file_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
 flask_logger.addHandler(file_handler)
 
-# Настройка логгера приложения (current_app.logger)
+# Настройка корневого логгера (current_app.logger использует его хендлеры)
 app_logger = logging.getLogger()
-app_logger.setLevel(logging.INFO)
+app_logger.setLevel(_log_level)
+for handler in app_logger.handlers[:]:
+    app_logger.removeHandler(handler)
 app_logger.addHandler(file_handler)
+
 def setup_production_environment():
     """Настройка переменных окружения для продакшена"""
     BASE_DIR = Path(__file__).resolve().parent
@@ -39,11 +47,11 @@ def setup_production_environment():
 
     # Загружаем основной .env файл
     env_file = BASE_DIR / '.env'
-    
+
     if env_file.exists():
         load_dotenv(env_file)
         print(f"📦 Загружены настройки из {env_file}")
-        
+
         # Переопределяем настройки для production
         if env == 'production':
             os.environ['FLASK_ENV'] = 'production'
