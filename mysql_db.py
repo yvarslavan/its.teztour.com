@@ -134,10 +134,10 @@ def get_database_config():
             missing.append(f'MYSQL_QUALITY_{key.upper()}')
 
     if missing:
-        print(f"⚠️ Отсутствуют переменные окружения: {', '.join(missing)}")
-        raise ValueError("Неполная конфигурация")
+        print(f"[WARNING] Missing environment variables: {', '.join(missing)}")
+        raise ValueError("Incomplete configuration")
 
-    print("✅ Используется конфигурация из переменных окружения")
+    print("[OK] Using configuration from environment variables")
 
     return {
         'mysql': mysql_config,
@@ -147,7 +147,7 @@ def get_database_config():
 def setup_quality_engine():
     config = db_config['mysql_quality']
     return create_engine(
-        "mysql+mysqlconnector://{user}:{password}@{host}:{port}/{database}".format(
+        "mysql+pymysql://{user}:{password}@{host}:{port}/{database}".format(
             user=config['user'],
             password=config['password'],
             host=config['host'],
@@ -169,7 +169,7 @@ db_config = get_database_config()
 
 # ИСПРАВЛЕНИЕ: Формируем URL соединения из конфигурации
 DATABASE_URL = (
-    f"mysql+mysqlconnector://{db_config['mysql']['user']}:"
+    f"mysql+pymysql://{db_config['mysql']['user']}:"
     f"{db_config['mysql']['password']}@{db_config['mysql']['host']}:"
     f"{db_config['mysql']['port']}/{db_config['mysql']['database']}"
 )

@@ -32,16 +32,16 @@ jobs:
 
       - name: Test dependency resolution
         run: |
-          echo "🔍 Testing dependency resolution..."
+          echo "Testing dependency resolution..."
           python -m pip install --dry-run -r requirements.txt 2>&1 | head -50
-          echo "✅ Dependency resolution check complete"
+          echo "OK: Dependency resolution check complete"
         continue-on-error: true
 
       - name: Install Python dependencies
         run: |
-          echo "📦 Installing Python dependencies..."
+          echo "Installing Python dependencies..."
           pip install -r requirements.txt
-          echo "✅ Python dependencies installed"
+          echo "OK: Python dependencies installed"
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -51,15 +51,15 @@ jobs:
 
       - name: Install Node dependencies
         run: |
-          echo "📦 Installing Node dependencies..."
+          echo "Installing Node dependencies..."
           npm ci
-          echo "✅ Node dependencies installed"
+          echo "OK: Node dependencies installed"
         continue-on-error: true
 
       - name: Lint Python code (non-blocking)
         run: |
-          echo "🔍 Linting Python code..."
-          flake8 blog/ --count --select=E9,F63,F7,F82 --show-source --statistics 2>/dev/null || echo "⚠️ Linting skipped"
+          echo "Linting Python code..."
+          flake8 blog/ --count --select=E9,F63,F7,F82 --show-source --statistics 2>/dev/null || echo "[WARNING] Linting skipped"
         continue-on-error: true
 
       - name: Create test .env file
@@ -73,16 +73,21 @@ jobs:
           MYSQL_DATABASE=redmine
           MYSQL_USER=easyredmine
           MYSQL_PASSWORD=testpass
+          MYSQL_QUALITY_HOST=127.0.0.1
+          MYSQL_QUALITY_PORT=3306
+          MYSQL_QUALITY_DATABASE=redmine
+          MYSQL_QUALITY_USER=easyredmine
+          MYSQL_QUALITY_PASSWORD=testpass
           REDMINE_URL=https://helpdesk.teztour.com
           REDMINE_API_KEY=test_key_ci
           REDMINE_LOGIN_ADMIN=admin
           REDMINE_PASSWORD_ADMIN=admin
           EOF
-          echo "✅ Test .env created"
+          echo "OK: Test .env created"
 
       - name: Test Flask application import
         run: |
-          echo "🧪 Testing Flask application..."
+          echo "Testing Flask application..."
           python << 'PYTEST'
           import sys
           import os
@@ -92,24 +97,24 @@ jobs:
           os.environ['SECRET_KEY'] = 'test-key-ci-2024'
           
           try:
-              print("📦 Importing Flask...")
+              print("[*] Importing Flask...")
               import flask
-              print(f"   ✅ Flask {flask.__version__}")
+              print(f"    [OK] Flask imported")
               
-              print("📦 Importing blog package...")
+              print("[*] Importing blog package...")
               from blog import create_app
-              print("   ✅ blog package imported")
+              print("    [OK] blog package imported")
               
-              print("🔧 Creating Flask app...")
+              print("[*] Creating Flask app...")
               app = create_app()
-              print("   ✅ Flask app created")
+              print("    [OK] Flask app created")
               
-              print("✅ All imports successful!")
+              print("\n[SUCCESS] All imports successful!")
           except ImportError as e:
-              print(f"❌ Import Error: {e}")
+              print(f"[ERROR] Import Error: {e}")
               sys.exit(1)
           except Exception as e:
-              print(f"❌ Error: {e}")
+              print(f"[ERROR] Error: {e}")
               import traceback
               traceback.print_exc()
               sys.exit(1)
@@ -117,20 +122,20 @@ jobs:
 
       - name: Run Python unit tests
         run: |
-          echo "🧪 Running Python unit tests..."
-          pytest tests/ -v --tb=short 2>/dev/null || echo "⚠️ No tests found - skipping"
+          echo "Running Python unit tests..."
+          pytest tests/ -v --tb=short 2>/dev/null || echo "[WARNING] No tests found - skipping"
         continue-on-error: true
 
       - name: Install Playwright browsers
         run: |
-          echo "📦 Installing Playwright browsers..."
-          npx playwright install chromium 2>/dev/null || echo "⚠️ Playwright installation skipped"
+          echo "Installing Playwright browsers..."
+          npx playwright install chromium 2>/dev/null || echo "[WARNING] Playwright installation skipped"
         continue-on-error: true
 
       - name: Run E2E Playwright tests
         run: |
-          echo "🧪 Running E2E tests..."
-          npm test 2>/dev/null || echo "⚠️ E2E tests skipped"
+          echo "Running E2E tests..."
+          npm test 2>/dev/null || echo "[WARNING] E2E tests skipped"
         continue-on-error: true
 
       - name: Upload Playwright report
