@@ -105,24 +105,38 @@ jobs:
           REDMINE_LOGIN_ADMIN=admin
           REDMINE_PASSWORD_ADMIN=admin
           EOF
-          echo "✅ Test .env created"
+          # Also copy to .env for app loading
+          cp .env.test .env
+          echo "✅ Test .env created and copied"
 
       - name: Test Flask import
+        env:
+          FLASK_ENV: testing
+          SECRET_KEY: test-key-ci-2024
         run: |
           echo "🧪 Testing Flask application import..."
           python -c "
           import sys
-          import flask
-          import werkzeug
+          import os
+          # Load test environment
+          os.environ.setdefault('FLASK_ENV', 'testing')
+          os.environ.setdefault('SECRET_KEY', 'test-key-ci-2024')
+          
           try:
+              import flask
+              import werkzeug
               from blog import create_app
+              
               print(f'✅ Flask version: {flask.__version__}')
               print(f'✅ Werkzeug version: {werkzeug.__version__}')
+              
               app = create_app()
               print('✅ Flask app created successfully')
               print('✅ All imports working')
           except Exception as e:
               print(f'❌ Import error: {e}')
+              import traceback
+              traceback.print_exc()
               sys.exit(1)
           "
 
