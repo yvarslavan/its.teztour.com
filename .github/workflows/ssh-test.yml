@@ -1,103 +1,26 @@
 name: SSH Connection Test
 
 on:
-  workflow_dispatch:  # Ручной запуск
-    inputs:
-      test_all_ports:
-        description: 'Test all common SSH ports'
-        required: false
-        default: false
-        type: boolean
+  workflow_dispatch:  # Manual trigger only
 
 jobs:
-  ssh-diagnosis:
+  ssh-test:
     runs-on: ubuntu-latest
-    name: Diagnose SSH Connection Issues
-
     steps:
-    - name: Comprehensive SSH Connectivity Test
-      run: |
-        echo "🔍 Starting comprehensive SSH diagnosis..."
-        echo "=================================================="
-        echo "Target Host: ${{ secrets.SSH_HOST }}"
-        echo "Expected SSH Port: ${{ secrets.SSH_PORT || '22' }}"
-        echo "=================================================="
-        echo ""
-
-        # Basic network tests
-        echo "1️⃣ NETWORK CONNECTIVITY TESTS"
-        echo "----------------------------------------"
-
-        # DNS Resolution
-        echo "🔍 DNS Resolution:"
-        if nslookup ${{ secrets.SSH_HOST }}; then
-          echo "✅ DNS resolution successful"
-
-          # Get IP address
-          SERVER_IP=$(nslookup ${{ secrets.SSH_HOST }} | grep -A 1 "Name:" | grep "Address:" | cut -d' ' -f2)
-          echo "📍 Resolved IP: $SERVER_IP"
-        else
-          echo "❌ DNS resolution failed"
-          exit 1
-        fi
-        echo ""
-
-        # Ping test
-        echo "🔍 Ping Test:"
-        if ping -c 3 -W 3 ${{ secrets.SSH_HOST }}; then
-          echo "✅ Server responds to ping"
-        else
-          echo "⚠️ Server doesn't respond to ping (это может быть нормально)"
-        fi
-        echo ""
-
-        # Port scanning
-        echo "2️⃣ PORT CONNECTIVITY TESTS"
-        echo "----------------------------------------"
-
-        SSH_PORT=${{ secrets.SSH_PORT || '22' }}
-        echo "🔍 Testing configured SSH port: $SSH_PORT"
-
-        if timeout 10 bash -c "echo >/dev/tcp/${{ secrets.SSH_HOST }}/$SSH_PORT" 2>/dev/null; then
-          echo "✅ Port $SSH_PORT is accessible"
-        else
-          echo "❌ Port $SSH_PORT is not accessible"
-        fi
-        echo ""
-
-        # Test common SSH ports if requested
-        if [ "${{ inputs.test_all_ports }}" = "true" ]; then
-          echo "🔍 Testing common SSH ports:"
-          COMMON_PORTS=(22 2222 2022 22022 22222 2020 2021 2023 10022)
-
-          for port in "${COMMON_PORTS[@]}"; do
-            echo -n "   Port $port: "
-            if timeout 5 bash -c "echo >/dev/tcp/${{ secrets.SSH_HOST }}/$port" 2>/dev/null; then
-              echo "✅ OPEN"
-              if [ "$port" != "$SSH_PORT" ]; then
-                echo "      💡 Consider updating SSH_PORT secret to $port"
-              fi
-            else
-              echo "❌ Closed/Filtered"
-            fi
-          done
-        fi
-        echo ""
-
-        # Traceroute (optional, may be limited)
-        echo "3️⃣ NETWORK PATH ANALYSIS"
-        echo "----------------------------------------"
-        echo "🔍 Network path to server:"
-        if command -v traceroute >/dev/null 2>&1; then
-          traceroute -m 10 ${{ secrets.SSH_HOST }} || echo "Traceroute limited or blocked"
-        else
-          echo "Traceroute not available"
-        fi
-        echo ""
-
-        # SSH banner grab attempt
-        echo "4️⃣ SSH SERVICE ANALYSIS"
-        echo "----------------------------------------"
+      - name: Test SSH connection
+        env:
+          DEPLOY_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          DEPLOY_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_USER: ${{ secrets.SSH_USER }}
+          DEPLOY_PORT: ${{ secrets.SSH_PORT || 22 }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$DEPLOY_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p $DEPLOY_PORT -H $DEPLOY_HOST >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+          echo "🔍 Testing SSH connection..."
+          ssh -i ~/.ssh/deploy_key -p $DEPLOY_PORT $DEPLOY_USER@$DEPLOY_HOST "echo '✅ SSH connection successful!'; whoami; pwd"
         echo "🔍 Attempting to grab SSH banner:"
 
         timeout 10 bash -c "

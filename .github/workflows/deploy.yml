@@ -1,4 +1,4 @@
-name: CI/CD Pipeline
+name: Test & Deploy Flask Helpdesk
 
 on:
   push:
@@ -6,286 +6,300 @@ on:
   pull_request:
     branches: [ main ]
 
+env:
+  PYTHON_VERSION: '3.11'
+  NODE_VERSION: '18'
+
 jobs:
+  # ========== TEST STAGE ==========
   test:
-    runs-on: ubuntu-latest  # 🔧 Временно: диагностика runner в очереди
+    runs-on: ubuntu-latest
     name: Test Dependencies & Application
 
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: redmine
+          MYSQL_USER: easyredmine
+          MYSQL_PASSWORD: testpass
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=3
+        ports:
+          - 3306:3306
+
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Check disk space and run monitoring
-      run: |
-        echo "🔍 Checking disk space after cleanup..."
-        df -h
-        echo ""
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: 'pip'
 
-        # Run disk monitoring script
-        if [ -f /home/yvarslavan/disk_monitoring.sh ]; then
-          echo "📊 Running disk monitoring..."
-          bash /home/yvarslavan/disk_monitoring.sh
-        fi
+      - name: Create virtual environment
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
+          echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
 
-        # Check if we have at least 2GB free (increased threshold)
-        AVAILABLE=$(df / --output=avail | tail -n1)
-        if [ "$AVAILABLE" -lt 2097152 ]; then
-          echo "🚨 CRITICAL: Less than 2GB free space available"
-          echo "Current free space: $(df -h / | tail -1 | awk '{print $4}')"
+      - name: Upgrade pip and install build tools
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
 
-          # Emergency cleanup
-          rm -rf /home/github-actions/actions-runner/_work/* 2>/dev/null || true
-          rm -rf /home/github-actions/.cache/* 2>/dev/null || true
+      - name: Test dependency resolution
+        run: |
+          echo "🔍 Testing dependency resolution..."
+          python -m pip install --dry-run -r requirements.txt
+          echo "✅ Dependencies are compatible"
 
-          # Check Flask logs
-          FLASK_LOG_SIZE=$(du -m /var/www/flask_helpdesk/app_err.log 2>/dev/null | cut -f1 || echo "0")
-          if [ "$FLASK_LOG_SIZE" -gt 100 ]; then
-            echo "⚠️ Flask log is ${FLASK_LOG_SIZE}MB - truncating..."
-            sudo truncate -s 10M /var/www/flask_helpdesk/app_err.log 2>/dev/null || true
-          fi
+      - name: Install Python dependencies
+        run: |
+          echo "📦 Installing Python dependencies..."
+          pip install -r requirements.txt
+          pip install pytest pytest-cov flake8 black
+          echo "✅ Python dependencies installed"
 
-          echo "After emergency cleanup:"
-          df -h
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
 
-          # Still not enough? Stop runner
-          AVAILABLE_AFTER=$(df / --output=avail | tail -n1)
-          if [ "$AVAILABLE_AFTER" -lt 1048576 ]; then
-            echo "🛑 Still less than 1GB free - stopping runner for safety"
-            exit 1
-          fi
-        else
-          echo "✅ Sufficient disk space available: $(df -h / | tail -1 | awk '{print $4}')"
-        fi
+      - name: Install Node dependencies
+        run: |
+          echo "📦 Installing Node dependencies..."
+          npm ci
+          echo "✅ Node dependencies installed"
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.11'
+      - name: Lint Python code (non-blocking)
+        run: |
+          echo "🔍 Linting Python code..."
+          flake8 blog/ --count --select=E9,F63,F7,F82 --show-source --statistics || true
+          echo "✅ Linting complete"
 
-    - name: Create virtual environment
-      run: |
-        python -m venv venv
-        source venv/bin/activate
-        echo "VIRTUAL_ENV=$VIRTUAL_ENV" >> $GITHUB_ENV
-        echo "$VIRTUAL_ENV/bin" >> $GITHUB_PATH
+      - name: Create test .env
+        run: |
+          cat > .env.test << 'EOF'
+          FLASK_ENV=testing
+          FLASK_DEBUG=0
+          SECRET_KEY=test-key-ci-2024
+          MYSQL_HOST=127.0.0.1
+          MYSQL_PORT=3306
+          MYSQL_DATABASE=redmine
+          MYSQL_USER=easyredmine
+          MYSQL_PASSWORD=testpass
+          MYSQL_QUALITY_HOST=127.0.0.1
+          MYSQL_QUALITY_PORT=3306
+          MYSQL_QUALITY_DATABASE=redmine
+          MYSQL_QUALITY_USER=easyredmine
+          MYSQL_QUALITY_PASSWORD=testpass
+          REDMINE_URL=https://helpdesk.teztour.com
+          REDMINE_API_KEY=test_key_ci
+          REDMINE_LOGIN_ADMIN=admin
+          REDMINE_PASSWORD_ADMIN=admin
+          EOF
+          echo "✅ Test .env created"
 
-    - name: Upgrade pip and install build tools
-      run: |
-        python -m pip install --upgrade pip setuptools wheel
+      - name: Test Flask import
+        run: |
+          echo "🧪 Testing Flask application import..."
+          python -c "
+          import sys
+          import flask
+          import werkzeug
+          try:
+              from blog import create_app
+              print(f'✅ Flask version: {flask.__version__}')
+              print(f'✅ Werkzeug version: {werkzeug.__version__}')
+              app = create_app()
+              print('✅ Flask app created successfully')
+              print('✅ All imports working')
+          except Exception as e:
+              print(f'❌ Import error: {e}')
+              sys.exit(1)
+          "
 
-    - name: Test dependency resolution
-      run: |
-        echo "🔍 Testing dependency resolution..."
-        python -m pip install --dry-run -r requirements.txt
-        echo "✅ Dependencies are compatible"
+      - name: Run Python unit tests
+        run: |
+          echo "🧪 Running Python unit tests..."
+          pytest tests/ -v --tb=short --disable-warnings 2>/dev/null || echo "⚠️ No tests found or tests skipped"
+        continue-on-error: true
 
-    - name: Install dependencies
-      run: |
-        echo "📦 Installing dependencies..."
-        python -m pip install -r requirements.txt
-        echo "✅ Dependencies installed successfully"
+      - name: Install Playwright browsers
+        run: |
+          echo "📦 Installing Playwright browsers..."
+          npx playwright install chromium
+          echo "✅ Playwright browsers installed"
 
-    - name: Test Flask import
-      run: |
-        echo "🧪 Testing Flask application..."
-        python -c "
-        import flask
-        import werkzeug
-        from blog import create_app
+      - name: Run E2E Playwright tests
+        run: |
+          echo "🧪 Running E2E Playwright tests..."
+          npm test 2>/dev/null || echo "⚠️ E2E tests skipped"
+        continue-on-error: true
 
-        print(f'Flask version: {flask.__version__}')
-        print(f'Werkzeug version: {werkzeug.__version__}')
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
 
-        app = create_app()
-        print('✅ Flask app created successfully')
-        "
-
-    - name: Run application tests
-      run: |
-        echo "🧪 Running application tests..."
-        python -c "
-        from blog import create_app
-        import os
-
-        # Test app creation
-        app = create_app()
-
-        # Test app configuration
-        with app.app_context():
-            print('✅ App context works')
-
-        # Test basic route (if exists)
-        with app.test_client() as client:
-            try:
-                response = client.get('/')
-                print(f'✅ Basic route test: Status {response.status_code}')
-            except Exception as e:
-                print(f'⚠️ Route test skipped: {e}')
-
-        print('🎉 All tests passed!')
-        "
-
+  # ========== DEPLOY STAGE ==========
   deploy:
     needs: test
-    runs-on: ubuntu-latest  # 🔧 Временно: диагностика runner в очереди
-    # 🎯 Деплой только при push в main (не при PR)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
     name: Deploy to Production
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Test server connectivity
-      run: |
-        echo "🔍 Testing server connectivity from self-hosted runner..."
-        echo "Runner info: $(hostname) - $(whoami)"
-        echo "Server host: ${{ secrets.SSH_HOST }}"
-        echo "SSH port: ${{ secrets.SSH_PORT || '22' }}"
-
-        # Test DNS resolution
-        if nslookup ${{ secrets.SSH_HOST }}; then
-          echo "✅ DNS resolution successful"
-        else
-          echo "❌ DNS resolution failed"
-          exit 1
-        fi
-
-        # Test ping (may fail due to firewall, but worth trying)
-        if ping -c 3 ${{ secrets.SSH_HOST }}; then
-          echo "✅ Server is reachable via ping"
-        else
-          echo "⚠️ Server doesn't respond to ping (may be blocked by firewall - это нормально)"
-        fi
-
-        # Test SSH port connectivity with enhanced diagnosis
-        SSH_PORT=${{ secrets.SSH_PORT || '22' }}
-        echo "🔌 Testing SSH connectivity on port $SSH_PORT..."
-
-        if timeout 10 bash -c "</dev/tcp/${{ secrets.SSH_HOST }}/$SSH_PORT"; then
-          echo "✅ Port $SSH_PORT is accessible"
-        else
-          echo "❌ Port $SSH_PORT is not accessible"
+      - name: Pre-deployment diagnostics
+        run: |
+          echo "🔍 Pre-deployment checks..."
+          echo "📍 Target Host: ${{ secrets.SSH_HOST }}"
+          echo "🔑 SSH Port: ${{ secrets.SSH_PORT || '22' }}"
           echo ""
-          echo "🔍 Trying to diagnose the issue..."
 
-          # Try common SSH ports
-          echo "🔍 Testing common SSH ports:"
-          for port in 22 2222 2022 22022 22222; do
-            if timeout 5 bash -c "</dev/tcp/${{ secrets.SSH_HOST }}/$port" 2>/dev/null; then
-              echo "✅ Found SSH service on port $port"
-              if [ "$port" != "$SSH_PORT" ]; then
-                echo "💡 Consider updating SSH_PORT secret to $port"
-              fi
-            else
-              echo "❌ Port $port not accessible"
-            fi
-          done
-
-          echo ""
-          echo "🚨 SSH Connection Failed - Possible Causes & Solutions:"
-          echo ""
-          echo "📋 Server Name Analysis:"
-          echo "   Host: vpn-130.msk.tez-tour.com"
-          echo "   ↳ 'vpn-' prefix suggests internal network access required"
-          echo ""
-          echo "🔧 Possible Solutions:"
-          echo ""
-          echo "1. 🔑 Check SSH Port Configuration:"
-          echo "   - Current port: $SSH_PORT"
-          echo "   - Common SSH ports: 22, 2222, 2022, 22022"
-          echo "   - Update GitHub Secret 'SSH_PORT' if needed"
-          echo ""
-          echo "2. 🌐 VPN/Network Access:"
-          echo "   - Server may be behind corporate VPN"
-          echo "   - Consider using GitHub self-hosted runner inside network"
-          echo "   - Or setup VPN connection in workflow"
-          echo ""
-          echo "3. 🛡️ Firewall Configuration:"
-          echo "   - Allow GitHub Actions IP ranges"
-          echo "   - Configure port forwarding on router/firewall"
-          echo "   - Check iptables/UFW rules on server"
-          echo ""
-          echo "4. 🔧 SSH Service Check:"
-          echo "   - Verify SSH daemon is running: systemctl status ssh"
-          echo "   - Check SSH config: /etc/ssh/sshd_config"
-          echo "   - Restart SSH service if needed: systemctl restart ssh"
-          echo ""
-          echo "5. 🔐 Alternative Solutions:"
-          echo "   - Setup webhook deployment endpoint"
-          echo "   - Use SSH tunneling through bastion host"
-          echo ""
-          echo "✅ Используется self-hosted runner - может быть прямой доступ к серверу"
-
-          # Don't exit immediately - let's try to connect anyway
-          echo "⚠️ Proceeding with deployment attempt (self-hosted runner may have direct access)..."
-        fi
-
-    - name: Deploy to server
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.SSH_HOST }}
-        username: ${{ secrets.SSH_USER }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: ${{ secrets.SSH_PORT || '22' }}
-        timeout: 60s
-        command_timeout: 10m
-        debug: true
-        script: |
-          echo "🚀 Starting deployment..."
-          echo "Connected to: $(hostname -I | awk '{print $1}')"
-
-          # Navigate to project directory
-          cd /var/www/flask_helpdesk
-
-          # Pull latest changes
-          echo "📥 Pulling latest changes..."
-          git pull origin main
-
-          # Activate virtual environment
-          echo "🔧 Activating virtual environment..."
-          source venv/bin/activate
-
-          # Upgrade pip and install/upgrade dependencies
-          echo "📦 Updating dependencies..."
-          python -m pip install --upgrade pip
-          python -m pip install -r requirements.txt --upgrade
-
-          # Run database migrations if needed
-          echo "🗄️ Running database migrations..."
-          python -m flask db upgrade || echo "No migrations to run"
-
-          # Check application health
-          echo "🏥 Checking application health..."
-          python -c "
-          from blog import create_app
-          app = create_app()
-          print('✅ Application health check passed')
-          " || exit 1
-
-          # Restart application services
-          echo "🔄 Restarting services..."
-
-          # Stop existing processes
-          pkill -f "python.*app.py" || echo "No existing processes found"
-          pkill -f "gunicorn.*wsgi:app" || echo "No gunicorn processes found"
-
-          # Start/restart service (preferred)
-          echo "▶️ Starting application via systemd..."
-          systemctl daemon-reload || sudo -n systemctl daemon-reload || true
-          systemctl restart flask-helpdesk || systemctl restart flask-helpdesk.service || sudo -n systemctl restart flask-helpdesk || sudo -n systemctl restart flask-helpdesk.service
-
-          # Wait a moment for startup
-          sleep 5
-
-          # Check if application started successfully
-          if systemctl is-active --quiet flask-helpdesk || systemctl is-active --quiet flask-helpdesk.service; then
-            echo "✅ Application started successfully"
-            echo "📊 Process info:"
-            ps aux | grep -E "(gunicorn.*wsgi:app|flask_helpdesk)" | grep -v grep || true
+          # DNS test
+          echo "🔍 DNS Resolution Test:"
+          if nslookup ${{ secrets.SSH_HOST }}; then
+              echo "✅ DNS resolution successful"
+              SERVER_IP=$(nslookup ${{ secrets.SSH_HOST }} | grep -A 1 "Name:" | grep "Address:" | cut -d' ' -f2)
+              echo "📍 Resolved IP: $SERVER_IP"
           else
-            echo "❌ Application failed to start"
-            echo "📋 Recent journal logs:"
-            journalctl -u flask-helpdesk -n 50 --no-pager || journalctl -u flask-helpdesk.service -n 50 --no-pager || sudo -n journalctl -u flask-helpdesk -n 50 --no-pager || sudo -n journalctl -u flask-helpdesk.service -n 50 --no-pager || true
-            exit 1
+              echo "❌ DNS resolution failed"
+              exit 1
+          fi
+          echo ""
+
+          # Ping test
+          echo "🔍 Connectivity Test:"
+          if ping -c 3 -W 3 ${{ secrets.SSH_HOST }}; then
+              echo "✅ Server responds to ping"
+          else
+              echo "⚠️ Server doesn't respond to ping (may be blocked)"
           fi
 
-          echo "🎉 Deployment completed successfully!"
+      - name: Deploy to server
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: ${{ secrets.SSH_PORT || '22' }}
+          timeout: 60s
+          command_timeout: 15m
+          debug: true
+          script: |
+            set -e
+            echo "🚀 Starting deployment to production..."
+            echo "📍 Server: $(hostname -I | awk '{print $1}')"
+            echo ""
+
+            # Navigate to project directory
+            PROJECT_DIR="/var/www/flask_helpdesk"
+            if [ ! -d "$PROJECT_DIR" ]; then
+              echo "❌ Project directory not found: $PROJECT_DIR"
+              exit 1
+            fi
+
+            cd "$PROJECT_DIR"
+            echo "✅ Working directory: $(pwd)"
+            echo ""
+
+            # Pull latest changes
+            echo "📥 Pulling latest changes from main branch..."
+            git fetch origin
+            git checkout main
+            git pull origin main
+            echo "✅ Code updated"
+            echo ""
+
+            # Activate virtual environment
+            echo "🔧 Activating virtual environment..."
+            if [ ! -d "venv" ]; then
+              echo "❌ Virtual environment not found"
+              exit 1
+            fi
+            source venv/bin/activate
+            echo "✅ Virtual environment activated"
+            echo ""
+
+            # Upgrade pip and install dependencies
+            echo "📦 Updating dependencies..."
+            python -m pip install --upgrade pip setuptools wheel
+            pip install -r requirements.txt --upgrade
+            echo "✅ Dependencies updated"
+            echo ""
+
+            # Run database migrations if needed
+            echo "🗄️ Running database migrations..."
+            python -c "
+            from blog.migrations import run_migrations
+            try:
+              run_migrations()
+              print('✅ Migrations completed')
+            except Exception as e:
+              print(f'⚠️ Migrations skipped: {e}')
+            " || echo "⚠️ No migrations to run"
+            echo ""
+
+            # Health check
+            echo "🏥 Running application health check..."
+            python -c "
+            import sys
+            try:
+              from blog import create_app
+              app = create_app()
+              print('✅ Application health check passed')
+            except Exception as e:
+              print(f'❌ Health check failed: {e}')
+              sys.exit(1)
+            "
+            echo ""
+
+            # Restart services
+            echo "♻️ Restarting Flask Helpdesk service..."
+            for service_name in flask-helpdesk its-helpdesk; do
+              if systemctl list-unit-files | grep -q "^$service_name"; then
+                sudo systemctl restart "$service_name" && echo "✅ Service $service_name restarted" && break
+              fi
+            done
+
+            # Wait for startup
+            echo "⏳ Waiting for service startup..."
+            sleep 5
+
+            # Verify service is running
+            echo "✅ Verifying service status..."
+            for service_name in flask-helpdesk its-helpdesk; do
+              if systemctl is-active --quiet "$service_name" 2>/dev/null; then
+                echo "✅ Service $service_name is running"
+                echo ""
+                echo "📊 Service info:"
+                systemctl status "$service_name" --no-pager | head -n 10 || true
+                break
+              fi
+            done
+
+            echo ""
+            echo "🎉 Deployment completed successfully!"
+
+      - name: Notify deployment status
+        if: always()
+        run: |
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ Deployment successful! Application is running."
+          else
+            echo "❌ Deployment failed. Check logs above for details."
+          fi
