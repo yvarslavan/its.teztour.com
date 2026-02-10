@@ -633,12 +633,11 @@ def account():
         }
         email_signature_html = generate_email_signature(user_details_for_signature)
 
+        valid_image_file = validate_user_image_path(user_obj)
         image_file = url_for(
-            "static",
-            filename="profile_pics/"
-            + current_user.username
-            + "/account_img/"
-            + current_user.image_file,
+            "users.user_avatar",
+            username=current_user.username,
+            image_file=valid_image_file,
         )
 
         # Получаем список пользователей через ту же сессию
@@ -925,10 +924,19 @@ def user_avatar(username, image_file):
     avatar_path = os.path.join(avatar_dir, image_file)
 
     if os.path.exists(avatar_path):
-        return send_from_directory(avatar_dir, image_file)
+        resp = send_from_directory(avatar_dir, image_file)
+        # Avoid stale avatar after re-upload.
+        resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+        resp.headers["Pragma"] = "no-cache"
+        resp.headers["Expires"] = "0"
+        return resp
 
     default_dir = os.path.join(current_app.root_path, "static", "profile_pics")
-    return send_from_directory(default_dir, "default.jpg")
+    resp = send_from_directory(default_dir, "default.jpg")
+    resp.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    resp.headers["Pragma"] = "no-cache"
+    resp.headers["Expires"] = "0"
+    return resp
 
 
 @users.route("/user_delete/<string:username>", methods=["GET", "POST"])

@@ -53,6 +53,7 @@
                   src="{{ image_file }}"
                   alt="Аватар {{ user.full_name }}"
                   class="profile-avatar"
+                  onerror="this.onerror=null;this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}';"
                 />
                 <div class="avatar-overlay">
                   <i class="fas fa-camera"></i>

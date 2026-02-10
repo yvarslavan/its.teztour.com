@@ -31,9 +31,18 @@ def random_avatar(user):
 
 
 def save_picture(form_picture):
-    random_hex = secrets.token_hex(10)
-    _, f_ext = os.path.splitext(form_picture.filename)
-    picture_fn = random_hex + f_ext
+    # Keep filename short enough for legacy DB schemas (User.image_file length can be 20).
+    # We normalize extension to .jpg/.png so final name reliably fits and keeps a valid MIME hint.
+    random_hex = secrets.token_hex(7)  # 14 chars
+    _, uploaded_ext = os.path.splitext(form_picture.filename or "")
+    uploaded_ext = uploaded_ext.lower()
+    if uploaded_ext in [".jpg", ".jpeg"]:
+        normalized_ext = ".jpg"
+    elif uploaded_ext == ".png":
+        normalized_ext = ".png"
+    else:
+        normalized_ext = ".jpg"
+    picture_fn = random_hex + normalized_ext
     full_path = os.path.join(current_app.root_path, 'static', 'profile_pics/', current_user.username, 'account_img')
 
     # Создаем директорию с правильными правами
@@ -70,12 +79,11 @@ def save_picture(form_picture):
         # Изменяем размер
         i.thumbnail(output_size, Image.Resampling.LANCZOS)
 
-        # Определяем формат для сохранения
-        _, file_ext = os.path.splitext(form_picture.filename)
-        if file_ext.lower() in ['.jpg', '.jpeg']:
+        # Определяем формат для сохранения по нормализованному расширению
+        if normalized_ext == '.jpg':
             # Сохраняем как JPEG
             i.save(picture_path, 'JPEG', quality=85, optimize=True)
-        elif file_ext.lower() in ['.png']:
+        elif normalized_ext == '.png':
             # Сохраняем как PNG
             i.save(picture_path, 'PNG', optimize=True)
         else:

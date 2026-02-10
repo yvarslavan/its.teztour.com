@@ -508,12 +508,14 @@
 
                         <!-- User Profile Dropdown -->
                         <li class="nav-item dropdown user-dropdown">
+                            {% set menu_avatar_url = url_for('users.user_avatar', username=current_user.username, image_file=(current_user.image_file or 'default.jpg')) %}
                             <a class="nav-link dropdown-toggle user-link" href="#" id="userDropdown" role="button"
                                 data-bs-toggle="dropdown">
                                 <div class="user-profile">
                                     <div class="user-avatar">
-                                        <img src="{{ url_for('static', filename='profile_pics/' + current_user.username + '/account_img/' + current_user.image_file) }}"
-                                            alt="user_avatar" class="avatar-img">
+                                        <img src="{{ menu_avatar_url }}"
+                                            alt="user_avatar" class="avatar-img"
+                                            onerror="this.onerror=null;this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}';">
                                         <div class="online-indicator"></div>
                                     </div>
                                     <div class="user-info">
@@ -531,8 +533,9 @@
                             <ul class="dropdown-menu modern-dropdown user-dropdown-menu" aria-labelledby="userDropdown">
                                 <li class="dropdown-header user-header">
                                     <div class="user-avatar-large">
-                                        <img src="{{ url_for('static', filename='profile_pics/' + current_user.username + '/account_img/' + current_user.image_file) }}"
-                                            alt="user_avatar">
+                                        <img src="{{ menu_avatar_url }}"
+                                            alt="user_avatar"
+                                            onerror="this.onerror=null;this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}';">
                                     </div>
                                     <div class="user-details">
                                         <span class="user-full-name">{{ current_user.full_name or current_user.username
