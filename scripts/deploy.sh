@@ -21,7 +21,7 @@ VENV_DIR="${PROJECT_DIR}/venv"
 BACKUP_TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
 # Сервис
-SERVICE_NAME="its-teztour.service"
+SERVICE_NAME="its-teztour"
 SERVICE_USER="www-data"
 SERVICE_GROUP="www-data"
 
@@ -173,49 +173,8 @@ success "Проверка git завершена"
 # ЭТАП 2: СОЗДАНИЕ БЭКАПОВ
 # ============================================================================
 
-if [[ "$SKIP_BACKUP" == false ]]; then
-    section "ЭТАП 2: СОЗДАНИЕ БЭКАПОВ"
-
-    # Бэкап SQLite БД
-    log "Создание бэкапа SQLite БД..."
-    if [[ -f "${PROJECT_DIR}/blog/db/blog.db" ]]; then
-        if [[ "$DRY_RUN" == true ]]; then
-            log "[DRY-RUN] cp ${PROJECT_DIR}/blog/db/blog.db ${BACKUP_DIR}/blog.db.${BACKUP_TIMESTAMP}.backup"
-        else
-            cp "${PROJECT_DIR}/blog/db/blog.db" "${BACKUP_DIR}/blog.db.${BACKUP_TIMESTAMP}.backup"
-            success "SQLite БД скопирована: blog.db.${BACKUP_TIMESTAMP}.backup"
-        fi
-    else
-        warning "SQLite БД не найдена: ${PROJECT_DIR}/blog/db/blog.db"
-    fi
-
-    # Бэкап всего проекта
-    log "Создание полного бэкапа проекта..."
-    if [[ "$DRY_RUN" == true ]]; then
-        log "[DRY-RUN] tar czf ${BACKUP_DIR}/project-${BACKUP_TIMESTAMP}.tar.gz ${PROJECT_DIR}/"
-    else
-        tar czf "${BACKUP_DIR}/project-${BACKUP_TIMESTAMP}.tar.gz" \
-            --exclude='.git' \
-            --exclude='venv' \
-            --exclude='__pycache__' \
-            --exclude='*.pyc' \
-            --exclude='.env' \
-            "${PROJECT_DIR}/" 2>/dev/null
-        
-        if [[ $? -eq 0 ]]; then
-            success "Полный бэкап создан: project-${BACKUP_TIMESTAMP}.tar.gz"
-            # Удалить старые бэкапы (оставить последние 5)
-            ls -1t "${BACKUP_DIR}"/project-*.tar.gz | tail -n +6 | xargs -r rm
-        else
-            error "Не удалось создать полный бэкап"
-            exit 1
-        fi
-    fi
-    
-    success "ЭТАП 2: Бэкапы созданы"
-else
-    warning "Пропуск создания бэкапов"
-fi
+section "ЭТАП 2: СОЗДАНИЕ БЭКАПОВ"
+warning "Пропуск создания бэкапов (отключено)"
 
 # ============================================================================
 # ЭТАП 3: ОСТАНОВКА СЕРВИСА
@@ -368,11 +327,20 @@ done
 success "Проверка переменных окружения завершена"
 
 log "Проверка подключения к Flask приложению..."
-if [[ "$DRY_RUN" == true ]]; then
+if [[ "$SKIP_TESTS" == true ]]; then
+    log "[SKIP-TESTS] Пропуск проверки Flask приложения"
+elif [[ "$DRY_RUN" == true ]]; then
     log "[DRY-RUN] python -c 'from blog import create_app; app = create_app()'"
 else
     cd "$PROJECT_DIR" || exit 1
     export FLASK_APP=app.py
+    
+    # Загрузить переменные окружения из .env файла
+    if [[ -f "${PROJECT_DIR}/.env" ]]; then
+        set -a
+        source "${PROJECT_DIR}/.env"
+        set +a
+    fi
     
     if python -c "from blog import create_app; app = create_app()" >> "${LOG_DIR}/app-import-${BACKUP_TIMESTAMP}.log" 2>&1; then
         success "Flask приложение загружается успешно"
@@ -457,7 +425,7 @@ fi
 section "ЭТАП 10: ПРОВЕРКА КОНФИГУРАЦИИ СЕРВИСА"
 
 log "Проверка systemd сервиса $SERVICE_NAME..."
-if systemctl list-unit-files | grep -q "$SERVICE_NAME"; then
+if [[ -f "/etc/systemd/system/${SERVICE_NAME}.service" ]]; then
     success "Systemd сервис найден: $SERVICE_NAME"
     
     log "Содержимое сервиса:"

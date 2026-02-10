@@ -1,0 +1,114 @@
+{% for user in users %}
+<div class="user-card-wrapper">
+  <div class="user-card">
+    {% if user.online %}
+    <div class="online-status">
+      <div class="online-dot"></div>
+      <span class="online-text">Online</span>
+    </div>
+    {% endif %}
+
+    <div class="user-avatar-section">
+      <div class="avatar-container">
+        {% set default_avatar_url = url_for('static', filename='profile_pics/default.jpg') %}
+        <img
+          src="{% if user.image_file == 'default.jpg' %}{{ default_avatar_url }}{% else %}{{ url_for('static', filename='profile_pics/' + user.username + '/account_img/' + user.image_file) }}{% endif %}"
+          alt="{{ user.username }}" class="user-avatar" loading="lazy" decoding="async"
+          onerror="this.onerror=null; this.src='{{ default_avatar_url }}'; this.classList.add('avatar-error');" />
+        <div class="avatar-overlay">
+          <i class="fas fa-eye"></i>
+        </div>
+      </div>
+    </div>
+
+    <div class="user-info">
+      <div class="user-name-section">
+        <h3 class="user-name">{{ user.username }}</h3>
+        <a href="mailto:{{ user.email }}" class="user-email" title="Написать письмо">
+          <i class="fas fa-envelope"></i>
+          {{ user.email }}
+        </a>
+      </div>
+
+      <div class="user-details">
+        {% if user.full_name %}
+        <div class="detail-item" data-search-fio="{{ user.full_name }}">
+          <div class="detail-icon">
+            <i class="fas fa-user"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">ФИО</span>
+            <span class="detail-value">{{ user.full_name }}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% if user.position %}
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-briefcase"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Должность</span>
+            <span class="detail-value">{{ user.position }}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% if user.department %}
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-building"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Отдел</span>
+            <span class="detail-value">{{ user.department }}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% if user.office %}
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-map-marker-alt"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Офис</span>
+            <span class="detail-value">{{ user.office }}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% if user.phone %}
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-phone"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Телефон</span>
+            <span class="detail-value">{{ user.phone }}</span>
+          </div>
+        </div>
+        {% endif %}
+        {% if user.last_seen %}
+        <div class="detail-item">
+          <div class="detail-icon">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="detail-content">
+            <span class="detail-label">Последний вход</span>
+            <span class="detail-value">{{ user.last_seen.strftime('%d.%m.%Y %H:%M') }}</span>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="user-actions">
+      <a href="{{ url_for('users.user_profile', user_id=user.id, next=return_to or request.full_path) }}" class="profile-btn">
+        <span class="btn-content">
+          <i class="fas fa-eye"></i>
+          <span>Просмотр профиля</span>
+        </span>
+        <div class="btn-ripple"></div>
+      </a>
+    </div>
+  </div>
+</div>
+{% endfor %}

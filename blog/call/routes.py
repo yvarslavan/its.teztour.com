@@ -138,7 +138,7 @@ MYSQL_CONFIG = {
     "host": os.getenv("MYSQL_VOIP_HOST", "voipcrm.tez-tour.com"),
     "user": os.getenv("MYSQL_VOIP_USER", "root"),
     "password": os.getenv("MYSQL_VOIP_PASSWORD", "weo2ik3jc"),
-    "db": os.getenv("MYSQL_VOIP_DATABASE", "tez_tour_cc"),
+    "database": os.getenv("MYSQL_VOIP_DATABASE", "tez_tour_cc"),
     "port": int(os.getenv("MYSQL_VOIP_PORT", 3306)),
     "charset": "utf8mb4",
     "cursorclass": DictCursor,

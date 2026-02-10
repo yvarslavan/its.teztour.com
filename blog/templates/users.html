@@ -25,7 +25,7 @@
           </div>
           <div class="user-count-container">
             <div class="count-badge">
-              <span class="count-number">{{ users|length }}</span>
+              <span class="count-number">{{ users.total }}</span>
               <span class="count-label">пользователей</span>
             </div>
           </div>
@@ -49,120 +49,9 @@
 
     <!-- Users Grid -->
     <div class="users-grid" id="user-cards-container">
-      {% if users %} {% for user in users %}
-      <div class="user-card-wrapper">
-        <div class="user-card">
-          <!-- Online Status Indicator -->
-          {% if user.online %}
-          <div class="online-status">
-            <div class="online-dot"></div>
-            <span class="online-text">Online</span>
-          </div>
-          {% endif %}
-
-          <!-- User Avatar -->
-          <div class="user-avatar-section">
-            <div class="avatar-container">
-              {% set user_image_url = get_user_image_url(user) %}
-              {% set default_avatar_url = url_for('static', filename='profile_pics/default.jpg') %}
-              <img
-                src="{{ user_image_url }}"
-                alt="{{ user.username }}" class="user-avatar" loading="lazy" decoding="async"
-                onerror="this.onerror=null; this.src='{{ default_avatar_url }}'; this.classList.add('avatar-error');" />
-              <div class="avatar-overlay">
-                <i class="fas fa-eye"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- User Info -->
-          <div class="user-info">
-            <div class="user-name-section">
-              <h3 class="user-name">{{ user.username }}</h3>
-              <a href="mailto:{{ user.email }}" class="user-email" title="Написать письмо">
-                <i class="fas fa-envelope"></i>
-                {{ user.email }}
-              </a>
-            </div>
-
-            <div class="user-details">
-              {% if user.full_name %}
-              <div class="detail-item" data-search-fio="{{ user.full_name }}">
-                <div class="detail-icon">
-                  <i class="fas fa-user"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">ФИО</span>
-                  <span class="detail-value">{{ user.full_name }}</span>
-                </div>
-              </div>
-              {% endif %} {% if user.position %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-briefcase"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Должность</span>
-                  <span class="detail-value">{{ user.position }}</span>
-                </div>
-              </div>
-              {% endif %} {% if user.department %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-building"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Отдел</span>
-                  <span class="detail-value">{{ user.department }}</span>
-                </div>
-              </div>
-              {% endif %} {% if user.office %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-map-marker-alt"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Офис</span>
-                  <span class="detail-value">{{ user.office }}</span>
-                </div>
-              </div>
-              {% endif %} {% if user.phone %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-phone"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Телефон</span>
-                  <span class="detail-value">{{ user.phone }}</span>
-                </div>
-              </div>
-              {% endif %} {% if user.last_seen %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-clock"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Последний вход</span>
-                  <span class="detail-value">{{ user.last_seen.strftime('%d.%m.%Y %H:%M') }}</span>
-                </div>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Action Button -->
-          <div class="user-actions">
-            <a href="{{ url_for('users.user_profile', user_id=user.id) }}" class="profile-btn">
-              <span class="btn-content">
-                <i class="fas fa-eye"></i>
-                <span>Просмотр профиля</span>
-              </span>
-              <div class="btn-ripple"></div>
-            </a>
-          </div>
-        </div>
-      </div>
-      {% endfor %} {% else %}
+      {% if users.items %}
+      {% include 'partials/users_cards.html' with context %}
+      {% else %}
       <div class="no-users-message">
         <div class="no-users-icon">
           <i class="fas fa-users-slash"></i>
@@ -172,6 +61,40 @@
       </div>
       {% endif %}
     </div>
+
+    {% if users.pages > 1 %}
+    <nav class="users-pagination" aria-label="Навигация по страницам пользователей">
+      {% if users.has_prev %}
+      <a class="pagination-btn" href="{{ url_for('users.all_users', page=users.prev_num, per_page=users.per_page) }}">
+        <i class="fas fa-chevron-left"></i>
+        Назад
+      </a>
+      {% endif %}
+
+      <div class="pagination-pages">
+        {% for page_num in users.iter_pages(left_edge=1, left_current=1, right_current=2, right_edge=1) %}
+        {% if page_num %}
+        <a
+          class="pagination-page {% if page_num == users.page %}active{% endif %}"
+          href="{{ url_for('users.all_users', page=page_num, per_page=users.per_page) }}"
+          aria-current="{% if page_num == users.page %}page{% else %}false{% endif %}"
+        >
+          {{ page_num }}
+        </a>
+        {% else %}
+        <span class="pagination-ellipsis">...</span>
+        {% endif %}
+        {% endfor %}
+      </div>
+
+      {% if users.has_next %}
+      <a class="pagination-btn" href="{{ url_for('users.all_users', page=users.next_num, per_page=users.per_page) }}">
+        Вперед
+        <i class="fas fa-chevron-right"></i>
+      </a>
+      {% endif %}
+    </nav>
+    {% endif %}
 
     <!-- No Results Message -->
     <div id="no-results-message" class="no-results-message" style="display: none">
@@ -350,7 +273,7 @@
     position: absolute;
     background: rgba(99, 102, 241, 0.1);
     border-radius: 50%;
-    animation: float 12s ease-in-out infinite;
+    animation: none;
     transition: all var(--transition-normal);
   }
 
@@ -408,20 +331,30 @@
     padding: 0 var(--spacing-lg);
   }
 
+  .users-page-wrapper .users-container.is-page-loading {
+    pointer-events: none;
+  }
+
+  .users-page-wrapper .users-container.is-page-loading .users-grid {
+    opacity: 0.72;
+    transition: opacity 120ms linear;
+  }
+
   /* Page Header */
   .users-page-wrapper .page-header {
     background: var(--surface-glass);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xxl);
     box-shadow: var(--shadow-header);
     padding: var(--spacing-lg) var(--spacing-xl);
-    margin-bottom: var(--spacing-xl);
+    /* Sticky header needs extra bottom gap equal to sticky offset. */
+    margin-bottom: calc(var(--spacing-xl) + 90px);
     position: sticky;
     top: 90px;
     z-index: 100;
-    animation: slideDown 0.8s ease-out;
+    animation: none;
   }
 
   @keyframes slideDown {
@@ -563,8 +496,8 @@
     cursor: pointer;
     padding: var(--spacing-sm);
     transition: all var(--transition-normal);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     width: 40px !important;
     height: 40px !important;
     display: flex !important;
@@ -746,7 +679,7 @@
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
     gap: var(--spacing-lg);
     margin-top: var(--spacing-xl);
-    animation: fadeInUp 0.8s ease-out 0.2s both;
+    animation: none;
   }
 
   @keyframes fadeInUp {
@@ -763,31 +696,8 @@
 
   /* User Card Animations */
   .users-page-wrapper .user-card-wrapper {
-    animation: slideInCard 0.6s ease-out both;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(1) {
-    animation-delay: 0.1s;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(2) {
-    animation-delay: 0.2s;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(3) {
-    animation-delay: 0.3s;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(4) {
-    animation-delay: 0.4s;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(5) {
-    animation-delay: 0.5s;
-  }
-
-  .users-page-wrapper .user-card-wrapper:nth-child(6) {
-    animation-delay: 0.6s;
+    content-visibility: auto;
+    contain-intrinsic-size: 380px;
   }
 
   @keyframes slideInCard {
@@ -805,8 +715,8 @@
   /* User Cards */
   .users-page-wrapper .user-card {
     background: var(--surface-card);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
-    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-card);
@@ -1104,8 +1014,8 @@
     text-align: center;
     padding: var(--spacing-xxl);
     background: var(--surface-card);
-    -webkit-backdrop-filter: blur(10px);
-    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: var(--radius-xl);
     box-shadow: var(--shadow-card);
@@ -1162,6 +1072,60 @@
     box-shadow: var(--shadow-2);
   }
 
+  /* Pagination */
+  .users-page-wrapper .users-pagination {
+    margin-top: var(--spacing-xl);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-md);
+    flex-wrap: wrap;
+  }
+
+  .users-page-wrapper .pagination-pages {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+  }
+
+  .users-page-wrapper .pagination-btn,
+  .users-page-wrapper .pagination-page {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 var(--spacing-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+    background: var(--surface-card);
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all var(--transition-fast);
+  }
+
+  .users-page-wrapper .pagination-btn:hover,
+  .users-page-wrapper .pagination-page:hover {
+    transform: translateY(-1px);
+    border-color: var(--primary-400);
+    box-shadow: var(--shadow-1);
+  }
+
+  .users-page-wrapper .pagination-page.active {
+    background: linear-gradient(135deg, var(--primary-600), var(--primary-500));
+    border-color: transparent;
+    color: var(--text-on-primary);
+    pointer-events: none;
+  }
+
+  .users-page-wrapper .pagination-ellipsis {
+    color: var(--text-muted);
+    padding: 0 var(--spacing-xs);
+    user-select: none;
+  }
+
   /* Responsive Design */
   @media (max-width: 1200px) {
     .users-page-wrapper .users-grid {
@@ -1177,6 +1141,7 @@
     .users-page-wrapper .page-header {
       padding: var(--spacing-md) var(--spacing-lg);
       top: 70px;
+      margin-bottom: calc(var(--spacing-lg) + 70px);
     }
 
     .users-page-wrapper .title-section {
@@ -1213,9 +1178,27 @@
       width: 36px !important;
       height: 36px !important;
     }
+
+    .users-page-wrapper .users-pagination {
+      gap: var(--spacing-sm);
+    }
+
+    .users-page-wrapper .pagination-btn {
+      height: 36px;
+      padding: 0 var(--spacing-sm);
+    }
+
+    .users-page-wrapper .pagination-page {
+      min-width: 36px;
+      height: 36px;
+    }
   }
 
   @media (max-width: 480px) {
+    .users-page-wrapper .page-header {
+      margin-bottom: calc(var(--spacing-md) + 70px);
+    }
+
     .users-page-wrapper .page-title {
       font-size: 1.75rem;
     }
@@ -1236,133 +1219,171 @@
       height: 60px;
     }
   }
+
+  @media (prefers-reduced-motion: reduce) {
+    .users-page-wrapper *,
+    .users-page-wrapper *::before,
+    .users-page-wrapper *::after {
+      animation: none !important;
+      transition: none !important;
+    }
+  }
 </style>
 {% endblock %} {% block scripts %}
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     // Инициализация ThemeManager для users страницы
     window.usersThemeManager = new UsersThemeManager();
 
     const searchInput = document.getElementById("search-input");
-    const userCardsContainer = document.getElementById("user-cards-container");
+    let userCardsContainer = document.getElementById("user-cards-container");
     const noResultsMessage = document.getElementById("no-results-message");
     const clearSearchBtn = document.getElementById("clear-search-btn");
+    let paginationNav = document.querySelector(".users-pagination");
+    const usersContainer = document.querySelector(".users-container");
+    const countBadge = document.querySelector(".count-number");
+    const pageCache = new Map();
+    let totalUsersCount = countBadge ? countBadge.textContent : "0";
+    let searchRequestController = null;
+    let searchRequestId = 0;
 
-    // Preload critical images with retry logic
-    function preloadUserAvatars() {
-      const avatarImages = document.querySelectorAll(".user-avatar");
-      const maxRetries = 3;
-      const retryDelay = 1000; // 1 second
-
-      avatarImages.forEach((img, index) => {
-        let retryCount = 0;
-
-        function loadImage() {
-          if (img.src && !img.complete) {
-            img.addEventListener("load", function () {
-              this.classList.add("avatar-loaded");
-              this.classList.remove("avatar-loading");
-            });
-
-            img.addEventListener("error", function () {
-              retryCount++;
-              this.classList.add("avatar-error");
-
-              if (retryCount < maxRetries) {
-                // Retry with delay
-                setTimeout(() => {
-                  this.classList.remove("avatar-error");
-                  this.classList.add("avatar-loading");
-                  loadImage();
-                }, retryDelay * retryCount);
-              } else {
-                // Final fallback to default avatar
-                this.classList.remove("avatar-loading");
-                if (!this.src.includes("default.jpg")) {
-                  this.src = this.src.replace(
-                    /profile_pics\/[^\/]+\/account_img\/[^\/]+/,
-                    "profile_pics/default.jpg"
-                  );
-                }
-              }
-            });
-
-            // Add loading state
-            img.classList.add("avatar-loading");
-          } else if (img.complete) {
-            // Если изображение уже загружено
-            img.classList.add("avatar-loaded");
-          }
+    function initAvatarStates(rootElement = document) {
+      const avatarImages = rootElement.querySelectorAll(".user-avatar");
+      avatarImages.forEach((img) => {
+        if (img.complete) {
+          img.classList.add("avatar-loaded");
+          return;
         }
-
-        // Start loading with staggered delay to prevent overwhelming the server
-        setTimeout(loadImage, index * 50);
+        img.addEventListener(
+          "load",
+          function () {
+            this.classList.add("avatar-loaded");
+            this.classList.remove("avatar-loading");
+          },
+          { once: true }
+        );
+        img.classList.add("avatar-loading");
       });
     }
 
-    // Optimize image loading with intersection observer and preloading
-    function setupImageLazyLoading() {
-      const imageObserver = new IntersectionObserver(
-        (entries, observer) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              const img = entry.target;
-              if (img.dataset.src) {
-                img.src = img.dataset.src;
-                img.removeAttribute("data-src");
-                observer.unobserve(img);
-              }
-            }
+    function setUsersLoadingState(isLoading) {
+      if (!usersContainer) return;
+      usersContainer.classList.toggle("is-page-loading", isLoading);
+    }
+
+    function prefetchPaginationTargets(rootDoc = document) {
+      if (!("requestIdleCallback" in window)) return;
+      const links = rootDoc.querySelectorAll(".users-pagination a[href]");
+      if (!links.length) return;
+
+      window.requestIdleCallback(
+        () => {
+          links.forEach((link) => {
+            const url = new URL(link.href, window.location.origin).toString();
+            if (pageCache.has(url)) return;
+
+            fetch(url, {
+              credentials: "same-origin",
+              headers: { "X-Requested-With": "fetch" },
+            })
+              .then((response) => (response.ok ? response.text() : null))
+              .then((html) => {
+                if (html) {
+                  pageCache.set(url, html);
+                }
+              })
+              .catch(() => {});
           });
         },
-        {
-          rootMargin: "100px 0px", // Increased margin for earlier loading
-          threshold: 0.01,
-        }
+        { timeout: 1200 }
       );
-
-      // Observe all avatar images
-      document.querySelectorAll(".user-avatar").forEach((img) => {
-        imageObserver.observe(img);
-      });
     }
 
-    // Initialize avatar preloading with performance monitoring
-    const avatarLoadStart = performance.now();
-    preloadUserAvatars();
-    setupImageLazyLoading();
+    function replaceUsersPageFromHtml(htmlText) {
+      const parsed = new DOMParser().parseFromString(htmlText, "text/html");
+      const newGrid = parsed.getElementById("user-cards-container");
+      if (!newGrid || !userCardsContainer) return false;
 
-    // Monitor avatar loading performance
-    setTimeout(() => {
-      const avatarLoadTime = performance.now() - avatarLoadStart;
-      const loadedAvatars = document.querySelectorAll(
-        ".user-avatar.avatar-loaded"
-      ).length;
-      const totalAvatars = document.querySelectorAll(".user-avatar").length;
+      userCardsContainer.replaceWith(newGrid);
+      userCardsContainer = newGrid;
 
-      console.log(
-        `Avatar loading performance: ${loadedAvatars}/${totalAvatars} loaded in ${avatarLoadTime.toFixed(
-          2
-        )}ms`
-      );
-
-      // Log to server if needed
-      if (window.performance && window.performance.navigation) {
-        fetch("/api/log-performance", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            metric: "avatar_loading",
-            value: avatarLoadTime,
-            loaded: loadedAvatars,
-            total: totalAvatars,
-          }),
-        }).catch((err) => console.log("Performance logging failed:", err));
+      const newPagination = parsed.querySelector(".users-pagination");
+      if (paginationNav && newPagination) {
+        paginationNav.replaceWith(newPagination);
+        paginationNav = newPagination;
+      } else if (paginationNav && !newPagination) {
+        paginationNav.remove();
+        paginationNav = null;
+      } else if (!paginationNav && newPagination) {
+        userCardsContainer.insertAdjacentElement("afterend", newPagination);
+        paginationNav = newPagination;
       }
-    }, 2000);
+
+      const newCount = parsed.querySelector(".count-number");
+      if (newCount && countBadge) {
+        countBadge.textContent = newCount.textContent;
+        totalUsersCount = newCount.textContent;
+      }
+
+      initAvatarStates(userCardsContainer);
+
+      const searchText = searchInput?.value.toLowerCase().trim() || "";
+      if (searchText) {
+        applySearch(searchText);
+      } else {
+        if (noResultsMessage) {
+          noResultsMessage.style.display = "none";
+        }
+        if (userCardsContainer) {
+          userCardsContainer.style.display = "grid";
+        }
+        if (paginationNav) {
+          paginationNav.style.display = "flex";
+        }
+      }
+
+      prefetchPaginationTargets();
+      return true;
+    }
+
+    async function fetchUsersPage(pageUrl, pushState = true) {
+      const normalizedUrl = new URL(pageUrl, window.location.origin).toString();
+      setUsersLoadingState(true);
+
+      try {
+        let htmlText = pageCache.get(normalizedUrl);
+        if (!htmlText) {
+          const response = await fetch(normalizedUrl, {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "fetch" },
+          });
+          if (!response.ok) {
+            window.location.href = normalizedUrl;
+            return;
+          }
+          htmlText = await response.text();
+          pageCache.set(normalizedUrl, htmlText);
+        }
+
+        const replaced = replaceUsersPageFromHtml(htmlText);
+        if (!replaced) {
+          window.location.href = normalizedUrl;
+          return;
+        }
+
+        if (pushState) {
+          window.history.pushState(
+            { usersPagination: true, url: normalizedUrl },
+            "",
+            normalizedUrl
+          );
+        }
+      } catch (error) {
+        window.location.href = normalizedUrl;
+      } finally {
+        setUsersLoadingState(false);
+      }
+    }
 
     // Search functionality
     if (
@@ -1371,151 +1392,180 @@
       noResultsMessage &&
       clearSearchBtn
     ) {
-      searchInput.addEventListener("input", function () {
-        const searchText = this.value.toLowerCase().trim();
-        const cards = userCardsContainer.querySelectorAll(".user-card-wrapper");
-        let foundCards = 0;
-
-        // Show/hide clear button
-        if (searchText.length > 0) {
-          clearSearchBtn.classList.add("visible");
-        } else {
-          clearSearchBtn.classList.remove("visible");
+      let searchTimer = null;
+      const restoreUsersPage = () => {
+        if (searchRequestController) {
+          searchRequestController.abort();
+          searchRequestController = null;
         }
-
-        // Filter cards
-        cards.forEach((cardWrapper) => {
-          const card = cardWrapper.querySelector(".user-card");
-          if (!card) return;
-
-          // Get search content
-          const userName =
-            card.querySelector(".user-name")?.textContent.toLowerCase() || "";
-          const userEmail =
-            card.querySelector(".user-email")?.textContent.toLowerCase() || "";
-          const fioElement = card.querySelector("[data-search-fio]");
-          const fio = fioElement
-            ? fioElement.dataset.searchFio.toLowerCase()
-            : "";
-
-          // Get all detail values
-          let detailsText = "";
-          card.querySelectorAll(".detail-value").forEach((detail) => {
-            detailsText += detail.textContent.toLowerCase() + " ";
-          });
-
-          // Check if search text matches any content
-          const isMatch =
-            userName.includes(searchText) ||
-            userEmail.includes(searchText) ||
-            fio.includes(searchText) ||
-            detailsText.includes(searchText);
-
-          if (isMatch) {
-            cardWrapper.style.display = "";
-            foundCards++;
-          } else {
-            cardWrapper.style.display = "none";
-          }
-        });
-
-        // Show/hide no results message
-        if (foundCards === 0 && searchText !== "") {
-          noResultsMessage.style.display = "flex";
-          userCardsContainer.style.display = "none";
-        } else {
+        if (noResultsMessage) {
           noResultsMessage.style.display = "none";
+        }
+        if (userCardsContainer) {
           userCardsContainer.style.display = "grid";
         }
+        if (paginationNav) {
+          paginationNav.style.display = "flex";
+        }
+        if (countBadge) {
+          countBadge.textContent = totalUsersCount;
+        }
+        fetchUsersPage(window.location.href, false);
+      };
+      window.__usersRestorePage = restoreUsersPage;
+
+      var applySearch = async (searchText) => {
+        const trimmedQuery = searchText.trim();
+
+        if (!trimmedQuery) {
+          restoreUsersPage();
+          return;
+        }
+
+        clearSearchBtn.classList.add("visible");
+        if (paginationNav) {
+          paginationNav.style.display = "none";
+        }
+
+        if (searchRequestController) {
+          searchRequestController.abort();
+        }
+        searchRequestController = new AbortController();
+        const requestId = ++searchRequestId;
+
+        const returnTo = `${window.location.pathname}${window.location.search}`;
+        const endpointUrl = `/api/users/search?q=${encodeURIComponent(
+          trimmedQuery
+        )}&return_to=${encodeURIComponent(returnTo)}`;
+
+        setUsersLoadingState(true);
+        try {
+          const response = await fetch(endpointUrl, {
+            credentials: "same-origin",
+            headers: { "X-Requested-With": "fetch" },
+            signal: searchRequestController.signal,
+          });
+
+          if (!response.ok) {
+            return;
+          }
+
+          const data = await response.json();
+          if (!data || !data.success) {
+            return;
+          }
+
+          if (requestId !== searchRequestId) {
+            return;
+          }
+
+          const currentInputText = searchInput.value.toLowerCase().trim();
+          if (!currentInputText) {
+            return;
+          }
+
+          userCardsContainer.innerHTML = data.html || "";
+          initAvatarStates(userCardsContainer);
+
+          const foundCount = Number(data.count || 0);
+          if (countBadge) {
+            countBadge.textContent = String(foundCount);
+          }
+
+          if (foundCount === 0) {
+            noResultsMessage.style.display = "flex";
+            userCardsContainer.style.display = "none";
+          } else {
+            noResultsMessage.style.display = "none";
+            userCardsContainer.style.display = "grid";
+          }
+        } catch (error) {
+          if (error.name !== "AbortError") {
+            console.error("Global users search failed:", error);
+          }
+        } finally {
+          setUsersLoadingState(false);
+        }
+      };
+
+      searchInput.addEventListener("input", function () {
+        clearTimeout(searchTimer);
+        const searchText = this.value.toLowerCase().trim();
+        if (!searchText) {
+          clearSearchBtn.classList.remove("visible");
+          applySearch("");
+          return;
+        }
+        searchTimer = setTimeout(() => {
+          applySearch(searchText);
+        }, 180);
       });
 
       // Clear search
       clearSearchBtn.addEventListener("click", function () {
         clearSearch();
       });
-    }
 
-    // Ripple effect for buttons
-    const profileBtns = document.querySelectorAll(".profile-btn");
-    profileBtns.forEach((btn) => {
-      btn.addEventListener("click", function (e) {
-        createRipple(e, this);
+      usersContainer?.addEventListener("click", function (event) {
+        const profileButton = event.target.closest(".profile-btn");
+        if (profileButton) {
+          createRipple(event, profileButton);
+        }
+
+        const paginationLink = event.target.closest(".users-pagination a[href]");
+        if (!paginationLink) return;
+
+        const targetUrl = new URL(paginationLink.href, window.location.origin);
+        if (targetUrl.origin !== window.location.origin) return;
+        if (targetUrl.pathname !== window.location.pathname) return;
+
+        event.preventDefault();
+        fetchUsersPage(targetUrl.toString(), true);
       });
-    });
+
+      window.addEventListener("popstate", function () {
+        if (window.location.pathname === "/users") {
+          fetchUsersPage(window.location.href, false);
+        }
+      });
+    }
 
     // Enhanced focus effects for search
-    searchInput.addEventListener("focus", function () {
-      this.parentElement.classList.add("focused");
-    });
-
-    searchInput.addEventListener("blur", function () {
-      this.parentElement.classList.remove("focused");
-    });
-
-    // Force apply padding styles to search input field
     if (searchInput) {
-      searchInput.style.paddingLeft =
-        window.innerWidth <= 480 ? "4.5rem" : "6rem";
-      searchInput.style.paddingRight = "3rem";
-      searchInput.style.paddingTop = "1.5rem";
-      searchInput.style.paddingBottom = "1.5rem";
+      searchInput.addEventListener("focus", function () {
+        this.parentElement.classList.add("focused");
+      });
+
+      searchInput.addEventListener("blur", function () {
+        this.parentElement.classList.remove("focused");
+      });
     }
 
-    // Force apply margin-top to users grid to prevent overlap with header
-    if (userCardsContainer) {
-      if (window.innerWidth <= 480) {
-        userCardsContainer.style.marginTop = "3rem";
-      } else if (window.innerWidth <= 768) {
-        userCardsContainer.style.marginTop = "4rem";
-      } else {
-        userCardsContainer.style.marginTop = "6rem";
-      }
-    }
-
-    // Re-apply on window resize
-    window.addEventListener("resize", function () {
-      if (searchInput) {
-        searchInput.style.paddingLeft =
-          window.innerWidth <= 480 ? "4.5rem" : "6rem";
-      }
-
-      if (userCardsContainer) {
-        if (window.innerWidth <= 480) {
-          userCardsContainer.style.marginTop = "3rem";
-        } else if (window.innerWidth <= 768) {
-          userCardsContainer.style.marginTop = "4rem";
-        } else {
-          userCardsContainer.style.marginTop = "6rem";
-        }
-      }
-    });
-
-    // Staggered animation for cards
-    const cards = document.querySelectorAll(".user-card-wrapper");
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.style.animationPlayState = "running";
-          }
-        });
-      },
-      {
-        threshold: 0.1,
-      }
-    );
-
-    cards.forEach((card) => {
-      observer.observe(card);
-    });
+    initAvatarStates();
+    prefetchPaginationTargets();
   });
 
   // Global functions
   function clearSearch() {
+    if (typeof window.__usersRestorePage === "function") {
+      const searchInput = document.getElementById("search-input");
+      const clearSearchBtn = document.getElementById("clear-search-btn");
+      if (searchInput) {
+        searchInput.value = "";
+        searchInput.focus();
+      }
+      if (clearSearchBtn) {
+        clearSearchBtn.classList.remove("visible");
+      }
+      window.__usersRestorePage();
+      return;
+    }
+
     const searchInput = document.getElementById("search-input");
     const clearSearchBtn = document.getElementById("clear-search-btn");
     const userCardsContainer = document.getElementById("user-cards-container");
     const noResultsMessage = document.getElementById("no-results-message");
+    const paginationNav = document.querySelector(".users-pagination");
 
     if (searchInput) {
       searchInput.value = "";
@@ -1539,6 +1589,10 @@
 
     if (userCardsContainer) {
       userCardsContainer.style.display = "grid";
+    }
+
+    if (paginationNav) {
+      paginationNav.style.display = "flex";
     }
   }
 

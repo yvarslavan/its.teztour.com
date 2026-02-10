@@ -35,6 +35,7 @@ class User(db.Model, UserMixin):
     id_redmine_user = db.Column(db.Integer, default=4)
     can_access_quality_control = db.Column(db.Boolean, default=False, nullable=False)
     can_access_contact_center_moscow = db.Column(db.Boolean, default=False, nullable=False)
+    can_access_redmine_report = db.Column(db.Boolean, default=False, nullable=False)
     is_admin = db.Column(db.Boolean, default=False, nullable=False)
     browser_notifications_enabled = db.Column(db.Boolean, default=False)
     notifications_widget_enabled = db.Column(db.Boolean, default=True, nullable=False)
@@ -52,6 +53,7 @@ class User(db.Model, UserMixin):
                 f"is_redmine_user={self.is_redmine_user}, id_redmine_user={self.id_redmine_user}, "
                 f"can_access_quality_control={self.can_access_quality_control}, "
                 f"can_access_contact_center_moscow={self.can_access_contact_center_moscow}, "
+                f"can_access_redmine_report={self.can_access_redmine_report}, "
                 f"browser_notifications_enabled={self.browser_notifications_enabled})")
 
     def get_active_tasks(self):

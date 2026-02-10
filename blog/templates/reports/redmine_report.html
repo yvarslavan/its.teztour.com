@@ -1,0 +1,1208 @@
+{% extends "layout.html" %}
+
+{% block title %}Отчёты по задачам Easy Redmine{% endblock %}
+
+{% block content %}
+<style>
+:root {
+  --primary-color: #3b82f6;
+  --primary-hover: #2563eb;
+  --secondary-color: #64748b;
+  --bg-light: #f8fafc;
+  --border-color: #e2e8f0;
+  --text-main: #1e293b;
+  --text-muted: #64748b;
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  --radius: 8px;
+  --radius-lg: 12px;
+}
+
+.report-container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Inter', sans-serif;
+}
+
+.filters-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.filters-header {
+  padding: 16px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.filters-body {
+  padding: 20px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+
+.form-control-modern {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-control-modern:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+.months-selector { grid-column: span 2; }
+
+.months-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.month-pill {
+  padding: 6px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--border-color);
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.month-pill.active {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.date-range input { flex: 1; }
+
+.date-separator { color: var(--text-muted); font-size: 13px; }
+
+.actions-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.btn-modern {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-primary-modern {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.btn-ghost-modern {
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.btn-ghost-modern:hover { color: var(--text-main); background: var(--bg-light); }
+
+.results-card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
+
+.results-header {
+  padding: 16px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.results-title { font-size: 16px; font-weight: 600; color: var(--text-main); margin: 0; }
+.results-stats { color: var(--text-muted); font-size: 14px; }
+
+.results-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.results-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.results-badge.groups {
+  background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+
+.results-badge.tasks {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.results-badge i {
+  font-size: 12px;
+}
+
+.results-divider {
+  color: var(--border-color);
+  font-weight: 300;
+}
+
+.btn-export {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: none;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 6px -1px rgb(16 185 129 / 0.3);
+}
+
+.btn-export:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px -2px rgb(16 185 129 / 0.4);
+}
+
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table thead { background: var(--bg-light); }
+.data-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+.data-table td {
+  padding: 14px 16px;
+  border-top: 1px solid var(--border-color);
+  font-size: 14px;
+}
+
+.row-group {
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.row-group:hover { background: rgb(59 130 246 / 0.02); }
+.row-group.expanded { background: rgb(59 130 246 / 0.05); }
+
+.chevron {
+  transition: transform 0.2s;
+  color: var(--text-muted);
+  margin-right: 8px;
+}
+.row-group.expanded .chevron {
+  transform: rotate(90deg);
+  color: var(--primary-color);
+}
+
+.group-name {
+  font-weight: 500;
+  color: var(--text-main);
+  display: flex;
+  align-items: center;
+}
+
+.group-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  margin-right: 12px;
+}
+
+.count-badge {
+  background: var(--primary-color);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.row-subgroup { background: var(--bg-light); cursor: pointer; }
+.row-subgroup:hover { background: rgb(59 130 246 / 0.05); }
+.row-subgroup td { padding-left: 48px; }
+
+.detail-row { background: white; }
+.detail-content { padding: 16px; }
+
+.detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.detail-table th {
+  background: var(--bg-light);
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+.detail-table td { padding: 10px 12px; border-top: 1px solid var(--border-color); }
+
+.issue-link { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+.issue-link:hover { text-decoration: underline; }
+
+.row-total {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: white;
+}
+.row-total td { border: none; font-weight: 600; }
+
+.pagination-modern {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  list-style: none;
+  margin: 0;
+}
+.pagination-modern a, .pagination-modern span {
+  padding: 8px 14px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  color: var(--text-main);
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+}
+.pagination-modern .active span {
+  background: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--text-muted);
+}
+.empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.3; }
+
+.custom-select {
+  position: relative;
+  width: 100%;
+}
+
+.custom-select-trigger {
+  padding: 10px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  background: white;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+  border-color: var(--primary-color);
+}
+
+.custom-select-trigger.active {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgb(59 130 246 / 0.1);
+}
+
+.custom-select-trigger .placeholder {
+  color: var(--text-muted);
+}
+
+.custom-select-trigger .arrow {
+  color: var(--text-muted);
+  transition: transform 0.2s;
+}
+
+.custom-select-trigger.active .arrow {
+  transform: rotate(180deg);
+}
+
+.custom-select-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  max-height: 320px;
+  display: none;
+  flex-direction: column;
+}
+
+.custom-select-dropdown.open {
+  display: flex;
+}
+
+.custom-select-search {
+  padding: 12px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-light);
+  border-radius: var(--radius) var(--radius) 0 0;
+  position: sticky;
+  top: 0;
+}
+
+.custom-select-search input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  font-size: 14px;
+  background: white;
+}
+
+.custom-select-search input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
+
+.custom-select-list {
+  overflow-y: auto;
+  max-height: 240px;
+}
+
+.custom-select-item {
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 14px;
+  border-bottom: 1px solid transparent;
+  transition: background 0.15s;
+}
+
+.custom-select-item:hover {
+  background: var(--bg-light);
+}
+
+.custom-select-item.selected {
+  background: rgb(59 130 246 / 0.1);
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+.custom-select-item.hidden {
+  display: none;
+}
+
+.custom-select-no-results {
+  padding: 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 1200px) {
+  .form-grid { grid-template-columns: repeat(2, 1fr); }
+  .months-selector { grid-column: span 2; }
+}
+.stale-badge-danger { background: #dc2626; color: white; }
+.stale-badge-warning { background: #ea580c; color: white; }
+.stale-badge-info { background: #ca8a04; color: white; }
+.stale-badge-success { background: #16a34a; color: white; }
+.stale-tasks-results { margin-top: 20px; }
+.stale-tasks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+.stale-tasks-count {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  color: white;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 600;
+}
+</style>
+
+<div class="report-container">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 style="font-size: 24px; font-weight: 700; color: var(--text-main); margin: 0;">Отчёты по задачам Easy Redmine</h1>
+  </div>
+
+  <!-- Stale Tasks Report Card -->
+  <div class="filters-card" style="border-left: 4px solid #f59e0b;">
+    <div class="filters-header" data-bs-toggle="collapse" data-bs-target="#staleTasksCollapse" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+      <h5><i class="fas fa-exclamation-triangle me-2"></i>Зависшие задачи</h5>
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div id="staleTasksCollapse" class="collapse">
+      <div class="filters-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Проект</label>
+            <select id="stale-project" class="form-control-modern">
+              <option value="" disabled {% if not project_id %}selected{% endif %}>Выберите проект</option>
+              {% for p in projects %}
+              <option value="{{ p.id }}" {% if project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Без движения более (дней)</label>
+            <input type="number" id="stale-days" class="form-control-modern" value="7" min="1">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Статус</label>
+            <select id="stale-status" class="form-control-modern">
+              <option value="">Все открытые</option>
+              {% for s in statuses %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Исполнитель</label>
+            <select id="stale-executor" class="form-control-modern">
+              <option value="">Все</option>
+              {% for e in executors %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="actions-row" style="margin-top: 16px;">
+          <button type="button" id="btn-load-stale" class="btn-modern btn-primary-modern" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); border: none;">
+            <i class="fas fa-search"></i>Показать зависшие задачи
+          </button>
+          <button type="button" id="btn-export-stale" class="btn-modern btn-ghost-modern" disabled>
+            <i class="fas fa-file-excel"></i>Экспорт в Excel
+          </button>
+        </div>
+        <div style="margin-top: 12px; padding: 10px 14px; background: #f8fafc; border-radius: 8px; font-size: 12px; color: var(--text-muted);">
+          <span style="font-weight: 600; margin-right: 8px;">Легенда:</span>
+          <span style="display: inline-flex; align-items: center; margin-right: 12px;"><span class="count-badge stale-badge-danger" style="padding: 2px 8px; font-size: 11px; margin-right: 4px;">>30 дн</span> Критично</span>
+          <span style="display: inline-flex; align-items: center; margin-right: 12px;"><span class="count-badge stale-badge-warning" style="padding: 2px 8px; font-size: 11px; margin-right: 4px;">15-30 дн</span> Требует внимания</span>
+          <span style="display: inline-flex; align-items: center; margin-right: 12px;"><span class="count-badge stale-badge-info" style="padding: 2px 8px; font-size: 11px; margin-right: 4px;">7-14 дн</span> Предупреждение</span>
+          <span style="display: inline-flex; align-items: center;"><span class="count-badge stale-badge-success" style="padding: 2px 8px; font-size: 11px; margin-right: 4px;"><7 дн</span> Норма</span>
+        </div>
+        <div id="stale-results" class="stale-tasks-results" style="display: none;">
+          <div class="stale-tasks-header">
+            <span class="stale-tasks-count"><i class="fas fa-tasks me-1"></i>Зависших задач: <span id="stale-count">0</span></span>
+          </div>
+          <table class="data-table" id="stale-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Тема</th>
+                <th>Статус</th>
+                <th>Исполнитель</th>
+                <th>Возраст</th>
+                <th>Без движения</th>
+                <th>Индикатор</th>
+              </tr>
+            </thead>
+            <tbody id="stale-tbody">
+            </tbody>
+          </table>
+          <div id="stale-pagination" style="margin-top: 16px; display: flex; justify-content: center; gap: 8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="filters-card">
+    <div class="filters-header" data-bs-toggle="collapse" data-bs-target="#filtersCollapse">
+      <h5><i class="fas fa-sliders-h me-2"></i>Фильтры и группировка</h5>
+      <i class="fas fa-chevron-down"></i>
+    </div>
+    <div id="filtersCollapse" class="collapse show">
+      <div class="filters-body">
+        <form method="GET" action="{{ url_for('reports.redmine_report') }}">
+          <div class="form-grid">
+            <div class="form-group">
+              <label class="form-label">Проект <span style="color: #ef4444;">*</span></label>
+              <select name="project_id" class="form-control-modern" required>
+                <option value="" disabled {% if not project_id %}selected{% endif %}>Выберите проект</option>
+                {% for p in projects %}
+                <option value="{{ p.id }}" {% if project_id == p.id %}selected{% endif %}>{{ p.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Группировка</label>
+              <select name="group_mode" class="form-control-modern">
+                <option value="EXECUTOR" {% if group_mode == 'EXECUTOR' %}selected{% endif %}>По исполнителю</option>
+                <option value="MONTH" {% if group_mode == 'MONTH' %}selected{% endif %}>По месяцу</option>
+                <option value="EXECUTOR_MONTH" {% if group_mode == 'EXECUTOR_MONTH' %}selected{% endif %}>Исполнитель → Месяц</option>
+                <option value="MONTH_EXECUTOR" {% if group_mode == 'MONTH_EXECUTOR' %}selected{% endif %}>Месяц → Исполнитель</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Год</label>
+              <select name="report_year" class="form-control-modern">
+                <option value="" {% if not report_year %}selected{% endif %}>За все время</option>
+                {% for year in range(current_year, current_year - 11, -1) %}
+                <option value="{{ year }}" {% if report_year == year %}selected{% endif %}>{{ year }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Исполнитель</label>
+              <div class="custom-select" id="executor-select">
+                <div class="custom-select-trigger" data-value="">
+                  <span class="select-text">Все исполнители</span>
+                  <i class="fas fa-chevron-down arrow"></i>
+                </div>
+                <div class="custom-select-dropdown">
+                  <div class="custom-select-search">
+                    <input type="text" placeholder="Найти сотрудника..." autocomplete="off">
+                  </div>
+                  <div class="custom-select-list">
+                    <div class="custom-select-item selected" data-value="">Все исполнители</div>
+                    {% for e in executors %}
+                    <div class="custom-select-item" data-value="{{ e.id }}">{{ e.name }}</div>
+                    {% endfor %}
+                  </div>
+                </div>
+                <input type="hidden" name="executor_id" value="{{ executor_id or '' }}">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Статус</label>
+              <select name="status_filter" class="form-control-modern">
+                <option value="" {% if not status_filter %}selected{% endif %}>Все статусы</option>
+                <optgroup label="Быстрые фильтры">
+                  <option value="is_open" {% if status_filter == 'is_open' %}selected{% endif %}>
+                    🟢 📂 Все открытые
+                  </option>
+                  <option value="is_closed" {% if status_filter == 'is_closed' %}selected{% endif %}>
+                    🔴 📁 Все закрытые
+                  </option>
+                </optgroup>
+                <optgroup label="Текущие статусы">
+                  {% for s in statuses %}
+                  <option value="{{ s.id }}" {% if status_filter == s.id|string %}selected{% endif %}>
+                    {{ s.name }}
+                  </option>
+                  {% endfor %}
+                </optgroup>
+              </select>
+            </div>
+
+            <div class="form-group months-selector">
+              <label class="form-label" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Месяцы</span>
+                <a href="javascript:void(0)" id="months-toggle" style="font-size: 11px; color: var(--text-muted); text-decoration: none; font-weight: 500;">
+                  Снять все
+                </a>
+              </label>
+              <div class="months-pills" id="months-pills-container">
+                {% set months_list = months or [] %}
+                {% for m in range(1, 13) %}
+                <label class="month-pill {% if not months or (m|string) in months_list %}active{% endif %}">
+                  <input type="checkbox" name="months" value="{{ m }}"
+                         {% if not months or (m|string) in months_list %}checked{% endif %}
+                         style="display: none;">
+                  {{ m }}
+                </label>
+                {% endfor %}
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Период</label>
+              <div class="date-range">
+                <input type="date" name="date_from" class="form-control-modern"
+                       value="{{ date_from or '' }}">
+                <span class="date-separator">—</span>
+                <input type="date" name="date_to" class="form-control-modern"
+                       value="{{ date_to or '' }}">
+              </div>
+            </div>
+          </div>
+
+          <div class="actions-row">
+            <a href="{{ url_for('reports.redmine_report') }}" class="btn-modern btn-ghost-modern">
+              <i class="fas fa-undo"></i>Сбросить
+            </a>
+            <button type="submit" class="btn-modern btn-primary-modern">
+              <i class="fas fa-search"></i>Показать отчёт
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if project_id %}
+  <div class="results-card">
+    <div class="results-header">
+      <div class="results-info">
+        <h6 class="results-title"><i class="fas fa-chart-pie me-2"></i>Результаты</h6>
+        <span class="results-divider">|</span>
+        <span class="results-badge groups">
+          <i class="fas fa-layer-group"></i>
+          {{ total_rows }} групп
+        </span>
+        <span class="results-badge tasks">
+          <i class="fas fa-tasks"></i>
+          {{ total_issues_count }} задач
+        </span>
+      </div>
+      {% set export_args = request.args.copy() %}
+      {% set _ = export_args.pop('months', None) %}
+      <a href="{{ url_for('reports.redmine_report_export', months=request.args.getlist('months'), **export_args) }}"
+         class="btn-export" title="Экспорт в Excel">
+        <i class="fas fa-file-excel"></i>
+      </a>
+    </div>
+
+    {% if report_data %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th style="width: 70%;">Группа</th>
+          <th style="width: 15%; text-align: center;">Задач</th>
+          <th style="width: 15%;"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for group in report_data %}
+        <tr class="row-group" data-group-id="{{ group.id if group.id is not none else 'unassigned' }}" data-top-level="true" data-group-type="{{ group_mode }}">
+          <td>
+            <div class="group-name">
+              <i class="fas fa-chevron-right chevron"></i>
+              <div class="group-icon">
+                <i class="fas {% if group_mode.startswith('EXECUTOR') %}fa-user{% else %}fa-calendar{% endif %}"></i>
+              </div>
+              {{ group.name or 'Исполнитель не назначен' }}
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <span class="count-badge">{{ group.count }}</span>
+          </td>
+          <td></td>
+        </tr>
+
+        {% if group.children %}
+        {% for child in group.children %}
+        <tr class="row-subgroup" data-group-id="{{ child.id if child.id is not none else 'unassigned' }}" data-parent-id="{{ group.id if group.id is not none else 'unassigned' }}" data-group-type="{{ group_mode }}">
+          <td>
+            <div class="group-name">
+              <i class="fas fa-chevron-right chevron"></i>
+              <i class="fas fa-angle-right" style="color: var(--primary-color); margin-right: 8px;"></i>
+              {{ child.name }}
+            </div>
+          </td>
+          <td style="text-align: center;">
+            <span class="count-badge" style="background: var(--secondary-color);">{{ child.count }}</span>
+          </td>
+          <td></td>
+        </tr>
+        <tr class="detail-row d-none" id="detail-row-{{ group.id if group.id is not none else 'unassigned' }}-{{ child.id if child.id is not none else 'unassigned' }}">
+          <td colspan="3">
+            <div class="detail-content" id="detail-container-{{ group.id if group.id is not none else 'unassigned' }}-{{ child.id if child.id is not none else 'unassigned' }}">
+              <div style="text-align: center; padding: 20px;">
+                <div class="spinner-border text-primary" role="status"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        {% else %}
+        <tr class="detail-row d-none" id="detail-row-{{ group.id if group.id is not none else 'unassigned' }}">
+          <td colspan="3">
+            <div class="detail-content" id="detail-container-{{ group.id if group.id is not none else 'unassigned' }}">
+              <div style="text-align: center; padding: 20px;">
+                <div class="spinner-border text-primary" role="status"></div>
+              </div>
+            </div>
+          </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+
+        <tr class="row-total">
+          <td style="text-align: right; padding-right: 24px;">ОБЩИЙ ИТОГ</td>
+          <td style="text-align: center;">{{ total_issues_count }}</td>
+          <td></td>
+        </tr>
+      </tbody>
+    </table>
+
+    {% if total_pages > 1 %}
+    <div style="border-top: 1px solid var(--border-color);">
+      <ul class="pagination-modern">
+        <li class="{% if page <= 1 %}disabled{% endif %}">
+          <a href="{% if page > 1 %}{{ url_for('reports.redmine_report', page=page-1, project_id=project_id, group_mode=group_mode, report_year=report_year, executor_id=executor_id, status_filter=status_filter, months=months, date_from=date_from, date_to=date_to, period_type=period_type) }}{% else %}#{% endif %}">
+            <i class="fas fa-chevron-left"></i>
+          </a>
+        </li>
+        <li class="active"><span>{{ page }} / {{ total_pages }}</span></li>
+        <li class="{% if page >= total_pages %}disabled{% endif %}">
+          <a href="{% if page < total_pages %}{{ url_for('reports.redmine_report', page=page+1, project_id=project_id, group_mode=group_mode, report_year=report_year, executor_id=executor_id, status_filter=status_filter, months=months, date_from=date_from, date_to=date_to, period_type=period_type) }}{% else %}#{% endif %}">
+            <i class="fas fa-chevron-right"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon"><i class="fas fa-inbox"></i></div>
+      <p>Данные не найдены</p>
+    </div>
+    {% endif %}
+  </div>
+  {% elif not project_id and projects %}
+  <div class="empty-state">
+    <div class="empty-state-icon"><i class="fas fa-chart-bar"></i></div>
+    <p>Выберите проект для формирования отчёта</p>
+  </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Custom Select with Search
+  const executorSelect = document.getElementById('executor-select');
+  if (executorSelect) {
+    const trigger = executorSelect.querySelector('.custom-select-trigger');
+    const dropdown = executorSelect.querySelector('.custom-select-dropdown');
+    const searchInput = executorSelect.querySelector('.custom-select-search input');
+    const list = executorSelect.querySelector('.custom-select-list');
+    const items = list.querySelectorAll('.custom-select-item');
+    const hiddenInput = executorSelect.querySelector('input[name="executor_id"]');
+    const selectText = trigger.querySelector('.select-text');
+
+    // Initialize with current value
+    const currentValue = hiddenInput.value;
+    if (currentValue) {
+      const currentItem = executorSelect.querySelector(`.custom-select-item[data-value="${currentValue}"]`);
+      if (currentItem) {
+        items.forEach(i => i.classList.remove('selected'));
+        currentItem.classList.add('selected');
+        selectText.textContent = currentItem.textContent;
+        trigger.dataset.value = currentValue;
+      }
+    }
+
+    trigger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = dropdown.classList.contains('open');
+      closeAllSelects();
+      if (!isOpen) {
+        dropdown.classList.add('open');
+        trigger.classList.add('active');
+        searchInput.focus();
+      }
+    });
+
+    items.forEach(item => {
+      item.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const value = this.dataset.value;
+        const text = this.textContent;
+
+        items.forEach(i => i.classList.remove('selected'));
+        this.classList.add('selected');
+
+        selectText.textContent = text;
+        trigger.dataset.value = value;
+        hiddenInput.value = value;
+
+        dropdown.classList.remove('open');
+        trigger.classList.remove('active');
+        searchInput.value = '';
+        filterItems('');
+      });
+    });
+
+    searchInput.addEventListener('input', function() {
+      filterItems(this.value.toLowerCase());
+    });
+
+    searchInput.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+
+    function filterItems(query) {
+      let visibleCount = 0;
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(query)) {
+          item.classList.remove('hidden');
+          visibleCount++;
+        } else {
+          item.classList.add('hidden');
+        }
+      });
+
+      let noResults = list.querySelector('.custom-select-no-results');
+      if (visibleCount === 0) {
+        if (!noResults) {
+          noResults = document.createElement('div');
+          noResults.className = 'custom-select-no-results';
+          noResults.textContent = 'Ничего не найдено';
+          list.appendChild(noResults);
+        }
+        noResults.style.display = 'block';
+      } else if (noResults) {
+        noResults.style.display = 'none';
+      }
+    }
+
+    function closeAllSelects() {
+      document.querySelectorAll('.custom-select-dropdown.open').forEach(d => {
+        d.classList.remove('open');
+        d.closest('.custom-select').querySelector('.custom-select-trigger').classList.remove('active');
+      });
+    }
+
+    document.addEventListener('click', function() {
+      closeAllSelects();
+    });
+  }
+
+  // Month pills
+  const monthPills = document.querySelectorAll('.month-pill');
+  const monthsToggle = document.getElementById('months-toggle');
+
+  function updateMonthsToggleText() {
+    const anyChecked = Array.from(monthPills).some(pill => pill.querySelector('input').checked);
+    if (anyChecked) {
+      monthsToggle.textContent = 'Снять все';
+    } else {
+      monthsToggle.textContent = 'Выбрать все';
+    }
+  }
+
+  monthPills.forEach(pill => {
+    pill.addEventListener('click', function() {
+      const checkbox = this.querySelector('input[type="checkbox"]');
+      checkbox.checked = !checkbox.checked;
+      this.classList.toggle('active', checkbox.checked);
+      updateMonthsToggleText();
+    });
+  });
+
+  if (monthsToggle) {
+    monthsToggle.addEventListener('click', function(e) {
+      e.preventDefault();
+      const anyChecked = Array.from(monthPills).some(pill => pill.querySelector('input').checked);
+      const shouldCheck = !anyChecked;
+
+      monthPills.forEach(pill => {
+        const checkbox = pill.querySelector('input[type="checkbox"]');
+        checkbox.checked = shouldCheck;
+        pill.classList.toggle('active', shouldCheck);
+      });
+
+      updateMonthsToggleText();
+    });
+  }
+
+  document.querySelectorAll('.row-group, .row-subgroup').forEach(row => {
+    row.addEventListener('click', function(e) {
+      if (e.target.closest('a')) return;
+
+      const groupId = this.dataset.groupId;
+      const parentId = this.dataset.parentId;
+      const groupType = this.dataset.groupType;
+      const isTopLevel = this.dataset.topLevel === 'true';
+
+      const detailRowId = parentId ? `detail-row-${parentId}-${groupId}` : `detail-row-${groupId}`;
+      const containerId = parentId ? `detail-container-${parentId}-${groupId}` : `detail-container-${groupId}`;
+
+      const detailRow = document.getElementById(detailRowId);
+      const container = document.getElementById(containerId);
+
+      if (detailRow.classList.contains('d-none')) {
+        this.classList.add('expanded');
+        detailRow.classList.remove('d-none');
+        loadDetails(container, groupId, parentId, groupType, isTopLevel);
+      } else {
+        this.classList.remove('expanded');
+        detailRow.classList.add('d-none');
+      }
+    });
+  });
+
+  function loadDetails(container, groupId, parentId, groupType, isTopLevel) {
+    const params = new URLSearchParams(window.location.search);
+
+    if (groupType === 'EXECUTOR_MONTH') {
+      if (isTopLevel) {
+        params.append('ctx_executor_id', groupId);
+      } else {
+        params.append('ctx_executor_id', parentId);
+        params.append('ctx_ym', groupId);
+      }
+    } else if (groupType === 'MONTH_EXECUTOR') {
+      if (isTopLevel) {
+        params.append('ctx_ym', groupId);
+      } else {
+        params.append('ctx_ym', parentId);
+        params.append('ctx_executor_id', groupId);
+      }
+    } else if (groupType === 'EXECUTOR') {
+      params.append('ctx_executor_id', groupId);
+    } else if (groupType === 'MONTH') {
+      params.append('ctx_ym', groupId);
+    }
+
+    params.set('detail_page', 1);
+
+    fetch(`{{ url_for('reports.redmine_report_details') }}?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          container.innerHTML = `<div style="color: #ef4444;">${data.error}</div>`;
+          return;
+        }
+        renderTable(container, data);
+      })
+      .catch(() => {
+        container.innerHTML = `<div style="color: #ef4444;">Ошибка загрузки</div>`;
+      });
+  }
+
+  function renderTable(container, data) {
+    if (!data.issues || !data.issues.length) {
+      container.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 20px;">Нет задач</div>';
+      return;
+    }
+
+    let html = `<table class="detail-table"><thead><tr>
+      <th>ID</th><th>Тема</th><th>Статус</th><th>Создана</th><th>Закрыта</th><th>Исполнитель</th>
+    </tr></thead><tbody>`;
+
+    data.issues.forEach(issue => {
+      html += `<tr>
+        <td><a href="https://helpdesk.teztour.com/issues/${issue.id}" target="_blank" class="issue-link">#${issue.id}</a></td>
+        <td>${issue.subject}</td>
+        <td>${issue.status_name}</td>
+        <td>${issue.created_on}</td>
+        <td>${issue.closed_on || '-'}</td>
+        <td>${issue.executor_name || '-'}</td>
+      </tr>`;
+    });
+
+    html += '</tbody></table>';
+
+    if (data.total_pages > 1) {
+      html += `<div style="display: flex; justify-content: center; gap: 8px; margin-top: 16px;">`;
+      if (data.page > 1) html += `<button onclick="changePage(${data.page - 1})" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer;"><i class="fas fa-chevron-left"></i></button>`;
+      html += `<span style="padding: 6px 12px;">${data.page} / ${data.total_pages}</span>`;
+      if (data.page < data.total_pages) html += `<button onclick="changePage(${data.page + 1})" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer;"><i class="fas fa-chevron-right"></i></button>`;
+      html += `</div>`;
+    }
+
+    container.innerHTML = html;
+  }
+
+  // Stale Tasks functionality
+  const btnLoadStale = document.getElementById('btn-load-stale');
+  const btnExportStale = document.getElementById('btn-export-stale');
+  const staleResults = document.getElementById('stale-results');
+  const staleTbody = document.getElementById('stale-tbody');
+  const staleCount = document.getElementById('stale-count');
+  const stalePagination = document.getElementById('stale-pagination');
+
+  let staleCurrentPage = 1;
+  let staleTotalPages = 1;
+
+  function getStalenessBadgeClass(days) {
+    if (days > 30) return 'stale-badge-danger';
+    if (days >= 15) return 'stale-badge-warning';
+    if (days >= 7) return 'stale-badge-info';
+    return 'stale-badge-success';
+  }
+
+  function getStalenessLabel(days) {
+    if (days > 30) return 'Критично';
+    if (days >= 15) return 'Требует внимания';
+    if (days >= 7) return 'Предупреждение';
+    return 'Норма';
+  }
+
+  function loadStaleTasks(page = 1) {
+    const projectId = document.getElementById('stale-project').value;
+    const staleDays = document.getElementById('stale-days').value;
+    const statusId = document.getElementById('stale-status').value;
+    const executorId = document.getElementById('stale-executor').value;
+
+    if (!projectId) {
+      alert('Выберите проект');
+      return;
+    }
+
+    const params = new URLSearchParams({
+      project_id: projectId,
+      stale_days: staleDays,
+      page: page
+    });
+    if (statusId) params.append('status_id', statusId);
+    if (executorId) params.append('executor_id', executorId);
+
+    btnLoadStale.disabled = true;
+    btnLoadStale.innerHTML = '<i class="fas fa-spinner fa-spin"></i>Загрузка...';
+
+    fetch(`{{ url_for('reports.redmine_stale_tasks') }}?${params.toString()}`)
+      .then(r => r.json())
+      .then(data => {
+        btnLoadStale.disabled = false;
+        btnLoadStale.innerHTML = '<i class="fas fa-search"></i>Показать зависшие задачи';
+
+        if (data.error) {
+          alert(data.error);
+          return;
+        }
+
+        staleResults.style.display = 'block';
+        staleCount.textContent = data.total;
+        staleCurrentPage = data.page;
+        staleTotalPages = data.total_pages;
+
+        if (data.issues && data.issues.length) {
+          let html = '';
+          data.issues.forEach(issue => {
+            const badgeClass = getStalenessBadgeClass(issue.stale_days);
+            const badgeLabel = getStalenessLabel(issue.stale_days);
+            html += `<tr>
+              <td><a href="https://helpdesk.teztour.com/issues/${issue.id}" target="_blank" class="issue-link">#${issue.id}</a></td>
+              <td>${issue.subject}</td>
+              <td>${issue.status_name}</td>
+              <td>${issue.assigned_to_name || '-'}</td>
+              <td>${issue.age_days} дн.</td>
+              <td>${issue.stale_days} дн.</td>
+              <td><span class="count-badge ${badgeClass}">${badgeLabel}</span></td>
+            </tr>`;
+          });
+          staleTbody.innerHTML = html;
+          btnExportStale.disabled = false;
+
+          // Pagination
+          let pagHtml = '';
+          if (data.total_pages > 1) {
+            if (data.page > 1) {
+              pagHtml += `<button onclick="window.loadStalePage(${data.page - 1})" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer;"><i class="fas fa-chevron-left"></i></button>`;
+            }
+            pagHtml += `<span style="padding: 6px 12px;">${data.page} / ${data.total_pages}</span>`;
+            if (data.page < data.total_pages) {
+              pagHtml += `<button onclick="window.loadStalePage(${data.page + 1})" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer;"><i class="fas fa-chevron-right"></i></button>`;
+            }
+          }
+          stalePagination.innerHTML = pagHtml;
+        } else {
+          staleTbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Нет зависших задач</td></tr>';
+          stalePagination.innerHTML = '';
+          btnExportStale.disabled = true;
+        }
+      })
+      .catch(err => {
+        btnLoadStale.disabled = false;
+        btnLoadStale.innerHTML = '<i class="fas fa-search"></i>Показать зависшие задачи';
+        alert('Ошибка загрузки данных');
+        console.error(err);
+      });
+  }
+
+  window.loadStalePage = function(page) {
+    loadStaleTasks(page);
+  };
+
+  if (btnLoadStale) {
+    btnLoadStale.addEventListener('click', () => loadStaleTasks(1));
+  }
+
+  if (btnExportStale) {
+    btnExportStale.addEventListener('click', function() {
+      const projectId = document.getElementById('stale-project').value;
+      const staleDays = document.getElementById('stale-days').value;
+      const statusId = document.getElementById('stale-status').value;
+      const executorId = document.getElementById('stale-executor').value;
+
+      if (!projectId) {
+        alert('Выберите проект');
+        return;
+      }
+
+      const params = new URLSearchParams({
+        project_id: projectId,
+        stale_days: staleDays
+      });
+      if (statusId) params.append('status_id', statusId);
+      if (executorId) params.append('executor_id', executorId);
+
+      window.location.href = `{{ url_for('reports.redmine_stale_tasks_export') }}?${params.toString()}`;
+    });
+  }
+});
+</script>
+{% endblock %}

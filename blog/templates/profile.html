@@ -13,7 +13,11 @@
     <div class="profile-header">
       <div class="header-content">
         <div class="back-navigation">
-          <a href="{{ url_for('users.all_users') }}" class="back-btn">
+          <a
+            href="{{ return_to or url_for('users.all_users') }}"
+            class="back-btn"
+            id="back-to-users-btn"
+          >
             <i class="fas fa-arrow-left"></i>
             <span>Назад к пользователям</span>
           </a>
@@ -51,10 +55,11 @@
               data-bs-target="#avatarZoomModal"
             >
               <img
-                src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+                src="{{ get_user_image_url(user) }}"
                 alt="Аватар {{ user.full_name }}"
                 class="user-avatar"
                 loading="lazy"
+                onerror="this.onerror=null; this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}';"
               />
               <div class="avatar-overlay">
                 <i class="fas fa-expand-alt"></i>
@@ -109,7 +114,9 @@
               </div>
               <div class="meta-content">
                 <span class="meta-label">Созданных задач</span>
-                <span class="meta-value">{{ count_issues }}</span>
+                <span class="meta-value" id="issues-count-value" data-user-id="{{ user.id }}">
+                  ...
+                </span>
               </div>
             </div>
           </div>
@@ -309,10 +316,11 @@
       <div class="modal-body">
         <div class="zoom-avatar-container">
           <img
-            src="{{ url_for('static', filename='profile_pics/' + user.username + '/' + 'account_img' + '/' + user.image_file) }}"
+            src="{{ get_user_image_url(user) }}"
             alt="Увеличенный аватар {{ user.full_name }}"
             class="zoom-avatar"
             id="zoomAvatar"
+            onerror="this.onerror=null; this.src='{{ url_for('static', filename='profile_pics/default.jpg') }}';"
           />
         </div>
       </div>
@@ -322,6 +330,42 @@
 {% endblock %} {% block scripts %}
 <script>
   document.addEventListener("DOMContentLoaded", function () {
+    const issuesCountElement = document.getElementById("issues-count-value");
+    const backToUsersButton = document.getElementById("back-to-users-btn");
+
+    if (issuesCountElement) {
+      const userId = issuesCountElement.dataset.userId;
+      if (userId) {
+        fetch(`/api/user/${userId}/issues-count`, {
+          credentials: "same-origin",
+          headers: { "X-Requested-With": "fetch" },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data && data.success) {
+              issuesCountElement.textContent = data.count_issues;
+            } else {
+              issuesCountElement.textContent = "0";
+            }
+          })
+          .catch(() => {
+            issuesCountElement.textContent = "0";
+          });
+      }
+    }
+
+    if (backToUsersButton) {
+      backToUsersButton.addEventListener("click", function (event) {
+        const referrer = document.referrer || "";
+        const fromUsersPage = referrer.includes("/users");
+
+        if (fromUsersPage && window.history.length > 1) {
+          event.preventDefault();
+          window.history.back();
+        }
+      });
+    }
+
     // Ripple effect for buttons
     const actionBtns = document.querySelectorAll(".action-btn");
     actionBtns.forEach((btn) => {

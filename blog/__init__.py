@@ -197,6 +197,7 @@ def create_app():
     from blog.tasks.routes import tasks_bp  # Импортируем блюпринт задач
     from blog.tasks.api_routes import api_bp  # Импортируем новый API блюпринт
     from blog.search.routes import search_bp  # Импортируем блюпринт поиска
+    from blog.reports.routes import reports_bp  # Импортируем блюпринт отчетов
 
     app.register_blueprint(main)
     app.register_blueprint(users)
@@ -207,6 +208,7 @@ def create_app():
     app.register_blueprint(tasks_bp, url_prefix="/tasks")  # Регистрируем блюпринт задач с префиксом
     app.register_blueprint(api_bp)  # Регистрируем новый API блюпринт (уже с префиксом /tasks/api)
     app.register_blueprint(search_bp)  # Регистрируем блюпринт поиска
+    app.register_blueprint(reports_bp)  # Регистрируем блюпринт отчетов
 
     # Регистрируем оптимизированные маршруты
     try:

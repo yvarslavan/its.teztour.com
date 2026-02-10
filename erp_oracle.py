@@ -38,13 +38,38 @@ except ImportError:
     db_user_name = os.getenv('ORACLE_USER')
     db_password = os.getenv('ORACLE_PASSWORD')
 
+# Логирование для диагностики - проверяем значения конфигурации
+logger = logging.getLogger(__name__)
+logger.info(f"[ORACLE CONFIG] db_host={db_host}")
+logger.info(f"[ORACLE CONFIG] os.getenv('ORACLE_HOST')={os.getenv('ORACLE_HOST')}")
+logger.info(f"[ORACLE CONFIG] Using secure_config: {locals().get('secure_config', 'None')}")
+
 
 def connect_oracle(
     oracle_host, oracle_port, oracle_service_name, oracle_user_name, oracle_password
 ):
+    logger = logging.getLogger(__name__)
+    logger.info(f"[ORACLE DEBUG] Connecting to Oracle: {oracle_host}:{oracle_port}/{oracle_service_name}")
+
+    # Проверяем, является ли устройство мобильным (для увеличения таймаута)
     try:
-        # Добавляем таймаут подключения (по умолчанию 3 секунды)
-        tcp_timeout = int(os.getenv("ORACLE_TCP_TIMEOUT", "3"))
+        from flask import request
+        user_agent = request.headers.get('User-Agent', '').lower()
+        is_mobile = any(x in user_agent for x in ['mobile', 'android', 'iphone', 'ipad', 'ios'])
+        if is_mobile:
+            logger.info(f"[ORACLE DEBUG] Mobile device detected: {user_agent[:50]}...")
+    except:
+        is_mobile = False
+
+    try:
+        # Добавляем таймаут подключения (по умолчанию 10 секунд для мобильных устройств)
+        # Таймаут Oracle (в секундах). Для мобильных устройств рекомендуется 10-15 сек.
+        tcp_timeout = int(os.getenv("ORACLE_TCP_TIMEOUT", "10"))
+        # Для мобильных устройств увеличиваем таймаут еще больше
+        if is_mobile and tcp_timeout < 15:
+            tcp_timeout = 15
+            logger.info(f"[ORACLE DEBUG] Increased timeout for mobile device to: {tcp_timeout} seconds")
+        logger.info(f"[ORACLE DEBUG] TCP timeout set to: {tcp_timeout} seconds")
         oracle_connection = oracledb.connect(
             user=oracle_user_name,
             password=oracle_password,
@@ -53,12 +78,13 @@ def connect_oracle(
             service_name=oracle_service_name,
             tcp_connect_timeout=tcp_timeout  # Таймаут TCP подключения в секундах
         )
+        logger.info("[ORACLE DEBUG] Oracle connection established successfully")
         return oracle_connection
     except oracledb.DatabaseError as e:
-        logging.error("Ошибка выполнения открытия соединения: %s", str(e))
+        logger.error(f"[ORACLE DEBUG] DatabaseError during connection: {str(e)}")
         return None
     except Exception as e:
-        logging.error("Неожиданная ошибка при подключении к Oracle: %s", str(e))
+        logger.error(f"[ORACLE DEBUG] Unexpected error during Oracle connection: {str(e)}")
         return None
 
 

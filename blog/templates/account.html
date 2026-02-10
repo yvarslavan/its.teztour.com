@@ -612,12 +612,6 @@
                 {% for u_admin in all_users %}
                 <div class="user-item">
                   <div class="user-info">
-                    <div class="user-avatar-small">
-                      <img
-                        src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
-                        alt="{{ u_admin.username }}"
-                      />
-                    </div>
                     <span class="user-name">{{ u_admin.username }}</span>
                   </div>
                   <div class="user-toggle">
@@ -650,12 +644,6 @@
                 {% for u_admin in all_users %}
                 <div class="user-item">
                   <div class="user-info">
-                    <div class="user-avatar-small">
-                      <img
-                        src="{{ url_for('static', filename='profile_pics/' + u_admin.username + '/account_img/' + u_admin.image_file) }}"
-                        alt="{{ u_admin.username }}"
-                      />
-                    </div>
                     <span class="user-name">{{ u_admin.username }}</span>
                   </div>
                   <div class="user-toggle">
@@ -670,6 +658,38 @@
                         aria-label="Дать права на контакт-центр Москва для пользователя {{ u_admin.username }}"
                         title="Управление доступом к контакт-центру Москва"
                         {% if u_admin.can_access_contact_center_moscow %}checked{% endif %}
+                      />
+                      <span class="toggle-slider"></span>
+                    </label>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+
+            <!-- Отчёты Redmine -->
+            <div class="admin-section">
+              <div class="section-header">
+                <span>Отчёты Redmine</span>
+              </div>
+              <div class="users-list">
+                {% for u_admin in all_users %}
+                <div class="user-item">
+                  <div class="user-info">
+                    <span class="user-name">{{ u_admin.username }}</span>
+                  </div>
+                  <div class="user-toggle">
+                    <label class="toggle-switch" for="redmine_report_toggle_{{ u_admin.id }}">
+                      <input
+                        type="checkbox"
+                        class="permission-toggle"
+                        id="redmine_report_toggle_{{ u_admin.id }}"
+                        name="redmine_report_toggle_{{ u_admin.id }}"
+                        data-user-id="{{ u_admin.id }}"
+                        data-type="redmine_report"
+                        aria-label="Дать права на отчёты Redmine для пользователя {{ u_admin.username }}"
+                        title="Управление доступом к отчётам Redmine"
+                        {% if u_admin.can_access_redmine_report %}checked{% endif %}
                       />
                       <span class="toggle-slider"></span>
                     </label>
@@ -2148,18 +2168,23 @@
   .account-page-wrapper .users-list {
     display: flex;
     flex-direction: column;
-    gap: var(--spacing-sm);
+    gap: var(--spacing-xs);
+    max-height: 450px;
+    overflow-y: auto;
+    padding-right: var(--spacing-xs);
   }
 
   .account-page-wrapper .user-item {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: var(--spacing-md);
-    background: var(--surface-2);
-    border-radius: var(--radius-lg);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    background: var(--surface-1);
+    border-radius: var(--radius-md);
     transition: all var(--transition-normal);
     border: 1px solid var(--border-light);
+    min-height: 40px;
+    box-sizing: border-box;
   }
 
   .account-page-wrapper .user-item:hover {
@@ -2171,15 +2196,21 @@
   .account-page-wrapper .user-info {
     display: flex;
     align-items: center;
-    gap: var(--spacing-md);
+    justify-content: flex-start;
+    gap: var(--spacing-sm);
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
   }
 
   .account-page-wrapper .user-avatar-small {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     overflow: hidden;
     border: 2px solid var(--border-light);
+    flex: 0 0 auto;
+    flex-shrink: 0;
   }
 
   .account-page-wrapper .user-avatar-small img {
@@ -2189,9 +2220,24 @@
   }
 
   .account-page-wrapper .user-name {
-    font-size: 0.875rem;
+    font-size: 0.8rem;
     font-weight: 500;
     color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+    text-align: left;
+    line-height: 1.2;
+    flex: 1 1 auto;
+  }
+
+  .account-page-wrapper .user-toggle {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    margin-left: auto;
+    display: flex;
+    align-items: center;
   }
 
   /* Toggle Switch */
@@ -2486,17 +2532,20 @@
 
   .account-page-wrapper .admin-sections-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: var(--spacing-xl);
-    padding: var(--spacing-xl);
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--spacing-md);
+    padding: var(--spacing-md);
   }
 
   .account-page-wrapper .admin-section {
     background: var(--surface-2);
     border-radius: var(--radius-lg);
-    padding: var(--spacing-lg);
+    padding: var(--spacing-md);
     border: 1px solid var(--border-light);
     transition: all var(--transition-normal);
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .account-page-wrapper .admin-section:hover {
@@ -2506,14 +2555,14 @@
   }
 
   .account-page-wrapper .section-header {
-    padding: var(--spacing-md) 0;
-    font-size: 0.875rem;
+    padding: var(--spacing-sm) 0;
+    font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
     border-bottom: 1px solid var(--border-light);
-    margin-bottom: var(--spacing-md);
+    margin-bottom: var(--spacing-sm);
   }
 
   /* Responsive Design */
@@ -3963,6 +4012,74 @@
 
     // Инициализация ThemeManager для account страницы
     window.accountThemeManager = new AccountThemeManager();
+
+    // Обработчик для переключателей прав доступа (admin-section карточки)
+    const permissionToggles = document.querySelectorAll('.permission-toggle');
+    permissionToggles.forEach(function(toggle) {
+      toggle.addEventListener('change', function(e) {
+        const userId = this.getAttribute('data-user-id');
+        const permissionType = this.getAttribute('data-type');
+        const isEnabled = this.checked;
+
+        // Формируем данные для отправки
+        const formData = new FormData();
+        formData.append('userId', userId);
+        formData.append('permissionType', permissionType);
+        formData.append('value', isEnabled.toString());
+
+        // Отправляем запрос на сервер
+        fetch('/update_user_permissions', {
+          method: 'POST',
+          headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+          },
+          body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            console.log('✅ Разрешение обновлено:', permissionType, isEnabled);
+            // Показываем уведомление
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                icon: 'success',
+                title: 'Сохранено',
+                text: 'Настройка доступа обновлена',
+                timer: 1500,
+                showConfirmButton: false,
+                toast: true,
+                position: 'top-end',
+              });
+            }
+          } else {
+            console.error('❌ Ошибка обновления разрешения:', data.message);
+            // Возвращаем переключатель в исходное состояние
+            this.checked = !isEnabled;
+            if (typeof Swal !== 'undefined') {
+              Swal.fire({
+                icon: 'error',
+                title: 'Ошибка',
+                text: data.message || 'Не удалось обновить настройку',
+                timer: 3000,
+              });
+            }
+          }
+        })
+        .catch(error => {
+          console.error('❌ Ошибка запроса:', error);
+          // Возвращаем переключатель в исходное состояние
+          this.checked = !isEnabled;
+          if (typeof Swal !== 'undefined') {
+            Swal.fire({
+              icon: 'error',
+              title: 'Ошибка',
+              text: 'Не удалось обновить настройку. Проверьте подключение.',
+              timer: 3000,
+            });
+          }
+        });
+      });
+    });
 
     // Обработчик для переключателя Kanban подсказок
     const kanbanTipsToggle = document.getElementById("kanbanTipsToggle");

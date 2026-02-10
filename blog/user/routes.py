@@ -2,6 +2,7 @@ import shutil
 import logging
 import os
 import traceback
+import unicodedata
 from configparser import ConfigParser
 from datetime import datetime, timedelta
 import time
@@ -22,13 +23,14 @@ from flask import (
     g,
     current_app,
     send_file,
+    send_from_directory,
     jsonify,
     app,
     Response,
 )
 import requests
 from flask_login import current_user, logout_user, login_required, login_user, AnonymousUserMixin
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, load_only
 from werkzeug.utils import redirect
 from blog import db, scheduler
 from blog.models import User, Post, PushSubscription
@@ -74,7 +76,7 @@ users = Blueprint("users", __name__)
 USERS_ACCOUNT_URL = "users.account"
 # Используем переменные окружения напрямую
 import os
-url_recovery_password = os.getenv('RECOVERY_PASSWORD_URL') or ""
+# url_recovery_password = os.getenv('RECOVERY_PASSWORD_URL') or "" # DEPRECATED: Moved to Config
 # Получение пути к ERP файлу
 ERP_FILE_PATH = os.getenv('ERP_FILE_PATH') or ""
 # Определение пути к файлу в зависимости от операционной системы
@@ -111,9 +113,18 @@ def inject_util_functions():
 
 @users.route("/register", methods=["GET", "POST"])
 def register():
+    logger.info("[REGISTER DEBUG] Register route accessed")
     if current_user.is_authenticated:
         return redirect(url_for("main.blog"))
     form = RegistrationForm()
+
+    if request.method == "POST":
+        logger.info(f"[REGISTER DEBUG] POST request received")
+        logger.info(f"[REGISTER DEBUG] Form data: {dict(request.form)}")
+        logger.info(f"[REGISTER DEBUG] CSRF token in form: {request.form.get('csrf_token', 'NOT FOUND')}")
+        logger.info(f"[REGISTER DEBUG] Form errors: {form.errors}")
+        logger.info(f"[REGISTER DEBUG] Form validate_on_submit: {form.validate_on_submit()}")
+        logger.info(f"[REGISTER DEBUG] User-Agent: {request.headers.get('User-Agent', 'Unknown')}")
 
     if form.validate_on_submit():
         oracle_connection = None
@@ -122,7 +133,7 @@ def register():
                 db_host, db_port, db_service_name, db_user_name, db_password
             )
             if oracle_connection is None:
-                flash("Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.", "error")
+                flash("Не удалось подключиться к TEZ ERP. Проверьте VPN соединение (Cisco Secure Client) и стабильность интернета. Если проблема persists, попробуйте позже.", "error")
                 return render_template(
                     "register.html", form=form, title="Регистрация", legend="Регистрация"
                 )
@@ -134,7 +145,7 @@ def register():
 
             # Проверяем, что данные получены успешно
             if user_erp_data is None:
-                flash("Неверные учетные данные или ошибка подключения к ERP", "error")
+                flash("Не удалось проверить учетные данные в TEZ ERP. Возможные причины: неверный логин/пароль, истек срок действия VPN, или временные проблемы соединения.", "error")
                 return render_template(
                     "register.html", form=form, title="Регистрация", legend="Регистрация"
                 )
@@ -162,7 +173,7 @@ def register():
             flash("Спасибо за регистрацию. Теперь вы можете авторизоваться.", "success")
             return redirect(url_for("users.login"))
         except oracledb.DatabaseError as e:
-            flash(f"Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.", "error")
+            flash(f"Ошибка подключения к TEZ ERP. Проверьте VPN соединение и интернет. Если проблема повторяется, обратитесь в IT поддержку.", "error")
             logging.error(f"Oracle connection error during registration: {str(e)}")
         finally:
             if oracle_connection:
@@ -669,25 +680,148 @@ def account():
 def all_users():
     start_time = time.time()
     try:
-        # Получаем пользователей с оптимизированным запросом
-        all_users_data = User.query.order_by(User.last_seen.desc()).all()
+        page = request.args.get("page", 1, type=int)
+        per_page = request.args.get("per_page", 24, type=int)
+        per_page = max(6, min(per_page, 60))
+
+        # Загружаем только поля, реально используемые на странице /users
+        users_pagination = (
+            User.query.options(
+                load_only(
+                    User.id,
+                    User.username,
+                    User.email,
+                    User.full_name,
+                    User.position,
+                    User.department,
+                    User.office,
+                    User.phone,
+                    User.last_seen,
+                    User.online,
+                    User.image_file,
+                )
+            )
+            .order_by(User.last_seen.desc())
+            .paginate(page=page, per_page=per_page, error_out=False)
+        )
 
         # Используем пакетную валидацию вместо цикла
         from blog.user.utils import batch_validate_user_images
-        all_users_data = batch_validate_user_images(all_users_data)
+        users_pagination.items = batch_validate_user_images(users_pagination.items)
 
         # Логируем время выполнения
         execution_time = time.time() - start_time
-        current_app.logger.info(f"Users page loaded in {execution_time:.3f}s for {len(all_users_data)} users")
+        current_app.logger.info(
+            f"Users page loaded in {execution_time:.3f}s "
+            f"(page={users_pagination.page}, per_page={users_pagination.per_page}, total={users_pagination.total})"
+        )
 
         return render_template(
-            "users.html", title="Зарегистированные пользователи", users=all_users_data
+            "users.html", title="Зарегистированные пользователи", users=users_pagination
         )
     except Exception as e:
         execution_time = time.time() - start_time
         current_app.logger.error(f"Ошибка при загрузке страницы пользователей за {execution_time:.3f}s: {e}")
         flash("Произошла ошибка при загрузке списка пользователей", "error")
-        return render_template("users.html", title="Пользователи", users=[])
+        users_fallback = type(
+            "UsersFallbackPagination",
+            (),
+            {
+                "items": [],
+                "total": 0,
+                "pages": 0,
+                "page": 1,
+                "per_page": 24,
+                "has_prev": False,
+                "has_next": False,
+                "prev_num": None,
+                "next_num": None,
+                "iter_pages": staticmethod(lambda **kwargs: []),
+            },
+        )()
+        return render_template("users.html", title="Пользователи", users=users_fallback)
+
+
+def _normalize_user_search_text(value):
+    if value is None:
+        return ""
+
+    text = unicodedata.normalize("NFKD", str(value)).casefold()
+    text = "".join(char for char in text if not unicodedata.combining(char))
+    text = text.replace("ё", "е")
+    return " ".join(text.split())
+
+
+@users.get("/api/users/search")
+@login_required
+def users_search():
+    try:
+        query_text = request.args.get("q", "", type=str).strip()
+        return_to = request.args.get("return_to", "/users", type=str)
+        if not return_to.startswith("/users"):
+            return_to = "/users"
+
+        if not query_text:
+            return jsonify({"success": True, "html": "", "count": 0})
+
+        normalized_query = _normalize_user_search_text(query_text)
+
+        users_data = (
+            User.query.options(
+                load_only(
+                    User.id,
+                    User.username,
+                    User.email,
+                    User.full_name,
+                    User.position,
+                    User.department,
+                    User.office,
+                    User.phone,
+                    User.last_seen,
+                    User.online,
+                    User.image_file,
+                )
+            )
+            .order_by(User.last_seen.desc())
+            .all()
+        )
+
+        from blog.user.utils import batch_validate_user_images
+        users_data = batch_validate_user_images(users_data)
+
+        matched_users = []
+        for user_obj in users_data:
+            searchable_fields = [
+                user_obj.username,
+                user_obj.email,
+                user_obj.full_name,
+                user_obj.position,
+                user_obj.department,
+                user_obj.office,
+                user_obj.phone,
+            ]
+            normalized_blob = " ".join(
+                _normalize_user_search_text(field) for field in searchable_fields if field
+            )
+            if normalized_query in normalized_blob:
+                matched_users.append(user_obj)
+
+        rendered_cards = render_template(
+            "partials/users_cards.html",
+            users=matched_users,
+            return_to=return_to,
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "html": rendered_cards,
+                "count": len(matched_users),
+            }
+        )
+    except Exception as e:
+        current_app.logger.error(f"Ошибка глобального поиска пользователей: {e}")
+        return jsonify({"success": False, "html": "", "count": 0}), 500
 
 
 @users.get("/user/<string:username>")
@@ -709,10 +843,27 @@ def user_posts(username):
 @users.get("/user/<int:user_id>")
 @login_required
 def user_profile(user_id):
-    db_session = Session()
     try:
         user_data = User.query.filter_by(id=user_id).first_or_404()
+        return_to = request.args.get("next", "", type=str)
+        if not return_to.startswith("/users"):
+            return_to = ""
 
+        return render_template(
+            "profile.html",
+            title="Профиль",
+            user=user_data,
+            count_issues=None,
+            return_to=return_to,
+        )
+    except Exception as e:
+        current_app.logger.error(f"Ошибка при обработке профиля пользователя с ID {user_id}: {e}")
+        return "Ошибка сервера", 500
+
+
+def _get_user_issues_count(user_data):
+    db_session = Session()
+    try:
         # Используем прямой SQL запрос вместо ORM
         if user_data.is_redmine_user:
             sql = text("""
@@ -725,33 +876,59 @@ def user_profile(user_id):
                 sql,
                 {"email": user_data.email, "redmine_id": user_data.id_redmine_user}
             )
-            count_issues = result.scalar()
-        else:
-            sql = text("""
-            SELECT COUNT(*) as count
-            FROM issues
-            WHERE easy_email_to = :email
-               OR easy_email_to = :alt_email
-            """)
-            result = db_session.execute(
-                sql,
-                {
-                    "email": user_data.email,
-                    "alt_email": user_data.email.replace("@tez-tour.com", "@msk.tez-tour.com")
-                }
-            )
-            count_issues = result.scalar()
-        return render_template(
-            "profile.html",
-            title="Профиль",
-            user=user_data,
-            count_issues=count_issues
+            return result.scalar() or 0
+
+        sql = text("""
+        SELECT COUNT(*) as count
+        FROM issues
+        WHERE easy_email_to = :email
+           OR easy_email_to = :alt_email
+        """)
+        result = db_session.execute(
+            sql,
+            {
+                "email": user_data.email,
+                "alt_email": user_data.email.replace("@tez-tour.com", "@msk.tez-tour.com")
+            }
         )
-    except Exception as e:
-        current_app.logger.error(f"Ошибка при обработке профиля пользователя с ID {user_id}: {e}")
-        return "Ошибка сервера", 500
+        return result.scalar() or 0
     finally:
         db_session.close()
+
+
+@users.get("/api/user/<int:user_id>/issues-count")
+@login_required
+def user_issues_count(user_id):
+    try:
+        user_data = User.query.filter_by(id=user_id).first_or_404()
+        count_issues = _get_user_issues_count(user_data)
+        return jsonify({"success": True, "count_issues": int(count_issues)})
+    except Exception as e:
+        current_app.logger.error(f"Ошибка получения количества задач пользователя с ID {user_id}: {e}")
+        return jsonify({"success": False, "count_issues": 0}), 500
+
+
+@users.get("/user-avatar/<string:username>/<string:image_file>")
+@login_required
+def user_avatar(username, image_file):
+    # Basic traversal guard for filename segment.
+    if os.path.basename(image_file) != image_file:
+        return "Некорректное имя файла", 400
+
+    avatar_dir = os.path.join(
+        current_app.root_path,
+        "static",
+        "profile_pics",
+        username,
+        "account_img",
+    )
+    avatar_path = os.path.join(avatar_dir, image_file)
+
+    if os.path.exists(avatar_path):
+        return send_from_directory(avatar_dir, image_file)
+
+    default_dir = os.path.join(current_app.root_path, "static", "profile_pics")
+    return send_from_directory(default_dir, "default.jpg")
 
 
 @users.route("/user_delete/<string:username>", methods=["GET", "POST"])
@@ -912,6 +1089,7 @@ def send_password():
         return jsonify({"message": "Имя пользователя обязательно."}), 400
 
     # Проверяем, что URL восстановления пароля задан
+    url_recovery_password = current_app.config.get("RECOVERY_PASSWORD_URL")
     print(f"[DEBUG] url_recovery_password = '{url_recovery_password}'", flush=True)
     if not url_recovery_password:
         logger.error("RECOVERY_PASSWORD_URL не задан в конфигурации")
@@ -923,7 +1101,7 @@ def send_password():
             "Username": username,
             "Send": "Отправить мне Пароль",
         }
-        response = send_request(payload)
+        response = send_request(payload, url_recovery_password)
 
         if response is None:
             return jsonify({"message": "Ошибка при отправке запроса"}), 500
@@ -947,7 +1125,9 @@ def send_password():
         return jsonify({"message": "Произошла ошибка", "detail": str(e)}), 500
 
 
-def send_request(payload):
+def send_request(payload, url_recovery_password=None):
+    if not url_recovery_password:
+        url_recovery_password = current_app.config.get("RECOVERY_PASSWORD_URL")
     try:
         # Для локальной разработки: отключаем прокси, если он вызывает 407
         proxies = {}
@@ -1075,6 +1255,8 @@ def update_user_permissions():
         user.can_access_quality_control = value
     elif permission_type == "contact_center_moscow": # Новое разрешение
         user.can_access_contact_center_moscow = value
+    elif permission_type == "redmine_report": # Новое разрешение для отчётов Redmine
+        user.can_access_redmine_report = value
     else:
         return jsonify({"success": False, "message": "Неизвестный тип разрешения"}), 400
 

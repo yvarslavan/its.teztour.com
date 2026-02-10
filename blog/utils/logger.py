@@ -56,6 +56,12 @@ def configure_blog_logger():
     blog_package_logger = logging.getLogger('blog')
     blog_package_logger.setLevel(log_level)
 
+    # Настраиваем дополнительные логгеры, которые должны писать в тот же файл
+    additional_loggers = ['erp_oracle', 'blog.user.forms', 'blog.user.routes']
+    for logger_name in additional_loggers:
+        extra_logger = logging.getLogger(logger_name)
+        extra_logger.setLevel(log_level)
+
     # Предотвращаем повторное добавление обработчиков, если они уже есть
     if not blog_package_logger.handlers:
         formatter = JsonFormatter(
@@ -78,6 +84,11 @@ def configure_blog_logger():
             )
             file_handler.setFormatter(formatter)
             blog_package_logger.addHandler(file_handler)
+
+            # Добавляем тот же handler для дополнительных логгеров
+            for logger_name in additional_loggers:
+                extra_logger = logging.getLogger(logger_name)
+                extra_logger.addHandler(file_handler)
         except Exception as e:
             logging.basicConfig(level=log_level)
             logging.getLogger().critical(f"Failed to configure file logger: {e}")
@@ -86,3 +97,8 @@ def configure_blog_logger():
         console_handler = logging.StreamHandler(sys.stdout)
         console_handler.setFormatter(formatter)
         blog_package_logger.addHandler(console_handler)
+
+        # Добавляем console handler для дополнительных логгеров
+        for logger_name in additional_loggers:
+            extra_logger = logging.getLogger(logger_name)
+            extra_logger.addHandler(console_handler)

@@ -4,21 +4,28 @@
 Универсальный файл для запуска Flask приложения в режиме разработки
 Заменяет run_server.py и run_dev.py
 """
+
 import os
 import sys
 from pathlib import Path
-from dotenv import load_dotenv
+from env_loader import load_environment
 
-load_dotenv()
+env_path, env_loaded, is_wsl = load_environment(Path(__file__).resolve().parent)
 # ВАЖНО: Полностью отключаем прокси ДО импорта любых библиотек
 # Удаляем все прокси-переменные и устанавливаем NO_PROXY=* для гарантии
-for _proxy_var in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy',
-                   'ALL_PROXY', 'all_proxy']:
+for _proxy_var in [
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "ALL_PROXY",
+    "all_proxy",
+]:
     if _proxy_var in os.environ:
         del os.environ[_proxy_var]
 # Устанавливаем NO_PROXY=* чтобы гарантированно отключить прокси для всех хостов
-os.environ['NO_PROXY'] = '*'
-os.environ['no_proxy'] = '*'
+os.environ["NO_PROXY"] = "*"
+os.environ["no_proxy"] = "*"
 
 
 def setup_development_environment():
@@ -35,69 +42,50 @@ def setup_development_environment():
     if not root_logger.handlers:
         try:
             from blog.utils.logger import configure_blog_logger
+
             configure_blog_logger()
         except ImportError:
             # Fallback если blog.utils.logger недоступен
             from logging.handlers import RotatingFileHandler
 
-            os.makedirs('logs', exist_ok=True)
+            os.makedirs("logs", exist_ok=True)
             file_handler = RotatingFileHandler(
-                'logs/app.log',
-                maxBytes=int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024))),
-                backupCount=int(os.getenv('LOG_BACKUP_COUNT', '5')),
-                encoding='utf-8'
+                "logs/app.log",
+                maxBytes=int(os.getenv("LOG_MAX_BYTES", str(10 * 1024 * 1024))),
+                backupCount=int(os.getenv("LOG_BACKUP_COUNT", "5")),
+                encoding="utf-8",
             )
 
             logging.basicConfig(
                 level=logging.INFO,
-                format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                handlers=[
-                    file_handler,
-                    logging.StreamHandler()
-                ],
-                force=True
+                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+                handlers=[file_handler, logging.StreamHandler()],
+                force=True,
             )
 
     # Suppress RotatingFileHandler permission errors on Windows
     import warnings
-    warnings.filterwarnings("ignore", message=".*RotatingFileHandler.*PermissionError.*", category=UserWarning)
+
+    warnings.filterwarnings(
+        "ignore",
+        message=".*RotatingFileHandler.*PermissionError.*",
+        category=UserWarning,
+    )
 
     print("✅ Логирование настроено")
 
     # Загружаем конфигурацию в зависимости от окружения
     BASE_DIR = Path(__file__).resolve().parent
-
-    # Определяем окружение (development по умолчанию для локальной разработки)
     env_mode = os.environ.get("FLASK_ENV", "development")
 
-    # Проверяем что мы в WSL
-    is_wsl = False
-    try:
-        with open('/proc/version', 'r') as f:
-            is_wsl = 'microsoft' in f.read().lower()
-    except:
-        pass
-
-    # Выбираем файл конфигурации
-    if env_mode == "production":
-        env_path = BASE_DIR / ".env.production"
-        if not env_path.exists():
-            env_path = BASE_DIR / ".env"  # Fallback на .env если production нет
-    else:
-        # В WSL всегда используем .env (создается setup_wsl_config.py)
-        if is_wsl and (BASE_DIR / ".env").exists():
-            env_path = BASE_DIR / ".env"
-        else:
-            env_path = BASE_DIR / ".env.development"
-            if not env_path.exists():
-                env_path = BASE_DIR / ".env"  # Fallback на .env если development нет
-
-    if env_path.exists():
-        load_dotenv(env_path)
+    env_path, env_loaded, is_wsl = load_environment(BASE_DIR, env_mode)
+    if env_loaded:
         wsl_info = " [WSL detected]" if is_wsl else ""
-        print(f"✅ Загружены переменные окружения из {env_path.name} (режим: {env_mode}){wsl_info}")
+        print(
+            f"✅ Загружены переменные окружения из {env_path.name} (режим: {env_mode}){wsl_info}"
+        )
     else:
-        print("⚠️ Файл конфигурации не найден. Создайте .env.development или .env.production")
+        print(f"⚠️ Файл конфигурации не найден: {env_path}")
 
 
 def main():

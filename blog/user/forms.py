@@ -1,4 +1,5 @@
 from flask import flash
+import logging
 from flask_login import current_user
 from flask_wtf import FlaskForm
 from flask_wtf.file import FileAllowed, FileSize
@@ -52,34 +53,54 @@ class RegistrationForm(FlaskForm):
             )
 
     def validate_password(self, password):
+        logger = logging.getLogger(__name__)
+        logger.info(f"[REGISTRATION DEBUG] Starting password validation for user: {login_erp}")
+        logger.info(f"[REGISTRATION DEBUG] Oracle connection params - host: {db_host}, port: {db_port}, service: {db_service_name}")
         try:
+            logger.info("[REGISTRATION DEBUG] Attempting Oracle connection...")
             conn_oracle = connect_oracle(
                 db_host, db_port, db_service_name, db_user_name, db_password
             )
+            logger.info(f"[REGISTRATION DEBUG] Oracle connection result: {conn_oracle is not None}")
             if not conn_oracle:
+                logger.error("[REGISTRATION DEBUG] Oracle connection is None - cannot connect to ERP")
                 flash(
-                    "Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.",
+                    "Не удалось подключиться к TEZ ERP. "
+                    "Проверьте: 1) Включен ли VPN (Cisco Secure Client), "
+                    "2) Стабильность интернет-соединения. "
+                    "Если проблема persists, попробуйте позже.",
                     "danger",
                 )
                 raise ValidationError(
                     "Registration service temporarily unavailable"
                 )
 
+            logger.info(f"[REGISTRATION DEBUG] Oracle connected, verifying credentials for: {login_erp}")
             check_user_erp = verify_credentials(conn_oracle, login_erp, password.data)
+            logger.info(f"[REGISTRATION DEBUG] verify_credentials result: {check_user_erp}")
             conn_oracle.close()
             if not check_user_erp:
+                logger.warning(f"[REGISTRATION DEBUG] Credentials verification failed for user: {login_erp}")
                 flash(
-                    "Не удалось завершить регистрацию. Ваши данные не соответствуют аккаунту в TEZ ERP.",
+                    "Не удалось проверить учетные данные в TEZ ERP. "
+                    "Возможные причины: неверный логин/пароль, истек срок действия VPN, "
+                    "или временные проблемы соединения. Попробуйте снова.",
                     "danger",
                 )
                 raise ValidationError(
                     "Registration could not be completed. Your data does not match your TEZ ERP account"
                 )
+            logger.info(f"[REGISTRATION DEBUG] Password validation successful for user: {login_erp}")
         except ValidationError:
             raise
         except Exception as e:
+            logger.error(f"[REGISTRATION DEBUG] Exception during password validation: {str(e)}")
+            import traceback
+            logger.error(f"[REGISTRATION DEBUG] Traceback: {traceback.format_exc()}")
             flash(
-                "Сервис регистрации временно недоступен. Пожалуйста, попробуйте позже.",
+                "Ошибка подключения к TEZ ERP. "
+                "Убедитесь, что VPN включен и интернет-соединение стабильно. "
+                "Если проблема повторяется, обратитесь в IT поддержку.",
                 "danger",
             )
             raise ValidationError(
