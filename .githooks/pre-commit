@@ -1,0 +1,18 @@
+#!/bin/sh
+set -e
+
+if command -v gitleaks >/dev/null 2>&1; then
+  echo "[pre-commit] Running gitleaks..."
+  gitleaks protect --staged --verbose
+  exit $?
+fi
+
+if command -v ggshield >/dev/null 2>&1; then
+  echo "[pre-commit] Running ggshield..."
+  ggshield secret scan pre-commit
+  exit $?
+fi
+
+echo "[pre-commit] No secret scanner found (gitleaks/ggshield)."
+echo "[pre-commit] Install one scanner to enable commit blocking."
+exit 0

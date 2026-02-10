@@ -101,8 +101,12 @@ config.ini
 config.local.ini
 *.local.ini
 .env.local
+.env.*.local
 .env.production
 .env.development
+.env.backup*
+*.pem
+*.key
 
 # Дополнительные логи и временные файлы
 app_err.log
