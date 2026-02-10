@@ -135,9 +135,9 @@ log_file_path = stat_log_path
 
 # Настройки подключения к базе данных tez_tour_cc
 MYSQL_CONFIG = {
-    "host": os.getenv("MYSQL_VOIP_HOST", "voipcrm.tez-tour.com"),
-    "user": os.getenv("MYSQL_VOIP_USER", "root"),
-    "password": os.getenv("MYSQL_VOIP_PASSWORD", "weo2ik3jc"),
+    "host": os.getenv("MYSQL_VOIP_HOST", "127.0.0.1"),
+    "user": os.getenv("MYSQL_VOIP_USER", "voip_user"),
+    "password": os.getenv("MYSQL_VOIP_PASSWORD", ""),
     "database": os.getenv("MYSQL_VOIP_DATABASE", "tez_tour_cc"),
     "port": int(os.getenv("MYSQL_VOIP_PORT", 3306)),
     "charset": "utf8mb4",

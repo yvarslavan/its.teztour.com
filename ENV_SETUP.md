@@ -63,14 +63,14 @@ SECRET_KEY=dev-key-flask-helpdesk-2024-change-in-production
 # MySQL Redmine Database (через порт-прокси Windows)
 MYSQL_HOST=127.0.0.1
 MYSQL_DATABASE=redmine
-MYSQL_USER=easyredmine
-MYSQL_PASSWORD=QhAKtwCLGW
+MYSQL_USER=redmine_user
+MYSQL_PASSWORD=replace_with_real_password
 
 # MySQL Quality Database (через порт-прокси Windows на порт 3307)
 MYSQL_QUALITY_HOST=127.0.0.1:3307
 MYSQL_QUALITY_DATABASE=redmine
-MYSQL_QUALITY_USER=easyredmine
-MYSQL_QUALITY_PASSWORD=QhAKtwCLGW
+MYSQL_QUALITY_USER=quality_user
+MYSQL_QUALITY_PASSWORD=replace_with_real_password
 
 # Redmine API Configuration
 REDMINE_URL=https://helpdesk.teztour.com
@@ -91,16 +91,16 @@ FLASK_DEBUG=0
 SECRET_KEY=production-secret-key-change-this-in-real-deployment-2024
 
 # MySQL Redmine Database (прямое подключение в корпоративной сети)
-MYSQL_HOST=helpdesk.teztour.com
+MYSQL_HOST=redmine-db.example.internal
 MYSQL_DATABASE=redmine
-MYSQL_USER=easyredmine
-MYSQL_PASSWORD=QhAKtwCLGW
+MYSQL_USER=redmine_user
+MYSQL_PASSWORD=replace_with_real_password
 
 # MySQL Quality Database (прямое подключение в корпоративной сети)
-MYSQL_QUALITY_HOST=quality.teztour.com
+MYSQL_QUALITY_HOST=quality-db.example.internal
 MYSQL_QUALITY_DATABASE=redmine
-MYSQL_QUALITY_USER=easyredmine
-MYSQL_QUALITY_PASSWORD=QhAKtwCLGW
+MYSQL_QUALITY_USER=quality_user
+MYSQL_QUALITY_PASSWORD=replace_with_real_password
 
 # Redmine API Configuration
 REDMINE_URL=https://helpdesk.teztour.com
@@ -128,4 +128,3 @@ SESSION_COOKIE_SAMESITE=Lax
 # Проверка какой файл используется
 python3 -c "from dotenv import load_dotenv; from pathlib import Path; import os; print('Используется:', Path('.env').read_text()[:100] if Path('.env').exists() else 'не найден')"
 ```
-

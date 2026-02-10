@@ -21,11 +21,11 @@ class EmailSender:
         try:
             import os
             self.sender_email = os.getenv('SENDER_EMAIL') or "help@tez-tour.com"
-            self.sender_password = os.getenv('SENDER_PASSWORD') or "$GjvjoM%"
+            self.sender_password = os.getenv('SENDER_PASSWORD') or ""
         except:
             # Fallback значения
             self.sender_email = "help@tez-tour.com"
-            self.sender_password = "$GjvjoM%"
+            self.sender_password = ""
 
     def send_email(self, recipient, subject, message, cc=None, attachments=None, reply_to=None):
         """
