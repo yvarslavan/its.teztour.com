@@ -3,6 +3,8 @@
  * Реализует все функции согласно документации tasks_my_tasks_documentation.md
  */
 
+const __myTasksDebugLog = (...args) => { if (window.__TASKS_DEBUG__) console.log(...args); };
+
 const MyTasksApp = {
     // Конфигурация
     config: {
@@ -33,10 +35,10 @@ const MyTasksApp = {
 
     // Инициализация приложения
     init: function() {
-        console.log('🚀 Инициализация MyTasksApp');
+        __myTasksDebugLog('🚀 Инициализация MyTasksApp');
 
         if (this.state.isInitialized) {
-            console.log('⚠️ MyTasksApp уже инициализирован');
+            __myTasksDebugLog('⚠️ MyTasksApp уже инициализирован');
             return;
         }
 
@@ -49,7 +51,7 @@ const MyTasksApp = {
         sessionStorage.removeItem('return_from_task_page');
         sessionStorage.removeItem('return_from_task_view');
 
-        console.log('🔄 Логика спиннера:', {
+        __myTasksDebugLog('🔄 Логика спиннера:', {
             isReturn: this.state.isReturn,
             showSpinnerFirstLoad: this.state.showSpinnerFirstLoad,
             returnId: 'очищен'
@@ -65,14 +67,14 @@ const MyTasksApp = {
         this.initializeTooltips();
 
         this.state.isInitialized = true;
-        console.log('✅ MyTasksApp инициализирован успешно');
+        __myTasksDebugLog('✅ MyTasksApp инициализирован успешно');
     },
 
     // Показать спинер загрузки
     showLoadingSpinner: function() {
         const spinner = document.getElementById(this.config.loadingSpinnerId);
         if (spinner) {
-            console.log('🟢 Показываем спиннер');
+            __myTasksDebugLog('🟢 Показываем спиннер');
             spinner.classList.add('show');
         } else {
             console.warn('⚠️ Спиннер не найден:', this.config.loadingSpinnerId);
@@ -83,7 +85,7 @@ const MyTasksApp = {
     hideLoadingSpinner: function() {
         const spinner = document.getElementById(this.config.loadingSpinnerId);
         if (spinner) {
-            console.log('🔴 Скрываем спиннер');
+            __myTasksDebugLog('🔴 Скрываем спиннер');
             spinner.classList.remove('show');
         } else {
             console.warn('⚠️ Спиннер не найден:', this.config.loadingSpinnerId);
@@ -92,7 +94,7 @@ const MyTasksApp = {
 
     // Инициализация DataTable
     initializeDataTable: function() {
-        console.log('📊 Инициализация DataTable');
+        __myTasksDebugLog('📊 Инициализация DataTable');
 
         // Проверяем наличие jQuery и DataTables
         if (typeof $ === "undefined" || typeof $.fn.dataTable === "undefined") {
@@ -130,7 +132,7 @@ const MyTasksApp = {
                         params.priority_id = [this.state.currentFilters.priority];
                     }
 
-                    console.log('📤 Параметры запроса DataTables:', params);
+                    __myTasksDebugLog('📤 Параметры запроса DataTables:', params);
                     return params;
                 },
                 error: (xhr, error, code) => {
@@ -151,7 +153,7 @@ const MyTasksApp = {
                         if (type === 'display') {
                             return `<div class="task-id-container">
                                         <a href="/tasks/my-tasks/${data}" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${data} в новой вкладке">
-                                            <span class="task-id-number">#${data}</span>
+                                            <span class="task-id-number">${data}</span>
                                         </a>
                                     </div>`;
                         }
@@ -168,7 +170,6 @@ const MyTasksApp = {
                         if (!data || data === '-') {
                             return `<div class="email-container">
                                         <span class="email-placeholder">
-                                            <i class="fas fa-envelope-open text-muted"></i>
                                             <span class="text-muted">Не указан</span>
                                         </span>
                                     </div>`;
@@ -178,14 +179,12 @@ const MyTasksApp = {
 
                         if (isValidEmail) {
                             return `<div class="email-container">
-                                        <i class="fas fa-envelope text-primary"></i>
                                         <a href="mailto:${this.escapeHtml(data)}" class="email-link" title="Написать письмо: ${this.escapeHtml(data)}">
                                             <span class="email-text">${this.escapeHtml(truncatedEmail)}</span>
                                         </a>
                                     </div>`;
                         } else {
                             return `<div class="email-container">
-                                        <i class="fas fa-envelope text-primary"></i>
                                         <span class="email-text" title="${this.escapeHtml(data)}">${this.escapeHtml(truncatedEmail)}</span>
                                     </div>`;
                         }
@@ -203,10 +202,7 @@ const MyTasksApp = {
 
                         // HTML-структура, которая соответствует CSS из 'tasks_modern_ui.css'
                         const taskTitleHtml = `<a class="task-title" href="/tasks/my-tasks/${row.id}" title="${subjectHtml}">${subjectHtml}</a>`;
-                        const projectNameHtml = `<div class="project-name">
-                                                   <i class="fas fa-folder-open"></i>
-                                                   <span>${projectHtml}</span>
-                                                 </div>`;
+                        const projectNameHtml = `<div class="project-name"><span>${projectHtml}</span></div>`;
 
                         return `<div class="task-title-container">
                                     ${taskTitleHtml}
@@ -226,9 +222,6 @@ const MyTasksApp = {
                                     <div class="status-indicator-modern ${statusInfo.class}"
                                          data-status="${this.escapeHtml(data || 'N/A')}"
                                          title="${statusInfo.tooltip || this.escapeHtml(data || 'N/A')}">
-                                        <div class="status-icon">
-                                            <i class="${statusInfo.icon}"></i>
-                                        </div>
                                         <span class="status-text">${this.escapeHtml(statusInfo.shortName || data || 'N/A')}</span>
                                         <div class="status-tooltip">${statusInfo.tooltip || this.escapeHtml(data || 'N/A')}</div>
                                     </div>
@@ -247,7 +240,6 @@ const MyTasksApp = {
                         const priorityInfo = this.getPriorityInfo(data);
                         return `<div class="priority-container">
                                     <span class="priority-badge-redesigned ${priorityInfo.class}">
-                                        <i class="${priorityInfo.icon} priority-icon"></i>
                                         <span class="priority-text">${this.escapeHtml(data || 'N/A')}</span>
                                     </span>
                                 </div>`;
@@ -261,7 +253,6 @@ const MyTasksApp = {
                     responsivePriority: 7,
                     render: (data) => {
                         return `<div class="date-container">
-                                    <i class="fas fa-calendar-plus date-icon"></i>
                                     <span class="date-text">${this.formatDate(data)}</span>
                                 </div>`;
                     }
@@ -278,7 +269,6 @@ const MyTasksApp = {
                         const tooltipText = `Точное время последнего обновления: ${formattedDateTime}\nВременная зона: ${timezoneInfo.timezone} (UTC${timezoneInfo.offset})`;
 
                         return `<div class="date-container">
-                                    <i class="fas fa-calendar-check date-icon"></i>
                                     <span class="date-text" title="${tooltipText}">${formattedDateTime}</span>
                                 </div>`;
                     }
@@ -332,10 +322,10 @@ const MyTasksApp = {
                 }
             },
             drawCallback: () => {
-                console.log('✅ DataTable перерисована');
+                __myTasksDebugLog('✅ DataTable перерисована');
             },
             initComplete: () => {
-                console.log('✅ DataTable инициализирована');
+                __myTasksDebugLog('✅ DataTable инициализирована');
 
                 // Скрываем спиннер после полной инициализации
                 this.hideLoadingSpinner();
@@ -345,7 +335,7 @@ const MyTasksApp = {
 
                 // Логируем информацию о временной зоне для отладки
                 const timezoneInfo = this.getTimezoneInfo();
-                console.log('🕐 Информация о временной зоне клиента:', timezoneInfo);
+                __myTasksDebugLog('🕐 Информация о временной зоне клиента:', timezoneInfo);
             }
         };
 
@@ -361,7 +351,7 @@ const MyTasksApp = {
         // Инициализируем DataTable
         try {
             this.state.dataTable = $(tableElement).DataTable(dataTableConfig);
-            console.log('✅ DataTable создана успешно');
+            __myTasksDebugLog('✅ DataTable создана успешно');
         } catch (error) {
             console.error('❌ Ошибка создания DataTable:', error);
             this.hideLoadingSpinner();
@@ -385,13 +375,13 @@ const MyTasksApp = {
             // Сохраняем текущий режим просмотра
             const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
             sessionStorage.setItem('return_from_task_view', currentView);
-            console.log(`[MyTasksApp] 💾 Сохранен режим просмотра при переходе в детали: ${currentView}`);
+            __myTasksDebugLog(`[MyTasksApp] 💾 Сохранен режим просмотра при переходе в детали: ${currentView}`);
         });
     },
 
     // Загрузка фильтров
     loadFilters: function() {
-        console.log('🔄 Загрузка фильтров');
+        __myTasksDebugLog('🔄 Загрузка фильтров');
 
         fetch(this.config.apiEndpoints.filters)
             .then(response => {
@@ -401,7 +391,7 @@ const MyTasksApp = {
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Фильтры загружены:', data);
+                __myTasksDebugLog('✅ Фильтры загружены:', data);
                 this.populateFilters(data);
                 this.state.filtersLoaded = true;
             })
@@ -455,12 +445,12 @@ const MyTasksApp = {
             }
         }
 
-        console.log('✅ Фильтры заполнены');
+        __myTasksDebugLog('✅ Фильтры заполнены');
     },
 
     // Загрузка статистики
     loadStatistics: function() {
-        console.log('🔄 Загрузка статистики');
+        __myTasksDebugLog('🔄 Загрузка статистики');
 
         fetch(this.config.apiEndpoints.statistics)
             .then(response => {
@@ -470,7 +460,7 @@ const MyTasksApp = {
                 return response.json();
             })
             .then(data => {
-                console.log('✅ Статистика загружена:', data);
+                __myTasksDebugLog('✅ Статистика загружена:', data);
                 this.updateStatistics(data);
                 this.state.statisticsLoaded = true;
             })
@@ -482,7 +472,7 @@ const MyTasksApp = {
 
     // Обновление карточек статистики
     updateStatistics: function(data) {
-        console.log('📊 Обновление статистики с данными:', data);
+        __myTasksDebugLog('📊 Обновление статистики с данными:', data);
 
         // Обновляем основные значения
         this.updateElementText('total-tasks-summary', data.total_tasks || 0);
@@ -504,7 +494,7 @@ const MyTasksApp = {
             this.updateDetailedStatisticsNew(data.statistics.breakdown_details, data.status_counts);
         }
 
-        console.log('✅ Статистика обновлена');
+        __myTasksDebugLog('✅ Статистика обновлена');
     },
 
     // Обновление детализированной статистики (старый формат)
@@ -536,7 +526,7 @@ const MyTasksApp = {
 
     // Обновление детализированной статистики (новый формат)
     updateDetailedStatisticsNew: function(breakdownDetails, statusCounts) {
-        console.log('📊 Обновление детализации (новый формат):', breakdownDetails);
+        __myTasksDebugLog('📊 Обновление детализации (новый формат):', breakdownDetails);
 
         // Открытые задачи
         if (breakdownDetails.open) {
@@ -595,7 +585,7 @@ const MyTasksApp = {
 
     // Привязка событий
     bindEventListeners: function() {
-        console.log('🔗 Привязка событий');
+        __myTasksDebugLog('🔗 Привязка событий');
 
         // Фильтры
         const statusFilter = document.getElementById('status-filter');
@@ -649,12 +639,12 @@ const MyTasksApp = {
             retryBtn.addEventListener('click', () => this.retry());
         }
 
-        console.log('✅ События привязаны');
+        __myTasksDebugLog('✅ События привязаны');
     },
 
     // Обработка изменения фильтров
     handleFilterChange: function(filterType, value) {
-        console.log(`🔄 Изменен фильтр ${filterType}:`, value);
+        __myTasksDebugLog(`🔄 Изменен фильтр ${filterType}:`, value);
 
         this.state.currentFilters[filterType] = value;
 
@@ -675,7 +665,7 @@ const MyTasksApp = {
 
     // Очистка фильтра
     clearFilter: function(buttonId) {
-        console.log('🧹 Очистка фильтра:', buttonId);
+        __myTasksDebugLog('🧹 Очистка фильтра:', buttonId);
 
         const filterType = buttonId.replace('clear-', '').replace('-filter', '');
         const select = document.getElementById(`${filterType}-filter`);
@@ -693,7 +683,7 @@ const MyTasksApp = {
 
     // Сброс всех фильтров
     resetAllFilters: function() {
-        console.log('🔄 Сброс всех фильтров');
+        __myTasksDebugLog('🔄 Сброс всех фильтров');
 
         this.state.currentFilters = {
             status: '',
@@ -793,7 +783,7 @@ const MyTasksApp = {
 
     // Повторная попытка
     retry: function() {
-        console.log('🔄 Повторная попытка загрузки');
+        __myTasksDebugLog('🔄 Повторная попытка загрузки');
         this.hideError();
         this.showLoadingSpinner();
 
@@ -1166,7 +1156,7 @@ const MyTasksApp = {
 
     // Инициализация tooltips с защитой от зависания
     initializeTooltips: function() {
-        console.log('🎯 Инициализация tooltips для MyTasksApp');
+        __myTasksDebugLog('🎯 Инициализация tooltips для MyTasksApp');
 
         // Принудительно очищаем все существующие tooltips перед инициализацией
         if (typeof window.emergencyHideTooltips === 'function') {
@@ -1187,7 +1177,7 @@ const MyTasksApp = {
 
                 // Инициализируем заново
                 this.tooltipManager.init();
-                console.log('✅ KanbanTooltips инициализированы успешно');
+                __myTasksDebugLog('✅ KanbanTooltips инициализированы успешно');
             } catch (error) {
                 console.warn('⚠️ Ошибка при инициализации KanbanTooltips:', error);
             }
@@ -1211,9 +1201,10 @@ const MyTasksApp = {
             }
         }, { passive: true });
 
-        console.log('✅ Tooltips защита от зависания настроена');
+        __myTasksDebugLog('✅ Tooltips защита от зависания настроена');
     }
 };
 
 // Экспортируем для глобального использования
 window.MyTasksApp = MyTasksApp;
+

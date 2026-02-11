@@ -92,6 +92,7 @@ def create_app():
         )
         app.logger.info("🔧 [INIT] Режим отладки активен - настройки разработки применены")
     else:
+        static_max_age = int(os.getenv("STATIC_MAX_AGE_SECONDS", "86400"))
         # Для продакшена
         app.config.update(
             SESSION_COOKIE_NAME='helpdesk_session',
@@ -102,7 +103,10 @@ def create_app():
             PERMANENT_SESSION_LIFETIME=86400,
             WTF_CSRF_ENABLED=True,  # Включаем CSRF защиту
             WTF_CSRF_TIME_LIMIT=None,  # Отключаем ограничение времени для CSRF токенов
-            WTF_CSRF_SSL_STRICT=False  # Отключаем строгую проверку SSL для CSRF (если за прокси)
+            WTF_CSRF_SSL_STRICT=False,  # Отключаем строгую проверку SSL для CSRF (если за прокси)
+            # В продакшене включаем кэш статики
+            SEND_FILE_MAX_AGE_DEFAULT=static_max_age,
+            TEMPLATES_AUTO_RELOAD=False
         )
         app.logger.info("✅ [INIT] Продакшен режим активен - настройки безопасности применены")
 
@@ -118,16 +122,13 @@ def create_app():
     # НОВОЕ: Минимальный набор настроек для SQLAlchemy
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
-    # ДОПОЛНИТЕЛЬНОЕ ИСПРАВЛЕНИЕ: Принудительно устанавливаем настройки шаблонов
-    # независимо от режима debug (для гарантии)
-    app.config['TEMPLATES_AUTO_RELOAD'] = True
-    app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+    # Настройка Jinja окружения с учетом режима приложения
+    app.jinja_env.auto_reload = app.config.get('TEMPLATES_AUTO_RELOAD', app.debug)
+    if app.debug:
+        # В dev не кешируем шаблоны для мгновенного обновления
+        app.jinja_env.cache = {}
 
-    # Настройка Jinja окружения для отключения кэширования
-    app.jinja_env.auto_reload = True
-    app.jinja_env.cache = {}  # Очищаем кэш шаблонов
-
-    app.logger.info(f"🔧 [INIT] Принудительные настройки шаблонов:")
+    app.logger.info(f"🔧 [INIT] Настройки шаблонов:")
     app.logger.info(f"🔧 [INIT] TEMPLATES_AUTO_RELOAD: {app.config.get('TEMPLATES_AUTO_RELOAD')}")
     app.logger.info(f"🔧 [INIT] jinja_env.auto_reload: {app.jinja_env.auto_reload}")
     app.logger.info(f"🔧 [INIT] DEBUG: {app.debug}")

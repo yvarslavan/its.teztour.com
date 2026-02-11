@@ -1,0 +1,495 @@
+/* Extracted from my_tasks.html and refactored for light, fast UI */
+
+:root {
+    --tasks-accent: #1e4fae;
+    --tasks-accent-soft: #e8f0ff;
+    --tasks-bg: #f5f8fc;
+    --tasks-surface: #ffffff;
+    --tasks-border: #dbe3ef;
+    --tasks-text: #1f2937;
+    --tasks-muted: #64748b;
+}
+
+html[data-theme="light"] body,
+[data-theme="light"] body {
+    background: var(--tasks-bg) !important;
+    color: var(--tasks-text) !important;
+}
+
+.status-breakdown-dashboard,
+.filters-section,
+.view-toggle-container,
+.table-container {
+    background: var(--tasks-surface) !important;
+    border: 1px solid var(--tasks-border) !important;
+    box-shadow: 0 2px 10px rgba(15, 23, 42, 0.05) !important;
+}
+
+.status-card {
+    background: #fff !important;
+    border: 1px solid var(--tasks-border) !important;
+    box-shadow: none !important;
+}
+
+.status-card .card-header {
+    background: #fff !important;
+    border-bottom: 1px solid var(--tasks-border) !important;
+}
+
+.status-card .card-description,
+.status-card .card-description p,
+.summary-label,
+.filter-label,
+.stat-label {
+    color: var(--tasks-muted) !important;
+}
+
+.summary-value,
+.card-value,
+.stat-value,
+.table-title,
+.breakdown-title h2 {
+    color: var(--tasks-text) !important;
+}
+
+.table-title i,
+.kanban-header h2 i {
+    display: none !important;
+}
+
+/* Keep stylish icons visible in dashboard status cards */
+.status-card .card-icon {
+    display: flex !important;
+}
+
+.status-card .card-icon i {
+    display: inline-block !important;
+    color: #ffffff !important;
+}
+
+.toggle-details-btn,
+.global-toggle-btn,
+.view-toggle-btn {
+    border-color: var(--tasks-border) !important;
+    color: #334155 !important;
+    background: #fff !important;
+}
+
+.view-toggle-btn.active {
+    background: var(--tasks-accent) !important;
+    border-color: var(--tasks-accent) !important;
+    color: #fff !important;
+}
+
+.filter-select {
+    border-color: var(--tasks-border) !important;
+    color: var(--tasks-text) !important;
+    background: #fff !important;
+}
+
+/* Keep table visually stable at first paint */
+#tasksTable,
+#tasksTable thead,
+#tasksTable thead th {
+    background: #1e4fae !important;
+}
+
+#tasksTable thead th {
+    color: #fff !important;
+}
+
+#tasksTable tbody,
+#tasksTable tbody tr {
+    background: #fff !important;
+}
+
+#tasksTable tbody tr:hover,
+#tasksTable tbody tr:nth-child(even) {
+    background: #f8fbff !important;
+}
+
+#tasksTable .email-container i,
+#tasksTable .date-icon,
+#tasksTable .priority-icon,
+#tasksTable .status-icon,
+#tasksTable .project-name i {
+    display: none !important;
+}
+
+.email-link {
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: #1e40af !important;
+    text-decoration: none;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background: #eef4ff;
+    border: 1px solid #c9d8f7;
+}
+
+.email-link:hover {
+    background: #dbe7ff;
+    color: #1e3a8a !important;
+}
+
+.kanban-header {
+    background: #edf3ff !important;
+    border: 1px solid #d5e2fb !important;
+    box-shadow: none !important;
+}
+
+.kanban-header h2 {
+    color: #1e3a8a !important;
+}
+
+.kanban-column-header,
+.column-header {
+    background: #1e4fae !important;
+    border-color: #1b4698 !important;
+}
+
+.kanban-stats {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.stat-card {
+    padding: 6px 10px !important;
+    border-radius: 6px !important;
+    min-width: auto !important;
+}
+
+/* Table header: remove purple gradients and uppercase */
+#tasksTable.modern-datatable-redesigned thead th,
+.modern-datatable-redesigned thead th {
+    background: #1e4fae !important;
+    color: #ffffff !important;
+    border-bottom: 1px solid #1b4698 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.2) !important;
+    text-transform: none !important;
+    letter-spacing: normal !important;
+    font-weight: 600 !important;
+}
+
+#tasksTable.modern-datatable-redesigned thead th:last-child,
+.modern-datatable-redesigned thead th:last-child {
+    border-right: none !important;
+}
+
+#tasksTable.modern-datatable-redesigned thead th .th-content,
+.modern-datatable-redesigned thead th .th-content {
+    background: transparent !important;
+}
+
+#tasksTable.modern-datatable-redesigned thead th .th-content span,
+.modern-datatable-redesigned thead th .th-content span {
+    text-transform: none !important;
+    color: inherit !important;
+    font-size: 0.82rem !important;
+}
+
+/* Task ID: clean readable number without badge overlay */
+#tasksTable .col-id-cell {
+    text-align: center !important;
+}
+
+#tasksTable .task-id-container {
+    display: block !important;
+    width: 100% !important;
+    text-align: center !important;
+}
+
+#tasksTable .task-id-link {
+    display: inline-block !important;
+    text-decoration: none !important;
+    color: #1e3a8a !important;
+    font-weight: 700 !important;
+    line-height: 1.2 !important;
+    opacity: 1 !important;
+}
+
+#tasksTable .task-id-number {
+    display: inline !important;
+    background: transparent !important;
+    color: #1e3a8a !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    font-size: 0.9rem !important;
+    font-weight: 700 !important;
+    letter-spacing: 0.01em !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="light"] #tasksTable .task-id-link,
+[data-theme="light"] #tasksTable .task-id-link,
+html[data-theme="light"] #tasksTable .task-id-number,
+[data-theme="light"] #tasksTable .task-id-number {
+    color: #1e3a8a !important;
+    opacity: 1 !important;
+}
+
+#tasksTable .task-id-link:hover,
+#tasksTable .task-id-link:hover .task-id-number {
+    color: #1d4ed8 !important;
+    text-decoration: underline !important;
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Subject column: prevent text from colliding with cell borders */
+#tasksTable.modern-datatable-redesigned {
+    table-layout: fixed !important;
+}
+
+#tasksTable td.col-subject-cell {
+    min-width: 0 !important;
+    padding-right: 16px !important;
+}
+
+#tasksTable td.col-subject-cell .task-title-container {
+    min-width: 0 !important;
+    width: 100% !important;
+    overflow: hidden !important;
+}
+
+#tasksTable td.col-subject-cell .task-title {
+    display: -webkit-box !important;
+    -webkit-box-orient: vertical !important;
+    -webkit-line-clamp: 2 !important;
+    line-clamp: 2 !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+    line-height: 1.35 !important;
+    margin-bottom: 0.25rem !important;
+}
+
+#tasksTable td.col-subject-cell .project-name {
+    min-width: 0 !important;
+    white-space: normal !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+}
+
+/* Dark theme compatibility: override light-only palette from this file */
+html[data-theme="dark"] body,
+[data-theme="dark"] body {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard,
+html[data-theme="dark"] .filters-section,
+html[data-theme="dark"] .view-toggle-container,
+html[data-theme="dark"] .table-container,
+[data-theme="dark"] .status-breakdown-dashboard,
+[data-theme="dark"] .filters-section,
+[data-theme="dark"] .view-toggle-container,
+[data-theme="dark"] .table-container {
+    background: #111827 !important;
+    border-color: #2b3648 !important;
+    box-shadow: none !important;
+}
+
+html[data-theme="dark"] .status-card,
+html[data-theme="dark"] .status-card .card-header,
+[data-theme="dark"] .status-card,
+[data-theme="dark"] .status-card .card-header {
+    background: #111827 !important;
+    border-color: #2b3648 !important;
+}
+
+html[data-theme="dark"] .status-card .card-description,
+html[data-theme="dark"] .status-card .card-description p,
+html[data-theme="dark"] .summary-label,
+html[data-theme="dark"] .filter-label,
+html[data-theme="dark"] .stat-label,
+[data-theme="dark"] .status-card .card-description,
+[data-theme="dark"] .status-card .card-description p,
+[data-theme="dark"] .summary-label,
+[data-theme="dark"] .filter-label,
+[data-theme="dark"] .stat-label {
+    color: #94a3b8 !important;
+}
+
+html[data-theme="dark"] .summary-value,
+html[data-theme="dark"] .card-value,
+html[data-theme="dark"] .stat-value,
+html[data-theme="dark"] .table-title,
+html[data-theme="dark"] .breakdown-title h2,
+[data-theme="dark"] .summary-value,
+[data-theme="dark"] .card-value,
+[data-theme="dark"] .stat-value,
+[data-theme="dark"] .table-title,
+[data-theme="dark"] .breakdown-title h2 {
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .toggle-details-btn,
+html[data-theme="dark"] .global-toggle-btn,
+html[data-theme="dark"] .view-toggle-btn,
+[data-theme="dark"] .toggle-details-btn,
+[data-theme="dark"] .global-toggle-btn,
+[data-theme="dark"] .view-toggle-btn {
+    background: #1f2937 !important;
+    border-color: #334155 !important;
+    color: #dbeafe !important;
+}
+
+html[data-theme="dark"] .view-toggle-btn.active,
+[data-theme="dark"] .view-toggle-btn.active {
+    background: #1d4ed8 !important;
+    border-color: #1d4ed8 !important;
+    color: #eff6ff !important;
+}
+
+html[data-theme="dark"] .filter-select,
+[data-theme="dark"] .filter-select {
+    background: #334155 !important;
+    border-color: #475569 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .kanban-header,
+[data-theme="dark"] .kanban-header {
+    background: #1f2937 !important;
+    border-color: #334155 !important;
+}
+
+html[data-theme="dark"] .kanban-header h2,
+[data-theme="dark"] .kanban-header h2 {
+    color: #dbeafe !important;
+}
+
+html[data-theme="dark"] #tasksTable.modern-datatable-redesigned thead th,
+html[data-theme="dark"] .modern-datatable-redesigned thead th,
+[data-theme="dark"] #tasksTable.modern-datatable-redesigned thead th,
+[data-theme="dark"] .modern-datatable-redesigned thead th {
+    background: #1f3f7a !important;
+    color: #eff6ff !important;
+    border-bottom-color: #2a4d8f !important;
+    border-right-color: rgba(255, 255, 255, 0.16) !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody tr,
+[data-theme="dark"] #tasksTable tbody tr {
+    background: #111827 !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody tr:nth-child(even),
+[data-theme="dark"] #tasksTable tbody tr:nth-child(even) {
+    background: #141d2c !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody tr:hover,
+[data-theme="dark"] #tasksTable tbody tr:hover {
+    background: #1a2638 !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody td,
+[data-theme="dark"] #tasksTable tbody td {
+    color: #dbeafe !important;
+    border-color: #2b3648 !important;
+}
+
+html[data-theme="dark"] #tasksTable .task-id-link,
+html[data-theme="dark"] #tasksTable .task-id-number,
+[data-theme="dark"] #tasksTable .task-id-link,
+[data-theme="dark"] #tasksTable .task-id-number {
+    color: #93c5fd !important;
+}
+
+html[data-theme="dark"] #tasksTable .task-title,
+html[data-theme="dark"] #tasksTable .project-name,
+[data-theme="dark"] #tasksTable .task-title,
+[data-theme="dark"] #tasksTable .project-name {
+    color: #dbeafe !important;
+}
+
+html[data-theme="dark"] .email-link,
+[data-theme="dark"] .email-link {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+    color: #93c5fd !important;
+}
+
+html[data-theme="dark"] #tasksTable .email-text,
+html[data-theme="dark"] #tasksTable .email-placeholder,
+html[data-theme="dark"] #tasksTable .email-placeholder .text-muted,
+[data-theme="dark"] #tasksTable .email-text,
+[data-theme="dark"] #tasksTable .email-placeholder,
+[data-theme="dark"] #tasksTable .email-placeholder .text-muted {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] #tasksTable .status-indicator-modern,
+[data-theme="dark"] #tasksTable .status-indicator-modern {
+    background: rgba(148, 163, 184, 0.12) !important;
+    border: 1px solid #3b516a !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] #tasksTable .status-indicator-modern .status-text,
+[data-theme="dark"] #tasksTable .status-indicator-modern .status-text {
+    color: inherit !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] #tasksTable .status-indicator-modern.status-closed,
+[data-theme="dark"] #tasksTable .status-indicator-modern.status-closed {
+    border-left: 3px solid #34d399 !important;
+    color: #a7f3d0 !important;
+}
+
+html[data-theme="dark"] #tasksTable .date-text,
+[data-theme="dark"] #tasksTable .date-text {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] #tasksTable td.col-updated-cell .date-text,
+[data-theme="dark"] #tasksTable td.col-updated-cell .date-text {
+    color: #bfdbfe !important;
+}
+
+/* Dashboard cards: restore readable titles/text in dark theme */
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header {
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header *,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header * {
+    color: inherit !important;
+    background: transparent !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-title h3,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-title h3 {
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-value,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-value {
+    color: #f8fafc !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-description,
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-description p,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-description,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .card-description p {
+    color: #cbd5e1 !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details-btn,
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details-btn span,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details-btn,
+[data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details-btn span {
+    color: #dbeafe !important;
+}

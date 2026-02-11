@@ -1,0 +1,86 @@
+/* Extracted from blog/templates/issues.html for better caching and lower HTML payload */
+/* Final deterministic table layout override for /my-issues */
+  #issue.issues-table {
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  #issue.issues-table th.column-id,
+  #issue.issues-table td.col-id {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-date,
+  #issue.issues-table td.col-date {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-status,
+  #issue.issues-table td.col-status {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-subject,
+  #issue.issues-table td.col-subject {
+    width: auto !important;
+  }
+
+  #issue.issues-table td.col-subject {
+    min-width: 420px !important;
+  }
+
+  /* Brighter clickable blue + normal font weight for ID and Subject data */
+  #issue.issues-table tbody td a.issue-id-link,
+  #issue.issues-table tbody td a.issue-subject-link {
+    color: #00008B !important;
+    font-weight: 400 !important;
+  }
+
+  #issue.issues-table tbody td a.issue-id-link:hover,
+  #issue.issues-table tbody td a.issue-subject-link:hover {
+    color: #00008B !important;
+    font-weight: 400 !important;
+  }
+
+  #issue.issues-table tbody td a.issue-id-link span,
+  #issue.issues-table tbody td a.issue-subject-link span,
+  #issue.issues-table .issue-subject {
+    font-weight: 400 !important;
+  }
+
+  /* Final page-level override for /my-issues status chips */
+  #issue.issues-table .status-cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  #issue.issues-table .status-badge {
+    padding: 0.24rem 0.56rem !important;
+    border-radius: 6px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    line-height: 1.1 !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+  }
+
+  #issue.issues-table tr.status-closed .status-badge,
+  #issue.issues-table .status-badge.status-closed {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    border-color: #86efac !important;
+  }
+

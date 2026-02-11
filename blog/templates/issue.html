@@ -423,10 +423,10 @@
 {% endblock main_page %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/issue_detail.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/issue_detail.css') }}?v={{ cache_buster or '1' }}">
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/issue_detail.js') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}"></script>
+<script src="{{ url_for('static', filename='js/issue_detail.js') }}?v={{ cache_buster or '1' }}"></script>
 {% endblock %}
 

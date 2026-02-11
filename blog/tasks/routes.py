@@ -60,6 +60,20 @@ from werkzeug.utils import secure_filename
 
 # Константы для анонимного пользователя (из main/routes.py)
 ANONYMOUS_USER_ID = 4  # ID анонимного пользователя в Redmine
+DEFAULT_STATIC_ASSET_VERSION = "20260211"
+
+
+def _parse_bool_query_param(value, default=False):
+    """Безопасно парсит bool-параметры из query string."""
+    if value is None:
+        return default
+
+    normalized = str(value).strip().lower()
+    if normalized in {"1", "true", "yes", "y", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "n", "off"}:
+        return False
+    return default
 
 def get_support_email():
     """
@@ -244,8 +258,9 @@ def my_tasks_page():
     # Передаем переменную count_notifications для совместимости с layout.html
     count_notifications = 0  # Значение по умолчанию
 
-    # Генерируем cache_buster для принудительного обновления кэша
-    cache_buster = str(int(time.time()))
+    # Стабильная версия ассетов: сохраняет кэш браузера между запросами.
+    # Обновляется через STATIC_ASSET_VERSION в окружении при деплое.
+    cache_buster = os.getenv("STATIC_ASSET_VERSION", DEFAULT_STATIC_ASSET_VERSION)
 
     # Получаем настройку показа баннера Kanban для текущего пользователя
     show_kanban_tips = getattr(current_user, 'show_kanban_tips', True)
@@ -876,6 +891,19 @@ def get_my_tasks_filters_optimized():
                 "priorities": []
             }), 403
 
+        # Короткий кеш фильтров: данные редко меняются, но запрашиваются часто
+        try:
+            now_ts = time.time()
+            cache_ttl = 300
+            cache_key = "global"
+            if not hasattr(current_app, "_tasks_filters_cache"):
+                current_app._tasks_filters_cache = {}
+            cache_entry = current_app._tasks_filters_cache.get(cache_key)
+            if cache_entry and (now_ts - cache_entry["ts"] < cache_ttl):
+                return jsonify(cache_entry["data"])
+        except Exception:
+            pass
+
         # Получаем подключение к MySQL Redmine (ИСПРАВЛЕНО!)
         mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name, port=db_redmine_port)
         if not mysql_conn:
@@ -966,7 +994,7 @@ def get_my_tasks_filters_optimized():
         total_time = time.time() - start_time
         current_app.logger.info(f"🎯 [PERFORMANCE] ОПТИМИЗИРОВАННЫЙ API завершен за {total_time:.3f}с (статусы: {len(statuses)}, проекты: {len(projects)}, приоритеты: {len(priorities)})")
 
-        return jsonify({
+        response_payload = {
             "success": True,
             "statuses": statuses,
             "projects": projects,
@@ -977,7 +1005,17 @@ def get_my_tasks_filters_optimized():
                 "projects_time": round(projects_time, 3),
                 "priorities_time": round(priorities_time, 3)
             }
-        })
+        }
+
+        try:
+            current_app._tasks_filters_cache["global"] = {
+                "ts": time.time(),
+                "data": response_payload
+            }
+        except Exception:
+            pass
+
+        return jsonify(response_payload)
 
     except Exception as e:
         total_time = time.time() - start_time
@@ -1985,6 +2023,19 @@ def get_my_tasks_statuses():
 
         current_app.logger.info(f"Запрос статусов задач для пользователя {current_user.username}")
 
+        # Кешируем список статусов (общий для всех пользователей) на 5 минут
+        try:
+            now_ts = time.time()
+            cache_ttl = 300
+            cache_key = "global"
+            if not hasattr(current_app, "_tasks_statuses_cache"):
+                current_app._tasks_statuses_cache = {}
+            cache_entry = current_app._tasks_statuses_cache.get(cache_key)
+            if cache_entry and (now_ts - cache_entry["ts"] < cache_ttl):
+                return jsonify(cache_entry["data"])
+        except Exception:
+            pass
+
         # Получаем локализованные статусы из таблицы u_statuses
         localized_statuses = get_my_tasks_statuses_localized()
         current_app.logger.info(f"📋 Получено локализованных статусов: {len(localized_statuses) if localized_statuses else 0}")
@@ -2017,10 +2068,20 @@ def get_my_tasks_statuses():
 
         current_app.logger.info(f"✅ Получено {len(statuses_list)} статусов из u_statuses для пользователя {current_user.username}")
 
-        return jsonify({
+        response_payload = {
             "success": True,
             "data": statuses_list
-        })
+        }
+
+        try:
+            current_app._tasks_statuses_cache["global"] = {
+                "ts": time.time(),
+                "data": response_payload
+            }
+        except Exception:
+            pass
+
+        return jsonify(response_payload)
 
     except Exception as e:
         current_app.logger.error(f"Ошибка получения статусов для {current_user.username}: {str(e)}")
@@ -2039,9 +2100,11 @@ def get_my_tasks_direct_sql():
         # Получаем параметры
         length = request.args.get('length', 100, type=int)
         start = request.args.get('start', 0, type=int)
-        force_load = request.args.get('force_load', 'false').lower() == 'true'
+        force_load = _parse_bool_query_param(request.args.get('force_load'), default=False)
         view = request.args.get('view', 'table')
-        exclude_completed = request.args.get('exclude_completed', 'false').lower() == 'true'
+        exclude_completed = _parse_bool_query_param(request.args.get('exclude_completed'), default=False)
+        kanban_limit_per_status = request.args.get('kanban_limit_per_status', 10, type=int)
+        kanban_limit_per_status = max(1, min(kanban_limit_per_status, 50))
 
         # Подключаемся к базе данных
         mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name, port=db_redmine_port)
@@ -2051,7 +2114,7 @@ def get_my_tasks_direct_sql():
         cursor = mysql_conn.cursor()
         try:
             # Базовый SQL запрос
-            base_query = """
+            base_select = """
                 SELECT
                     i.id,
                     i.subject,
@@ -2078,32 +2141,74 @@ def get_my_tasks_direct_sql():
                 LEFT JOIN u_statuses us ON i.status_id = us.id
                 LEFT JOIN issue_statuses ist ON i.status_id = ist.id
                 LEFT JOIN enumerations e ON i.priority_id = e.id AND e.type = 'IssuePriority'
-                LEFT JOIN u_Priority up ON e.id = up.id
-                LEFT JOIN users ua ON i.assigned_to_id = ua.id
-                LEFT JOIN users uau ON i.author_id = uau.id
-                WHERE i.assigned_to_id = %s
+                    LEFT JOIN u_Priority up ON e.id = up.id
+                    LEFT JOIN users ua ON i.assigned_to_id = ua.id
+                    LEFT JOIN users uau ON i.author_id = uau.id
+                    WHERE i.assigned_to_id = %s
             """
 
             # Добавляем фильтры в зависимости от параметров
             params = [current_user.id_redmine_user]
+            kanban_status_counts = {}
+            used_window_kanban_query = False
 
             if exclude_completed:
                 # Исключаем статусы, помеченные как закрытые в issue_statuses
-                base_query += " AND ist.is_closed = 0"
+                base_select += " AND ist.is_closed = 0"
 
             if view == 'kanban':
-                # Для Kanban получаем задачи с ограничением по 10 в каждом статусе
-                base_query += " ORDER BY i.updated_on DESC"
+                # Для Kanban ограничиваем задачи по каждому статусу прямо в SQL (быстрее и меньше данных)
+                window_query = f"""
+                    SELECT *
+                    FROM (
+                        SELECT
+                            base.*,
+                            ROW_NUMBER() OVER (PARTITION BY base.status_id ORDER BY base.updated_on DESC) AS status_rank
+                        FROM (
+                            {base_select}
+                        ) AS base
+                    ) AS ranked
+                    WHERE ranked.status_rank <= %s
+                    ORDER BY ranked.updated_on DESC
+                """
+                window_params = [*params, kanban_limit_per_status]
+
+                try:
+                    cursor.execute(window_query, window_params)
+                    rows = cursor.fetchall()
+                    used_window_kanban_query = True
+
+                    # Подсчёт полных totals по статусам (для UI "shown/total")
+                    counts_query = """
+                        SELECT i.status_id, COUNT(*) AS total_count
+                        FROM issues i
+                        LEFT JOIN issue_statuses ist ON i.status_id = ist.id
+                        WHERE i.assigned_to_id = %s
+                    """
+                    counts_params = [current_user.id_redmine_user]
+                    if exclude_completed:
+                        counts_query += " AND ist.is_closed = 0"
+                    counts_query += " GROUP BY i.status_id"
+
+                    cursor.execute(counts_query, counts_params)
+                    for row in cursor.fetchall():
+                        status_id = row["status_id"]
+                        kanban_status_counts[status_id] = {
+                            "shown": 0,
+                            "total": row["total_count"]
+                        }
+                except Exception as window_query_error:
+                    current_app.logger.warning(
+                        f"⚠️ [DIRECT SQL] Window-функция недоступна, fallback на legacy режим: {window_query_error}"
+                    )
+                    fallback_query = base_select + " ORDER BY i.updated_on DESC"
+                    cursor.execute(fallback_query, params)
+                    rows = cursor.fetchall()
             else:
-                base_query += " ORDER BY i.updated_on DESC"
-                base_query += " LIMIT %s OFFSET %s"
+                base_query = base_select + " ORDER BY i.updated_on DESC LIMIT %s OFFSET %s"
                 params.extend([length, start])
-
-            current_app.logger.info(f"🔍 [DIRECT SQL] Выполняем запрос: {base_query}")
-            current_app.logger.info(f"🔍 [DIRECT SQL] Параметры: {params}")
-
-            cursor.execute(base_query, params)
-            rows = cursor.fetchall()
+                cursor.execute(base_query, params)
+                rows = cursor.fetchall()
 
             current_app.logger.info(f"🔍 [DIRECT SQL] Получено строк из БД: {len(rows)}")
 
@@ -2141,8 +2246,8 @@ def get_my_tasks_direct_sql():
 
             current_app.logger.info(f"🔍 [DIRECT SQL] Получено задач: {len(tasks)}")
 
-                        # Для Kanban группируем задачи по статусам с ограничением по 10
-            if view == 'kanban':
+            # Для Kanban в fallback-режиме ограничиваем задачи по статусам в Python
+            if view == 'kanban' and not used_window_kanban_query:
                 # Группируем задачи по статусам
                 tasks_by_status = {}
 
@@ -2160,8 +2265,8 @@ def get_my_tasks_direct_sql():
                     # Сортируем по дате обновления (новые сначала)
                     status_tasks.sort(key=lambda x: x['updated_on'] or '', reverse=True)
 
-                    # Берем только первые 10 задач
-                    limited_status_tasks = status_tasks[:10]
+                    # Берем только первые N задач
+                    limited_status_tasks = status_tasks[:kanban_limit_per_status]
                     limited_tasks.extend(limited_status_tasks)
 
                     # Сохраняем информацию о количестве
@@ -2172,6 +2277,13 @@ def get_my_tasks_direct_sql():
 
                 current_app.logger.info(f"🔍 [DIRECT SQL] Ограничили задачи по статусам: {status_counts}")
                 tasks = limited_tasks
+                kanban_status_counts = status_counts
+            elif view == 'kanban':
+                for task in tasks:
+                    status_id = task.get('status_id')
+                    if status_id not in kanban_status_counts:
+                        kanban_status_counts[status_id] = {"shown": 0, "total": 0}
+                    kanban_status_counts[status_id]["shown"] += 1
 
             response_data = {
                 "success": True,
@@ -2180,7 +2292,7 @@ def get_my_tasks_direct_sql():
 
             # Добавляем информацию о количестве задач для Kanban
             if view == 'kanban':
-                response_data["status_counts"] = status_counts
+                response_data["status_counts"] = kanban_status_counts
 
             return jsonify(response_data)
 

@@ -2,6 +2,8 @@
  * FiltersPanel - Компонент панели фильтров
  * Инкапсулирует логику загрузки и управления фильтрами
  */
+const __filtersDebugLog = (...args) => { if (window.__TASKS_DEBUG__) console.log(...args); };
+
 class FiltersPanel {
     constructor(eventBus, loadingManager, tasksAPI) {
         this.eventBus = eventBus;
@@ -47,7 +49,7 @@ class FiltersPanel {
      */
     async init() {
         try {
-            console.log('[FiltersPanel] 🚀 Инициализация панели фильтров...');
+            __filtersDebugLog('[FiltersPanel] 🚀 Инициализация панели фильтров...');
 
             // Настраиваем debounced поиск
             this.debouncedSearch = debounce(this.performSearch.bind(this), 500);
@@ -62,7 +64,7 @@ class FiltersPanel {
             this._initializeFilterState();
 
             this.isInitialized = true;
-            console.log('[FiltersPanel] ✅ Панель фильтров инициализирована');
+            __filtersDebugLog('[FiltersPanel] ✅ Панель фильтров инициализирована');
 
             this.eventBus.emit('filters:initialized');
 
@@ -78,19 +80,19 @@ class FiltersPanel {
      */
     async loadFilters() {
         if (this.isLoading) {
-            console.log('[FiltersPanel] Фильтры уже загружаются...');
+            __filtersDebugLog('[FiltersPanel] Фильтры уже загружаются...');
             return;
         }
 
         // Проверяем кэш
         if (this.cache.isValid()) {
-            console.log('[FiltersPanel] 📦 Используем кэшированные фильтры');
+            __filtersDebugLog('[FiltersPanel] 📦 Используем кэшированные фильтры');
             this._updateFilterOptions(this.cache.data);
             return;
         }
 
         try {
-            console.log('[FiltersPanel] 📥 Загрузка фильтров...');
+            __filtersDebugLog('[FiltersPanel] 📥 Загрузка фильтров...');
             this.isLoading = true;
             this._showLoadingIndicator(true);
 
@@ -99,7 +101,7 @@ class FiltersPanel {
 
             if (!response) {
                 // Fallback на старый API
-                console.log('[FiltersPanel] 🔄 Fallback на старый API...');
+                __filtersDebugLog('[FiltersPanel] 🔄 Fallback на старый API...');
                 response = await this._tryFallbackAPI();
             }
 
@@ -119,7 +121,7 @@ class FiltersPanel {
                 this._updateFilterOptions(filters);
                 this.eventBus.emit('filters:loaded', { filters });
 
-                console.log('[FiltersPanel] ✅ Фильтры загружены:', {
+                __filtersDebugLog('[FiltersPanel] ✅ Фильтры загружены:', {
                     statuses: filters.statuses.length,
                     projects: filters.projects.length,
                     priorities: filters.priorities.length
@@ -148,7 +150,7 @@ class FiltersPanel {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('[FiltersPanel] ✅ Оптимизированный API успешен');
+                    __filtersDebugLog('[FiltersPanel] ✅ Оптимизированный API успешен');
                     return data;
                 }
             }
@@ -167,7 +169,7 @@ class FiltersPanel {
             if (response.ok) {
                 const data = await response.json();
                 if (data.success) {
-                    console.log('[FiltersPanel] ✅ Fallback API успешен');
+                    __filtersDebugLog('[FiltersPanel] ✅ Fallback API успешен');
                     return data;
                 }
             }
@@ -181,7 +183,7 @@ class FiltersPanel {
      * Обновление опций фильтров
      */
     _updateFilterOptions(filters) {
-        console.log('[FiltersPanel] 🔧 Обновление опций фильтров...');
+        __filtersDebugLog('[FiltersPanel] 🔧 Обновление опций фильтров...');
 
         this._populateStandardSelect(this.selectors.statusFilter, filters.statuses, 'Все статусы');
         this._populateStandardSelect(this.selectors.priorityFilter, filters.priorities, 'Все приоритеты');
@@ -192,7 +194,7 @@ class FiltersPanel {
             this._updateAllClearButtons();
         }, 100);
 
-        console.log('[FiltersPanel] ✅ Опции фильтров обновлены');
+        __filtersDebugLog('[FiltersPanel] ✅ Опции фильтров обновлены');
     }
 
     /**
@@ -230,7 +232,7 @@ class FiltersPanel {
         select.val('');
         select.closest('.filter-container').removeClass('has-value');
 
-        console.log(`[FiltersPanel] ✅ Селект ${selector} заполнен: ${options.length} опций`);
+        __filtersDebugLog(`[FiltersPanel] ✅ Селект ${selector} заполнен: ${options.length} опций`);
     }
 
     /**
@@ -276,7 +278,7 @@ class FiltersPanel {
         select.val('');
         select.closest('.filter-container').removeClass('has-value');
 
-        console.log(`[FiltersPanel] ✅ Селект проектов заполнен: ${sortedProjects.length} опций`);
+        __filtersDebugLog(`[FiltersPanel] ✅ Селект проектов заполнен: ${sortedProjects.length} опций`);
     }
 
     /**
@@ -295,7 +297,7 @@ class FiltersPanel {
      * Применение фильтров
      */
     applyFilters(filters = {}) {
-        console.log('[FiltersPanel] 🔍 Применение фильтров:', filters);
+        __filtersDebugLog('[FiltersPanel] 🔍 Применение фильтров:', filters);
 
         // Устанавливаем значения
         if (filters.status !== undefined) {
@@ -324,7 +326,7 @@ class FiltersPanel {
      * Сброс всех фильтров
      */
     resetAllFilters() {
-        console.log('[FiltersPanel] 🔄 Сброс всех фильтров');
+        __filtersDebugLog('[FiltersPanel] 🔄 Сброс всех фильтров');
 
         $(this.selectors.statusFilter).val('');
         $(this.selectors.projectFilter).val('');
@@ -347,7 +349,7 @@ class FiltersPanel {
      * Выполнение поиска
      */
     performSearch(searchTerm) {
-        console.log('[FiltersPanel] 🔍 Поиск:', searchTerm);
+        __filtersDebugLog('[FiltersPanel] 🔍 Поиск:', searchTerm);
         this.eventBus.emit('search:changed', { searchTerm });
     }
 
@@ -385,7 +387,7 @@ class FiltersPanel {
         const value = filter.val();
         const filterId = filter.attr('id');
 
-        console.log('[FiltersPanel] 🔄 Фильтр изменен:', filterId, '=', value);
+        __filtersDebugLog('[FiltersPanel] 🔄 Фильтр изменен:', filterId, '=', value);
 
         // Обновляем видимость кнопки очистки
         this._updateFilterVisibility(filter);
@@ -404,7 +406,7 @@ class FiltersPanel {
      */
     handleSearchInput(event) {
         const searchTerm = $(event.target).val();
-        console.log('[FiltersPanel] 🔍 Ввод поиска:', searchTerm);
+        __filtersDebugLog('[FiltersPanel] 🔍 Ввод поиска:', searchTerm);
 
         // Используем debounced поиск
         if (this.debouncedSearch) {
@@ -425,7 +427,7 @@ class FiltersPanel {
             const filterSelector = `#${filterId}`;
             const filter = $(filterSelector);
 
-            console.log('[FiltersPanel] 🗑️ Очистка фильтра:', filterId);
+            __filtersDebugLog('[FiltersPanel] 🗑️ Очистка фильтра:', filterId);
 
             filter.val('');
             this._updateFilterVisibility(filter);
@@ -457,7 +459,7 @@ class FiltersPanel {
             container.removeClass('has-value');
         }
 
-        console.log(`[FiltersPanel] 👁️ Видимость кнопки ${clearBtnId}:`, hasValue ? 'показана' : 'скрыта');
+        __filtersDebugLog(`[FiltersPanel] 👁️ Видимость кнопки ${clearBtnId}:`, hasValue ? 'показана' : 'скрыта');
     }
 
     /**
@@ -489,7 +491,7 @@ class FiltersPanel {
      * Очистка и отключение фильтров при ошибке
      */
     _clearAndDisableFilters() {
-        console.log('[FiltersPanel] 🚫 Очистка и отключение фильтров');
+        __filtersDebugLog('[FiltersPanel] 🚫 Очистка и отключение фильтров');
 
         $(this.selectors.statusFilter + ', ' + this.selectors.projectFilter + ', ' + this.selectors.priorityFilter)
             .empty()
@@ -537,7 +539,7 @@ class FiltersPanel {
      * Принудительное обновление
      */
     refresh() {
-        console.log('[FiltersPanel] 🔄 Принудительное обновление фильтров');
+        __filtersDebugLog('[FiltersPanel] 🔄 Принудительное обновление фильтров');
         this.cache.data = null; // Сбрасываем кэш
         return this.loadFilters();
     }
@@ -554,7 +556,7 @@ class FiltersPanel {
         $(document).off('click', this.selectors.clearButtons, this.handleClearFilter);
 
         this.isInitialized = false;
-        console.log('[FiltersPanel] 🗑️ Компонент очищен');
+        __filtersDebugLog('[FiltersPanel] 🗑️ Компонент очищен');
     }
 }
 
@@ -564,3 +566,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else if (typeof window !== 'undefined') {
     window.FiltersPanel = FiltersPanel;
 }
+

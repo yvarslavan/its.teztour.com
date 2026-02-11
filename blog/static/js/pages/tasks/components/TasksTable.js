@@ -2,6 +2,8 @@
  * TasksTable - Компонент таблицы задач
  * Инкапсулирует логику DataTables с сохранением всей функциональности
  */
+const __tasksTableDebugLog = (...args) => { if (window.__TASKS_DEBUG__) console.log(...args); };
+
 class TasksTable {
     constructor(eventBus, loadingManager, tasksAPI) {
         this.eventBus = eventBus;
@@ -47,14 +49,14 @@ class TasksTable {
 
             // Проверяем, не инициализирована ли уже таблица
             if ($.fn.DataTable.isDataTable(tableSelector)) {
-                console.log('[TasksTable] ⚠️ Таблица уже инициализирована, получаем существующий экземпляр');
+                __tasksTableDebugLog('[TasksTable] ⚠️ Таблица уже инициализирована, получаем существующий экземпляр');
                 this.dataTable = this.tableElement.DataTable();
                 this.isInitialized = true;
                 this._setupEventListeners();
                 return this.dataTable;
             }
 
-            console.log('[TasksTable] 🚀 Инициализация таблицы задач...');
+            __tasksTableDebugLog('[TasksTable] 🚀 Инициализация таблицы задач...');
 
             // Показываем загрузку
             this.loadingManager.show('table', 'Инициализация таблицы...');
@@ -85,7 +87,7 @@ class TasksTable {
             this.isInitialized = true;
             this._setupEventListeners();
 
-            console.log('[TasksTable] ✅ Таблица успешно инициализирована');
+            __tasksTableDebugLog('[TasksTable] ✅ Таблица успешно инициализирована');
             this.eventBus.emit('table:initialized', { table: this.dataTable });
 
             return this.dataTable;
@@ -107,7 +109,7 @@ class TasksTable {
             return;
         }
 
-        console.log('[TasksTable] 🔄 Обновление данных таблицы');
+        __tasksTableDebugLog('[TasksTable] 🔄 Обновление данных таблицы');
         this.loadingManager.show('table', 'Обновление данных...');
         this.dataTable.ajax.reload();
     }
@@ -121,7 +123,7 @@ class TasksTable {
             return;
         }
 
-        console.log('[TasksTable] 🔍 Применение фильтров:', filters);
+        __tasksTableDebugLog('[TasksTable] 🔍 Применение фильтров:', filters);
 
         // Сохраняем текущие фильтры
         this.currentFilters = { ...filters };
@@ -139,7 +141,7 @@ class TasksTable {
             return;
         }
 
-        console.log('[TasksTable] 🔍 Поиск:', searchTerm);
+        __tasksTableDebugLog('[TasksTable] 🔍 Поиск:', searchTerm);
         this.dataTable.search(searchTerm).draw();
     }
 
@@ -158,7 +160,7 @@ class TasksTable {
      * Обработчик данных AJAX запроса
      */
     handleAjaxData(d) {
-        console.log('[TasksTable] 🔄 Формирование AJAX запроса');
+        __tasksTableDebugLog('[TasksTable] 🔄 Формирование AJAX запроса');
 
         // Добавляем сортировку
         const orderColumnIndex = d.order[0].column;
@@ -199,7 +201,7 @@ class TasksTable {
             ...this.currentFilters
         };
 
-        console.log('[TasksTable] 📊 Параметры запроса:', params);
+        __tasksTableDebugLog('[TasksTable] 📊 Параметры запроса:', params);
         return params;
     }
 
@@ -207,14 +209,14 @@ class TasksTable {
      * Обработчик источника данных
      */
     handleDataSrc(json) {
-        console.log('[TasksTable] 📥 Данные получены:', json);
+        __tasksTableDebugLog('[TasksTable] 📥 Данные получены:', json);
 
         // Скрываем загрузку
         this.loadingManager.hide('table');
 
         // Сбрасываем флаг первой загрузки
         if (this.isFirstLoad) {
-            console.log('[TasksTable] ✅ Первая загрузка выполнена');
+            __tasksTableDebugLog('[TasksTable] ✅ Первая загрузка выполнена');
             this.isFirstLoad = false;
         }
 
@@ -247,7 +249,7 @@ class TasksTable {
      * Обработчик отрисовки таблицы
      */
     handleTableDraw() {
-        console.log('[TasksTable] 🎨 Обработка отрисовки таблицы');
+        __tasksTableDebugLog('[TasksTable] 🎨 Обработка отрисовки таблицы');
 
         // Улучшаем строки таблицы
         this._enhanceTableRows();
@@ -285,7 +287,7 @@ class TasksTable {
      * Обработчик завершения инициализации
      */
     _handleInitComplete(settings, json) {
-        console.log('[TasksTable] ✅ Инициализация завершена');
+        __tasksTableDebugLog('[TasksTable] ✅ Инициализация завершена');
 
         // Перемещаем элементы UI для лучшего отображения
         this._moveUIElements();
@@ -329,7 +331,7 @@ class TasksTable {
             const taskId = $(this).text().replace('#', '');
             const url = $(this).attr('href');
 
-            console.log('[TasksTable] 🔗 Клик по задаче:', taskId);
+            __tasksTableDebugLog('[TasksTable] 🔗 Клик по задаче:', taskId);
 
             // Открываем задачу (сохраняем оригинальную логику)
             window.location.href = url;
@@ -355,7 +357,7 @@ class TasksTable {
                 data: 'id',
                 render: (data, type, row) => {
                     return type === 'display'
-                        ? `<a href="/tasks/my-tasks/${data}" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${data} в новой вкладке">#${data}</a>`
+                        ? `<a href="/tasks/my-tasks/${data}" class="task-id-link" target="_blank" rel="noopener noreferrer" title="Открыть задачу #${data} в новой вкладке">${data}</a>`
                         : data;
                 },
                 orderable: true,
@@ -532,7 +534,7 @@ class TasksTable {
         }
 
         this.isInitialized = false;
-        console.log('[TasksTable] 🗑️ Компонент очищен');
+        __tasksTableDebugLog('[TasksTable] 🗑️ Компонент очищен');
     }
 }
 
@@ -542,3 +544,4 @@ if (typeof module !== 'undefined' && module.exports) {
 } else if (typeof window !== 'undefined') {
     window.TasksTable = TasksTable;
 }
+

@@ -1,0 +1,88 @@
+/* Task detail page: visual cleanup, anti-flicker, and responsive refinements */
+
+.modern-task-detail {
+  --task-hero-start: #0d5ea6;
+  --task-hero-end: #0d8a9a;
+  --task-hero-overlay: rgba(255, 255, 255, 0.08);
+}
+
+.modern-task-detail .hero-section {
+  background:
+    radial-gradient(circle at 15% 20%, var(--task-hero-overlay), transparent 45%),
+    linear-gradient(132deg, var(--task-hero-start) 0%, var(--task-hero-end) 100%) !important;
+}
+
+[data-theme="dark"] .modern-task-detail .hero-section {
+  --task-hero-start: #0f4a7e;
+  --task-hero-end: #146c76;
+  --task-hero-overlay: rgba(255, 255, 255, 0.05);
+}
+
+.modern-task-detail .hero-title {
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.modern-task-detail .hero-subtitle {
+  font-size: clamp(1.05rem, 0.9rem + 0.4vw, 1.3rem) !important;
+  font-weight: 600 !important;
+  line-height: 1.35;
+  letter-spacing: 0.01em;
+  opacity: 1 !important;
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.18);
+}
+
+.modern-task-detail .status-indicator.status-pending {
+  color: #f59e0b;
+}
+
+.modern-task-detail .hero-action-btn.primary,
+.modern-task-detail .hero-action-btn.back-btn {
+  color: #0d4e8d !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+}
+
+.modern-task-detail .hero-action-btn.secondary {
+  background: rgba(255, 255, 255, 0.14) !important;
+  border-color: rgba(255, 255, 255, 0.36) !important;
+}
+
+[data-theme="dark"] .modern-task-detail .hero-action-btn.primary,
+[data-theme="dark"] .modern-task-detail .hero-action-btn.back-btn {
+  color: #c9e5ff !important;
+  border-color: rgba(201, 229, 255, 0.35) !important;
+}
+
+[data-theme="dark"] .modern-task-detail .hero-action-btn.secondary {
+  color: #e5f4ff !important;
+}
+
+.modern-task-detail .card,
+.modern-task-detail .card-header,
+.modern-task-detail .card-content,
+.modern-task-detail .detail-item,
+.modern-task-detail .history-item,
+.modern-task-detail .history-comment {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.modern-task-detail .detail-item {
+  transition: background-color 0.16s ease, border-color 0.16s ease;
+}
+
+.modern-task-detail .detail-item:hover {
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+.modern-task-detail .history-item:hover,
+.modern-task-detail .history-comment:hover {
+  transform: none !important;
+}
+
+@media (max-width: 768px) {
+  .modern-task-detail .hero-subtitle {
+    font-size: 1.05rem !important;
+  }
+}
