@@ -313,6 +313,92 @@
 
 <!-- Base Styles (Always Active) -->
 <link rel="stylesheet" href="{{ url_for('static', filename='css/issues_styles.css') }}?v={{ cache_buster or '1' }}&force={{ range(1, 999999) | random }}">
+<style>
+  /* Final deterministic table layout override for /my-issues */
+  #issue.issues-table {
+    width: 100% !important;
+    table-layout: auto !important;
+  }
+
+  #issue.issues-table th.column-id,
+  #issue.issues-table td.col-id {
+    width: 120px !important;
+    min-width: 120px !important;
+    max-width: 120px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-date,
+  #issue.issues-table td.col-date {
+    width: 180px !important;
+    min-width: 180px !important;
+    max-width: 180px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-status,
+  #issue.issues-table td.col-status {
+    width: 150px !important;
+    min-width: 150px !important;
+    max-width: 150px !important;
+    white-space: nowrap !important;
+  }
+
+  #issue.issues-table th.column-subject,
+  #issue.issues-table td.col-subject {
+    width: auto !important;
+  }
+
+  #issue.issues-table td.col-subject {
+    min-width: 420px !important;
+  }
+
+  /* Brighter clickable blue + normal font weight for ID and Subject data */
+  #issue.issues-table tbody td a.issue-id-link,
+  #issue.issues-table tbody td a.issue-subject-link {
+    color: #00008B !important;
+    font-weight: 400 !important;
+  }
+
+  #issue.issues-table tbody td a.issue-id-link:hover,
+  #issue.issues-table tbody td a.issue-subject-link:hover {
+    color: #00008B !important;
+    font-weight: 400 !important;
+  }
+
+  #issue.issues-table tbody td a.issue-id-link span,
+  #issue.issues-table tbody td a.issue-subject-link span,
+  #issue.issues-table .issue-subject {
+    font-weight: 400 !important;
+  }
+
+  /* Final page-level override for /my-issues status chips */
+  #issue.issues-table .status-cell {
+    display: inline-flex !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  #issue.issues-table .status-badge {
+    padding: 0.24rem 0.56rem !important;
+    border-radius: 6px !important;
+    font-size: 0.74rem !important;
+    font-weight: 600 !important;
+    text-transform: none !important;
+    line-height: 1.1 !important;
+    border: 1px solid #cbd5e1 !important;
+    background: #f8fafc !important;
+    color: #1e293b !important;
+    box-shadow: none !important;
+  }
+
+  #issue.issues-table tr.status-closed .status-badge,
+  #issue.issues-table .status-badge.status-closed {
+    background: #ecfdf5 !important;
+    color: #047857 !important;
+    border-color: #86efac !important;
+  }
+</style>
 {% endblock %}{% block scripts %}
 <script>
   // DataStateManager - компонент для сохранения состояния данных
@@ -482,7 +568,6 @@
     function getStatusStyle(statusName) {
       let style = {
         trClass: "status-default",
-        iconClass: "fas fa-question-circle",
         tooltip: statusName,
         statusTextClass: "",
       };
@@ -497,14 +582,12 @@
         normalizedStatus.includes("redirected")
       ) {
         style.trClass = "status-closed";
-        style.iconClass = "fas fa-times-circle";
         style.tooltip = "Заявка окончательно закрыта";
       } else if (
         normalizedStatus.includes("выполнена") ||
         normalizedStatus.includes("resolved")
       ) {
         style.trClass = "status-open";
-        style.iconClass = "fas fa-check-circle";
         style.tooltip = "Заявка выполнена, ожидает закрытия";
       } else if (
         normalizedStatus.includes("в работе") ||
@@ -515,21 +598,18 @@
         normalizedStatus.includes("in progress")
       ) {
         style.trClass = "status-progress";
-        style.iconClass = "fas fa-clock";
         style.tooltip = "Заявка находится в процессе выполнения";
       } else if (
         normalizedStatus.includes("запрошено уточнение") ||
         normalizedStatus.includes("clarification")
       ) {
         style.trClass = "status-clarification";
-        style.iconClass = "fas fa-exclamation-circle";
         style.tooltip = "Требуется ваше уточнение для продолжения работы";
       } else if (
         normalizedStatus.includes("на согласовании") ||
         normalizedStatus.includes("approval")
       ) {
         style.trClass = "status-approval";
-        style.iconClass = "fas fa-user-clock";
         style.tooltip = "Заявка ожидает согласования";
       } else if (
         normalizedStatus.includes("открыта") ||
@@ -540,7 +620,6 @@
         normalizedStatus.includes("зарегистрирована")
       ) {
         style.trClass = "status-open";
-        style.iconClass = "fas fa-folder-open";
         style.tooltip = "Заявка зарегистрирована и ожидает обработки";
       }
       return style;
@@ -861,6 +940,7 @@
           },
           processing: true,
           serverSide: true,
+          autoWidth: false,
           order: [[1, "desc"]],
           pageLength: 10,
           lengthMenu: [
@@ -934,8 +1014,7 @@
                 const safeTooltip = escapeHtml(statusInfo.tooltip || "");
                 return `
                   <div class="status-cell">
-                    <div class="status-badge" title="${safeTooltip}">
-                      <i class="${statusInfo.iconClass} status-icon"></i>
+                    <div class="status-badge ${statusInfo.trClass}" title="${safeTooltip}">
                       <span>${safeStatus}</span>
                     </div>
                   </div>
@@ -948,6 +1027,12 @@
               searchable: false,
             },
           ],
+          columnDefs: [
+            { targets: 0, width: "120px", className: "col-id nowrap-cell" },
+            { targets: 1, width: "180px", className: "col-date nowrap-cell" },
+            { targets: 2, className: "col-subject" },
+            { targets: 3, width: "150px", className: "col-status nowrap-cell" },
+          ],
           createdRow: function (row, data) {
             const statusInfo = getStatusStyle(data.status_name || "");
             $(row)
@@ -955,6 +1040,11 @@
               .attr("data-status-id", data.status_id || 0)
               .attr("data-issue-id", data.id || "")
               .attr("data-status-name", data.status_name || "");
+
+            // Cleanup stale cached markup: remove legacy status icon spans if they appear
+            $(row)
+              .find(".status-badge > span[aria-hidden='true'], .status-badge > .status-dot")
+              .remove();
           },
           initComplete: function () {
             $(".dataTables_filter").detach().appendTo("#searchBoxContainer");

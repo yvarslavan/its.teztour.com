@@ -151,7 +151,7 @@ body.theme-switching * {
    ============================================ */
 
 .issues-table th {
-    background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #ec4899 100%);
+    background: linear-gradient(135deg, #2f6fdd 0%, #245ec4 100%);
     color: #ffffff;
     font-weight: 600;
     font-size: 0.875rem;
@@ -163,7 +163,7 @@ body.theme-switching * {
     position: relative;
     vertical-align: middle;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 8px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 2px 8px rgba(47, 111, 221, 0.15);
 }
 
 .issues-table th:first-child {
@@ -176,10 +176,10 @@ body.theme-switching * {
 }
 
 .issues-table th:hover {
-    background: linear-gradient(135deg, #3730a3 0%, #6d28d9 50%, #be185d 100%);
+    background: linear-gradient(135deg, #245ec4 0%, #1f4e9f 100%);
     color: #ffffff;
     transform: translateY(-1px);
-    box-shadow: 0 4px 16px rgba(79, 70, 229, 0.25);
+    box-shadow: 0 4px 16px rgba(47, 111, 221, 0.25);
     border-bottom-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -479,10 +479,10 @@ body.theme-switching * {
 }
 
 .issues-table tbody tr:hover {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.08) 0%, rgba(124, 58, 237, 0.06) 100%);
+    background: linear-gradient(135deg, rgba(47, 111, 221, 0.08) 0%, rgba(36, 94, 196, 0.06) 100%);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
-    border-left: 3px solid #4f46e5;
+    box-shadow: 0 4px 12px rgba(47, 111, 221, 0.15);
+    border-left: 3px solid #2f6fdd;
 }
 
 .issues-table tbody td {
@@ -496,19 +496,19 @@ body.theme-switching * {
 
 .issues-table tbody tr:hover td {
     color: var(--color-text-primary);
-    border-bottom-color: rgba(79, 70, 229, 0.2);
+    border-bottom-color: rgba(47, 111, 221, 0.2);
 }
 
 /* Link styling in table */
 .issues-table tbody td a {
-    color: #4f46e5;
+    color: var(--issue-subject-color, #1f4e79);
     text-decoration: none;
     font-weight: 500;
     transition: all 0.2s ease;
 }
 
 .issues-table tbody td a:hover {
-    color: #3730a3;
+    color: var(--issue-subject-hover-color, #163c5f);
     text-decoration: underline;
 }
 
@@ -518,7 +518,7 @@ body.theme-switching * {
     border-radius: 6px;
     font-size: 0.75rem;
     font-weight: 500;
-    text-transform: uppercase;
+    text-transform: none;
     letter-spacing: 0.025em;
 }
 
@@ -674,9 +674,9 @@ body {
 }
 
 [data-theme="dark"] .issues-table tbody tr:hover {
-    background: linear-gradient(135deg, rgba(79, 70, 229, 0.15) 0%, rgba(124, 58, 237, 0.1) 100%);
-    box-shadow: 0 4px 12px rgba(79, 70, 229, 0.25);
-    border-left-color: #6366f1;
+    background: linear-gradient(135deg, rgba(110, 164, 255, 0.16) 0%, rgba(59, 130, 246, 0.1) 100%);
+    box-shadow: 0 4px 12px rgba(110, 164, 255, 0.24);
+    border-left-color: #6ea4ff;
 }
 
 [data-theme="dark"] .issues-table tbody td {
@@ -685,15 +685,15 @@ body {
 }
 
 [data-theme="dark"] .issues-table tbody tr:hover td {
-    border-bottom-color: rgba(99, 102, 241, 0.3);
+    border-bottom-color: rgba(110, 164, 255, 0.3);
 }
 
 [data-theme="dark"] .issues-table tbody td a {
-    color: #818cf8;
+    color: var(--issue-subject-color, #93c5fd);
 }
 
 [data-theme="dark"] .issues-table tbody td a:hover {
-    color: #a5b4fc;
+    color: var(--issue-subject-hover-color, #bfdbfe);
 }
 
 [data-theme="dark"] .issues-table .status-badge.new {

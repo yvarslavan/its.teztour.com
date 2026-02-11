@@ -299,8 +299,8 @@
     // Инициализация при загрузке страницы
     document.addEventListener('DOMContentLoaded', init);
 
-    // Очистка при уходе со страницы
-    window.addEventListener('beforeunload', function() {
+    // Очистка при скрытии/выгрузке страницы (BFCache-friendly)
+    window.addEventListener('pagehide', function() {
         if (updateInterval) {
             clearInterval(updateInterval);
         }

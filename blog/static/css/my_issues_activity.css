@@ -28,12 +28,12 @@
     cursor: pointer;
     user-select: none;
     transition: all 0.3s ease;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #2f6fdd 0%, #245ec4 100%);
     color: white;
 }
 
 .activity-accordion-header:hover {
-    background: linear-gradient(135deg, #5568d3 0%, #6a3f8f 100%);
+    background: linear-gradient(135deg, #245ec4 0%, #1f4e9f 100%);
 }
 
 .activity-accordion-header:active {
@@ -129,19 +129,19 @@
 }
 
 .activity-container::-webkit-scrollbar-thumb {
-    background: rgba(102, 126, 234, 0.3);
+    background: rgba(47, 111, 221, 0.3);
     border-radius: 3px;
     transition: background 0.2s ease;
 }
 
 .activity-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(102, 126, 234, 0.5);
+    background: rgba(47, 111, 221, 0.5);
 }
 
 /* Для Firefox */
 .activity-container {
     scrollbar-width: thin;
-    scrollbar-color: rgba(102, 126, 234, 0.3) rgba(0, 0, 0, 0.05);
+    scrollbar-color: rgba(47, 111, 221, 0.3) rgba(0, 0, 0, 0.05);
 }
 
 /* Спиннер загрузки */
@@ -157,7 +157,7 @@
 
 .activity-loading i {
     font-size: 2rem;
-    color: #667eea;
+    color: #2f6fdd;
 }
 
 /* Список активности */
@@ -183,8 +183,8 @@
 
 .activity-item:hover {
     background: var(--activity-item-hover-bg, #f3f4f6);
-    border-left-color: #667eea;
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+    border-left-color: #2f6fdd;
+    box-shadow: 0 4px 16px rgba(47, 111, 221, 0.15);
     transform: translateX(6px) translateY(-2px);
 }
 
@@ -195,7 +195,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    background: linear-gradient(135deg, rgba(47, 111, 221, 0.05) 0%, rgba(36, 94, 196, 0.05) 100%);
     opacity: 0;
     transition: opacity 0.3s ease;
     pointer-events: none;
@@ -250,12 +250,12 @@
 }
 
 .activity-issue-link:hover {
-    color: #667eea;
+    color: #2f6fdd;
 }
 
 .activity-issue-id {
     font-weight: 600;
-    color: #667eea;
+    color: #2f6fdd;
     font-size: 0.9rem;
 }
 
@@ -299,16 +299,16 @@
     align-items: center;
     gap: 0.35rem;
     padding: 0.25rem 0.75rem;
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(47, 111, 221, 0.1);
     border-radius: 20px;
     font-size: 0.8rem;
     font-weight: 500;
-    border: 1px solid rgba(102, 126, 234, 0.2);
+    border: 1px solid rgba(47, 111, 221, 0.2);
     transition: all 0.2s ease;
 }
 
 .activity-status:hover {
-    background: rgba(102, 126, 234, 0.15);
+    background: rgba(47, 111, 221, 0.15);
     transform: scale(1.05);
 }
 
@@ -326,7 +326,7 @@
 .activity-empty i {
     font-size: 3rem;
     opacity: 0.3;
-    color: #667eea;
+    color: #2f6fdd;
 }
 
 .activity-empty p {
@@ -396,11 +396,11 @@
 
 [data-theme="dark"] .activity-item:hover {
     background: var(--activity-item-hover-bg-dark, #4b5563);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
+    box-shadow: 0 4px 16px rgba(110, 164, 255, 0.22);
 }
 
 [data-theme="dark"] .activity-item::before {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    background: linear-gradient(135deg, rgba(110, 164, 255, 0.12) 0%, rgba(59, 130, 246, 0.1) 100%);
 }
 
 [data-theme="dark"] .activity-issue-link {
@@ -416,7 +416,7 @@
 }
 
 [data-theme="dark"] .activity-status {
-    background: rgba(102, 126, 234, 0.2);
+    background: rgba(110, 164, 255, 0.2);
 }
 
 /* Стилизация скроллбара для темной темы */
@@ -425,11 +425,11 @@
 }
 
 [data-theme="dark"] .activity-container::-webkit-scrollbar-thumb {
-    background: rgba(102, 126, 234, 0.4);
+    background: rgba(110, 164, 255, 0.4);
 }
 
 [data-theme="dark"] .activity-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(102, 126, 234, 0.6);
+    background: rgba(110, 164, 255, 0.6);
 }
 
 [data-theme="dark"] .activity-container {

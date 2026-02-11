@@ -1782,63 +1782,31 @@ def issue(issue_id):
     """Оптимизированный вывод истории заявки с минимальными подключениями к БД"""
     form = AddCommentRedmine()
 
-    # === ЭТАП 1: Подключения к внешним системам ===
     logger.info(f"Загрузка заявки #{issue_id} для пользователя {current_user.id}")
     start_time = time.time()
+    timings = {}
 
-    # Подключение к Oracle (для получения пароля пользователя)
-    oracle_connect_instance = None
-    user_password_erp = None
+    # === ЭТАП 1: Получение учетных данных (Oracle -> Session -> SQLite fallback) ===
+    password_lookup_start = time.time()
+    actual_user_password = get_user_password_with_fallback(current_user)
+    timings["password_lookup"] = time.time() - password_lookup_start
 
-    try:
-        oracle_connect_instance = connect_oracle(
-            db_host, db_port, db_service_name, db_user_name, db_password
-        )
-
-        if not oracle_connect_instance:
-            current_app.logger.error(
-                f"Не удалось подключиться к Oracle для пользователя {current_user.username}"
-            )
-            flash(
-                "Ошибка подключения к базе данных Oracle. Проверьте VPN соединение.",
-                "error",
-            )
-            return redirect(url_for("main.my_issues"))
-
-        user_password_erp = get_user_erp_password(
-            oracle_connect_instance, current_user.username
-        )
-
-        if not user_password_erp:
-            current_app.logger.error(
-                f"Не удалось получить пароль из Oracle для пользователя {current_user.username}"
-            )
-            flash(
-                "Не удалось получить пароль пользователя. Обратитесь в службу поддержки.",
-                "error",
-            )
-            return redirect(url_for("main.my_issues"))
-
-    except Exception as oracle_error:
+    # Для пользователя с аккаунтом Redmine пароль обязателен
+    if current_user.is_redmine_user and not actual_user_password:
         current_app.logger.error(
-            f"Ошибка при работе с Oracle для пользователя {current_user.username}: {oracle_error}"
+            "Не удалось получить пароль для Redmine пользователя %s",
+            current_user.username,
         )
         flash(
-            "Ошибка при подключении к системе аутентификации. Попробуйте позже.",
+            "Не удалось получить учетные данные Redmine. Обратитесь в службу поддержки.",
             "error",
         )
         return redirect(url_for("main.my_issues"))
 
-    # Получаем пароль пользователя
-    actual_user_password = (
-        user_password_erp[0]
-        if isinstance(user_password_erp, tuple)
-        else user_password_erp
-    )
-
     # === ЭТАП 2: Создание Redmine коннектора ===
     redmine_connector_user = None
 
+    connector_start = time.time()
     try:
         redmine_connector_user = get_redmine_connector(
             current_user, actual_user_password
@@ -1890,48 +1858,68 @@ def issue(issue_id):
             "error",
         )
         return redirect(url_for("main.my_issues"))
+    timings["connector_init"] = time.time() - connector_start
 
     # === ЭТАП 3: Загрузка данных заявки ===
     issue_detail_obj = None
     attachment_list = []
-    issue_history = None
+    issue_history = []
+
+    def _has_issue_access(issue_obj):
+        """Object-level access check to avoid reading чужие заявки через прямой URL."""
+        user_email = (current_user.email or "").strip().lower()
+        alt_email = user_email.replace("@tez-tour.com", "@msk.tez-tour.com")
+        easy_email_to = (getattr(issue_obj, "easy_email_to", None) or "").lower()
+        easy_email_cc = (getattr(issue_obj, "easy_email_cc", None) or "").lower()
+
+        author_id = getattr(getattr(issue_obj, "author", None), "id", None)
+        assignee_id = getattr(getattr(issue_obj, "assigned_to", None), "id", None)
+        current_redmine_id = getattr(current_user, "id_redmine_user", None)
+
+        email_match = bool(
+            user_email
+            and (
+                user_email in easy_email_to
+                or user_email in easy_email_cc
+                or alt_email in easy_email_to
+                or alt_email in easy_email_cc
+            )
+        )
+        id_match = bool(
+            current_redmine_id
+            and (author_id == current_redmine_id or assignee_id == current_redmine_id)
+        )
+        return email_match or id_match
 
     try:
         # Загружаем основные данные задачи
         current_app.logger.info(
             f"Попытка загрузки задачи #{issue_id} для пользователя {current_user.username}"
         )
-
-        # Сначала попробуем загрузить задачу без дополнительных данных для диагностики
-        try:
-            basic_issue = redmine_connector_user.redmine.issue.get(issue_id)
-            current_app.logger.info(
-                f"Базовая информация о задаче #{issue_id} получена успешно"
-            )
-        except Exception as basic_error:
-            current_app.logger.error(
-                f"Не удалось получить базовую информацию о задаче #{issue_id}: {basic_error}"
-            )
-            raise basic_error
-
-        # Теперь загружаем полную информацию
+        load_issue_start = time.time()
         issue_detail_obj = redmine_connector_user.redmine.issue.get(
             issue_id, include=["attachments", "journals"]
         )
+        timings["issue_fetch"] = time.time() - load_issue_start
 
         if not issue_detail_obj:
             current_app.logger.error(
                 f"Задача #{issue_id} не найдена или недоступна для пользователя {current_user.username}"
             )
-            flash(
-                f"Задача #{issue_id} не найдена или у вас нет прав доступа к ней.",
-                "error",
-            )
-            return redirect(url_for("main.my_issues"))
+            abort(404)
 
         current_app.logger.info(
             f"Задача #{issue_id} успешно загружена для пользователя {current_user.username}"
         )
+
+        # Object-level access контроль (особенно важен при fallback на системный API ключ)
+        if not _has_issue_access(issue_detail_obj):
+            current_app.logger.warning(
+                "Доступ к задаче #%s запрещен для пользователя %s",
+                issue_id,
+                current_user.username,
+            )
+            abort(403)
 
         # Получаем вложения
         if hasattr(issue_detail_obj, "attachments"):
@@ -1940,17 +1928,13 @@ def issue(issue_id):
                 f"Найдено {len(attachment_list)} вложений для задачи #{issue_id}"
             )
 
-        # Получаем историю изменений
-        try:
-            issue_history = redmine_connector_user.get_issue_history(issue_id)
+        # История уже включена через include=["journals"], избегаем второго API-запроса
+        if hasattr(issue_detail_obj, "journals"):
+            issue_history = list(reversed(issue_detail_obj.journals))
             current_app.logger.info(
-                f"История изменений загружена для задачи #{issue_id}"
+                "История изменений получена из include journals: %s записей",
+                len(issue_history),
             )
-        except Exception as history_error:
-            current_app.logger.warning(
-                f"Не удалось загрузить историю для задачи #{issue_id}: {history_error}"
-            )
-            issue_history = None  # Продолжаем без истории
 
     except Exception as e:
         error_msg = str(e)
@@ -1960,9 +1944,9 @@ def issue(issue_id):
 
         # Определяем тип ошибки для более точного сообщения
         if "403" in error_msg or "Forbidden" in error_msg:
-            flash(f"У вас нет прав доступа к задаче #{issue_id}.", "error")
+            abort(403)
         elif "404" in error_msg or "Not Found" in error_msg:
-            flash(f"Задача #{issue_id} не найдена.", "error")
+            abort(404)
         elif "401" in error_msg or "Unauthorized" in error_msg:
             flash("Ошибка аутентификации. Проверьте ваши учетные данные.", "error")
         elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
@@ -1983,6 +1967,7 @@ def issue(issue_id):
     redmine_connection = None
 
     if issue_history:
+        property_desc_start = time.time()
         try:
             # Создаем ОДНО соединение для всех операций с БД
             redmine_connection = get_connection(
@@ -2011,6 +1996,7 @@ def issue(issue_id):
         finally:
             if redmine_connection:
                 redmine_connection.close()
+        timings["property_descriptions"] = time.time() - property_desc_start
 
     # === ЭТАП 5: Обработка формы комментария ===
     if form.validate_on_submit() and handle_comment_submission(
@@ -2020,9 +2006,18 @@ def issue(issue_id):
 
     # === ЭТАП 6: Рендеринг шаблона с предзагруженными данными ===
     end_time = time.time()
-    logger.info(f"Заявка #{issue_id} загружена за {end_time - start_time:.2f} сек")
+    total_time = end_time - start_time
+    logger.info(
+        "Заявка #%s загружена за %.2f сек (password=%.2f, connector=%.2f, issue=%.2f, props=%.2f)",
+        issue_id,
+        total_time,
+        timings.get("password_lookup", 0),
+        timings.get("connector_init", 0),
+        timings.get("issue_fetch", 0),
+        timings.get("property_descriptions", 0),
+    )
 
-    return render_template(
+    html = render_template(
         "issue.html",
         title=f"#{issue_detail_obj.id} - {issue_detail_obj.subject}",
         issue_detail=issue_detail_obj,
@@ -2033,14 +2028,24 @@ def issue(issue_id):
         convert_datetime_msk_format=convert_datetime_msk_format,
         # КРИТИЧНО: Передаем предзагруженные данные вместо функций
         property_descriptions=property_descriptions,
-        # НЕ передаем функции get_property_name и другие!
-        # get_property_name=get_property_name,  # УДАЛИТЬ ЭТУ СТРОКУ!
-        # get_status_name_from_id=get_status_name_from_id,  # УДАЛИТЬ!
-        # get_project_name_from_id=get_project_name_from_id,  # УДАЛИТЬ!
-        # get_user_full_name_from_id=get_user_full_name_from_id,  # УДАЛИТЬ!
-        # get_priority_name_from_id=get_priority_name_from_id,  # УДАЛИТЬ!
-        # get_connection=get_connection,  # УДАЛИТЬ!
     )
+
+    response = current_app.make_response(html)
+    response.headers["Server-Timing"] = (
+        f"password;dur={timings.get('password_lookup', 0) * 1000:.1f}, "
+        f"connector;dur={timings.get('connector_init', 0) * 1000:.1f}, "
+        f"issue_fetch;dur={timings.get('issue_fetch', 0) * 1000:.1f}, "
+        f"props;dur={timings.get('property_descriptions', 0) * 1000:.1f}, "
+        f"total;dur={total_time * 1000:.1f}"
+    )
+    response.headers["X-Issue-Timings"] = (
+        f"password={timings.get('password_lookup', 0):.3f};"
+        f"connector={timings.get('connector_init', 0):.3f};"
+        f"issue_fetch={timings.get('issue_fetch', 0):.3f};"
+        f"props={timings.get('property_descriptions', 0):.3f};"
+        f"total={total_time:.3f}"
+    )
+    return response
 
 
 def handle_comment_submission(form, issue_id, redmine_connector):
