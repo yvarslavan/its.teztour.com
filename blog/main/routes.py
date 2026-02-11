@@ -1789,7 +1789,7 @@ def issue(issue_id):
     # === ЭТАП 1: Получение учетных данных (Oracle -> Session -> SQLite fallback) ===
     password_lookup_start = time.time()
     actual_user_password = get_user_password_with_fallback(current_user)
-    timings["password_lookup"] = time.time() - password_lookup_start
+    timings["credential_lookup"] = time.time() - password_lookup_start
 
     # Для пользователя с аккаунтом Redmine пароль обязателен
     if current_user.is_redmine_user and not actual_user_password:
@@ -2008,10 +2008,10 @@ def issue(issue_id):
     end_time = time.time()
     total_time = end_time - start_time
     logger.info(
-        "Заявка #%s загружена за %.2f сек (password=%.2f, connector=%.2f, issue=%.2f, props=%.2f)",
+        "Заявка #%s загружена за %.2f сек (cred_lookup=%.2f, connector=%.2f, issue=%.2f, props=%.2f)",
         issue_id,
         total_time,
-        timings.get("password_lookup", 0),
+        timings.get("credential_lookup", 0),
         timings.get("connector_init", 0),
         timings.get("issue_fetch", 0),
         timings.get("property_descriptions", 0),
@@ -2032,14 +2032,14 @@ def issue(issue_id):
 
     response = current_app.make_response(html)
     response.headers["Server-Timing"] = (
-        f"password;dur={timings.get('password_lookup', 0) * 1000:.1f}, "
+        f"cred_lookup;dur={timings.get('credential_lookup', 0) * 1000:.1f}, "
         f"connector;dur={timings.get('connector_init', 0) * 1000:.1f}, "
         f"issue_fetch;dur={timings.get('issue_fetch', 0) * 1000:.1f}, "
         f"props;dur={timings.get('property_descriptions', 0) * 1000:.1f}, "
         f"total;dur={total_time * 1000:.1f}"
     )
     response.headers["X-Issue-Timings"] = (
-        f"password={timings.get('password_lookup', 0):.3f};"
+        f"cred_lookup={timings.get('credential_lookup', 0):.3f};"
         f"connector={timings.get('connector_init', 0):.3f};"
         f"issue_fetch={timings.get('issue_fetch', 0):.3f};"
         f"props={timings.get('property_descriptions', 0):.3f};"
