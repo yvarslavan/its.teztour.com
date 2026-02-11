@@ -32,7 +32,7 @@ from flask import (
 from flask_login import login_required, current_user
 from flask_wtf.csrf import CSRFProtect
 from blog import csrf
-from sqlalchemy import or_, desc, text, inspect
+from sqlalchemy import or_, desc, asc, text, inspect, cast, String
 from sqlalchemy.orm import joinedload
 from sqlalchemy.sql.functions import count
 from blog import db
@@ -1220,26 +1220,387 @@ def get_my_issues():
                 "danger",
             )
             return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+        try:
+            check_user_redmine = check_user_active_redmine(conn, current_user.email)
 
-        check_user_redmine = check_user_active_redmine(conn, current_user.email)
+            # Получаем все возможные статусы
+            statuses = session.query(Status).all()
+            status_list = [{"id": status.id, "name": status.name} for status in statuses]
 
-        # Получаем все возможные статусы
-        statuses = session.query(Status).all()
-        status_list = [{"id": status.id, "name": status.name} for status in statuses]
+            if check_user_redmine == ANONYMOUS_USER_ID:
+                issues_data = get_issues_by_email(session, current_user.email)
+            else:
+                issues_data = get_issues_redmine_author_id(
+                    conn, check_user_redmine, current_user.email
+                )
 
-        if check_user_redmine == ANONYMOUS_USER_ID:
-            issues_data = get_issues_by_email(session, current_user.email)
-        else:
-            issues_data = get_issues_redmine_author_id(
-                conn, check_user_redmine, current_user.email
+            return jsonify(
+                {
+                    "issues": issues_data or [],
+                    "statuses": status_list,  # Добавляем список всех статусов
+                }
             )
+        finally:
+            conn.close()
 
-        return jsonify(
+
+def _build_my_issues_filter(email_value):
+    alt_email = email_value.replace("@tez-tour.com", "@msk.tez-tour.com")
+    return or_(Issue.easy_email_to == email_value, Issue.easy_email_to == alt_email)
+
+
+def _parse_datatable_request():
+    draw = request.args.get("draw", 1, type=int)
+    start = max(request.args.get("start", 0, type=int), 0)
+    length = request.args.get("length", 10, type=int)
+    if length < 1:
+        length = 10
+    length = min(length, 100)
+
+    order_column_index = request.args.get("order[0][column]", 1, type=int)
+    order_direction = request.args.get("order[0][dir]", "desc", type=str).lower()
+    order_direction = "asc" if order_direction == "asc" else "desc"
+
+    search_value = (request.args.get("search[value]", "", type=str) or "").strip()
+    status_filter = (
+        request.args.get("columns[3][search][value]", "", type=str) or ""
+    ).strip()
+
+    return {
+        "draw": draw,
+        "start": start,
+        "length": length,
+        "order_column_index": order_column_index,
+        "order_direction": order_direction,
+        "search_value": search_value,
+        "status_filter": status_filter,
+    }
+
+
+def _build_issue_response_rows(rows):
+    def _get_value(row_obj, key, default=None):
+        if isinstance(row_obj, dict):
+            return row_obj.get(key, default)
+        if hasattr(row_obj, "_mapping"):
+            return row_obj._mapping.get(key, default)
+        if hasattr(row_obj, "_asdict"):
+            return row_obj._asdict().get(key, default)
+        return getattr(row_obj, key, default)
+
+    issue_rows = []
+    for row in rows:
+        issue_id = _get_value(row, "id")
+        updated_on = _get_value(row, "updated_on")
+        subject = _get_value(row, "subject")
+        status_name = _get_value(row, "status_name")
+        status_id = _get_value(row, "status_id")
+
+        issue_rows.append(
             {
-                "issues": issues_data,
-                "statuses": status_list,  # Добавляем список всех статусов
+                "id": int(issue_id) if issue_id is not None else 0,
+                "updated_on": updated_on.isoformat()
+                if hasattr(updated_on, "isoformat")
+                else str(updated_on or ""),
+                "subject": subject or "",
+                "status_name": status_name or "",
+                "status_id": int(status_id) if status_id is not None else 0,
             }
         )
+
+    return issue_rows
+
+
+def _fetch_issues_datatable_sqlalchemy(session, email_value, dt_params):
+    base_filter = _build_my_issues_filter(email_value)
+    search_value = dt_params["search_value"]
+    status_filter = dt_params["status_filter"]
+
+    base_query = (
+        session.query(
+            Issue.id.label("id"),
+            Issue.updated_on.label("updated_on"),
+            Issue.subject.label("subject"),
+            Status.name.label("status_name"),
+            Issue.status_id.label("status_id"),
+        )
+        .join(Status, Issue.status_id == Status.id)
+        .filter(base_filter)
+    )
+
+    filtered_query = base_query
+    if search_value:
+        like_value = f"%{search_value}%"
+        id_like_value = f"%{search_value.lstrip('#')}%"
+        filtered_query = filtered_query.filter(
+            or_(
+                cast(Issue.id, String).like(id_like_value),
+                Issue.subject.ilike(like_value),
+                Status.name.ilike(like_value),
+            )
+        )
+
+    if status_filter:
+        filtered_query = filtered_query.filter(Status.name == status_filter)
+
+    order_map = {
+        0: Issue.id,
+        1: Issue.updated_on,
+        2: Issue.subject,
+        3: Status.name,
+        4: Issue.status_id,
+    }
+    order_column = order_map.get(dt_params["order_column_index"], Issue.updated_on)
+    order_clause = (
+        asc(order_column)
+        if dt_params["order_direction"] == "asc"
+        else desc(order_column)
+    )
+
+    paged_query = (
+        filtered_query.order_by(order_clause)
+        .offset(dt_params["start"])
+        .limit(dt_params["length"])
+    )
+
+    records_total = (
+        session.query(count(Issue.id)).filter(base_filter).scalar()
+    ) or 0
+    records_filtered = filtered_query.order_by(None).count()
+    rows = paged_query.all()
+
+    return records_total, records_filtered, _build_issue_response_rows(rows)
+
+
+def _fetch_issues_datatable_redmine(conn, author_id, email_value, dt_params):
+    search_value = dt_params["search_value"]
+    status_filter = dt_params["status_filter"]
+
+    where_parts = ["(i.author_id = %s OR i.easy_email_to = %s)"]
+    where_params = [author_id, email_value]
+
+    if status_filter:
+        where_parts.append("us.name = %s")
+        where_params.append(status_filter)
+
+    if search_value:
+        where_parts.append(
+            "(CAST(i.id AS CHAR) LIKE %s OR i.subject LIKE %s OR us.name LIKE %s)"
+        )
+        where_params.extend(
+            [
+                f"%{search_value.lstrip('#')}%",
+                f"%{search_value}%",
+                f"%{search_value}%",
+            ]
+        )
+
+    where_clause = " AND ".join(where_parts)
+    order_map = {
+        0: "i.id",
+        1: "i.updated_on",
+        2: "i.subject",
+        3: "us.name",
+        4: "i.status_id",
+    }
+    order_column = order_map.get(dt_params["order_column_index"], "i.updated_on")
+    order_direction = "ASC" if dt_params["order_direction"] == "asc" else "DESC"
+
+    total_query = """
+        SELECT COUNT(*) AS total_count
+        FROM issues i
+        WHERE (i.author_id = %s OR i.easy_email_to = %s)
+    """
+
+    filtered_query = f"""
+        SELECT COUNT(*) AS total_count
+        FROM issues i
+        INNER JOIN u_statuses us ON us.id = i.status_id
+        WHERE {where_clause}
+    """
+
+    data_query = f"""
+        SELECT
+            i.id AS id,
+            i.updated_on AS updated_on,
+            i.subject AS subject,
+            us.name AS status_name,
+            i.status_id AS status_id
+        FROM issues i
+        INNER JOIN u_statuses us ON us.id = i.status_id
+        WHERE {where_clause}
+        ORDER BY {order_column} {order_direction}
+        LIMIT %s OFFSET %s
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(total_query, (author_id, email_value))
+        total_row = cursor.fetchone() or {}
+        records_total = int(total_row.get("total_count", 0))
+
+        cursor.execute(filtered_query, where_params)
+        filtered_row = cursor.fetchone() or {}
+        records_filtered = int(filtered_row.get("total_count", 0))
+
+        cursor.execute(
+            data_query, where_params + [dt_params["length"], dt_params["start"]]
+        )
+        rows = cursor.fetchall() or []
+
+    return records_total, records_filtered, _build_issue_response_rows(rows)
+
+
+@main.route("/get-my-issues-summary", methods=["GET"])
+@login_required
+def get_my_issues_summary():
+    with Session() as session:
+        conn = get_connection(
+            DB_REDMINE_HOST,
+            DB_REDMINE_USER,
+            DB_REDMINE_PASSWORD,
+            DB_REDMINE_DB,
+            port=DB_REDMINE_PORT,
+        )
+        if conn is None:
+            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
+        try:
+            check_user_redmine = check_user_active_redmine(conn, current_user.email)
+
+            statuses = session.query(Status).order_by(Status.name.asc()).all()
+            status_list = [{"id": status.id, "name": status.name} for status in statuses]
+
+            status_counts = []
+            total_count = 0
+
+            if check_user_redmine == ANONYMOUS_USER_ID:
+                base_filter = _build_my_issues_filter(current_user.email)
+                rows = (
+                    session.query(
+                        Status.id.label("status_id"),
+                        Status.name.label("status_name"),
+                        count(Issue.id).label("issues_count"),
+                    )
+                    .join(Issue, Issue.status_id == Status.id)
+                    .filter(base_filter)
+                    .group_by(Status.id, Status.name)
+                    .all()
+                )
+
+                for row in rows:
+                    row_count = int(row.issues_count or 0)
+                    if row_count <= 0:
+                        continue
+                    status_counts.append(
+                        {
+                            "id": int(row.status_id),
+                            "name": row.status_name,
+                            "count": row_count,
+                        }
+                    )
+                    total_count += row_count
+            else:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        SELECT
+                            us.id AS status_id,
+                            us.name AS status_name,
+                            COUNT(i.id) AS issues_count
+                        FROM issues i
+                        INNER JOIN u_statuses us ON us.id = i.status_id
+                        WHERE i.author_id = %s OR i.easy_email_to = %s
+                        GROUP BY us.id, us.name
+                        ORDER BY us.name
+                        """,
+                        (check_user_redmine, current_user.email),
+                    )
+                    rows = cursor.fetchall() or []
+
+                for row in rows:
+                    row_count = int(row.get("issues_count", 0))
+                    if row_count <= 0:
+                        continue
+                    status_counts.append(
+                        {
+                            "id": int(row.get("status_id") or 0),
+                            "name": row.get("status_name") or "",
+                            "count": row_count,
+                        }
+                    )
+                    total_count += row_count
+
+            return jsonify(
+                {
+                    "total": total_count,
+                    "statuses": status_list,
+                    "status_counts": status_counts,
+                }
+            )
+        finally:
+            conn.close()
+
+
+@main.route("/get-my-issues-datatable", methods=["GET"])
+@login_required
+def get_my_issues_datatable():
+    dt_params = _parse_datatable_request()
+
+    with Session() as session:
+        conn = get_connection(
+            DB_REDMINE_HOST,
+            DB_REDMINE_USER,
+            DB_REDMINE_PASSWORD,
+            DB_REDMINE_DB,
+            port=DB_REDMINE_PORT,
+        )
+        if conn is None:
+            return jsonify(
+                {
+                    "draw": dt_params["draw"],
+                    "recordsTotal": 0,
+                    "recordsFiltered": 0,
+                    "data": [],
+                    "error": "Ошибка подключения к базе данных",
+                }
+            ), 500
+
+        try:
+            check_user_redmine = check_user_active_redmine(conn, current_user.email)
+
+            if check_user_redmine == ANONYMOUS_USER_ID:
+                records_total, records_filtered, data_rows = (
+                    _fetch_issues_datatable_sqlalchemy(
+                        session, current_user.email, dt_params
+                    )
+                )
+            else:
+                records_total, records_filtered, data_rows = (
+                    _fetch_issues_datatable_redmine(
+                        conn, check_user_redmine, current_user.email, dt_params
+                    )
+                )
+
+            return jsonify(
+                {
+                    "draw": dt_params["draw"],
+                    "recordsTotal": records_total,
+                    "recordsFiltered": records_filtered,
+                    "data": data_rows,
+                }
+            )
+        except Exception as e:
+            current_app.logger.error(f"Error in get_my_issues_datatable: {str(e)}")
+            return jsonify(
+                {
+                    "draw": dt_params["draw"],
+                    "recordsTotal": 0,
+                    "recordsFiltered": 0,
+                    "data": [],
+                    "error": "Ошибка загрузки заявок",
+                }
+            ), 500
+        finally:
+            conn.close()
 
 
 def get_issues_by_email(session, email):

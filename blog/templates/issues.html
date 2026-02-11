@@ -321,15 +321,15 @@
       this.tableState = {};
       this.statsState = {};
       this.storageKey = "issuesPageState";
+      this.maxAgeMs = 60 * 60 * 1000;
     }
 
     getDataTable() {
-      try {
-        return window.issuesTable || window.table || null;
-      } catch (e) {
-        console.warn("Ошибка получения DataTable:", e);
-        return null;
-      }
+      return window.issuesTable || window.table || null;
+    }
+
+    isTableReady(dt = this.getDataTable()) {
+      return Boolean(dt && $.fn.DataTable.isDataTable("#issue"));
     }
 
     saveTableState() {
@@ -337,165 +337,124 @@
     }
 
     saveCurrentState() {
-      try {
-        // Сохраняем состояние таблицы DataTables
-        const dt = this.getDataTable();
-        if (dt && $.fn.DataTable.isDataTable("#issue")) {
-          const tableInfo = dt.page.info();
-          const searchValue = dt.search();
-          const orderInfo = dt.order();
+      const dt = this.getDataTable();
+      if (this.isTableReady(dt)) {
+        const info = dt.page.info();
 
-          this.tableState = {
-            page: tableInfo.page,
-            length: tableInfo.length,
-            search: searchValue,
-            order: orderInfo,
-            timestamp: Date.now(),
-          };
-        }
-
-        // Сохраняем состояние статистических карточек
-        this.saveStatsState();
-
-        // Сохраняем в localStorage
-        this.persistState();
-      } catch (error) {
-        console.error("Ошибка при сохранении состояния:", error);
+        this.tableState = {
+          page: info.page,
+          length: info.length,
+          search: dt.search(),
+          order: dt.order(),
+          timestamp: Date.now(),
+        };
       }
+
+      this.statsState = this.collectStatsState();
+      this.persistState();
     }
 
-    saveStatsState() {
-      try {
-        const statsCards = document.querySelectorAll(".stat-card");
-        this.statsState = {};
+    collectStatsState() {
+      const state = {};
 
-        statsCards.forEach((card, index) => {
-          const isExpanded = card.classList.contains("expanded");
-          const cardId = card.id || `stat-card-${index}`;
+      document.querySelectorAll(".stat-card").forEach((card, index) => {
+        const isExpanded = card.classList.contains("expanded");
+        const cardId = card.id || `stat-card-${index}`;
 
-          this.statsState[cardId] = {
-            expanded: isExpanded,
-            visible: !card.classList.contains("hidden"),
-          };
-        });
-      } catch (error) {
-        console.error("Ошибка при сохранении состояния статистики:", error);
-      }
+        state[cardId] = {
+          expanded: isExpanded,
+          visible: !card.classList.contains("hidden"),
+        };
+      });
+
+      return state;
     }
 
     restoreState() {
-      try {
-        // Восстанавливаем состояние таблицы
-        this.restoreTableState();
-
-        // Восстанавливаем состояние статистики
-        this.restoreStatsState();
-      } catch (error) {
-        console.error("Ошибка при восстановлении состояния:", error);
-      }
+      this.restoreTableState();
+      this.restoreStatsState();
     }
 
     restoreTableState() {
-      try {
-        const dt = this.getDataTable();
-        if (this.tableState && dt && $.fn.DataTable.isDataTable("#issue")) {
-          // Восстанавливаем поиск
-          if (this.tableState.search) {
-            dt.search(this.tableState.search);
-          }
-
-          // Восстанавливаем сортировку
-          if (this.tableState.order) {
-            dt.order(this.tableState.order);
-          }
-
-          // Восстанавливаем размер страницы
-          if (this.tableState.length) {
-            dt.page.len(this.tableState.length);
-          }
-
-          // Восстанавливаем текущую страницу
-          if (this.tableState.page !== undefined) {
-            dt.page(this.tableState.page);
-          }
-
-          // Перерисовываем таблицу
-          dt.draw(false);
-        }
-      } catch (error) {
-        console.error("Ошибка при восстановлении состояния таблицы:", error);
+      const dt = this.getDataTable();
+      if (!this.isTableReady(dt) || !this.tableState) {
+        return;
       }
+
+      const { search, order, length, page } = this.tableState;
+      if (search) {
+        dt.search(search);
+      }
+      if (order) {
+        dt.order(order);
+      }
+      if (length) {
+        dt.page.len(length);
+      }
+      if (page !== undefined) {
+        dt.page(page);
+      }
+
+      dt.draw(false);
     }
 
     restoreStatsState() {
-      try {
-        if (this.statsState) {
-          Object.keys(this.statsState).forEach((cardId) => {
-            const card = document.getElementById(cardId);
-            if (card) {
-              const state = this.statsState[cardId];
-
-              // Восстанавливаем состояние раскрытия
-              if (state.expanded) {
-                card.classList.add("expanded");
-              } else {
-                card.classList.remove("expanded");
-              }
-
-              // Восстанавливаем видимость
-              if (state.visible) {
-                card.classList.remove("hidden");
-              } else {
-                card.classList.add("hidden");
-              }
-            }
-          });
-        }
-      } catch (error) {
-        console.error("Ошибка при восстановлении состояния статистики:", error);
+      if (!this.statsState) {
+        return;
       }
+
+      Object.entries(this.statsState).forEach(([cardId, state]) => {
+        const card = document.getElementById(cardId);
+        if (!card) {
+          return;
+        }
+
+        card.classList.toggle("expanded", Boolean(state.expanded));
+        card.classList.toggle("hidden", !state.visible);
+      });
     }
 
     persistState() {
       try {
-        const stateData = {
+        const payload = {
           table: this.tableState,
           stats: this.statsState,
           timestamp: Date.now(),
         };
 
-        localStorage.setItem(this.storageKey, JSON.stringify(stateData));
+        localStorage.setItem(this.storageKey, JSON.stringify(payload));
       } catch (error) {
-        console.warn("Не удалось сохранить состояние в localStorage:", error);
+        localStorage.removeItem(this.storageKey);
       }
     }
 
     loadPersistedState() {
       try {
-        const savedData = localStorage.getItem(this.storageKey);
-        if (savedData) {
-          const stateData = JSON.parse(savedData);
+        const raw = localStorage.getItem(this.storageKey);
+        if (!raw) {
+          return;
+        }
 
-          // Проверяем, не устарели ли данные (старше 1 часа)
-          const oneHour = 60 * 60 * 1000;
-          if (Date.now() - stateData.timestamp < oneHour) {
-            this.tableState = stateData.table || {};
-            this.statsState = stateData.stats || {};
-          }
+        const parsed = JSON.parse(raw);
+        if (Date.now() - (parsed.timestamp || 0) < this.maxAgeMs) {
+          this.tableState = parsed.table || {};
+          this.statsState = parsed.stats || {};
+        } else {
+          this.clearState();
         }
       } catch (error) {
-        console.warn("Не удалось загрузить состояние из localStorage:", error);
+        this.clearState();
       }
     }
 
+    resetState() {
+      this.tableState = {};
+      this.statsState = {};
+    }
+
     clearState() {
-      try {
-        this.tableState = {};
-        this.statsState = {};
-        localStorage.removeItem(this.storageKey);
-      } catch (error) {
-        console.error("Ошибка при очистке состояния:", error);
-      }
+      this.resetState();
+      localStorage.removeItem(this.storageKey);
     }
   }
 
@@ -601,101 +560,492 @@
         minute: "2-digit",
       });
     }
-    // Функция инициализации данных таблицы с поддержкой кеша
-    function initializeTableData() {
-      const cacheKey = "my_issues_data_v2";
-      const stateKey = "my_issues_table_state_v2";
-      const cacheTimeKey = "my_issues_cache_time_v2";
-      const cacheExpiry = 10 * 60 * 1000; // 10 минут
 
-      // Проверяем URL параметры
-      const urlParams = new URLSearchParams(window.location.search);
-      const useCached = urlParams.get("cached") === "1";
-      const fromIssueId = urlParams.get("from_issue");
+    const ISSUE_TABLE_COLUMNS = $("#issue thead th").length || 5;
 
-      // Попытка использовать кеш
-      if (useCached) {
-        const cachedData = sessionStorage.getItem(cacheKey);
-        const cacheTimestamp = sessionStorage.getItem(cacheTimeKey);
-        const cachedState = sessionStorage.getItem(stateKey);
+    function buildStateTableRow(contentHtml) {
+      const contentCellIndex = Math.floor(ISSUE_TABLE_COLUMNS / 2);
+      let cells = "";
 
-        if (
-          cachedData &&
-          cacheTimestamp &&
-          Date.now() - parseInt(cacheTimestamp) < cacheExpiry
-        ) {
-          try {
-            const response = JSON.parse(cachedData);
-            const tableState = cachedState ? JSON.parse(cachedState) : null;
-
-            console.log("📚 Используем кешированные данные");
-            processTableData(response, tableState, fromIssueId);
-
-            // Очищаем URL от параметров кеша
-            window.history.replaceState({}, "", "/my-issues");
-            return;
-          } catch (error) {
-            console.warn("⚠️ Ошибка при использовании кеша:", error);
-          }
+      for (let i = 0; i < ISSUE_TABLE_COLUMNS; i += 1) {
+        if (i === contentCellIndex) {
+          cells += `<td>${contentHtml}</td>`;
+        } else {
+          cells += "<td></td>";
         }
       }
 
-      // Загрузка данных с сервера
-      console.log("🌐 Загружаем данные с сервера");
-      loadDataFromServer();
+      return `<tr>${cells}</tr>`;
+    }
+    function escapeHtml(value) {
+      return $("<div>").text(value || "").html();
     }
 
-    // AJAX запрос для получения данных с сервера
-    function loadDataFromServer() {
+    function parseJsonSafe(raw) {
+      if (!raw) {
+        return null;
+      }
+
+      try {
+        return JSON.parse(raw);
+      } catch (error) {
+        return null;
+      }
+    }
+
+    function setSessionValueSafe(key, value) {
+      try {
+        sessionStorage.setItem(key, value);
+        return true;
+      } catch (error) {
+        sessionStorage.removeItem(key);
+        return false;
+      }
+    }
+
+    function setSessionJsonSafe(key, payload) {
+      return setSessionValueSafe(key, JSON.stringify(payload));
+    }
+
+    function debounce(fn, delay = 120) {
+      let timerId = null;
+      const debounced = function (...args) {
+        if (timerId) {
+          clearTimeout(timerId);
+        }
+        timerId = setTimeout(() => {
+          timerId = null;
+          fn.apply(this, args);
+        }, delay);
+      };
+      debounced.cancel = function () {
+        if (timerId) {
+          clearTimeout(timerId);
+          timerId = null;
+        }
+      };
+      return debounced;
+    }
+
+    let scheduleTableStateSave = null;
+
+    // Инициализация summary + server-side DataTable
+    function initializeTableData() {
+      const stateKey = "my_issues_table_state_v2";
+      const summaryCacheKey = "my_issues_summary_v1";
+      const summaryCacheTimeKey = "my_issues_summary_time_v1";
+      const summaryCacheExpiry = 2 * 60 * 1000; // 2 минуты
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromIssueId = urlParams.get("from_issue");
+      const cachedState = sessionStorage.getItem(stateKey);
+      const tableState = parseJsonSafe(cachedState);
+
+      const cachedSummary = sessionStorage.getItem(summaryCacheKey);
+      const summaryTimestamp = sessionStorage.getItem(summaryCacheTimeKey);
+
+      if (
+        cachedSummary &&
+        summaryTimestamp &&
+        Date.now() - parseInt(summaryTimestamp, 10) < summaryCacheExpiry
+      ) {
+        const summaryData = parseJsonSafe(cachedSummary);
+        if (summaryData) {
+          processSummaryData(summaryData, tableState, fromIssueId);
+          window.history.replaceState({}, "", "/my-issues");
+          return;
+        }
+        sessionStorage.removeItem(summaryCacheKey);
+        sessionStorage.removeItem(summaryCacheTimeKey);
+      }
+
+      loadSummaryFromServer(tableState, fromIssueId);
+    }
+
+    function loadSummaryFromServer(savedState, fromIssueId) {
       $.ajax({
-        url: "/get-my-issues",
+        url: "/get-my-issues-summary",
         method: "GET",
         crossDomain: true,
         xhrFields: {
           withCredentials: true,
         },
         success: function (response) {
-          // Кешируем полученные данные
-          const cacheKey = "my_issues_data_v2";
-          const cacheTimeKey = "my_issues_cache_time_v2";
-
-          try {
-            sessionStorage.setItem(cacheKey, JSON.stringify(response));
-            sessionStorage.setItem(cacheTimeKey, Date.now().toString());
-            console.log("💾 Данные сохранены в кеш");
-          } catch (error) {
-            console.warn("⚠️ Не удалось сохранить в кеш:", error);
-          }
-
-          // Обрабатываем данные
-          processTableData(response);
+          setSessionJsonSafe("my_issues_summary_v1", response);
+          setSessionValueSafe("my_issues_summary_time_v1", Date.now().toString());
+          processSummaryData(response, savedState, fromIssueId);
         },
         error: function (xhr, status, error) {
-          console.error("Error:", error);
-          $("#table-body").html(`
-                      <tr>
-                          <td></td>
-                          <td></td>
-                          <td>
-                              <div class="error-state">
-                                  <i class="fas fa-exclamation-triangle"></i>
-                                  <h3>Ошибка загрузки данных</h3>
-                                  <p>Не удалось подключиться к системе HelpDesk</p>
-                                  <button onclick="location.reload()" class="action-button primary">
-                                      <i class="fas fa-refresh"></i>
-                                      <span>Попробовать снова</span>
-                                  </button>
-                              </div>
-                          </td>
-                          <td></td>
-                      </tr>
-                  `);
-        },
-        complete: function () {
-          // Скрываем спиннер после завершения запроса
-          $("#loading-spinner").hide();
+          $("#table-body").html(
+            buildStateTableRow(`
+              <div class="error-state">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Ошибка загрузки данных</h3>
+                <p>Не удалось подключиться к системе HelpDesk</p>
+                <button onclick="location.reload()" class="action-button primary">
+                  <i class="fas fa-refresh"></i>
+                  <span>Попробовать снова</span>
+                </button>
+              </div>
+            `)
+          );
+          initializeServerSideDataTable(savedState, fromIssueId);
         },
       });
+    }
+
+    function buildStatsFromStatusCounts(statusCounts) {
+      const stats = {
+        total: 0,
+        open: 0,
+        inProgress: 0,
+        closed: 0,
+        awaitingResponse: 0,
+        detailsByCategory: {
+          open: {},
+          progress: {},
+          closed: {},
+          awaiting: {},
+          other: {},
+        },
+      };
+
+      (statusCounts || []).forEach((statusItem) => {
+        const count = parseInt(statusItem.count || 0, 10) || 0;
+        if (count <= 0) return;
+
+        const statusName = String(statusItem.name || "");
+        const normalizedStatus = statusName.toLowerCase();
+        const statusId = parseInt(statusItem.id || 0, 10);
+        stats.total += count;
+
+        if (statusId === 9 || statusId === 13 || statusId === 15) {
+          stats.awaitingResponse += count;
+          stats.detailsByCategory.awaiting[statusName] =
+            (stats.detailsByCategory.awaiting[statusName] || 0) + count;
+        } else if (
+          normalizedStatus.includes("закрыта") ||
+          normalizedStatus.includes("отклонена") ||
+          normalizedStatus.includes("перенаправлена") ||
+          normalizedStatus.includes("closed") ||
+          normalizedStatus.includes("rejected") ||
+          normalizedStatus.includes("redirected")
+        ) {
+          stats.closed += count;
+          stats.detailsByCategory.closed[statusName] =
+            (stats.detailsByCategory.closed[statusName] || 0) + count;
+        } else if (
+          normalizedStatus.includes("в работе") ||
+          normalizedStatus.includes("приостановлена") ||
+          normalizedStatus.includes("на тестировании") ||
+          normalizedStatus.includes("в очереди") ||
+          normalizedStatus.includes("заморожена") ||
+          normalizedStatus.includes("in progress")
+        ) {
+          stats.inProgress += count;
+          stats.detailsByCategory.progress[statusName] =
+            (stats.detailsByCategory.progress[statusName] || 0) + count;
+        } else if (
+          normalizedStatus.includes("открыта") ||
+          normalizedStatus.includes("выполнена") ||
+          normalizedStatus.includes("new") ||
+          normalizedStatus.includes("open") ||
+          normalizedStatus.includes("pending") ||
+          normalizedStatus.includes("resolved") ||
+          normalizedStatus.includes("создана") ||
+          normalizedStatus.includes("зарегистрирована")
+        ) {
+          stats.open += count;
+          stats.detailsByCategory.open[statusName] =
+            (stats.detailsByCategory.open[statusName] || 0) + count;
+        } else {
+          stats.detailsByCategory.other[statusName] =
+            (stats.detailsByCategory.other[statusName] || 0) + count;
+        }
+      });
+
+      return stats;
+    }
+
+    function ensureViewToggleControls() {
+      if ($(".view-toggle-wrapper").length === 0) {
+        const viewToggleHtml = `
+          <div class="view-toggle-wrapper" style="margin: 20px 0; text-align: center;">
+            <div class="view-toggle-buttons">
+              <button class="view-toggle-btn active" data-view="list" title="Режим списка">
+                <i class="fas fa-list"></i>
+                <span>Список</span>
+              </button>
+              <button class="view-toggle-btn" data-view="kanban" title="Режим карточек">
+                <i class="fas fa-th-large"></i>
+                <span>Карточки</span>
+              </button>
+            </div>
+          </div>
+        `;
+        $(".issues-section .table-container").before(viewToggleHtml);
+      }
+
+      $(".view-toggle-btn")
+        .off("click.viewToggle")
+        .on("click.viewToggle", function () {
+          const viewMode = $(this).data("view");
+          $(".view-toggle-btn").removeClass("active");
+          $(this).addClass("active");
+          localStorage.setItem("issues_view_mode", viewMode);
+          if (viewMode === "kanban") {
+            window.showKanbanView();
+          } else {
+            window.showListView();
+          }
+        });
+
+      const savedViewMode = localStorage.getItem("issues_view_mode");
+      if (savedViewMode === "kanban") {
+        $(".view-toggle-btn[data-view='kanban']").addClass("active");
+        $(".view-toggle-btn[data-view='list']").removeClass("active");
+      } else {
+        $(".view-toggle-btn[data-view='list']").addClass("active");
+        $(".view-toggle-btn[data-view='kanban']").removeClass("active");
+      }
+    }
+
+    function processSummaryData(response, savedState, fromIssueId) {
+      const statuses = Array.isArray(response.statuses) ? response.statuses : [];
+      let statusFilter =
+        '<select id="status-filter" class="form-control">' +
+        '<option value="">Все статусы</option>';
+
+      statuses.forEach(function (status) {
+        statusFilter += `<option value="${escapeHtml(status.name)}">${escapeHtml(
+          status.name
+        )}</option>`;
+      });
+
+      statusFilter += "</select>";
+      $("#statusFilterContainer").html(statusFilter);
+
+      const stats = buildStatsFromStatusCounts(response.status_counts || []);
+      animateNumber($("#totalIssues"), stats.total);
+      animateNumber($("#openIssues"), stats.open);
+      animateNumber($("#inProgressIssues"), stats.inProgress);
+      animateNumber($("#closedIssues"), stats.closed);
+      animateNumber($("#awaitingResponseIssues"), stats.awaitingResponse);
+      populateCardDetails(stats);
+      initStatCards();
+
+      initializeServerSideDataTable(savedState, fromIssueId);
+    }
+
+    function initializeServerSideDataTable(savedState, fromIssueId) {
+      if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+        window.issuesTable.destroy();
+      }
+      $("#table-body").empty();
+      if (scheduleTableStateSave && typeof scheduleTableStateSave.cancel === "function") {
+        scheduleTableStateSave.cancel();
+      }
+      scheduleTableStateSave = debounce(() => {
+        if (window.dataStateManager) {
+          window.dataStateManager.saveTableState();
+        }
+      }, 120);
+
+      let table;
+      try {
+        table = window.issuesTable = $("#issue").DataTable({
+          language: {
+            url: "/static/js/datatables/Russian.json",
+            emptyTable: "У вас пока нет заявок в системе",
+            zeroRecords: "По вашему запросу ничего не найдено",
+            processing: "Загрузка заявок...",
+          },
+          processing: true,
+          serverSide: true,
+          order: [[1, "desc"]],
+          pageLength: 10,
+          lengthMenu: [
+            [5, 10, 25, 50],
+            [5, 10, 25, 50],
+          ],
+          pagingType: "full_numbers",
+          dom: '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
+          deferRender: true,
+          stateSave: false,
+          ajax: {
+            url: "/get-my-issues-datatable",
+            type: "GET",
+            dataSrc: function (json) {
+              window.currentIssuesPage = Array.isArray(json.data) ? json.data : [];
+              return window.currentIssuesPage;
+            },
+          },
+          columns: [
+            {
+              data: "id",
+              render: function (data, type, row) {
+                if (type === "sort" || type === "type") {
+                  return Number(data) || 0;
+                }
+                return `
+                  <a href="/my-issues/${row.id}" class="issue-id-link" title="Посмотреть детали заявки">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>#${escapeHtml(String(row.id || ""))}</span>
+                  </a>
+                `;
+              },
+            },
+            {
+              data: "updated_on",
+              render: function (data, type) {
+                if (type === "sort" || type === "type") {
+                  return data || "";
+                }
+                const titleText = data
+                  ? new Date(data).toLocaleString("ru-RU")
+                  : "Нет даты";
+                return `<span title="${escapeHtml(titleText)}">${escapeHtml(
+                  formatDate(data)
+                )}</span>`;
+              },
+            },
+            {
+              data: "subject",
+              render: function (data, type, row) {
+                if (type === "sort" || type === "type" || type === "filter") {
+                  return data || "";
+                }
+                const safeSubject = escapeHtml(data || "");
+                return `
+                  <a href="/my-issues/${row.id}" class="issue-subject-link issue-subject" title="${safeSubject}">
+                    <i class="fas fa-external-link-alt"></i>
+                    <span>${safeSubject}</span>
+                  </a>
+                `;
+              },
+            },
+            {
+              data: "status_name",
+              render: function (data, type, row) {
+                if (type === "sort" || type === "type" || type === "filter") {
+                  return data || "";
+                }
+                const statusInfo = getStatusStyle(data || "");
+                const safeStatus = escapeHtml(data || "");
+                const safeTooltip = escapeHtml(statusInfo.tooltip || "");
+                return `
+                  <div class="status-cell">
+                    <div class="status-badge" title="${safeTooltip}">
+                      <i class="${statusInfo.iconClass} status-icon"></i>
+                      <span>${safeStatus}</span>
+                    </div>
+                  </div>
+                `;
+              },
+            },
+            {
+              data: "status_id",
+              visible: false,
+              searchable: false,
+            },
+          ],
+          createdRow: function (row, data) {
+            const statusInfo = getStatusStyle(data.status_name || "");
+            $(row)
+              .addClass(statusInfo.trClass)
+              .attr("data-status-id", data.status_id || 0)
+              .attr("data-issue-id", data.id || "")
+              .attr("data-status-name", data.status_name || "");
+          },
+          initComplete: function () {
+            $(".dataTables_filter").detach().appendTo("#searchBoxContainer");
+            $("#searchBoxContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+            $('#searchBoxContainer input[type="search"]').attr(
+              "placeholder",
+              "Поиск по заявкам..."
+            );
+
+            $(".dataTables_length").detach().appendTo("#lengthContainer");
+            $("#lengthContainer label")
+              .contents()
+              .filter(function () {
+                return this.nodeType === 3;
+              })
+              .remove();
+
+            $(".dataTables_info").detach().appendTo("#infoContainer");
+            $(".dataTables_paginate").detach().appendTo("#paginationContainer");
+            ensureViewToggleControls();
+
+            const savedViewMode = localStorage.getItem("issues_view_mode");
+            if (savedViewMode === "kanban") {
+              window.showKanbanView();
+            } else {
+              window.showListView();
+            }
+          },
+          paging: true,
+          info: true,
+          searching: true,
+          ordering: true,
+        });
+
+        $("#status-filter")
+          .off("change")
+          .on("change", function () {
+            let selectedStatus = $(this).val();
+            table.column(3).search(selectedStatus).draw();
+
+            if (scheduleTableStateSave) {
+              scheduleTableStateSave();
+            }
+          });
+
+        table.on("page.dt length.dt order.dt search.dt", function () {
+          if (scheduleTableStateSave) {
+            scheduleTableStateSave();
+          }
+        });
+
+        if (window.dataStateManager && savedState) {
+          setTimeout(() => {
+            window.dataStateManager.restoreTableState();
+          }, 100);
+        }
+
+        if (fromIssueId) {
+          table.one("draw", function () {
+            const rowToHighlight = $(
+              `#issue tbody tr[data-issue-id="${fromIssueId}"]`
+            );
+            if (rowToHighlight.length) {
+              rowToHighlight.addClass("issue-highlight");
+              setTimeout(() => rowToHighlight.removeClass("issue-highlight"), 1600);
+            }
+          });
+        }
+      } catch (error) {
+        $("#table-body").html(
+          buildStateTableRow(`
+            <div class="error-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <h3>Ошибка инициализации таблицы</h3>
+              <p>Попробуйте обновить страницу</p>
+              <button onclick="location.reload()" class="action-button primary">
+                <i class="fas fa-refresh"></i>
+                <span>Обновить</span>
+              </button>
+            </div>
+          `)
+        );
+      } finally {
+        $("#loading-spinner").hide();
+        $(document).trigger("dataLoaded");
+      }
     }
     // Функция анимации чисел - Optimized
     function animateNumber(element, finalNumber) {
@@ -722,15 +1072,10 @@
 
     // Функция заполнения деталей карточек
     function populateCardDetails(stats) {
-      console.log("🔍 populateCardDetails вызвана с:", stats);
-
       // Проверяем наличие структуры detailsByCategory
       if (!stats || !stats.detailsByCategory) {
-        console.error("❌ stats.detailsByCategory не найден:", stats);
         return;
       }
-
-      console.log("📊 detailsByCategory:", stats.detailsByCategory);
 
       // Вспомогательная функция генерации блока статусов
       function buildCategoryBlock(titleEmojiAndText, categoryMap, itemClass) {
@@ -827,479 +1172,186 @@
         awaitingDetailsHTML =
           '<div class="status-item"><span class="status-name">Нет данных</span></div>';
       $("#awaitingResponseDetails").html(awaitingDetailsHTML);
-    } // Функция обработки данных таблицы (общая для кеша и сервера)
-    function processTableData(response, savedState, fromIssueId) {
-      // 🔧 ИСПРАВЛЕНИЕ: Сохраняем данные для Канбан-доски
-      window.issuesData = response.issues || [];
-      console.log('💾 Сохранено заявок для Канбан:', window.issuesData.length);
-
-      // Создаем фильтр статусов
-      let statusFilter =
-        '<select id="status-filter" class="form-control">' +
-        '<option value="">Все статусы</option>';
-
-      response.statuses.forEach(function (status) {
-        statusFilter += `<option value="${status.name}">${status.name}</option>`;
-      });
-
-      statusFilter += "</select>";
-      $("#statusFilterContainer").html(statusFilter);
-
-      // Подсчет и отображение статистики
-      let stats = {
-        total: response.issues.length,
-        open: 0,
-        inProgress: 0,
-        closed: 0,
-        awaitingResponse: 0,
-        detailsByCategory: {
-          open: {},
-          progress: {},
-          closed: {},
-          awaiting: {},
-          other: {},
-        },
-      };
-
-      // Отладка: выводим все заявки для проверки
-      console.log('📊 Всего заявок для анализа:', response.issues.length);
-      console.log('🔍 Ищем заявки со статусами 9, 13, 15...');
-
-      response.issues.forEach(function (issue) {
-        const normalizedStatus = String(issue.status_name).toLowerCase();
-        const statusName = issue.status_name;
-        const statusId = parseInt(issue.status_id); // Преобразуем в число
-
-        // Отладка: выводим каждую заявку
-        // Преобразуем statusId в число для корректного сравнения
-        const statusIdNum = parseInt(statusId, 10);
-        if (statusIdNum === 9 || statusIdNum === 13 || statusIdNum === 15) {
-          console.log(`⏳ НАЙДЕНА! Заявка #${issue.id} "${statusName}" (ID: ${statusId}, тип: ${typeof statusId}) → Ожидают ответа`);
-          stats.awaitingResponse++;
-          stats.detailsByCategory.awaiting[statusName] =
-            (stats.detailsByCategory.awaiting[statusName] || 0) + 1;
-        } else if (
-          normalizedStatus.includes("закрыта") ||
-          normalizedStatus.includes("отклонена") ||
-          normalizedStatus.includes("перенаправлена") ||
-          normalizedStatus.includes("closed") ||
-          normalizedStatus.includes("rejected") ||
-          normalizedStatus.includes("redirected")
-        ) {
-          stats.closed++;
-          stats.detailsByCategory.closed[statusName] =
-            (stats.detailsByCategory.closed[statusName] || 0) + 1;
-        } else if (
-          normalizedStatus.includes("в работе") ||
-          normalizedStatus.includes("приостановлена") ||
-          normalizedStatus.includes("на тестировании") ||
-          normalizedStatus.includes("в очереди") ||
-          normalizedStatus.includes("заморожена") ||
-          normalizedStatus.includes("in progress")
-        ) {
-          stats.inProgress++;
-          stats.detailsByCategory.progress[statusName] =
-            (stats.detailsByCategory.progress[statusName] || 0) + 1;
-        } else if (
-          normalizedStatus.includes("открыта") ||
-          normalizedStatus.includes("выполнена") ||
-          normalizedStatus.includes("new") ||
-          normalizedStatus.includes("open") ||
-          normalizedStatus.includes("pending") ||
-          normalizedStatus.includes("resolved") ||
-          normalizedStatus.includes("создана") ||
-          normalizedStatus.includes("зарегистрирована")
-        ) {
-          stats.open++;
-          stats.detailsByCategory.open[statusName] =
-            (stats.detailsByCategory.open[statusName] || 0) + 1;
-        } else {
-          // Другие статусы
-          stats.detailsByCategory.other[statusName] =
-            (stats.detailsByCategory.other[statusName] || 0) + 1;
-        }
-      });
-
-      // Отладка: выводим итоговую статистику
-      console.log('📊 Итоговая статистика:', {
-        total: stats.total,
-        open: stats.open,
-        inProgress: stats.inProgress,
-        closed: stats.closed,
-        awaitingResponse: stats.awaitingResponse
-      });
-      console.log('📋 Детализация "Ожидают ответа":', stats.detailsByCategory.awaiting);
-
-      // Обновляем статистику с анимацией
-      animateNumber($("#totalIssues"), stats.total);
-      animateNumber($("#openIssues"), stats.open);
-      animateNumber($("#inProgressIssues"), stats.inProgress);
-      animateNumber($("#closedIssues"), stats.closed);
-      animateNumber($("#awaitingResponseIssues"), stats.awaitingResponse);
-
-      // Заполняем детализацию карточек
-      populateCardDetails(stats);
-      // Инициализируем клики по стат-карточкам
-      initStatCards();
-
-      // Заполняем таблицу данными
-      if (response.issues.length === 0) {
-        $("#table-body").html(`
-                  <tr>
-                      <td></td>
-                      <td></td>
-                      <td>
-                          <div class="empty-state">
-                              <i class="fas fa-inbox"></i>
-                              <h3>Заявки не найдены</h3>
-                              <p>У вас пока нет заявок в системе</p>
-                              <a href="${'{{ url_for("main.new_issue") }}'}" class="action-button primary">
-                                  <i class="fas fa-plus"></i>
-                                  <span>Создать первую заявку</span>
-                              </a>
-                          </div>
-                      </td>
-                      <td></td>
-                  </tr>
-              `);
-      } else {
-        let tableBody = "";
-        response.issues.forEach(function (issue) {
-          let statusInfo = getStatusStyle(issue.status_name);
-          tableBody += `
-                      <tr class="${statusInfo.trClass}" data-status-id="${issue.status_id || 0}" data-issue-id="${issue.id}" data-status-name="${issue.status_name}">
-                          <td>
-                              <a href="/my-issues/${issue.id
-            }" class="issue-id-link" title="Посмотреть детали заявки">
-                                  <i class="fas fa-external-link-alt"></i>
-                                  <span>#${issue.id}</span>
-                              </a>
-                          </td>
-                          <td data-sort="${issue.updated_on}">
-                              <span title="${new Date(
-              issue.updated_on
-            ).toLocaleString("ru-RU")}">${formatDate(
-              issue.updated_on
-            )}</span>
-                          </td>
-                          <td>
-                              <a href="/my-issues/${issue.id
-            }" class="issue-subject-link issue-subject" title="${issue.subject
-            }">
-                                  <i class="fas fa-external-link-alt"></i>
-                                  <span>${issue.subject}</span>
-                              </a>
-                          </td>
-                          <td>
-                              <div class="status-cell">
-                                  <div class="status-badge" title="${statusInfo.tooltip
-            }">
-                                      <i class="${statusInfo.iconClass
-            } status-icon"></i>
-                                      <span>${issue.status_name}</span>
-                                  </div>
-                              </div>
-                          </td>
-                          <td style="display:none;">${issue.status_id || 0}</td>
-                      </tr>
-                  `;
-        });
-        $("#table-body").html(tableBody);
-      }
-
-      // Инициализируем DataTables
-      let table;
-      try {
-        table = window.issuesTable = $("#issue").DataTable({
-          language: {
-            url: "/static/js/datatables/Russian.json",
-          },
-          order: [[1, "desc"]],
-          pageLength: 10,
-          lengthMenu: [
-            [5, 10, 25, 50],
-            [5, 10, 25, 50],
-          ],
-          pagingType: "full_numbers",
-          dom: '<"top"<"left-col"l><"right-col"f>><"clear">rt<"bottom"<"left-col"i><"right-col"p>>',
-          deferRender: true, // Optimize rendering
-          processing: false, // Disable processing indicator for better UX
-          stateSave: false, // We handle state manually
-          initComplete: function () {
-            // Перемещаем элементы управления
-            $(".dataTables_filter").detach().appendTo("#searchBoxContainer");
-            $("#searchBoxContainer label")
-              .contents()
-              .filter(function () {
-                return this.nodeType === 3;
-              })
-              .remove();
-            $('#searchBoxContainer input[type="search"]').attr(
-              "placeholder",
-              "Поиск по заявкам..."
-            );
-
-            $(".dataTables_length").detach().appendTo("#lengthContainer");
-            $("#lengthContainer label")
-              .contents()
-              .filter(function () {
-                return this.nodeType === 3;
-              })
-              .remove();
-
-            $(".dataTables_info").detach().appendTo("#infoContainer");
-            $(".dataTables_paginate").detach().appendTo("#paginationContainer");
-
-            // Добавляем кнопки переключения режимов просмотра
-            const viewToggleHtml = `
-              <div class="view-toggle-wrapper" style="margin: 20px 0; text-align: center;">
-                <div class="view-toggle-buttons">
-                  <button class="view-toggle-btn active" data-view="list" title="Режим списка">
-                    <i class="fas fa-list"></i>
-                    <span>Список</span>
-                  </button>
-                  <button class="view-toggle-btn" data-view="kanban" title="Режим карточек">
-                    <i class="fas fa-th-large"></i>
-                    <span>Карточки</span>
-                  </button>
-                </div>
-              </div>
-            `;
-
-            // Добавляем кнопки перед таблицей
-            $('.issues-section .table-container').before(viewToggleHtml);
-
-            // Добавляем обработчики кликов
-            $('.view-toggle-btn').on('click', function () {
-              const viewMode = $(this).data('view');
-
-              // Убираем активный класс со всех кнопок
-              $('.view-toggle-btn').removeClass('active');
-
-              // Добавляем активный класс к нажатой кнопке
-              $(this).addClass('active');
-
-              // Сохраняем выбранный режим
-              localStorage.setItem('issues_view_mode', viewMode);
-
-              // Переключаем режим отображения
-              if (viewMode === 'kanban') {
-                window.showKanbanView();
-              } else {
-                window.showListView();
-              }
-
-              console.log('🔄 Переключен режим просмотра:', viewMode);
-            });
-
-            // Восстанавливаем сохраненный режим
-            const savedViewMode = localStorage.getItem('issues_view_mode');
-            if (savedViewMode === 'kanban') {
-              $('.view-toggle-btn[data-view="kanban"]').trigger('click');
-            }
-          },
-          paging: true,
-          info: true,
-          searching: true,
-          ordering: true,
-        });
-
-        // Добавляем обработчик изменения фильтра статусов
-        $("#status-filter").on("change", function () {
-          let selectedStatus = $(this).val();
-          table.column(3).search(selectedStatus).draw();
-
-          // Сохраняем состояние при изменении фильтра
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.saveTableState();
-            }, 100);
-          }
-        });
-
-        // Добавляем обработчики для сохранения состояния при других изменениях
-        table.on("page.dt", function () {
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.saveTableState();
-            }, 100);
-          }
-        });
-
-        table.on("length.dt", function () {
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.saveTableState();
-            }, 100);
-          }
-        });
-
-        table.on("order.dt", function () {
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.saveTableState();
-            }, 100);
-          }
-        });
-
-        table.on("search.dt", function () {
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.saveTableState();
-            }, 100);
-          }
-        });
-      } catch (error) {
-        console.error("❌ Ошибка инициализации DataTables:", error);
-      }
-
-      // Восстанавливаем состояние таблицы после инициализации
-      if (window.dataStateManager && savedState) {
-        setTimeout(() => {
-          window.dataStateManager.restoreTableState();
-        }, 100);
-      }
-
-      // Скрываем спиннер после успешной обработки данных
-      $("#loading-spinner").hide();
-
-      // Уведомляем о загрузке данных
-      $(document).trigger("dataLoaded");
     }
 
     // Table initialization moved to requestAnimationFrame above
 
     // Инициализация поведения стат-карточек - Optimized
     function initStatCards() {
-      try {
-        $(".stat-card.expandable").each(function () {
-          const $card = $(this);
-          const $details = $card.find(".stat-details");
+      $(".stat-card.expandable").each(function () {
+        const $card = $(this);
+        const $details = $card.find(".stat-details");
 
-          $card.off("click.statToggle").on("click.statToggle", function (e) {
-            if (
-              $(e.target).is(
-                "select, option, input, button, a, .action-button, .status-item"
-              )
+        $card.off("click.statToggle").on("click.statToggle", function (e) {
+          if (
+            $(e.target).is(
+              "select, option, input, button, a, .action-button, .status-item"
             )
-              return;
+          )
+            return;
 
-            $card.toggleClass("expanded");
+          $card.toggleClass("expanded");
 
-            if ($card.hasClass("expanded")) {
-              $details
-                .css({
-                  display: "block",
-                  opacity: "0",
-                  height: "0",
-                  overflow: "hidden",
-                })
-                .stop(true, true)
-                .animate(
-                  {
-                    opacity: "1",
-                    height: $details[0].scrollHeight + "px",
-                  },
-                  150,
-                  function () {
-                    $details.css({
-                      height: "auto",
-                      overflow: "visible",
-                    });
-                  }
-                );
-            } else {
-              $details.stop(true, true).animate(
+          if ($card.hasClass("expanded")) {
+            $details
+              .css({
+                display: "block",
+                opacity: "0",
+                height: "0",
+                overflow: "hidden",
+              })
+              .stop(true, true)
+              .animate(
                 {
-                  opacity: "0",
-                  height: "0",
+                  opacity: "1",
+                  height: $details[0].scrollHeight + "px",
                 },
                 150,
                 function () {
-                  $details.css("display", "none");
+                  $details.css({
+                    height: "auto",
+                    overflow: "visible",
+                  });
                 }
               );
-            }
-          });
+          } else {
+            $details.stop(true, true).animate(
+              {
+                opacity: "0",
+                height: "0",
+              },
+              150,
+              function () {
+                $details.css("display", "none");
+              }
+            );
+          }
         });
+      });
 
-        // Инициализация кликов по статусам для фильтрации
-        $(".status-item")
-          .off("click.statusFilter")
-          .on("click.statusFilter", function (e) {
-            e.stopPropagation();
-            const $statusItem = $(this);
-            const statusText = $statusItem.find(".status-name").text().trim();
+      // Инициализация кликов по статусам для фильтрации
+      $(".status-item")
+        .off("click.statusFilter")
+        .on("click.statusFilter", function (e) {
+          e.stopPropagation();
+          const $statusItem = $(this);
+          const statusText = $statusItem.find(".status-name").text().trim();
 
-            console.log("🔍 Клик по статусу:", statusText);
+          // Убираем активный класс со всех статусов
+          $(".status-item").removeClass("active");
+          // Добавляем активный класс к выбранному статусу
+          $statusItem.addClass("active");
 
-            // Убираем активный класс со всех статусов
-            $(".status-item").removeClass("active");
-            // Добавляем активный класс к выбранному статусу
-            $statusItem.addClass("active");
-
-            // Фильтруем таблицу по статусу
-            filterTableByStatus(statusText);
-          });
-      } catch (err) {
-        console.error("Ошибка инициализации стат-карточек:", err);
-      }
+          // Фильтруем таблицу по статусу
+          filterTableByStatus(statusText);
+        });
     }
 
     // Функция фильтрации таблицы по статусу
     function filterTableByStatus(statusText) {
-      try {
-        console.log("🔍 filterTableByStatus вызвана с:", statusText);
-        const dt = window.dataStateManager
-          ? window.dataStateManager.getDataTable()
-          : null;
-        console.log("🔍 DataTable instance:", dt);
+      const dt = window.dataStateManager
+        ? window.dataStateManager.getDataTable()
+        : null;
 
-        if (dt && $.fn.DataTable.isDataTable("#issue")) {
-          console.log("🔍 Применяем фильтр по статусу:", statusText);
+      if (dt && $.fn.DataTable.isDataTable("#issue")) {
+        // Очищаем предыдущие фильтры
+        dt.search("").columns().search("").draw();
 
-          // Очищаем предыдущие фильтры
-          dt.search("").columns().search("").draw();
-
-          // Применяем фильтр по статусу (колонка 3 - статус)
-          if (statusText && statusText !== "Все") {
-            dt.column(3).search(statusText, true, false).draw();
-            console.log("🔍 Фильтр применен к колонке 3");
-          }
-
-          // Сохраняем состояние
-          if (window.dataStateManager) {
-            window.dataStateManager.saveCurrentState();
-          }
-        } else {
-          console.warn("⚠️ DataTable не найдена или не инициализирована");
+        // Применяем фильтр по статусу (колонка 3 - статус)
+        if (statusText && statusText !== "Все") {
+          dt.column(3).search(statusText).draw();
         }
-      } catch (err) {
-        console.error("Ошибка фильтрации по статусу:", err);
+
+        // Сохраняем состояние
+        if (scheduleTableStateSave) {
+          scheduleTableStateSave();
+        } else if (window.dataStateManager) {
+          window.dataStateManager.saveTableState();
+        }
       }
     }
 
     // Функция сброса фильтров
     function resetStatusFilter() {
-      try {
-        const dt = window.dataStateManager
-          ? window.dataStateManager.getDataTable()
-          : null;
-        if (dt && $.fn.DataTable.isDataTable("#issue")) {
-          // Очищаем все фильтры
-          dt.search("").columns().search("").draw();
+      const dt = window.dataStateManager
+        ? window.dataStateManager.getDataTable()
+        : null;
+      if (dt && $.fn.DataTable.isDataTable("#issue")) {
+        // Очищаем все фильтры
+        dt.search("").columns().search("").draw();
 
-          // Убираем активный класс со всех статусов
-          $(".status-item").removeClass("active");
+        // Убираем активный класс со всех статусов
+        $(".status-item").removeClass("active");
 
-          // Сохраняем состояние
-          if (window.dataStateManager) {
-            window.dataStateManager.saveCurrentState();
-          }
+        // Сохраняем состояние
+        if (scheduleTableStateSave) {
+          scheduleTableStateSave();
+        } else if (window.dataStateManager) {
+          window.dataStateManager.saveTableState();
         }
-      } catch (err) {
-        console.error("Ошибка сброса фильтров:", err);
       }
+    }
+
+    let kanbanLoadPromise = null;
+    async function loadIssuesForKanban(forceReload = false) {
+      const cacheKey = "my_issues_kanban_data_v1";
+      const cacheTimeKey = "my_issues_kanban_time_v1";
+      const cacheTtl = 5 * 60 * 1000;
+
+      if (
+        !forceReload &&
+        Array.isArray(window.issuesData) &&
+        window.issuesData.length > 0
+      ) {
+        return window.issuesData;
+      }
+
+      if (!forceReload) {
+        const cachedData = sessionStorage.getItem(cacheKey);
+        const cachedTime = sessionStorage.getItem(cacheTimeKey);
+        if (
+          cachedData &&
+          cachedTime &&
+          Date.now() - parseInt(cachedTime, 10) < cacheTtl
+        ) {
+          const parsedCachedData = parseJsonSafe(cachedData);
+          if (Array.isArray(parsedCachedData)) {
+            window.issuesData = parsedCachedData;
+            return window.issuesData;
+          }
+          sessionStorage.removeItem(cacheKey);
+          sessionStorage.removeItem(cacheTimeKey);
+        }
+      }
+
+      if (kanbanLoadPromise) {
+        return kanbanLoadPromise;
+      }
+
+      kanbanLoadPromise = fetch("/get-my-issues", {
+        method: "GET",
+        credentials: "include",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then((response) => {
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+          return response.json();
+        })
+        .then((payload) => {
+          window.issuesData = Array.isArray(payload.issues) ? payload.issues : [];
+          setSessionJsonSafe(cacheKey, window.issuesData);
+          setSessionValueSafe(cacheTimeKey, Date.now().toString());
+          return window.issuesData;
+        })
+        .finally(() => {
+          kanbanLoadPromise = null;
+        });
+
+      return kanbanLoadPromise;
     }
 
     // Функция показа режима списка
@@ -1310,7 +1362,6 @@
       // Показываем пагинацию в режиме списка
       $('.table-footer').show();
 
-      console.log('📋 Показан режим списка');
     }
 
     // Функция показа режима канбан
@@ -1381,23 +1432,37 @@
       // Скрываем пагинацию в режиме канбан
       $('.table-footer').hide();
 
-      populateKanbanBoard();
-      console.log('📊 Показан режим канбан');
+      $('.kanban-cards').html(`
+        <div class="empty-kanban-state">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Загрузка карточек...</span>
+        </div>
+      `);
+
+      loadIssuesForKanban()
+        .then(() => {
+          populateKanbanBoard();
+        })
+        .catch((error) => {
+          $("#kanban-open").html(`
+            <div class="empty-kanban-state">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span>Не удалось загрузить данные канбана</span>
+            </div>
+          `);
+          $("#kanban-progress, #kanban-awaiting, #kanban-closed").empty();
+        });
     }
 
     // Функция заполнения канбан-доски
     window.populateKanbanBoard = function () {
-      console.log('📊 Начинаем заполнение канбан-доски...');
-
       // Очищаем все колонки
       $('.kanban-cards').empty();
 
       // 🔧 ИСПРАВЛЕНИЕ: Используем те же данные, что и статистика!
       const issues = window.issuesData || [];
-      console.log('📊 Всего заявок для Канбан:', issues.length);
 
       if (issues.length === 0) {
-        console.warn('⚠️ Нет данных для Канбан! Проверьте window.issuesData');
         return;
       }
 
@@ -1410,20 +1475,10 @@
       };
 
       // Обрабатываем каждую заявку
-      issues.forEach(function (issue, index) {
+      issues.forEach(function (issue) {
         const issueId = issue.id;
         const statusName = issue.status_name;
         const statusId = parseInt(issue.status_id);
-
-        // Отладка первой заявки
-        if (index === 0) {
-          console.log('📊 Первая заявка:', {
-            id: issueId,
-            subject: issue.subject,
-            status: statusName,
-            status_id: statusId
-          });
-        }
 
         // Определяем колонку по статусу (ТОЧНО ТА ЖЕ ЛОГИКА, что и в статистике!)
         let columnId = 'kanban-open';
@@ -1475,15 +1530,11 @@
         $(`#${columnId}`).append(card);
       });
 
-      console.log('📊 Распределение по колонкам:', counters);
-
       // Обновляем счетчики
       $('.kanban-column').each(function () {
         const count = $(this).find('.kanban-card').length;
         $(this).find('.kanban-count').text(count);
       });
-
-      console.log('✅ Канбан-доска заполнена!');
     }
 
     // 🔧 НОВАЯ ФУНКЦИЯ: Создание карточки напрямую из данных заявки
@@ -1646,43 +1697,39 @@
 
     // Функции для управления таблицей при переключении темы
     window.reinitializeTable = function () {
-      try {
-        // Сохраняем текущее состояние перед уничтожением
-        if (window.dataStateManager) {
-          window.dataStateManager.saveCurrentState();
-        }
-
-        // Уничтожаем существующую таблицу
-        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
-          window.issuesTable.destroy();
-        }
-
-        // Пересоздаем таблицу
-        setTimeout(() => {
-          initializeTableData();
-
-          // Восстанавливаем состояние после пересоздания
-          if (window.dataStateManager) {
-            setTimeout(() => {
-              window.dataStateManager.restoreState();
-            }, 200);
-          }
-        }, 100);
-      } catch (error) {
-        console.error("Ошибка при переинициализации таблицы:", error);
+      // Сохраняем текущее состояние перед уничтожением
+      if (window.dataStateManager) {
+        window.dataStateManager.saveCurrentState();
       }
+
+      // Уничтожаем существующую таблицу
+      if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+        window.issuesTable.destroy();
+      }
+
+      // Пересоздаем таблицу
+      setTimeout(() => {
+        initializeTableData();
+
+        // Восстанавливаем состояние после пересоздания
+        if (window.dataStateManager) {
+          setTimeout(() => {
+            window.dataStateManager.restoreState();
+          }, 200);
+        }
+      }, 100);
     };
 
     // Функция для безопасного уничтожения таблицы
     window.destroyTable = function () {
-      try {
-        if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
-          window.issuesTable.destroy();
-          window.issuesTable = null;
-        }
-      } catch (error) {
-        console.error("Ошибка при уничтожении таблицы:", error);
+      if (window.issuesTable && $.fn.DataTable.isDataTable("#issue")) {
+        window.issuesTable.destroy();
+        window.issuesTable = null;
       }
+      if (scheduleTableStateSave && typeof scheduleTableStateSave.cancel === "function") {
+        scheduleTableStateSave.cancel();
+      }
+      scheduleTableStateSave = null;
     };
   });
 
@@ -1699,14 +1746,10 @@
 <!-- Автоматическая загрузка активности при готовности страницы -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('[Issues Page] 🚀 Страница загружена, запускаем загрузку активности...');
     // Небольшая задержка для полной загрузки всех элементов
     setTimeout(function() {
         if (typeof loadRecentActivity === 'function') {
-            console.log('[Issues Page] ✅ Функция loadRecentActivity найдена, вызываем...');
             loadRecentActivity();
-        } else {
-            console.error('[Issues Page] ❌ Функция loadRecentActivity не найдена!');
         }
     }, 1000);
 });

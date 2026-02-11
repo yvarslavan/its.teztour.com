@@ -2425,3 +2425,27 @@ body.dark-theme .theme-switcher:hover .fa-sun {
   }
 }
 
+.issue-highlight {
+  animation: issueHighlightPulse 1.6s ease;
+}
+
+@keyframes issueHighlightPulse {
+  0% {
+    background-color: rgba(0, 123, 255, 0.18);
+  }
+  100% {
+    background-color: transparent;
+  }
+}
+
+.empty-kanban-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 72px;
+  padding: 12px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
