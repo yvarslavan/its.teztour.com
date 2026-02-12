@@ -573,12 +573,39 @@
     transition: var(--header-transition);
 }
 
+/* Header search sizing */
+.modern-header .search-wrapper {
+    width: clamp(190px, 16vw, 250px) !important;
+}
+
 /* Responsive Design */
-@media (max-width: 1200px) {
+@media (max-width: 1400px) {
+    .logo-sub {
+        display: none;
+    }
+
+    .logo-main {
+        font-size: 1.25rem;
+    }
+
     .header-container {
         padding: 0 1.5rem;
     }
 
+    .nav-menu {
+        gap: 0.25rem;
+    }
+
+    .nav-link {
+        padding: 0.65rem 0.75rem;
+    }
+
+    .modern-header .search-wrapper {
+        width: clamp(170px, 14vw, 220px) !important;
+    }
+}
+
+@media (max-width: 1280px) {
     .nav-text {
         display: none;
     }
@@ -589,6 +616,10 @@
 
     .user-info {
         display: none;
+    }
+
+    .modern-header .search-wrapper {
+        width: clamp(150px, 12vw, 190px) !important;
     }
 }
 

@@ -16,7 +16,7 @@ os.makedirs(db_dir, exist_ok=True)
 
 
 class Config:
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "dev-key-flask-helpdesk-2024-fixed"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
     SESSION_TYPE = "filesystem"
     # SQLite соединение
     SQLALCHEMY_DATABASE_URI = f"sqlite:///{os.path.join(db_dir, 'blog.db')}?timeout=20"

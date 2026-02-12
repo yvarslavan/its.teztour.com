@@ -1249,31 +1249,6 @@ td {
     text-align: left;
 }
 
-.assistant-response {
-    background-color: #f9f9f9;
-    border: 1px solid #ddd;
-    border-radius: 5px;
-    padding: 10px;
-    margin-bottom: 10px;
-    overflow: auto;
-    /* Добавим свойство overflow */
-}
-
-.assistant-response p {
-    margin: 0;
-}
-
-.assistant-response strong {
-    color: #333;
-}
-
-.assistant-response div {
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    color: #555;
-}
-
-
 .container {
     height: auto;
 }

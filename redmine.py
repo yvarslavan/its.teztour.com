@@ -19,7 +19,6 @@ from redminelib.exceptions import (
 import pymysql
 import pymysql.cursors
 from dbutils.pooled_db import PooledDB
-import urllib3
 from flask import flash, current_app
 from blog.models import User, Notifications, NotificationsAddNotes
 from blog import db
@@ -35,8 +34,13 @@ logging.basicConfig(
 # Создаем объект логгера
 logger = logging.getLogger(__name__)
 
-# Отключаем предупреждения о небезопасных запросах (SSL verify=False)
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+def _get_requests_verify_setting():
+    """
+    Returns SSL verification setting for requests/redminelib.
+    - True by default (strict TLS verification).
+    - Path to CA bundle when REQUESTS_CA_BUNDLE/SSL_CA_BUNDLE is set.
+    """
+    return os.getenv("REQUESTS_CA_BUNDLE") or os.getenv("SSL_CA_BUNDLE") or True
 
 os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 
@@ -459,7 +463,8 @@ class RedmineConnector:
             import requests
 
             session = requests.Session()
-            session.verify = False
+            verify_setting = _get_requests_verify_setting()
+            session.verify = verify_setting
             session.trust_env = False
             # Устанавливаем таймауты для избежания зависания запросов
             # Таймауты будут передаваться в каждый запрос
@@ -472,7 +477,7 @@ class RedmineConnector:
                     url,
                     username=username,
                     password=password,
-                    requests={"session": session, "timeout": 10, "verify": False},
+                    requests={"session": session, "timeout": 10, "verify": verify_setting},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием имени пользователя и пароля."
@@ -482,7 +487,7 @@ class RedmineConnector:
                 self.redmine = Redmine(
                     url,
                     key=api_key,
-                    requests={"session": session, "timeout": 10, "verify": False},
+                    requests={"session": session, "timeout": 10, "verify": verify_setting},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием API ключа."
@@ -1701,11 +1706,12 @@ def get_redmine_admin_instance():
         import requests
 
         session = requests.Session()
-        session.verify = False
+        verify_setting = _get_requests_verify_setting()
+        session.verify = verify_setting
         session.trust_env = False
 
         return Redmine(
-            REDMINE_URL, key=REDMINE_ADMIN_API_KEY, requests={"session": session, "timeout": 10, "verify": False}
+            REDMINE_URL, key=REDMINE_ADMIN_API_KEY, requests={"session": session, "timeout": 10, "verify": verify_setting}
         )
     except Exception as e:
         logger.error(f"Ошибка при создании экземпляра Redmine API: {e}")

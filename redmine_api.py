@@ -5,6 +5,7 @@ Handles Redmine API integration, authentication, and operations.
 
 import logging
 import traceback
+import os
 import requests
 from urllib.parse import urlparse
 from redminelib import Redmine
@@ -17,6 +18,14 @@ from redminelib.exceptions import (
 
 # Создаем объект логгера
 logger = logging.getLogger(__name__)
+
+def _get_requests_verify_setting():
+    """
+    Returns SSL verification setting for requests/redminelib.
+    - True by default (strict TLS verification).
+    - Path to CA bundle when REQUESTS_CA_BUNDLE/SSL_CA_BUNDLE is set.
+    """
+    return os.getenv("REQUESTS_CA_BUNDLE") or os.getenv("SSL_CA_BUNDLE") or True
 
 
 class RedmineConnector:
@@ -37,7 +46,8 @@ class RedmineConnector:
 
             # Создаем сессию без прокси (NO_PROXY=* установлен глобально в app.py)
             session = requests.Session()
-            session.verify = False
+            verify_setting = _get_requests_verify_setting()
+            session.verify = verify_setting
             session.trust_env = False
             # Устанавливаем таймауты для избежания зависания запросов
             # Таймауты будут передаваться в каждый запрос
@@ -50,7 +60,7 @@ class RedmineConnector:
                     url,
                     username=username,
                     password=password,
-                    requests={"session": session, "timeout": 10, "verify": False},
+                    requests={"session": session, "timeout": 10, "verify": verify_setting},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием имени пользователя и пароля."
@@ -60,7 +70,7 @@ class RedmineConnector:
                 self.redmine = Redmine(
                     url,
                     key=api_key,
-                    requests={"session": session, "timeout": 10, "verify": False},
+                    requests={"session": session, "timeout": 10, "verify": verify_setting},
                 )
                 logger.info(
                     "Инициализировано подключение к Redmine с использованием API ключа."

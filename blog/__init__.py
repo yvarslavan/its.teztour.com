@@ -72,9 +72,14 @@ def create_app():
 
     # Загрузка конфигурации
     app.config.from_object(Config)
+    # CSRF must stay enabled in all environments.
+    app.config["WTF_CSRF_ENABLED"] = True
 
-    # Фиксированный секретный ключ - используйте значение из окружения в продакшн
-    app.secret_key = os.environ.get('SECRET_KEY', "e6914948deb30b6ece648d7ac6c81bc1fa822008d425dc38")
+    # SECRET_KEY must always come from environment (fail fast if missing).
+    secret = os.environ.get("SECRET_KEY")
+    if not secret:
+        raise RuntimeError("SECRET_KEY is required! Set it in environment variables.")
+    app.secret_key = secret
 
     # Разные настройки для разных окружений
     if app.debug:
@@ -85,7 +90,6 @@ def create_app():
             SESSION_COOKIE_HTTPONLY=True,
             SESSION_COOKIE_SAMESITE='Lax',
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=False,  # Отключаем CSRF защиту
             # Отключаем кэширование для разработки
             SEND_FILE_MAX_AGE_DEFAULT=0,
             TEMPLATES_AUTO_RELOAD=True
@@ -101,7 +105,6 @@ def create_app():
             SESSION_COOKIE_SAMESITE='Lax',  # Более безопасная настройка
             SESSION_COOKIE_DOMAIN='.tez-tour.com',  # Поддомены с точкой в начале
             PERMANENT_SESSION_LIFETIME=86400,
-            WTF_CSRF_ENABLED=True,  # Включаем CSRF защиту
             WTF_CSRF_TIME_LIMIT=None,  # Отключаем ограничение времени для CSRF токенов
             WTF_CSRF_SSL_STRICT=False,  # Отключаем строгую проверку SSL для CSRF (если за прокси)
             # В продакшене включаем кэш статики
