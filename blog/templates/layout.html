@@ -323,12 +323,11 @@
                     <a href="/" class="logo-link">
                         <div class="logo-wrapper">
                             <div class="logo-icon">
-                                <i class="fas fa-tasks"></i>
+                                <i class="fas fa-compass"></i>
                                 <div class="logo-icon-glow"></div>
                             </div>
                             <div class="logo-text">
                                 <span class="logo-main">TEZ Navigator</span>
-                                <span class="logo-sub">навигатор по заявкам и задачам</span>
                             </div>
                         </div>
                     </a>
@@ -339,34 +338,16 @@
                     <ul class="nav-menu">
                         {% if current_user.is_authenticated %}
                         <!-- Search Item -->
-                        <li class="nav-item search-item me-3 d-flex align-items-center">
-                            <div class="search-wrapper position-relative" style="width: 250px;">
-                                <!-- Иконка внутри поля с использованием position: absolute -->
-                                <i class="fas fa-search text-muted position-absolute"
-                                    style="left: 10px; top: 50%; transform: translateY(-50%); z-index: 10;"></i>
+                        <li class="nav-item search-item">
+                            <div class="search-wrapper">
+                                <i class="fas fa-search search-icon" aria-hidden="true"></i>
                                 <input type="text" id="nav-search-input" class="form-control form-control-sm ps-4"
-                                    placeholder="Поиск..." autocomplete="off"
-                                    style="padding-left: 35px !important; border-radius: 20px;">
+                                    placeholder="Поиск по FAQ..." autocomplete="off">
 
-                                <!-- Выпадающий список результатов -->
                                 <div id="search-results" class="dropdown-menu w-100 shadow-sm mt-1"
-                                    style="display: none; max-height: 400px; overflow-y: auto; border-radius: 12px; border: none; box-shadow: 0 4px 20px rgba(0,0,0,0.15) !important;">
+                                    style="display: none; max-height: 400px; overflow-y: auto;">
                                 </div>
                             </div>
-                        </li>
-
-                        <!-- Notifications -->
-                        <li class="nav-item">
-                            <a class="nav-link notification-link" href="{{ url_for('main.my_notifications') }}">
-                                <div class="nav-icon-wrapper">
-                                    <i class="fas fa-bell nav-icon notification-icon"></i>
-                                    <span class="nav-text">Уведомления</span>
-                                    {% if count_notifications > 0 %}
-                                    <span class="notification-badge" id="notification-badge">{{ count_notifications
-                                        }}</span>
-                                    {% endif %}
-                                </div>
-                            </a>
                         </li>
 
                         <!-- Wiki Dropdown -->
@@ -405,7 +386,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="tasksDropdown" role="button"
                                 data-bs-toggle="dropdown">
                                 <div class="nav-icon-wrapper">
-                                    <i class="fas fa-ticket-alt nav-icon tasks-icon"></i>
+                                    <i class="fas fa-file-invoice nav-icon tasks-icon"></i>
                                     <span class="nav-text">Заявки</span>
                                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                                 </div>
@@ -433,7 +414,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="issuesDropdownMenu" role="button"
                                 data-bs-toggle="dropdown">
                                 <div class="nav-icon-wrapper">
-                                    <i class="fas fa-clipboard-list nav-icon issues-icon"></i>
+                                    <i class="fas fa-list-check fa-clipboard-list nav-icon issues-icon"></i>
                                     <span class="nav-text">Задачи</span>
                                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                                 </div>
@@ -462,7 +443,7 @@
                             <a class="nav-link dropdown-toggle" href="#" id="otherDropdown" role="button"
                                 data-bs-toggle="dropdown">
                                 <div class="nav-icon-wrapper">
-                                    <i class="fas fa-th nav-icon other-icon"></i>
+                                    <i class="fas fa-ellipsis fa-ellipsis-h nav-icon other-icon"></i>
                                     <span class="nav-text">Прочее</span>
                                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                                 </div>
@@ -506,6 +487,21 @@
                             </ul>
                         </li>
 
+                        <!-- Notifications -->
+                        <li class="nav-item">
+                            <a class="nav-link notification-link" href="{{ url_for('main.my_notifications') }}"
+                                aria-label="Уведомления">
+                                <div class="nav-icon-wrapper">
+                                    <i class="fas fa-bell nav-icon notification-icon"></i>
+                                    {% if count_notifications > 0 %}
+                                    <span class="notification-badge" id="notification-badge">{{ count_notifications
+                                        }}</span>
+                                    {% endif %}
+                                    <span class="notification-dot" aria-hidden="true"></span>
+                                </div>
+                            </a>
+                        </li>
+
                         <!-- User Profile Dropdown -->
                         <li class="nav-item dropdown user-dropdown">
                             {% set menu_avatar_url = url_for('users.user_avatar', username=current_user.username, image_file=(current_user.image_file or 'default.jpg')) %}
@@ -520,12 +516,15 @@
                                     </div>
                                     <div class="user-info">
                                         <span class="user-name">
-                                            {% set names = current_user.full_name.split() %}
-                                            {{ names[0] }} {{ names[1][:1] }}.{{ names[-1][:1] }}.
+                                            {% set full_name_parts = (current_user.full_name or 'Пользователь').split() %}
+                                            {% if full_name_parts|length >= 3 %}
+                                            {{ full_name_parts[0] }} {{ full_name_parts[1][0] }}.{{ full_name_parts[2][0] }}.
+                                            {% elif full_name_parts|length == 2 %}
+                                            {{ full_name_parts[0] }} {{ full_name_parts[1][0] }}.
+                                            {% else %}
+                                            {{ full_name_parts[0] }}
+                                            {% endif %}
                                         </span>
-                                        <span class="user-role">{{ current_user.position[:20] + '...' if
-                                            current_user.position and current_user.position|length > 20 else
-                                            current_user.position or 'Пользователь' }}</span>
                                     </div>
                                     <i class="fas fa-chevron-down dropdown-arrow"></i>
                                 </div>
@@ -1142,10 +1141,14 @@
                 newToggleBtn.setAttribute('aria-label', 'Переключить тему');
                 newToggleBtn.setAttribute('title', 'Переключить светлую/темную тему');
 
-                // Клонируем SVG иконки из оригинальной кнопки, если она найдена
+                // Клонируем иконку из оригинальной кнопки, если она найдена
                 if (themeToggleBtn) {
+                    const moonIcon = themeToggleBtn.querySelector('.theme-toggle-icon');
                     const lightIcon = themeToggleBtn.querySelector('.theme-icon-light');
                     const darkIcon = themeToggleBtn.querySelector('.theme-icon-dark');
+                    if (moonIcon) {
+                        newToggleBtn.appendChild(moonIcon.cloneNode(true));
+                    }
                     if (lightIcon) {
                         newToggleBtn.appendChild(lightIcon.cloneNode(true));
                     }
@@ -1153,28 +1156,11 @@
                         newToggleBtn.appendChild(darkIcon.cloneNode(true));
                     }
                 } else {
-                    // Создаем иконки вручную, если оригинальная кнопка не найдена
-                    const lightIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    lightIcon.setAttribute('class', 'theme-icon theme-icon-light');
-                    lightIcon.setAttribute('width', '20');
-                    lightIcon.setAttribute('height', '20');
-                    lightIcon.setAttribute('viewBox', '0 0 24 24');
-                    lightIcon.setAttribute('fill', 'none');
-                    lightIcon.setAttribute('stroke', 'currentColor');
-                    lightIcon.setAttribute('stroke-width', '2');
-                    lightIcon.innerHTML = '<circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>';
-                    newToggleBtn.appendChild(lightIcon);
-
-                    const darkIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-                    darkIcon.setAttribute('class', 'theme-icon theme-icon-dark');
-                    darkIcon.setAttribute('width', '20');
-                    darkIcon.setAttribute('height', '20');
-                    darkIcon.setAttribute('viewBox', '0 0 24 24');
-                    darkIcon.setAttribute('fill', 'none');
-                    darkIcon.setAttribute('stroke', 'currentColor');
-                    darkIcon.setAttribute('stroke-width', '2');
-                    darkIcon.innerHTML = '<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>';
-                    newToggleBtn.appendChild(darkIcon);
+                    // Создаем moon-иконку вручную, если оригинальная кнопка не найдена
+                    const moonIcon = document.createElement('i');
+                    moonIcon.className = 'fas fa-moon theme-toggle-icon';
+                    moonIcon.setAttribute('aria-hidden', 'true');
+                    newToggleBtn.appendChild(moonIcon);
                 }
 
                 // Добавляем текст
@@ -1298,11 +1284,11 @@
                                         html += `
                                                     <a href="${item.url}" class="dropdown-item py-2 border-bottom">
                                                         <div class="d-flex align-items-center">
-                                                            <div class="me-3 text-primary bg-light rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                            <div class="search-result-icon me-3 rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
                                                                 <i class="fas ${icon}"></i>
                                                             </div>
                                                             <div>
-                                                                <div class="fw-bold text-dark" style="font-size: 0.9rem;">${item.title}</div>
+                                                                <div class="search-result-title" style="font-size: 0.9rem;">${item.title}</div>
                                                             </div>
                                                         </div>
                                                     </a>
@@ -1311,7 +1297,7 @@
                                     searchResults.innerHTML = html;
                                     searchResults.style.display = 'block';
                                 } else {
-                                    searchResults.innerHTML = '<div class="dropdown-item text-muted small py-2">Ничего не найдено</div>';
+                                    searchResults.innerHTML = '<div class="dropdown-item search-empty small py-2">Ничего не найдено</div>';
                                     searchResults.style.display = 'block';
                                 }
                             })

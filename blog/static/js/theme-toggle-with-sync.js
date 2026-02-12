@@ -127,24 +127,29 @@ class ThemeManagerWithSync {
         const toggleButton = document.getElementById('theme-toggle');
         if (!toggleButton) return;
 
+        const moonIcon = toggleButton.querySelector('.theme-toggle-icon');
         const lightIcon = toggleButton.querySelector('.theme-icon-light');
         const darkIcon = toggleButton.querySelector('.theme-icon-dark');
 
-        if (!lightIcon || !darkIcon) return;
+        if (lightIcon && darkIcon) {
+            // Force update legacy dual-icons button when present
+            if (theme === this.THEMES.DARK) {
+                // Dark theme - show sun icon (light icon)
+                lightIcon.style.opacity = '1';
+                lightIcon.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
+                darkIcon.style.opacity = '0';
+                darkIcon.style.transform = 'translate(-50%, -50%) rotate(-90deg) scale(0.8)';
+            } else {
+                // Light theme - show moon icon (dark icon)
+                lightIcon.style.opacity = '0';
+                lightIcon.style.transform = 'translate(-50%, -50%) rotate(90deg) scale(0.8)';
+                darkIcon.style.opacity = '1';
+                darkIcon.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
+            }
+        }
 
-        // Force update icons based on theme
-        if (theme === this.THEMES.DARK) {
-            // Dark theme - show sun icon (light icon)
-            lightIcon.style.opacity = '1';
-            lightIcon.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
-            darkIcon.style.opacity = '0';
-            darkIcon.style.transform = 'translate(-50%, -50%) rotate(-90deg) scale(0.8)';
-        } else {
-            // Light theme - show moon icon (dark icon)
-            lightIcon.style.opacity = '0';
-            lightIcon.style.transform = 'translate(-50%, -50%) rotate(90deg) scale(0.8)';
-            darkIcon.style.opacity = '1';
-            darkIcon.style.transform = 'translate(-50%, -50%) rotate(0deg) scale(1)';
+        if (moonIcon) {
+            toggleButton.classList.toggle('is-dark-theme', theme === this.THEMES.DARK);
         }
 
         // Update tooltip
