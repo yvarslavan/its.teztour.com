@@ -493,3 +493,342 @@ html[data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details
 [data-theme="dark"] .status-breakdown-dashboard .status-card .toggle-details-btn span {
     color: #dbeafe !important;
 }
+
+/* Light-theme guard: prevent OS dark-scheme media rules from leaking into /tasks/my-tasks */
+html[data-theme="light"] .status-breakdown-dashboard .status-card,
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-header,
+body.light-theme .status-breakdown-dashboard .status-card,
+body.light-theme .status-breakdown-dashboard .status-card .card-header {
+    background: #ffffff !important;
+    border-color: #dbe3ef !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-header *,
+body.light-theme .status-breakdown-dashboard .status-card .card-header * {
+    background: transparent !important;
+    color: inherit !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-title h3,
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-value,
+body.light-theme .status-breakdown-dashboard .status-card .card-title h3,
+body.light-theme .status-breakdown-dashboard .status-card .card-value {
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-description,
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-description p,
+body.light-theme .status-breakdown-dashboard .status-card .card-description,
+body.light-theme .status-breakdown-dashboard .status-card .card-description p {
+    color: #64748b !important;
+}
+
+html[data-theme="light"] .filters-section,
+html[data-theme="light"] .table-container,
+html[data-theme="light"] .dataTables_wrapper .row,
+body.light-theme .filters-section,
+body.light-theme .table-container,
+body.light-theme .dataTables_wrapper .row {
+    background: #ffffff !important;
+    border-color: #dbe3ef !important;
+    color: #1f2937 !important;
+}
+
+html[data-theme="light"] .dataTables_wrapper .dataTables_filter input,
+html[data-theme="light"] .dataTables_wrapper .dataTables_length select,
+html[data-theme="light"] .filter-select,
+body.light-theme .dataTables_wrapper .dataTables_filter input,
+body.light-theme .dataTables_wrapper .dataTables_length select,
+body.light-theme .filter-select {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border-color: #dbe3ef !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned tbody td,
+html[data-theme="light"] .modern-datatable-redesigned tbody tr,
+body.light-theme .modern-datatable-redesigned tbody td,
+body.light-theme .modern-datatable-redesigned tbody tr {
+    background: #ffffff !important;
+    color: #1f2937 !important;
+    border-color: #dbe3ef !important;
+}
+
+html[data-theme="light"] .modern-datatable-redesigned tbody tr:nth-child(even),
+body.light-theme .modern-datatable-redesigned tbody tr:nth-child(even) {
+    background: #f8fbff !important;
+}
+
+html[data-theme="light"] #tasksTable .status-indicator-modern,
+body.light-theme #tasksTable .status-indicator-modern {
+    background: #f8fafc !important;
+    border-color: #cbd5e1 !important;
+    color: #334155 !important;
+}
+
+/* Fallback for cases when light theme is active but data-theme="light" class was not stamped */
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-header {
+    background: #ffffff !important;
+    border-color: #dbe3ef !important;
+}
+
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-header * {
+    background: transparent !important;
+    color: inherit !important;
+}
+
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-title h3,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-value {
+    color: #1f2937 !important;
+}
+
+/* Dark-theme guard for class-based theme switcher + stronger table contrast */
+body.dark-theme .status-breakdown-dashboard,
+body.dark-theme .filters-section,
+body.dark-theme .view-toggle-container,
+body.dark-theme .table-container {
+    background: #111827 !important;
+    border-color: #2b3648 !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme #tasksTable tbody tr {
+    background: #111827 !important;
+}
+
+body.dark-theme #tasksTable tbody tr:nth-child(even) {
+    background: #162133 !important;
+}
+
+body.dark-theme #tasksTable tbody tr:hover {
+    background: #1b2a41 !important;
+}
+
+body.dark-theme #tasksTable tbody td {
+    color: #e2e8f0 !important;
+    border-color: #2b3648 !important;
+}
+
+body.dark-theme #tasksTable .task-title,
+body.dark-theme #tasksTable .project-name,
+body.dark-theme #tasksTable .email-text,
+body.dark-theme #tasksTable .date-text,
+body.dark-theme #tasksTable .task-id-link,
+body.dark-theme #tasksTable .task-id-number {
+    color: #dbeafe !important;
+    opacity: 1 !important;
+}
+
+body.dark-theme #tasksTable td.col-updated-cell .date-text {
+    color: #bfdbfe !important;
+}
+
+body.dark-theme #tasksTable .status-indicator-modern {
+    background: rgba(30, 41, 59, 0.9) !important;
+    border: 1px solid #3b516a !important;
+    color: #e2e8f0 !important;
+}
+
+body.dark-theme #tasksTable .status-indicator-modern .status-text {
+    color: inherit !important;
+    opacity: 1 !important;
+}
+
+/* Restore colorful dashboard icons in dark theme (the broad card-header * reset makes them monochrome) */
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header .card-icon,
+body.dark-theme .status-breakdown-dashboard .status-card .card-header .card-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.35) !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card[data-type="total"] .card-icon,
+body.dark-theme .status-breakdown-dashboard .status-card[data-type="total"] .card-icon {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card[data-type="open"] .card-icon,
+body.dark-theme .status-breakdown-dashboard .status-card[data-type="open"] .card-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.35) !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card[data-type="in-progress"] .card-icon,
+body.dark-theme .status-breakdown-dashboard .status-card[data-type="in-progress"] .card-icon {
+    background: linear-gradient(135deg, #38bdf8, #2563eb) !important;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.35) !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card[data-type="completed"] .card-icon,
+body.dark-theme .status-breakdown-dashboard .status-card[data-type="completed"] .card-icon {
+    background: linear-gradient(135deg, #22c55e, #059669) !important;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35) !important;
+}
+
+html[data-theme="dark"] .status-breakdown-dashboard .status-card .card-header .card-icon i,
+body.dark-theme .status-breakdown-dashboard .status-card .card-header .card-icon i {
+    color: #ffffff !important;
+}
+
+
+/* Robust dark-table contrast fix for mixed theme states */
+html[data-theme="dark"] #tasksTable tbody td,
+body.dark-theme #tasksTable tbody td {
+    background: #0f172a !important;
+    border-color: #2b3648 !important;
+    color: #e2e8f0 !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody tr:nth-child(even) td,
+body.dark-theme #tasksTable tbody tr:nth-child(even) td {
+    background: #132033 !important;
+}
+
+html[data-theme="dark"] #tasksTable tbody tr:hover td,
+body.dark-theme #tasksTable tbody tr:hover td {
+    background: #1a2a42 !important;
+}
+
+html[data-theme="dark"] #tasksTable .task-id-link,
+html[data-theme="dark"] #tasksTable .task-id-number,
+body.dark-theme #tasksTable .task-id-link,
+body.dark-theme #tasksTable .task-id-number {
+    color: #93c5fd !important;
+    font-weight: 700 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] #tasksTable .task-title,
+body.dark-theme #tasksTable .task-title {
+    color: #e2e8f0 !important;
+    font-weight: 600 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] #tasksTable .project-name,
+body.dark-theme #tasksTable .project-name {
+    color: #94a3b8 !important;
+    opacity: 1 !important;
+}
+
+html[data-theme="dark"] #tasksTable .date-text,
+body.dark-theme #tasksTable .date-text {
+    color: #cbd5e1 !important;
+    opacity: 1 !important;
+    font-weight: 600 !important;
+}
+
+html[data-theme="dark"] #tasksTable td.col-updated-cell .date-text,
+body.dark-theme #tasksTable td.col-updated-cell .date-text {
+    color: #bfdbfe !important;
+}
+
+html[data-theme="dark"] #tasksTable .email-text,
+html[data-theme="dark"] #tasksTable .email-placeholder,
+body.dark-theme #tasksTable .email-text,
+body.dark-theme #tasksTable .email-placeholder {
+    color: #e2e8f0 !important;
+    opacity: 1 !important;
+}
+
+@media (prefers-color-scheme: dark) {
+    html:not([data-theme="light"]) #tasksTable tbody td,
+    body:not(.light-theme) #tasksTable tbody td {
+        background: #0f172a !important;
+        border-color: #2b3648 !important;
+        color: #e2e8f0 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable tbody tr:nth-child(even) td,
+    body:not(.light-theme) #tasksTable tbody tr:nth-child(even) td {
+        background: #132033 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable tbody tr:hover td,
+    body:not(.light-theme) #tasksTable tbody tr:hover td {
+        background: #1a2a42 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable .task-id-link,
+    html:not([data-theme="light"]) #tasksTable .task-id-number,
+    body:not(.light-theme) #tasksTable .task-id-link,
+    body:not(.light-theme) #tasksTable .task-id-number {
+        color: #93c5fd !important;
+        font-weight: 700 !important;
+        opacity: 1 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable .task-title,
+    body:not(.light-theme) #tasksTable .task-title {
+        color: #e2e8f0 !important;
+        font-weight: 600 !important;
+        opacity: 1 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable .project-name,
+    body:not(.light-theme) #tasksTable .project-name {
+        color: #94a3b8 !important;
+        opacity: 1 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable .date-text,
+    body:not(.light-theme) #tasksTable .date-text {
+        color: #cbd5e1 !important;
+        opacity: 1 !important;
+        font-weight: 600 !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable td.col-updated-cell .date-text,
+    body:not(.light-theme) #tasksTable td.col-updated-cell .date-text {
+        color: #bfdbfe !important;
+    }
+
+    html:not([data-theme="light"]) #tasksTable .email-text,
+    html:not([data-theme="light"]) #tasksTable .email-placeholder,
+    body:not(.light-theme) #tasksTable .email-text,
+    body:not(.light-theme) #tasksTable .email-placeholder {
+        color: #e2e8f0 !important;
+        opacity: 1 !important;
+    }
+}
+
+/* Restore colorful dashboard icons in light theme */
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-header .card-icon,
+body.light-theme .status-breakdown-dashboard .status-card .card-header .card-icon,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-header .card-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8) !important;
+    box-shadow: 0 4px 14px rgba(59, 130, 246, 0.28) !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card[data-type="total"] .card-icon,
+body.light-theme .status-breakdown-dashboard .status-card[data-type="total"] .card-icon,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card[data-type="total"] .card-icon {
+    background: linear-gradient(135deg, #0ea5e9, #2563eb) !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card[data-type="open"] .card-icon,
+body.light-theme .status-breakdown-dashboard .status-card[data-type="open"] .card-icon,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card[data-type="open"] .card-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+    box-shadow: 0 4px 14px rgba(245, 158, 11, 0.28) !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card[data-type="in-progress"] .card-icon,
+body.light-theme .status-breakdown-dashboard .status-card[data-type="in-progress"] .card-icon,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card[data-type="in-progress"] .card-icon {
+    background: linear-gradient(135deg, #38bdf8, #2563eb) !important;
+    box-shadow: 0 4px 14px rgba(56, 189, 248, 0.28) !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card[data-type="completed"] .card-icon,
+body.light-theme .status-breakdown-dashboard .status-card[data-type="completed"] .card-icon,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card[data-type="completed"] .card-icon {
+    background: linear-gradient(135deg, #22c55e, #059669) !important;
+    box-shadow: 0 4px 14px rgba(34, 197, 94, 0.28) !important;
+}
+
+html[data-theme="light"] .status-breakdown-dashboard .status-card .card-header .card-icon i,
+body.light-theme .status-breakdown-dashboard .status-card .card-header .card-icon i,
+html:not([data-theme="dark"]) body:not(.dark-theme) .status-breakdown-dashboard .status-card .card-header .card-icon i {
+    color: #ffffff !important;
+}
