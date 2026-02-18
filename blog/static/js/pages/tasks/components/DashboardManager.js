@@ -24,56 +24,66 @@ class DashboardManager {
     }
 
     setupEventListeners() {
-        // Переключение между видами
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.view-toggle-btn')) {
-                const btn = e.target.closest('.view-toggle-btn');
-                const view = btn.dataset.view;
-                this.switchView(view);
-            }
-        });
+        // Переключение между видами - ОТКЛЮЧЕНО
+        // KanbanManager уже обрабатывает переключение видов для 'list' и 'kanban'
+        // DashboardManager будет обрабатывать только специальные виды дашбордов
+        // document.addEventListener('click', (e) => {
+        //     if (e.target.closest('.view-toggle-btn')) {
+        //         const btn = e.target.closest('.view-toggle-btn');
+        //         const view = btn.dataset.view;
+        //         this.switchView(view);
+        //     }
+        // });
 
         // Drag & Drop для Kanban
         this.setupKanbanDragDrop();
     }
 
     restoreViewFromURL() {
+        // ОТКЛЮЧЕНО - KanbanManager уже обрабатывает восстановление режима просмотра
         // Проверяем URL параметры для восстановления режима просмотра
-        const urlParams = new URLSearchParams(window.location.search);
-        const viewParam = urlParams.get('view');
+        // const urlParams = new URLSearchParams(window.location.search);
+        // const viewParam = urlParams.get('view');
 
-        console.log(`[DashboardManager] 🔍 Проверка восстановления режима просмотра`);
-        console.log(`[DashboardManager] 📋 URL параметры:`, Object.fromEntries(urlParams.entries()));
-        console.log(`[DashboardManager] 💾 sessionStorage:`, Object.fromEntries(Object.entries(sessionStorage)));
+        // console.log(`[DashboardManager] 🔍 Проверка восстановления режима просмотра`);
+        // console.log(`[DashboardManager] 📋 URL параметры:`, Object.fromEntries(urlParams.entries()));
+        // console.log(`[DashboardManager] 💾 sessionStorage:`, Object.fromEntries(Object.entries(sessionStorage)));
 
-        if (viewParam && ['list', 'kanban'].includes(viewParam)) {
-            console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из URL: ${viewParam}`);
+        // if (viewParam && ['list', 'kanban'].includes(viewParam)) {
+        //     console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из URL: ${viewParam}`);
 
-            // Небольшая задержка для полной загрузки DOM
-            setTimeout(() => {
-                this.switchView(viewParam);
-            }, 100);
-        } else {
-            // Проверяем сохраненный режим в sessionStorage
-            const savedView = sessionStorage.getItem('return_from_task_view');
-            console.log(`[DashboardManager] 🔍 Сохраненный режим из sessionStorage: ${savedView}`);
+        //     // Небольшая задержка для полной загрузки DOM
+        //     setTimeout(() => {
+        //         this.switchView(viewParam);
+        //     }, 100);
+        // } else {
+        //     // Проверяем сохраненный режим в sessionStorage
+        //     const savedView = sessionStorage.getItem('return_from_task_view');
+        //     console.log(`[DashboardManager] 🔍 Сохраненный режим из sessionStorage: ${savedView}`);
 
-            if (savedView && ['list', 'kanban'].includes(savedView)) {
-                console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из sessionStorage: ${savedView}`);
+        //     if (savedView && ['list', 'kanban'].includes(savedView)) {
+        //         console.log(`[DashboardManager] 🔄 Восстанавливаем режим просмотра из sessionStorage: ${savedView}`);
 
-                setTimeout(() => {
-                    this.switchView(savedView);
-                }, 100);
-            } else {
-                console.log(`[DashboardManager] ⚠️ Режим просмотра не найден, используем 'list' по умолчанию`);
-            }
-        }
+        //         setTimeout(() => {
+        //             this.switchView(savedView);
+        //         }, 100);
+        //     } else {
+        //         console.log(`[DashboardManager] ⚠️ Режим просмотра не найден, используем 'list' по умолчанию`);
+        //     }
+        // }
     }
 
     switchView(view) {
-        console.log(`[DashboardManager] 🔄 Переключение на вид: ${view}`);
-
-        // Обновляем активную кнопку
+        // ОТКЛЮЧЕНО - KanbanManager уже обрабатывает переключение видов
+        console.log(`[DashboardManager] ⚠️ switchView вызван для ${view}, но обработка отключена - этим занимается KanbanManager`);
+        
+        // Для 'list' и 'kanban' ничего не делаем - этим занимается KanbanManager
+        if (view === 'list' || view === 'kanban') {
+            console.log(`[DashboardManager] ⚠️ switchView отключен для '${view}' - этим занимается KanbanManager`);
+            return;
+        }
+        
+        // Обновляем активную кнопку (только для совместимости)
         const allButtons = document.querySelectorAll('.view-toggle-btn');
         console.log(`[DashboardManager] 🔍 Найдено кнопок переключения: ${allButtons.length}`);
 
@@ -90,18 +100,24 @@ class DashboardManager {
             console.error(`[DashboardManager] ❌ Кнопка для вида не найдена: ${view}`);
         }
 
-        // Скрываем/показываем соответствующие секции
+        // Переключаем секции (только для специальных видов дашбордов)
         this.toggleDashboardSections(view);
 
         this.currentView = view;
 
         // Сохраняем режим просмотра в sessionStorage
-        sessionStorage.setItem('return_from_task_view', view);
-        console.log(`[DashboardManager] 💾 Сохранен режим просмотра: ${view}`);
+        // sessionStorage.setItem('return_from_task_view', view);
+        console.log(`[DashboardManager] 💾 Режим просмотра НЕ сохранен (этим занимается KanbanManager)`);
     }
 
     toggleDashboardSections(view) {
         console.log(`[DashboardManager] 🔄 Переключение секций на вид: ${view}`);
+
+        // ОТКЛЮЧЕНО для 'list' и 'kanban' - этим занимается KanbanManager
+        if (view === 'list' || view === 'kanban') {
+            console.log(`[DashboardManager] ⚠️ toggleDashboardSections отключен для '${view}' - этим занимается KanbanManager`);
+            return;
+        }
 
         const sections = {
             'list': ['.table-container'],
@@ -431,5 +447,17 @@ class DashboardManager {
 
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
-    window.dashboardManager = new DashboardManager();
+    // Проверяем, есть ли на странице специальные виды дашбордов
+    const hasAnalyticsDashboard = document.querySelector('.analytics-dashboard');
+    const hasPriorityDashboard = document.querySelector('.priority-dashboard');
+    const hasProjectsDashboard = document.querySelector('.projects-dashboard');
+    
+    if (hasAnalyticsDashboard || hasPriorityDashboard || hasProjectsDashboard) {
+        console.log('[DashboardManager] ✅ Обнаружены специальные виды дашбордов, инициализируем...');
+        window.dashboardManager = new DashboardManager();
+    } else {
+        console.log('[DashboardManager] ⚠️ Специальные виды дашбордов не обнаружены, инициализация отключена (этим занимается KanbanManager)');
+        // Не инициализируем DashboardManager, так как на странице нет специальных видов дашбордов
+        // KanbanManager уже обрабатывает виды 'list' и 'kanban'
+    }
 });
