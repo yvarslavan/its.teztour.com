@@ -218,6 +218,10 @@
   background-color: var(--talking-color);
 }
 
+.status-work {
+  background-color: #fd7e14;
+}
+
 /* Стили для списка операторов */
 .agents-container {
   display: grid;
@@ -606,4 +610,444 @@
     width: auto;  /* Автоматическая ширина для сохранения пропорций */
     margin-right: 15px; /* Отступ справа от логотипа */
     vertical-align: middle; /* Для лучшего выравнивания с текстом, если он рядом */
+}
+
+/* === TEZ overrides for Finesse panels === */
+#agentsPanelContainer .accordion-header {
+  background: linear-gradient(90deg, #0f766e 0%, #10b981 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.24);
+}
+
+#agentsPanelContainer .refresh-button {
+  background-color: #10b981;
+}
+
+#agentsPanelContainer .refresh-button.loading i {
+  animation: spin 1s linear infinite;
+}
+
+/* === CSQ Summary === */
+#csqSummaryPanel {
+  background: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+  overflow: hidden;
+}
+
+#csqSummaryPanel .csq-summary-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 16px;
+  background: linear-gradient(90deg, #0f766e 0%, #10b981 100%);
+  color: #ffffff;
+  cursor: pointer;
+}
+
+#csqSummaryPanel .csq-summary-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+#csqSummaryPanel .csq-summary-title-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#csqSummaryPanel .csq-summary-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#csqSummaryPanel .csq-summary-title {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+#csqSummaryPanel .csq-source-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: #f1f5f9;
+  background: rgba(15, 23, 42, 0.24);
+  border-radius: 999px;
+  padding: 3px 10px;
+  letter-spacing: 0.3px;
+}
+
+#csqSummaryPanel .csq-summary-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#csqSummaryPanel .csq-header-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid rgba(15, 118, 110, 0.18);
+  background: #f8fafc;
+  color: #0f766e;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+#csqSummaryPanel .csq-header-btn:hover {
+  background: #e2f8f0;
+  border-color: rgba(15, 118, 110, 0.35);
+}
+
+#csqSummaryPanel .csq-summary-content {
+  max-height: 2200px;
+  transition: max-height 0.3s ease;
+  overflow: hidden;
+  border-top: 1px solid #e2e8f0;
+}
+
+#csqSummaryPanel.is-collapsed .csq-summary-content {
+  max-height: 0;
+  border-top: 0;
+}
+
+#csqSummaryPanel .csq-table-scroll {
+  overflow-x: auto;
+}
+
+#csqSummaryPanel .csq-summary-table {
+  width: 100%;
+  min-width: 960px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+#csqSummaryPanel .csq-summary-table th {
+  background: #f1f5f9;
+  color: #64748b;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 10px 12px;
+  font-weight: 700;
+  text-align: center;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+#csqSummaryPanel .csq-summary-table th:first-child,
+#csqSummaryPanel .csq-summary-table td:first-child {
+  text-align: left;
+}
+
+#csqSummaryPanel .csq-summary-table td {
+  height: 56px;
+  padding: 9px 12px;
+  border-bottom: 1px solid #e2e8f0;
+  background: #ffffff;
+  vertical-align: middle;
+  text-align: center;
+}
+
+#csqSummaryPanel .csq-main-row {
+  cursor: pointer;
+}
+
+#csqSummaryPanel .csq-main-row:hover td {
+  background: #f8fafc;
+}
+
+#csqSummaryPanel .csq-queue-name {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: 13px;
+  line-height: 1.25;
+  font-weight: 500;
+  color: #0f172a;
+}
+
+#csqSummaryPanel .csq-queue-description {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #94a3b8;
+}
+
+#csqSummaryPanel .csq-metric-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #334155;
+}
+
+#csqSummaryPanel .csq-waiting-cell.has-waiting {
+  background: #fef2f2;
+}
+
+#csqSummaryPanel .csq-waiting-cell.has-waiting .csq-metric-value {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+#csqSummaryPanel .csq-waiting-value-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+#csqSummaryPanel .csq-waiting-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  animation: csq-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes csq-pulse {
+  0% {
+    transform: scale(0.75);
+    opacity: 1;
+  }
+  70% {
+    transform: scale(1.35);
+    opacity: 0.45;
+  }
+  100% {
+    transform: scale(0.75);
+    opacity: 1;
+  }
+}
+
+#csqSummaryPanel .csq-waiting-timer,
+#csqSummaryPanel .csq-longest-value {
+  font-family: 'JetBrains Mono', 'SFMono-Regular', 'SF Mono', Consolas, 'Liberation Mono', monospace;
+  font-size: 12px;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
+#csqSummaryPanel .csq-waiting-timer.is-active,
+#csqSummaryPanel .csq-longest-value.is-active {
+  color: #ef4444;
+}
+
+#csqSummaryPanel .csq-waiting-timer.is-critical,
+#csqSummaryPanel .csq-longest-value.is-critical {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+#csqSummaryPanel .csq-dot-metric {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+#csqSummaryPanel .csq-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+#csqSummaryPanel .dot-ready {
+  background: #10b981;
+}
+
+#csqSummaryPanel .dot-not-ready {
+  background: #f59e0b;
+}
+
+#csqSummaryPanel .csq-longest-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+#csqSummaryPanel .csq-row-chevron {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+#csqSummaryPanel .csq-details-row td {
+  padding: 0;
+  border-bottom: 0;
+}
+
+#csqSummaryPanel .csq-details-drawer {
+  display: none;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  padding: 12px 14px 14px;
+}
+
+#csqSummaryPanel .csq-details-row.is-open .csq-details-drawer {
+  display: block;
+}
+
+#csqSummaryPanel .csq-operator-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+#csqSummaryPanel .csq-operator-card {
+  background: #ffffff;
+  border-radius: 10px;
+  border: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+  padding: 10px 11px;
+}
+
+#csqSummaryPanel .csq-operator-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 6px;
+}
+
+#csqSummaryPanel .csq-operator-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#csqSummaryPanel .csq-operator-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #94a3b8;
+}
+
+#csqSummaryPanel .csq-operator-status.status-ready {
+  color: #10b981;
+}
+
+#csqSummaryPanel .csq-operator-status.status-ready .csq-operator-status-dot {
+  background-color: #10b981;
+}
+
+#csqSummaryPanel .csq-operator-status.status-not-ready,
+#csqSummaryPanel .csq-operator-status.status-work {
+  color: #f59e0b;
+}
+
+#csqSummaryPanel .csq-operator-status.status-not-ready .csq-operator-status-dot,
+#csqSummaryPanel .csq-operator-status.status-work .csq-operator-status-dot {
+  background-color: #f59e0b;
+}
+
+#csqSummaryPanel .csq-operator-status.status-talking {
+  color: #0ea5e9;
+}
+
+#csqSummaryPanel .csq-operator-status.status-talking .csq-operator-status-dot {
+  background-color: #0ea5e9;
+}
+
+#csqSummaryPanel .csq-operator-status.status-logout {
+  color: #94a3b8;
+}
+
+#csqSummaryPanel .csq-operator-status.status-logout .csq-operator-status-dot {
+  background-color: #94a3b8;
+}
+
+#csqSummaryPanel .csq-operator-calls {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #475569;
+}
+
+#csqSummaryPanel .csq-operators-empty {
+  font-size: 13px;
+  color: #64748b;
+  padding: 4px 0;
+}
+
+#csqSummaryPanel .csq-summary-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid #e2e8f0;
+  padding: 10px 14px;
+  background: #ffffff;
+}
+
+#csqSummaryPanel .csq-summary-updated {
+  font-size: 13px;
+  color: #94a3b8;
+}
+
+#csqSummaryPanel .csq-summary-footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+#csqSummaryPanel .csq-summary-api-label {
+  font-size: 12px;
+  color: #cbd5e1;
+}
+
+#csqSummaryPanel .csq-footer-refresh-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  border: 0;
+  background: #10b981;
+  color: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+#csqSummaryPanel .csq-footer-refresh-button:hover {
+  filter: brightness(0.95);
+}
+
+#csqSummaryPanel .csq-refresh-button.loading i {
+  animation: spin 1s linear infinite;
+}
+
+#csqSummaryPanel .csq-loading-row td {
+  text-align: center;
+  color: #64748b;
+  font-size: 13px;
+  height: auto;
+  padding: 18px 10px;
+}
+
+@media (max-width: 900px) {
+  #csqSummaryPanel .csq-summary-title {
+    font-size: 20px;
+  }
+
+  #csqSummaryPanel .csq-summary-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  #csqSummaryPanel .csq-summary-controls {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  #csqSummaryPanel .csq-summary-table {
+    min-width: 980px;
+  }
 }

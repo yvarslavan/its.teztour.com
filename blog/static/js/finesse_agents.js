@@ -1,165 +1,160 @@
 /**
  * Модуль для управления отображением статусов операторов Cisco Finesse
+ * и сводкой очередей (CSQ Summary).
  */
-(function() {
-    // Глобальная переменная для хранения статусов операторов
+(function () {
+    const CSQ_DEFINITIONS = [
+        {
+            id: 'questions',
+            name: 'RU-MSK-RETAIL-QUESTIONS',
+            description: 'Вопросы клиентов',
+            teamKeywords: ['RU-MSK-RETAIL'],
+            agentKeywords: ['QUESTION', 'ВОПРОС', 'RETAIL'],
+            callKeywords: ['QUESTION', 'ВОПРОС', 'ИНФО', 'КОНСУЛЬТ']
+        },
+        {
+            id: 'purchase',
+            name: 'RU-MSK-RETAIL-TOUR-PURCHASE',
+            description: 'Покупка туров',
+            teamKeywords: ['RU-MSK-RETAIL'],
+            agentKeywords: ['PURCHASE', 'TOUR', 'ПРОДАЖ', 'ТУР'],
+            callKeywords: ['PURCHASE', 'TOUR', 'ПОКУП', 'ПРОДАЖ', 'ТУР']
+        }
+    ];
+
+    const WAITING_RESULT_CODES = new Set([0, 2, 3, 4, 5, 6]);
+    const REFRESH_BUTTON_IDS = ['refreshAgentsBtn', 'refreshCsqBtn', 'refreshCsqFooterBtn'];
+
     let agentsData = [];
+    let callsDataForQueues = [];
+    let callsDataDate = '';
     let lastUpdateTime = null;
     let isLoading = false;
 
-    /**
-     * Загружает статусы операторов с сервера
-     */
-    async function fetchAgentStatuses() {
-        console.log('[fetchAgentStatuses] Вызвана функция'); // <<< Лог 1: Начало вызова
-        // Отображаем состояние загрузки
-        isLoading = true;
-        updateStatusMessage('Загрузка статусов операторов...', 'loading');
+    const queueWaitStartedAt = new Map();
+    const expandedQueues = new Set();
 
-        // Отображаем анимацию на кнопке обновления
-        const refreshBtn = document.getElementById('refreshAgentsBtn');
-        if (refreshBtn) {
-            refreshBtn.classList.add('loading');
+    function isFinesseAuthenticated() {
+        return Boolean(window.finesseAuth && window.finesseAuth.isAuthenticated);
+    }
+
+    function setRefreshButtonsLoading(loading) {
+        REFRESH_BUTTON_IDS.forEach((id) => {
+            const button = document.getElementById(id);
+            if (button) {
+                button.classList.toggle('loading', loading);
+            }
+        });
+    }
+
+    function setPanelsVisible(isVisible) {
+        const agentsPanel = document.getElementById('agentsPanelContainer');
+        const csqPanel = document.getElementById('csqSummaryPanel');
+
+        if (agentsPanel) {
+            agentsPanel.style.display = isVisible ? '' : 'none';
         }
 
-        try {
-            let response;
-            let data;
-            let authorized = false;
-            let limitedAccess = false;
-            let errorMessage = '';
-
-            // Проверяем авторизацию
-            if (window.finesseAuth && window.finesseAuth.isAuthenticated) {
-                try {
-                    // Получаем данные через авторизованный маршрут
-                    response = await fetch('/finesse/agents/status', {
-                        headers: {
-                            'X-Requested-With': 'XMLHttpRequest'
-                        },
-                        credentials: 'include'
-                    });
-
-                    if (response.ok) {
-                        data = await response.json();
-                        limitedAccess = response.headers.get('X-Finesse-Limited-Access') === '1';
-                        authorized = true;
-                    } else {
-                        errorMessage = `Ошибка при получении статусов (${response.status})`;
-                        // Проверяем на 401, чтобы показать уведомление о правах
-                        if (response.status === 401) {
-                            showVpnNotification('Ошибка авторизации', 'У вас нет прав на просмотр статусов операторов в Cisco Finesse. Обратитесь к администратору.');
-                        }
-                        throw new Error(errorMessage);
-                    }
-                } catch (authError) {
-                    console.error('Ошибка авторизованного доступа:', authError);
-                    // Проверяем наличие ошибки сети, что может указывать на проблемы с VPN
-                    if (authError.message && (authError.message.includes('Failed to fetch') || authError.message.includes('Network Error') )) {
-                        errorMessage = 'Ошибка сетевого соединения. Проверьте подключение VPN Cisco AnyConnect.';
-                        showVpnNotification(); // Показываем стандартное VPN уведомление
-                    } else {
-                        errorMessage = authError.message || 'Ошибка авторизованного доступа';
-                        // Если это не 401 и не сеть, показываем общую ошибку
-                        if (response && response.status !== 401) {
-                           showVpnNotification('Ошибка доступа к Finesse', errorMessage);
-                        }
-                    }
-                    throw new Error(errorMessage);
-                }
-            } else {
-                 // Если пользователь не авторизован, ничего не делаем или показываем сообщение
-                updateStatusMessage('Требуется авторизация для просмотра статусов', 'info');
-                return; // Выходим, так как нет смысла делать запрос без токена
-            }
-
-            // Если мы дошли сюда, значит авторизованный запрос был успешен
-            // Логируем полученные данные перед обработкой
-            console.log('Сырые данные операторов от API:', JSON.stringify(data, null, 2));
-            
-            // Проверяем формат данных
-            if (!Array.isArray(data)) {
-                console.error('ОШИБКА: Данные от API не являются массивом!', typeof data, data);
-                if (data && data.success === false) {
-                    throw new Error(data.error || 'Ошибка сервера при получении статусов');
-                }
-            } else {
-                console.log(`Получено ${data.length} операторов от API`);
-            }
-
-            // Сохраняем данные
-            agentsData = data;
-            lastUpdateTime = new Date();
-
-            console.log('[fetchAgentStatuses] Успех. Вызов displayAgentStatuses'); // <<< Лог 2: Перед успехом
-            // Отображаем данные
-            displayAgentStatuses(data);
-
-            // Обновляем сообщение о статусе
-            const formattedTime = lastUpdateTime.toLocaleTimeString();
-            if (limitedAccess) {
-                updateStatusMessage('Ограниченный доступ Finesse: отображается только ваш статус оператора', 'info');
-            } else {
-                updateStatusMessage(`Данные обновлены в ${formattedTime}`, 'success'); // Убираем isPublicApi
-            }
-
-            // Обновляем текст внизу панели
-            const refreshStatusElement = document.querySelector('#agentsPanelContainer .refresh-status');
-            if (refreshStatusElement) {
-                refreshStatusElement.textContent = `Обновлено: ${formattedTime}`;
-            }
-
-        } catch (error) { // Перехватываем ошибки из блока try
-            console.error('Ошибка при получении статусов операторов:', error);
-            updateStatusMessage(`Ошибка: ${error.message}`, 'error');
-
-            // Убираем анимацию вращения
-            const refreshIcon = document.querySelector('.refresh-button i');
-            if (refreshIcon) refreshIcon.classList.remove('fa-spin');
-
-            // Показываем сообщение об ошибке с учетом кода 401
-            errorMessage = `Ошибка при получении статусов: ${error.message || 'Неизвестная ошибка'}`;
-            if (error.message && error.message.includes('(401)')) {
-                errorMessage = 'Ошибка авторизации (401): У вас нет прав на просмотр статусов операторов в Cisco Finesse. Обратитесь к администратору.';
-            }
-            console.warn('[fetchAgentStatuses] Ошибка. Вызов showError:', errorMessage); // <<< Лог 3: Перед ошибкой
-            showError(errorMessage);
-        } finally {
-            // Убираем состояние загрузки
-            isLoading = false;
-
-            // Убираем анимацию с кнопки обновления
-            const refreshBtn = document.getElementById('refreshAgentsBtn');
-            if (refreshBtn) {
-                refreshBtn.classList.remove('loading');
-            }
+        if (csqPanel) {
+            csqPanel.style.display = isVisible ? '' : 'none';
         }
     }
 
-    /**
-     * Отображает статусы операторов на странице
-     */
+    function updateRefreshTimestamps(formattedTime) {
+        const agentRefreshStatus = document.querySelector('#agentsPanelContainer .refresh-status');
+        if (agentRefreshStatus) {
+            agentRefreshStatus.textContent = `Обновлено: ${formattedTime}`;
+        }
+
+        const queueUpdatedAt = document.getElementById('csqUpdatedAt');
+        if (queueUpdatedAt) {
+            queueUpdatedAt.textContent = `Обновлено: ${formattedTime}`;
+        }
+    }
+
+    async function fetchAgentStatuses() {
+        isLoading = true;
+        updateStatusMessage('Загрузка статусов операторов...', 'loading');
+        setRefreshButtonsLoading(true);
+        renderCsqSummary();
+
+        try {
+            if (!isFinesseAuthenticated()) {
+                updateStatusMessage('Выполните вход Finesse для просмотра статусов', 'info');
+                return;
+            }
+
+            const response = await fetch('/finesse/agents/status', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                const errorMessage = `Ошибка при получении статусов (${response.status})`;
+                if (response.status === 401) {
+                    showVpnNotification(
+                        'Ошибка авторизации',
+                        'У вас нет прав на просмотр статусов операторов в Cisco Finesse. Обратитесь к администратору.'
+                    );
+                }
+                throw new Error(errorMessage);
+            }
+
+            const data = await response.json();
+            if (!Array.isArray(data)) {
+                if (data && data.success === false) {
+                    throw new Error(data.error || 'Ошибка сервера при получении статусов');
+                }
+                throw new Error('Некорректный формат ответа Finesse API');
+            }
+
+            agentsData = data;
+            lastUpdateTime = new Date();
+
+            displayAgentStatuses(agentsData);
+            renderCsqSummary();
+
+            const limitedAccess = response.headers.get('X-Finesse-Limited-Access') === '1';
+            const formattedTime = lastUpdateTime.toLocaleTimeString('ru-RU');
+
+            if (limitedAccess) {
+                updateStatusMessage('Ограниченный доступ Finesse: отображается только ваш статус оператора', 'info');
+            } else {
+                updateStatusMessage(`Данные обновлены в ${formattedTime}`, 'success');
+            }
+
+            updateRefreshTimestamps(formattedTime);
+        } catch (error) {
+            const errorText = error && error.message ? error.message : 'Неизвестная ошибка';
+            showError(`Ошибка при получении статусов: ${errorText}`);
+
+            if (errorText.includes('Failed to fetch') || errorText.includes('Network') || errorText.includes('сет')) {
+                showVpnNotification();
+            }
+        } finally {
+            isLoading = false;
+            setRefreshButtonsLoading(false);
+            renderCsqSummary();
+        }
+    }
+
     function displayAgentStatuses(agents) {
-        // Получаем контейнер для отображения операторов
         const container = document.getElementById('agentsContainer');
         if (!container) {
-            console.error('Контейнер для отображения операторов не найден');
             return;
         }
 
-        // Очищаем контейнер
         container.innerHTML = '';
 
-        // Проверяем наличие данных
-        if (!agents || agents.length === 0) {
+        if (!Array.isArray(agents) || agents.length === 0) {
             container.innerHTML = '<div class="empty-message">Нет доступных данных об операторах</div>';
             return;
         }
 
-        // Группируем операторов по командам (Teams), если доступно
         const agentsByTeam = {};
-
-        agents.forEach(agent => {
+        agents.forEach((agent) => {
             const team = agent.team || 'Без команды';
             if (!agentsByTeam[team]) {
                 agentsByTeam[team] = [];
@@ -167,144 +162,94 @@
             agentsByTeam[team].push(agent);
         });
 
-        // Создаем элементы для каждой команды и операторов в ней
-        Object.keys(agentsByTeam).sort().forEach(team => {
-            // Создаем обертку для группы команды (заголовок + операторы)
-            const teamGroup = document.createElement('div');
-            teamGroup.className = 'team-group';
+        Object.keys(agentsByTeam)
+            .sort()
+            .forEach((team) => {
+                const teamGroup = document.createElement('div');
+                teamGroup.className = 'team-group';
 
-            // Создаем заголовок для команды
-            const teamHeader = document.createElement('div');
-            teamHeader.className = 'team-header';
-            teamHeader.innerHTML = `
-                ${team}
-                <i class="fas fa-chevron-down team-accordion-icon"></i>
-            `;
-            teamGroup.appendChild(teamHeader);
-
-            // Создаем контейнер для операторов команды
-            const teamContainer = document.createElement('div');
-            teamContainer.className = 'team-container';
-            // По умолчанию контейнер скрыт (будет управляться через CSS/JS)
-            teamContainer.style.maxHeight = '0';
-            teamContainer.style.overflow = 'hidden';
-            teamContainer.style.transition = 'max-height 0.3s ease-out';
-
-            // Добавляем обработчик клика на заголовок команды
-            teamHeader.addEventListener('click', function() {
-                teamGroup.classList.toggle('active');
-                const icon = this.querySelector('.team-accordion-icon');
-                if (teamGroup.classList.contains('active')) {
-                    teamContainer.style.maxHeight = teamContainer.scrollHeight + 'px';
-                    icon.classList.remove('fa-chevron-down');
-                    icon.classList.add('fa-chevron-up');
-                } else {
-                    teamContainer.style.maxHeight = '0';
-                    icon.classList.remove('fa-chevron-up');
-                    icon.classList.add('fa-chevron-down');
-                }
-            });
-
-            // Создаем карточки для каждого оператора
-            agentsByTeam[team].forEach(agent => {
-                // Создаем карточку оператора
-                const card = document.createElement('div');
-                card.className = 'agent-card';
-
-                // Получаем информацию о статусе
-                let statusClass = '';
-                let statusText = '';
-
-                switch (agent.status) {
-                    case 'READY':
-                        statusClass = 'status-ready';
-                        statusText = 'Ready';
-                        break;
-                    case 'NOT_READY':
-                        statusClass = 'status-not-ready';
-                        statusText = 'Not Ready';
-                        break;
-                    case 'TALKING':
-                        statusClass = 'status-talking';
-                        statusText = 'Talking';
-                        break;
-                    case 'WORK':
-                    case 'WORK_READY':
-                        statusClass = 'status-work';
-                        statusText = 'Work';
-                        break;
-                    default:
-                        statusClass = 'status-logout';
-                        statusText = 'Logout';
-                }
-
-                // Заполняем карточку
-                card.innerHTML = `
-                    <div class="agent-name">
-                        <span class="agent-status ${statusClass}"></span>
-                        ${agent.displayName || agent.username || 'Неизвестный оператор'}
-                    </div>
-                    <div class="agent-details">
-                        <div class="agent-status-text">${statusText}</div>
-                        <div class="agent-phone">
-                            <i class="fas fa-phone"></i> ${agent.extension || 'не указан'}
-                        </div>
-                    </div>
+                const teamHeader = document.createElement('div');
+                teamHeader.className = 'team-header';
+                teamHeader.innerHTML = `
+                    ${escapeHtml(team)}
+                    <i class="fas fa-chevron-down team-accordion-icon"></i>
                 `;
+                teamGroup.appendChild(teamHeader);
 
-                // Добавляем карточку в контейнер команды
-                teamContainer.appendChild(card);
+                const teamContainer = document.createElement('div');
+                teamContainer.className = 'team-container';
+                teamContainer.style.maxHeight = '0';
+                teamContainer.style.overflow = 'hidden';
+                teamContainer.style.transition = 'max-height 0.3s ease-out';
+
+                teamHeader.addEventListener('click', function () {
+                    teamGroup.classList.toggle('active');
+                    const icon = this.querySelector('.team-accordion-icon');
+
+                    if (teamGroup.classList.contains('active')) {
+                        teamContainer.style.maxHeight = `${teamContainer.scrollHeight}px`;
+                        icon.classList.remove('fa-chevron-down');
+                        icon.classList.add('fa-chevron-up');
+                    } else {
+                        teamContainer.style.maxHeight = '0';
+                        icon.classList.remove('fa-chevron-up');
+                        icon.classList.add('fa-chevron-down');
+                    }
+                });
+
+                agentsByTeam[team].forEach((agent) => {
+                    const card = document.createElement('div');
+                    card.className = 'agent-card';
+
+                    const statusClass = getAgentStatusClass(agent.status, true);
+                    const statusText = getAgentStatusLabel(agent.status);
+
+                    card.innerHTML = `
+                        <div class="agent-name">
+                            <span class="agent-status ${statusClass}"></span>
+                            ${escapeHtml(getAgentDisplayName(agent))}
+                        </div>
+                        <div class="agent-details">
+                            <div class="agent-status-text">${escapeHtml(statusText)}</div>
+                            <div class="agent-phone">
+                                <i class="fas fa-phone"></i> ${escapeHtml(agent.extension || 'не указан')}
+                            </div>
+                        </div>
+                    `;
+
+                    teamContainer.appendChild(card);
+                });
+
+                teamGroup.appendChild(teamContainer);
+                container.appendChild(teamGroup);
             });
-
-            teamGroup.appendChild(teamContainer);
-            container.appendChild(teamGroup); // Добавляем всю группу в основной контейнер
-        });
     }
 
-    /**
-     * Обновляет сообщение о статусе загрузки
-     */
     function updateStatusMessage(message, type = 'info') {
         const statusElement = document.getElementById('agentsStatusMessage');
         if (!statusElement) {
             return;
         }
 
-        // Удаляем предыдущие классы типов
         statusElement.classList.remove('status-error', 'status-success', 'status-loading', 'status-info');
-
-        // Устанавливаем новый тип
         statusElement.classList.add(`status-${type}`);
-
-        // Обновляем сообщение
         statusElement.textContent = message;
-
-        // Показываем элемент
         statusElement.style.display = 'block';
     }
 
-    /**
-     * Показывает сообщение об ошибке в панели статусов
-     */
     function showError(message) {
         updateStatusMessage(message, 'error');
     }
 
-    /**
-     * Создает UI элементы для отображения операторов
-     */
     function createAgentsUI() {
-        // Создаем основной контейнер
         const container = document.createElement('div');
         container.className = 'supervisor-panel accordion-panel';
         container.id = 'agentsPanelContainer';
 
-        // Добавляем атрибут для скрытия, если пользователь не авторизован
-        if (!window.finesseAuth || !window.finesseAuth.isAuthenticated) {
+        if (!isFinesseAuthenticated()) {
             container.style.display = 'none';
         }
 
-        // Создаем заголовок
         const header = document.createElement('div');
         header.className = 'accordion-header';
         header.innerHTML = `
@@ -313,60 +258,48 @@
         `;
         container.appendChild(header);
 
-        // Создаем контент аккордеона
         const content = document.createElement('div');
         content.className = 'accordion-content';
         container.appendChild(content);
 
-        // Добавляем сообщение о статусе
         const statusMessage = document.createElement('div');
         statusMessage.id = 'agentsStatusMessage';
         statusMessage.className = 'status-message';
         statusMessage.style.display = 'none';
         content.appendChild(statusMessage);
 
-        // Создаем контейнер для карточек операторов
         const agentsContainer = document.createElement('div');
         agentsContainer.id = 'agentsContainer';
         agentsContainer.className = 'agents-container';
         content.appendChild(agentsContainer);
 
-        // Добавляем контейнер для кнопки обновления
         const refreshContainer = document.createElement('div');
         refreshContainer.className = 'refresh-container';
         content.appendChild(refreshContainer);
 
-        // Добавляем информацию о последнем обновлении
         const refreshStatus = document.createElement('div');
         refreshStatus.className = 'refresh-status';
         refreshStatus.textContent = 'Данные не загружены';
         refreshContainer.appendChild(refreshStatus);
 
-        // Добавляем кнопку обновления
         const refreshButton = document.createElement('button');
         refreshButton.id = 'refreshAgentsBtn';
         refreshButton.className = 'refresh-button';
         refreshButton.innerHTML = '<i class="fas fa-sync-alt"></i>';
         refreshButton.setAttribute('title', 'Обновить статусы операторов');
-
-        // Добавляем обработчик для кнопки обновления
-        refreshButton.addEventListener('click', function() {
+        refreshButton.addEventListener('click', function () {
             if (!isLoading) {
                 fetchAgentStatuses();
             }
         });
-
         refreshContainer.appendChild(refreshButton);
 
-        // Навешиваем обработчик клика на заголовок аккордеона
-        header.addEventListener('click', function() {
+        header.addEventListener('click', function () {
             container.classList.toggle('active');
         });
 
-        // Добавляем контейнер на страницу
         const contentArea = document.querySelector('.container');
         if (contentArea) {
-            // Находим место для вставки контейнера (после шапки, но перед журналом звонков)
             const callsPanel = document.querySelector('.calls-panel');
             if (callsPanel) {
                 contentArea.insertBefore(container, callsPanel);
@@ -377,126 +310,707 @@
             document.body.appendChild(container);
         }
 
-        // Раскрываем аккордеон по умолчанию
         container.classList.add('active');
-
-        // Возвращаем созданный контейнер
         return container;
     }
 
-    /**
-     * Защита элементов от удаления
-     */
-    function protectRefreshButton() {
-        // Получаем кнопку обновления
-        const refreshBtn = document.getElementById('refreshAgentsBtn');
-        if (!refreshBtn) {
+    function createCsqSummaryUI() {
+        const panel = document.createElement('section');
+        panel.id = 'csqSummaryPanel';
+        panel.className = 'csq-summary-panel';
+
+        if (!isFinesseAuthenticated()) {
+            panel.style.display = 'none';
+        }
+
+        panel.innerHTML = `
+            <div class="csq-summary-header" id="csqSummaryHeader">
+                <div class="csq-summary-title-wrap">
+                    <span class="csq-summary-title-icon"><i class="fas fa-phone-alt"></i></span>
+                    <div class="csq-summary-title-block">
+                        <div class="csq-summary-title-row">
+                            <h3 class="csq-summary-title">Очереди вызовов</h3>
+                            <span class="csq-source-badge">Cisco Finesse · RU-MSK</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="csq-summary-controls">
+                    <button type="button" class="csq-header-btn" id="csqSettingsBtn" title="Настройки"><i class="fas fa-ellipsis-h"></i></button>
+                    <button type="button" class="csq-header-btn" id="csqCollapseBtn" title="Свернуть/развернуть"><i class="fas fa-chevron-up"></i></button>
+                    <button type="button" class="csq-header-btn csq-refresh-button" id="refreshCsqBtn" title="Обновить очереди"><i class="fas fa-sync-alt"></i></button>
+                </div>
+            </div>
+            <div class="csq-summary-content">
+                <div class="csq-table-scroll">
+                    <table class="csq-summary-table" aria-label="Сводка очередей вызовов">
+                        <thead>
+                            <tr>
+                                <th>Название очереди</th>
+                                <th>Ожидают</th>
+                                <th>В системе</th>
+                                <th>Разговаривают</th>
+                                <th>Готовы</th>
+                                <th>Не готовы</th>
+                                <th>После звонка</th>
+                                <th>Зарезервированы</th>
+                                <th>Дольше всего ждёт</th>
+                            </tr>
+                        </thead>
+                        <tbody id="csqSummaryBody"></tbody>
+                    </table>
+                </div>
+                <div class="csq-summary-footer">
+                    <div class="csq-summary-updated" id="csqUpdatedAt">Обновлено: --:--:--</div>
+                    <div class="csq-summary-footer-right">
+                        <span class="csq-summary-api-label">Cisco Finesse API</span>
+                        <button type="button" class="csq-footer-refresh-button csq-refresh-button" id="refreshCsqFooterBtn" title="Обновить очереди">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        const contentArea = document.querySelector('.container');
+        if (contentArea) {
+            const callsPanel = document.querySelector('.calls-panel');
+            if (callsPanel) {
+                contentArea.insertBefore(panel, callsPanel);
+            } else {
+                contentArea.appendChild(panel);
+            }
+        } else {
+            document.body.appendChild(panel);
+        }
+
+        const header = document.getElementById('csqSummaryHeader');
+        const settingsBtn = document.getElementById('csqSettingsBtn');
+        const collapseBtn = document.getElementById('csqCollapseBtn');
+        const refreshBtn = document.getElementById('refreshCsqBtn');
+        const footerRefreshBtn = document.getElementById('refreshCsqFooterBtn');
+
+        if (settingsBtn) {
+            settingsBtn.addEventListener('click', (event) => {
+                event.stopPropagation();
+            });
+        }
+
+        if (collapseBtn) {
+            collapseBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                toggleCsqPanelCollapse();
+            });
+        }
+
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', function (event) {
+                event.stopPropagation();
+                if (!isLoading) {
+                    fetchAgentStatuses();
+                }
+            });
+        }
+
+        if (footerRefreshBtn) {
+            footerRefreshBtn.addEventListener('click', function () {
+                if (!isLoading) {
+                    fetchAgentStatuses();
+                }
+            });
+        }
+
+        if (header) {
+            header.addEventListener('click', function () {
+                toggleCsqPanelCollapse();
+            });
+        }
+
+        panel.classList.remove('is-collapsed');
+        renderCsqSummary();
+        return panel;
+    }
+
+    function toggleCsqPanelCollapse(forceCollapsed) {
+        const panel = document.getElementById('csqSummaryPanel');
+        if (!panel) {
             return;
         }
 
-        // Добавляем атрибут для защиты
-        refreshBtn.setAttribute('id', 'tez_protected_refresh_btn');
+        const collapsed = panel.classList.contains('is-collapsed');
+        const shouldCollapse = typeof forceCollapsed === 'boolean' ? forceCollapsed : !collapsed;
 
-        // Используем MutationObserver для защиты кнопки от удаления
-        const observer = new MutationObserver(function(mutations) {
-            mutations.forEach(function(mutation) {
-                if (mutation.type === 'childList' && mutation.removedNodes.length) {
-                    // Проверяем, была ли удалена наша кнопка
-                    const wasRemoved = Array.from(mutation.removedNodes).some(node => {
-                        return node.id === 'tez_protected_refresh_btn' ||
-                               (node.querySelector && node.querySelector('#tez_protected_refresh_btn'));
-                    });
+        panel.classList.toggle('is-collapsed', shouldCollapse);
 
-                    if (wasRemoved) {
-                        console.warn('Кнопка обновления статусов была удалена. Восстанавливаем...');
-
-                        // Восстанавливаем кнопку
-                        const container = document.querySelector('.refresh-container');
-                        if (container && !document.getElementById('tez_protected_refresh_btn')) {
-                            const newBtn = document.createElement('button');
-                            newBtn.id = 'tez_protected_refresh_btn';
-                            newBtn.className = 'refresh-button';
-                            newBtn.innerHTML = '<i class="fas fa-sync-alt"></i>';
-                            newBtn.setAttribute('title', 'Обновить статусы операторов');
-
-                            // Добавляем обработчик
-                            newBtn.addEventListener('click', function() {
-                                if (!isLoading) {
-                                    fetchAgentStatuses();
-                                }
-                            });
-
-                            container.appendChild(newBtn);
-                        }
-                    }
-                }
-            });
-        });
-
-        // Запускаем наблюдение за документом
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-    }
-
-    /**
-     * Инициализация модуля
-     */
-    function init() {
-        // Создаем UI элементы для отображения операторов
-        createAgentsUI();
-
-        // Защищаем кнопку обновления от удаления
-        protectRefreshButton();
-
-        // Если пользователь авторизован, загружаем статусы операторов
-        if (window.finesseAuth && window.finesseAuth.isAuthenticated) {
-            // Загружаем статусы с небольшой задержкой
-            setTimeout(fetchAgentStatuses, 500);
-        } else {
-            // Показываем сообщение о необходимости авторизации
-            updateStatusMessage('Выполните вход Finesse для просмотра статусов', 'info');
-
-            // Слушаем событие успешной авторизации
-            document.addEventListener('finesseAuthSuccess', function() {
-                // Загружаем статусы после успешной авторизации
-                setTimeout(fetchAgentStatuses, 500);
-            });
+        const icon = panel.querySelector('#csqCollapseBtn i');
+        if (icon) {
+            icon.classList.toggle('fa-chevron-up', !shouldCollapse);
+            icon.classList.toggle('fa-chevron-down', shouldCollapse);
         }
     }
 
-    // Запускаем инициализацию после загрузки DOM
+    function getCurrentCallLogDate() {
+        const datePicker = document.getElementById('callLogDatePicker');
+        if (datePicker && datePicker.value) {
+            return datePicker.value;
+        }
+
+        const now = new Date();
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function extractCallsFromDomTable() {
+        const rows = document.querySelectorAll('.calls-table tbody tr');
+        if (!rows.length) {
+            return [];
+        }
+
+        const calls = [];
+        rows.forEach((row) => {
+            if (row.querySelector('.no-calls-message') || row.querySelector('.error-message')) {
+                return;
+            }
+
+            if (!row.cells || row.cells.length < 5) {
+                return;
+            }
+
+            const operatorCell = row.cells[2];
+            const operatorElement = operatorCell.querySelector('.operator-name-text');
+            const operatorName = operatorElement ? operatorElement.textContent.trim() : operatorCell.textContent.trim();
+
+            const resultBadge = row.cells[3].querySelector('.call-result-badge');
+            let resultCode = null;
+            if (resultBadge) {
+                if (resultBadge.classList.contains('result-success')) {
+                    resultCode = 1;
+                } else if (resultBadge.classList.contains('result-dropped')) {
+                    resultCode = 2;
+                } else if (resultBadge.classList.contains('result-no-internet')) {
+                    resultCode = 3;
+                } else if (resultBadge.classList.contains('result-failed')) {
+                    resultCode = 0;
+                }
+            }
+
+            calls.push({
+                operator: operatorName,
+                time: row.cells[1].textContent.trim(),
+                call_type_text: row.cells[4].textContent.trim(),
+                result: resultCode
+            });
+        });
+
+        return calls;
+    }
+
+    function handleCallLogUpdated(event) {
+        const detail = event && event.detail ? event.detail : {};
+        callsDataForQueues = Array.isArray(detail.calls) ? detail.calls : [];
+        callsDataDate = detail.date || getCurrentCallLogDate();
+        renderCsqSummary();
+    }
+
+    function renderCsqSummary() {
+        const tbody = document.getElementById('csqSummaryBody');
+        if (!tbody) {
+            return;
+        }
+
+        tbody.innerHTML = '';
+
+        if (isLoading && agentsData.length === 0) {
+            tbody.innerHTML = `
+                <tr class="csq-loading-row">
+                    <td colspan="9"><i class="fas fa-spinner fa-spin"></i> Загрузка данных очередей...</td>
+                </tr>
+            `;
+            return;
+        }
+
+        const now = new Date();
+
+        CSQ_DEFINITIONS.forEach((queueDef) => {
+            const metrics = getQueueMetrics(queueDef, now);
+            const isExpanded = expandedQueues.has(queueDef.id);
+
+            const mainRow = document.createElement('tr');
+            mainRow.className = 'csq-main-row';
+            if (isExpanded) {
+                mainRow.classList.add('is-expanded');
+            }
+
+            const waitingCellClass = metrics.counts.waiting > 0 ? 'has-waiting' : '';
+            const waitingTimerClass = metrics.waitSeconds > 30
+                ? 'is-critical'
+                : (metrics.waitSeconds > 0 ? 'is-active' : '');
+
+            mainRow.innerHTML = `
+                <td>
+                    <div class="csq-queue-name">${escapeHtml(queueDef.name)}</div>
+                    <div class="csq-queue-description">${escapeHtml(queueDef.description)}</div>
+                </td>
+                <td class="csq-waiting-cell ${waitingCellClass}">
+                    <div class="csq-waiting-value-row">
+                        ${metrics.counts.waiting > 0 ? '<span class="csq-waiting-dot"></span>' : ''}
+                        <span class="csq-metric-value">${metrics.counts.waiting}</span>
+                    </div>
+                    <div class="csq-waiting-timer ${waitingTimerClass}">${formatDuration(metrics.waitSeconds)}</div>
+                </td>
+                <td><span class="csq-metric-value">${metrics.counts.inSystem}</span></td>
+                <td><span class="csq-metric-value">${metrics.counts.talking}</span></td>
+                <td>${renderDotMetric(metrics.counts.ready, 'ready')}</td>
+                <td>${renderDotMetric(metrics.counts.notReady, 'not-ready')}</td>
+                <td><span class="csq-metric-value">${metrics.counts.afterCall}</span></td>
+                <td><span class="csq-metric-value">${metrics.counts.reserved}</span></td>
+                <td>
+                    <div class="csq-longest-cell">
+                        <span class="csq-longest-value ${waitingTimerClass}">${formatDuration(metrics.waitSeconds)}</span>
+                        <i class="fas fa-chevron-${isExpanded ? 'up' : 'down'} csq-row-chevron"></i>
+                    </div>
+                </td>
+            `;
+
+            mainRow.addEventListener('click', function () {
+                toggleQueueRow(queueDef.id);
+            });
+
+            const detailsRow = document.createElement('tr');
+            detailsRow.className = 'csq-details-row';
+            if (isExpanded) {
+                detailsRow.classList.add('is-open');
+            }
+            detailsRow.innerHTML = `
+                <td colspan="9">
+                    <div class="csq-details-drawer">
+                        ${buildQueueOperatorsHtml(metrics)}
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(mainRow);
+            tbody.appendChild(detailsRow);
+        });
+    }
+
+    function toggleQueueRow(queueId) {
+        if (expandedQueues.has(queueId)) {
+            expandedQueues.delete(queueId);
+        } else {
+            expandedQueues.add(queueId);
+        }
+
+        renderCsqSummary();
+    }
+
+    function renderDotMetric(value, type) {
+        const dotClass = type === 'ready' ? 'dot-ready' : 'dot-not-ready';
+        if (value > 0) {
+            return `
+                <span class="csq-dot-metric">
+                    <span class="csq-dot ${dotClass}"></span>
+                    <span class="csq-metric-value">${value}</span>
+                </span>
+            `;
+        }
+
+        return `<span class="csq-metric-value">${value}</span>`;
+    }
+
+    function getQueueMetrics(queueDef, now) {
+        const queueOperators = getQueueOperators(queueDef);
+        const queueCalls = getQueueCalls(queueDef);
+        const callsByOperator = buildCallsByOperator(queueCalls);
+
+        const counts = {
+            waiting: 0,
+            inSystem: 0,
+            talking: 0,
+            ready: 0,
+            notReady: 0,
+            afterCall: 0,
+            reserved: 0
+        };
+
+        queueOperators.forEach((agent) => {
+            const status = normalizeText(agent.status);
+
+            if (isAgentInSystem(status)) {
+                counts.inSystem += 1;
+            }
+
+            if (status === 'TALKING') {
+                counts.talking += 1;
+            }
+
+            if (status === 'READY') {
+                counts.ready += 1;
+            }
+
+            if (status === 'NOT_READY') {
+                counts.notReady += 1;
+            }
+
+            if (status === 'WORK' || status === 'WORK_READY' || status === 'AFTER_CALL_WORK') {
+                counts.afterCall += 1;
+            }
+
+            if (status === 'RESERVED') {
+                counts.reserved += 1;
+            }
+        });
+
+        const waitingState = calculateWaitingState(queueDef.id, queueCalls, counts, now);
+        counts.waiting = waitingState.waiting;
+
+        return {
+            queueDef,
+            operators: queueOperators,
+            counts,
+            waitSeconds: waitingState.waitSeconds,
+            callsByOperator
+        };
+    }
+
+    function getQueueOperators(queueDef) {
+        if (!Array.isArray(agentsData) || agentsData.length === 0) {
+            return [];
+        }
+
+        let scopedAgents = agentsData;
+        if (Array.isArray(queueDef.teamKeywords) && queueDef.teamKeywords.length > 0) {
+            scopedAgents = agentsData.filter((agent) => {
+                const teamText = normalizeText(agent.team || '');
+                return queueDef.teamKeywords.some((keyword) => teamText.includes(normalizeText(keyword)));
+            });
+        }
+
+        const matched = scopedAgents.filter((agent) => {
+            const searchText = normalizeText(`${agent.team || ''} ${getAgentDisplayName(agent)}`);
+            return queueDef.agentKeywords.some((keyword) => searchText.includes(normalizeText(keyword)));
+        });
+
+        return matched.length > 0 ? matched : scopedAgents;
+    }
+
+    function getQueueCalls(queueDef) {
+        if (!Array.isArray(callsDataForQueues) || callsDataForQueues.length === 0) {
+            return [];
+        }
+
+        const matched = callsDataForQueues.filter((call) => {
+            const callTypeText = normalizeText(`${call.call_type_text || ''} ${call.call_type || ''}`);
+            return queueDef.callKeywords.some((keyword) => callTypeText.includes(normalizeText(keyword)));
+        });
+
+        return matched.length > 0 ? matched : callsDataForQueues;
+    }
+
+    function calculateWaitingState(queueId, queueCalls, counts, now) {
+        const baseDate = callsDataDate || getCurrentCallLogDate();
+        const activeThreshold = now.getTime() - 3 * 60 * 1000;
+
+        const activeWaitingCalls = queueCalls
+            .map((call) => ({
+                call,
+                date: parseCallDateTime(baseDate, call.time || call.call_time || call.datetime)
+            }))
+            .filter((item) => {
+                const rawResult = item.call.result;
+                if (rawResult === null || rawResult === undefined || rawResult === '') {
+                    return false;
+                }
+
+                const resultCode = Number(rawResult);
+                return (
+                    item.date &&
+                    Number.isFinite(resultCode) &&
+                    WAITING_RESULT_CODES.has(resultCode) &&
+                    item.date.getTime() >= activeThreshold
+                );
+            });
+
+        let waiting = activeWaitingCalls.length;
+        let candidateStart = null;
+
+        if (activeWaitingCalls.length > 0) {
+            candidateStart = Math.min(...activeWaitingCalls.map((item) => item.date.getTime()));
+        }
+
+        if (waiting === 0 && counts.reserved > counts.talking) {
+            waiting = counts.reserved - counts.talking;
+            candidateStart = now.getTime();
+        }
+
+        if (waiting > 0) {
+            const previousStart = queueWaitStartedAt.get(queueId);
+            let newStart = candidateStart !== null ? candidateStart : now.getTime();
+            if (previousStart) {
+                newStart = Math.min(previousStart, newStart);
+            }
+            queueWaitStartedAt.set(queueId, newStart);
+        } else {
+            queueWaitStartedAt.delete(queueId);
+        }
+
+        const waitStart = queueWaitStartedAt.get(queueId);
+        const waitSeconds = waitStart ? Math.max(0, Math.floor((now.getTime() - waitStart) / 1000)) : 0;
+
+        return {
+            waiting,
+            waitSeconds
+        };
+    }
+
+    function parseCallDateTime(dateString, timeString) {
+        if (!timeString) {
+            return null;
+        }
+
+        const raw = String(timeString).trim();
+        if (!raw) {
+            return null;
+        }
+
+        const plainTimePattern = /^\d{2}:\d{2}(:\d{2})?$/;
+        if (plainTimePattern.test(raw)) {
+            const normalizedTime = raw.length === 5 ? `${raw}:00` : raw;
+            const parsed = new Date(`${dateString}T${normalizedTime}`);
+            if (!Number.isNaN(parsed.getTime())) {
+                return parsed;
+            }
+        }
+
+        const parsed = new Date(raw);
+        if (!Number.isNaN(parsed.getTime())) {
+            return parsed;
+        }
+
+        return null;
+    }
+
+    function buildCallsByOperator(calls) {
+        const stats = new Map();
+        calls.forEach((call) => {
+            const aliases = getOperatorNameAliases(call.operator || call.operator_name || '');
+            if (!aliases.length) {
+                return;
+            }
+
+            aliases.forEach((alias) => {
+                stats.set(alias, (stats.get(alias) || 0) + 1);
+            });
+        });
+        return stats;
+    }
+
+    function buildQueueOperatorsHtml(metrics) {
+        if (!metrics.operators.length) {
+            return '<div class="csq-operators-empty">Нет операторов для отображения</div>';
+        }
+
+        const cards = [...metrics.operators]
+            .sort((left, right) => getAgentDisplayName(left).localeCompare(getAgentDisplayName(right), 'ru'))
+            .map((agent) => {
+                const name = getAgentDisplayName(agent);
+                const statusLabel = getAgentStatusLabel(agent.status);
+                const statusClass = getAgentStatusClass(agent.status);
+                const aliases = getOperatorNameAliases(name);
+                const callsCount = aliases.reduce((maxValue, alias) => {
+                    const aliasCount = metrics.callsByOperator.get(alias) || 0;
+                    return Math.max(maxValue, aliasCount);
+                }, 0);
+
+                return `
+                    <article class="csq-operator-card">
+                        <div class="csq-operator-name">${escapeHtml(name)}</div>
+                        <div class="csq-operator-status ${statusClass}">
+                            <span class="csq-operator-status-dot"></span>
+                            ${escapeHtml(statusLabel)}
+                        </div>
+                        <div class="csq-operator-calls">Звонков за день: <strong>${callsCount}</strong></div>
+                    </article>
+                `;
+            })
+            .join('');
+
+        return `<div class="csq-operator-grid">${cards}</div>`;
+    }
+
+    function isAgentInSystem(status) {
+        return status && status !== 'LOGOUT' && status !== 'LOGGED_OUT';
+    }
+
+    function getAgentDisplayName(agent) {
+        return (agent && (agent.displayName || agent.username || agent.loginId)) || 'Неизвестный оператор';
+    }
+
+    function getAgentStatusClass(status, forLegacyCard = false) {
+        const normalized = normalizeText(status);
+
+        if (normalized === 'READY') {
+            return forLegacyCard ? 'status-ready' : 'status-ready';
+        }
+
+        if (normalized === 'NOT_READY') {
+            return forLegacyCard ? 'status-not-ready' : 'status-not-ready';
+        }
+
+        if (normalized === 'TALKING') {
+            return forLegacyCard ? 'status-talking' : 'status-talking';
+        }
+
+        if (normalized === 'WORK' || normalized === 'WORK_READY' || normalized === 'AFTER_CALL_WORK') {
+            return forLegacyCard ? 'status-work' : 'status-work';
+        }
+
+        return forLegacyCard ? 'status-logout' : 'status-logout';
+    }
+
+    function getAgentStatusLabel(status) {
+        const normalized = normalizeText(status);
+
+        if (normalized === 'READY') {
+            return 'Готов';
+        }
+
+        if (normalized === 'NOT_READY') {
+            return 'Не готов';
+        }
+
+        if (normalized === 'TALKING') {
+            return 'Разговаривает';
+        }
+
+        if (normalized === 'WORK' || normalized === 'WORK_READY' || normalized === 'AFTER_CALL_WORK') {
+            return 'После звонка';
+        }
+
+        if (normalized === 'RESERVED') {
+            return 'Зарезервирован';
+        }
+
+        return 'Не в системе';
+    }
+
+    function formatDuration(totalSeconds) {
+        const safeSeconds = Math.max(0, Number(totalSeconds) || 0);
+        const hours = String(Math.floor(safeSeconds / 3600)).padStart(2, '0');
+        const minutes = String(Math.floor((safeSeconds % 3600) / 60)).padStart(2, '0');
+        const seconds = String(safeSeconds % 60).padStart(2, '0');
+        return `${hours}:${minutes}:${seconds}`;
+    }
+
+    function normalizeText(value) {
+        return String(value || '').trim().toUpperCase();
+    }
+
+    function normalizeOperatorName(value) {
+        return normalizeText(value)
+            .replace(/Ё/g, 'Е')
+            .replace(/[^A-ZА-Я0-9\s]/g, ' ')
+            .replace(/\s+/g, ' ')
+            .trim();
+    }
+
+    function getOperatorNameAliases(value) {
+        const normalized = normalizeOperatorName(value);
+        if (!normalized || normalized === '-') {
+            return [];
+        }
+
+        const tokens = normalized.split(' ').filter(Boolean);
+        if (!tokens.length) {
+            return [];
+        }
+
+        const aliases = new Set();
+        const first = tokens[0];
+        const last = tokens[tokens.length - 1];
+
+        aliases.add(tokens.join(' '));
+
+        if (tokens.length >= 2) {
+            aliases.add(`${first} ${last}`.trim());
+            aliases.add(`${last} ${first}`.trim());
+            aliases.add(`${first.charAt(0)} ${last}`.trim());
+            aliases.add(`${last} ${first.charAt(0)}`.trim());
+            aliases.add(`${first}${last}`.trim());
+            aliases.add(`${last}${first}`.trim());
+        }
+
+        return Array.from(aliases).filter((alias) => alias && alias !== '-');
+    }
+
+    function escapeHtml(value) {
+        return String(value || '')
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    function init() {
+        createAgentsUI();
+        createCsqSummaryUI();
+
+        callsDataDate = getCurrentCallLogDate();
+        callsDataForQueues = extractCallsFromDomTable();
+        renderCsqSummary();
+
+        document.addEventListener('moscowCallLogUpdated', handleCallLogUpdated);
+
+        if (isFinesseAuthenticated()) {
+            setPanelsVisible(true);
+            setTimeout(fetchAgentStatuses, 400);
+        } else {
+            setPanelsVisible(false);
+            updateStatusMessage('Выполните вход Finesse для просмотра статусов', 'info');
+        }
+
+        document.addEventListener('finesseAuthSuccess', function () {
+            setPanelsVisible(true);
+            setTimeout(fetchAgentStatuses, 400);
+        });
+
+        document.addEventListener('finesseLogout', function () {
+            agentsData = [];
+            queueWaitStartedAt.clear();
+            expandedQueues.clear();
+            setPanelsVisible(false);
+            renderCsqSummary();
+        });
+    }
+
     document.addEventListener('DOMContentLoaded', init);
 
-    // Экспортируем функцию для внешнего вызова
     window.fetchAgentStatuses = fetchAgentStatuses;
 
-    /**
-     * Показывает уведомление о необходимости подключения VPN
-     */
-    function showVpnNotification(title, message) {
-        // Проверяем, нет ли уже показанного уведомления
+    function showVpnNotification(
+        title = 'Внимание: проблема с подключением',
+        message = 'Невозможно получить данные Cisco Finesse. Проверьте подключение VPN Cisco AnyConnect.'
+    ) {
         if (document.getElementById('vpn-notification')) {
             return;
         }
 
-        // Создаем элемент уведомления
         const notification = document.createElement('div');
         notification.id = 'vpn-notification';
         notification.className = 'vpn-notification';
         notification.innerHTML = `
             <div class="vpn-notification-header">
                 <i class="fas fa-exclamation-triangle"></i>
-                <span>${title}</span>
+                <span>${escapeHtml(title)}</span>
                 <button class="vpn-close-btn">&times;</button>
             </div>
             <div class="vpn-notification-body">
-                <p>${message}</p>
+                <p>${escapeHtml(message)}</p>
             </div>
         `;
 
-        // Добавляем стили для уведомления
         const style = document.createElement('style');
         style.textContent = `
             .vpn-notification {
@@ -550,7 +1064,7 @@
 
             .vpn-notification-body p {
                 margin-top: 0;
-                margin-bottom: 10px;
+                margin-bottom: 0;
             }
 
             @keyframes slideIn {
@@ -576,20 +1090,17 @@
             }
         `;
 
-        // Добавляем стили и уведомление в DOM
         document.head.appendChild(style);
         document.body.appendChild(notification);
 
-        // Добавляем обработчик для закрытия уведомления
         const closeBtn = notification.querySelector('.vpn-close-btn');
-        closeBtn.addEventListener('click', function() {
+        closeBtn.addEventListener('click', function () {
             notification.style.animation = 'slideOut 0.3s forwards';
             setTimeout(() => {
                 notification.remove();
             }, 300);
         });
 
-        // Автоматически скрываем уведомление через 30 секунд
         setTimeout(() => {
             if (document.body.contains(notification)) {
                 notification.style.animation = 'slideOut 0.3s forwards';
@@ -602,6 +1113,5 @@
         }, 30000);
     }
 
-    // Добавьте в конец файла, внутри замыкания
     window.showVpnNotification = showVpnNotification;
 })();

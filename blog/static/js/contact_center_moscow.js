@@ -463,6 +463,16 @@
             const analyticsReportDateDisplay = document.getElementById('analyticsReportDate'); // Переименовываем для ясности
             const analyticsDatePicker = document.getElementById('analyticsDatePicker'); // Новый календарь для аналитики
 
+            function emitCallLogUpdated(calls, dateString, error = '') {
+                document.dispatchEvent(new CustomEvent('moscowCallLogUpdated', {
+                    detail: {
+                        calls: Array.isArray(calls) ? calls : [],
+                        date: dateString || '',
+                        error: error || ''
+                    }
+                }));
+            }
+
             function updateCallsKpi(calls) {
                 const totalCalls = Array.isArray(calls) ? calls.length : 0;
                 const knownCalls = Array.isArray(calls)
@@ -586,6 +596,7 @@
                             updateCallsKpi(data.calls);
                             enhanceOperatorCells();
                             filterCalls();
+                            emitCallLogUpdated(data.calls, dateString);
                         } else {
                             console.log('[updateTableForDate] LOG 8: No calls data or success:false for main log. Selected date:', dateString, 'Data received:', data);
                             const emptyRow = document.createElement('tr');
@@ -596,6 +607,7 @@
                             populateOperatorFilter(allRows);
                             syncNoCallsRowReference();
                             filterCalls();
+                            emitCallLogUpdated([], dateString);
                             // ОТСЮДА УБРАН ВЫЗОВ clearAnalyticsReport
                         }
 
@@ -622,6 +634,7 @@
                         }
                         if (clearOperatorBtn) clearOperatorBtn.style.display = 'none';
                         syncNoCallsRowReference();
+                        emitCallLogUpdated([], dateString, error.message);
                         // ОТСЮДА УБРАНО ОБНОВЛЕНИЕ analyticsReportDateSpan И ВЫЗОВ showErrorInAnalyticsReport
                     });
             }
