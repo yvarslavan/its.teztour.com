@@ -4,9 +4,39 @@ import logging
 from flask import Blueprint, render_template, jsonify, current_app, request, Response
 from flask_cors import CORS
 import requests
+import urllib3
 
 # Получаем логгер для текущего модуля
 logger = logging.getLogger(__name__)
+
+FINESSE_BASE_URL = os.getenv("FINESSE_BASE_URL", "https://uccx-pub.teztour.com:8445").rstrip("/")
+FINESSE_API_PREFIX = "/finesse/api"
+FINESSE_VERIFY_SSL = os.getenv("FINESSE_VERIFY_SSL", "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+FINESSE_CA_BUNDLE = os.getenv("FINESSE_CA_BUNDLE", "").strip()
+FINESSE_SSL_VERIFY = FINESSE_CA_BUNDLE if FINESSE_CA_BUNDLE else FINESSE_VERIFY_SSL
+
+if FINESSE_BASE_URL.startswith("https://") and FINESSE_SSL_VERIFY is False:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def finesse_api_url(path: str) -> str:
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    return f"{FINESSE_BASE_URL}{FINESSE_API_PREFIX}{normalized_path}"
+
+
+def finesse_http_get(url: str, **kwargs):
+    kwargs.setdefault("verify", FINESSE_SSL_VERIFY)
+    return requests.get(url, **kwargs)
+
+
+def finesse_http_put(url: str, **kwargs):
+    kwargs.setdefault("verify", FINESSE_SSL_VERIFY)
+    return requests.put(url, **kwargs)
 
 finesse = Blueprint(
     "finesse", __name__, static_folder="static", template_folder="templates"
@@ -51,11 +81,11 @@ def get_config():
 
 @finesse.route("/proxy/dialogs", methods=["GET"])
 def proxy_dialogs():
-    finesse_url = "http://uccx1.teztour.com:8082/finesse/api/User/test/Dialogs"
+    finesse_url = finesse_api_url("/User/test/Dialogs")
     auth = ("test", "test")
 
     try:
-        response = requests.get(finesse_url, auth=auth, timeout=10)
+        response = finesse_http_get(finesse_url, auth=auth, timeout=10)
         return Response(
             response.text, content_type="application/xml", status=response.status_code
         )
@@ -83,16 +113,14 @@ def proxy_transfer():
         if not call_id or not destination:
             return jsonify({"error": "Нет callId"}), 400
 
-        finesse_url = (
-            f"http://uccx1.teztour.com:8082/finesse/api/User/test/Dialogs/{call_id}"
-        )
+        finesse_url = finesse_api_url(f"/User/test/Dialogs/{call_id}")
         auth = ("test", "test")
         # Используем JSON как payload и указываем заголовки соответствующие
         transfer_payload = {
             "Dialog": {"targetMediaAddress": destination, "requestedAction": "TRANSFER"}
         }
 
-        finesse_response = requests.put(
+        finesse_response = finesse_http_put(
             finesse_url,
             json=transfer_payload,  # Передача данных в JSON
             auth=auth,

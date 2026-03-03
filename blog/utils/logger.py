@@ -48,10 +48,21 @@ except ModuleNotFoundError:
                     )
 
 def configure_blog_logger():
-    """Конфигурирует логгер для всего пакета 'blog'."""
+    """Конфигурирует логгер для всего пакета 'blog'.
+    
+    Переменные окружения для настройки:
+    - LOG_LEVEL: Уровень логирования (DEBUG/INFO/WARNING/ERROR/CRITICAL)
+    - LOG_MAX_BYTES: Максимальный размер файла лога (по умолчанию 10MB)
+    - LOG_BACKUP_COUNT: Количество архивных файлов (по умолчанию 7)
+    - LOG_PATH: Путь к основному файлу лога
+    """
     import os
+    
+    # Получаем настройки из переменных окружения
     log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
     log_level = getattr(logging, log_level_str, logging.INFO)
+    log_max_bytes = int(os.getenv('LOG_MAX_BYTES', str(10 * 1024 * 1024)))  # 10MB по умолчанию
+    log_backup_count = int(os.getenv('LOG_BACKUP_COUNT', '7'))  # 7 архивов по умолчанию
 
     blog_package_logger = logging.getLogger('blog')
     blog_package_logger.setLevel(log_level)
@@ -64,6 +75,7 @@ def configure_blog_logger():
 
     # Предотвращаем повторное добавление обработчиков, если они уже есть
     if not blog_package_logger.handlers:
+        # Формат для production - более компактный
         formatter = JsonFormatter(
             '%(asctime)s %(name)s %(levelname)s %(process)d %(module)s %(funcName)s %(lineno)d %(message)s'
         )
@@ -71,15 +83,15 @@ def configure_blog_logger():
         # Файловый обработчик с ротацией (с улучшенной обработкой ошибок)
         try:
             default_log_path = Path(__file__).resolve().parents[2] / "logs" / "app.log"
-            log_file_path = get("logging", "path", str(default_log_path))
+            log_file_path = os.getenv('LOG_PATH', str(default_log_path))
             log_dir = os.path.dirname(log_file_path)
 
             os.makedirs(log_dir, exist_ok=True)
 
             file_handler = _SafeHandler(
                 log_file_path,
-                maxBytes=1024 * 1024 * 5,  # 5 MB
-                backupCount=3,
+                maxBytes=log_max_bytes,
+                backupCount=log_backup_count,
                 encoding='utf-8'
             )
             file_handler.setFormatter(formatter)
@@ -93,12 +105,13 @@ def configure_blog_logger():
             logging.basicConfig(level=log_level)
             logging.getLogger().critical(f"Failed to configure file logger: {e}")
 
-        # Обработчик для вывода в консоль
-        console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setFormatter(formatter)
-        blog_package_logger.addHandler(console_handler)
+        # Обработчик для вывода в консоль (только для development)
+        if os.getenv('FLASK_ENV', 'production') == 'development':
+            console_handler = logging.StreamHandler(sys.stdout)
+            console_handler.setFormatter(formatter)
+            blog_package_logger.addHandler(console_handler)
 
-        # Добавляем console handler для дополнительных логгеров
-        for logger_name in additional_loggers:
-            extra_logger = logging.getLogger(logger_name)
-            extra_logger.addHandler(console_handler)
+            # Добавляем console handler для дополнительных логгеров
+            for logger_name in additional_loggers:
+                extra_logger = logging.getLogger(logger_name)
+                extra_logger.addHandler(console_handler)

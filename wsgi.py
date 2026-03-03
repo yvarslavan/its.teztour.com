@@ -15,11 +15,14 @@ os.makedirs(log_dir, exist_ok=True)
 
 _log_level_str = os.getenv("LOG_LEVEL", "INFO").upper()
 _log_level = getattr(logging, _log_level_str, logging.INFO)
+_log_max_bytes = int(os.getenv("LOG_MAX_BYTES", str(10 * 1024 * 1024)))
+_log_backup_count = int(os.getenv("LOG_BACKUP_COUNT", "5"))
 
+# Используем единый файл app.log для всех логов
 file_handler = RotatingFileHandler(
-    os.path.join(log_dir, "flask_debug.log"),
-    maxBytes=int(os.getenv("LOG_MAX_BYTES", str(10 * 1024 * 1024))),
-    backupCount=int(os.getenv("LOG_BACKUP_COUNT", "5")),
+    os.path.join(log_dir, "app.log"),
+    maxBytes=_log_max_bytes,
+    backupCount=_log_backup_count,
     encoding="utf-8",
 )
 file_handler.setFormatter(

@@ -28,51 +28,64 @@ os.environ["NO_PROXY"] = "*"
 os.environ["no_proxy"] = "*"
 
 
+def configure_console_output():
+    """Пытается включить UTF-8 вывод в консоли, если это поддерживается."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if callable(reconfigure):
+            try:
+                reconfigure(encoding="utf-8", errors="replace")
+            except Exception:
+                pass
+
+
+def safe_print(message: str):
+    """Печать без падения на UnicodeEncodeError в старых кодировках консоли."""
+    try:
+        print(message)
+    except UnicodeEncodeError:
+        encoding = getattr(sys.stdout, "encoding", None) or "utf-8"
+        fallback = str(message).encode(encoding, errors="replace").decode(
+            encoding, errors="replace"
+        )
+        print(fallback)
+
+
 def setup_development_environment():
     """Настройка переменных окружения для разработки"""
     # Устанавливаем режим разработки
     os.environ["FLASK_ENV"] = "development"
     os.environ["FLASK_DEBUG"] = "1"
 
-    # Настраиваем простое логирование - используем безопасный обработчик из blog.utils.logger
-    import logging
+    # Настраиваем логирование через централизованный модуль blog.utils.logger
+    try:
+        from blog.utils.logger import configure_blog_logger
 
-    # Проверяем, уже настроен ли логгер, чтобы избежать дублирования
-    root_logger = logging.getLogger()
-    if not root_logger.handlers:
-        try:
-            from blog.utils.logger import configure_blog_logger
+        configure_blog_logger()
+    except ImportError as e:
+        # Fallback только если blog.utils.logger недоступен
+        import logging
+        from logging.handlers import RotatingFileHandler
 
-            configure_blog_logger()
-        except ImportError:
-            # Fallback если blog.utils.logger недоступен
-            from logging.handlers import RotatingFileHandler
+        os.makedirs("logs", exist_ok=True)
+        file_handler = RotatingFileHandler(
+            "logs/app.log",
+            maxBytes=int(os.getenv("LOG_MAX_BYTES", str(10 * 1024 * 1024))),
+            backupCount=int(os.getenv("LOG_BACKUP_COUNT", "5")),
+            encoding="utf-8",
+        )
+        file_handler.setFormatter(
+            logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        )
 
-            os.makedirs("logs", exist_ok=True)
-            file_handler = RotatingFileHandler(
-                "logs/app.log",
-                maxBytes=int(os.getenv("LOG_MAX_BYTES", str(10 * 1024 * 1024))),
-                backupCount=int(os.getenv("LOG_BACKUP_COUNT", "5")),
-                encoding="utf-8",
-            )
+        logging.basicConfig(
+            level=logging.INFO,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[file_handler, logging.StreamHandler()],
+            force=True,
+        )
 
-            logging.basicConfig(
-                level=logging.INFO,
-                format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-                handlers=[file_handler, logging.StreamHandler()],
-                force=True,
-            )
-
-    # Suppress RotatingFileHandler permission errors on Windows
-    import warnings
-
-    warnings.filterwarnings(
-        "ignore",
-        message=".*RotatingFileHandler.*PermissionError.*",
-        category=UserWarning,
-    )
-
-    print("✅ Логирование настроено")
+    safe_print("✅ Логирование настроено")
 
     # Загружаем конфигурацию в зависимости от окружения
     BASE_DIR = Path(__file__).resolve().parent
@@ -81,15 +94,22 @@ def setup_development_environment():
     env_path, env_loaded, is_wsl = load_environment(BASE_DIR, env_mode)
     if env_loaded:
         wsl_info = " [WSL detected]" if is_wsl else ""
-        print(
+        safe_print(
             f"✅ Загружены переменные окружения из {env_path.name} (режим: {env_mode}){wsl_info}"
         )
     else:
-        print(f"⚠️ Файл конфигурации не найден: {env_path}")
+        if env_path.exists():
+            safe_print(
+                f"ℹ️ Переменные окружения уже загружены ранее из {env_path.name}"
+            )
+        else:
+            safe_print(f"⚠️ Файл конфигурации не найден: {env_path}")
 
 
 def main():
     """Основная функция запуска"""
+    configure_console_output()
+
     # Настраиваем окружение разработки
     setup_development_environment()
 
@@ -100,20 +120,20 @@ def main():
     app = create_app()
 
     # Красивый вывод информации о запуске
-    print("=" * 60)
-    print("🚀 FLASK DEVELOPMENT SERVER")
-    print("=" * 60)
-    print(f"📁 Проект: {Path(__file__).resolve().parent}")
-    print(f"🔧 Debug режим: {app.debug}")
-    print(f"🔧 Окружение: {os.environ.get('FLASK_ENV', 'не определено')}")
-    print(f"🌐 Сервер будет доступен по адресам:")
-    print("   ➡️  http://localhost:5000")
-    print("   ➡️  http://127.0.0.1:5000")
-    print("   ➡️  http://0.0.0.0:5000 (внешний доступ)")
-    print("📍 Главные страницы:")
-    print("   ➡️  http://localhost:5000/tasks/my-tasks")
-    print("   ➡️  http://localhost:5000/users/login")
-    print("=" * 60)
+    safe_print("=" * 60)
+    safe_print("🚀 FLASK DEVELOPMENT SERVER")
+    safe_print("=" * 60)
+    safe_print(f"📁 Проект: {Path(__file__).resolve().parent}")
+    safe_print(f"🔧 Debug режим: {app.debug}")
+    safe_print(f"🔧 Окружение: {os.environ.get('FLASK_ENV', 'не определено')}")
+    safe_print("🌐 Сервер будет доступен по адресам:")
+    safe_print("   ➡️  http://localhost:5000")
+    safe_print("   ➡️  http://127.0.0.1:5000")
+    safe_print("   ➡️  http://0.0.0.0:5000 (внешний доступ)")
+    safe_print("📍 Главные страницы:")
+    safe_print("   ➡️  http://localhost:5000/tasks/my-tasks")
+    safe_print("   ➡️  http://localhost:5000/users/login")
+    safe_print("=" * 60)
 
     # Запускаем сервер с оптимальными настройками для разработки
     try:
@@ -129,10 +149,10 @@ def main():
             load_dotenv=False,  # Мы уже загрузили переменные
         )
     except KeyboardInterrupt:
-        print("\n🛑 Сервер остановлен пользователем")
+        safe_print("\n🛑 Сервер остановлен пользователем")
         sys.exit(0)
     except Exception as e:
-        print(f"❌ Ошибка запуска сервера: {e}")
+        safe_print(f"❌ Ошибка запуска сервера: {e}")
         sys.exit(1)
 
 

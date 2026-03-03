@@ -1,0 +1,1921 @@
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f5f5f5;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: linear-gradient(to right, #00b09b, #96c93d);
+            color: white;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Новый стиль для группы логотипа и заголовка */
+        .header-main-content {
+            display: flex;
+            align-items: center;
+            flex-shrink: 1; /* Разрешить блоку сжиматься */
+            min-width: 0;   /* Позволить сжиматься меньше содержимого по умолчанию */
+            margin-right: 15px; /* Небольшой отступ от блока действий */
+        }
+
+        .header-logo { /* Новый стиль для логотипа */
+            height: 70px; /* Уменьшим немного логотип для баланса */
+            margin-right: 20px; /* Увеличим отступ */
+        }
+
+        .header-title {
+            font-size: 26px; /* Немного увеличим */
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .header-subtitle {
+            font-size: 15px; /* Немного увеличим */
+            opacity: 0.85;
+            margin-top: 5px;
+            word-break: break-word; /* Разрешить перенос длинных слов */
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px; /* Отступ между элементами в actions */
+            flex-shrink: 0; /* Запретить этому блоку сжиматься */
+        }
+
+        .current-date-container {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            margin-top: 8px;
+            word-break: break-word; /* Разрешить перенос для этого элемента тоже */
+        }
+
+        .current-date-container .date-icon {
+            margin-right: 8px;
+            font-size: 1.1em;
+        }
+
+        .login-btn {
+            background-color: #fff; /* Белый фон для контраста */
+            color: #007bff; /* Синий текст, можно использовать цвет из градиента */
+            border: none;
+            padding: 10px 18px;
+            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .login-btn:hover {
+            background-color: #f0f0f0; /* Легкое потемнение при наведении */
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+            transform: translateY(-1px);
+        }
+
+        .login-btn i {
+            font-size: 1.1em;
+        }
+
+        .calls-panel {
+            margin-top: 20px;
+        }
+
+        /* Стили для журнала звонков */
+        .calls-list {
+            padding: 20px;
+        }
+
+        .call-card {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            transition: transform 0.2s ease;
+        }
+
+        .call-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .call-info {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .call-property {
+            flex: 1;
+            min-width: 200px;
+            padding: 8px;
+        }
+
+        .property-label {
+            font-size: 12px;
+            color: #6c757d;
+            margin-bottom: 5px;
+        }
+
+        .property-value {
+            font-weight: 500;
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 40px;
+            color: #6c757d;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-info {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .status-loading {
+            background-color: #f8f9fa;
+            color: #6c757d;
+            border: 1px solid #e9ecef;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .call-property {
+                min-width: 100%;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+        }
+
+        .header-actions {
+                margin-top: 10px;
+            }
+        }
+
+        .finesse-modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .finesse-modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 600px;
+            border-radius: 8px;
+            position: relative;
+            box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2),0 6px 20px 0 rgba(0,0,0,0.19);
+            animation: slideInModal 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .finesse-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .finesse-modal-title {
+            margin: 0;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            color: #333;
+        }
+
+        .finesse-modal-title i {
+            margin-right: 10px;
+            color: #007bff;
+            font-size: 1.1em;
+        }
+
+        .finesse-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0 5px;
+        }
+
+        .finesse-modal-body {
+            /* max-height: 400px; */
+            /* overflow-y: auto; */ /* <<< Меняем это >>> */
+            overflow-y: scroll; /* <<< На это (всегда показывать скролл) >>> */
+        }
+
+        .loading-spinner {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-message {
+            color: #721c24;
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 15px;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .client-info-row {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .client-info-label {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+
+        .agency-info {
+            padding: 15px;
+        }
+
+        .agency-info-row {
+            display: flex;
+            margin-bottom: 10px;
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .agency-info-label {
+            font-weight: bold;
+            width: 150px;
+            color: #666;
+        }
+
+        .agency-info-value {
+            flex: 1;
+            padding-left: 10px;
+        }
+
+        /* Новые стили для карточки обзвона */
+        .agency-info-card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            /* <<< НАЧАЛО ИЗМЕНЕНИЯ: Управляем высотой и скроллом здесь, добавляем flex >>> */
+            display: block; /* Убедимся, что это блок */
+            max-height: 80vh; /* Ограничиваем высоту */
+            overflow-y: auto; /* Добавляем скролл при необходимости */
+            flex: 1; /* Позволяем элементу растягиваться/сжиматься */
+            /* <<< КОНЕЦ ИЗМЕНЕНИЯ >>> */
+        }
+
+        .agency-info-card .info-row {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .agency-info-card .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .agency-info-card .info-icon {
+            font-size: 1.1em;
+            margin-right: 15px;
+            color: #555;
+            width: 25px; /* Фиксированная ширина для выравнивания */
+            text-align: center;
+        }
+
+        .agency-info-card .info-label {
+            font-weight: 500;
+            color: #333;
+            width: 130px; /* Фиксированная ширина метки */
+        }
+
+        .agency-info-card .info-value {
+            flex: 1;
+            color: #555;
+        }
+
+        /* Цвета для иконок */
+        .info-icon.agency { color: #007bff; } /* Синий */
+        .info-icon.result-success { color: #28a745; } /* Зеленый */
+        .info-icon.result-fail { color: #dc3545; } /* Красный */
+        .info-icon.result-neutral { color: #6c757d; } /* Серый */
+        .info-icon.country { color: #ffc107; } /* Желтый */
+        .info-icon.metro { color: #fd7e14; } /* Оранжевый */
+        .info-icon.manager { color: #6f42c1; } /* Фиолетовый */
+        .info-icon.datetime { color: #17a2b8; } /* Бирюзовый */
+        .info-icon.operator { color: #e83e8c; } /* Розовый */
+        .info-icon.client { color: #20c997; } /* Тиловый */
+        /* Добавляем цвета для карточки клиента */
+        .info-icon.phone { color: #17a2b8; } /* Бирюзовый (как дата) */
+        .info-icon.email { color: #6610f2; } /* Индиго */
+        .info-icon.city { color: #fd7e14; } /* Оранжевый (как метро) */
+        .info-icon.ad { color: #e83e8c; } /* Розовый (как оператор) */
+
+         /* Стили для кнопки информации об обзвоне */
+        .agency-info-btn {
+            background: none;
+            border: none;
+            color: #007bff;
+            cursor: pointer;
+            padding: 0 5px;
+            font-size: 0.9em;
+            margin-left: 8px;
+            vertical-align: middle;
+            transition: color 0.2s ease;
+        }
+        .agency-info-btn:hover {
+            color: #0056b3;
+        }
+
+        /* Новые стили для таблицы журнала звонков */
+        .calls-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            background-color: #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+            border-radius: 6px;
+            overflow: hidden; /* Для скругления углов */
+        }
+
+        .calls-table th,
+        .calls-table td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle; /* Выравнивание по вертикали */
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .calls-table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap; /* Заголовки не переносятся */
+        }
+
+        .calls-table tbody tr:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+
+        .calls-table tbody tr:hover {
+            background-color: #f1f8ff;
+            cursor: default; /* Или pointer, если вся строка кликабельна */
+        }
+
+        /* Иконки в таблице */
+        .calls-table .icon {
+            margin-right: 8px;
+            color: #6c757d; /* Серый цвет иконок по умолчанию */
+            width: 16px; /* Для выравнивания */
+            display: inline-block;
+            text-align: center;
+        }
+        .calls-table .phone-icon { color: #17a2b8; } /* Бирюзовый */
+        .calls-table .operator-icon { color: #6f42c1; } /* Фиолетовый */
+        .calls-table .time-icon { color: #fd7e14; } /* Оранжевый */
+        .calls-table .result-icon { color: #20c997; } /* Тиловый */
+        .calls-table .type-icon { color: #ff6b6b; } /* Коралловый (пример) */
+
+         /* Стиль для значков результата звонка */
+        .call-result-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 0.8em;
+            font-weight: 600;
+            border-radius: 12px; /* Скругленные края */
+            text-align: center;
+            min-width: 80px; /* Минимальная ширина для консистентности */
+        }
+        /* Успешный результат */
+        .result-success {
+            background-color: #d1e7dd; /* Светло-зеленый */
+            color: #0a3622;
+        }
+        /* Неуспешный/Сорвался результат */
+        .result-failed {
+            background-color: #f8d7da; /* Светло-красный */
+            color: #58151c;
+        }
+         /* Клиент положил трубку */
+        .result-dropped {
+             background-color: #fff3cd; /* Светло-желтый */
+             color: #664d03;
+        }
+         /* Нет интернета */
+        .result-no-internet {
+             background-color: #cfe2ff; /* Светло-синий */
+             color: #052c65;
+        }
+         /* Неизвестный результат */
+        .result-unknown {
+            background-color: #e9ecef; /* Светло-серый */
+            color: #495057;
+        }
+
+         /* Стиль для кнопок в таблице */
+        .calls-table .action-btn {
+            background-color: #e9ecef;
+            color: #495057;
+            border: none;
+            padding: 5px 10px;
+            font-size: 0.8rem;
+            border-radius: 15px; /* Сильное скругление */
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex; /* Для выравнивания иконки и текста */
+            align-items: center;
+            margin-right: 5px; /* Отступ между кнопками */
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .calls-table .action-btn i {
+            margin-right: 5px;
+        }
+        .calls-table .action-btn:hover {
+            background-color: #ced4da;
+            color: #343a40;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Выделяем кнопку карты клиента */
+        .calls-table .client-card-btn {
+            background-color: #d1e7dd; /* Светло-зеленый */
+            color: #0f5132;
+        }
+        .calls-table .client-card-btn:hover {
+            background-color: #badbcc;
+            color: #0a3622;
+        }
+        .calls-table .agency-info-btn {
+             /* Оставляем стили по умолчанию (серые) или добавляем свои */
+        }
+
+        /* Стили для заголовка аккордеона */
+        .accordion-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 20px;
+            background:rgb(17, 130, 223); /* Устанавливаем фон, перекрывая внешний стиль */
+            color: white; /* Делаем текст белым */
+            cursor: pointer;
+            border-radius: 6px 6px 0 0; /* Скругление только верхних углов */
+            border-bottom: 1px solid #bee5eb; /* Добавим границу для разделения */
+        }
+        .accordion-header span {
+            font-weight: 600;
+        }
+        .accordion-header .header-date {
+            font-size: 0.9em;
+            opacity: 0.9;
+            margin-left: 15px; /* Отступ от заголовка */
+        }
+        .accordion-header .controls {
+             display: flex;
+             align-items: center;
+        }
+        .accordion-header .refresh-calls-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-left: 15px;
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+        .accordion-header .refresh-calls-btn:hover {
+            opacity: 1;
+        }
+        .accordion-icon {
+             margin-left: 10px;
+             transition: transform 0.3s ease; /* Анимация поворота иконки */
+        }
+        /* Поворот иконки при активном аккордеоне */
+        .accordion-panel.active .accordion-icon {
+            transform: rotate(180deg);
+        }
+
+        /* Стили для контента аккордеона */
+        .accordion-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding-top 0.3s ease-out, padding-bottom 0.3s ease-out;
+            padding-top: 0;
+            padding-bottom: 0;
+            border-top: none; /* Убираем границу сверху */
+            background-color: #fff; /* Добавляем фон, если его нет */
+             border-radius: 0 0 6px 6px; /* Скругление нижних углов */
+        }
+        /* Стили для активного (открытого) аккордеона */
+        .accordion-panel.active .accordion-content {
+            max-height: 5000px; /* Устанавливаем очень большое значение вместо 'none' */
+                                /* Это может помочь браузеру лучше пересчитывать высоту */
+            overflow-y: auto;   /* Используем auto, чтобы скролл появлялся только при необходимости */
+                                /* Раньше было: overflow: visible; */
+             padding-top: 15px; /* Восстанавливаем отступы при открытии */
+             padding-bottom: 15px;
+             border-top: 1px solid #dee2e6; /* Добавляем границу сверху при открытии */
+        }
+
+        /* Стили для фильтров */
+        .calls-filter-bar {
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            gap: 15px; /* Отступы между элементами */
+            align-items: center;
+            flex-wrap: wrap; /* Перенос на новую строку при нехватке места */
+        }
+        .calls-filter-bar .filter-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .calls-filter-bar label {
+            font-size: 0.9rem;
+            color: #495057;
+            margin-bottom: 0; /* Убираем нижний отступ у метки */
+        }
+        .calls-filter-bar input[type="text"],
+        .calls-filter-bar input[type="date"] {
+            padding: 6px 10px;
+            border: 1px solid #ced4da;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        /* Стили для поля даты в заголовке (если будем добавлять) */
+        .header-date-input {
+             padding: 2px 6px;
+             margin-left: 8px;
+             border: 1px solid rgba(255,255,255,0.3);
+             border-radius: 4px;
+             background-color: rgba(255,255,255,0.1);
+             color: white;
+             font-size: 0.85em;
+        }
+
+        /* Стиль для отображения количества звонков */
+        .call-count-display {
+            font-size: 0.9rem;
+            color: #555;
+            background-color: #e9ecef;
+            padding: 6px 12px;
+            border-radius: 4px;
+        }
+        .call-count-display i {
+            margin-right: 6px;
+            color: #6c757d;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .calls-filter-bar {
+                flex-direction: column; /* Фильтры в столбик */
+                align-items: stretch; /* Растягиваем по ширине */
+            }
+            .calls-filter-bar .filter-group {
+                 width: 100%; /* Фильтры на всю ширину */
+            }
+            .calls-filter-bar input[type="text"] {
+                 width: 100%; /* Поля ввода на всю ширину */
+                 box-sizing: border-box; /* Учитываем padding и border в ширине */
+            }
+
+            .calls-table {
+                display: block; /* Позволяет таблице прокручиваться */
+                overflow-x: auto; /* Добавляем горизонтальную прокрутку */
+                white-space: nowrap; /* Предотвращаем перенос текста в ячейках */
+                border-radius: 0; /* Убираем скругление для блока */
+                box-shadow: none; /* Убираем тень */
+            }
+            .calls-table thead, .calls-table tbody, .calls-table tr {
+                display: block;
+            }
+            .calls-table th,
+            .calls-table td {
+                 white-space: normal; /* Разрешаем перенос текста в ячейках */
+                 /* Можно настроить ширину колонок или скрыть некоторые */
+                 padding: 8px 10px; /* Уменьшаем отступы */
+            }
+            .calls-table td:first-child,
+            .calls-table th:first-child {
+                 padding-left: 15px;
+            }
+             .calls-table td:last-child,
+            .calls-table th:last-child {
+                 padding-right: 15px;
+            }
+            .accordion-header {
+                flex-direction: column; /* Заголовок в столбик */
+                align-items: flex-start;
+            }
+            .accordion-header .controls {
+                margin-top: 10px;
+            }
+        }
+
+        /* Стили для карточки клиента из старой версии */
+        .client-card {
+            padding: 15px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        .client-info h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 8px;
+        }
+        .client-phone {
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .client-details p {
+            margin: 5px 0;
+            font-size: 0.9em;
+            color: #666;
+            line-height: 1.4;
+        }
+        .client-details p strong {
+            display: inline-block;
+            width: 100px; /* Выравнивание меток */
+            color: #444;
+        }
+        /* Конец стилей для карточки клиента */
+
+        /* Стили для кнопки очистки фильтра */
+        .filter-input-wrapper {
+            position: relative; /* Для позиционирования крестика */
+            display: flex; /* Выравниваем иконку, инпут и крестик */
+            align-items: center;
+        }
+        .clear-filter-btn {
+            position: absolute;
+            right: 8px; /* Отступ справа */
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #aaa;
+            font-size: 1.2em;
+            line-height: 1;
+            font-weight: bold;
+        }
+        .clear-filter-btn:hover {
+            color: #555;
+        }
+        /* Отображаем крестик только если инпут не пустой - можно через JS */
+
+        /* <<< НАЧАЛО ИЗМЕНЕНИЯ: СТАБИЛИЗИРУЕМ ПОЛОЖЕНИЕ МОДАЛЬНОГО ОКНА >>> */
+        #agencyInfoModal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1050;
+            display: none;
+            /* Используем flex для центрирования - это стабилизирует положение */
+            justify-content: center;
+            align-items: center;
+            /* Добавляем плавное появление/исчезновение */
+            opacity: 1;
+            transition: opacity 0.2s ease;
+        }
+
+        #agencyInfoModal .finesse-modal-content {
+            /* Убираем абсолютное позиционирование и transform */
+            position: relative;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            min-height: 300px; /* Добавляем минимальную высоту */
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            /* Добавляем анимации для плавного появления и стабилизации */
+            transform: translateY(0); /* Стабильное положение */
+            animation: modalContentAppear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes modalContentAppear {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        #agencyInfoModal .finesse-modal-header {
+            padding: 12px 15px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff; /* Возвращаем голубой цвет фона */
+            color: white; /* Белый цвет текста для контраста */
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+        }
+
+        #agencyInfoModal .finesse-modal-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        #agencyInfoModal .finesse-modal-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin: 0;
+            color: white; /* Убеждаемся, что текст заголовка белый */
+        }
+
+        #agencyInfoModal .finesse-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            color: white; /* Меняем цвет кнопки закрытия на белый */
+        }
+
+        /* Новые стили для карточки обзвона - УПРОЩЕННЫЕ */
+        .agency-info-card {
+            width: 100%;
+            height: auto;
+            background-color: #fff;
+            padding: 15px;
+        }
+        /* <<< КОНЕЦ ИЗМЕНЕНИЯ >>> */
+
+        /* <<< НАЧАЛО ИЗМЕНЕНИЯ: ДОБАВЛЯЕМ СТИЛИ ДЛЯ ССЫЛКИ НА КАРТУ >>> */
+        .map-link {
+            color: #0d6efd;
+            text-decoration: none;
+            border-bottom: 1px dashed #0d6efd;
+            position: relative;
+            transition: all 0.2s ease;
+            padding-right: 22px; /* Место для иконки */
+            display: inline-block;
+        }
+
+        .map-link:hover {
+            color: #0a58ca;
+            border-bottom: 1px solid #0a58ca;
+        }
+
+        .map-link-icon {
+            font-size: 0.85em;
+            position: absolute;
+            right: 0;
+            top: 2px;
+            opacity: 0.7;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+
+        .map-link:hover .map-link-icon {
+            opacity: 1;
+            transform: translateX(2px);
+        }
+
+        /* Добавляем тултип при наведении */
+        .map-link::after {
+            content: "Открыть на Яндекс Картах";
+            position: absolute;
+            bottom: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+            z-index: 1060;
+        }
+
+        .map-link:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        /* <<< КОНЕЦ ИЗМЕНЕНИЯ >>> */
+
+        /* Стили для панели аналитики */
+        .analytics-panel .accordion-content {
+            background-color: #f8f9fa; /* Немного другой фон для отличия */
+        }
+
+        #analyticsReportContainer {
+            padding: 15px;
+        }
+
+        .report-section {
+            background-color: #fff;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .report-section h4 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            color: #333;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        /* Стили для таблиц в отчете (можно расширить) */
+        .analytics-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+        .analytics-table th,
+        .analytics-table td {
+            padding: 8px 12px;
+            text-align: left;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+        }
+        .analytics-table th {
+            background-color: #e9ecef;
+            font-weight: 600;
+            color: #495057;
+        }
+        .analytics-table tbody tr:nth-child(even) {
+            background-color: #fdfdfd;
+        }
+        .analytics-table .percentage-bar-container {
+            width: 100px; /* Ширина для прогресс-бара */
+            background-color: #e9ecef;
+            border-radius: 4px;
+            height: 12px;
+            overflow: hidden;
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .analytics-table .percentage-bar {
+            height: 100%;
+            background-color: #007bff; /* Синий по умолчанию */
+            border-radius: 4px 0 0 4px;
+            transition: width 0.5s ease-in-out;
+        }
+        .analytics-table .percentage-text {
+            margin-left: 5px;
+            font-size: 0.85em;
+            vertical-align: middle;
+        }
+         /* Цвета для прогресс-баров результативности */
+        .analytics-table .percentage-bar.success { background-color: #28a745; } /* Зеленый */
+        .analytics-table .percentage-bar.failed { background-color: #dc3545; } /* Красный */
+        .analytics-table .percentage-bar.dropped { background-color: #ffc107; } /* Желтый */
+
+        /* Стили для общей статистики */
+        #dailySummaryStats ul {
+            list-style-type: none;
+            padding-left: 0;
+        }
+        #dailySummaryStats li {
+            padding: 6px 0;
+            border-bottom: 1px dashed #eee;
+            display: flex;
+            justify-content: space-between;
+        }
+        #dailySummaryStats li:last-child {
+            border-bottom: none;
+        }
+        #dailySummaryStats li strong {
+            color: #007bff; /* Акцент на цифрах */
+        }
+
+        /* Стили для модального окна детальной информации об агентстве (#agencyDetailModal) */
+        #agencyDetailModal .info-icon.fa-phone-alt { color: #555; } /* Основной цвет для номеров телефонов в списке */
+
+        /* Конец стилей для #agencyDetailModal */
+
+        /* Стили для таблицы Справочника Агентств */
+        .agencies-table th {
+            /* background-color: #e9ecef; /* Чуть другой фон для заголовков агентств, если нужно */
+            /* color: #0056b3;       /* Более темный синий для текста заголовков */
+        }
+
+        /* Раскрашиваем иконки в заголовках таблицы агентств */
+        .agencies-table th .fa-building { color: #007bff; } /* Название - синий */
+        .agencies-table th .fa-map-marker-alt { color: #dc3545; } /* Адрес - красный */
+        .agencies-table th .fa-city { color: #fd7e14; } /* Город - оранжевый */
+        .agencies-table th .fa-subway { color: #6f42c1; } /* Метро - фиолетовый */
+        .agencies-table th .fa-phone-alt { color: #17a2b8; } /* Телефоны - бирюзовый */
+        .agencies-table th .fa-map-signs { color: #20c997; } /* Район - тиловый */
+        .agencies-table th .fa-info-circle { color: #6c757d; } /* Действия - серый */
+
+        /* Цвет иконки для названия агентства в строках таблицы */
+        .agencies-table td .fa-building {
+            color: #007bff; /* Синий, как в заголовке */
+            margin-right: 8px; /* Добавим отступ, если его нет */
+        }
+
+        /* === Styles for Agency Detail Modal === */
+        #agencyDetailModal .finesse-modal-content {
+            position: relative;
+            margin: auto; /* Center in parent if parent is flex and align/justify center */
+            width: 90%;
+            max-width: 950px; /* Made wider */
+            min-height: 400px;
+            max-height: 90vh; /* Limit height of the modal box */
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column; /* Stack header and body */
+            animation: modalContentAppear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); /* Smooth appearance */
+        }
+
+        /* Consistent header styling with agencyInfoModal */
+        #agencyDetailModal .finesse-modal-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff; /* Consistent blue header */
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            flex-shrink: 0; /* Header should not shrink */
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-modal-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin: 0;
+            color: white;
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-modal-title i {
+            margin-right: 10px;
+            /* color: white; Ensure icon color if needed */
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            color: white;
+        }
+
+        /* Styles for the body of agencyDetailModal (which is #agencyDetailContent) */
+        #agencyDetailModal .finesse-modal-body {
+            padding: 20px;
+            overflow-y: auto; /* KEY for scrolling the content within the body */
+            flex: 1;          /* Body takes up available vertical space */
+            min-height: 0;    /* Crucial for scrollable flex children */
+        }
+        /* Ensure the inner card defers scrolling to the modal body */
+        #agencyDetailModal .finesse-modal-body .agency-info-card {
+            max-height: none;
+            overflow-y: visible;
+            /* Retain its own padding as it structures the info-rows */
+        }
+
+        /* === Styles for Agency Detail Modal (Attempt 2) === */
+        #agencyDetailModal .finesse-modal-content {
+            position: relative;
+            margin: auto;
+            width: 90%;
+            max-width: 950px;
+            min-height: 400px;
+            max-height: 90vh;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            animation: modalContentAppear 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        #agencyDetailModal .finesse-modal-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #007bff;
+            color: white;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            flex-shrink: 0;
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-modal-title {
+            font-size: 1.2rem;
+            font-weight: 500;
+            margin: 0;
+            color: white;
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-modal-title i {
+            margin-right: 10px;
+        }
+
+        #agencyDetailModal .finesse-modal-header .finesse-close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+            color: white;
+        }
+
+        #agencyDetailModal .finesse-modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+
+        #agencyDetailModal .finesse-modal-body .agency-info-card {
+            max-height: none;
+            overflow-y: visible;
+        }
+        /* === End of Styles for Agency Detail Modal (Attempt 2) === */
+
+        /* Цветные иконки для карточки агентства */
+        #agencyDetailModal .info-icon.agency         { color: #007bff; }  /* Синий */
+        #agencyDetailModal .info-icon.globe          { color: #20c997; }  /* Тиловый */
+        #agencyDetailModal .info-icon.city           { color: #fd7e14; }  /* Оранжевый */
+        #agencyDetailModal .info-icon.metro          { color: #6f42c1; }  /* Фиолетовый */
+        #agencyDetailModal .info-icon.map-marker-alt { color: #dc3545; }  /* Красный */
+        #agencyDetailModal .info-icon.map-signs      { color: #20c997; }  /* Тиловый */
+        #agencyDetailModal .info-icon.map            { color: #0d6efd; }  /* Синий */
+        #agencyDetailModal .info-icon.clock          { color: #17a2b8; }  /* Бирюзовый */
+        #agencyDetailModal .info-icon.calendar-alt   { color: #ffc107; }  /* Желтый */
+        #agencyDetailModal .info-icon.user-check     { color: #198754; }  /* Зеленый */
+        #agencyDetailModal .info-icon.ticket-alt     { color: #fd7e14; }  /* Оранжевый */
+        #agencyDetailModal .info-icon.ban            { color: #6c757d; }  /* Серый */
+        #agencyDetailModal .info-icon.random         { color: #6610f2; }  /* Индиго */
+        #agencyDetailModal .info-icon.credit-card    { color: #20c997; }  /* Тиловый */
+        #agencyDetailModal .info-icon.plane-departure{ color: #007bff; }  /* Синий */
+        #agencyDetailModal .info-icon.skiing         { color: #6f42c1; }  /* Фиолетовый */
+        #agencyDetailModal .info-icon.directions     { color: #198754; }  /* Зеленый */
+        #agencyDetailModal .info-icon.phone-alt      { color: #17a2b8; }  /* Бирюзовый */
+        #agencyDetailModal .info-icon.phone-square-alt { color: #0d6efd; }/* Синий */
+        #agencyDetailModal .info-icon.phone-slash    { color: #dc3545; }  /* Красный */
+        #agencyDetailModal .info-icon.hashtag        { color: #6c757d; }  /* Серый */
+        #agencyDetailModal .info-icon { opacity: 0.95; }
+
+        #agencyDetailModal .finesse-modal-header {
+            background: linear-gradient(90deg, #007bff 0%, #20c997 100%);
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-bottom: 3px solid #20c997;
+            font-size: 1.35rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        #agencyDetailModal .finesse-modal-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.35rem;
+            font-weight: 700;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.08);
+        }
+        #agencyDetailModal .finesse-modal-title i {
+            margin-right: 12px;
+            font-size: 1.3em;
+        }
+
+        /* Стили для кнопки обновления Справочника Агентств, чтобы она выглядела как refresh-calls-btn */
+        .accordion-header .refresh-agencies-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.1em;
+            cursor: pointer;
+            margin-left: 15px; /* Или другой отступ, если требуется для выравнивания */
+            opacity: 0.8;
+            transition: opacity 0.2s ease;
+        }
+        .accordion-header .refresh-agencies-btn:hover {
+            opacity: 1;
+        }
+        /* Если иконка внутри кнопки не наследует цвет автоматически */
+        .accordion-header .refresh-agencies-btn i {
+            color: white; /* Убедимся, что иконка белая */
+        }
+
+        /* Более специфичное правило для иконки заголовка, чтобы гарантировать отображение */
+        #agencyDetailModal .finesse-modal-header .finesse-modal-title i.header-icon.fa-building {
+            display: inline-block !important;
+            font-family: "Font Awesome 5 Free" !important; /* Явно указываем шрифт */
+            font-weight: 900 !important; /* Для solid иконок */
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            -webkit-font-smoothing: antialiased !important;
+            margin-right: 12px !important;
+            font-size: 1.3em !important; /* Или ваше значение */
+            color: white !important;
+            /* Временный фон для отладки, если иконка есть, но не видна */
+            /* background-color: deeppink; */
+            /* border: 1px solid lime; */
+        }
+
+        /* Стили для иконки в заголовке #agencyInfoModal (аналогично #agencyDetailModal) */
+        #agencyInfoModal .finesse-modal-header {
+            /* Если нужны общие стили для хедера этого модального окна, можно добавить здесь */
+            /* Например, background, color, box-shadow, border-bottom, font-size, etc. */
+            /* Мы уже имеем стили для #agencyInfoModal .finesse-modal-header, так что это для специфичных переопределений */
+        }
+        #agencyInfoModal .finesse-modal-title {
+            display: flex; /* Для выравнивания иконки и текста */
+            align-items: center;
+            /* font-size и font-weight должны наследоваться или быть установлены в #agencyInfoModal .finesse-modal-header */
+        }
+        #agencyInfoModal .finesse-modal-header .finesse-modal-title i.header-icon {
+            display: inline-block !important;
+            font-family: "Font Awesome 5 Free" !important;
+            font-weight: 900 !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            -webkit-font-smoothing: antialiased !important;
+            margin-right: 12px !important;
+            font-size: 1.3em !important; /* Или ваше значение */
+            color: white !important; /* Убедимся, что цвет белый */
+        }
+
+        /* Цветные иконки для карточки агентства (из Журнала) - agencyInfoModal */
+        /* Общие иконки агентства */
+        #agencyInfoModal .info-icon.hashtag        { color: #6c757d; }  /* Серый (ID Агентства) */
+        #agencyInfoModal .info-icon.agency         { color: #007bff; }  /* Синий (Название) */
+        #agencyInfoModal .info-icon.globe          { color: #20c997; }  /* Тиловый (Название англ.) */
+        #agencyInfoModal .info-icon.map-marker-alt { color: #dc3545; }  /* Красный (Адрес) */
+        #agencyInfoModal .info-icon.city           { color: #fd7e14; }  /* Оранжевый (Город) */
+        #agencyInfoModal .info-icon.metro          { color: #6f42c1; }  /* Фиолетовый (Метро) */
+        #agencyInfoModal .info-icon.map-signs      { color: #20c997; }  /* Тиловый (Район города) */
+        #agencyInfoModal .info-icon.map            { color: #0d6efd; }  /* Синий (Зона, Регион) */
+        #agencyInfoModal .info-icon.clock          { color: #17a2b8; }  /* Бирюзовый (Часовой пояс) */
+        #agencyInfoModal .info-icon.user-check     { color: #198754; }  /* Зеленый (Англ. туристы) */
+        #agencyInfoModal .info-icon.ticket-alt     { color: #fd7e14; }  /* Оранжевый (Продажа билетов) */
+        #agencyInfoModal .info-icon.ban            { color: #6c757d; }  /* Серый ("Станция не задана") */
+        #agencyInfoModal .info-icon.random         { color: #6610f2; }  /* Индиго ("Перекл. на Мск") */
+        #agencyInfoModal .info-icon.credit-card    { color: #20c997; }  /* Тиловый (Прием банк. карт) */
+        #agencyInfoModal .info-icon.plane-departure{ color: #007bff; }  /* Синий (Туры в Стамбул) */
+        #agencyInfoModal .info-icon.skiing         { color: #6f42c1; }  /* Фиолетовый (Туры в Австрию) */
+        #agencyInfoModal .info-icon.directions     { color: #198754; }  /* Зеленый (Как пройти) */
+
+        /* Телефоны в agencyInfoModal */
+        /* Основная иконка fa-phone-square-alt для "Телефоны:" (имеет класс .operator) */
+        #agencyInfoModal .info-icon.fa-phone-square-alt.operator { color: #0d6efd; } /* Синий */
+        /* Иконки fa-phone-alt для отдельных номеров (без доп. класса от formatAgencyData кроме result-*) */
+        #agencyInfoModal .info-icon.fa-phone-alt { color: #17a2b8; } /* Бирюзовый */
+
+        /* Информация о звонке в agencyInfoModal */
+        /* Результат звонка (fa-phone-alt с классами result-*) - эти должны переопределить .fa-phone-alt выше */
+        #agencyInfoModal .info-icon.result-success { color: #28a745 !important; } /* Зеленый */
+        #agencyInfoModal .info-icon.result-fail    { color: #dc3545 !important; } /* Красный */
+        #agencyInfoModal .info-icon.result-neutral { color: #6c757d !important; } /* Серый */
+
+        #agencyInfoModal .info-icon.client         { color: #20c997; }  /* Тиловый (Клиент - fa-user-tie) */
+        #agencyInfoModal .info-icon.country        { color: #ffc107; }  /* Желтый (Страна - fa-globe-americas) */
+        /* .metro для "Метро (из обзвона)" уже покрыто правилом выше */
+        #agencyInfoModal .info-icon.manager        { color: #6f42c1; }  /* Фиолетовый (Менеджер - fa-user-tag) */
+        /* Оператор (звонка) - fa-headset с классом .operator */
+        #agencyInfoModal .info-icon.fa-headset.operator { color: #e83e8c; }  /* Розовый */
+        #agencyInfoModal .info-icon.datetime       { color: #17a2b8; }  /* Бирюзовый (Дата и время звонка - fa-calendar-alt) */
+
+        /* Общее правило для иконок в agencyInfoModal, чтобы соответствовать agencyDetailModal */
+        #agencyInfoModal .info-icon { opacity: 0.95; }
+
+        .finesse-status-indicator {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.9);
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 3px 8px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            margin-top: 8px;
+        }
+
+        .finesse-status-indicator i {
+            margin-right: 5px;
+        }
+
+        .finesse-status-dot {
+            height: 8px;
+            width: 8px;
+            background-color: #4CAF50; /* Green for connected */
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        .finesse-status-dot.disconnected {
+            background-color: #F44336; /* Red for disconnected */
+        }
+        .finesse-status-dot.connecting {
+            background-color: #FFC107; /* Yellow for connecting */
+        }
+
+        .user-session-controls {
+            display: flex;
+            align-items: center;
+            background-color: #00897b; /* Примерный цвет из скриншота (темный бирюзовый) */
+            padding: 8px 15px;
+            border-radius: 6px;
+            color: white;
+        }
+
+        .username-text {
+            font-weight: 600;
+            margin-right: 12px;
+            font-size: 15px;
+        }
+
+        .logout-btn {
+            background-color: transparent;
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            padding: 6px 12px;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-color: white;
+        }
+
+        /* Стили для иконок в заголовках аккордеона */
+        .accordion-header .panel-icon {
+            margin-right: 10px; /* Отступ иконки от текста */
+            font-size: 1em; /* Размер иконки */
+            opacity: 0.9;
+        }
+
+        /* ======================
+           Modern Call Journal UI
+           ====================== */
+        :root {
+            --tez-bg: #f8f9fa;
+            --tez-surface: #ffffff;
+            --tez-border: #e5e7eb;
+            --tez-text: #111827;
+            --tez-muted: #6b7280;
+            --tez-blue: #1d4ed8;
+            --tez-green: #0f9d6c;
+            --tez-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+            --tez-radius-lg: 14px;
+            --tez-radius-md: 10px;
+            --tez-radius-sm: 8px;
+        }
+
+        body {
+            font-family: 'Inter', 'Roboto', sans-serif;
+            background: var(--tez-bg);
+            color: var(--tez-text);
+        }
+
+        .container {
+            max-width: 1360px;
+            padding: 16px 20px 28px;
+        }
+
+        header {
+            background: linear-gradient(120deg, #2a4d6d 0%, #223f60 46%, #1b3150 78%, #16263f 100%);
+            color: #f8fafc;
+            border: 1px solid #375170;
+            border-left: 4px solid var(--tez-blue);
+            border-radius: var(--tez-radius-lg);
+            box-shadow: 0 12px 30px rgba(15, 23, 42, 0.24);
+            padding: 12px 18px;
+            margin-bottom: 14px;
+        }
+
+        .header-content {
+            gap: 14px;
+        }
+
+        .header-logo {
+            height: 52px;
+            margin-right: 14px;
+        }
+
+        .header-title {
+            font-size: 22px;
+            line-height: 1.1;
+            color: #f8fafc;
+            letter-spacing: -0.01em;
+        }
+
+        .header-subtitle {
+            font-size: 13px;
+            color: #c9d5e5;
+            margin-top: 2px;
+            opacity: 1;
+        }
+
+        .finesse-status-indicator {
+            margin-top: 8px;
+            color: #dbeafe;
+            background: rgba(30, 64, 175, 0.2);
+            border: 1px solid rgba(147, 197, 253, 0.35);
+            border-radius: 999px;
+            padding: 3px 10px;
+            width: fit-content;
+        }
+
+        .current-date-container {
+            margin-top: 0;
+            font-size: 13px;
+            color: #e2e8f0;
+            background: rgba(15, 23, 42, 0.36);
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            border-radius: 999px;
+            padding: 7px 12px;
+            white-space: nowrap;
+        }
+
+        .current-date-container .date-icon {
+            color: #93c5fd;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #2563eb 0%, #0ea5a2 100%);
+            color: #fff;
+            border-radius: 999px;
+            border: none;
+            padding: 8px 16px;
+            font-size: 13px;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, 0.18);
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f766e 100%);
+            color: #fff;
+            box-shadow: 0 8px 16px rgba(37, 99, 235, 0.24);
+            transform: translateY(-1px);
+        }
+
+        .user-session-controls {
+            position: relative;
+            background: transparent;
+            padding: 0;
+        }
+
+        .user-menu-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid rgba(148, 163, 184, 0.35);
+            background: rgba(15, 23, 42, 0.36);
+            color: #f8fafc;
+            border-radius: 999px;
+            padding: 6px 12px 6px 8px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .user-menu-btn:hover {
+            border-color: rgba(148, 163, 184, 0.65);
+            box-shadow: 0 6px 14px rgba(15, 23, 42, 0.3);
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1d4ed8 0%, #0f9d6c 100%);
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            flex-shrink: 0;
+        }
+
+        .user-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 8px);
+            right: 0;
+            background: #fff;
+            border: 1px solid var(--tez-border);
+            border-radius: 12px;
+            box-shadow: 0 16px 30px rgba(15, 23, 42, 0.12);
+            min-width: 230px;
+            padding: 8px;
+            display: none;
+            z-index: 20;
+        }
+
+        .user-dropdown.open .user-dropdown-menu {
+            display: block;
+        }
+
+        .user-dropdown-name {
+            font-size: 12px;
+            color: var(--tez-muted);
+            padding: 6px 8px 10px;
+            border-bottom: 1px solid var(--tez-border);
+            margin-bottom: 8px;
+        }
+
+        .logout-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: #fff;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+            border-radius: 10px;
+            padding: 9px 12px;
+            font-size: 13px;
+            font-weight: 600;
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .logout-btn:hover {
+            background: #fef2f2;
+            border-color: #fca5a5;
+        }
+
+        .accordion-panel {
+            border: 1px solid var(--tez-border);
+            border-radius: var(--tez-radius-lg);
+            box-shadow: var(--tez-shadow);
+            overflow: hidden;
+            margin-bottom: 12px;
+        }
+
+        .accordion-header {
+            background: #fff;
+            color: #0f172a;
+            border-bottom: 1px solid var(--tez-border);
+            padding: 12px 16px;
+            border-radius: 0;
+        }
+
+        .accordion-header .panel-icon {
+            color: var(--tez-blue);
+            opacity: 1;
+        }
+
+        .accordion-header .header-date {
+            color: var(--tez-muted);
+            opacity: 1;
+        }
+
+        .accordion-header .accordion-icon {
+            color: #475569;
+        }
+
+        .accordion-header .refresh-calls-btn {
+            margin-left: 8px;
+            color: var(--tez-blue);
+            background: #eff6ff;
+            border: 1px solid #dbeafe;
+            border-radius: 999px;
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9rem;
+            opacity: 1;
+        }
+
+        .accordion-header .refresh-calls-btn:hover {
+            background: #dbeafe;
+        }
+
+        .accordion-content {
+            background: #fff;
+        }
+
+        .accordion-panel.active .accordion-content {
+            padding-top: 12px;
+            padding-bottom: 14px;
+        }
+
+        .calls-kpi-grid {
+            display: grid;
+            grid-template-columns: 220px 220px minmax(360px, 1fr);
+            gap: 12px;
+            padding: 0 14px 12px;
+            border-bottom: 1px solid var(--tez-border);
+            margin-bottom: 12px;
+        }
+
+        .kpi-card {
+            background: var(--tez-surface);
+            border: 1px solid var(--tez-border);
+            border-radius: var(--tez-radius-md);
+            padding: 12px 14px;
+            min-height: 88px;
+        }
+
+        .kpi-total-card {
+            border-left: 4px solid var(--tez-blue);
+        }
+
+        .kpi-card-title {
+            font-size: 12px;
+            color: var(--tez-muted);
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .kpi-card-value {
+            font-size: 30px;
+            line-height: 1;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .kpi-card-subtitle {
+            margin-top: 7px;
+            font-size: 12px;
+            color: var(--tez-muted);
+        }
+
+        .kpi-leaders-card {
+            border-left: 4px solid var(--tez-green);
+        }
+
+        #operatorStatsContainer {
+            min-height: 58px;
+            font-size: 12px;
+            color: var(--tez-muted);
+        }
+
+        .kpi-leaders-list {
+            display: grid;
+            gap: 8px;
+        }
+
+        .kpi-leader-row {
+            display: grid;
+            grid-template-columns: minmax(90px, 1fr) auto;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .kpi-leader-name {
+            font-size: 12px;
+            font-weight: 600;
+            color: #1f2937;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .kpi-leader-count {
+            font-size: 12px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+
+        .kpi-leader-bar {
+            grid-column: 1 / -1;
+            height: 6px;
+            border-radius: 999px;
+            background: #e2e8f0;
+            overflow: hidden;
+        }
+
+        .kpi-leader-bar span {
+            display: block;
+            height: 100%;
+            border-radius: 999px;
+            background: linear-gradient(90deg, #2563eb, #10b981);
+        }
+
+        .calls-filter-bar {
+            margin: 0 14px;
+            padding: 10px 12px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--tez-radius-md);
+            gap: 10px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .calls-filter-bar .filter-group {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 0 10px;
+            min-height: 40px;
+        }
+
+        .calls-filter-bar .filter-group.filter-input-wrapper {
+            min-width: 240px;
+        }
+
+        .calls-filter-bar label {
+            color: #64748b;
+        }
+
+        .calls-filter-bar input[type="text"],
+        .calls-filter-bar input[type="date"],
+        #operatorSelect {
+            border: none;
+            outline: none;
+            background: transparent;
+            padding: 10px 6px;
+            font-size: 13px;
+            color: #0f172a;
+            min-width: 160px;
+        }
+
+        .calls-filter-bar input[type="text"]::placeholder {
+            color: #9ca3af;
+        }
+
+        #operatorSelect {
+            appearance: none;
+        }
+
+        .calls-list {
+            background: transparent;
+            box-shadow: none;
+            padding: 10px 14px 0;
+        }
+
+        .calls-table {
+            margin-top: 0;
+            border: 1px solid var(--tez-border);
+            border-radius: var(--tez-radius-md);
+            box-shadow: none;
+            overflow: hidden;
+        }
+
+        .calls-table th,
+        .calls-table td {
+            padding: 14px 16px;
+            border-bottom: 1px solid #eef2f7;
+            font-size: 13px;
+            color: #1f2937;
+        }
+
+        .calls-table th {
+            background: #f8fafc;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .calls-table tbody tr:nth-child(even) {
+            background: #fcfdff;
+        }
+
+        .calls-table tbody tr:hover {
+            background: #f8fbff;
+        }
+
+        .calls-table .icon {
+            color: #94a3b8;
+        }
+
+        .calls-table .phone-number {
+            color: #111827;
+            font-weight: 600;
+        }
+
+        .calls-table .phone-number.unknown-number {
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .phone-unknown-label {
+            color: #64748b;
+            font-style: normal;
+            font-weight: 500;
+        }
+
+        .operator-person {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            max-width: 100%;
+        }
+
+        .operator-avatar-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: #e0e7ff;
+            color: #1e3a8a;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .operator-name-text {
+            font-weight: 600;
+            color: #1f2937;
+        }
+
+        .call-result-badge {
+            border-radius: 999px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 12px;
+            min-width: auto;
+        }
+
+        .call-result-badge.result-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .call-result-badge.result-failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .call-result-badge.result-dropped {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .call-result-badge.result-no-internet {
+            background: #dbeafe;
+            color: #1e3a8a;
+        }
+
+        .call-result-badge.result-unknown {
+            background: #e5e7eb;
+            color: #374151;
+        }
+
+        .calls-table .action-btn {
+            border-radius: 999px;
+            background: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
+            padding: 5px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            box-shadow: none;
+        }
+
+        .calls-table .action-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .calls-table .client-card-btn {
+            background: #dcfce7;
+            border-color: #bbf7d0;
+            color: #166534;
+        }
+
+        .calls-table .client-card-btn:hover {
+            background: #bbf7d0;
+            color: #14532d;
+        }
+
+        @media (max-width: 1180px) {
+            .calls-kpi-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            .kpi-leaders-card {
+                grid-column: 1 / -1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 12px;
+            }
+
+            .header-content {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .header-actions {
+                width: 100%;
+                justify-content: space-between;
+            }
+
+            .calls-kpi-grid {
+                grid-template-columns: 1fr;
+                padding: 0 10px 12px;
+            }
+
+            .calls-filter-bar {
+                margin: 0 10px;
+            }
+
+            .calls-filter-bar .filter-group.filter-input-wrapper {
+                min-width: 100%;
+            }
+
+            .calls-list {
+                padding: 10px;
+            }
+        }

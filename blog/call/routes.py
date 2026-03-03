@@ -41,6 +41,7 @@ from pymysql.cursors import DictCursor
 import xmltodict
 import uuid
 import time
+import urllib3
 from flask_session import Session
 import base64
 import threading
@@ -67,6 +68,8 @@ if not logger.handlers:
     _log_level_str = os.getenv('LOG_LEVEL', 'INFO').upper()
     _log_level = getattr(logging, _log_level_str, logging.INFO)
     logger.setLevel(_log_level)
+    
+    # Обработчик для статистики звонков
     _stat_handler = RotatingFileHandler(
         stat_log_path,
         maxBytes=int(os.getenv('STAT_LOG_MAX_BYTES', str(5 * 1024 * 1024))),
@@ -75,6 +78,18 @@ if not logger.handlers:
     )
     _stat_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
     logger.addHandler(_stat_handler)
+    
+    # Обработчик для ошибок с ротацией
+    _error_handler = RotatingFileHandler(
+        error_log_path,
+        maxBytes=int(os.getenv('ERROR_LOG_MAX_BYTES', str(10 * 1024 * 1024))),
+        backupCount=int(os.getenv('ERROR_LOG_BACKUP_COUNT', '5')),
+        encoding='utf-8'
+    )
+    _error_handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(name)s %(message)s'))
+    _error_handler.setLevel(logging.ERROR)
+    logger.addHandler(_error_handler)
+    
     logger.propagate = True
 
 # Импортируем декораторы для защиты отладочных эндпоинтов
@@ -144,6 +159,152 @@ MYSQL_CONFIG = {
     "cursorclass": DictCursor,
 }
 
+FINESSE_BASE_URL = os.getenv("FINESSE_BASE_URL", "https://uccx-pub.teztour.com:8445").rstrip("/")
+FINESSE_API_PREFIX = "/finesse/api"
+FINESSE_VERIFY_SSL = os.getenv("FINESSE_VERIFY_SSL", "false").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
+FINESSE_CA_BUNDLE = os.getenv("FINESSE_CA_BUNDLE", "").strip()
+FINESSE_SSL_VERIFY: Union[bool, str] = FINESSE_CA_BUNDLE if FINESSE_CA_BUNDLE else FINESSE_VERIFY_SSL
+FINESSE_MONITOR_USERNAME = os.getenv("FINESSE_MONITOR_USERNAME", "").strip()
+FINESSE_MONITOR_PASSWORD = os.getenv("FINESSE_MONITOR_PASSWORD", "").strip()
+
+if FINESSE_BASE_URL.startswith("https://") and FINESSE_SSL_VERIFY is False:
+    urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+
+def finesse_api_url(path: str) -> str:
+    normalized_path = path if path.startswith("/") else f"/{path}"
+    return f"{FINESSE_BASE_URL}{FINESSE_API_PREFIX}{normalized_path}"
+
+
+def finesse_http_get(url: str, **kwargs):
+    kwargs.setdefault("verify", FINESSE_SSL_VERIFY)
+    return requests.get(url, **kwargs)
+
+
+def finesse_http_put(url: str, **kwargs):
+    kwargs.setdefault("verify", FINESSE_SSL_VERIFY)
+    return requests.put(url, **kwargs)
+
+
+def get_xml_field(node: Any, field: str, default: Any = None) -> Any:
+    if not isinstance(node, dict):
+        return default
+
+    if field in node:
+        return node[field]
+
+    for key, value in node.items():
+        if isinstance(key, str) and key.split(":")[-1] == field:
+            return value
+
+    return default
+
+
+def xml_text(value: Any, default: str = "") -> str:
+    if value is None:
+        return default
+
+    if isinstance(value, dict):
+        text_value = value.get("#text")
+        return default if text_value is None else str(text_value)
+
+    return str(value)
+
+
+def format_finesse_user_entry(user: Any) -> Optional[Dict[str, str]]:
+    if not isinstance(user, dict):
+        return None
+
+    extension = xml_text(get_xml_field(user, "extension"), "").strip()
+    if not extension:
+        return None
+
+    first_name = xml_text(get_xml_field(user, "firstName"), "").strip()
+    last_name = xml_text(get_xml_field(user, "lastName"), "").strip()
+
+    team_name = xml_text(get_xml_field(user, "teamName"), "").strip()
+    if not team_name:
+        team_node = get_xml_field(user, "team", {})
+        if isinstance(team_node, dict):
+            team_name = xml_text(get_xml_field(team_node, "name"), "").strip()
+        else:
+            team_name = xml_text(team_node, "").strip()
+
+    return {
+        "loginId": xml_text(get_xml_field(user, "loginId"), "").strip(),
+        "firstName": first_name,
+        "lastName": last_name,
+        "displayName": f"{first_name} {last_name}".strip(),
+        "extension": extension,
+        "status": xml_text(get_xml_field(user, "state"), "").strip(),
+        "team": team_name,
+        "lastStateChange": xml_text(get_xml_field(user, "stateChangeTime"), "").strip(),
+    }
+
+
+def extract_team_ids(node: Any) -> List[str]:
+    team_ids = set()
+
+    def walk(value: Any, parent_key: str = ""):
+        if isinstance(value, dict):
+            for key, nested in value.items():
+                key_name = str(key).split(":")[-1].lower()
+                walk(nested, key_name)
+            return
+
+        if isinstance(value, list):
+            for item in value:
+                walk(item, parent_key)
+            return
+
+        if not isinstance(value, str):
+            return
+
+        text = value.strip()
+        if not text:
+            return
+
+        uri_match = re.search(r"/Team/(\d+)", text, flags=re.IGNORECASE)
+        if uri_match:
+            team_ids.add(uri_match.group(1))
+
+        if text.isdigit() and parent_key in {"id", "teamid", "team_id"}:
+            team_ids.add(text)
+
+    walk(node)
+    return sorted(team_ids, key=lambda item: int(item))
+
+
+def extract_user_nodes(payload: Any) -> List[Dict[str, Any]]:
+    user_nodes: List[Dict[str, Any]] = []
+
+    def walk(value: Any):
+        if isinstance(value, dict):
+            normalized_keys = {str(key).split(":")[-1] for key in value.keys()}
+            if "loginId" in normalized_keys and (
+                "extension" in normalized_keys
+                or "firstName" in normalized_keys
+                or "lastName" in normalized_keys
+            ):
+                user_nodes.append(value)
+                return
+
+            for nested in value.values():
+                walk(nested)
+            return
+
+        if isinstance(value, list):
+            for item in value:
+                walk(item)
+
+    walk(payload)
+    return user_nodes
+
 
 def get_db_connection():
     """Создает и возвращает соединение с базой данных MySQL"""
@@ -168,12 +329,14 @@ def get_session_with_bind(bind_key):
         raise
 
 
-def write_log(message):
+def write_log(message, level="debug"):
+    """Запись лога звонка. По умолчанию использует DEBUG уровень для снижения объёма логов."""
     try:
         ct = datetime.datetime.now()
         curt = ct.strftime("%Y-%m-%d %H:%M:%S")
         mess_log = f"{curt} tel: '{message}'\n"
-        logger.info(mess_log.rstrip("\n"))
+        log_func = getattr(logger, level.lower(), logger.debug)
+        log_func(mess_log.rstrip("\n"))
     except IOError as e:
         logger.error("Не удалось записать в файл лога stat.log: %s", str(e))
 
@@ -1122,11 +1285,6 @@ def contact_center_moscow(ani=None, agent_id=None):
 
 @calls.route("/api/moscow-calls")
 def get_moscow_calls():
-    # --- НАЧАЛО ИЗМЕНЕНИЯ ---
-    # Получаем логгер и устанавливаем уровень DEBUG прямо здесь
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    # --- КОНЕЦ ИЗМЕНЕНИЯ ---
     try:
         # Получаем дату из параметров запроса
         selected_date_str = request.args.get("date")
@@ -1409,7 +1567,7 @@ def get_call_agency_data(pp_id):
                             logger.error(
                                 f"Ошибка при получении детальных номеров телефонов: {str(phone_e)}"
                             )
-                    # Удаляем старые tel_x_id поля, если они больше не нужны напрямую в JS
+                    # Удаляем с��арые tel_x_id поля, если они больше не нужны напрямую в JS
                     # for i in range(1, 8):
                     #     agency_record.pop(f'tel_{i}_id', None)
 
@@ -1613,12 +1771,12 @@ def get_agents_status():
     # Используем учетные данные из сессии
     username, password = session_data["credentials"]
 
-    finesse_url = "http://uccx1.teztour.com:8082/finesse/api/Users"
+    finesse_url = finesse_api_url("/Users")
 
     auth = (username, password)  # Используем учетные данные из сессии
 
     try:
-        response = requests.get(finesse_url, auth=auth, timeout=10)
+        response = finesse_http_get(finesse_url, auth=auth, timeout=10)
 
         logger.debug(f"Запрос к Finesse API, статус: {response.status_code}")
 
@@ -1665,13 +1823,11 @@ def get_finesse_calls():
     try:
         # Изменяем URL API для получения звонков агента
         # Здесь используем имя пользователя для получения диалогов конкретного агента
-        finesse_url = (
-            f"http://uccx1.teztour.com:8082/finesse/api/User/{username}/Dialogs"
-        )
+        finesse_url = finesse_api_url(f"/User/{username}/Dialogs")
 
         logger.debug(f"Отправка запроса к API: {finesse_url}")
 
-        response = requests.get(finesse_url, auth=(username, password), timeout=10)
+        response = finesse_http_get(finesse_url, auth=(username, password), timeout=10)
 
         logger.debug(f"Получен ответ с кодом: {response.status_code}")
 
@@ -1685,10 +1841,10 @@ def get_finesse_calls():
             return jsonify(data)
         elif response.status_code == 404:
             # Пробуем альтернативный URL для всех диалогов
-            alt_url = "http://uccx1.teztour.com:8082/finesse/api/Team/1/Dialogs"
+            alt_url = finesse_api_url("/Team/1/Dialogs")
             logger.debug(f"Попытка запроса к альтернативному API: {alt_url}")
 
-            alt_response = requests.get(alt_url, auth=(username, password), timeout=10)
+            alt_response = finesse_http_get(alt_url, auth=(username, password), timeout=10)
 
             if alt_response.status_code == 200:
                 data = xmltodict.parse(alt_response.text)
@@ -1742,9 +1898,9 @@ def finesse_login():
         )
 
     # Проверка учетных данных
-    finesse_url = f"http://uccx1.teztour.com:8082/finesse/api/User/{username}"
+    finesse_url = finesse_api_url(f"/User/{username}")
     try:
-        response = requests.get(finesse_url, auth=(username, password), timeout=10)
+        response = finesse_http_get(finesse_url, auth=(username, password), timeout=10)
         if response.status_code == 200:
             # Успешная авторизация
             # session_token = str(uuid.uuid4()) # <<< УДАЛЯЕМ генерацию токена
@@ -1752,13 +1908,22 @@ def finesse_login():
             # Получаем реальные данные пользователя из ответа API
             try:
                 data = xmltodict.parse(response.text)
-                user_data = data.get("User", {})
+                user_data = get_xml_field(data, "User", {})
+                first_name = xml_text(get_xml_field(user_data, "firstName"), "").strip()
+                last_name = xml_text(get_xml_field(user_data, "lastName"), "").strip()
+                extension = xml_text(get_xml_field(user_data, "extension"), "").strip()
+
+                roles_data = get_xml_field(user_data, "roles", {})
+                role_value = get_xml_field(roles_data, "role", "Agent")
+                if isinstance(role_value, list):
+                    role_value = role_value[0] if role_value else "Agent"
+                role = xml_text(role_value, "Agent").strip() or "Agent"
 
                 user = {
                     "username": username,
-                    "displayName": f"{user_data.get('firstName', '')} {user_data.get('lastName', '')}".strip(),
-                    "extension": user_data.get("extension", ""),
-                    "role": user_data.get("roles", {}).get("role", "Agent"),
+                    "displayName": f"{first_name} {last_name}".strip(),
+                    "extension": extension,
+                    "role": role,
                 }
             except Exception as e:
                 logger.error(f"Ошибка при парсинге данных пользователя: {str(e)}")
@@ -1821,8 +1986,8 @@ def finesse_session():
         session_token = str(uuid.uuid4())
 
         # Проверяем соединение с Finesse API
-        finesse_url = "http://uccx1.teztour.com:8082/finesse/api/User/" + username
-        response = requests.get(finesse_url, auth=(username, password), timeout=10)
+        finesse_url = finesse_api_url(f"/User/{username}")
+        response = finesse_http_get(finesse_url, auth=(username, password), timeout=10)
 
         if response.status_code != 200:
             return (
@@ -1839,15 +2004,15 @@ def finesse_session():
         user_data = xmltodict.parse(response.text)
 
         # Извлекаем нужные данные пользователя
-        user_info = user_data.get("User", {})
+        user_info = get_xml_field(user_data, "User", {})
         user = {
-            "loginId": user_info.get("loginId"),
-            "firstName": user_info.get("firstName"),
-            "lastName": user_info.get("lastName"),
-            "extension": user_info.get("extension"),
-            "state": user_info.get("state"),
-            "stateChangeTime": user_info.get("stateChangeTime"),
-            "team": user_info.get("team"),
+            "loginId": xml_text(get_xml_field(user_info, "loginId"), ""),
+            "firstName": xml_text(get_xml_field(user_info, "firstName"), ""),
+            "lastName": xml_text(get_xml_field(user_info, "lastName"), ""),
+            "extension": xml_text(get_xml_field(user_info, "extension"), ""),
+            "state": xml_text(get_xml_field(user_info, "state"), ""),
+            "stateChangeTime": xml_text(get_xml_field(user_info, "stateChangeTime"), ""),
+            "team": xml_text(get_xml_field(user_info, "team"), ""),
         }
 
         # Сохраняем данные сессии
@@ -1927,11 +2092,11 @@ def finesse_agent_state():
     if request.method == "GET":
         try:
             # Запрос к API Finesse для получения текущего статуса
-            finesse_url = f"http://uccx1.teztour.com:8082/finesse/api/User/{username}"
+            finesse_url = finesse_api_url(f"/User/{username}")
             logger.info(
                 f"[finesse_agent_state GET] Запрос к Finesse URL: {finesse_url}"
             )
-            response = requests.get(finesse_url, auth=(username, password), timeout=10)
+            response = finesse_http_get(finesse_url, auth=(username, password), timeout=10)
             logger.info(
                 f"[finesse_agent_state GET] Ответ от Finesse: Статус {response.status_code}"
             )
@@ -1949,15 +2114,15 @@ def finesse_agent_state():
 
             # Парсим XML-ответ
             user_data = xmltodict.parse(response.text)
-            user_info = user_data.get("User", {})
+            user_info = get_xml_field(user_data, "User", {})
+            state = xml_text(get_xml_field(user_info, "state"), "")
+            state_change_time = xml_text(get_xml_field(user_info, "stateChangeTime"), "")
 
             # <<< НАЧАЛО ИЗМЕНЕНИЯ: Обновляем flask_session >>>
             current_finesse_user = flask_session.get("finesse_user")
             if current_finesse_user:
-                current_finesse_user["state"] = user_info.get("state")
-                current_finesse_user["stateChangeTime"] = user_info.get(
-                    "stateChangeTime"
-                )
+                current_finesse_user["state"] = state
+                current_finesse_user["stateChangeTime"] = state_change_time
                 # Помечаем сессию как измененную, чтобы Flask-Session ее сохранил
                 flask_session.modified = True
             else:
@@ -1969,8 +2134,8 @@ def finesse_agent_state():
             return jsonify(
                 {
                     "success": True,
-                    "state": user_info.get("state"),
-                    "stateChangeTime": user_info.get("stateChangeTime"),
+                    "state": state,
+                    "stateChangeTime": state_change_time,
                 }
             )
 
@@ -1999,8 +2164,8 @@ def finesse_agent_state():
             """
 
             # Запрос к API Finesse для изменения статуса
-            finesse_url = f"http://uccx1.teztour.com:8082/finesse/api/User/{username}"
-            response = requests.put(
+            finesse_url = finesse_api_url(f"/User/{username}")
+            response = finesse_http_put(
                 finesse_url,
                 auth=(username, password),
                 data=xml_data,
@@ -2079,6 +2244,9 @@ def finesse_agents_status():
             500,
         )
     username, password = credentials
+    monitor_auth_available = bool(FINESSE_MONITOR_USERNAME and FINESSE_MONITOR_PASSWORD)
+    request_username = FINESSE_MONITOR_USERNAME if monitor_auth_available else username
+    request_password = FINESSE_MONITOR_PASSWORD if monitor_auth_available else password
     # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
 
     # Получаем данные сессии # <<< УДАЛЯЕМ блок >>>
@@ -2091,14 +2259,19 @@ def finesse_agents_status():
     # logger.info(f"[finesse_agents_status] Проверка учетных данных - Username: '{username}', Password: '{password}'")
 
     try:
+        if monitor_auth_available:
+            logger.info(
+                "[finesse_agents_status] Используются сервисные учетные данные FINESSE_MONITOR_USERNAME для запроса /Users"
+            )
+
         # Запрос к API Finesse для получения списка всех операторов
-        finesse_url = "http://uccx1.teztour.com:8082/finesse/api/Users"
+        finesse_url = finesse_api_url("/Users")
         # <<< НАЧАЛО ИЗМЕНЕНИЯ: Логируем URL и статус ответа >>>
         logger.info(
             f"[finesse_agents_status] Запрос к Finesse URL: {finesse_url}"
         )  # Лог URL
-        auth = (username, password)
-        response = requests.get(finesse_url, auth=auth, timeout=15)
+        auth = (request_username, request_password)
+        response = finesse_http_get(finesse_url, auth=auth, timeout=15)
         logger.info(
             f"[finesse_agents_status] Ответ от Finesse: Статус {response.status_code}"
         )  # Лог ответа Finesse
@@ -2111,6 +2284,109 @@ def finesse_agents_status():
                 f"[finesse_agents_status] Ошибка от Finesse API ({response.status_code}): {error_body}"
             )
             # <<< КОНЕЦ ИЗМЕНЕНИЯ >>>
+
+            # Для супервизора /Users может быть недоступен, но Team/*/Users доступен.
+            # В этом случае пробуем получить список операторов через команды текущего пользователя.
+            if response.status_code == 401 and username:
+                logger.warning(
+                    f"[finesse_agents_status] Нет прав на /Users для '{request_username}'. Пробуем fallback через команды пользователя '{username}'"
+                )
+                user_url = finesse_api_url(f"/User/{username}")
+                user_response = finesse_http_get(
+                    user_url,
+                    auth=(username, password),
+                    timeout=10,
+                )
+
+                if user_response.status_code == 200:
+                    user_data = xmltodict.parse(user_response.text)
+                    user_info = get_xml_field(user_data, "User", {})
+
+                    team_ids = extract_team_ids(get_xml_field(user_info, "teams", {}))
+                    if not team_ids:
+                        team_ids = extract_team_ids(get_xml_field(user_info, "team", {}))
+                    if not team_ids:
+                        team_ids = extract_team_ids(user_info)
+
+                    if team_ids:
+                        logger.info(
+                            f"[finesse_agents_status] Найдены team id для fallback: {', '.join(team_ids)}"
+                        )
+                        team_users: List[Dict[str, str]] = []
+
+                        for team_id in team_ids:
+                            team_paths = [
+                                f"/Team/{team_id}/Users",
+                                f"/Team/{team_id}",
+                            ]
+                            for team_path in team_paths:
+                                team_users_url = finesse_api_url(team_path)
+                                team_users_response = finesse_http_get(
+                                    team_users_url,
+                                    auth=(username, password),
+                                    timeout=15,
+                                )
+                                logger.info(
+                                    f"[finesse_agents_status] Fallback team request {team_users_url} -> {team_users_response.status_code}"
+                                )
+
+                                if team_users_response.status_code != 200:
+                                    continue
+
+                                team_payload = xmltodict.parse(team_users_response.text)
+                                team_user_nodes = extract_user_nodes(team_payload)
+                                if not team_user_nodes:
+                                    continue
+
+                                team_root = get_xml_field(team_payload, "Team", {})
+                                team_name_hint = xml_text(
+                                    get_xml_field(team_root, "name"), ""
+                                ).strip()
+
+                                for raw_user in team_user_nodes:
+                                    normalized_user = format_finesse_user_entry(raw_user)
+                                    if not normalized_user:
+                                        continue
+                                    if not normalized_user.get("team"):
+                                        normalized_user["team"] = (
+                                            team_name_hint or f"Team {team_id}"
+                                        )
+                                    team_users.append(normalized_user)
+
+                        if team_users:
+                            deduped_users: Dict[str, Dict[str, str]] = {}
+                            for user_item in team_users:
+                                key = (
+                                    user_item.get("loginId")
+                                    or user_item.get("extension")
+                                    or user_item.get("displayName")
+                                )
+                                if key:
+                                    deduped_users[key] = user_item
+
+                            team_users_result = (
+                                list(deduped_users.values())
+                                if deduped_users
+                                else team_users
+                            )
+                            team_users_result.sort(
+                                key=lambda item: item.get("displayName", "")
+                            )
+                            logger.info(
+                                f"[finesse_agents_status] Fallback через Team/*/Users успешен: {len(team_users_result)} операторов"
+                            )
+                            return jsonify(team_users_result)
+
+                    # Последний fallback: только текущий пользователь.
+                    fallback_user = format_finesse_user_entry(user_info)
+                    if fallback_user:
+                        logger.info(
+                            "[finesse_agents_status] Team fallback не дал список. Возвращен статус текущего пользователя"
+                        )
+                        fallback_response = jsonify([fallback_user])
+                        fallback_response.headers["X-Finesse-Limited-Access"] = "1"
+                        return fallback_response
+
             return (
                 jsonify(
                     {
@@ -2123,34 +2399,27 @@ def finesse_agents_status():
 
         # Парсим XML-ответ
         users_data = xmltodict.parse(response.text)
-        users = users_data.get("Users", {}).get("User", [])
+        users_root = get_xml_field(users_data, "Users", {})
+        users = get_xml_field(users_root, "User", [])
 
         # Если вернулся только один пользователь, преобразуем его в список
-        if not isinstance(users, list):
+        if isinstance(users, dict):
             users = [users]
+        elif not isinstance(users, list):
+            users = []
 
         # Форматируем данные пользователей
         formatted_users = []
         for user in users:
-            # Пропускаем системных пользователей или супервизоров без extension
-            if not user.get("extension"):
-                continue
-
-            formatted_users.append(
-                {
-                    "loginId": user.get("loginId"),
-                    "firstName": user.get("firstName"),
-                    "lastName": user.get("lastName"),
-                    "displayName": f"{user.get('firstName', '')} {user.get('lastName', '')}".strip(),
-                    "extension": user.get("extension"),
-                    "status": user.get("state"),
-                    "team": user.get("teamName"),
-                    "lastStateChange": user.get("stateChangeTime"),
-                }
-            )
+            normalized_user = format_finesse_user_entry(user)
+            if normalized_user:
+                formatted_users.append(normalized_user)
 
         # Сортируем пользователей по имени
         formatted_users.sort(key=lambda x: x["displayName"])
+        logger.info(
+            f"[finesse_agents_status] Получено пользователей: {len(users)}, после фильтра extension: {len(formatted_users)}"
+        )
 
         return jsonify(formatted_users)
 
@@ -2185,8 +2454,8 @@ def finesse_health_check():
     """Проверка доступности API Finesse"""
     try:
         # Проверяем доступность API Finesse
-        finesse_url = "http://uccx1.teztour.com:8082/finesse/api/SystemInfo"
-        response = requests.get(finesse_url, timeout=5)
+        finesse_url = finesse_api_url("/SystemInfo")
+        response = finesse_http_get(finesse_url, timeout=5)
 
         if response.status_code == 200:
             return jsonify({"status": "ok", "message": "API Finesse доступно"})
@@ -2680,9 +2949,6 @@ def update_calls_cache(calls):
 @calls.route("/api/moscow-operator-stats")
 def get_moscow_operator_stats():
     """Возвращает статистику звонков по операторам за указанную дату."""
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-
     try:
         # Получаем дату из параметров запроса, по умолчанию - сегодня
         selected_date_str = request.args.get("date")
@@ -2762,10 +3028,6 @@ def get_moscow_operator_stats():
 @calls.route("/api/moscow-calls-monthly-stats")
 def get_moscow_calls_monthly_stats():
     """Возвращает ежемесячную статистику звонков (год, месяц, количество) для графика."""
-    logger = logging.getLogger(__name__)
-    logger.setLevel(logging.DEBUG)
-    logger.info("Запрос ежемесячной статистики звонков")
-
     try:
         connection = get_db_connection()
         if not connection:
@@ -2797,7 +3059,7 @@ def get_moscow_calls_monthly_stats():
                 cursor.execute(query)
                 stats = cursor.fetchall()
 
-                logger.info(f"Получено {len(stats)} записей ежемесячной статистики")
+                logger.info(f"Получено {len(stats)} записей ��жемесячной статистики")
                 return jsonify({"success": True, "stats": stats})
 
         except Exception as e:

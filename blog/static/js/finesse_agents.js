@@ -26,6 +26,7 @@
             let response;
             let data;
             let authorized = false;
+            let limitedAccess = false;
             let errorMessage = '';
 
             // Проверяем авторизацию
@@ -41,6 +42,7 @@
 
                     if (response.ok) {
                         data = await response.json();
+                        limitedAccess = response.headers.get('X-Finesse-Limited-Access') === '1';
                         authorized = true;
                     } else {
                         errorMessage = `Ошибка при получении статусов (${response.status})`;
@@ -74,6 +76,16 @@
             // Если мы дошли сюда, значит авторизованный запрос был успешен
             // Логируем полученные данные перед обработкой
             console.log('Сырые данные операторов от API:', JSON.stringify(data, null, 2));
+            
+            // Проверяем формат данных
+            if (!Array.isArray(data)) {
+                console.error('ОШИБКА: Данные от API не являются массивом!', typeof data, data);
+                if (data && data.success === false) {
+                    throw new Error(data.error || 'Ошибка сервера при получении статусов');
+                }
+            } else {
+                console.log(`Получено ${data.length} операторов от API`);
+            }
 
             // Сохраняем данные
             agentsData = data;
@@ -85,7 +97,11 @@
 
             // Обновляем сообщение о статусе
             const formattedTime = lastUpdateTime.toLocaleTimeString();
-            updateStatusMessage(`Данные обновлены в ${formattedTime}`, 'success'); // Убираем isPublicApi
+            if (limitedAccess) {
+                updateStatusMessage('Ограниченный доступ Finesse: отображается только ваш статус оператора', 'info');
+            } else {
+                updateStatusMessage(`Данные обновлены в ${formattedTime}`, 'success'); // Убираем isPublicApi
+            }
 
             // Обновляем текст внизу панели
             const refreshStatusElement = document.querySelector('#agentsPanelContainer .refresh-status');
