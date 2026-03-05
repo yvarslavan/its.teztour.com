@@ -52,10 +52,20 @@ def safe_print(message: str):
 
 
 def setup_development_environment():
-    """Настройка переменных окружения для разработки"""
-    # Устанавливаем режим разработки
-    os.environ["FLASK_ENV"] = "development"
-    os.environ["FLASK_DEBUG"] = "1"
+    """Настройка переменных окружения.
+
+    По умолчанию запускаем development, но не перезаписываем
+    явно заданный FLASK_ENV (например, в production service).
+    """
+    env_mode = os.environ.get("FLASK_ENV", "development").strip().lower()
+
+    # В development включаем debug по умолчанию.
+    # В production/staging не перезаписываем режим принудительно.
+    if env_mode in {"production", "staging"}:
+        os.environ.setdefault("FLASK_DEBUG", "0")
+    else:
+        os.environ.setdefault("FLASK_ENV", "development")
+        os.environ.setdefault("FLASK_DEBUG", "1")
 
     # Настраиваем логирование через централизованный модуль blog.utils.logger
     try:

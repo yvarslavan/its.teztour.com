@@ -47,10 +47,11 @@ os.environ["NLS_LANG"] = "Russian.AL32UTF8"
 # Импорт безопасной конфигурации
 try:
     # Прямое чтение переменных окружения
-    db_redmine_host = os.getenv('MYSQL_HOST', '127.0.0.1')
-    db_redmine_port = os.getenv('MYSQL_PORT', '3306')
+    db_redmine_host = os.getenv('MYSQL_HOST')
+    db_redmine_port = int(os.getenv('MYSQL_PORT', '3306'))
     if db_redmine_host and ':' in db_redmine_host:
-        db_redmine_host, db_redmine_port = db_redmine_host.split(':', 1)
+        db_redmine_host, port_str = db_redmine_host.split(':', 1)
+        db_redmine_port = int(port_str)
 
     db_redmine_name = os.getenv('MYSQL_DATABASE')
     db_redmine_user_name = os.getenv('MYSQL_USER')
@@ -67,7 +68,13 @@ try:
         logger.warning("⚠️ Отсутствуют переменные окружения: %s", ', '.join(missing))
         raise ImportError("Неполная конфигурация")
 
-    logger.info("✅ Используется безопасная конфигурация из переменных окружения")
+    logger.info(
+        "✅ Используется безопасная конфигурация из переменных окружения (host=%s, port=%s, db=%s, user=%s)",
+        db_redmine_host,
+        db_redmine_port,
+        db_redmine_name,
+        db_redmine_user_name,
+    )
 
     # Получаем путь к текущему каталогу
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1153,6 +1160,13 @@ def process_status_changes(
                         if (
                             user
                         ):  # Убедимся что пользователь есть (загружен ранее в функции)
+                            # ИСПРАВЛЕНИЕ: Локальный импорт вынесен за пределы try-блока
+                            from blog.notification_service import (
+                                NotificationData,
+                                NotificationType,
+                                WebPushException,
+                            )
+
                             try:
                                 # Используем данные из new_notification_status (SQLite)
                                 current_issue_id = new_notification_status.issue_id
@@ -1179,13 +1193,6 @@ def process_status_changes(
 
                                 # Если нужно строго следовать "статус заявки номер X изменен на Y" без темы:
                                 # message = f"Статус задачи #{current_issue_id} изменен на '{status_name_to or new_status_id}'."
-
-                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
-                                from blog.notification_service import (
-                                    NotificationData,
-                                    NotificationType,
-                                    WebPushException,
-                                )
 
                                 notification_payload_for_push = NotificationData(
                                     user_id=current_user_id,
@@ -1427,6 +1434,13 @@ def process_added_notes(cursor, email_part, current_user_id, easy_email_to):
                         if (
                             user
                         ):  # Убедимся что пользователь есть (загружен ранее в функции)
+                            # ИСПРАВЛЕНИЕ: Локальный импорт вынесен за пределы try-блока
+                            from blog.notification_service import (
+                                NotificationData,
+                                NotificationType,
+                                WebPushException,
+                            )
+
                             try:
                                 title = f"Новый комментарий к задаче #{issue_id_notes}"
                                 comment_preview = row_add_notes["Notes"]
@@ -1434,13 +1448,6 @@ def process_added_notes(cursor, email_part, current_user_id, easy_email_to):
                                     comment_preview = comment_preview[:97] + "..."
 
                                 message = f'К задаче #{issue_id_notes} добавлен новый комментарий: "{comment_preview}".'
-
-                                # ИСПРАВЛЕНИЕ: Локальный импорт для избежания циклического импорта
-                                from blog.notification_service import (
-                                    NotificationData,
-                                    NotificationType,
-                                    WebPushException,
-                                )
 
                                 notification_payload_for_push = NotificationData(
                                     user_id=current_user_id,

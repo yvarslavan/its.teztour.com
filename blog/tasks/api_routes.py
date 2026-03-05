@@ -29,6 +29,105 @@ from blog import csrf
 # Создаем Blueprint для API
 api_bp = Blueprint('tasks_api', __name__, url_prefix='/tasks/api')
 
+
+def _is_valid_redmine_connector(connector):
+    return bool(connector and hasattr(connector, "redmine") and connector.redmine)
+
+
+def _get_local_password_candidates_for_current_user():
+    """
+    Возвращает список локальных кандидатов пароля пользователя в порядке приоритета:
+    1) current_user.password
+    2) users.password из локальной БД (актуальное значение из таблицы users)
+    """
+    candidates = []
+    seen = set()
+
+    session_password = getattr(current_user, "password", None)
+    if session_password:
+        candidates.append(("current_user.password", session_password))
+        seen.add(session_password)
+
+    try:
+        from blog.models import User
+
+        db_password = (
+            User.query.with_entities(User.password)
+            .filter_by(id=current_user.id)
+            .scalar()
+        )
+        if db_password and db_password not in seen:
+            candidates.append(("users.password", db_password))
+    except Exception as db_error:
+        current_app.logger.warning(
+            "[API] Не удалось получить users.password из локальной БД для %s: %s",
+            current_user.username,
+            db_error,
+        )
+
+    return candidates
+
+
+def _get_redmine_connector_for_current_user(allow_api_key_fallback=True):
+    """
+    Возвращает рабочий RedmineConnector для текущего пользователя.
+
+    Порядок:
+    1) Локальные источники пароля (current_user.password, users.password)
+    2) ERP-пароль
+    3) (опционально) API key fallback через get_redmine_connector
+    """
+    local_password_candidates = _get_local_password_candidates_for_current_user()
+    for password_source, local_password in local_password_candidates:
+        connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=local_password,
+        )
+        if _is_valid_redmine_connector(connector):
+            if password_source != "current_user.password":
+                current_app.logger.info(
+                    "[API] RedmineConnector для %s создан через локальный источник %s",
+                    current_user.username,
+                    password_source,
+                )
+            return connector
+
+    current_app.logger.warning(
+        "[API] Не удалось создать RedmineConnector по локальным паролям для %s",
+        current_user.username,
+    )
+
+    from blog.tasks.utils import get_user_redmine_password
+
+    actual_password = get_user_redmine_password(current_user.username)
+    if actual_password:
+        connector = create_redmine_connector(
+            is_redmine_user=current_user.is_redmine_user,
+            user_login=current_user.username,
+            password=actual_password,
+        )
+        if _is_valid_redmine_connector(connector):
+            return connector
+
+    if allow_api_key_fallback:
+        current_app.logger.warning(
+            "[API] fallback на ERP-пароль не сработал для %s, пробуем API key",
+            current_user.username,
+        )
+        from blog.tasks.utils import get_redmine_connector
+
+        connector = get_redmine_connector(current_user, actual_password)
+        if _is_valid_redmine_connector(connector):
+            return connector
+
+    current_app.logger.error(
+        "[API] Не удалось создать RedmineConnector для %s: локальный пароль/ERP%s недоступны",
+        current_user.username,
+        "/API key" if allow_api_key_fallback else "",
+    )
+    return None
+
 # ===== API ENDPOINTS ДЛЯ ИЗМЕНЕНИЯ СТАТУСА =====
 
 @api_bp.route("/task/<int:task_id>", methods=["GET"])
@@ -50,24 +149,7 @@ def get_task_by_id(task_id):
                 "data": None
             }), 403
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False,
-                "data": None
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user()
         if not redmine_connector:
             return jsonify({
                 "error": "Ошибка подключения к Redmine",
@@ -214,27 +296,10 @@ def get_task_available_statuses(task_id):
                 "statuses": []
             }), 403
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False,
-                "statuses": []
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user()
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Ошибка подключения к Redmine (локальный пароль/ERP/API key недоступны).",
                 "success": False,
                 "statuses": []
             }), 500
@@ -357,26 +422,10 @@ def update_task_status(task_id):
 
         current_app.logger.info(f"[API] Изменение статуса задачи {task_id} на {new_status_id}, комментарий: '{comment}'")
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user(allow_api_key_fallback=False)
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Не удалось получить учетные данные пользователя Redmine (локальная БД/ERP).",
                 "success": False
             }), 500
 
@@ -506,27 +555,10 @@ def get_task_available_priorities(task_id):
                 "priorities": []
             }), 403
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False,
-                "priorities": []
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user()
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Ошибка подключения к Redmine (локальный пароль/ERP/API key недоступны).",
                 "success": False,
                 "priorities": []
             }), 500
@@ -650,26 +682,10 @@ def update_task_priority(task_id):
 
         current_app.logger.info(f"[API] Изменение приоритета задачи {task_id} на {new_priority_id}, комментарий: '{comment}'")
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user(allow_api_key_fallback=False)
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Не удалось получить учетные данные пользователя Redmine (локальная БД/ERP).",
                 "success": False
             }), 500
 
@@ -799,27 +815,10 @@ def get_available_users():
                 "users": []
             }), 403
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False,
-                "users": []
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user()
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Ошибка подключения к Redmine (локальный пароль/ERP/API key недоступны).",
                 "success": False,
                 "users": []
             }), 500
@@ -956,26 +955,10 @@ def update_task_assignee(task_id):
 
         current_app.logger.info(f"[API] Изменение исполнителя задачи {task_id} на {new_assignee_id}, комментарий: '{comment}'")
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user(allow_api_key_fallback=False)
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Не удалось получить учетные данные пользователя Redmine (локальная БД/ERP).",
                 "success": False
             }), 500
 
@@ -1108,26 +1091,10 @@ def download_task_attachment(task_id, attachment_id):
                 "success": False
             }), 403
 
-        # Получаем оригинальный пароль из Oracle для подключения к Redmine
-        from blog.tasks.utils import get_user_redmine_password
-
-        actual_password = get_user_redmine_password(current_user.username)
-        if not actual_password:
-            return jsonify({
-                "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                "success": False
-            }), 500
-
-        # Создаем коннектор Redmine с оригинальным паролем
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=actual_password
-        )
-
+        redmine_connector = _get_redmine_connector_for_current_user()
         if not redmine_connector:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Ошибка подключения к Redmine (локальный пароль/ERP/API key недоступны).",
                 "success": False
             }), 500
 
