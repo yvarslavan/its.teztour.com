@@ -10,6 +10,7 @@ from datetime import datetime
 import pymysql.cursors
 from datetime import datetime, timedelta, timezone, date
 import threading
+from types import SimpleNamespace
 
 # Простой кэш для счётчика уведомлений (TTL 10 секунд)
 _notification_count_cache = {}
@@ -55,6 +56,7 @@ from blog.notification_service import (
     NotificationType,
     NotificationService,
 )
+from blog.redmine import execute_query as execute_sql_query
 from mysql_db import (
     Issue,
     Status,
@@ -65,6 +67,7 @@ from mysql_db import (
     QualitySession,
     execute_quality_query_safe,
     db_manager,
+    get_issue_details,
 )
 from redmine import (
     RedmineConnector,
@@ -169,6 +172,198 @@ def get_user_password_with_fallback(user):
         return user.password
 
     return None
+
+
+def _coerce_issue_datetime(value):
+    if not value:
+        return None
+
+    if isinstance(value, datetime):
+        return value
+
+    if isinstance(value, date):
+        return datetime.combine(value, datetime.min.time())
+
+    if isinstance(value, str):
+        normalized = value.strip().replace("T", " ").replace("Z", "+00:00")
+        for parser in (
+            lambda raw: datetime.fromisoformat(raw),
+            lambda raw: datetime.strptime(raw, "%Y-%m-%d %H:%M:%S"),
+            lambda raw: datetime.strptime(raw, "%Y-%m-%d"),
+        ):
+            try:
+                return parser(normalized)
+            except ValueError:
+                continue
+
+    return None
+
+
+def _compose_person_name(lastname=None, firstname=None, fallback=None):
+    parts = [part for part in (lastname, firstname) if part]
+    if parts:
+        return " ".join(parts)
+    return fallback
+
+
+def _load_issue_from_db(issue_id):
+    issue_row = get_issue_details(issue_id)
+    if not issue_row:
+        return None, [], []
+
+    assigned_to_id = None
+    try:
+        with Session() as session:
+            assigned_to_id = (
+                session.query(Issue.assigned_to_id).filter(Issue.id == issue_id).scalar()
+            )
+    except Exception as assigned_to_error:
+        current_app.logger.warning(
+            "Не удалось получить assigned_to_id для заявки #%s из DB fallback: %s",
+            issue_id,
+            assigned_to_error,
+        )
+
+    issue_detail_obj = SimpleNamespace(
+        id=issue_row.id,
+        subject=issue_row.subject or f"Заявка #{issue_id}",
+        description=issue_row.description or "",
+        status=SimpleNamespace(name=issue_row.status_name or "Неизвестен"),
+        priority=SimpleNamespace(name=issue_row.priority_name or "Обычный"),
+        author=SimpleNamespace(
+            id=issue_row.author_id,
+            name=_compose_person_name(
+                issue_row.author_lastname,
+                issue_row.author_firstname,
+                issue_row.author_login,
+            )
+            or "Не указан",
+        )
+        if getattr(issue_row, "author_id", None)
+        else None,
+        assigned_to=SimpleNamespace(
+            id=assigned_to_id,
+            name=_compose_person_name(
+                issue_row.assigned_to_lastname,
+                issue_row.assigned_to_firstname,
+            )
+            or "Не назначен",
+        )
+        if assigned_to_id
+        else None,
+        created_on=_coerce_issue_datetime(issue_row.created_on) or datetime.now(),
+        updated_on=_coerce_issue_datetime(issue_row.updated_on)
+        or _coerce_issue_datetime(issue_row.created_on)
+        or datetime.now(),
+        closed_on=_coerce_issue_datetime(issue_row.closed_on),
+        start_date=_coerce_issue_datetime(issue_row.start_date),
+        due_date=_coerce_issue_datetime(issue_row.due_date),
+        easy_email_to=issue_row.easy_email_to,
+        easy_email_cc=issue_row.easy_email_cc,
+        last_updated_by_lastname=issue_row.last_updated_by_lastname,
+        last_updated_by_firstname=issue_row.last_updated_by_firstname,
+    )
+
+    history_query = """
+        SELECT
+            j.id,
+            j.notes,
+            j.created_on,
+            COALESCE(NULLIF(CONCAT_WS(' ', u.lastname, u.firstname), ''), u.login, 'Система') AS user_name,
+            COALESCE(j.private_notes, 0) AS private_notes
+        FROM journals j
+        LEFT JOIN users u ON u.id = j.user_id
+        WHERE j.journalized_type = 'Issue' AND j.journalized_id = %s
+        ORDER BY j.created_on DESC, j.id DESC
+    """
+    history_success, history_rows = execute_sql_query(
+        history_query, (issue_id,), fetch="all"
+    )
+
+    issue_history = []
+    if history_success and history_rows:
+        for row in history_rows:
+            issue_history.append(
+                SimpleNamespace(
+                    id=row["id"],
+                    user=row.get("user_name") or "Система",
+                    created_on=_coerce_issue_datetime(row.get("created_on"))
+                    or datetime.now(),
+                    notes=row.get("notes"),
+                    private_notes=bool(row.get("private_notes")),
+                    details=[],
+                )
+            )
+    elif not history_success:
+        current_app.logger.warning(
+            "Не удалось загрузить историю заявки #%s через DB fallback: %s",
+            issue_id,
+            history_rows,
+        )
+
+    if issue_history:
+        details_query = """
+            SELECT journal_id, property, prop_key, old_value, value
+            FROM journal_details
+            WHERE journal_id IN ({placeholders})
+            ORDER BY id
+        """.format(placeholders=", ".join(["%s"] * len(issue_history)))
+        details_success, detail_rows = execute_sql_query(
+            details_query,
+            tuple(entry.id for entry in issue_history),
+            fetch="all",
+        )
+
+        if details_success and detail_rows:
+            details_by_journal = {}
+            for detail_row in detail_rows:
+                details_by_journal.setdefault(detail_row["journal_id"], []).append(
+                    {
+                        "property": detail_row.get("property", "attr"),
+                        "name": detail_row.get("prop_key", ""),
+                        "old_value": detail_row.get("old_value"),
+                        "new_value": detail_row.get("value"),
+                    }
+                )
+
+            for entry in issue_history:
+                entry.details = details_by_journal.get(entry.id, [])
+        elif not details_success:
+            current_app.logger.warning(
+                "Не удалось загрузить details для истории заявки #%s: %s",
+                issue_id,
+                detail_rows,
+            )
+            issue_history = [entry for entry in issue_history if entry.notes]
+
+    return issue_detail_obj, issue_history, []
+
+
+def _user_has_issue_access(issue_obj, user_obj):
+    """Проверка доступа пользователя к заявке по email/author/assignee."""
+    user_email = (getattr(user_obj, "email", None) or "").strip().lower()
+    alt_email = user_email.replace("@tez-tour.com", "@msk.tez-tour.com")
+    easy_email_to = (getattr(issue_obj, "easy_email_to", None) or "").lower()
+    easy_email_cc = (getattr(issue_obj, "easy_email_cc", None) or "").lower()
+
+    author_id = getattr(getattr(issue_obj, "author", None), "id", None)
+    assignee_id = getattr(getattr(issue_obj, "assigned_to", None), "id", None)
+    current_redmine_id = getattr(user_obj, "id_redmine_user", None)
+
+    email_match = bool(
+        user_email
+        and (
+            user_email in easy_email_to
+            or user_email in easy_email_cc
+            or alt_email in easy_email_to
+            or alt_email in easy_email_cc
+        )
+    )
+    id_match = bool(
+        current_redmine_id
+        and (author_id == current_redmine_id or assignee_id == current_redmine_id)
+    )
+    return email_match or id_match
 
 
 @main.app_template_filter("format_datetime")
@@ -1865,32 +2060,6 @@ def issue(issue_id):
     attachment_list = []
     issue_history = []
 
-    def _has_issue_access(issue_obj):
-        """Object-level access check to avoid reading чужие заявки через прямой URL."""
-        user_email = (current_user.email or "").strip().lower()
-        alt_email = user_email.replace("@tez-tour.com", "@msk.tez-tour.com")
-        easy_email_to = (getattr(issue_obj, "easy_email_to", None) or "").lower()
-        easy_email_cc = (getattr(issue_obj, "easy_email_cc", None) or "").lower()
-
-        author_id = getattr(getattr(issue_obj, "author", None), "id", None)
-        assignee_id = getattr(getattr(issue_obj, "assigned_to", None), "id", None)
-        current_redmine_id = getattr(current_user, "id_redmine_user", None)
-
-        email_match = bool(
-            user_email
-            and (
-                user_email in easy_email_to
-                or user_email in easy_email_cc
-                or alt_email in easy_email_to
-                or alt_email in easy_email_cc
-            )
-        )
-        id_match = bool(
-            current_redmine_id
-            and (author_id == current_redmine_id or assignee_id == current_redmine_id)
-        )
-        return email_match or id_match
-
     try:
         # Загружаем основные данные задачи
         current_app.logger.info(
@@ -1913,7 +2082,7 @@ def issue(issue_id):
         )
 
         # Object-level access контроль (особенно важен при fallback на системный API ключ)
-        if not _has_issue_access(issue_detail_obj):
+        if not _user_has_issue_access(issue_detail_obj, current_user):
             current_app.logger.warning(
                 "Доступ к задаче #%s запрещен для пользователя %s",
                 issue_id,
@@ -1942,25 +2111,59 @@ def issue(issue_id):
             f"Ошибка при загрузке задачи #{issue_id} для пользователя {current_user.username}: {error_msg}"
         )
 
-        # Определяем тип ошибки для более точного сообщения
-        if "403" in error_msg or "Forbidden" in error_msg:
-            abort(403)
-        elif "404" in error_msg or "Not Found" in error_msg:
-            abort(404)
-        elif "401" in error_msg or "Unauthorized" in error_msg:
-            flash("Ошибка аутентификации. Проверьте ваши учетные данные.", "error")
-        elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
-            flash(
-                "Превышено время ожидания подключения к серверу. Попробуйте позже.",
-                "error",
+        issue_detail_obj = None
+        issue_history = []
+        attachment_list = []
+
+        try:
+            issue_detail_obj, issue_history, attachment_list = _load_issue_from_db(
+                issue_id
+            )
+        except Exception as fallback_error:
+            current_app.logger.error(
+                "DB fallback для заявки #%s завершился ошибкой: %s",
+                issue_id,
+                fallback_error,
+                exc_info=True,
+            )
+            issue_detail_obj = None
+
+        if issue_detail_obj:
+            if not _user_has_issue_access(issue_detail_obj, current_user):
+                current_app.logger.warning(
+                    "DB fallback: доступ к задаче #%s запрещен для пользователя %s",
+                    issue_id,
+                    current_user.username,
+                )
+                abort(403)
+
+            timings["issue_fetch"] = time.time() - load_issue_start
+            timings["db_fallback"] = True
+            current_app.logger.warning(
+                "Заявка #%s загружена через DB fallback для пользователя %s",
+                issue_id,
+                current_user.username,
             )
         else:
-            flash(
-                f"Не удалось загрузить задачу #{issue_id}. Обратитесь в службу поддержки.",
-                "error",
-            )
+            # Определяем тип ошибки для более точного сообщения
+            if "403" in error_msg or "Forbidden" in error_msg:
+                abort(403)
+            elif "404" in error_msg or "Not Found" in error_msg:
+                abort(404)
+            elif "401" in error_msg or "Unauthorized" in error_msg:
+                flash("Ошибка аутентификации. Проверьте ваши учетные данные.", "error")
+            elif "timeout" in error_msg.lower() or "connection" in error_msg.lower():
+                flash(
+                    "Превышено время ожидания подключения к серверу. Попробуйте позже.",
+                    "error",
+                )
+            else:
+                flash(
+                    f"Не удалось загрузить задачу #{issue_id}. Обратитесь в службу поддержки.",
+                    "error",
+                )
 
-        return redirect(url_for("main.my_issues"))
+            return redirect(url_for("main.my_issues"))
 
     # === ЭТАП 4: КРИТИЧЕСКАЯ ОПТИМИЗАЦИЯ - Предзагрузка данных для истории ===
     property_descriptions = {}
@@ -4482,11 +4685,8 @@ def download_issue_attachment(issue_id, attachment_id):
     start_time = time.time()
 
     try:
-        if not current_user.is_redmine_user:
-            return jsonify({"error": "Доступ запрещен", "success": False}), 403
-
-            # Используем существующий Redmine коннектор (он уже использует API ключ администратора)
-        redmine_connector = get_redmine_connector(current_user, None)
+        actual_user_password = get_user_password_with_fallback(current_user)
+        redmine_connector = get_redmine_connector(current_user, actual_user_password)
 
         if not redmine_connector:
             return jsonify(
@@ -4496,11 +4696,20 @@ def download_issue_attachment(issue_id, attachment_id):
         try:
             # Получаем заявку для проверки прав доступа
             issue = redmine_connector.redmine.issue.get(
-                issue_id, include=["attachments"]
+                issue_id,
+                include=["attachments", "easy_email_to", "easy_email_cc", "author", "assigned_to"],
             )
             current_app.logger.info(
                 f"[API] Получена заявка {issue_id} с {len(issue.attachments)} вложениями"
             )
+
+            if not _user_has_issue_access(issue, current_user):
+                current_app.logger.warning(
+                    "[API] Доступ к вложению заявки #%s запрещен для пользователя %s",
+                    issue_id,
+                    current_user.username,
+                )
+                return jsonify({"error": "Доступ запрещен", "success": False}), 403
 
             # Ищем нужное вложение
             attachment = None
@@ -4529,25 +4738,56 @@ def download_issue_attachment(issue_id, attachment_id):
                 f"[API] Attachment {attachment_id} найден в заявке {issue_id}"
             )
 
-            # Формируем URL для прямого скачивания из Redmine
-            redmine_download_url = (
-                f"{redmine_connector.redmine.url}/attachments/download/{attachment_id}"
+            system_api_key = os.getenv("REDMINE_API_KEY")
+            if not system_api_key or "your_redmine_api_key_here" in system_api_key:
+                current_app.logger.error(
+                    "[API] REDMINE_API_KEY не настроен для скачивания вложений"
+                )
+                return jsonify(
+                    {
+                        "error": "Системный ключ Redmine не настроен",
+                        "success": False,
+                    }
+                ), 500
+
+            from redmine import _get_requests_verify_setting
+            import requests
+
+            redmine_download_url = f"{redmine_connector.redmine.url}/attachments/download/{attachment_id}"
+            session = requests.Session()
+            session.verify = _get_requests_verify_setting()
+            session.trust_env = False
+            attachment_response = session.get(
+                redmine_download_url,
+                headers={"X-Redmine-API-Key": system_api_key},
+                stream=True,
+                timeout=30,
             )
-            current_app.logger.info(f"[API] URL для скачивания: {redmine_download_url}")
+            attachment_response.raise_for_status()
+
+            content_type = (
+                attachment_response.headers.get("Content-Type")
+                or "application/octet-stream"
+            )
+            content_disposition = attachment_response.headers.get(
+                "Content-Disposition"
+            ) or f'attachment; filename="{attachment.filename}"'
 
             execution_time = time.time() - start_time
             current_app.logger.info(
                 f"[API] GET /api/issue/{issue_id}/attachment/{attachment_id}/download выполнен за {execution_time:.2f}с"
             )
 
-            # Возвращаем JSON с URL для скачивания
-            return jsonify(
-                {
-                    "success": True,
-                    "download_url": redmine_download_url,
-                    "filename": attachment.filename,
-                    "filesize": attachment.filesize,
-                }
+            return Response(
+                attachment_response.iter_content(chunk_size=65536),
+                content_type=content_type,
+                headers={
+                    "Content-Disposition": content_disposition,
+                    "Content-Length": attachment_response.headers.get(
+                        "Content-Length", str(attachment.filesize)
+                    ),
+                    "Cache-Control": "no-store",
+                },
             )
 
         except Exception as redmine_error:

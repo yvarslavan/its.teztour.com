@@ -1,14 +1,23 @@
         body {
             font-family: 'Roboto', sans-serif;
-            background-color: #f5f5f5;
+            background-color: #dce4ea;
+            background-image:
+                linear-gradient(180deg, rgba(8, 24, 42, 0.52), rgba(8, 24, 42, 0.28)),
+                url("../img/tez_centre.jpg");
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
             margin: 0;
             padding: 0;
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1200px;
             margin: 0 auto;
             padding: 20px;
+            position: relative;
         }
 
         header {
@@ -1360,13 +1369,22 @@
 
         body {
             font-family: 'Inter', 'Roboto', sans-serif;
-            background: var(--tez-bg);
+            background-color: #dce4ea;
+            background-image:
+                linear-gradient(180deg, rgba(8, 24, 42, 0.52), rgba(8, 24, 42, 0.28)),
+                url("../img/tez_centre.jpg");
+            background-position: center top;
+            background-repeat: no-repeat;
+            background-size: cover;
+            background-attachment: fixed;
             color: var(--tez-text);
+            min-height: 100vh;
         }
 
         .container {
             max-width: 1360px;
             padding: 16px 20px 28px;
+            position: relative;
         }
 
         header {
@@ -1888,6 +1906,10 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                background-attachment: scroll;
+            }
+
             .container {
                 padding: 12px;
             }

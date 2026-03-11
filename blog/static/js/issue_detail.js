@@ -93,15 +93,26 @@
       });
 
       if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-
-      const data = await resp.json();
-
-      if (data.success && data.download_url) {
-        window.open(data.download_url, '_blank');
-        showNotif(`Файл ${data.filename} загружается`);
-      } else {
-        throw new Error('URL не получен');
+      const contentType = resp.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const data = await resp.json();
+        throw new Error(data.error || 'Не удалось скачать файл');
       }
+
+      const blob = await resp.blob();
+      const objectUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      const disposition = resp.headers.get('content-disposition') || '';
+      const fileNameMatch = disposition.match(/filename\*=UTF-8''([^;]+)|filename="?([^";]+)"?/i);
+      const fileName = decodeURIComponent(fileNameMatch?.[1] || fileNameMatch?.[2] || `attachment-${attachmentId}`);
+
+      link.href = objectUrl;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(objectUrl);
+      showNotif(`Файл ${fileName} загружается`);
     } catch (error) {
       console.error('Ошибка:', error);
       showNotif(`Ошибка: ${error.message}`);
