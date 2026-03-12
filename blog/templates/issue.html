@@ -128,7 +128,13 @@
   <article class="history-card {{ role_class }}{% if featured %} is-featured{% endif %}">
     <div class="history-card-header">
       <div class="history-card-identity">
-        <div class="user-avatar">{{ user_name[0] }}</div>
+        <div class="user-avatar" aria-hidden="true">
+          <svg viewBox="0 0 24 24" class="user-avatar-icon" focusable="false">
+            <path
+              d="M12 12.75a4.125 4.125 0 1 0 0-8.25a4.125 4.125 0 0 0 0 8.25ZM5.25 19.5a6.75 6.75 0 0 1 13.5 0v.75H5.25v-.75Z"
+              fill="currentColor" />
+          </svg>
+        </div>
         <div class="history-card-meta">
           <div class="history-card-title-row">
             <strong class="history-card-author">{{ user_name }}</strong>
