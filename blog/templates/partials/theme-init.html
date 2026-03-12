@@ -11,6 +11,10 @@
     function getInitialTheme() {
         const stored = localStorage.getItem('site-theme');
         if (stored) return stored;
+
+        // Backward compatibility: some older pages still write preferred-theme.
+        const legacyStored = localStorage.getItem('preferred-theme');
+        if (legacyStored) return legacyStored;
         
         if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
             return 'dark';

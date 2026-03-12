@@ -1237,7 +1237,7 @@
     <script src="{{ url_for('static', filename='js/modern_splash_screen.js') }}"></script>
 
     <!-- Theme Toggle System - Load with server sync -->
-    <script src="{{ url_for('static', filename='js/theme-toggle-with-sync.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/theme-toggle-with-sync.js') }}?v={{ cache_buster or '20260311-theme-sync' }}"></script>
     <!-- Search Functionality -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {

@@ -21,11 +21,23 @@
       const id = block.getAttribute('data-section');
       const saved = localStorage.getItem(`block_${id}`);
 
-      // Default: open description and history
-      if (saved === 'open' || (saved === null && (id === 'description' || id === 'history'))) {
+      // Default: prioritize history, keep secondary sections collapsed until user opens them.
+      if (saved === 'open' || (saved === null && id === 'history')) {
         block.classList.add('open');
       }
     });
+  }
+
+  function focusBlock(id) {
+    const block = document.querySelector(`[data-section="${id}"]`);
+    if (!block) return;
+
+    if (!block.classList.contains('open')) {
+      block.classList.add('open');
+      localStorage.setItem(`block_${id}`, 'open');
+    }
+
+    block.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   // Toggle comment form

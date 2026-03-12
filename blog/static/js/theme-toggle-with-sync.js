@@ -8,6 +8,7 @@
 class ThemeManagerWithSync {
     constructor() {
         this.STORAGE_KEY = 'site-theme';
+        this.LEGACY_STORAGE_KEY = 'preferred-theme';
         this.SYNC_ENDPOINT = '/api/theme/sync';
         this.THEMES = {
             LIGHT: 'light',
@@ -26,6 +27,11 @@ class ThemeManagerWithSync {
         const stored = localStorage.getItem(this.STORAGE_KEY);
         if (stored) {
             return stored;
+        }
+
+        const legacyStored = localStorage.getItem(this.LEGACY_STORAGE_KEY);
+        if (legacyStored) {
+            return legacyStored;
         }
 
         // Fallback to system preference
@@ -58,6 +64,7 @@ class ThemeManagerWithSync {
 
         // Save to localStorage
         localStorage.setItem(this.STORAGE_KEY, theme);
+        localStorage.setItem(this.LEGACY_STORAGE_KEY, theme);
 
         // Sync with server if enabled
         if (sync) {

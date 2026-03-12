@@ -1,5 +1,187 @@
 {% extends 'layout.html' %}
 
+{% macro render_facts_panel(issue_detail, panel_class='') %}
+<div class="content-block facts-panel {{ panel_class }}">
+  <div class="block-header">
+    <h2><i class="fas fa-layer-group"></i> Факты по заявке</h2>
+  </div>
+  <div class="block-content facts-panel-content">
+    <div class="facts-group">
+      <div class="facts-group-title">Кто</div>
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-user detail-icon-author"></i> Автор</div>
+        <div class="fact-value">
+          {% if issue_detail.author %}
+            {{ issue_detail.author.name }}
+          {% else %}
+            <span class="muted-text">Не указан</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-user-cog detail-icon-assignee"></i> Исполнитель</div>
+        <div class="fact-value">
+          {% if issue_detail.assigned_to %}
+            {{ issue_detail.assigned_to.name }}
+          {% else %}
+            <span class="muted-text">Не назначен</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="facts-group">
+      <div class="facts-group-title">Когда</div>
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-calendar-plus detail-icon-created"></i> Создана</div>
+        <div class="fact-value">{{ issue_detail.created_on.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+
+      {% if issue_detail.start_date %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-play-circle detail-icon-start"></i> Начало</div>
+        <div class="fact-value">{{ issue_detail.start_date.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+
+      {% if issue_detail.due_date %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-calendar-times detail-icon-due"></i> Срок</div>
+        <div class="fact-value">{{ issue_detail.due_date.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+
+      {% if issue_detail.closed_on %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-check-circle detail-icon-closed"></i> Закрыта</div>
+        <div class="fact-value">{{ issue_detail.closed_on.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+      {% else %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-sync detail-icon-updated"></i> Обновлено</div>
+        <div class="fact-value">
+          {{ issue_detail.updated_on.strftime('%d.%m.%Y %H:%M') }}
+          {% if issue_detail.last_updated_by_lastname %}
+            <span class="fact-meta">{{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}</span>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if issue_detail.easy_email_to or issue_detail.easy_email_cc %}
+    <div class="facts-group">
+      <div class="facts-group-title">Контакты</div>
+      {% if issue_detail.easy_email_to %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-envelope detail-icon-email"></i> Email</div>
+        <div class="fact-value">
+          <a href="mailto:{{ issue_detail.easy_email_to }}" class="link-text">{{ issue_detail.easy_email_to }}</a>
+        </div>
+      </div>
+      {% endif %}
+      {% if issue_detail.easy_email_cc %}
+      <div class="fact-item">
+        <div class="fact-label"><i class="fas fa-envelope-square detail-icon-cc"></i> CC</div>
+        <div class="fact-value fact-value--compact">{{ issue_detail.easy_email_cc }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endmacro %}
+
+{% macro render_history_entry(entry, issue_author_name, issue_assignee_name, featured=False, timeline=False) %}
+  {% set user_name = entry.user or 'Система' %}
+  {% set has_comment = entry.notes %}
+  {% set is_private = has_comment and entry.private_notes %}
+  {% set role_class = 'message-system' %}
+  {% set role_label = 'Системное изменение' %}
+  {% set role_icon = 'fas fa-sliders-h' %}
+
+  {% if is_private %}
+    {% set role_class = 'message-private' %}
+    {% set role_label = 'Приватный комментарий' %}
+    {% set role_icon = 'fas fa-lock' %}
+  {% elif has_comment and issue_author_name and user_name == issue_author_name %}
+    {% set role_class = 'message-user' %}
+    {% set role_label = 'Ответ заявителя' %}
+    {% set role_icon = 'fas fa-user-edit' %}
+  {% elif has_comment and issue_assignee_name and user_name == issue_assignee_name %}
+    {% set role_class = 'message-staff' %}
+    {% set role_label = 'Ответ исполнителя' %}
+    {% set role_icon = 'fas fa-headset' %}
+  {% elif has_comment %}
+    {% set role_class = 'message-staff' %}
+    {% set role_label = 'Ответ поддержки' %}
+    {% set role_icon = 'fas fa-comment-dots' %}
+  {% endif %}
+
+  {% if timeline %}
+  <div class="timeline-entry {{ role_class }}">
+    <div class="timeline-dot {{ role_class }}">
+      <i class="{{ role_icon }}"></i>
+    </div>
+  {% endif %}
+
+  <article class="history-card {{ role_class }}{% if featured %} is-featured{% endif %}">
+    <div class="history-card-header">
+      <div class="history-card-identity">
+        <div class="user-avatar">{{ user_name[0] }}</div>
+        <div class="history-card-meta">
+          <div class="history-card-title-row">
+            <strong class="history-card-author">{{ user_name }}</strong>
+            <span class="entry-role">{{ role_label }}</span>
+            {% if featured %}
+              <span class="entry-flag">Сейчас важно</span>
+            {% endif %}
+          </div>
+          <div class="entry-time">{{ convert_datetime_msk_format(entry.created_on) }}</div>
+        </div>
+      </div>
+      <div class="history-card-icon">
+        <i class="{{ role_icon }}"></i>
+      </div>
+    </div>
+
+    {% if entry.details %}
+      <div class="entry-changes">
+        {% for detail in entry.details %}
+          {% set old_val = detail.get('old_value') %}
+          {% set new_val = detail.get('new_value') %}
+          {% set cache_k = detail['property'] + ':' + detail['name'] + ':' + (old_val|string if old_val else '') + ':' + (new_val|string if new_val else '') %}
+          {% set prop_desc = property_descriptions.get(cache_k) %}
+          {% if prop_desc %}
+            <div class="change-line">
+              <i class="fas fa-arrow-right"></i>
+              <span>{{ prop_desc | safe }}</span>
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if has_comment %}
+      <div class="entry-comment{% if is_private %} private-comment{% endif %}">
+        {% if is_private %}
+          <div class="private-label">
+            <i class="fas fa-lock"></i>
+            <span>Приватный комментарий</span>
+          </div>
+          <div class="private-note-hint">Содержимое скрыто по правилам доступа.</div>
+        {% else %}
+          {{ entry.notes | safe }}
+        {% endif %}
+      </div>
+    {% endif %}
+  </article>
+
+  {% if timeline %}
+  </div>
+  {% endif %}
+{% endmacro %}
+
 {% block head %}
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
@@ -7,161 +189,198 @@
 {% endblock %}
 
 {% block main_page %}
-<div class="issue-detail-page">
+{% set issue_author_name = issue_detail.author.name if issue_detail.author else none %}
+{% set issue_assignee_name = issue_detail.assigned_to.name if issue_detail.assigned_to else none %}
+{% set history_state = namespace(latest_entry=None, latest_message=None) %}
+{% for entry in issue_history %}
+  {% set history_state.latest_entry = entry %}
+  {% if entry.notes %}
+    {% set history_state.latest_message = entry %}
+  {% endif %}
+{% endfor %}
+{% set featured_entry = history_state.latest_message or history_state.latest_entry %}
 
-  <!-- Breadcrumb & Actions -->
+<div class="issue-detail-page">
   <div class="page-header">
     <div class="breadcrumb-nav">
       <a href="{{ url_for('main.my_issues') }}" class="breadcrumb-link" onclick="return goBackToListOptimized(event);">
-          <i class="fas fa-arrow-left"></i>
-          <span>Назад к списку</span>
-        </a>
+        <i class="fas fa-arrow-left"></i>
+        <span>Назад к списку</span>
+      </a>
     </div>
     <div class="header-actions-bar">
       <button onclick="toggleCommentForm()" class="btn-primary">
         <i class="fas fa-comment"></i>
-        <span>Комментарий в заявку</span>
+        <span>Комментарий</span>
       </button>
       <button onclick="window.print()" class="btn-secondary">
-          <i class="fas fa-print"></i>
-          <span>Печать</span>
-        </button>
-      </div>
+        <i class="fas fa-print"></i>
+        <span>Печать</span>
+      </button>
     </div>
+  </div>
 
-  <!-- Issue Title Section -->
-  <div class="issue-title-section">
-    <div class="issue-meta">
-      <div class="issue-header-top">
-        <div class="issue-id-container">
-          <span class="issue-id">#{{issue_detail.id}}</span>
-        </div>
+  <section class="issue-hero">
+    <div class="issue-hero-main">
+      <div class="issue-hero-topline">
+        <span class="issue-kicker">Заявка #{{ issue_detail.id }}</span>
         <div class="issue-status-badges">
-        {% if issue_detail.status.name in ['Закрыта', 'Closed', 'Resolved'] %}
-          <span class="status-badge status-success">
-            <i class="fas fa-check-circle"></i> {{ issue_detail.status.name }}
-          </span>
-        {% elif issue_detail.status.name in ['Новая', 'Открыта', 'Open', 'New'] %}
-          <span class="status-badge status-info">
-            <i class="fas fa-info-circle"></i> {{ issue_detail.status.name }}
-          </span>
-        {% elif issue_detail.status.name in ['В работе', 'In Progress'] %}
-          <span class="status-badge status-warning">
-            <i class="fas fa-clock"></i> {{ issue_detail.status.name }}
-          </span>
-        {% elif issue_detail.status.name in ['Отклонена', 'Rejected'] %}
-          <span class="status-badge status-danger">
-            <i class="fas fa-times-circle"></i> {{ issue_detail.status.name }}
-          </span>
-                  {% else %}
-          <span class="status-badge status-default">
-            <i class="fas fa-circle"></i> {{ issue_detail.status.name }}
-          </span>
-                  {% endif %}
+          {% if issue_detail.status.name in ['Закрыта', 'Closed', 'Resolved'] %}
+            <span class="status-badge status-success"><i class="fas fa-check-circle"></i> {{ issue_detail.status.name }}</span>
+          {% elif issue_detail.status.name in ['Новая', 'Открыта', 'Open', 'New'] %}
+            <span class="status-badge status-info"><i class="fas fa-sparkles"></i> {{ issue_detail.status.name }}</span>
+          {% elif issue_detail.status.name in ['В работе', 'In Progress'] %}
+            <span class="status-badge status-warning"><i class="fas fa-clock"></i> {{ issue_detail.status.name }}</span>
+          {% elif issue_detail.status.name in ['Отклонена', 'Rejected'] %}
+            <span class="status-badge status-danger"><i class="fas fa-times-circle"></i> {{ issue_detail.status.name }}</span>
+          {% else %}
+            <span class="status-badge status-default"><i class="fas fa-circle"></i> {{ issue_detail.status.name }}</span>
+          {% endif %}
 
-        {% if issue_detail.priority.name in ['Высокий', 'Срочный', 'Неотложный'] %}
-          <span class="status-badge status-danger">
-            <i class="fas fa-exclamation-triangle"></i> {{ issue_detail.priority.name }}
-          </span>
-        {% else %}
-          <span class="status-badge status-default">
-            <i class="fas fa-flag priority-flag-icon"></i> {{ issue_detail.priority.name }}
-          </span>
-        {% endif %}
+          {% if issue_detail.priority.name in ['Высокий', 'Срочный', 'Неотложный'] %}
+            <span class="status-badge status-danger"><i class="fas fa-exclamation-triangle"></i> {{ issue_detail.priority.name }}</span>
+          {% else %}
+            <span class="status-badge status-default"><i class="fas fa-flag"></i> {{ issue_detail.priority.name }}</span>
+          {% endif %}
         </div>
-        {% if current_user.is_redmine_user %}
-        <a href="https://helpdesk.teztour.com/issues/{{issue_detail.id}}" target="_blank" rel="noopener" class="redmine-link-btn">
-          <i class="fas fa-external-link-alt"></i>
-          <span>Перейти в заявку в Redmine</span>
-        </a>
-        {% endif %}
+      </div>
+
+      <h1 class="issue-title-text">{{ issue_detail.subject }}</h1>
+
+      <div class="issue-hero-summary">
+        <div class="hero-summary-item">
+          <span class="hero-summary-label">Последнее обновление</span>
+          <span class="hero-summary-value">{{ issue_detail.updated_on.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+        <div class="hero-summary-item">
+          <span class="hero-summary-label">Записей в истории</span>
+          <span class="hero-summary-value">{{ issue_history|length }}</span>
+        </div>
       </div>
     </div>
-    <h1 class="issue-title-text">{{issue_detail.subject}}</h1>
 
-    <!-- Assignee in one line -->
-    <div class="assignee-line">
-      <div class="assignee-label">
-        <i class="fas fa-user icon-assignee"></i>
-        <span>Исполнитель:</span>
-      </div>
-      <div class="assignee-value">
-        {% if issue_detail.assigned_to %}
-          {{ issue_detail.assigned_to.name }}
-        {% else %}
-          Не назначен
-        {% endif %}
-      </div>
+    {% if current_user.is_redmine_user %}
+    <div class="issue-hero-link">
+      <a href="https://helpdesk.teztour.com/issues/{{ issue_detail.id }}" target="_blank" rel="noopener" class="redmine-link-btn">
+        <i class="fas fa-external-link-alt"></i>
+        <span>Открыть в Redmine</span>
+      </a>
     </div>
-                </div>
+    {% endif %}
+  </section>
 
-  <!-- Two Column Layout -->
   <div class="two-column-layout">
+    <div class="left-column issue-main-feed">
+      {% if featured_entry %}
+      <section class="content-block latest-activity-block">
+        <div class="block-header latest-activity-header">
+          <div>
+            <h2><i class="fas fa-bolt"></i> Последняя активность</h2>
+            <p class="block-subtitle">Сразу видно последний содержательный ответ и недавние изменения.</p>
+          </div>
+          {% if issue_history %}
+          <button type="button" class="btn-secondary btn-compact" onclick="focusBlock('history')">
+            <i class="fas fa-history"></i>
+            <span>К истории</span>
+          </button>
+          {% endif %}
+        </div>
+        <div class="block-content latest-activity-content">
+          {{ render_history_entry(featured_entry, issue_author_name, issue_assignee_name, featured=True, timeline=False) }}
+        </div>
+      </section>
+      {% endif %}
 
-    <!-- Left Column - Main Content -->
-    <div class="left-column">
-
-      <!-- Comment Form -->
-      <div id="commentFormBlock" class="content-block" style="display: none;">
+      <div id="commentFormBlock" class="content-block comment-form-block" style="display: none;">
         <div class="block-header">
           <h2><i class="fas fa-comment-medical"></i> Добавить комментарий</h2>
-                </div>
+        </div>
         <div class="block-content">
           <form action="" method="POST" enctype="multipart/form-data" onsubmit="return disableSubmitOnSubmit()">
             {{ form.hidden_tag() }}
             <div class="form-field">
               <label for="comment">{{ form.comment.label.text }}</label>
               {{ form.comment(class="textarea-input", rows="4", id="comment", placeholder="Введите текст комментария...") }}
-                </div>
+            </div>
             <div class="form-buttons">
               <button type="button" onclick="toggleCommentForm()" class="btn-secondary">
-                <i class="fas fa-times"></i> Отмена
+                <i class="fas fa-times"></i>
+                <span>Отмена</span>
               </button>
               <button type="submit" class="btn-primary" id="submitBtn">
-                <i class="fas fa-paper-plane"></i> Отправить
+                <i class="fas fa-paper-plane"></i>
+                <span>Отправить</span>
               </button>
-              </div>
+            </div>
           </form>
-                </div>
-                </div>
+        </div>
+      </div>
 
-      <!-- Description Block -->
-      <div class="content-block accordion-block" data-section="description">
+      {{ render_facts_panel(issue_detail, 'facts-panel--mobile') }}
+
+      <section class="content-block accordion-block" data-section="history">
+        <div class="block-header clickable" onclick="toggleBlock('history')">
+          <h2>
+            <i class="fas fa-history"></i>
+            <span>История диалога</span>
+            {% if issue_history %}
+              <span class="count-badge">{{ issue_history|length }}</span>
+            {% endif %}
+          </h2>
+          <i class="fas fa-chevron-down toggle-arrow"></i>
+        </div>
+        <div class="block-content collapsible">
+          {% if issue_history %}
+            <div class="history-timeline">
+              {% for entry in issue_history %}
+                {{ render_history_entry(entry, issue_author_name, issue_assignee_name, timeline=True) }}
+              {% endfor %}
+            </div>
+          {% else %}
+            <div class="empty-message">
+              <i class="fas fa-history"></i>
+              <p>История изменений пуста</p>
+            </div>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="content-block accordion-block" data-section="description">
         <div class="block-header clickable" onclick="toggleBlock('description')">
           <h2><i class="fas fa-file-alt"></i> Описание</h2>
           <i class="fas fa-chevron-down toggle-arrow"></i>
         </div>
         <div class="block-content collapsible">
-        {% if issue_detail.description %}
+          {% if issue_detail.description %}
             <div class="prose-content" id="descText">
               {{ issue_detail.description | safe }}
             </div>
             {% if issue_detail.description | length > 500 %}
               <button class="link-button" id="descToggle" onclick="toggleDesc()">
-                <i class="fas fa-chevron-down"></i> Показать полностью
+                <i class="fas fa-chevron-down"></i>
+                <span>Показать полностью</span>
               </button>
             {% endif %}
-        {% else %}
+          {% else %}
             <div class="empty-message">
-            <i class="fas fa-file-alt"></i>
+              <i class="fas fa-file-alt"></i>
               <p>Описание отсутствует</p>
-          </div>
-        {% endif %}
-      </div>
-      </div>
+            </div>
+          {% endif %}
+        </div>
+      </section>
 
-      <!-- Attachments Block -->
-          {% if attachment_list %}
-      <div class="content-block accordion-block" data-section="attachments">
+      {% if attachment_list %}
+      <section class="content-block accordion-block" data-section="attachments">
         <div class="block-header clickable" onclick="toggleBlock('attachments')">
           <h2>
-            <i class="fas fa-paperclip"></i> Вложения
+            <i class="fas fa-paperclip"></i>
+            <span>Вложения</span>
             <span class="count-badge">{{ attachment_list | length }}</span>
           </h2>
           <i class="fas fa-chevron-down toggle-arrow"></i>
         </div>
         <div class="block-content collapsible">
-
           {% set files_by_type = {'eml': [], 'pdf': [], 'doc': [], 'xls': [], 'img': [], 'zip': [], 'other': []} %}
           {% for att in attachment_list %}
             {% set fname = att.filename.lower() %}
@@ -179,254 +398,84 @@
               {% set _ = files_by_type['zip'].append(att) %}
             {% else %}
               {% set _ = files_by_type['other'].append(att) %}
-              {% endif %}
+            {% endif %}
           {% endfor %}
 
           {% for ftype, files in files_by_type.items() if files %}
-            <div class="file-group">
-              {% if ftype == 'eml' %}
-                <div class="group-header"><i class="fas fa-envelope"></i> Email файлы ({{ files|length }})</div>
-              {% elif ftype == 'pdf' %}
-                <div class="group-header"><i class="fas fa-file-pdf"></i> PDF документы ({{ files|length }})</div>
-              {% elif ftype == 'doc' %}
-                <div class="group-header"><i class="fas fa-file-word"></i> Документы Word ({{ files|length }})</div>
-              {% elif ftype == 'xls' %}
-                <div class="group-header"><i class="fas fa-file-excel"></i> Таблицы Excel ({{ files|length }})</div>
-              {% elif ftype == 'img' %}
-                <div class="group-header"><i class="fas fa-file-image"></i> Изображения ({{ files|length }})</div>
-              {% elif ftype == 'zip' %}
-                <div class="group-header"><i class="fas fa-file-archive"></i> Архивы ({{ files|length }})</div>
-              {% else %}
-                <div class="group-header"><i class="fas fa-file"></i> Другие файлы ({{ files|length }})</div>
-              {% endif %}
+          <div class="file-group">
+            {% if ftype == 'eml' %}
+              <div class="group-header"><i class="fas fa-envelope"></i> Email файлы</div>
+            {% elif ftype == 'pdf' %}
+              <div class="group-header"><i class="fas fa-file-pdf"></i> PDF документы</div>
+            {% elif ftype == 'doc' %}
+              <div class="group-header"><i class="fas fa-file-word"></i> Документы Word</div>
+            {% elif ftype == 'xls' %}
+              <div class="group-header"><i class="fas fa-file-excel"></i> Таблицы Excel</div>
+            {% elif ftype == 'img' %}
+              <div class="group-header"><i class="fas fa-file-image"></i> Изображения</div>
+            {% elif ftype == 'zip' %}
+              <div class="group-header"><i class="fas fa-file-archive"></i> Архивы</div>
+            {% else %}
+              <div class="group-header"><i class="fas fa-file"></i> Другие файлы</div>
+            {% endif %}
 
-              {% for att in files %}
-                <div class="file-item">
-                  <div class="file-icon">
-                    {% set fname = att.filename.lower() %}
-                    {% if '.eml' in fname %}
-                      <i class="fas fa-envelope fa-2x" style="color: #1976d2;"></i>
-                    {% elif '.pdf' in fname %}
-                      <i class="fas fa-file-pdf fa-2x" style="color: #d32f2f;"></i>
-                    {% elif '.doc' in fname or '.docx' in fname %}
-                      <i class="fas fa-file-word fa-2x" style="color: #1976d2;"></i>
-                    {% elif '.xls' in fname or '.xlsx' in fname %}
-                      <i class="fas fa-file-excel fa-2x" style="color: #388e3c;"></i>
-                    {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname %}
-                      <i class="fas fa-file-image fa-2x" style="color: #7b1fa2;"></i>
-                    {% elif '.zip' in fname or '.rar' in fname or '.7z' in fname %}
-                      <i class="fas fa-file-archive fa-2x" style="color: #f57c00;"></i>
-                    {% else %}
-                      <i class="fas fa-file fa-2x" style="color: #757575;"></i>
-                    {% endif %}
-                </div>
-                  <div class="file-details">
-                    <div class="file-name" title="{{ att.filename }}">{{ att.filename }}</div>
-                    <div class="file-info">
-                      {% if att.author %}<span><i class="fas fa-user"></i> {{ att.author }}</span>{% endif %}
-                      <span><i class="fas fa-clock"></i> {{ convert_datetime_msk_format(att.created_on) }}</span>
-                  </div>
-                </div>
-                  <button onclick="downloadFile(event, '{{ att.id }}')" class="icon-button" title="Скачать">
-                    <i class="fas fa-download"></i>
-                  </button>
-                </div>
-              {% endfor %}
+            {% for att in files %}
+            <div class="file-item">
+              <div class="file-icon">
+                {% set fname = att.filename.lower() %}
+                {% if '.eml' in fname %}
+                  <i class="fas fa-envelope fa-lg" style="color: #2563eb;"></i>
+                {% elif '.pdf' in fname %}
+                  <i class="fas fa-file-pdf fa-lg" style="color: #dc2626;"></i>
+                {% elif '.doc' in fname or '.docx' in fname %}
+                  <i class="fas fa-file-word fa-lg" style="color: #2563eb;"></i>
+                {% elif '.xls' in fname or '.xlsx' in fname %}
+                  <i class="fas fa-file-excel fa-lg" style="color: #16a34a;"></i>
+                {% elif '.png' in fname or '.jpg' in fname or '.jpeg' in fname %}
+                  <i class="fas fa-file-image fa-lg" style="color: #9333ea;"></i>
+                {% elif '.zip' in fname or '.rar' in fname or '.7z' in fname %}
+                  <i class="fas fa-file-archive fa-lg" style="color: #ea580c;"></i>
+                {% else %}
+                  <i class="fas fa-file fa-lg" style="color: #64748b;"></i>
+                {% endif %}
               </div>
-            {% endfor %}
-
-          </div>
-          </div>
-        {% endif %}
-
-      <!-- History Block -->
-      <div class="content-block accordion-block" data-section="history">
-        <div class="block-header clickable" onclick="toggleBlock('history')">
-          <h2>
-            <i class="fas fa-history"></i> История и комментарии
-            {% if issue_history %}<span class="count-badge">{{ issue_history|length }}</span>{% endif %}
-          </h2>
-          <i class="fas fa-chevron-down toggle-arrow"></i>
-        </div>
-        <div class="block-content collapsible">
-          {% if issue_history %}
-            <div class="history-timeline">
-              {% for entry in issue_history %}
-                <div class="timeline-entry">
-                  <div class="timeline-dot">
-                    {% if entry.notes and entry.private_notes %}
-                      <i class="fas fa-lock" style="color: #d32f2f;"></i>
-                    {% elif entry.notes %}
-                      <i class="fas fa-comment" style="color: #1976d2;"></i>
-                    {% else %}
-                      <i class="fas fa-edit" style="color: #757575;"></i>
-          {% endif %}
-        </div>
-                  <div class="timeline-card">
-                    <div class="entry-header">
-                      <div class="user-info">
-                        <div class="user-avatar">{{ (entry.user or 'S')[0] }}</div>
-                        <div>
-                          <strong>{{ entry.user or 'Система' }}</strong>
-                          <div class="entry-time">{{ convert_datetime_msk_format(entry.created_on) }}</div>
-      </div>
+              <div class="file-details">
+                <div class="file-name" title="{{ att.filename }}">{{ att.filename }}</div>
+                <div class="file-info">
+                  <span class="file-type-badge">{{ ftype | upper }}</span>
+                  {% if att.author %}
+                    <span><i class="fas fa-user"></i> {{ att.author }}</span>
+                  {% endif %}
+                  <span><i class="fas fa-clock"></i> {{ convert_datetime_msk_format(att.created_on) }}</span>
+                </div>
+              </div>
+              <button onclick="downloadFile(event, '{{ att.id }}')" class="icon-button" title="Скачать">
+                <i class="fas fa-download"></i>
+              </button>
             </div>
-        </div>
-
-                    {% if entry.details %}
-                      <div class="entry-changes">
-                        {% for detail in entry.details %}
-                          {% set old_val = detail.get('old_value') %}
-                          {% set new_val = detail.get('new_value') %}
-                          {% set cache_k = detail['property'] + ':' + detail['name'] + ':' + (old_val|string if old_val else '') + ':' + (new_val|string if new_val else '') %}
-                          {% set prop_desc = property_descriptions.get(cache_k) %}
-
-                          {% if prop_desc %}
-                            <div class="change-line">
-                            <i class="fas fa-arrow-right"></i>
-                              <span>{{ prop_desc | safe }}</span>
-                          </div>
-                        {% endif %}
-                      {% endfor %}
-                    </div>
-                  {% endif %}
-
-                    {% if entry.notes %}
-                      <div class="entry-comment {% if entry.private_notes %}private-comment{% endif %}">
-                        {% if entry.private_notes %}
-                          <div class="private-label">
-                            <i class="fas fa-lock"></i> Приватный комментарий
-                        </div>
-                      {% else %}
-                          {{ entry.notes | safe }}
-                      {% endif %}
-                    </div>
-                  {% endif %}
-                </div>
-              </div>
             {% endfor %}
           </div>
-        {% else %}
-            <div class="empty-message">
-            <i class="fas fa-history"></i>
-              <p>История изменений пуста</p>
-          </div>
-        {% endif %}
-      </div>
-      </div>
-
-</div>
-
-    <!-- Right Column - Sidebar -->
-    <div class="right-column">
-      <div class="content-block sidebar-sticky">
-        <div class="block-header details-header">
-          <h2><i class="fas fa-info-circle"></i> Детали</h2>
+          {% endfor %}
         </div>
-        <div class="block-content">
-          <div class="details-list">
-
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-user detail-icon-author"></i> Автор</div>
-              <div class="detail-text">
-                {% if issue_detail.author %}
-                  {{ issue_detail.author.name }}
-                {% else %}
-                  <span class="muted-text">Не указан</span>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-user-cog detail-icon-assignee"></i> Исполнитель</div>
-              <div class="detail-text">
-                {% if issue_detail.assigned_to %}
-                  {{ issue_detail.assigned_to.name }}
-                {% else %}
-                  <span class="muted-text">Не назначен</span>
-                {% endif %}
-              </div>
-            </div>
-
-            <div class="detail-separator"></div>
-
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-calendar-plus detail-icon-created"></i> Создана</div>
-              <div class="detail-text">{{issue_detail.created_on.strftime('%d.%m.%Y %H:%M')}}</div>
-            </div>
-
-            {% if issue_detail.start_date %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-play-circle detail-icon-start"></i> Начало</div>
-              <div class="detail-text">{{issue_detail.start_date.strftime('%d.%m.%Y')}}</div>
-            </div>
-            {% endif %}
-
-            {% if issue_detail.due_date %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-calendar-times detail-icon-due"></i> Срок</div>
-              <div class="detail-text">{{issue_detail.due_date.strftime('%d.%m.%Y')}}</div>
-            </div>
-            {% endif %}
-
-            {% if issue_detail.closed_on %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-check-circle detail-icon-closed"></i> Закрыта</div>
-              <div class="detail-text">{{issue_detail.closed_on.strftime('%d.%m.%Y %H:%M')}}</div>
-            </div>
-            {% endif %}
-
-            {% if not issue_detail.closed_on %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-sync detail-icon-updated"></i> Обновлено</div>
-              <div class="detail-text">
-                {{issue_detail.updated_on.strftime('%d.%m.%Y %H:%M')}}
-                {% if issue_detail.last_updated_by_lastname %}
-                  <br><small class="muted-text">{{ issue_detail.last_updated_by_lastname }} {{ issue_detail.last_updated_by_firstname }}</small>
-                {% endif %}
-              </div>
-            </div>
-            {% endif %}
-
-            {% if issue_detail.easy_email_to or issue_detail.easy_email_cc %}
-            <div class="detail-separator"></div>
-
-            {% if issue_detail.easy_email_to %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-envelope detail-icon-email"></i> Email</div>
-              <div class="detail-text">
-                <a href="mailto:{{ issue_detail.easy_email_to }}" class="link-text">{{ issue_detail.easy_email_to }}</a>
-              </div>
-            </div>
-            {% endif %}
-
-            {% if issue_detail.easy_email_cc %}
-            <div class="detail-row">
-              <div class="detail-label"><i class="fas fa-envelope-square detail-icon-cc"></i> CC</div>
-              <div class="detail-text">
-                <small class="muted-text">{{ issue_detail.easy_email_cc }}</small>
-              </div>
-            </div>
-            {% endif %}
-            {% endif %}
-
-          </div>
-        </div>
-      </div>
+      </section>
+      {% endif %}
     </div>
 
+    <aside class="right-column issue-facts-panel">
+      <div class="sidebar-sticky">
+        {{ render_facts_panel(issue_detail) }}
+      </div>
+    </aside>
   </div>
 
   <div id="notification" class="notification-toast"></div>
-
 </div>
 {% endblock main_page %}
 
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/issue_detail.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/issue_detail.css') }}?v={{ cache_buster or '20260311-redesign-v2' }}">
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/issue_detail.js') }}?v={{ cache_buster or '1' }}"></script>
+<script src="{{ url_for('static', filename='js/issue_detail.js') }}?v={{ cache_buster or '20260311-redesign-v1' }}"></script>
 {% endblock %}
-

@@ -212,16 +212,14 @@
   <!-- Controls Panel -->
   <section class="controls-panel">
     <div class="controls-content">
-      <div class="filters-section">
-        <div class="filter-group">
-          <div class="filter-item">
-            <label class="filter-label">
-              <i class="fas fa-filter"></i>
-              Статус заявки
-            </label>
-            <div id="statusFilterContainer" class="filter-container">
-              <!-- Динамически заполняется JavaScript -->
-            </div>
+      <div class="controls-toolbar">
+        <div class="filter-item">
+          <label class="filter-label">
+            <i class="fas fa-filter"></i>
+            Статус заявки
+          </label>
+          <div id="statusFilterContainer" class="filter-container">
+            <!-- Динамически заполняется JavaScript -->
           </div>
         </div>
         <div class="search-section">
@@ -233,13 +231,17 @@
             <!-- Динамически заполняется JavaScript -->
           </div>
         </div>
-      </div>
-      <div class="display-options">
         <div class="display-item">
-          <label class="display-label">Показать:</label>
+          <label class="display-label">Показать</label>
           <div id="lengthContainer" class="length-container">
             <!-- Динамически заполняется JavaScript -->
           </div>
+        </div>
+        <div class="reset-filter-container">
+          <button id="reset-filter-btn" class="action-button secondary" type="button">
+            <i class="fas fa-times"></i>
+            <span>Сбросить фильтр</span>
+          </button>
         </div>
       </div>
     </div>
@@ -247,27 +249,32 @@
 
   <!-- Issues Table -->
   <section class="issues-section">
+    <div class="results-header">
+      <div class="results-meta">
+        <span class="results-kicker">Результаты</span>
+        <div id="infoContainer" class="results-count">
+          <!-- Динамически заполняется JavaScript -->
+        </div>
+      </div>
+      <div id="resultsToggleContainer" class="results-toggle-slot">
+        <!-- Динамически заполняется JavaScript -->
+      </div>
+    </div>
     <div class="table-container">
       <div class="table-wrapper">
         <table id="issue" class="issues-table">
           <thead>
             <tr>
-              <th class="column-id">
+              <th class="column-subject">
                 <div class="column-header">
-                  <i class="fas fa-hashtag"></i>
-                  <span>ID</span>
+                  <i class="fas fa-envelope"></i>
+                  <span>Заявка</span>
                 </div>
               </th>
               <th class="column-date">
                 <div class="column-header">
                   <i class="fas fa-calendar-alt"></i>
                   <span>Обновлено</span>
-                </div>
-              </th>
-              <th class="column-subject">
-                <div class="column-header">
-                  <i class="fas fa-envelope"></i>
-                  <span>Тема заявки</span>
                 </div>
               </th>
               <th class="column-status">
@@ -286,13 +293,12 @@
       </div>
     </div>
 
-    <!-- Table Footer with Info and Pagination -->
+    <div id="kanban-container" class="kanban-container">
+      <!-- Динамически заполняется JavaScript -->
+    </div>
+
+    <!-- Table Footer with Pagination -->
     <div class="table-footer">
-      <div class="table-info">
-        <div id="infoContainer">
-          <!-- Динамически заполняется JavaScript -->
-        </div>
-      </div>
       <div class="table-pagination">
         <div id="paginationContainer">
           <!-- Динамически заполняется JavaScript -->
@@ -305,16 +311,16 @@
 
 <!-- Theme-aware styles for Issues page -->
 <link rel="stylesheet"
-  href="{{ url_for('static', filename='css/issues_theme_fix.css') }}?v={{ cache_buster or '1' }}">
+  href="{{ url_for('static', filename='css/issues_theme_fix.css') }}?v={{ cache_buster or '20260311-my-issues-worklist' }}">
 
 <!-- Стили для блока "Активные заявки" -->
 <link rel="stylesheet"
-  href="{{ url_for('static', filename='css/my_issues_activity.css') }}?v={{ cache_buster or '1' }}">
+  href="{{ url_for('static', filename='css/my_issues_activity.css') }}?v={{ cache_buster or '20260311-my-issues-worklist' }}">
 
 <!-- Base Styles (Always Active) -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/issues_styles.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/issues_styles.css') }}?v={{ cache_buster or '20260311-my-issues-worklist' }}">
 <!-- Page-specific overrides (extracted from inline styles) -->
-<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/issues/issues_page_overrides.css') }}?v={{ cache_buster or '1' }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/pages/issues/issues_page_overrides.css') }}?v={{ cache_buster or '20260311-my-issues-worklist' }}">
 {% endblock %}{% block scripts %}
 <script>
   // DataStateManager - компонент для сохранения состояния данных
@@ -556,7 +562,39 @@
       });
     }
 
-    const ISSUE_TABLE_COLUMNS = $("#issue thead th").length || 5;
+    const ISSUE_TABLE_COLUMNS = $("#issue thead th").length || 4;
+    const ISSUE_COLUMN_INDEX = {
+      issue: 0,
+      updated: 1,
+      status: 2,
+      statusId: 3,
+    };
+    const ISSUE_OVERVIEW_GROUPS = [
+      {
+        key: "open",
+        title: "Открытые",
+        icon: "fa-folder-open",
+        emptyText: "Открытых заявок пока нет",
+      },
+      {
+        key: "progress",
+        title: "В работе",
+        icon: "fa-briefcase",
+        emptyText: "Заявок в работе пока нет",
+      },
+      {
+        key: "awaiting",
+        title: "Ожидают ответа",
+        icon: "fa-clock",
+        emptyText: "Нет заявок, ожидающих ответа",
+      },
+      {
+        key: "closed",
+        title: "Закрытые",
+        icon: "fa-check-circle",
+        emptyText: "Закрытых заявок пока нет",
+      },
+    ];
 
     function buildStateTableRow(contentHtml) {
       const contentCellIndex = Math.floor(ISSUE_TABLE_COLUMNS / 2);
@@ -600,6 +638,88 @@
 
     function setSessionJsonSafe(key, payload) {
       return setSessionValueSafe(key, JSON.stringify(payload));
+    }
+
+    function getIssueUrl(issueId) {
+      return `/my-issues/${issueId}`;
+    }
+
+    function isGroupedCardViewActive() {
+      return localStorage.getItem("issues_view_mode") === "kanban";
+    }
+
+    function getIssueOverviewMeta(issue) {
+      const statusName = issue && issue.status_name ? issue.status_name : "";
+      const statusId = Number(issue && issue.status_id) || 0;
+      const statusInfo = getStatusStyle(statusName);
+      let groupKey = "open";
+      let chipClass = statusInfo.trClass || "status-default";
+
+      if (
+        statusId === 9 ||
+        statusId === 13 ||
+        statusId === 15 ||
+        statusInfo.trClass === "status-clarification" ||
+        statusInfo.trClass === "status-approval"
+      ) {
+        groupKey = "awaiting";
+        if (chipClass === "status-default" || chipClass === "status-open") {
+          chipClass = "status-clarification";
+        }
+      } else if (statusInfo.trClass === "status-closed") {
+        groupKey = "closed";
+      } else if (statusInfo.trClass === "status-progress") {
+        groupKey = "progress";
+      }
+
+      const group =
+        ISSUE_OVERVIEW_GROUPS.find(function (item) {
+          return item.key === groupKey;
+        }) || ISSUE_OVERVIEW_GROUPS[0];
+
+      return {
+        group: group,
+        chipClass: chipClass,
+        tooltip: statusInfo.tooltip || statusName,
+      };
+    }
+
+    function getGroupedCardFilters() {
+      return {
+        status: ($("#status-filter").val() || "").trim(),
+        search: ($('#searchBoxContainer input[type="search"]').val() || "").trim().toLowerCase(),
+      };
+    }
+
+    function filterIssuesForGroupedCards(issues) {
+      const filters = getGroupedCardFilters();
+      return (Array.isArray(issues) ? issues : []).filter(function (issue) {
+        const statusName = String(issue && issue.status_name ? issue.status_name : "");
+        if (filters.status && statusName !== filters.status) {
+          return false;
+        }
+
+        if (!filters.search) {
+          return true;
+        }
+
+        const searchableText = [
+          issue && issue.id ? `#${issue.id}` : "",
+          issue && issue.subject ? issue.subject : "",
+          statusName,
+          formatDate((issue && issue.updated_on) || (issue && issue.created_on) || ""),
+        ]
+          .join(" ")
+          .toLowerCase();
+
+        return searchableText.includes(filters.search);
+      });
+    }
+
+    function updateGroupedCardsIfVisible() {
+      if (isGroupedCardViewActive() && $("#kanban-container").is(":visible")) {
+        window.populateKanbanBoard();
+      }
     }
 
     function debounce(fn, delay = 120) {
@@ -762,9 +882,9 @@
     }
 
     function ensureViewToggleControls() {
-      if ($(".view-toggle-wrapper").length === 0) {
+      if ($("#resultsToggleContainer .view-toggle-wrapper").length === 0) {
         const viewToggleHtml = `
-          <div class="view-toggle-wrapper" style="margin: 20px 0; text-align: center;">
+          <div class="view-toggle-wrapper">
             <div class="view-toggle-buttons">
               <button class="view-toggle-btn active" data-view="list" title="Режим списка">
                 <i class="fas fa-list"></i>
@@ -777,7 +897,7 @@
             </div>
           </div>
         `;
-        $(".issues-section .table-container").before(viewToggleHtml);
+        $("#resultsToggleContainer").html(viewToggleHtml);
       }
 
       $(".view-toggle-btn")
@@ -877,16 +997,29 @@
           },
           columns: [
             {
-              data: "id",
+              data: "subject",
               render: function (data, type, row) {
                 if (type === "sort" || type === "type") {
-                  return Number(data) || 0;
+                  return data || "";
                 }
+                if (type === "filter") {
+                  return `${data || ""} #${row.id || ""}`;
+                }
+                const safeSubject = escapeHtml(data || "Без темы");
+                const safeId = escapeHtml(String(row.id || ""));
+                const issueHref = getIssueUrl(row.id);
                 return `
-                  <a href="/my-issues/${row.id}" class="issue-id-link" title="Посмотреть детали заявки">
-                    <i class="fas fa-external-link-alt"></i>
-                    <span>#${escapeHtml(String(row.id || ""))}</span>
-                  </a>
+                  <div class="issue-primary-cell">
+                    <div class="issue-primary-top">
+                      <a href="${issueHref}" class="issue-id-chip" title="Открыть заявку #${safeId}">
+                        <span>#${safeId}</span>
+                      </a>
+                    </div>
+                    <a href="${issueHref}" class="issue-primary-title issue-subject-link" title="${safeSubject}">
+                      <span>${safeSubject}</span>
+                      <i class="fas fa-external-link-alt"></i>
+                    </a>
+                  </div>
                 `;
               },
             },
@@ -902,21 +1035,6 @@
                 return `<span title="${escapeHtml(titleText)}">${escapeHtml(
                   formatDate(data)
                 )}</span>`;
-              },
-            },
-            {
-              data: "subject",
-              render: function (data, type, row) {
-                if (type === "sort" || type === "type" || type === "filter") {
-                  return data || "";
-                }
-                const safeSubject = escapeHtml(data || "");
-                return `
-                  <a href="/my-issues/${row.id}" class="issue-subject-link issue-subject" title="${safeSubject}">
-                    <i class="fas fa-external-link-alt"></i>
-                    <span>${safeSubject}</span>
-                  </a>
-                `;
               },
             },
             {
@@ -944,10 +1062,9 @@
             },
           ],
           columnDefs: [
-            { targets: 0, width: "120px", className: "col-id nowrap-cell" },
-            { targets: 1, width: "180px", className: "col-date nowrap-cell" },
-            { targets: 2, className: "col-subject" },
-            { targets: 3, width: "150px", className: "col-status nowrap-cell" },
+            { targets: ISSUE_COLUMN_INDEX.issue, className: "col-subject" },
+            { targets: ISSUE_COLUMN_INDEX.updated, width: "184px", className: "col-date nowrap-cell" },
+            { targets: ISSUE_COLUMN_INDEX.status, width: "160px", className: "col-status nowrap-cell" },
           ],
           createdRow: function (row, data) {
             const statusInfo = getStatusStyle(data.status_name || "");
@@ -974,6 +1091,14 @@
               "placeholder",
               "Поиск по заявкам..."
             );
+            $('#searchBoxContainer input[type="search"]')
+              .off("input.groupedCards")
+              .on(
+                "input.groupedCards",
+                debounce(function () {
+                  updateGroupedCardsIfVisible();
+                }, 120)
+              );
 
             $(".dataTables_length").detach().appendTo("#lengthContainer");
             $("#lengthContainer label")
@@ -982,6 +1107,7 @@
                 return this.nodeType === 3;
               })
               .remove();
+            $("#lengthContainer select").attr("aria-label", "Количество заявок на странице");
 
             $(".dataTables_info").detach().appendTo("#infoContainer");
             $(".dataTables_paginate").detach().appendTo("#paginationContainer");
@@ -1004,7 +1130,8 @@
           .off("change")
           .on("change", function () {
             let selectedStatus = $(this).val();
-            table.column(3).search(selectedStatus).draw();
+            table.column(ISSUE_COLUMN_INDEX.status).search(selectedStatus).draw();
+            updateGroupedCardsIfVisible();
 
             if (scheduleTableStateSave) {
               scheduleTableStateSave();
@@ -1015,6 +1142,10 @@
           if (scheduleTableStateSave) {
             scheduleTableStateSave();
           }
+        });
+
+        table.on("draw.dt", function () {
+          updateGroupedCardsIfVisible();
         });
 
         if (window.dataStateManager && savedState) {
@@ -1263,9 +1394,9 @@
         // Очищаем предыдущие фильтры
         dt.search("").columns().search("").draw();
 
-        // Применяем фильтр по статусу (колонка 3 - статус)
+        // Применяем фильтр по статусу
         if (statusText && statusText !== "Все") {
-          dt.column(3).search(statusText).draw();
+          dt.column(ISSUE_COLUMN_INDEX.status).search(statusText).draw();
         }
 
         // Сохраняем состояние
@@ -1274,6 +1405,8 @@
         } else if (window.dataStateManager) {
           window.dataStateManager.saveTableState();
         }
+
+        updateGroupedCardsIfVisible();
       }
     }
 
@@ -1283,6 +1416,9 @@
         ? window.dataStateManager.getDataTable()
         : null;
       if (dt && $.fn.DataTable.isDataTable("#issue")) {
+        $("#status-filter").val("");
+        $('#searchBoxContainer input[type="search"]').val("");
+
         // Очищаем все фильтры
         dt.search("").columns().search("").draw();
 
@@ -1295,6 +1431,8 @@
         } else if (window.dataStateManager) {
           window.dataStateManager.saveTableState();
         }
+
+        updateGroupedCardsIfVisible();
       }
     }
 
@@ -1360,345 +1498,228 @@
       return kanbanLoadPromise;
     }
 
-    // Функция показа режима списка
-    window.showListView = function () {
-      $('.issues-section .table-container').show();
-      $('#kanban-container').hide();
-
-      // Показываем пагинацию в режиме списка
-      $('.table-footer').show();
-
+    function ensureGroupedCardContainer() {
+      const $container = $("#kanban-container");
+      if ($container.find(".kanban-feedback").length === 0) {
+        $container.html(`
+          <div class="kanban-feedback" hidden></div>
+          <div class="issue-groups"></div>
+        `);
+      }
+      return $container;
     }
 
-    // Функция показа режима канбан
-    window.showKanbanView = function () {
-      $('.issues-section .table-container').hide();
-
-      // Создаем контейнер для канбан-доски если его нет
-      if ($('#kanban-container').length === 0) {
-        const kanbanHtml = `
-          <div id="kanban-container" class="kanban-container">
-            <div class="kanban-board">
-              <div class="kanban-column column-open" data-status="open">
-                <div class="kanban-header header-open">
-                  <div class="header-content">
-                    <div class="header-icon">
-                      <i class="fas fa-folder-open"></i>
+    function ensureGroupedCardSections() {
+      const $container = ensureGroupedCardContainer();
+      const $groups = $container.find(".issue-groups");
+      if ($groups.children().length === 0) {
+        $groups.html(
+          ISSUE_OVERVIEW_GROUPS.map(function (group) {
+            return `
+              <section class="issue-group issue-group-${group.key}" data-group="${group.key}">
+                <div class="issue-group-header">
+                  <div class="issue-group-title-wrap">
+                    <div class="issue-group-icon">
+                      <i class="fas ${group.icon}"></i>
                     </div>
-                    <h3>Открытые</h3>
-                  </div>
-                  <span class="kanban-count count-open">0</span>
-                </div>
-                <div class="kanban-cards" id="kanban-open"></div>
-              </div>
-              <div class="kanban-column column-progress" data-status="progress">
-                <div class="kanban-header header-progress">
-                  <div class="header-content">
-                    <div class="header-icon">
-                      <i class="fas fa-cogs fa-spin"></i>
+                    <div class="issue-group-title-text">
+                      <h3>${group.title}</h3>
                     </div>
-                    <h3>В работе</h3>
                   </div>
-                  <span class="kanban-count count-progress">0</span>
+                  <span class="issue-group-count">0</span>
                 </div>
-                <div class="kanban-cards" id="kanban-progress"></div>
-              </div>
-              <div class="kanban-column column-awaiting" data-status="awaiting">
-                <div class="kanban-header header-awaiting">
-                  <div class="header-content">
-                    <div class="header-icon">
-                      <i class="fas fa-clock"></i>
-                    </div>
-                    <h3>Ожидают ответа</h3>
-                  </div>
-                  <span class="kanban-count count-awaiting">0</span>
-                </div>
-                <div class="kanban-cards" id="kanban-awaiting"></div>
-              </div>
-              <div class="kanban-column column-closed" data-status="closed">
-                <div class="kanban-header header-closed">
-                  <div class="header-content">
-                    <div class="header-icon">
-                      <i class="fas fa-check-circle"></i>
-                    </div>
-                    <h3>Закрытые</h3>
-                  </div>
-                  <span class="kanban-count count-closed">0</span>
-                </div>
-                <div class="kanban-cards" id="kanban-closed"></div>
-              </div>
-            </div>
-          </div>
-        `;
-        $('.issues-section').append(kanbanHtml);
+                <div class="issue-group-grid" id="issue-group-${group.key}"></div>
+              </section>
+            `;
+          }).join("")
+        );
       }
+      return $groups;
+    }
 
-      $('#kanban-container').show();
+    function setGroupedCardFeedbackState(iconClass, message, modifierClass) {
+      const $container = ensureGroupedCardContainer();
+      const $feedback = $container.find(".kanban-feedback");
+      const feedbackClass = ["kanban-feedback", modifierClass || ""].join(" ").trim();
 
-      // Скрываем пагинацию в режиме канбан
-      $('.table-footer').hide();
+      $feedback
+        .attr("class", feedbackClass)
+        .html(`
+          <div class="empty-kanban-state">
+            <i class="fas ${iconClass}"></i>
+            <span>${escapeHtml(message)}</span>
+          </div>
+        `)
+        .prop("hidden", false);
 
-      $('.kanban-cards').html(`
-        <div class="empty-kanban-state">
-          <i class="fas fa-spinner fa-spin"></i>
-          <span>Загрузка карточек...</span>
-        </div>
-      `);
+      $container.find(".issue-groups").hide();
+    }
+
+    function clearGroupedCardFeedbackState() {
+      const $container = ensureGroupedCardContainer();
+      $container.find(".kanban-feedback").prop("hidden", true).empty();
+      $container.find(".issue-groups").show();
+    }
+
+    function buildIssueOverviewCardElement(issueData) {
+      const overviewMeta = getIssueOverviewMeta({
+        status_name: issueData.statusName,
+        status_id: issueData.statusId,
+      });
+      const $card = $("<a>")
+        .addClass("kanban-card modern-card")
+        .attr("href", issueData.href || getIssueUrl(issueData.issueId))
+        .attr("data-issue-id", issueData.issueId || "")
+        .attr("data-status-group", overviewMeta.group.key)
+        .attr("title", `Открыть заявку #${issueData.issueId || ""}`);
+
+      const $header = $("<div>").addClass("kanban-card-header");
+      $header.append(
+        $("<span>").addClass("card-id-badge").text(`#${issueData.issueId || ""}`),
+        $("<span>").addClass("card-date").append(
+          $("<i>").addClass("far fa-calendar-alt"),
+          $("<span>").text(issueData.displayDate || "Нет даты")
+        )
+      );
+
+      const $body = $("<div>").addClass("kanban-card-body");
+      $body.append($("<div>").addClass("kanban-card-title").text(issueData.subject || "Без темы"));
+
+      const $footer = $("<div>").addClass("kanban-card-footer");
+      $footer.append(
+        $("<div>")
+          .addClass(`kanban-card-status ${overviewMeta.chipClass || "status-default"}`)
+          .attr("title", overviewMeta.tooltip || issueData.statusName || "")
+          .append($("<span>").text(issueData.statusName || "Без статуса")),
+        $("<div>")
+          .addClass("card-action-hint")
+          .append($("<i>").addClass("fas fa-external-link-alt"))
+      );
+
+      $card.append($header, $body, $footer);
+      return $card;
+    }
+
+    // Функция показа режима списка
+    window.showListView = function () {
+      $(".issues-section .table-container").show();
+      $("#kanban-container").hide();
+      $(".table-footer").show();
+    };
+
+    // Функция показа режима карточек
+    window.showKanbanView = function () {
+      $(".issues-section .table-container").hide();
+      $(".table-footer").hide();
+      ensureGroupedCardSections();
+      $("#kanban-container").show();
+      setGroupedCardFeedbackState("fa-spinner fa-spin", "Загрузка карточек...", "is-loading");
 
       loadIssuesForKanban()
         .then(() => {
-          populateKanbanBoard();
+          window.populateKanbanBoard();
         })
-        .catch((error) => {
-          $("#kanban-open").html(`
-            <div class="empty-kanban-state">
-              <i class="fas fa-exclamation-triangle"></i>
-              <span>Не удалось загрузить данные канбана</span>
-            </div>
-          `);
-          $("#kanban-progress, #kanban-awaiting, #kanban-closed").empty();
+        .catch(() => {
+          setGroupedCardFeedbackState(
+            "fa-exclamation-triangle",
+            "Не удалось загрузить карточки заявок",
+            "is-error"
+          );
         });
-    }
+    };
 
-    // Функция заполнения канбан-доски
+    // Функция заполнения grouped card overview
     window.populateKanbanBoard = function () {
-      // Очищаем все колонки
-      $('.kanban-cards').empty();
+      const $groups = ensureGroupedCardSections();
+      const issues = filterIssuesForGroupedCards(window.issuesData || []);
+      const groupedIssues = {
+        open: [],
+        progress: [],
+        awaiting: [],
+        closed: [],
+      };
 
-      // 🔧 ИСПРАВЛЕНИЕ: Используем те же данные, что и статистика!
-      const issues = window.issuesData || [];
+      issues.forEach(function (issue) {
+        const overviewMeta = getIssueOverviewMeta(issue);
+        if (!groupedIssues[overviewMeta.group.key]) {
+          groupedIssues[overviewMeta.group.key] = [];
+        }
+        groupedIssues[overviewMeta.group.key].push(issue);
+      });
 
-      if (issues.length === 0) {
+      let visibleGroupCount = 0;
+      let renderedCardCount = 0;
+
+      ISSUE_OVERVIEW_GROUPS.forEach(function (group) {
+        const groupIssues = groupedIssues[group.key] || [];
+        const $group = $groups.find(`.issue-group[data-group="${group.key}"]`);
+        const $grid = $group.find(".issue-group-grid");
+        const $count = $group.find(".issue-group-count");
+
+        $grid.empty();
+        $count.text(groupIssues.length);
+
+        if (groupIssues.length === 0) {
+          $group.hide();
+          return;
+        }
+
+        visibleGroupCount += 1;
+        renderedCardCount += groupIssues.length;
+        $group.show();
+        groupIssues.forEach(function (issue) {
+          $grid.append(window.createKanbanCardFromData(issue));
+        });
+      });
+
+      if (renderedCardCount === 0 || visibleGroupCount === 0) {
+        const activeFilters = getGroupedCardFilters();
+        const emptyMessage =
+          activeFilters.status || activeFilters.search
+            ? "По текущим фильтрам заявки не найдены"
+            : "Заявок для отображения пока нет";
+        setGroupedCardFeedbackState("fa-inbox", emptyMessage, "is-empty");
         return;
       }
 
-      // Счетчики для отладки
-      let counters = {
-        open: 0,
-        progress: 0,
-        awaiting: 0,
-        closed: 0
-      };
+      clearGroupedCardFeedbackState();
+    };
 
-      // Обрабатываем каждую заявку
-      issues.forEach(function (issue) {
-        const issueId = issue.id;
-        const statusName = issue.status_name;
-        const statusId = parseInt(issue.status_id);
-
-        // Определяем колонку по статусу (ТОЧНО ТА ЖЕ ЛОГИКА, что и в статистике!)
-        let columnId = 'kanban-open';
-        let category = 'open';
-        const normalizedStatus = String(statusName).toLowerCase();
-
-        // Проверяем по status_id (приоритет!)
-        if (statusId === 9 || statusId === 13 || statusId === 15) {
-          columnId = 'kanban-awaiting';
-          category = 'awaiting';
-        } else if (
-          normalizedStatus.includes('закрыта') ||
-          normalizedStatus.includes('отклонена') ||
-          normalizedStatus.includes('перенаправлена') ||
-          normalizedStatus.includes('closed') ||
-          normalizedStatus.includes('rejected') ||
-          normalizedStatus.includes('redirected')
-        ) {
-          columnId = 'kanban-closed';
-          category = 'closed';
-        } else if (
-          normalizedStatus.includes('в работе') ||
-          normalizedStatus.includes('приостановлена') ||
-          normalizedStatus.includes('на тестировании') ||
-          normalizedStatus.includes('в очереди') ||
-          normalizedStatus.includes('заморожена') ||
-          normalizedStatus.includes('in progress')
-        ) {
-          columnId = 'kanban-progress';
-          category = 'progress';
-        } else if (
-          normalizedStatus.includes('открыта') ||
-          normalizedStatus.includes('выполнена') ||
-          normalizedStatus.includes('new') ||
-          normalizedStatus.includes('open') ||
-          normalizedStatus.includes('pending') ||
-          normalizedStatus.includes('resolved') ||
-          normalizedStatus.includes('создана') ||
-          normalizedStatus.includes('зарегистрирована')
-        ) {
-          columnId = 'kanban-open';
-          category = 'open';
-        }
-
-        counters[category]++;
-
-        // Создаем карточку напрямую из данных заявки
-        const card = createKanbanCardFromData(issue);
-        $(`#${columnId}`).append(card);
-      });
-
-      // Обновляем счетчики
-      $('.kanban-column').each(function () {
-        const count = $(this).find('.kanban-card').length;
-        $(this).find('.kanban-count').text(count);
-      });
-    }
-
-    // 🔧 НОВАЯ ФУНКЦИЯ: Создание карточки напрямую из данных заявки
     window.createKanbanCardFromData = function (issue) {
-      const issueId = issue.id;
-      const statusId = parseInt(issue.status_id);
-      const statusName = issue.status_name;
-      const issueDate = issue.created_on || issue.updated_on || '';
-      const issueSubject = issue.subject || 'Без темы';
-
-      // Определяем цвет статуса
-      let statusColor = 'status-default';
-      let statusIcon = 'fa-circle';
-
-      if (statusId === 9 || statusId === 13 || statusId === 15) {
-        statusColor = 'status-awaiting';
-        statusIcon = 'fa-clock';
-      } else if (statusName.toLowerCase().includes('закрыта')) {
-        statusColor = 'status-closed';
-        statusIcon = 'fa-check-circle';
-      } else if (statusName.toLowerCase().includes('в работе')) {
-        statusColor = 'status-progress';
-        statusIcon = 'fa-cog fa-spin';
-      } else if (statusName.toLowerCase().includes('открыта') || statusName.toLowerCase().includes('выполнена')) {
-        statusColor = 'status-open';
-        statusIcon = 'fa-folder-open';
-      }
-
-      // Создаем карточку
-      const $card = $('<div>')
-        .addClass('kanban-card modern-card')
-        .attr('data-issue-id', issueId)
-        .css('cursor', 'pointer')
-        .on('click', function () {
-          window.location.href = '/my-issues/' + issueId;
-        });
-
-      // Заголовок карточки
-      const $header = $('<div>').addClass('kanban-card-header');
-      $header.append(
-        $('<div>').addClass('card-id-badge').append(
-          $('<i>').addClass('fas fa-hashtag'),
-          $('<span>').text(issueId)
+      return buildIssueOverviewCardElement({
+        issueId: issue && issue.id ? issue.id : "",
+        subject: issue && issue.subject ? issue.subject : "Без темы",
+        statusName: issue && issue.status_name ? issue.status_name : "Без статуса",
+        statusId: issue && issue.status_id ? issue.status_id : 0,
+        displayDate: formatDate(
+          (issue && issue.updated_on) || (issue && issue.created_on) || ""
         ),
-        $('<div>').addClass('card-date').append(
-          $('<i>').addClass('far fa-calendar-alt'),
-          $('<span>').text(issueDate)
-        )
-      );
+        href: getIssueUrl(issue && issue.id ? issue.id : ""),
+      });
+    };
 
-      // Тело карточки
-      const $body = $('<div>').addClass('kanban-card-body');
-      $body.append(
-        $('<div>').addClass('kanban-card-title').text(issueSubject)
-      );
-
-      // Подвал карточки
-      const $footer = $('<div>').addClass('kanban-card-footer');
-      $footer.append(
-        $('<div>').addClass('kanban-card-status ' + statusColor).append(
-          $('<i>').addClass('fas ' + statusIcon),
-          $('<span>').text(statusName)
-        ),
-        $('<div>').addClass('card-action-hint').append(
-          $('<i>').addClass('fas fa-external-link-alt')
-        )
-      );
-
-      $card.append($header, $body, $footer);
-      return $card;
-    }
-
-    // Функция создания карточки канбан из строки таблицы (старая, оставляем для совместимости)
+    // Функция создания карточки из строки таблицы (оставляем для совместимости)
     window.createKanbanCard = function ($row) {
-      // Получаем данные из data-атрибутов строки
-      const issueId = $row.data('issue-id');
-      const statusId = parseInt($row.data('status-id'));
-      const statusName = $row.data('status-name');
+      return buildIssueOverviewCardElement({
+        issueId: $row.data("issue-id") || "",
+        subject:
+          $row.find(".issue-primary-title span").text().trim() ||
+          $row.find("td").eq(ISSUE_COLUMN_INDEX.issue).text().trim() ||
+          "Без темы",
+        statusName: $row.data("status-name") || "Без статуса",
+        statusId: Number($row.data("status-id")) || 0,
+        displayDate:
+          $row.find("td").eq(ISSUE_COLUMN_INDEX.updated).text().trim() || "Нет даты",
+        href: getIssueUrl($row.data("issue-id") || ""),
+      });
+    };
 
-      // Получаем текст из ячеек (уже экранированный браузером)
-      const issueDate = $row.find('td').eq(1).text().trim();
-      const issueSubject = $row.find('td').eq(2).text().trim();
-
-      // Определяем цвет статуса
-      let statusColor = 'status-default';
-      let statusIcon = 'fa-circle';
-
-      if (statusId === 9 || statusId === 13 || statusId === 15) {
-        statusColor = 'status-awaiting';
-        statusIcon = 'fa-clock';
-      } else if (statusName.toLowerCase().includes('закрыта')) {
-        statusColor = 'status-closed';
-        statusIcon = 'fa-check-circle';
-      } else if (statusName.toLowerCase().includes('в работе')) {
-        statusColor = 'status-progress';
-        statusIcon = 'fa-cog fa-spin';
-      } else if (statusName.toLowerCase().includes('открыта')) {
-        statusColor = 'status-open';
-        statusIcon = 'fa-folder-open';
-      }
-
-      // Создаем карточку с помощью jQuery для безопасного экранирования
-      const $card = $('<div>')
-        .addClass('kanban-card modern-card')
-        .attr('data-issue-id', issueId)
-        .css('cursor', 'pointer')
-        .on('click', function () {
-          window.location.href = '/my-issues/' + issueId;
-        });
-
-      // Заголовок карточки
-      const $header = $('<div>').addClass('kanban-card-header');
-      $header.append(
-        $('<div>').addClass('card-id-badge').append(
-          $('<i>').addClass('fas fa-hashtag'),
-          $('<span>').text(issueId)
-        ),
-        $('<div>').addClass('card-date').append(
-          $('<i>').addClass('far fa-calendar-alt'),
-          $('<span>').text(issueDate)
-        )
-      );
-
-      // Тело карточки
-      const $body = $('<div>').addClass('kanban-card-body');
-      $body.append(
-        $('<div>').addClass('kanban-card-title').text(issueSubject)
-      );
-
-      // Подвал карточки
-      const $footer = $('<div>').addClass('kanban-card-footer');
-      $footer.append(
-        $('<div>').addClass('kanban-card-status ' + statusColor).append(
-          $('<i>').addClass('fas ' + statusIcon),
-          $('<span>').text(statusName)
-        ),
-        $('<div>').addClass('card-action-hint').append(
-          $('<i>').addClass('fas fa-external-link-alt')
-        )
-      );
-
-      $card.append($header, $body, $footer);
-      return $card;
-    }
-
-    // Добавляем кнопку сброса фильтра в DOM
     $(document).ready(function () {
-      // Добавляем кнопку сброса фильтра в панель управления
-      if ($("#reset-filter-btn").length === 0) {
-        $(".controls-content").append(
-          '<div class="reset-filter-container"><button id="reset-filter-btn" class="action-button secondary"><i class="fas fa-times"></i> Сбросить фильтр</button></div>'
-        );
-
-        // Обработчик клика по кнопке сброса
-        $("#reset-filter-btn").on("click", function () {
+      $("#reset-filter-btn")
+        .off("click")
+        .on("click", function () {
           resetStatusFilter();
         });
-      }
     });
 
     // Функции для управления таблицей при переключении темы
