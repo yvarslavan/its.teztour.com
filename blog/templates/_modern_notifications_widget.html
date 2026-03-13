@@ -1802,6 +1802,61 @@ span.restore-button,
 try {
     console.log('[ModernWidget] 🚀 Инициализация виджета уведомлений...');
 
+    const notificationsWidgetStorageScope = 'user-{{ current_user.id }}';
+    const notificationsWidgetScopedKeys = new Set([
+        'notificationsMinimized',
+        'notificationsWidgetClosed',
+        'notificationsWidgetClosedByUser',
+        'notificationsWidgetDisabled',
+        'notificationSoundDisabled',
+        'seenNotificationIds',
+        'lastNotificationCheck',
+        'lastSoundPlay',
+    ]);
+    const notificationsWidgetBrowserStorage = window.localStorage;
+    const notificationsWidgetStorageKey = (key) => (
+        notificationsWidgetScopedKeys.has(key)
+            ? `${key}::${notificationsWidgetStorageScope}`
+            : key
+    );
+
+    const cleanupLegacyNotificationsWidgetStorage = () => {
+        try {
+            notificationsWidgetScopedKeys.forEach((key) => {
+                const scopedKey = notificationsWidgetStorageKey(key);
+                if (
+                    notificationsWidgetBrowserStorage.getItem(scopedKey) === null &&
+                    notificationsWidgetBrowserStorage.getItem(key) !== null
+                ) {
+                    notificationsWidgetBrowserStorage.removeItem(key);
+                }
+            });
+        } catch (error) {
+            console.warn('[ModernWidget] ⚠️ Не удалось очистить legacy storage виджета:', error);
+        }
+    };
+
+    cleanupLegacyNotificationsWidgetStorage();
+
+    const localStorage = {
+        getItem(key) {
+            return notificationsWidgetBrowserStorage.getItem(
+                notificationsWidgetStorageKey(key)
+            );
+        },
+        setItem(key, value) {
+            return notificationsWidgetBrowserStorage.setItem(
+                notificationsWidgetStorageKey(key),
+                value
+            );
+        },
+        removeItem(key) {
+            return notificationsWidgetBrowserStorage.removeItem(
+                notificationsWidgetStorageKey(key)
+            );
+        },
+    };
+
     class ModernNotificationsWidget {
         constructor() {
             // Проверяем, не инициализирован ли уже виджет

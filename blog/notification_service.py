@@ -976,6 +976,7 @@ class NotificationService:
                         "issue_id": notification.issue_id,
                         "old_status": notification.old_status,
                         "new_status": notification.new_status,
+                        "old_subj": notification.old_subj,
                         "date_created": (
                             notification.date_created.isoformat()
                             if notification.date_created
@@ -1102,6 +1103,7 @@ class NotificationService:
                         "issue_id": notification.issue_id,
                         "old_status": notification.old_status,
                         "new_status": notification.new_status,
+                        "old_subj": notification.old_subj,
                         "date_created": (
                             notification.date_created.isoformat()
                             if notification.date_created
