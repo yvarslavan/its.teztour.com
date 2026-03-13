@@ -323,12 +323,46 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/pages/issues/issues_page_overrides.css') }}?v={{ cache_buster or '20260311-my-issues-worklist' }}">
 {% endblock %}{% block scripts %}
 <script>
+  const ISSUES_CACHE_SCOPE = "user-{{ current_user.id }}";
+  const ISSUES_VIEW_MODE_KEY = `issues_view_mode::${ISSUES_CACHE_SCOPE}`;
+
+  function getScopedStorageKey(baseKey) {
+    return `${baseKey}::${ISSUES_CACHE_SCOPE}`;
+  }
+
+  function cleanupLegacyIssueCaches() {
+    try {
+      [
+        "issuesPageState",
+        "issues_view_mode",
+        "my_issues_table_state_v2",
+        "my_issues_summary_v1",
+        "my_issues_summary_time_v1",
+      ].forEach((legacyKey) => {
+        localStorage.removeItem(legacyKey);
+        sessionStorage.removeItem(legacyKey);
+      });
+
+      const legacyKanbanPrefix = "my_issues_kanban_overview_v2::";
+      Object.keys(sessionStorage).forEach((storageKey) => {
+        if (
+          storageKey.startsWith(legacyKanbanPrefix) &&
+          !storageKey.includes(ISSUES_CACHE_SCOPE)
+        ) {
+          sessionStorage.removeItem(storageKey);
+        }
+      });
+    } catch (error) {
+      // Игнорируем ошибки доступа к storage, чтобы не ломать страницу.
+    }
+  }
+
   // DataStateManager - компонент для сохранения состояния данных
   class DataStateManager {
     constructor() {
       this.tableState = {};
       this.statsState = {};
-      this.storageKey = "issuesPageState";
+      this.storageKey = getScopedStorageKey("issuesPageState");
       this.maxAgeMs = 60 * 60 * 1000;
     }
 
@@ -475,6 +509,7 @@
       window.dataStateManager = new DataStateManager();
 
       // Загружаем сохраненное состояние
+      cleanupLegacyIssueCaches();
       window.dataStateManager.loadPersistedState();
 
       // Показываем спиннер перед отправкой запроса
@@ -645,7 +680,7 @@
     }
 
     function isGroupedCardViewActive() {
-      return localStorage.getItem("issues_view_mode") === "kanban";
+      return localStorage.getItem(ISSUES_VIEW_MODE_KEY) === "kanban";
     }
 
     function getIssueOverviewMeta(issue) {
@@ -691,6 +726,30 @@
       };
     }
 
+    function getKanbanFiltersCacheKey(filters) {
+      return `${getScopedStorageKey("my_issues_kanban_overview_v2")}::${encodeURIComponent(
+        JSON.stringify({
+          status: filters.status || "",
+          search: filters.search || "",
+        })
+      )}`;
+    }
+
+    function buildKanbanOverviewUrl(filters) {
+      const params = new URLSearchParams();
+      if (filters.status) {
+        params.set("status", filters.status);
+      }
+      if (filters.search) {
+        params.set("search", filters.search);
+      }
+
+      const queryString = params.toString();
+      return queryString
+        ? `/get-my-issues-overview?${queryString}`
+        : "/get-my-issues-overview";
+    }
+
     function filterIssuesForGroupedCards(issues) {
       const filters = getGroupedCardFilters();
       return (Array.isArray(issues) ? issues : []).filter(function (issue) {
@@ -718,7 +777,20 @@
 
     function updateGroupedCardsIfVisible() {
       if (isGroupedCardViewActive() && $("#kanban-container").is(":visible")) {
-        window.populateKanbanBoard();
+        loadIssuesForKanban()
+          .then(() => {
+            window.populateKanbanBoard();
+          })
+          .catch((error) => {
+            if (error && error.name === "AbortError") {
+              return;
+            }
+            setGroupedCardFeedbackState(
+              "fa-exclamation-triangle",
+              "Не удалось загрузить карточки заявок",
+              "is-error"
+            );
+          });
       }
     }
 
@@ -746,9 +818,9 @@
 
     // Инициализация summary + server-side DataTable
     function initializeTableData() {
-      const stateKey = "my_issues_table_state_v2";
-      const summaryCacheKey = "my_issues_summary_v1";
-      const summaryCacheTimeKey = "my_issues_summary_time_v1";
+      const stateKey = getScopedStorageKey("my_issues_table_state_v2");
+      const summaryCacheKey = getScopedStorageKey("my_issues_summary_v1");
+      const summaryCacheTimeKey = getScopedStorageKey("my_issues_summary_time_v1");
       const summaryCacheExpiry = 2 * 60 * 1000; // 2 минуты
       const urlParams = new URLSearchParams(window.location.search);
       const fromIssueId = urlParams.get("from_issue");
@@ -785,8 +857,11 @@
           withCredentials: true,
         },
         success: function (response) {
-          setSessionJsonSafe("my_issues_summary_v1", response);
-          setSessionValueSafe("my_issues_summary_time_v1", Date.now().toString());
+          setSessionJsonSafe(getScopedStorageKey("my_issues_summary_v1"), response);
+          setSessionValueSafe(
+            getScopedStorageKey("my_issues_summary_time_v1"),
+            Date.now().toString()
+          );
           processSummaryData(response, savedState, fromIssueId);
         },
         error: function (xhr, status, error) {
@@ -906,7 +981,7 @@
           const viewMode = $(this).data("view");
           $(".view-toggle-btn").removeClass("active");
           $(this).addClass("active");
-          localStorage.setItem("issues_view_mode", viewMode);
+          localStorage.setItem(ISSUES_VIEW_MODE_KEY, viewMode);
           if (viewMode === "kanban") {
             window.showKanbanView();
           } else {
@@ -914,7 +989,7 @@
           }
         });
 
-      const savedViewMode = localStorage.getItem("issues_view_mode");
+      const savedViewMode = localStorage.getItem(ISSUES_VIEW_MODE_KEY);
       if (savedViewMode === "kanban") {
         $(".view-toggle-btn[data-view='kanban']").addClass("active");
         $(".view-toggle-btn[data-view='list']").removeClass("active");
@@ -1113,7 +1188,7 @@
             $(".dataTables_paginate").detach().appendTo("#paginationContainer");
             ensureViewToggleControls();
 
-            const savedViewMode = localStorage.getItem("issues_view_mode");
+            const savedViewMode = localStorage.getItem(ISSUES_VIEW_MODE_KEY);
             if (savedViewMode === "kanban") {
               window.showKanbanView();
             } else {
@@ -1437,15 +1512,19 @@
     }
 
     let kanbanLoadPromise = null;
+    let kanbanLoadKey = null;
+    let kanbanAbortController = null;
     async function loadIssuesForKanban(forceReload = false) {
-      const cacheKey = "my_issues_kanban_data_v1";
-      const cacheTimeKey = "my_issues_kanban_time_v1";
+      const filters = getGroupedCardFilters();
+      const cacheKey = getKanbanFiltersCacheKey(filters);
+      const cacheTimeKey = `${cacheKey}::time`;
       const cacheTtl = 5 * 60 * 1000;
+      const requestUrl = buildKanbanOverviewUrl(filters);
 
       if (
         !forceReload &&
         Array.isArray(window.issuesData) &&
-        window.issuesData.length > 0
+        window.issuesDataFiltersKey === cacheKey
       ) {
         return window.issuesData;
       }
@@ -1461,6 +1540,7 @@
           const parsedCachedData = parseJsonSafe(cachedData);
           if (Array.isArray(parsedCachedData)) {
             window.issuesData = parsedCachedData;
+            window.issuesDataFiltersKey = cacheKey;
             return window.issuesData;
           }
           sessionStorage.removeItem(cacheKey);
@@ -1468,16 +1548,23 @@
         }
       }
 
-      if (kanbanLoadPromise) {
+      if (kanbanLoadPromise && kanbanLoadKey === cacheKey) {
         return kanbanLoadPromise;
       }
 
-      kanbanLoadPromise = fetch("/get-my-issues", {
+      if (kanbanAbortController && kanbanLoadKey !== cacheKey) {
+        kanbanAbortController.abort();
+      }
+
+      kanbanLoadKey = cacheKey;
+      kanbanAbortController = new AbortController();
+      kanbanLoadPromise = fetch(requestUrl, {
         method: "GET",
         credentials: "include",
         headers: {
           "X-Requested-With": "XMLHttpRequest",
         },
+        signal: kanbanAbortController.signal,
       })
         .then((response) => {
           if (!response.ok) {
@@ -1487,12 +1574,16 @@
         })
         .then((payload) => {
           window.issuesData = Array.isArray(payload.issues) ? payload.issues : [];
+          window.issuesDataFiltersKey = cacheKey;
           setSessionJsonSafe(cacheKey, window.issuesData);
           setSessionValueSafe(cacheTimeKey, Date.now().toString());
           return window.issuesData;
         })
         .finally(() => {
-          kanbanLoadPromise = null;
+          if (kanbanLoadKey === cacheKey) {
+            kanbanLoadPromise = null;
+            kanbanAbortController = null;
+          }
         });
 
       return kanbanLoadPromise;
@@ -1768,19 +1859,7 @@
 
 <!-- JavaScript для блока "Активные заявки" -->
 <script
-  src="{{ url_for('static', filename='js/my_issues_activity.js') }}?v={{ cache_buster or '1' }}"></script>
-
-<!-- Автоматическая загрузка активности при готовности страницы -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Небольшая задержка для полной загрузки всех элементов
-    setTimeout(function() {
-        if (typeof loadRecentActivity === 'function') {
-            loadRecentActivity();
-        }
-    }, 1000);
-});
-</script>
+  src="{{ url_for('static', filename='js/my_issues_activity.js') }}?v={{ cache_buster or '20260313-my-issues-perf' }}"></script>
 
 {% endblock %}
 

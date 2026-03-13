@@ -93,17 +93,10 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
         list: Список записей активности или пустой список в случае ошибки
     """
     try:
-        logger.info(f"[get_recent_activity] Получение активности для user_id={user_id}, email={user_email}, limit={limit}")
-
         if not user_email:
-            logger.warning("[get_recent_activity] Email пользователя не указан")
             return []
 
-        logger.info(f"[get_recent_activity] 🔍 ДЕТАЛЬНАЯ ОТЛАДКА:")
-        logger.info(f"[get_recent_activity] - user_id: {user_id} (тип: {type(user_id)})")
-        logger.info(f"[get_recent_activity] - user_email: '{user_email}'")
-        logger.info(f"[get_recent_activity] - user_id != 4: {user_id != 4}")
-        logger.info(f"[get_recent_activity] - user_id and user_id != 4: {user_id and user_id != 4}")
+        limit = min(max(int(limit or 50), 1), 50)
 
         # Получаем подключение к MySQL
         connection = get_connection()
@@ -111,6 +104,7 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
             logger.error("[get_recent_activity] Не удалось подключиться к MySQL")
             return []
 
+        cursor = None
         try:
             cursor = connection.cursor()
             activity_data = []
@@ -128,12 +122,9 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
                     AND (ist.is_closed = 0 OR ist.is_closed IS NULL)
                     AND i.updated_on >= DATE_SUB(NOW(), INTERVAL 10 DAY)
                     ORDER BY i.updated_on DESC
+                    LIMIT %s
                 """
-                logger.info(f"[get_recent_activity] 🔍 SQL для пользователя С аккаунтом Redmine:")
-                logger.info(f"[get_recent_activity] - user_id: {user_id}")
-                logger.info(f"[get_recent_activity] - user_email: '{user_email}'")
-                logger.info(f"[get_recent_activity] - SQL: {issues_query}")
-                cursor.execute(issues_query, (user_id, user_email))
+                cursor.execute(issues_query, (user_id, user_email, limit))
             else:
                 # Для пользователей без аккаунта в Redmine: ищем только по easy_email_to
                 # Используем ту же логику, что и в get_issues_by_email
@@ -148,22 +139,11 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
                     AND (ist.is_closed = 0 OR ist.is_closed IS NULL)
                     AND i.updated_on >= DATE_SUB(NOW(), INTERVAL 10 DAY)
                     ORDER BY i.updated_on DESC
+                    LIMIT %s
                 """
-                logger.info(f"[get_recent_activity] 🔍 SQL для пользователя БЕЗ аккаунта Redmine:")
-                logger.info(f"[get_recent_activity] - user_email: '{user_email}'")
-                logger.info(f"[get_recent_activity] - alt_email: '{alt_email}'")
-                logger.info(f"[get_recent_activity] - SQL: {issues_query}")
-                cursor.execute(issues_query, (user_email, alt_email))
+                cursor.execute(issues_query, (user_email, alt_email, limit))
 
             issues = cursor.fetchall()
-
-            logger.info(f"[get_recent_activity] Найдено {len(issues)} заявок для пользователя")
-            if issues:
-                logger.info(f"[get_recent_activity] 🔍 ПРИМЕРЫ НАЙДЕННЫХ ЗАЯВОК:")
-                for i, issue in enumerate(issues[:5]):  # Показываем первые 5
-                    logger.info(f"[get_recent_activity] - Заявка {i+1}: ID={issue['id']}, subject='{issue['subject'][:50]}...', updated_on={issue['updated_on']}")
-            else:
-                logger.warning(f"[get_recent_activity] Заявки не найдены для user_id={user_id}, email={user_email}")
 
             for issue in issues:
                 activity_data.append({
@@ -196,12 +176,11 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
                     AND j.notes != ''
                     AND j.created_on >= DATE_SUB(NOW(), INTERVAL 10 DAY)
                     ORDER BY j.created_on DESC
+                    LIMIT %s
                 """
 
-                cursor.execute(comments_query, issue_ids)
+                cursor.execute(comments_query, issue_ids + [limit])
                 comments = cursor.fetchall()
-
-                logger.info(f"[get_recent_activity] Найдено {len(comments)} комментариев")
 
                 for comment in comments:
                     activity_data.append({
@@ -215,16 +194,11 @@ def get_recent_activity(user_id: Optional[int] = None, user_email: str = None, l
 
             # Сортируем по дате обновления
             activity_data.sort(key=lambda x: x['updated_on'], reverse=True)
-
-            logger.info(f"[get_recent_activity] Возвращаем {len(activity_data)} записей активности")
-            if activity_data:
-                logger.info(f"[get_recent_activity] Примеры возвращаемых данных: {activity_data[:2]}")
-            else:
-                logger.warning(f"[get_recent_activity] ВНИМАНИЕ: Возвращаем пустой список!")
-            return activity_data
+            return activity_data[:limit]
 
         finally:
-            cursor.close()
+            if cursor:
+                cursor.close()
             connection.close()
 
     except Exception as e:

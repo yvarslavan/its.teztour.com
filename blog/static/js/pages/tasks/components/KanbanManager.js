@@ -13,16 +13,23 @@ class KanbanManager {
         this.isLoading = false;
         this.isInitialized = false;
         this.eventListenersInitialized = false; // Флаг для предотвращения повторной инициализации обработчиков
+        this.lastDragEndedAt = 0;
+        this.boundHandleDragStart = this.handleDragStart.bind(this);
+        this.boundHandleDragEnd = this.handleDragEnd.bind(this);
+        this.boundHandleDragOver = this.handleDragOver.bind(this);
+        this.boundHandleDragEnter = this.handleDragEnter.bind(this);
+        this.boundHandleDragLeave = this.handleDragLeave.bind(this);
+        this.boundHandleDrop = this.handleDrop.bind(this);
         this.cache = {
             tasks: null,
             statuses: null,
-            completedTasks: null,
+            statusCounts: null,
             lastUpdate: null,
+            filterKey: '',
             cacheTimeout: 5 * 60 * 1000 // 5 минут
         };
-
-        // Встраиваем стили для компактных (пустых) колонок
-        this.ensureCompactColumnStyles();
+        this.navigationStateKey = 'my_tasks:return_context';
+        this.returnContextTtlMs = 10 * 60 * 1000;
 
         __kanbanDebugLog('[KanbanManager] 🚀 Конструктор Kanban менеджера');
 
@@ -36,28 +43,6 @@ class KanbanManager {
         }
     }
 
-    // Добавленные методы
-    ensureCompactColumnStyles() {
-        if (document.getElementById('kanban-compact-columns-style')) return;
-        const style = document.createElement('style');
-        style.id = 'kanban-compact-columns-style';
-        style.textContent = `
-            /* Плавные переходы высоты */
-            .kanban-column, .kanban-column .kanban-column-content { transition: min-height .25s ease; }
-            /* Сжатие пустых колонок: перекрываем любые глобальные правила */
-            .kanban-column.kanban-column-empty { min-height: 120px !important; }
-            .kanban-columns .kanban-column.kanban-column-empty .kanban-column-content { min-height: 100px !important; }
-            /* Мини-статус (точка и бордер) без текста внутри карточки */
-            .kanban-card{ position: relative; border-left: 3px solid var(--status-dot, transparent); }
-            .kanban-card.has-status-dot::before{ content:''; position:absolute; top:8px; left:8px; width:8px; height:8px; border-radius:50%; background: var(--status-dot, #94a3b8); box-shadow: 0 0 6px var(--status-dot, transparent); }
-            .kanban-card-header { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-            .kanban-card-meta { display: flex; align-items: center; gap: 8px; }
-        `;
-        document.head.appendChild(style);
-    }
-
-    // (Убрали индикатор статуса с текстом внутри карточки по требованию)
-
     adjustEmptyColumns() {
         try {
             const columns = document.querySelectorAll('.kanban-column');
@@ -67,10 +52,26 @@ class KanbanManager {
                 const cards = content.querySelectorAll('.kanban-card');
                 const isEmpty = cards.length === 0;
                 col.classList.toggle('kanban-column-empty', isEmpty);
+                const placeholder = content.querySelector('.kanban-empty-placeholder');
+
+                if (isEmpty) {
+                    if (!placeholder) {
+                        content.insertAdjacentHTML('beforeend', `
+                            <div class="kanban-empty-placeholder">
+                                <span class="kanban-empty-placeholder-icon">
+                                    <i class="fas fa-inbox"></i>
+                                </span>
+                                <span class="kanban-empty-placeholder-text">Пока задач нет</span>
+                            </div>
+                        `);
+                    }
+                } else if (placeholder) {
+                    placeholder.remove();
+                }
             });
-            __kanbanDebugLog('[KanbanManager] ✅ Пустые колонки сжаты');
+            __kanbanDebugLog('[KanbanManager] ✅ Пустые колонки обновлены');
         } catch (e) {
-            console.warn('[KanbanManager] ⚠️ Не удалось применить сжатие пустых колонок:', e);
+            console.warn('[KanbanManager] ⚠️ Не удалось обновить пустые колонки:', e);
         }
     }
 
@@ -101,14 +102,10 @@ class KanbanManager {
                     __kanbanDebugLog('[KanbanManager] ✅ Инициализация завершена');
                     
                     // Проверяем, какой режим активен по умолчанию
-                    const activeView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+                    const activeView = this.getPreferredInitialView();
                     __kanbanDebugLog('[KanbanManager] 🔍 Активный режим по умолчанию:', activeView);
                     
-                    // Если активен режим "Список", инициализируем таблицу
-                    if (activeView === 'list') {
-                        __kanbanDebugLog('[KanbanManager] 📊 Режим "Список" активен по умолчанию - инициализируем таблицу');
-                        this.switchView('list');
-                    }
+                    this.switchView(activeView, { skipReload: activeView === 'kanban' });
                 }).catch(error => {
                     console.error('[KanbanManager] ❌ Ошибка загрузки данных Kanban:', error);
                     this.isInitialized = true;
@@ -142,47 +139,56 @@ class KanbanManager {
                     const view = btn.dataset.view;
                     __kanbanDebugLog('[KanbanManager] 🔄 Переключение на вид:', view);
                     this.switchView(view);
+                    return;
                 }
 
-                                // Обработка клика по ID задачи в Kanban карточках
-                if (e.target.closest('.kanban-card-id')) {
+                const columnHeader = e.target.closest('.kanban-column-header');
+                if (columnHeader) {
                     e.preventDefault();
-                    e.stopPropagation();
-                    e.stopImmediatePropagation(); // Останавливаем немедленное всплытие
+                    this.toggleColumnCollapse(columnHeader.closest('.kanban-column'));
+                    return;
+                }
 
-                    const taskIdElement = e.target.closest('.kanban-card-id');
-                    const taskId = taskIdElement.dataset.taskId;
+                if (e.target.closest('.kanban-card-drag-handle')) {
+                    return;
+                }
 
+                const taskCard = e.target.closest('.kanban-card');
+                if (taskCard) {
+                    if (Date.now() - this.lastDragEndedAt < 250) {
+                        return;
+                    }
+
+                    const taskId = taskCard.dataset.taskId;
                     if (taskId) {
-                        __kanbanDebugLog(`[KanbanManager] 🎯 Клик по задаче ${taskId} в Kanban`);
-                        __kanbanDebugLog(`[KanbanManager] 🔍 Target:`, e.target);
-                        __kanbanDebugLog(`[KanbanManager] 🔍 CurrentTarget:`, e.currentTarget);
-
-                        // Защита от двойного клика
-                        if (taskIdElement.dataset.clicking === 'true') {
-                            __kanbanDebugLog(`[KanbanManager] ⚠️ Двойной клик по задаче ${taskId} - игнорируем`);
-                            return;
-                        }
-
-                        // Устанавливаем флаг клика
-                        taskIdElement.dataset.clicking = 'true';
-                        setTimeout(() => {
-                            taskIdElement.dataset.clicking = 'false';
-                        }, 1000);
-
-                        // Сохраняем текущий режим просмотра
-                        const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
-                        sessionStorage.setItem('return_from_task_view', currentView);
-                        __kanbanDebugLog(`[KanbanManager] 💾 Сохранен режим просмотра: ${currentView}`);
-
-                        // Открываем задачу в новой вкладке
-                        window.open(`/tasks/my-tasks/${taskId}`, '_blank');
+                        e.preventDefault();
+                        this.openTaskDetails(taskId);
                     }
                 }
+            });
 
-                // УДАЛЕНО: Обработка клика по всей карточке Kanban
-                // Теперь детали задачи открываются только при клике по номеру задачи (.kanban-card-id)
-                // Клики по остальной части карточки игнорируются
+            document.addEventListener('keydown', (e) => {
+                const isActivationKey = e.key === 'Enter' || e.key === ' ';
+                if (!isActivationKey) {
+                    return;
+                }
+
+                const columnHeader = e.target.closest('.kanban-column-header');
+                if (columnHeader) {
+                    e.preventDefault();
+                    this.toggleColumnCollapse(columnHeader.closest('.kanban-column'));
+                    return;
+                }
+
+                if (e.target.closest('.kanban-card-drag-handle')) {
+                    return;
+                }
+
+                const taskCard = e.target.closest('.kanban-card');
+                if (taskCard) {
+                    e.preventDefault();
+                    this.openTaskDetails(taskCard.dataset.taskId);
+                }
             });
 
             // Обработка фильтров
@@ -218,16 +224,86 @@ class KanbanManager {
     }
 
     updateFilters() {
-        this.filters = {
+        const nextFilters = {
             status: document.getElementById('status-filter')?.value || '',
             project: document.getElementById('project-filter')?.value || '',
             priority: document.getElementById('priority-filter')?.value || ''
         };
+        const hasDomFilters = Boolean(nextFilters.status || nextFilters.project || nextFilters.priority);
+        const returnContext = !hasDomFilters ? this.readReturnContext() : null;
+        const normalizedFilters = returnContext?.view === 'kanban'
+            ? {
+                status: nextFilters.status || returnContext.filters?.status || '',
+                project: nextFilters.project || returnContext.filters?.project || '',
+                priority: nextFilters.priority || returnContext.filters?.priority || ''
+            }
+            : nextFilters;
+        const nextFilterKey = this.buildFilterQuery(normalizedFilters).toString();
+
+        if (this.cache.filterKey && this.cache.filterKey !== nextFilterKey) {
+            this.clearCache();
+        }
+
+        this.filters = normalizedFilters;
 
         __kanbanDebugLog('[KanbanManager] 🔍 Фильтры обновлены:', this.filters);
     }
 
-    switchView(view) {
+    buildFilterQuery(filters = this.filters) {
+        const params = new URLSearchParams({
+            force_load: '1',
+            view: 'kanban',
+            exclude_completed: '0'
+        });
+
+        if (filters.status) {
+            params.set('status_id', filters.status);
+        }
+
+        if (filters.project) {
+            params.set('project_id', filters.project);
+        }
+
+        if (filters.priority) {
+            params.set('priority_id', filters.priority);
+        }
+
+        return params;
+    }
+
+    readReturnContext() {
+        try {
+            const rawValue = sessionStorage.getItem(this.navigationStateKey);
+            if (!rawValue) {
+                return null;
+            }
+
+            const parsed = JSON.parse(rawValue);
+            if (!parsed?.timestamp) {
+                return null;
+            }
+
+            if ((Date.now() - parsed.timestamp) > this.returnContextTtlMs) {
+                return null;
+            }
+
+            return parsed;
+        } catch (error) {
+            console.warn('[KanbanManager] ⚠️ Не удалось прочитать return-context:', error);
+            return null;
+        }
+    }
+
+    getPreferredInitialView() {
+        const returnContext = this.readReturnContext();
+        if (returnContext?.view === 'kanban') {
+            return 'kanban';
+        }
+
+        return document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+    }
+
+    switchView(view, options = {}) {
         __kanbanDebugLog(`[KanbanManager] 🔄 Переключение на вид: ${view}`);
 
         // Проверяем, что Kanban инициализирован
@@ -259,7 +335,7 @@ class KanbanManager {
         this.currentView = view;
 
         // Загружаем данные для Kanban если переключились на него
-        if (view === 'kanban') {
+        if (view === 'kanban' && !options.skipReload) {
             __kanbanDebugLog('[KanbanManager] 📊 Загружаем данные для Kanban');
             this.loadKanbanDataOptimized();
 
@@ -382,9 +458,11 @@ class KanbanManager {
      */
     async loadKanbanDataOptimized() {
         __kanbanDebugLog('[KanbanManager] 📊 Оптимизированная загрузка данных для Kanban');
+        this.updateFilters();
+        const filterKey = this.buildFilterQuery().toString();
 
         // Проверяем кэш
-        if (this.isCacheValid()) {
+        if (this.isCacheValid(filterKey)) {
             __kanbanDebugLog('[KanbanManager] 📦 Используем кэшированные данные');
             this.renderKanbanBoard(this.cache.tasks);
             return;
@@ -396,7 +474,7 @@ class KanbanManager {
 
         try {
             // Используем новый endpoint для прямого SQL запроса
-            const response = await fetch('/tasks/get-my-tasks-direct-sql?force_load=1&view=kanban&exclude_completed=0');
+            const response = await fetch(`/tasks/get-my-tasks-direct-sql?${filterKey}`);
 
             __kanbanDebugLog('[KanbanManager] 📡 Ответ сервера:', response.status, response.statusText);
 
@@ -423,6 +501,7 @@ class KanbanManager {
             this.cache.tasks = tasks;
             this.cache.statusCounts = statusCounts;
             this.cache.lastUpdate = Date.now();
+            this.cache.filterKey = filterKey;
             this.tasksData = tasks;
 
             // Создаем динамические колонки на основе статусов
@@ -447,8 +526,12 @@ class KanbanManager {
     /**
      * Проверка валидности кэша
      */
-    isCacheValid() {
+    isCacheValid(expectedFilterKey = this.buildFilterQuery().toString()) {
         if (!this.cache.tasks || !this.cache.lastUpdate) {
+            return false;
+        }
+
+        if ((this.cache.filterKey || '') !== expectedFilterKey) {
             return false;
         }
 
@@ -465,9 +548,9 @@ class KanbanManager {
         this.cache = {
             tasks: null,
             statuses: null,
-            completedTasks: null,
             statusCounts: null,
             lastUpdate: null,
+            filterKey: '',
             cacheTimeout: 5 * 60 * 1000
         };
         __kanbanDebugLog('[KanbanManager] 🗑️ Кэш очищен');
@@ -490,7 +573,8 @@ class KanbanManager {
         allColumns.forEach(column => { column.innerHTML = ''; });
         __kanbanDebugLog('[KanbanManager] 📋 Начинаем распределение задач по колонкам...');
 
-                    // Подсчитываем статистику статусов для отладки
+        if (window.__TASKS_DEBUG__) {
+            // Подсчитываем статистику статусов только в debug-режиме.
             const statusStats = {};
             const statusIdStats = {};
             tasks.forEach(task => {
@@ -502,59 +586,48 @@ class KanbanManager {
 
             __kanbanDebugLog('[KanbanManager] 📈 Статистика статусов (названия):', statusStats);
             __kanbanDebugLog('[KanbanManager] 📈 Статистика статусов (ID):', statusIdStats);
+        }
 
-                // Распределяем задачи по колонкам на основе их статуса
+        // Распределяем задачи по колонкам на основе их статуса
         tasks.forEach((task, index) => {
-            __kanbanDebugLog(`[KanbanManager] 📋 Задача ${index + 1}: ID=${task.id}, Статус="${task.status_name}", StatusID=${task.status_id}`);
-
             const status = task.status_name || 'Новая';
             const statusId = task.status_id || 1; // ID статуса из задачи
-
-            __kanbanDebugLog(`[KanbanManager] 🔍 Анализ статуса: "${status}" (ID: ${statusId})`);
 
             // Находим колонку для этого статуса
             const columnElement = document.querySelector(`[data-status-id="${statusId}"]`);
 
             if (columnElement) {
-                __kanbanDebugLog(`[KanbanManager] ✅ Найдена колонка для статуса "${status}" (ID: ${statusId})`);
-
                 // Создаем карточку задачи
                 this.createTaskCard(task, columnElement);
-
-                // Обновляем счетчик колонки
-                this.updateColumnCount(columnElement);
             } else {
                 console.warn(`[KanbanManager] ⚠️ Колонка для статуса "${status}" (ID: ${statusId}) не найдена`);
 
-                // Показываем все доступные колонки для отладки
                 const allColumns = document.querySelectorAll('.kanban-column-content');
-                __kanbanDebugLog('[KanbanManager] 🔍 Доступные колонки:');
-                allColumns.forEach(col => {
-                    const statusId = col.getAttribute('data-status-id');
-                    const columnTitle = col.closest('.kanban-column')?.querySelector('.kanban-column-title')?.textContent?.trim();
-                    __kanbanDebugLog(`  - ID: ${statusId}, Название: ${columnTitle}`);
-                });
+
+                if (window.__TASKS_DEBUG__) {
+                    __kanbanDebugLog('[KanbanManager] 🔍 Доступные колонки:');
+                    allColumns.forEach(col => {
+                        const debugStatusId = col.getAttribute('data-status-id');
+                        const columnTitle = col.closest('.kanban-column')?.querySelector('.kanban-column-title')?.textContent?.trim();
+                        __kanbanDebugLog(`  - ID: ${debugStatusId}, Название: ${columnTitle}`);
+                    });
+                }
 
                 // Попробуем найти колонку по названию статуса
-                __kanbanDebugLog('[KanbanManager] 🔍 Попытка найти колонку по названию статуса...');
                 const columnByTitle = Array.from(allColumns).find(col => {
                     const columnTitle = col.closest('.kanban-column')?.querySelector('.kanban-column-title')?.textContent?.trim();
                     return columnTitle && columnTitle.includes(status);
                 });
 
                 if (columnByTitle) {
-                    __kanbanDebugLog(`[KanbanManager] ✅ Найдена колонка по названию для статуса "${status}"`);
                     this.createTaskCard(task, columnByTitle);
-                    this.updateColumnCount(columnByTitle);
                 } else {
                     console.error(`[KanbanManager] ❌ Колонка для статуса "${status}" не найдена ни по ID, ни по названию`);
 
                     // Fallback: добавляем в первую доступную колонку
                     const firstColumn = allColumns[0];
                     if (firstColumn) {
-                        __kanbanDebugLog(`[KanbanManager] 🔄 Fallback: добавляем в первую колонку`);
                         this.createTaskCard(task, firstColumn);
-                        this.updateColumnCount(firstColumn);
                     }
                 }
             }
@@ -565,17 +638,12 @@ class KanbanManager {
         // Обновляем индикаторы количества задач
         this.updateTaskCountIndicators();
 
-        // Проверяем соответствие колонок и статусов
-        this.validateAndFixColumnStatusMapping();
-
-        // Исправляем несоответствия статусов
-        this.fixStatusMismatches();
-
-        // Мониторим новые статусы
-        this.monitorNewStatuses();
-
-        // Тестируем соответствие статусов
-        this.testStatusMapping();
+        if (window.__TASKS_DEBUG__) {
+            this.validateAndFixColumnStatusMapping();
+            this.fixStatusMismatches();
+            this.monitorNewStatuses();
+            this.testStatusMapping();
+        }
 
         // Обновляем статистики
         this.updateKanbanStats(tasks);
@@ -589,7 +657,7 @@ class KanbanManager {
         // Применяем сжатие пустых колонок после полного рендера
         this.adjustEmptyColumns();
 
-        __kanbanDebugLog('[KanbanManager] ✅ Ограничение по 10 задач в каждом статусе применено');
+        __kanbanDebugLog('[KanbanManager] ✅ Состояние Kanban обновлено');
     }
 
     /**
@@ -612,22 +680,12 @@ class KanbanManager {
                 if (countElement) {
                     const shown = countInfo.shown || 0;
                     const total = countInfo.total || 0;
-
-                    if (total > shown) {
-                        // Показываем "Показано X из Y"
-                        countElement.textContent = `${shown} из ${total}`;
-                        countElement.title = `Показано ${shown} из ${total} задач`;
-                        countElement.style.color = '#ff6b35'; // Оранжевый цвет для индикатора
-                    } else {
-                        // Показываем просто количество
-                        countElement.textContent = shown.toString();
-                        countElement.title = `${shown} задач`;
-                        countElement.style.color = ''; // Сброс цвета
-                    }
+                    this.setCountChipState(countElement, shown, total);
                 }
             }
         });
 
+        this.updatePhaseSummaries();
         __kanbanDebugLog('[KanbanManager] ✅ Индикаторы количества задач обновлены');
     }
 
@@ -650,25 +708,48 @@ class KanbanManager {
             const statusId = columnElement.getAttribute('data-status-id');
             const statusCounts = this.cache.statusCounts || {};
             const countInfo = statusCounts[statusId];
-
-            if (countInfo && countInfo.total > countInfo.shown) {
-                // Используем информацию из кэша для индикатора
-                const shown = countInfo.shown || count;
-                const total = countInfo.total;
-                countElement.textContent = `${shown} из ${total}`;
-                countElement.title = `Показано ${shown} из ${total} задач`;
-                countElement.style.color = '#ff6b35'; // Оранжевый цвет для индикатора
-            } else {
-                // Показываем просто количество
-                countElement.textContent = count.toString();
-                countElement.title = `${count} задач`;
-                countElement.style.color = ''; // Сброс цвета
-            }
+            const shown = countInfo?.shown ?? count;
+            const total = countInfo?.total ?? shown;
+            this.setCountChipState(countElement, shown, total);
 
             __kanbanDebugLog(`[KanbanManager] 📊 Обновлен счетчик колонки: ${count} задач`);
         }
         // При каждом обновлении счетчика пересчитываем пустые колонки
         this.adjustEmptyColumns();
+        this.updatePhaseSummaries();
+    }
+
+    setCountChipState(countElement, shown, total) {
+        if (!countElement) return;
+
+        const isPartial = total > shown;
+        countElement.classList.toggle('is-partial', isPartial);
+
+        if (isPartial) {
+            countElement.innerHTML = `
+                <span class="kanban-column-count-primary">${shown}</span>
+                <span class="kanban-column-count-secondary">из ${total}</span>
+            `;
+            countElement.title = `Показано ${shown} из ${total} задач`;
+        } else {
+            countElement.innerHTML = `
+                <span class="kanban-column-count-primary">${shown}</span>
+            `;
+            countElement.title = `${shown} задач`;
+        }
+    }
+
+    updatePhaseSummaries() {
+        const phases = document.querySelectorAll('.kanban-phase');
+        phases.forEach(phase => {
+            const phaseKey = phase.getAttribute('data-phase');
+            const phaseCount = phase.querySelector(`#phase-count-${phaseKey}`);
+            if (!phaseCount) return;
+
+            const cards = phase.querySelectorAll('.kanban-card').length;
+            phaseCount.textContent = cards.toString();
+            phaseCount.title = `${cards} задач в группе`;
+        });
     }
 
         /**
@@ -695,192 +776,14 @@ class KanbanManager {
             const cards = col.querySelectorAll('.kanban-card');
             const countElement = col.parentElement.querySelector('.kanban-column-count');
             if (countElement) {
-                countElement.textContent = cards.length;
-                countElement.title = `Задач: ${cards.length}`;
+                const statusId = col.getAttribute('data-status-id');
+                const total = this.cache.statusCounts?.[statusId]?.total ?? cards.length;
+                this.setCountChipState(countElement, cards.length, total);
             }
         });
 
         __kanbanDebugLog('[KanbanManager] ✅ Все ограничения для закрытых колонок убраны');
     }
-
-    /**
-     * Загрузка дополнительных завершенных задач
-     */
-    async loadMoreCompletedTasks() {
-        __kanbanDebugLog('[KanbanManager] 📥 Загрузка дополнительных завершенных задач...');
-
-        try {
-            const response = await fetch('/tasks/get-completed-tasks?limit=10');
-            const data = await response.json();
-
-            if (data.success && data.data.length > 0) {
-                // Сортируем по дате обновления (новые сверху)
-                data.data.sort((a, b) => {
-                    const dateA = new Date(a.updated_on);
-                    const dateB = new Date(b.updated_on);
-                    return dateB - dateA;
-                });
-
-                // Берем все задачи
-                const tasksToAdd = data.data;
-
-                const closedColumn = document.querySelector('[data-status-id="5"]');
-                if (closedColumn) {
-                    tasksToAdd.forEach(task => {
-                        // Проверяем, не существует ли уже карточка
-                        const existingCard = document.querySelector(`[data-task-id="${task.id}"]`);
-                        if (!existingCard) {
-                            this.createTaskCard(task, closedColumn);
-                        }
-                    });
-
-                    this.updateColumnCount(closedColumn);
-                    __kanbanDebugLog('[KanbanManager] ✅ Добавлены дополнительные задачи в колонку "Закрыта"');
-                }
-            }
-        } catch (error) {
-            console.error('[KanbanManager] ❌ Ошибка загрузки дополнительных задач:', error);
-        }
-    }
-
-        /**
-     * Автоматическая загрузка завершённых задач при отрисовке Kanban
-     */
-    loadCompletedTasksOnKanbanRender() {
-        __kanbanDebugLog('[KanbanManager] 🔘 Автоматическая загрузка завершённых задач');
-
-        if (!this.completedTasksLoaded) {
-            __kanbanDebugLog('[KanbanManager] ✅ Загружаем завершённые задачи автоматически');
-            this.loadCompletedTasks();
-        } else {
-            __kanbanDebugLog('[KanbanManager] ⚠️ Завершённые задачи уже загружены');
-        }
-    }
-
-    /**
-     * Загрузка 5 завершённых задач
-     */
-    async loadCompletedTasks() {
-        __kanbanDebugLog('[KanbanManager] 📥 Загрузка 5 завершённых задач');
-
-        try {
-            const response = await fetch('/tasks/get-completed-tasks');
-
-            __kanbanDebugLog('[KanbanManager] 📡 Ответ сервера:', response.status, response.statusText);
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                console.error('[KanbanManager] ❌ HTTP ошибка:', errorText);
-                throw new Error(`HTTP error! status: ${response.status}, message: ${errorText}`);
-            }
-
-            const data = await response.json();
-            __kanbanDebugLog('[KanbanManager] 📋 Данные ответа:', data);
-
-            if (!data.success) {
-                throw new Error(data.error || 'Ошибка загрузки завершённых задач');
-            }
-
-            __kanbanDebugLog('[KanbanManager] ✅ Получено завершённых задач:', data.data.length);
-
-                        // Сортируем задачи по дате обновления (новые сверху)
-            data.data.sort((a, b) => {
-                const dateA = new Date(a.updated_on);
-                const dateB = new Date(b.updated_on);
-                return dateB - dateA; // Убывающий порядок
-            });
-
-            __kanbanDebugLog('[KanbanManager] ✅ Сортировка применена');
-
-            // Ограничиваем до 5 последних завершённых задач
-            const limitedTasks = data.data;
-            __kanbanDebugLog(`[KanbanManager] 📊 Показываем все ${limitedTasks.length} задач`);
-
-            // Отладочная информация о распределении задач по статусам
-            const statusDistribution = {};
-            limitedTasks.forEach(task => {
-                const statusName = task.status_name || 'Неизвестно';
-                statusDistribution[statusName] = (statusDistribution[statusName] || 0) + 1;
-            });
-            __kanbanDebugLog('[KanbanManager] 📊 Распределение задач по статусам:', statusDistribution);
-
-            // Очищаем все колонки с закрытыми статусами перед добавлением новых задач
-            const closedStatusIds = [5, 6, 14]; // Закрыта, Отклонена, Перенаправлена
-            closedStatusIds.forEach(statusId => {
-                const column = document.querySelector(`[data-status-id="${statusId}"]`);
-                if (column) {
-                    column.innerHTML = '';
-                    __kanbanDebugLog(`[KanbanManager] ✅ Колонка статуса ${statusId} очищена`);
-                }
-            });
-
-            // Добавляем задачи в соответствующие колонки по их статусу
-            limitedTasks.forEach(task => {
-                __kanbanDebugLog(`[KanbanManager] 📋 Добавляем завершённую задачу ${task.id} со статусом "${task.status_name}" (ID: ${task.status_id})`);
-
-                // Показываем все доступные колонки для отладки
-                const allColumns = document.querySelectorAll('.kanban-column-content');
-                __kanbanDebugLog('[KanbanManager] 🔍 Доступные колонки для завершённых задач:');
-                allColumns.forEach(col => {
-                    const statusId = col.getAttribute('data-status-id');
-                    const columnTitle = col.closest('.kanban-column')?.querySelector('.kanban-column-title')?.textContent?.trim();
-                    __kanbanDebugLog(`  - ID: ${statusId}, Название: ${columnTitle}`);
-                });
-
-                // Находим колонку по ID статуса задачи
-                const targetColumn = document.querySelector(`[data-status-id="${task.status_id}"]`);
-
-                if (targetColumn) {
-                    __kanbanDebugLog(`[KanbanManager] ✅ Найдена колонка для статуса ${task.status_id}`);
-                    this.createTaskCard(task, targetColumn);
-
-                    // Обновляем счетчик колонки
-                    this.updateColumnCount(targetColumn);
-                } else {
-                    console.warn(`[KanbanManager] ⚠️ Колонка для статуса ${task.status_id} не найдена, добавляем в колонку "Закрыта" как fallback`);
-
-                    // Fallback: добавляем в колонку "Закрыта"
-                    const closedColumn = document.getElementById('status-5-column');
-                    if (closedColumn) {
-                        const columnContent = closedColumn.querySelector('.kanban-column-content');
-                        if (columnContent) {
-                            this.createTaskCard(task, columnContent);
-                            this.updateColumnCount(columnContent);
-                        }
-                    }
-                }
-            });
-
-            this.completedTasksLoaded = true;
-            __kanbanDebugLog('[KanbanManager] ✅ Завершённые задачи загружены и отображены');
-
-            // Обновляем счётчики всех колонок
-            this.updateColumnCounts();
-
-            // Подсчитываем только задачи со статусом "Закрыта" для счётчика
-            const closedTasksCount = data.data.filter(task => task.status_id === 5).length;
-            const closedCount = document.getElementById('status-5-count');
-            if (closedCount) {
-                closedCount.textContent = closedTasksCount;
-                __kanbanDebugLog('[KanbanManager] 🔢 Обновлённый счётчик колонки "Закрыта":', closedCount.textContent);
-            }
-
-            // Обновляем общий счётчик задач
-            const totalCount = document.querySelector('.total-tasks-count');
-            if (totalCount) {
-                const currentTotal = parseInt(totalCount.textContent) || 0;
-                const newTotal = currentTotal + data.data.length;
-                totalCount.textContent = newTotal;
-                __kanbanDebugLog('[KanbanManager] 🔢 Обновлённый общий счётчик:', newTotal);
-            }
-
-        } catch (error) {
-            console.error('[KanbanManager] ❌ Ошибка загрузки завершённых задач:', error);
-            this.showKanbanError(`Ошибка загрузки завершённых задач: ${error.message}`);
-        }
-    }
-
-
 
     /**
      * Создание карточки задачи
@@ -907,109 +810,48 @@ class KanbanManager {
             __kanbanDebugLog(`[KanbanManager] ⚠️ Неизвестный приоритет "${priority}" -> priority-normal (по умолчанию)`);
         }
 
-        // Создаем HTML карточки с названием проекта
-        const projectName = task.project_name || 'Неизвестный проект';
-        const statusColor = this.getStatusColor(task.status_name || '');
+        const projectName = this.resolveTaskSource(task);
+        const statusKey = this.getStatusKey(task.status_name || '');
+        const phaseKey = this.getStatusPhase({
+            name: task.status_name || '',
+            is_closed: !!task.status_is_closed
+        });
+        const updatedLabel = this.formatDate(task.updated_on) || 'нет данных';
+        const placeholder = columnElement.querySelector('.kanban-empty-placeholder');
+        if (placeholder) {
+            placeholder.remove();
+        }
+
         const cardHtml = `
-            <div class="kanban-card has-status-dot" data-task-id="${task.id}" data-priority="${priorityClass}" data-updated-on="${task.updated_on || ''}" draggable="true" style="--status-dot:${statusColor}">
+            <div class="kanban-card" data-task-id="${task.id}" data-priority="${priorityClass}" data-status-key="${statusKey}" data-phase="${phaseKey}" data-updated-on="${task.updated_on || ''}" tabindex="0" role="link" aria-label="Открыть задачу #${task.id}">
                 <div class="kanban-card-header">
-                    <div class="kanban-card-meta"><div class="kanban-card-id" data-task-id="${task.id}" style="cursor: pointer; color: #2563eb;">#${task.id}</div></div>
-                    <div class="kanban-card-priority">
+                    <div class="kanban-card-meta">
+                        <span class="kanban-card-id">#${task.id}</span>
+                    </div>
+                    <div class="kanban-card-actions">
                         <span class="priority-badge ${priorityClass}">${this.escapeHtml(priority)}</span>
+                        <button type="button" class="kanban-card-drag-handle" aria-label="Перетащить задачу #${task.id}" title="Перетащить задачу">
+                            <i class="fas fa-grip-lines"></i>
+                        </button>
                     </div>
                 </div>
                 <div class="kanban-card-content">
-                    <div class="kanban-card-project" style="font-size: 0.8em; color: #6b7280; margin-bottom: 4px;">${this.escapeHtml(projectName)}</div>
-                    <div class="kanban-card-subject">${this.escapeHtml(task.subject || 'Без названия')}</div>
-                    <div class="kanban-card-date">${this.formatDate(task.updated_on)}</div>
+                    <div class="kanban-card-subject" title="${this.escapeHtml(task.subject || 'Без названия')}">${this.escapeHtml(task.subject || 'Без названия')}</div>
+                    <div class="kanban-card-project" title="${this.escapeHtml(projectName)}">${this.escapeHtml(projectName)}</div>
+                </div>
+                <div class="kanban-card-footer">
+                    <span class="kanban-card-date-label">Обновлена</span>
+                    <span class="kanban-card-date">${updatedLabel}</span>
                 </div>
             </div>
         `;
 
         // Добавляем карточку в колонку
         columnElement.insertAdjacentHTML('beforeend', cardHtml);
-
-                // Добавляем обработчик клика для открытия деталей задачи
-        const newCard = columnElement.lastElementChild;
-        if (newCard) {
-            // Обработчик клика для аккордеона (убираем, так как теперь используется onclick в HTML)
-            // Клик по кнопке "Открыть" обрабатывается через onclick в HTML
-
-            // Обработчики drag & drop для новой карточки
-            if (this.boundHandleDragStart && this.boundHandleDragEnd) {
-                newCard.addEventListener('dragstart', this.boundHandleDragStart);
-                newCard.addEventListener('dragend', this.boundHandleDragEnd);
-                __kanbanDebugLog(`[KanbanManager] ✅ Обработчики drag & drop добавлены для карточки ${task.id}`);
-            } else {
-                // Создаем простые обработчики для этой карточки
-                newCard.addEventListener('dragstart', (e) => {
-                    __kanbanDebugLog(`🎯 Drag start для карточки ${task.id}`);
-                    e.dataTransfer.setData('text/plain', task.id);
-                    newCard.style.opacity = '0.5';
-                });
-
-                newCard.addEventListener('dragend', (e) => {
-                    __kanbanDebugLog(`✅ Drag end для карточки ${task.id}`);
-                    newCard.style.opacity = '1';
-                });
-
-                            __kanbanDebugLog(`[KanbanManager] ✅ Простые обработчики drag & drop добавлены для карточки ${task.id}`);
-        }
-
-        // Также добавляем обработчики для зон сброса, если их еще нет
-        const dropZones = document.querySelectorAll('.kanban-column-content');
-        dropZones.forEach((zone, index) => {
-            // Проверяем, есть ли уже обработчики
-            const hasDropHandler = zone._hasDropHandler;
-            if (!hasDropHandler) {
-                zone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    zone.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
-                });
-
-                zone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    const taskId = e.dataTransfer.getData('text/plain');
-                    const statusId = zone.getAttribute('data-status-id');
-                    __kanbanDebugLog(`🎯 СТАРЫЙ ОБРАБОТЧИК: Drop задачи ${taskId} в зону ${index + 1} (статус: ${statusId})`);
-                    zone.style.backgroundColor = '';
-
-                    // ВАЖНО: Добавляем проверку статуса и в старый обработчик
-                    const taskCard = document.querySelector(`[data-task-id="${taskId}"]`);
-                    if (taskCard) {
-                        const currentColumn = taskCard.closest('[data-status-id]');
-                        const currentStatusId = currentColumn ? currentColumn.getAttribute('data-status-id') : null;
-
-                        __kanbanDebugLog(`🎯 СТАРЫЙ ОБРАБОТЧИК: Проверка статусов - текущий: ${currentStatusId}, новый: ${statusId}`);
-
-                        if (String(currentStatusId) === String(statusId)) {
-                            __kanbanDebugLog(`🎯 СТАРЫЙ ОБРАБОТЧИК: Статусы одинаковые, НЕ вызываем updateTaskStatus`);
-                            return; // НЕ вызываем updateTaskStatus
-                        }
-                    }
-
-                    // Обновляем статус задачи только если статусы разные
-                    __kanbanDebugLog(`🎯 СТАРЫЙ ОБРАБОТЧИК: Статусы разные, вызываем updateTaskStatus`);
-                    if (window.kanbanManager && window.kanbanManager.updateTaskStatus) {
-                        window.kanbanManager.updateTaskStatus(taskId, statusId);
-                    }
-                });
-
-                zone.addEventListener('dragenter', (e) => {
-                    e.preventDefault();
-                    zone.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                });
-
-                zone.addEventListener('dragleave', (e) => {
-                    e.preventDefault();
-                    zone.style.backgroundColor = '';
-                });
-
-                zone._hasDropHandler = true;
-                __kanbanDebugLog(`[KanbanManager] ✅ Обработчики drop добавлены для зоны ${index + 1}`);
-            }
-        });
     }
+
+    resolveTaskSource(task) {
+        return task.project_name || task.easy_email_to || 'Без проекта';
     }
 
     // Утилитарные методы
@@ -1023,9 +865,33 @@ class KanbanManager {
         return 'priority-normal';
     }
 
+    toggleColumnCollapse(column) {
+        if (!column) return;
+
+        column.classList.toggle('collapsed');
+        const isExpanded = !column.classList.contains('collapsed');
+        const header = column.querySelector('.kanban-column-header');
+
+        if (header) {
+            header.setAttribute('aria-expanded', isExpanded ? 'true' : 'false');
+        }
+    }
+
     openTaskDetails(taskId) {
         __kanbanDebugLog('[KanbanManager] 🔗 Открытие деталей задачи:', taskId);
-        window.location.href = `/tasks/my-tasks/${taskId}`;
+
+        if (!taskId) {
+            return;
+        }
+
+        if (typeof MyTasksApp !== 'undefined' && typeof MyTasksApp.persistReturnContext === 'function') {
+            MyTasksApp.persistReturnContext(taskId);
+        } else {
+            const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+            sessionStorage.setItem('return_from_task_view', currentView);
+        }
+
+        window.open(`/tasks/my-tasks/${taskId}`, '_blank', 'noopener');
     }
 
     showKanbanLoading() {
@@ -1234,6 +1100,137 @@ class KanbanManager {
         return sortedStatuses;
     }
 
+    getPhaseMeta() {
+        return {
+            active: {
+                key: 'active',
+                eyebrow: 'Основной поток',
+                title: 'Активные статусы',
+                description: 'Новые, открытые и рабочие этапы выполнения.'
+            },
+            exceptions: {
+                key: 'exceptions',
+                eyebrow: 'Требует внимания',
+                title: 'Исключения и паузы',
+                description: 'Уточнения, паузы и нестандартные маршруты.'
+            },
+            terminal: {
+                key: 'terminal',
+                eyebrow: 'Финализация',
+                title: 'Терминальные статусы',
+                description: 'Задачи, которые завершены или закрыты для потока.'
+            }
+        };
+    }
+
+    getStatusPhase(status) {
+        const normalizedName = (status?.name || '').toLowerCase();
+
+        if (/(уточ|приост|заморож|перенаправ)/.test(normalizedName)) {
+            return 'exceptions';
+        }
+
+        if (status?.is_closed || /(выполн|закрыт|отклон)/.test(normalizedName)) {
+            return 'terminal';
+        }
+
+        return 'active';
+    }
+
+    groupStatusesByPhase(statuses) {
+        const phaseMeta = this.getPhaseMeta();
+        const grouped = {
+            active: [],
+            exceptions: [],
+            terminal: []
+        };
+
+        statuses.forEach(status => {
+            const phaseKey = this.getStatusPhase(status);
+            grouped[phaseKey].push(status);
+        });
+
+        return Object.keys(phaseMeta)
+            .map(key => ({ ...phaseMeta[key], statuses: grouped[key] }))
+            .filter(phase => phase.statuses.length > 0);
+    }
+
+    getStatusKey(statusName) {
+        const normalizedName = (statusName || '').toLowerCase();
+
+        if (normalizedName.includes('нов')) return 'new';
+        if (normalizedName.includes('откры')) return 'open';
+        if (normalizedName.includes('очеред')) return 'queue';
+        if (normalizedName.includes('соглас')) return 'approval';
+        if (normalizedName.includes('работ')) return 'progress';
+        if (normalizedName.includes('уточ')) return 'clarification';
+        if (normalizedName.includes('приост')) return 'paused';
+        if (normalizedName.includes('заморож')) return 'frozen';
+        if (normalizedName.includes('тестир')) return 'testing';
+        if (normalizedName.includes('протест')) return 'tested';
+        if (normalizedName.includes('перенаправ')) return 'redirected';
+        if (normalizedName.includes('выполн')) return 'done';
+        if (normalizedName.includes('закры')) return 'closed';
+        if (normalizedName.includes('отклон')) return 'rejected';
+
+        return 'generic';
+    }
+
+    buildKanbanPhaseMarkup(phase) {
+        const columnsMarkup = phase.statuses
+            .map(status => this.buildKanbanColumnMarkup(status, phase.key))
+            .join('');
+
+        return `
+            <section class="kanban-phase kanban-phase-${phase.key}" data-phase="${phase.key}">
+                <div class="kanban-phase-header">
+                    <div class="kanban-phase-copy">
+                        <span class="kanban-phase-eyebrow">${phase.eyebrow}</span>
+                        <div class="kanban-phase-title-row">
+                            <h3 class="kanban-phase-title">${phase.title}</h3>
+                            <span class="kanban-phase-count" id="phase-count-${phase.key}">0</span>
+                        </div>
+                        <p class="kanban-phase-description">${phase.description}</p>
+                    </div>
+                </div>
+                <div class="kanban-phase-columns">
+                    ${columnsMarkup}
+                </div>
+            </section>
+        `;
+    }
+
+    buildKanbanColumnMarkup(status, phaseKey) {
+        const statusKey = this.getStatusKey(status.name);
+
+        return `
+            <div class="kanban-column" id="kanban-column-${status.id}" data-phase="${phaseKey}" data-status-key="${statusKey}" data-status-closed="${status.is_closed ? 'true' : 'false'}">
+                <div class="kanban-column-header" role="button" tabindex="0" aria-expanded="true">
+                    <div class="kanban-column-title-group">
+                        <span class="kanban-column-status-dot" aria-hidden="true"></span>
+                        <span class="kanban-column-title">${this.escapeHtml(status.name)}</span>
+                    </div>
+                    <div class="kanban-column-meta">
+                        <div class="kanban-column-count" id="count-${status.id}" title="0 задач">
+                            <span class="kanban-column-count-primary">0</span>
+                        </div>
+                        <span class="kanban-column-toggle" aria-hidden="true">
+                            <i class="fas fa-chevron-down"></i>
+                        </span>
+                    </div>
+                </div>
+                <div class="kanban-column-content" data-status-id="${status.id}" data-status-name="${this.escapeHtml(status.name)}" data-status-key="${statusKey}">
+                    <div class="kanban-empty-placeholder">
+                        <span class="kanban-empty-placeholder-icon">
+                            <i class="fas fa-inbox"></i>
+                        </span>
+                        <span class="kanban-empty-placeholder-text">Пока задач нет</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
     /**
      * Динамическое создание колонок на основе статусов Redmine с оптимизацией
      */
@@ -1255,47 +1252,11 @@ class KanbanManager {
 
             // Очищаем существующие колонки
             kanbanColumns.innerHTML = '';
-
-            __kanbanDebugLog('[KanbanManager] 🏗️ Создаем колонки для статусов:');
-            __kanbanDebugLog('[KanbanManager] 📋 Отсортированные статусы:', sortedStatuses);
-
-            sortedStatuses.forEach((status, index) => {
-                __kanbanDebugLog(`- ${status.name} (ID: ${status.id}, is_closed: ${status.is_closed})`);
-
-                const columnHtml = `
-                    <div class="kanban-column" id="kanban-column-${status.id}">
-                        <div class="kanban-column-header" onclick="this.closest('.kanban-column').classList.toggle('collapsed')">
-                            <div class="kanban-column-title">
-                                <i class="fas fa-circle" style="color: ${this.getStatusColor(status.name)}"></i>
-                                ${this.escapeHtml(status.name)}
-                            </div>
-                            <div class="kanban-column-count" id="count-${status.id}">0</div>
-                            <div class="kanban-column-toggle">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-column-content" data-status-id="${status.id}" data-status-name="${this.escapeHtml(status.name)}">
-                            <!-- Задачи будут добавлены здесь -->
-                        </div>
-                    </div>
-                `;
-
-                kanbanColumns.insertAdjacentHTML('beforeend', columnHtml);
-
-                // Проверяем, что заголовок создался корректно
-                const columnElement = kanbanColumns.lastElementChild;
-                const header = columnElement.querySelector('.kanban-column-header');
-                const title = columnElement.querySelector('.kanban-column-title');
-                __kanbanDebugLog(`[KanbanManager] 🔍 Колонка ${index + 1}:`, {
-                    id: status.id,
-                    name: status.name,
-                    headerExists: !!header,
-                    titleExists: !!title,
-                    titleText: title ? title.textContent : 'null'
-                });
-            });
+            const phases = this.groupStatusesByPhase(sortedStatuses);
+            kanbanColumns.innerHTML = phases.map(phase => this.buildKanbanPhaseMarkup(phase)).join('');
 
             __kanbanDebugLog('[KanbanManager] ✅ Динамические колонки созданы в нужном порядке');
+            this.adjustEmptyColumns();
 
         } catch (error) {
             console.error('[KanbanManager] ❌ Ошибка создания колонок:', error);
@@ -1336,32 +1297,10 @@ class KanbanManager {
 
             // Очищаем существующие колонки
             kanbanColumns.innerHTML = '';
-
-            // Создаём fallback колонки в нужном порядке
-            fallbackStatuses.forEach((status, index) => {
-                const columnHtml = `
-                    <div class="kanban-column" id="status-${status.id}-column">
-                        <div class="kanban-column-header" onclick="this.closest('.kanban-column').classList.toggle('collapsed')">
-                            <div class="kanban-column-title">
-                                <i class="fas fa-circle" style="color: ${this.getStatusColor(status.name)}"></i>
-                                ${status.name}
-                            </div>
-                            <div class="kanban-column-count" id="status-${status.id}-count">0</div>
-                            <div class="kanban-column-toggle">
-                                <i class="fas fa-chevron-down"></i>
-                            </div>
-                        </div>
-                        <div class="kanban-column-content" data-status-id="${status.id}" data-status-name="${this.escapeHtml(status.name)}">
-                            <!-- Задачи будут добавляться сюда -->
-                        </div>
-                    </div>
-                `;
-
-                kanbanColumns.insertAdjacentHTML('beforeend', columnHtml);
-            });
+            const phases = this.groupStatusesByPhase(fallbackStatuses);
+            kanbanColumns.innerHTML = phases.map(phase => this.buildKanbanPhaseMarkup(phase)).join('');
 
             __kanbanDebugLog('[KanbanManager] ✅ Fallback колонки созданы в нужном порядке');
-            // Сжимаем пустые колонки сразу после создания
             this.adjustEmptyColumns();
         } catch (error) {
             console.error('[KanbanManager] ❌ Ошибка создания fallback колонок:', error);
@@ -1792,7 +1731,6 @@ class KanbanManager {
         return {
             hasTasks: !!this.cache.tasks,
             hasStatuses: !!this.cache.statuses,
-            hasCompletedTasks: !!this.cache.completedTasks,
             lastUpdate: this.cache.lastUpdate,
             cacheAge: cacheAge,
             isValid: isValid,
@@ -1817,21 +1755,32 @@ class KanbanManager {
 
             // Находим все карточки задач
             const cards = document.querySelectorAll('.kanban-card');
+            const dragHandles = document.querySelectorAll('.kanban-card-drag-handle');
             const dropZones = document.querySelectorAll('.kanban-column-content');
 
-            // Добавляем обработчики для карточек
+            // Карточка сама по себе не является drag-source
             cards.forEach(card => {
-                card.setAttribute('draggable', true);
-                card.addEventListener('dragstart', this.handleDragStart.bind(this));
-                card.addEventListener('dragend', this.handleDragEnd.bind(this));
+                card.setAttribute('draggable', false);
+            });
+
+            dragHandles.forEach(handle => {
+                handle.setAttribute('draggable', true);
+                handle.removeEventListener('dragstart', this.boundHandleDragStart);
+                handle.removeEventListener('dragend', this.boundHandleDragEnd);
+                handle.addEventListener('dragstart', this.boundHandleDragStart);
+                handle.addEventListener('dragend', this.boundHandleDragEnd);
             });
 
             // Добавляем обработчики для зон сброса
             dropZones.forEach(zone => {
-                zone.addEventListener('dragover', this.handleDragOver.bind(this));
-                zone.addEventListener('dragenter', this.handleDragEnter.bind(this));
-                zone.addEventListener('dragleave', this.handleDragLeave.bind(this));
-                zone.addEventListener('drop', this.handleDrop.bind(this));
+                zone.removeEventListener('dragover', this.boundHandleDragOver);
+                zone.removeEventListener('dragenter', this.boundHandleDragEnter);
+                zone.removeEventListener('dragleave', this.boundHandleDragLeave);
+                zone.removeEventListener('drop', this.boundHandleDrop);
+                zone.addEventListener('dragover', this.boundHandleDragOver);
+                zone.addEventListener('dragenter', this.boundHandleDragEnter);
+                zone.addEventListener('dragleave', this.boundHandleDragLeave);
+                zone.addEventListener('drop', this.boundHandleDrop);
             });
 
             __kanbanDebugLog('[KanbanManager] ✅ Drag & drop инициализирован');
@@ -1850,8 +1799,14 @@ class KanbanManager {
             __kanbanDebugLog('[KanbanManager] 📋 event.target.tagName:', event.target.tagName);
             __kanbanDebugLog('[KanbanManager] 📋 event.target.className:', event.target.className);
 
+            const dragHandle = event.target.closest('.kanban-card-drag-handle');
+            if (!dragHandle) {
+                event.preventDefault();
+                return;
+            }
+
             // Ищем ближайший элемент с data-task-id (карточка задачи)
-            const taskCard = event.target.closest('[data-task-id]');
+            const taskCard = dragHandle.closest('.kanban-card');
             __kanbanDebugLog('[KanbanManager] 📋 taskCard найден:', taskCard);
 
             const taskId = taskCard ? taskCard.getAttribute('data-task-id') : null;
@@ -1871,8 +1826,12 @@ class KanbanManager {
             event.dataTransfer.setData('text/plain', taskId);
             event.dataTransfer.setData('text/html', taskTitle);
             event.dataTransfer.effectAllowed = 'move';
+            if (event.dataTransfer.setDragImage && taskCard) {
+                event.dataTransfer.setDragImage(taskCard, 24, 24);
+            }
 
             taskCard.classList.add('dragging');
+            document.body.classList.add('kanban-dragging');
 
             // Показываем подсказку
             this.showNotification(`Перетаскивание: ${taskTitle}`, 'info');
@@ -1890,6 +1849,8 @@ class KanbanManager {
      */
     handleDragEnd(event) {
         __kanbanDebugLog('[KanbanManager] ✅ Перетаскивание завершено');
+        this.lastDragEndedAt = Date.now();
+        document.body.classList.remove('kanban-dragging');
 
         // Принудительно очищаем все drag-состояния
         this.clearAllDragStates();
@@ -2167,14 +2128,6 @@ class KanbanManager {
                         this.updateColumnCounts();
                     }
 
-                    // Если задача перемещена в закрытый статус, обновляем только завершенные задачи
-                    const closedStatusIds = [5, 6, 14]; // ID закрытых статусов: Закрыта, Отклонена, Перенаправлена
-                    if (closedStatusIds.includes(parseInt(newStatusId))) {
-                        __kanbanDebugLog(`[KanbanManager] 🔄 Обновление завершенных задач после перемещения в закрытый статус ${newStatusId}`);
-                        setTimeout(() => {
-                            this.loadCompletedTasks();
-                        }, 1000);
-                    }
                 }
             } else {
                 // Возвращаем карточку на место при ошибке
@@ -2416,11 +2369,18 @@ class KanbanManager {
         columns.forEach(column => {
             const countElement = column.querySelector('.kanban-column-count');
             const taskCards = column.querySelectorAll('.kanban-card');
+            const columnContent = column.querySelector('.kanban-column-content');
+            const statusId = columnContent?.getAttribute('data-status-id');
+            const countInfo = statusId ? (this.cache.statusCounts || {})[statusId] : null;
+            const shown = countInfo?.shown ?? taskCards.length;
+            const total = countInfo?.total ?? shown;
 
             if (countElement) {
-                countElement.textContent = taskCards.length;
+                this.setCountChipState(countElement, shown, total);
             }
         });
+
+        this.updatePhaseSummaries();
     }
 
     /**

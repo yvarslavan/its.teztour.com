@@ -16,6 +16,15 @@ from types import SimpleNamespace
 _notification_count_cache = {}
 _notification_count_cache_lock = threading.Lock()
 NOTIFICATION_CACHE_TTL = 10  # секунд
+
+_my_issues_cache = {}
+_my_issues_cache_lock = threading.Lock()
+MY_ISSUES_USER_TYPE_CACHE_TTL = 60
+MY_ISSUES_STATUS_CACHE_TTL = 300
+MY_ISSUES_SUMMARY_CACHE_TTL = 60
+MY_ISSUES_OVERVIEW_CACHE_TTL = 60
+MY_ISSUES_ACTIVITY_CACHE_TTL = 45
+MY_ISSUES_PROPERTY_CACHE_TTL = 300
 from flask import (
     Blueprint,
     render_template,
@@ -206,23 +215,103 @@ def _compose_person_name(lastname=None, firstname=None, fallback=None):
     return fallback
 
 
+def _my_issues_cache_key(prefix, *parts):
+    normalized_parts = [str(part) for part in parts if part is not None and part != ""]
+    return "::".join([prefix] + normalized_parts)
+
+
+def _my_issues_cache_get(cache_key):
+    now = time.time()
+    with _my_issues_cache_lock:
+        cached_entry = _my_issues_cache.get(cache_key)
+        if not cached_entry:
+            return None
+        if cached_entry["expires_at"] <= now:
+            _my_issues_cache.pop(cache_key, None)
+            return None
+        return cached_entry["value"]
+
+
+def _my_issues_cache_set(cache_key, value, ttl_seconds):
+    with _my_issues_cache_lock:
+        _my_issues_cache[cache_key] = {
+            "value": value,
+            "expires_at": time.time() + ttl_seconds,
+        }
+    return value
+
+
+def _normalize_user_email(email_value):
+    return (email_value or "").strip().lower()
+
+
+def _is_my_issues_perf_debug_enabled():
+    return current_app.debug or os.getenv("MY_ISSUES_PERF_DEBUG") == "1"
+
+
+def _open_redmine_db_connection():
+    return get_connection(
+        DB_REDMINE_HOST,
+        DB_REDMINE_USER,
+        DB_REDMINE_PASSWORD,
+        DB_REDMINE_DB,
+        port=DB_REDMINE_PORT,
+    )
+
+
+def _get_cached_my_issues_user_type(user_email):
+    normalized_email = _normalize_user_email(user_email)
+    cache_key = _my_issues_cache_key("my-issues-user-type", normalized_email)
+    cached_user_type = _my_issues_cache_get(cache_key)
+    if cached_user_type is not None:
+        return cached_user_type, None
+
+    conn = _open_redmine_db_connection()
+    if conn is None:
+        return None, None
+
+    user_type = check_user_active_redmine(conn, user_email)
+    _my_issues_cache_set(cache_key, user_type, MY_ISSUES_USER_TYPE_CACHE_TTL)
+    return user_type, conn
+
+
+def _get_cached_status_list(session):
+    cache_key = "my-issues-status-list"
+    cached_status_list = _my_issues_cache_get(cache_key)
+    if cached_status_list is not None:
+        return cached_status_list
+
+    statuses = session.query(Status).order_by(Status.name.asc()).all()
+    status_list = [{"id": status.id, "name": status.name} for status in statuses]
+    return _my_issues_cache_set(
+        cache_key, status_list, MY_ISSUES_STATUS_CACHE_TTL
+    )
+
+
+def _build_issue_history_cache_key(issue_id, issue_history):
+    if not issue_history:
+        return None
+
+    first_entry = issue_history[0]
+    last_entry = issue_history[-1]
+    first_created = getattr(first_entry, "created_on", None)
+    last_created = getattr(last_entry, "created_on", None)
+
+    return _my_issues_cache_key(
+        "my-issues-property-descriptions",
+        issue_id,
+        len(issue_history),
+        first_created.isoformat() if hasattr(first_created, "isoformat") else first_created,
+        last_created.isoformat() if hasattr(last_created, "isoformat") else last_created,
+    )
+
+
 def _load_issue_from_db(issue_id):
     issue_row = get_issue_details(issue_id)
     if not issue_row:
         return None, [], []
 
-    assigned_to_id = None
-    try:
-        with Session() as session:
-            assigned_to_id = (
-                session.query(Issue.assigned_to_id).filter(Issue.id == issue_id).scalar()
-            )
-    except Exception as assigned_to_error:
-        current_app.logger.warning(
-            "Не удалось получить assigned_to_id для заявки #%s из DB fallback: %s",
-            issue_id,
-            assigned_to_error,
-        )
+    assigned_to_id = getattr(issue_row, "assigned_to_id", None)
 
     issue_detail_obj = SimpleNamespace(
         id=issue_row.id,
@@ -625,411 +714,19 @@ def check_connection():
 @main.route("/get-my-tasks-paginated", methods=["GET"])
 @login_required
 def get_my_tasks_paginated():
-    """API для получения задач с пагинацией (перенаправление на новый модуль tasks)"""
-    try:
-        # Проверяем, является ли пользователь пользователем Redmine
-        if not current_user.is_redmine_user:
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "У вас нет доступа к модулю 'Мои задачи'. Этот раздел доступен только для пользователей Redmine.",
-                    "tasks": [],
-                    "pagination": {
-                        "page": 1,
-                        "per_page": 25,
-                        "total": 0,
-                        "total_display_records": 0,
-                    },
-                }
-            ), 403
+    """Legacy wrapper: единая реализация живет в blog.tasks.routes."""
+    from blog.tasks.routes import get_my_tasks_paginated_api
 
-        # Получаем параметры DataTables
-        draw = request.args.get("draw", 1, type=int)
-        page = (
-            request.args.get("start", 0, type=int)
-            // request.args.get("length", 25, type=int)
-            + 1
-        )
-        per_page = request.args.get("length", 25, type=int)
-        search_term = request.args.get("search[value]", "", type=str).strip()
-
-        order_column_index = request.args.get("order[0][column]", 0, type=int)
-        order_column_name_dt = request.args.get(
-            f"columns[{order_column_index}][data]", "updated_on", type=str
-        )
-        sort_direction = request.args.get("order[0][dir]", "desc", type=str)
-
-        # Сопоставление имен столбцов DataTables с полями Redmine
-        column_mapping = {
-            "id": "id",
-            "subject": "subject",
-            "status_name": "status.name",
-            "priority_name": "priority.name",
-            "updated_on": "updated_on",
-            "created_on": "created_on",
-            "start_date": "start_date",
-        }
-        sort_column = column_mapping.get(order_column_name_dt, "updated_on")
-
-        # Получаем фильтры
-        status_ids = [
-            x for x in request.args.getlist("status_id[]") if x
-        ]  # Убираем пустые значения
-        project_ids = [x for x in request.args.getlist("project_id[]") if x]
-        priority_ids = [x for x in request.args.getlist("priority_id[]") if x]
-
-        logger.info(
-            f"API пагинации - параметры: draw={draw}, page={page}, per_page={per_page}, search_term='{search_term}'"
-        )
-        logger.info(
-            f"Фильтры из запроса: status_ids={status_ids}, project_ids={project_ids}, priority_ids={priority_ids}"
-        )
-
-        # Получаем коннектор Redmine
-        from erp_oracle import (
-            connect_oracle,
-            get_user_erp_password,
-            db_host,
-            db_port,
-            db_service_name,
-            db_user_name,
-            db_password,
-        )
-
-        oracle_conn = connect_oracle(
-            db_host, db_port, db_service_name, db_user_name, db_password
-        )
-        if not oracle_conn:
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Ошибка подключения к Oracle для получения пароля Redmine.",
-                    "tasks": [],
-                    "pagination": {
-                        "page": page,
-                        "per_page": per_page,
-                        "total": 0,
-                        "total_display_records": 0,
-                    },
-                }
-            ), 500
-
-        user_password_erp = get_user_erp_password(oracle_conn, current_user.username)
-        if not user_password_erp:
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Не удалось получить пароль пользователя Redmine из ERP.",
-                    "tasks": [],
-                    "pagination": {
-                        "page": page,
-                        "per_page": per_page,
-                        "total": 0,
-                        "total_display_records": 0,
-                    },
-                }
-            ), 500
-
-        actual_password = (
-            user_password_erp[0]
-            if isinstance(user_password_erp, tuple)
-            else user_password_erp
-        )
-
-        # Создаем коннектор
-        redmine_connector = get_redmine_connector(current_user, actual_password)
-        if (
-            not redmine_connector
-            or not hasattr(redmine_connector, "redmine")
-            or not redmine_connector.redmine
-        ):
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Не удалось создать коннектор Redmine.",
-                    "tasks": [],
-                    "pagination": {
-                        "page": page,
-                        "per_page": per_page,
-                        "total": 0,
-                        "total_display_records": 0,
-                    },
-                }
-            ), 500
-
-        # Получаем ID пользователя Redmine
-        redmine_user_obj = redmine_connector.redmine.user.get("current")
-        redmine_user_id = redmine_user_obj.id
-
-        # Получаем задачи
-        issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
-            redmine_connector,
-            redmine_user_id,
-            page=page,
-            per_page=per_page,
-            search_term=search_term,
-            sort_column=sort_column,
-            sort_direction=sort_direction,
-            status_ids=status_ids,
-            project_ids=project_ids,
-            priority_ids=priority_ids,
-        )
-
-        # Преобразуем задачи в словари
-        tasks_data = [task_to_dict(issue) for issue in issues_list]
-
-        # Возвращаем формат DataTables
-        return jsonify(
-            {
-                "draw": draw,
-                "recordsTotal": total_count,
-                "recordsFiltered": total_count,
-                "data": tasks_data,
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Ошибка в get_my_tasks_paginated: {e}")
-        return jsonify(
-            {
-                "draw": request.args.get("draw", 1, type=int),
-                "error": str(e),
-                "recordsTotal": 0,
-                "recordsFiltered": 0,
-                "data": [],
-            }
-        ), 500
+    return get_my_tasks_paginated_api()
 
 
 @main.route("/get-my-tasks-statistics-optimized", methods=["GET"])
 @login_required
 def get_my_tasks_statistics_optimized():
-    """API для получения статистики задач"""
-    try:
-        if not current_user.is_redmine_user:
-            return jsonify(
-                {
-                    "error": "У вас нет доступа к модулю 'Мои задачи'.",
-                    "total_tasks": 0,
-                    "new_tasks": 0,
-                    "in_progress_tasks": 0,
-                    "closed_tasks": 0,
-                }
-            ), 403
+    """Legacy wrapper: единая реализация живет в blog.tasks.routes."""
+    from blog.tasks.routes import get_my_tasks_statistics_optimized as tasks_get_my_tasks_statistics_optimized
 
-        # Получаем коннектор Redmine
-        from erp_oracle import (
-            connect_oracle,
-            get_user_erp_password,
-            db_host,
-            db_port,
-            db_service_name,
-            db_user_name,
-            db_password,
-        )
-
-        oracle_conn = connect_oracle(
-            db_host, db_port, db_service_name, db_user_name, db_password
-        )
-        if not oracle_conn:
-            return jsonify(
-                {
-                    "error": "Ошибка подключения к Oracle",
-                    "total_tasks": 0,
-                    "new_tasks": 0,
-                    "in_progress_tasks": 0,
-                    "closed_tasks": 0,
-                }
-            ), 500
-
-        user_password_erp = get_user_erp_password(oracle_conn, current_user.username)
-        if not user_password_erp:
-            return jsonify(
-                {
-                    "error": "Не удалось получить пароль пользователя",
-                    "total_tasks": 0,
-                    "new_tasks": 0,
-                    "in_progress_tasks": 0,
-                    "closed_tasks": 0,
-                }
-            ), 500
-
-        actual_password = (
-            user_password_erp[0]
-            if isinstance(user_password_erp, tuple)
-            else user_password_erp
-        )
-        redmine_connector = get_redmine_connector(current_user, actual_password)
-
-        if not redmine_connector or not hasattr(redmine_connector, "redmine"):
-            return jsonify(
-                {
-                    "error": "Не удалось создать коннектор Redmine",
-                    "total_tasks": 0,
-                    "new_tasks": 0,
-                    "in_progress_tasks": 0,
-                    "closed_tasks": 0,
-                }
-            ), 500
-
-        # Получаем ID пользователя Redmine
-        redmine_user_obj = redmine_connector.redmine.user.get("current")
-        redmine_user_id = redmine_user_obj.id
-
-        # Получаем статистику задач
-        all_issues = redmine_connector.redmine.issue.filter(
-            assigned_to_id=redmine_user_id, limit=1000
-        )
-
-        total_tasks = 0
-        new_tasks = 0
-        in_progress_tasks = 0
-        closed_tasks = 0
-
-        # Получаем все статусы для корректной классификации
-        redmine_statuses = redmine_connector.redmine.issue_status.all()
-        status_mapping = {}
-
-        for status in redmine_statuses:
-            status_name_lower = status.name.lower()
-            logger.debug(
-                f"Классификация статуса: '{status.name}' (ID: {status.id}) -> '{status_name_lower}'"
-            )
-
-            # NEW (новые задачи)
-            if any(
-                keyword in status_name_lower
-                for keyword in [
-                    "новая",
-                    "новый",
-                    "new",
-                    "создан",
-                    "создана",
-                    "открыта",
-                    "открыт",
-                    "в очереди",
-                    "очереди",
-                ]
-            ):
-                status_mapping[status.id] = "new"
-                logger.debug(f"Статус '{status.name}' классифицирован как NEW")
-            # CLOSED (завершенные задачи)
-            elif any(
-                keyword in status_name_lower
-                for keyword in [
-                    "закрыт",
-                    "закрыта",
-                    "closed",
-                    "отклонена",
-                    "отклонен",
-                    "перенаправлена",
-                    "перенаправлен",
-                ]
-            ):
-                status_mapping[status.id] = "closed"
-                logger.debug(f"Статус '{status.name}' классифицирован как CLOSED")
-            # IN_PROGRESS (все остальные - задачи в процессе работы)
-            else:
-                status_mapping[status.id] = "in_progress"
-                logger.debug(f"Статус '{status.name}' классифицирован как IN_PROGRESS")
-
-        for issue in all_issues:
-            total_tasks += 1
-            status_id = (
-                issue.status.id if hasattr(issue, "status") and issue.status else None
-            )
-            status_name = (
-                issue.status.name
-                if hasattr(issue, "status") and issue.status
-                else "Unknown"
-            )
-            status_category = status_mapping.get(status_id, "other")
-
-            logger.debug(
-                f"Задача #{issue.id}: статус '{status_name}' (ID: {status_id}) -> категория '{status_category}'"
-            )
-
-            if status_category == "new":
-                new_tasks += 1
-            elif status_category == "in_progress":
-                in_progress_tasks += 1
-            elif status_category == "closed":
-                closed_tasks += 1
-
-        # Создаем детальную статистику для модального окна
-        debug_status_counts = {}
-        additional_stats = {
-            "avg_completion_time": "Не определено",
-            "most_active_project": "Не определено",
-            "completion_rate": 0,
-        }
-
-        # Подсчитываем статистику по статусам
-        for issue in all_issues:
-            status_name = (
-                issue.status.name
-                if hasattr(issue, "status") and issue.status
-                else "Неизвестно"
-            )
-            if status_name in debug_status_counts:
-                debug_status_counts[status_name] += 1
-            else:
-                debug_status_counts[status_name] = 1
-
-        # Вычисляем процент завершения
-        if total_tasks > 0:
-            additional_stats["completion_rate"] = round(
-                (closed_tasks / total_tasks) * 100, 1
-            )
-
-        # Логируем итоговую статистику
-        logger.info(
-            f"СТАТИСТИКА для {current_user.username}: ВСЕГО={total_tasks}, НОВЫХ={new_tasks}, В РАБОТЕ={in_progress_tasks}, ЗАКРЫТЫХ={closed_tasks}"
-        )
-
-        return jsonify(
-            {
-                "success": True,
-                "total_tasks": total_tasks,
-                "new_tasks": new_tasks,
-                "in_progress_tasks": in_progress_tasks,
-                "closed_tasks": closed_tasks,
-                "statistics": {
-                    "debug_status_counts": debug_status_counts,
-                    "additional_stats": additional_stats,
-                    "focused_data": {
-                        "total": {
-                            "additional_stats": additional_stats,
-                            "status_breakdown": debug_status_counts,
-                        },
-                        "new": {
-                            "debug_status_counts": debug_status_counts,
-                            "filter_description": f"Отображены задачи со статусом 'Новый' или 'New'",
-                        },
-                        "progress": {
-                            "debug_status_counts": debug_status_counts,
-                            "filter_description": f"Отображены задачи в статусе 'В работе' или 'Progress'",
-                        },
-                        "closed": {
-                            "debug_status_counts": debug_status_counts,
-                            "filter_description": f"Отображены завершенные задачи",
-                        },
-                    },
-                },
-            }
-        )
-
-    except Exception as e:
-        logger.error(f"Ошибка в get_my_tasks_statistics_optimized: {e}")
-        return jsonify(
-            {
-                "error": str(e),
-                "total_tasks": 0,
-                "new_tasks": 0,
-                "in_progress_tasks": 0,
-                "closed_tasks": 0,
-            }
-        ), 500
+    return tasks_get_my_tasks_statistics_optimized()
 
 
 @main.route("/notifications-polling", methods=["GET"])
@@ -1361,12 +1058,6 @@ def theme_test():
 @login_required
 def my_issues():
     try:
-        # Проверяем уведомления только если пользователь аутентифицирован
-        if current_user.is_authenticated:
-            # check_notifications(g.current_user.email, g.current_user.id) # ЗАКОММЕНТИРОВАНО
-            logger.info(
-                f"Вызов check_notifications ЗАКОММЕНТИРОВАН для пользователя {g.current_user.id} в /my-issues"
-            )
         return render_template("issues.html", title="Мои заявки")
     except Exception as e:
         current_app.logger.error(f"Error in my_issues: {str(e)}")
@@ -1401,41 +1092,86 @@ def get_my_issues():
     if use_cached:
         # Возвращаем сигнал клиенту использовать кеш
         return jsonify({"use_cached_data": True})
-    with Session() as session:
-        conn = get_connection(
-            DB_REDMINE_HOST,
-            DB_REDMINE_USER,
-            DB_REDMINE_PASSWORD,
-            DB_REDMINE_DB,
-            port=DB_REDMINE_PORT,
+    user_type, conn = _get_cached_my_issues_user_type(current_user.email)
+    if user_type is None and conn is None:
+        flash(
+            "Ошибка подключения к HelpDesk (Easy Redmine). Проверьте ваше VPN соединение",
+            "danger",
         )
-        if conn is None:
-            flash(
-                "Ошибка подключения к HelpDesk (Easy Redmine). Проверьте ваше VPN соединение",
-                "danger",
-            )
-            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
-        try:
-            check_user_redmine = check_user_active_redmine(conn, current_user.email)
+        return jsonify({"error": "Ошибка подключения к базе данных"}), 500
 
-            # Получаем все возможные статусы
-            statuses = session.query(Status).all()
-            status_list = [{"id": status.id, "name": status.name} for status in statuses]
+    try:
+        with Session() as session:
+            status_list = _get_cached_status_list(session)
 
-            if check_user_redmine == ANONYMOUS_USER_ID:
-                issues_data = get_issues_by_email(session, current_user.email)
+            if user_type == ANONYMOUS_USER_ID:
+                issues_data = _fetch_issues_overview_sqlalchemy(
+                    session, current_user.email
+                )
             else:
-                issues_data = get_issues_redmine_author_id(
-                    conn, check_user_redmine, current_user.email
+                if conn is None:
+                    conn = _open_redmine_db_connection()
+                if conn is None:
+                    return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+                issues_data = _fetch_issues_overview_redmine(
+                    conn, user_type, current_user.email
                 )
 
-            return jsonify(
-                {
-                    "issues": issues_data or [],
-                    "statuses": status_list,  # Добавляем список всех статусов
-                }
+            return jsonify({"issues": issues_data or [], "statuses": status_list})
+    finally:
+        if conn:
+            conn.close()
+
+
+@main.route("/get-my-issues-overview", methods=["GET"])
+@login_required
+def get_my_issues_overview():
+    search_value = (request.args.get("search", "", type=str) or "").strip()
+    status_filter = (request.args.get("status", "", type=str) or "").strip()
+    cache_key = _my_issues_cache_key(
+        "my-issues-overview",
+        current_user.id,
+        _normalize_user_email(current_user.email),
+        status_filter,
+        search_value,
+    )
+    cached_response = _my_issues_cache_get(cache_key)
+    if cached_response is not None:
+        return jsonify(cached_response)
+
+    user_type, conn = _get_cached_my_issues_user_type(current_user.email)
+    if user_type is None and conn is None:
+        return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
+    try:
+        if user_type == ANONYMOUS_USER_ID:
+            with Session() as session:
+                issues_data = _fetch_issues_overview_sqlalchemy(
+                    session,
+                    current_user.email,
+                    search_value=search_value,
+                    status_filter=status_filter,
+                )
+        else:
+            if conn is None:
+                conn = _open_redmine_db_connection()
+            if conn is None:
+                return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+            issues_data = _fetch_issues_overview_redmine(
+                conn,
+                user_type,
+                current_user.email,
+                search_value=search_value,
+                status_filter=status_filter,
             )
-        finally:
+
+        response_payload = {"issues": issues_data or []}
+        _my_issues_cache_set(
+            cache_key, response_payload, MY_ISSUES_OVERVIEW_CACHE_TTL
+        )
+        return jsonify(response_payload)
+    finally:
+        if conn:
             conn.close()
 
 
@@ -1458,7 +1194,9 @@ def _parse_datatable_request():
 
     search_value = (request.args.get("search[value]", "", type=str) or "").strip()
     status_filter = (
-        request.args.get("columns[3][search][value]", "", type=str) or ""
+        request.args.get("columns[2][search][value]", "", type=str)
+        or request.args.get("columns[3][search][value]", "", type=str)
+        or ""
     ).strip()
 
     return {
@@ -1505,6 +1243,86 @@ def _build_issue_response_rows(rows):
     return issue_rows
 
 
+def _apply_issue_search_filters(query, search_value):
+    if not search_value:
+        return query
+
+    like_value = f"%{search_value}%"
+    id_like_value = f"%{search_value.lstrip('#')}%"
+    return query.filter(
+        or_(
+            cast(Issue.id, String).like(id_like_value),
+            Issue.subject.ilike(like_value),
+            Status.name.ilike(like_value),
+        )
+    )
+
+
+def _fetch_issues_overview_sqlalchemy(session, email_value, search_value="", status_filter=""):
+    base_query = (
+        session.query(
+            Issue.id.label("id"),
+            Issue.updated_on.label("updated_on"),
+            Issue.subject.label("subject"),
+            Status.name.label("status_name"),
+            Issue.status_id.label("status_id"),
+        )
+        .join(Status, Issue.status_id == Status.id)
+        .filter(_build_my_issues_filter(email_value))
+    )
+
+    filtered_query = _apply_issue_search_filters(base_query, search_value)
+
+    if status_filter:
+        filtered_query = filtered_query.filter(Status.name == status_filter)
+
+    rows = filtered_query.order_by(desc(Issue.updated_on)).all()
+    return _build_issue_response_rows(rows)
+
+
+def _fetch_issues_overview_redmine(
+    conn, author_id, email_value, search_value="", status_filter=""
+):
+    where_parts = ["(i.author_id = %s OR i.easy_email_to = %s)"]
+    where_params = [author_id, email_value]
+
+    if status_filter:
+        where_parts.append("us.name = %s")
+        where_params.append(status_filter)
+
+    if search_value:
+        where_parts.append(
+            "(CAST(i.id AS CHAR) LIKE %s OR i.subject LIKE %s OR us.name LIKE %s)"
+        )
+        where_params.extend(
+            [
+                f"%{search_value.lstrip('#')}%",
+                f"%{search_value}%",
+                f"%{search_value}%",
+            ]
+        )
+
+    where_clause = " AND ".join(where_parts)
+    query = f"""
+        SELECT
+            i.id AS id,
+            i.updated_on AS updated_on,
+            i.subject AS subject,
+            us.name AS status_name,
+            i.status_id AS status_id
+        FROM issues i
+        INNER JOIN u_statuses us ON us.id = i.status_id
+        WHERE {where_clause}
+        ORDER BY i.updated_on DESC
+    """
+
+    with conn.cursor() as cursor:
+        cursor.execute(query, where_params)
+        rows = cursor.fetchall() or []
+
+    return _build_issue_response_rows(rows)
+
+
 def _fetch_issues_datatable_sqlalchemy(session, email_value, dt_params):
     base_filter = _build_my_issues_filter(email_value)
     search_value = dt_params["search_value"]
@@ -1522,17 +1340,7 @@ def _fetch_issues_datatable_sqlalchemy(session, email_value, dt_params):
         .filter(base_filter)
     )
 
-    filtered_query = base_query
-    if search_value:
-        like_value = f"%{search_value}%"
-        id_like_value = f"%{search_value.lstrip('#')}%"
-        filtered_query = filtered_query.filter(
-            or_(
-                cast(Issue.id, String).like(id_like_value),
-                Issue.subject.ilike(like_value),
-                Status.name.ilike(like_value),
-            )
-        )
+    filtered_query = _apply_issue_search_filters(base_query, search_value)
 
     if status_filter:
         filtered_query = filtered_query.filter(Status.name == status_filter)
@@ -1647,27 +1455,27 @@ def _fetch_issues_datatable_redmine(conn, author_id, email_value, dt_params):
 @main.route("/get-my-issues-summary", methods=["GET"])
 @login_required
 def get_my_issues_summary():
-    with Session() as session:
-        conn = get_connection(
-            DB_REDMINE_HOST,
-            DB_REDMINE_USER,
-            DB_REDMINE_PASSWORD,
-            DB_REDMINE_DB,
-            port=DB_REDMINE_PORT,
-        )
-        if conn is None:
-            return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+    cache_key = _my_issues_cache_key(
+        "my-issues-summary",
+        current_user.id,
+        _normalize_user_email(current_user.email),
+    )
+    cached_response = _my_issues_cache_get(cache_key)
+    if cached_response is not None:
+        return jsonify(cached_response)
 
-        try:
-            check_user_redmine = check_user_active_redmine(conn, current_user.email)
+    user_type, conn = _get_cached_my_issues_user_type(current_user.email)
+    if user_type is None and conn is None:
+        return jsonify({"error": "Ошибка подключения к базе данных"}), 500
 
-            statuses = session.query(Status).order_by(Status.name.asc()).all()
-            status_list = [{"id": status.id, "name": status.name} for status in statuses]
+    try:
+        status_counts = []
+        total_count = 0
 
-            status_counts = []
-            total_count = 0
+        with Session() as session:
+            status_list = _get_cached_status_list(session)
 
-            if check_user_redmine == ANONYMOUS_USER_ID:
+            if user_type == ANONYMOUS_USER_ID:
                 base_filter = _build_my_issues_filter(current_user.email)
                 rows = (
                     session.query(
@@ -1694,6 +1502,11 @@ def get_my_issues_summary():
                     )
                     total_count += row_count
             else:
+                if conn is None:
+                    conn = _open_redmine_db_connection()
+                if conn is None:
+                    return jsonify({"error": "Ошибка подключения к базе данных"}), 500
+
                 with conn.cursor() as cursor:
                     cursor.execute(
                         """
@@ -1707,7 +1520,7 @@ def get_my_issues_summary():
                         GROUP BY us.id, us.name
                         ORDER BY us.name
                         """,
-                        (check_user_redmine, current_user.email),
+                        (user_type, current_user.email),
                     )
                     rows = cursor.fetchall() or []
 
@@ -1724,14 +1537,15 @@ def get_my_issues_summary():
                     )
                     total_count += row_count
 
-            return jsonify(
-                {
-                    "total": total_count,
-                    "statuses": status_list,
-                    "status_counts": status_counts,
-                }
-            )
-        finally:
+        response_payload = {
+            "total": total_count,
+            "statuses": status_list,
+            "status_counts": status_counts,
+        }
+        _my_issues_cache_set(cache_key, response_payload, MY_ISSUES_SUMMARY_CACHE_TTL)
+        return jsonify(response_payload)
+    finally:
+        if conn:
             conn.close()
 
 
@@ -1739,90 +1553,70 @@ def get_my_issues_summary():
 @login_required
 def get_my_issues_datatable():
     dt_params = _parse_datatable_request()
+    user_type, conn = _get_cached_my_issues_user_type(current_user.email)
+    if user_type is None and conn is None:
+        return jsonify(
+            {
+                "draw": dt_params["draw"],
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": [],
+                "error": "Ошибка подключения к базе данных",
+            }
+        ), 500
 
-    with Session() as session:
-        conn = get_connection(
-            DB_REDMINE_HOST,
-            DB_REDMINE_USER,
-            DB_REDMINE_PASSWORD,
-            DB_REDMINE_DB,
-            port=DB_REDMINE_PORT,
-        )
-        if conn is None:
-            return jsonify(
-                {
-                    "draw": dt_params["draw"],
-                    "recordsTotal": 0,
-                    "recordsFiltered": 0,
-                    "data": [],
-                    "error": "Ошибка подключения к базе данных",
-                }
-            ), 500
-
-        try:
-            check_user_redmine = check_user_active_redmine(conn, current_user.email)
-
-            if check_user_redmine == ANONYMOUS_USER_ID:
+    try:
+        if user_type == ANONYMOUS_USER_ID:
+            with Session() as session:
                 records_total, records_filtered, data_rows = (
                     _fetch_issues_datatable_sqlalchemy(
                         session, current_user.email, dt_params
                     )
                 )
-            else:
-                records_total, records_filtered, data_rows = (
-                    _fetch_issues_datatable_redmine(
-                        conn, check_user_redmine, current_user.email, dt_params
-                    )
-                )
+        else:
+            if conn is None:
+                conn = _open_redmine_db_connection()
+            if conn is None:
+                return jsonify(
+                    {
+                        "draw": dt_params["draw"],
+                        "recordsTotal": 0,
+                        "recordsFiltered": 0,
+                        "data": [],
+                        "error": "Ошибка подключения к базе данных",
+                    }
+                ), 500
 
-            return jsonify(
-                {
-                    "draw": dt_params["draw"],
-                    "recordsTotal": records_total,
-                    "recordsFiltered": records_filtered,
-                    "data": data_rows,
-                }
+            records_total, records_filtered, data_rows = _fetch_issues_datatable_redmine(
+                conn, user_type, current_user.email, dt_params
             )
-        except Exception as e:
-            current_app.logger.error(f"Error in get_my_issues_datatable: {str(e)}")
-            return jsonify(
-                {
-                    "draw": dt_params["draw"],
-                    "recordsTotal": 0,
-                    "recordsFiltered": 0,
-                    "data": [],
-                    "error": "Ошибка загрузки заявок",
-                }
-            ), 500
-        finally:
+
+        return jsonify(
+            {
+                "draw": dt_params["draw"],
+                "recordsTotal": records_total,
+                "recordsFiltered": records_filtered,
+                "data": data_rows,
+            }
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error in get_my_issues_datatable: {str(e)}")
+        return jsonify(
+            {
+                "draw": dt_params["draw"],
+                "recordsTotal": 0,
+                "recordsFiltered": 0,
+                "data": [],
+                "error": "Ошибка загрузки заявок",
+            }
+        ), 500
+    finally:
+        if conn:
             conn.close()
 
 
 def get_issues_by_email(session, email):
-    filtered_issues = (
-        session.query(Issue)
-        .options(joinedload(Issue.status))
-        .join(Status, Issue.status_id == Status.id)
-        .filter(
-            or_(
-                Issue.easy_email_to == email,
-                Issue.easy_email_to
-                == email.replace("@tez-tour.com", "@msk.tez-tour.com"),
-            )
-        )
-        .order_by(desc(Issue.updated_on))
-        .all()
-    )
-    return [
-        {
-            "id": issue.id,
-            "updated_on": issue.updated_on.isoformat(),
-            "subject": issue.subject,
-            "status_name": issue.status.name,
-            "status_id": issue.status_id,  # Добавляем ID статуса
-        }
-        for issue in filtered_issues
-    ]
+    return _fetch_issues_overview_sqlalchemy(session, email)
 
 
 @main.route("/blog", methods=["POST", "GET"])
@@ -1866,8 +1660,18 @@ def get_my_issues_recent_activity():
     API endpoint для получения последней активности по заявкам пользователя
     Для страницы "Мои заявки"
     """
-    current_app.logger.info("🚀 API endpoint /my-issues/api/recent-activity вызван!")
     try:
+        limit = min(max(request.args.get("limit", 12, type=int), 1), 30)
+        cache_key = _my_issues_cache_key(
+            "my-issues-activity",
+            current_user.id,
+            _normalize_user_email(current_user.email),
+            limit,
+        )
+        cached_response = _my_issues_cache_get(cache_key)
+        if cached_response is not None:
+            return jsonify(cached_response)
+
         # Определяем user_id для запроса
         # ИСПРАВЛЕНИЕ: Если у пользователя нет аккаунта в Redmine или id_redmine_user не установлен,
         # используем значение по умолчанию = 4 (Аноним)
@@ -1887,16 +1691,8 @@ def get_my_issues_recent_activity():
         from blog.redmine import get_recent_activity
 
         # Получаем данные активности
-        current_app.logger.info(
-            f"Запрашиваем активность для пользователя: id_redmine_user={user_id}, email={current_user.email}, is_redmine_user={getattr(current_user, 'is_redmine_user', False)}"
-        )
-
         activity_data = get_recent_activity(
-            user_id=user_id, user_email=current_user.email
-        )
-
-        current_app.logger.info(
-            f"Получены данные активности: {len(activity_data) if activity_data else 0} записей"
+            user_id=user_id, user_email=current_user.email, limit=limit
         )
 
         # Проверяем, что activity_data не None (в случае ошибки БД)
@@ -1912,7 +1708,11 @@ def get_my_issues_recent_activity():
 
         # Обрабатываем данные активности
         if not activity_data:
-            return jsonify({"success": True, "data": [], "count": 0})
+            response_payload = {"success": True, "data": [], "count": 0}
+            _my_issues_cache_set(
+                cache_key, response_payload, MY_ISSUES_ACTIVITY_CACHE_TTL
+            )
+            return jsonify(response_payload)
 
         # Конвертируем datetime объекты в строки для JSON
         import pytz
@@ -1952,9 +1752,15 @@ def get_my_issues_recent_activity():
                 # Конвертируем datetime в строку для JSON
                 item["updated_on"] = updated_on.isoformat()
 
-        return jsonify(
-            {"success": True, "data": activity_data, "count": len(activity_data)}
+        response_payload = {
+            "success": True,
+            "data": activity_data,
+            "count": len(activity_data),
+        }
+        _my_issues_cache_set(
+            cache_key, response_payload, MY_ISSUES_ACTIVITY_CACHE_TTL
         )
+        return jsonify(response_payload)
 
     except Exception as e:
         current_app.logger.error(f"Ошибка при получении активности заявок: {e}")
@@ -1977,7 +1783,6 @@ def issue(issue_id):
     """Оптимизированный вывод истории заявки с минимальными подключениями к БД"""
     form = AddCommentRedmine()
 
-    logger.info(f"Загрузка заявки #{issue_id} для пользователя {current_user.id}")
     start_time = time.time()
     timings = {}
 
@@ -2062,9 +1867,6 @@ def issue(issue_id):
 
     try:
         # Загружаем основные данные задачи
-        current_app.logger.info(
-            f"Попытка загрузки задачи #{issue_id} для пользователя {current_user.username}"
-        )
         load_issue_start = time.time()
         issue_detail_obj = redmine_connector_user.redmine.issue.get(
             issue_id, include=["attachments", "journals"]
@@ -2076,10 +1878,6 @@ def issue(issue_id):
                 f"Задача #{issue_id} не найдена или недоступна для пользователя {current_user.username}"
             )
             abort(404)
-
-        current_app.logger.info(
-            f"Задача #{issue_id} успешно загружена для пользователя {current_user.username}"
-        )
 
         # Object-level access контроль (особенно важен при fallback на системный API ключ)
         if not _user_has_issue_access(issue_detail_obj, current_user):
@@ -2093,17 +1891,10 @@ def issue(issue_id):
         # Получаем вложения
         if hasattr(issue_detail_obj, "attachments"):
             attachment_list = issue_detail_obj.attachments
-            current_app.logger.info(
-                f"Найдено {len(attachment_list)} вложений для задачи #{issue_id}"
-            )
 
         # История уже включена через include=["journals"], избегаем второго API-запроса
         if hasattr(issue_detail_obj, "journals"):
             issue_history = list(reversed(issue_detail_obj.journals))
-            current_app.logger.info(
-                "История изменений получена из include journals: %s записей",
-                len(issue_history),
-            )
 
     except Exception as e:
         error_msg = str(e)
@@ -2172,27 +1963,29 @@ def issue(issue_id):
     if issue_history:
         property_desc_start = time.time()
         try:
-            # Создаем ОДНО соединение для всех операций с БД
-            redmine_connection = get_connection(
-                DB_REDMINE_HOST,
-                DB_REDMINE_USER,
-                DB_REDMINE_PASSWORD,
-                DB_REDMINE_DB,
-                port=DB_REDMINE_PORT,
-            )
+            property_cache_key = _build_issue_history_cache_key(issue_id, issue_history)
+            if property_cache_key:
+                property_descriptions = (
+                    _my_issues_cache_get(property_cache_key) or {}
+                )
 
-            if redmine_connection:
-                # Используем оптимизированную функцию для пакетной загрузки
-                property_descriptions = generate_optimized_property_names(
-                    redmine_connection, issue_history
-                )
-                logger.info(
-                    f"Предзагружено {len(property_descriptions)} описаний изменений"
-                )
-            else:
-                logger.warning(
-                    "Не удалось создать соединение с Redmine DB для оптимизации"
-                )
+            if not property_descriptions:
+                redmine_connection = _open_redmine_db_connection()
+
+                if redmine_connection:
+                    property_descriptions = generate_optimized_property_names(
+                        redmine_connection, issue_history
+                    )
+                    if property_cache_key:
+                        _my_issues_cache_set(
+                            property_cache_key,
+                            property_descriptions,
+                            MY_ISSUES_PROPERTY_CACHE_TTL,
+                        )
+                else:
+                    logger.warning(
+                        "Не удалось создать соединение с Redmine DB для оптимизации"
+                    )
 
         except Exception as e:
             logger.error(f"Ошибка при предзагрузке данных для истории: {e}")
@@ -2210,15 +2003,17 @@ def issue(issue_id):
     # === ЭТАП 6: Рендеринг шаблона с предзагруженными данными ===
     end_time = time.time()
     total_time = end_time - start_time
-    logger.info(
-        "Заявка #%s загружена за %.2f сек (cred_lookup=%.2f, connector=%.2f, issue=%.2f, props=%.2f)",
-        issue_id,
-        total_time,
-        timings.get("credential_lookup", 0),
-        timings.get("connector_init", 0),
-        timings.get("issue_fetch", 0),
-        timings.get("property_descriptions", 0),
-    )
+    perf_debug_enabled = _is_my_issues_perf_debug_enabled()
+    if perf_debug_enabled:
+        logger.info(
+            "Заявка #%s загружена за %.2f сек (cred_lookup=%.2f, connector=%.2f, issue=%.2f, props=%.2f)",
+            issue_id,
+            total_time,
+            timings.get("credential_lookup", 0),
+            timings.get("connector_init", 0),
+            timings.get("issue_fetch", 0),
+            timings.get("property_descriptions", 0),
+        )
 
     html = render_template(
         "issue.html",
@@ -2234,20 +2029,21 @@ def issue(issue_id):
     )
 
     response = current_app.make_response(html)
-    response.headers["Server-Timing"] = (
-        f"cred_lookup;dur={timings.get('credential_lookup', 0) * 1000:.1f}, "
-        f"connector;dur={timings.get('connector_init', 0) * 1000:.1f}, "
-        f"issue_fetch;dur={timings.get('issue_fetch', 0) * 1000:.1f}, "
-        f"props;dur={timings.get('property_descriptions', 0) * 1000:.1f}, "
-        f"total;dur={total_time * 1000:.1f}"
-    )
-    response.headers["X-Issue-Timings"] = (
-        f"cred_lookup={timings.get('credential_lookup', 0):.3f};"
-        f"connector={timings.get('connector_init', 0):.3f};"
-        f"issue_fetch={timings.get('issue_fetch', 0):.3f};"
-        f"props={timings.get('property_descriptions', 0):.3f};"
-        f"total={total_time:.3f}"
-    )
+    if perf_debug_enabled:
+        response.headers["Server-Timing"] = (
+            f"cred_lookup;dur={timings.get('credential_lookup', 0) * 1000:.1f}, "
+            f"connector;dur={timings.get('connector_init', 0) * 1000:.1f}, "
+            f"issue_fetch;dur={timings.get('issue_fetch', 0) * 1000:.1f}, "
+            f"props;dur={timings.get('property_descriptions', 0) * 1000:.1f}, "
+            f"total;dur={total_time * 1000:.1f}"
+        )
+        response.headers["X-Issue-Timings"] = (
+            f"cred_lookup={timings.get('credential_lookup', 0):.3f};"
+            f"connector={timings.get('connector_init', 0):.3f};"
+            f"issue_fetch={timings.get('issue_fetch', 0):.3f};"
+            f"props={timings.get('property_descriptions', 0):.3f};"
+            f"total={total_time:.3f}"
+        )
     return response
 
 

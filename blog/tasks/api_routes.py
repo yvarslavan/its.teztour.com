@@ -91,7 +91,22 @@ def _get_redmine_connector_for_current_user(allow_api_key_fallback=True):
                     current_user.username,
                     password_source,
                 )
-            return connector
+    return connector
+
+
+def _invalidate_task_page_caches():
+    """Сбрасывает короткоживущие кэши страницы задач после изменения статуса."""
+    direct_sql_cache = getattr(current_app, '_tasks_direct_sql_cache', None)
+    if isinstance(direct_sql_cache, dict):
+        keys_to_delete = [key for key in direct_sql_cache if key and key[0] == current_user.id]
+        for key in keys_to_delete:
+            direct_sql_cache.pop(key, None)
+
+    stats_cache = getattr(current_app, '_tasks_stats_cache', None)
+    if isinstance(stats_cache, dict):
+        keys_to_delete = [key for key in stats_cache if key and key[0] == current_user.id]
+        for key in keys_to_delete:
+            stats_cache.pop(key, None)
 
     current_app.logger.warning(
         "[API] Не удалось создать RedmineConnector по локальным паролям для %s",
@@ -493,6 +508,8 @@ def update_task_status(task_id):
                 "updated_at": datetime.now().isoformat(),
                 "message": f"Статус задачи успешно изменен на '{new_status_name}'"
             }
+
+            _invalidate_task_page_caches()
 
             # Обрабатываем уведомления после изменения статуса
             try:

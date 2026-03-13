@@ -377,6 +377,7 @@ def get_issue_details(issue_id):
                     Status.name.label("status_name"),
                     Priority.name.label("priority_name"),
                     Issue.author_id,
+                    Issue.assigned_to_id,
                     Issue.created_on,
                     Issue.updated_on,
                     Issue.closed_on,

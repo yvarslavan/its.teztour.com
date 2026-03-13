@@ -13,6 +13,31 @@ from redmine import get_connection, db_redmine_host, db_redmine_user_name, db_re
 # или должен быть получен через get('redmine', 'anonymous_user_id') если нужен именно ID.
 # Пока что логика create_redmine_connector полагается на общий api_key для "анонимов".
 
+
+def _tasks_debug_enabled():
+    """Включает подробные логи только по явному флагу приложения."""
+    try:
+        return bool(current_app.config.get('TASKS_DEBUG', False))
+    except RuntimeError:
+        return False
+
+
+def _tasks_debug_log(level, message, *args, **kwargs):
+    if not _tasks_debug_enabled():
+        return
+
+    log_method = getattr(current_app.logger, level, None)
+    if callable(log_method):
+        log_method(message, *args, **kwargs)
+
+
+def _should_include_description():
+    return request.args.get('with_description') == '1'
+
+
+def _should_search_in_description():
+    return request.args.get('search_in_description') == '1' or _should_include_description()
+
 def create_redmine_connector(is_redmine_user, user_login, password=None, api_key_param=None):
     try:
         # Получаем URL Redmine из переменных окружения
@@ -21,22 +46,28 @@ def create_redmine_connector(is_redmine_user, user_login, password=None, api_key
             current_app.logger.error("REDMINE_URL не установлен в переменных окружения")
             return None
 
-        current_app.logger.info(f"Создание коннектора Redmine для URL: {url}")
+        _tasks_debug_log('info', "Создание коннектора Redmine для URL: %s", url)
         effective_api_key = api_key_param
 
         if not is_redmine_user and not api_key_param:
             effective_api_key = os.getenv('REDMINE_API_KEY')
-            current_app.logger.info(f"Используется API ключ из переменных окружения: {'Да' if effective_api_key else 'Нет'}")
+            _tasks_debug_log('info', "Используется API ключ из переменных окружения: %s", 'Да' if effective_api_key else 'Нет')
 
         if effective_api_key:
             masked_key = f"...{effective_api_key[-6:]}" if len(effective_api_key) > 6 else "***"
-            current_app.logger.info(f"Используется API ключ Redmine: {masked_key}")
+            _tasks_debug_log('info', "Используется API ключ Redmine: %s", masked_key)
             if "your_redmine_api_key_here" in effective_api_key:
                 current_app.logger.error("В переменных окружения используется шаблонный REDMINE_API_KEY, а не реальный ключ")
                 return None
 
         # Логируем параметры создания коннектора
-        current_app.logger.info(f"Параметры коннектора - is_redmine_user: {is_redmine_user}, user_login: {user_login}, password: {'***' if password else 'None'}")
+        _tasks_debug_log(
+            'info',
+            "Параметры коннектора - is_redmine_user: %s, user_login: %s, password: %s",
+            is_redmine_user,
+            user_login,
+            '***' if password else 'None',
+        )
 
         if is_redmine_user:
             if not user_login or not password:
@@ -49,7 +80,7 @@ def create_redmine_connector(is_redmine_user, user_login, password=None, api_key
                 password=password,
                 api_key=effective_api_key
             )
-            current_app.logger.info(f"Создан коннектор для пользователя Redmine: {user_login}")
+            _tasks_debug_log('info', "Создан коннектор для пользователя Redmine: %s", user_login)
             return connector
         else:
             if not effective_api_key:
@@ -62,7 +93,7 @@ def create_redmine_connector(is_redmine_user, user_login, password=None, api_key
                 password=None,
                 api_key=effective_api_key
             )
-            current_app.logger.info("Создан коннектор для анонимного пользователя")
+            _tasks_debug_log('info', "Создан коннектор для анонимного пользователя")
             return connector
 
     except Exception as e:
@@ -217,12 +248,12 @@ def format_issue_date(date_obj):
         current_app.logger.error(f"Ошибка форматирования даты '{date_obj}': {str(e)}")
         return str(date_obj)
 
-def task_to_dict(issue):
+def task_to_dict(issue, include_description=False):
     """Преобразует объект задачи Redmine в простой словарь, оптимизированный для DataTables."""
     try:
         if not issue:
             # Возвращаем структуру-заглушку, чтобы избежать ошибок на фронтенде
-            return {
+            fallback_task = {
                 'id': 0,
                 'subject': 'Ошибка: Задача не найдена',
                 'project_name': 'N/A',
@@ -237,11 +268,15 @@ def task_to_dict(issue):
                 'due_date': '',
                 'closed_on': '',
                 'done_ratio': 0,
-                'description': 'Задача не была найдена или произошла ошибка при ее загрузке.',
             }
 
+            if include_description:
+                fallback_task['description'] = 'Задача не была найдена или произошла ошибка при ее загрузке.'
+
+            return fallback_task
+
         # Формируем "плоский" словарь
-        return {
+        task_data = {
             'id': issue.id,
             'subject': getattr(issue, 'subject', ''),
 
@@ -263,13 +298,17 @@ def task_to_dict(issue):
             'due_date': format_issue_date(getattr(issue, 'due_date', None)),
             'closed_on': format_issue_date(getattr(issue, 'closed_on', None)),
             'done_ratio': getattr(issue, 'done_ratio', 0),
-            'description': getattr(issue, 'description', ''),
         }
+
+        if include_description:
+            task_data['description'] = getattr(issue, 'description', '')
+
+        return task_data
     except Exception as e:
         issue_id = getattr(issue, 'id', 'N/A')
         current_app.logger.error(f"Ошибка преобразования задачи #{issue_id} в словарь: {e}", exc_info=True)
         # В случае любой ошибки возвращаем словарь-заглушку с той же структурой
-        return {
+        fallback_task = {
             'id': issue_id,
             'subject': f'Ошибка обработки данных для задачи #{issue_id}',
             'project_name': 'Ошибка',
@@ -284,8 +323,12 @@ def task_to_dict(issue):
             'due_date': '',
             'closed_on': '',
             'done_ratio': 0,
-            'description': f'Произошла ошибка при обработке данных для задачи #{issue_id}.',
         }
+
+        if include_description:
+            fallback_task['description'] = f'Произошла ошибка при обработке данных для задачи #{issue_id}.'
+
+        return fallback_task
 
 def get_accurate_task_count(redmine_connector, filter_params):
     try:
@@ -349,30 +392,24 @@ def get_user_assigned_tasks_paginated_optimized(
         if priority_id:
             priority_ids = [priority_id]
 
-        current_app.logger.info(f"🔍 [FILTER_DEBUG] Получены параметры фильтрации: status_id={status_id}, project_id={project_id}, priority_id={priority_id}")
-        current_app.logger.info(f"🔍 [FILTER_DEBUG] Получены параметры фильтрации по имени: status_name='{status_name}', project_name='{project_name}', priority_name='{priority_name}'")
-
         # Переменная для отслеживания, нужна ли фильтрация на стороне Python
         use_python_filtering = False
         python_filters = {}
+        include_description = _should_include_description()
+        search_in_description = _should_search_in_description()
 
         # Проверка наличия параметров фильтрации по имени
         if status_name and status_name not in ['Все статусы', 'All']:
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Обнаружен фильтр по имени статуса: '{status_name}'")
             python_filters['status_name'] = status_name
             use_python_filtering = True
 
         if project_name and project_name not in ['Все проекты', 'All']:
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Обнаружен фильтр по имени проекта: '{project_name}'")
             python_filters['project_name'] = project_name
             use_python_filtering = True
 
         if priority_name and priority_name not in ['Все приоритеты', 'All']:
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Обнаружен фильтр по имени приоритета: '{priority_name}'")
             python_filters['priority_name'] = priority_name
             use_python_filtering = True
-
-        current_app.logger.info(f"Получение задач: user_id={redmine_user_id}, page={page}, per_page={per_page}, search='{search_term}', sort='{sort_column}:{sort_direction}', statuses={status_ids}, projects={project_ids}, priorities={priority_ids}")
 
         # Увеличиваем лимит для Kanban запросов с force_load=True
         if force_load:
@@ -382,7 +419,7 @@ def get_user_assigned_tasks_paginated_optimized(
 
         # По умолчанию не тянем тяжелое поле description в списках
         includes_base = ['status', 'priority', 'project', 'tracker', 'author', 'easy_email_to']
-        if request.args.get('with_description') == '1':
+        if include_description or search_in_description:
             includes_base.append('description')
 
         filter_params = {
@@ -396,25 +433,20 @@ def get_user_assigned_tasks_paginated_optimized(
         # Если есть ID фильтров, добавляем их в запрос к Redmine API
         if status_ids and isinstance(status_ids, list) and status_ids[0]:
             filter_params['status_id'] = status_ids[0]
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Добавлен фильтр по ID статуса: {status_ids[0]}")
 
         if project_ids and isinstance(project_ids, list) and project_ids[0]:
             filter_params['project_id'] = project_ids[0]
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Добавлен фильтр по ID проекта: {project_ids[0]}")
 
         if priority_ids and isinstance(priority_ids, list) and priority_ids[0]:
             filter_params['priority_id'] = priority_ids[0]
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Добавлен фильтр по ID приоритета: {priority_ids[0]}")
 
         # Если это принудительная загрузка данных при первом запросе, добавляем специальный параметр
         if force_load:
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Принудительная загрузка данных (force_load=True)")
             # Добавляем параметр status_id=* для загрузки всех задач
             filter_params['status_id'] = '*'
 
         # Исключение завершённых задач для оптимизации Kanban
         if exclude_completed:
-            current_app.logger.info(f"🔍 [FILTER_DEBUG] Исключение завершённых задач (exclude_completed=True)")
             # Исключаем завершённые статусы (5=Закрыта, 6=Отклонена, 14=Перенаправлена)
             completed_status_ids = ['5', '6', '14']
             if 'status_id' in filter_params:
@@ -437,18 +469,19 @@ def get_user_assigned_tasks_paginated_optimized(
             if search_encoded.isdigit():
                 # Поиск по ID задачи - используем Redmine фильтр
                 filter_params['issue_id'] = search_encoded
-                current_app.logger.info(f"🔍 ОТЛАДКА: Поиск по ID задачи: {search_encoded}")
             elif search_encoded.startswith('#') and search_encoded[1:].isdigit():
                 # Поиск по ID задачи с символом # - используем Redmine фильтр
                 filter_params['issue_id'] = search_encoded[1:]
-                current_app.logger.info(f"🔍 ОТЛАДКА: Поиск по ID задачи (с #): {search_encoded[1:]}")
             else:
                 # Поиск по тексту - НЕ используем Redmine фильтры, делаем на стороне Python
                 use_python_only_search = True
-                current_app.logger.info(f"🔍 ОТЛАДКА: ТЕКСТОВЫЙ ПОИСК '{search_encoded}' - будем загружать ВСЕ задачи и фильтровать на Python")
-
-        current_app.logger.debug(f"Итоговые фильтры Redmine REST API: {filter_params}")
-        current_app.logger.info(f"🔍 ОТЛАДКА: use_python_only_search = {use_python_only_search}, use_python_filtering = {use_python_filtering}")
+                _tasks_debug_log(
+                    'info',
+                    "Python text search enabled for user_id=%s, search='%s', include_description=%s",
+                    redmine_user_id,
+                    search_encoded,
+                    search_in_description,
+                )
 
         # Объединение логики текстового поиска и фильтрации по имени
         use_python_search_or_filter = use_python_only_search or use_python_filtering
@@ -464,11 +497,9 @@ def get_user_assigned_tasks_paginated_optimized(
                     filter_params_for_python['limit'] = 200   # Обычный лимит для поиска/фильтрации
                 filter_params_for_python['offset'] = 0   # Сбрасываем offset для поиска/фильтрации
 
-                current_app.logger.info(f"🔍 ОТЛАДКА: Загружаем {filter_params_for_python['limit']} задач для обработки на Python")
                 issues_page = redmine_connector.redmine.issue.filter(**filter_params_for_python)
             else:
                 # Обычный поиск по ID или без поиска
-                current_app.logger.info(f"🔍 ОТЛАДКА: Выполняем стандартный запрос к Redmine")
                 issues_page = redmine_connector.redmine.issue.filter(**filter_params)
         except Exception as api_error:
             current_app.logger.error(f"❌ Ошибка запроса к Redmine API: {str(api_error)}")
@@ -476,11 +507,10 @@ def get_user_assigned_tasks_paginated_optimized(
             raise api_error
 
         issues_list_initial = list(issues_page)
-        current_app.logger.info(f"🔍 ОТЛАДКА: Получено {len(issues_list_initial)} задач от Redmine API")
+        _tasks_debug_log('info', "Fetched %s issues from Redmine API for user_id=%s", len(issues_list_initial), redmine_user_id)
 
         # ОБЪЕДИНЕННАЯ PYTHON-ФИЛЬТРАЦИЯ: Для текстового поиска и фильтрации по имени
         if use_python_search_or_filter:
-            current_app.logger.info(f"🔍 ОТЛАДКА: ЗАПУСК Python-фильтрации")
             issues_list_filtered = []
 
             # Подготавливаем параметры поиска
@@ -493,10 +523,9 @@ def get_user_assigned_tasks_paginated_optimized(
                 # ПРОВЕРКА ПОИСКА: Если есть поисковый запрос, проверяем его
                 if use_python_only_search and search_term_lower:
                     # Поля для текстового поиска
-                    fields_to_search = [
-                        getattr(issue, 'subject', ''),
-                        getattr(issue, 'description', ''),
-                    ]
+                    fields_to_search = [getattr(issue, 'subject', '')]
+                    if search_in_description:
+                        fields_to_search.append(getattr(issue, 'description', ''))
 
                     # Проверяем, содержится ли поисковый термин в любом из полей
                     found_in_any_field = False
@@ -530,7 +559,13 @@ def get_user_assigned_tasks_paginated_optimized(
                 if include_issue:
                     issues_list_filtered.append(issue)
 
-            current_app.logger.info(f"🔍 ОТЛАДКА: После Python-фильтрации осталось {len(issues_list_filtered)} задач из {len(issues_list_initial)}")
+            _tasks_debug_log(
+                'info',
+                "Python filtering kept %s of %s issues for user_id=%s",
+                len(issues_list_filtered),
+                len(issues_list_initial),
+                redmine_user_id,
+            )
             issues_list_to_return = issues_list_filtered
 
             # Применяем пагинацию на уже отфильтрованных данных
@@ -542,7 +577,14 @@ def get_user_assigned_tasks_paginated_optimized(
             issues_list_to_return = issues_list_initial
             total_count_final = issues_page.total_count if hasattr(issues_page, 'total_count') else len(issues_list_to_return)
 
-        current_app.logger.info(f"get_user_assigned_tasks_paginated_optimized: page={page}, per_page={per_page}, found_on_page={len(issues_list_to_return)}, total_overall={total_count_final}")
+        _tasks_debug_log(
+            'info',
+            "Paginated tasks ready: page=%s per_page=%s found_on_page=%s total=%s",
+            page,
+            per_page,
+            len(issues_list_to_return),
+            total_count_final,
+        )
         return issues_list_to_return, total_count_final
 
     except Exception as e:

@@ -15,7 +15,11 @@ const MyTasksApp = {
         },
         tableId: 'tasksTable',
         loadingSpinnerId: 'loading-spinner',
-        defaultPageSize: 25
+        defaultPageSize: 25,
+        navigationStateKey: 'my_tasks:return_context',
+        tableCacheKey: 'my_tasks:table_cache',
+        returnContextTtlMs: 10 * 60 * 1000,
+        tableCacheTtlMs: 90 * 1000
     },
 
     // Состояние приложения
@@ -26,6 +30,11 @@ const MyTasksApp = {
         showSpinnerFirstLoad: true, // Нужно ли показывать спиннер при первой загрузке
         filtersLoaded: false,
         statisticsLoaded: false,
+        returnContext: null,
+        hasUsedReturnCache: false,
+        scrollRestored: false,
+        prefetchedTaskIds: new Set(),
+        deferInitialTableLoad: false,
         currentFilters: {
             status: '',
             project: '',
@@ -42,29 +51,49 @@ const MyTasksApp = {
             return;
         }
 
-        // Определяем, вернулся ли пользователь со страницы детали
-        this.state.isReturn = sessionStorage.getItem('return_from_task_id') !== null;
-        this.state.showSpinnerFirstLoad = !this.state.isReturn; // если возврат — спиннер не нужен
+        const returnNavigation = this.isReturnNavigation();
+        const returnContext = returnNavigation ? this.loadReturnContext() : null;
 
-        // Очищаем данные выделения строки при загрузке страницы
-        sessionStorage.removeItem('return_from_task_id');
-        sessionStorage.removeItem('return_from_task_page');
-        sessionStorage.removeItem('return_from_task_view');
+        if (!returnNavigation) {
+            this.clearReturnContext();
+        }
+        if (returnNavigation && !returnContext) {
+            this.cleanReturnQueryParam();
+        }
+
+        this.state.returnContext = returnContext;
+        this.state.isReturn = Boolean(returnContext);
+        this.state.showSpinnerFirstLoad = !this.state.isReturn; // если возврат — спиннер не нужен
+        this.state.deferInitialTableLoad = returnContext?.view === 'kanban';
+
+        if (returnContext?.filters) {
+            this.state.currentFilters = {
+                ...this.state.currentFilters,
+                ...returnContext.filters
+            };
+        }
 
         __myTasksDebugLog('🔄 Логика спиннера:', {
             isReturn: this.state.isReturn,
             showSpinnerFirstLoad: this.state.showSpinnerFirstLoad,
-            returnId: 'очищен'
+            returnTaskId: returnContext?.taskId || null
         });
 
         // Спиннер уже управляется ранним скриптом в template
         // Здесь только логируем состояние
 
-        this.initializeDataTable();
+        if (!this.state.deferInitialTableLoad) {
+            this.initializeDataTable();
+        }
         this.loadFilters();
         this.loadStatistics();
         this.bindEventListeners();
         this.initializeTooltips();
+
+        if (this.state.deferInitialTableLoad) {
+            this.restoreScrollPosition();
+            this.finalizeReturnNavigation();
+        }
 
         this.state.isInitialized = true;
         __myTasksDebugLog('✅ MyTasksApp инициализирован успешно');
@@ -117,29 +146,37 @@ const MyTasksApp = {
         const dataTableConfig = {
             processing: true,
             serverSide: true,
-            ajax: {
-                url: this.config.apiEndpoints.tasks,
-                type: 'GET',
-                data: (params) => {
-                    // Добавляем параметры фильтрации
-                    if (this.state.currentFilters.status) {
-                        params.status_id = [this.state.currentFilters.status];
-                    }
-                    if (this.state.currentFilters.project) {
-                        params.project_id = [this.state.currentFilters.project];
-                    }
-                    if (this.state.currentFilters.priority) {
-                        params.priority_id = [this.state.currentFilters.priority];
-                    }
+            ajax: (params, callback) => {
+                const requestParams = this.buildTaskRequestParams(params);
+                __myTasksDebugLog('📤 Параметры запроса DataTables:', requestParams);
 
-                    __myTasksDebugLog('📤 Параметры запроса DataTables:', params);
-                    return params;
-                },
-                error: (xhr, error, code) => {
-                    console.error('❌ Ошибка загрузки данных DataTables:', {xhr, error, code});
-                    this.hideLoadingSpinner();
-                    this.showError(`Ошибка загрузки данных: ${error}`);
+                if (this.state.isReturn && !this.state.hasUsedReturnCache) {
+                    const cachedResponse = this.getCachedTableResponse(params);
+                    if (cachedResponse) {
+                        __myTasksDebugLog('♻️ Используем кэшированный ответ DataTables при возврате');
+                        this.state.hasUsedReturnCache = true;
+                        callback({
+                            ...cachedResponse,
+                            draw: params.draw
+                        });
+                        return;
+                    }
                 }
+
+                $.ajax({
+                    url: this.config.apiEndpoints.tasks,
+                    type: 'GET',
+                    data: requestParams,
+                    success: (response) => {
+                        this.cacheTableResponse(params, response);
+                        callback(response);
+                    },
+                    error: (xhr, error, code) => {
+                        console.error('❌ Ошибка загрузки данных DataTables:', {xhr, error, code});
+                        this.hideLoadingSpinner();
+                        this.showError(`Ошибка загрузки данных: ${error}`);
+                    }
+                });
             },
             columns: [
                 {
@@ -274,8 +311,11 @@ const MyTasksApp = {
                     }
                 }
             ],
-            order: [[6, 'desc']], // Сортировка по дате обновления (убывание)
-            pageLength: this.config.defaultPageSize,
+            order: this.state.returnContext?.order || [[6, 'desc']], // Сортировка по дате обновления (убывание)
+            search: {
+                search: this.state.returnContext?.search || ''
+            },
+            pageLength: this.state.returnContext?.pageLength || this.config.defaultPageSize,
             lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
             responsive: {
                 details: {
@@ -323,6 +363,9 @@ const MyTasksApp = {
             },
             drawCallback: () => {
                 __myTasksDebugLog('✅ DataTable перерисована');
+                if (this.state.isReturn) {
+                    this.restoreScrollPosition();
+                }
             },
             initComplete: () => {
                 __myTasksDebugLog('✅ DataTable инициализирована');
@@ -336,15 +379,18 @@ const MyTasksApp = {
                 // Логируем информацию о временной зоне для отладки
                 const timezoneInfo = this.getTimezoneInfo();
                 __myTasksDebugLog('🕐 Информация о временной зоне клиента:', timezoneInfo);
+
+                this.finalizeReturnNavigation();
             }
         };
 
         /*
          * ⬅️ Восстановление страницы пагинации ещё до создания DataTable.
          */
-        const savedPage = sessionStorage.getItem('return_from_task_page');
-        if (savedPage !== null) {
-            dataTableConfig.displayStart = parseInt(savedPage, 10) * this.config.defaultPageSize;
+        const savedPage = this.state.returnContext?.page;
+        const savedPageLength = this.state.returnContext?.pageLength || this.config.defaultPageSize;
+        if (savedPage !== null && savedPage !== undefined) {
+            dataTableConfig.displayStart = Number.parseInt(savedPage, 10) * savedPageLength;
             dataTableConfig.processing = !this.state.isReturn;
         }
 
@@ -365,17 +411,15 @@ const MyTasksApp = {
         });
 
         // Перехватываем клики по ссылкам задач, чтобы сохранить контекст (ID и страница)
-        $(tableElement).on('click', '.task-id-link, .task-title', (e) => {
-            const taskId = $(e.currentTarget).closest('tr').find('.task-id-number').text().replace('#','');
-            sessionStorage.setItem('return_from_task_id', taskId);
-            // Сохраняем текущую страницу DataTable
-            const currentPage = this.state.dataTable.page();
-            sessionStorage.setItem('return_from_task_page', currentPage);
+        $(tableElement).on('mouseenter focusin', '.task-id-link, .task-title', (e) => {
+            const taskId = this.getTaskIdFromElement(e.currentTarget);
+            this.prefetchTaskDetail(taskId);
+        });
 
-            // Сохраняем текущий режим просмотра
-            const currentView = document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
-            sessionStorage.setItem('return_from_task_view', currentView);
-            __myTasksDebugLog(`[MyTasksApp] 💾 Сохранен режим просмотра при переходе в детали: ${currentView}`);
+        $(tableElement).on('click', '.task-id-link, .task-title', (e) => {
+            const taskId = this.getTaskIdFromElement(e.currentTarget);
+            const context = this.persistReturnContext(taskId);
+            __myTasksDebugLog('[MyTasksApp] 💾 Сохранён контекст возврата:', context);
         });
     },
 
@@ -444,6 +488,20 @@ const MyTasksApp = {
                 });
             }
         }
+
+        ['status', 'project', 'priority'].forEach((filterType) => {
+            const select = document.getElementById(`${filterType}-filter`);
+            const clearBtn = document.getElementById(`clear-${filterType}-filter`);
+            const selectedValue = this.state.currentFilters[filterType] || '';
+
+            if (select) {
+                select.value = selectedValue;
+            }
+
+            if (clearBtn) {
+                clearBtn.style.display = selectedValue ? 'block' : 'none';
+            }
+        });
 
         __myTasksDebugLog('✅ Фильтры заполнены');
     },
@@ -679,6 +737,281 @@ const MyTasksApp = {
         if (clearBtn) {
             clearBtn.style.display = 'none';
         }
+
+        if (window.kanbanManager && window.kanbanManager.currentView === 'kanban') {
+            window.kanbanManager.clearCache();
+            window.kanbanManager.loadKanbanDataOptimized();
+        }
+    },
+
+    readSessionJson: function(key) {
+        try {
+            const rawValue = sessionStorage.getItem(key);
+            if (!rawValue) {
+                return null;
+            }
+            return JSON.parse(rawValue);
+        } catch (error) {
+            console.warn('⚠️ Не удалось прочитать sessionStorage JSON:', key, error);
+            sessionStorage.removeItem(key);
+            return null;
+        }
+    },
+
+    writeSessionJson: function(key, value) {
+        try {
+            sessionStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.warn('⚠️ Не удалось сохранить sessionStorage JSON:', key, error);
+        }
+    },
+
+    clearReturnContext: function() {
+        sessionStorage.removeItem(this.config.navigationStateKey);
+        sessionStorage.removeItem('return_from_task_id');
+        sessionStorage.removeItem('return_from_task_page');
+        sessionStorage.removeItem('return_from_task_view');
+    },
+
+    isReturnNavigation: function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const referrer = document.referrer || '';
+        const navigationEntry = performance.getEntriesByType('navigation')[0];
+
+        return urlParams.has('return')
+            || referrer.includes('/tasks/my-tasks/')
+            || navigationEntry?.type === 'back_forward';
+    },
+
+    normalizeOrder: function(order) {
+        if (!Array.isArray(order)) {
+            return [[6, 'desc']];
+        }
+
+        const normalized = order
+            .map((item) => {
+                if (!Array.isArray(item) || item.length < 2) {
+                    return null;
+                }
+
+                const columnIndex = Number.parseInt(item[0], 10);
+                const direction = item[1] === 'asc' ? 'asc' : 'desc';
+
+                if (Number.isNaN(columnIndex)) {
+                    return null;
+                }
+
+                return [columnIndex, direction];
+            })
+            .filter(Boolean);
+
+        return normalized.length ? normalized : [[6, 'desc']];
+    },
+
+    loadReturnContext: function() {
+        const now = Date.now();
+        const storedContext = this.readSessionJson(this.config.navigationStateKey);
+
+        if (storedContext?.timestamp && (now - storedContext.timestamp) <= this.config.returnContextTtlMs) {
+            return {
+                taskId: storedContext.taskId || '',
+                page: Number.parseInt(storedContext.page, 10) || 0,
+                pageLength: Number.parseInt(storedContext.pageLength, 10) || this.config.defaultPageSize,
+                search: storedContext.search || '',
+                order: this.normalizeOrder(storedContext.order),
+                view: storedContext.view || 'list',
+                scrollY: Number.parseInt(storedContext.scrollY, 10) || 0,
+                filters: {
+                    status: storedContext.filters?.status || '',
+                    project: storedContext.filters?.project || '',
+                    priority: storedContext.filters?.priority || ''
+                },
+                timestamp: storedContext.timestamp
+            };
+        }
+
+        const legacyTaskId = sessionStorage.getItem('return_from_task_id');
+        if (!legacyTaskId) {
+            this.clearReturnContext();
+            return null;
+        }
+
+        return {
+            taskId: legacyTaskId,
+            page: Number.parseInt(sessionStorage.getItem('return_from_task_page'), 10) || 0,
+            pageLength: this.config.defaultPageSize,
+            search: '',
+            order: [[6, 'desc']],
+            view: sessionStorage.getItem('return_from_task_view') || 'list',
+            scrollY: 0,
+            filters: {
+                status: '',
+                project: '',
+                priority: ''
+            },
+            timestamp: now
+        };
+    },
+
+    getCurrentView: function() {
+        return document.querySelector('.view-toggle-btn.active')?.dataset.view || 'list';
+    },
+
+    getCurrentTableContext: function(taskId = '') {
+        const dataTable = this.state.dataTable;
+
+        return {
+            taskId: taskId || this.state.returnContext?.taskId || '',
+            page: dataTable ? dataTable.page() : 0,
+            pageLength: dataTable ? dataTable.page.len() : this.config.defaultPageSize,
+            search: dataTable ? dataTable.search() : '',
+            order: dataTable ? this.normalizeOrder(dataTable.order()) : [[6, 'desc']],
+            view: this.getCurrentView(),
+            scrollY: Math.round(window.scrollY || window.pageYOffset || 0),
+            filters: {
+                ...this.state.currentFilters
+            },
+            timestamp: Date.now()
+        };
+    },
+
+    persistReturnContext: function(taskId = '') {
+        const context = this.getCurrentTableContext(taskId);
+        this.writeSessionJson(this.config.navigationStateKey, context);
+        sessionStorage.setItem('return_from_task_id', context.taskId || '');
+        sessionStorage.setItem('return_from_task_page', String(context.page || 0));
+        sessionStorage.setItem('return_from_task_view', context.view || 'list');
+        return context;
+    },
+
+    buildTaskRequestParams: function(params) {
+        const requestParams = { ...params };
+
+        if (this.state.currentFilters.status) {
+            requestParams.status_id = [this.state.currentFilters.status];
+        }
+        if (this.state.currentFilters.project) {
+            requestParams.project_id = [this.state.currentFilters.project];
+        }
+        if (this.state.currentFilters.priority) {
+            requestParams.priority_id = [this.state.currentFilters.priority];
+        }
+
+        return requestParams;
+    },
+
+    buildTableCacheSignature: function(params) {
+        const signaturePayload = {
+            start: Number.parseInt(params.start, 10) || 0,
+            length: Number.parseInt(params.length, 10) || this.config.defaultPageSize,
+            search: params.search?.value || '',
+            order: Array.isArray(params.order)
+                ? params.order.map((item) => `${item.column}:${item.dir}`)
+                : [],
+            filters: {
+                status: this.state.currentFilters.status || '',
+                project: this.state.currentFilters.project || '',
+                priority: this.state.currentFilters.priority || ''
+            }
+        };
+
+        return JSON.stringify(signaturePayload);
+    },
+
+    getCachedTableResponse: function(params) {
+        const cachedState = this.readSessionJson(this.config.tableCacheKey);
+        if (!cachedState?.response || !cachedState.timestamp || !cachedState.signature) {
+            return null;
+        }
+
+        if ((Date.now() - cachedState.timestamp) > this.config.tableCacheTtlMs) {
+            sessionStorage.removeItem(this.config.tableCacheKey);
+            return null;
+        }
+
+        if (cachedState.signature !== this.buildTableCacheSignature(params)) {
+            return null;
+        }
+
+        return cachedState.response;
+    },
+
+    cacheTableResponse: function(params, response) {
+        if (!response || !Array.isArray(response.data)) {
+            return;
+        }
+
+        this.writeSessionJson(this.config.tableCacheKey, {
+            signature: this.buildTableCacheSignature(params),
+            timestamp: Date.now(),
+            response
+        });
+    },
+
+    restoreScrollPosition: function() {
+        if (this.state.scrollRestored || !this.state.returnContext) {
+            return;
+        }
+
+        this.state.scrollRestored = true;
+        const scrollY = this.state.returnContext.scrollY || 0;
+
+        window.requestAnimationFrame(() => {
+            window.scrollTo({
+                top: scrollY,
+                behavior: 'auto'
+            });
+        });
+    },
+
+    cleanReturnQueryParam: function() {
+        const url = new URL(window.location.href);
+        if (!url.searchParams.has('return')) {
+            return;
+        }
+
+        url.searchParams.delete('return');
+        const cleanUrl = `${url.pathname}${url.search}${url.hash}`;
+        window.history.replaceState(window.history.state, document.title, cleanUrl || url.pathname);
+    },
+
+    finalizeReturnNavigation: function() {
+        if (!this.state.isReturn) {
+            return;
+        }
+
+        this.restoreScrollPosition();
+        this.clearReturnContext();
+        this.state.isReturn = false;
+        this.state.returnContext = null;
+        this.cleanReturnQueryParam();
+    },
+
+    getTaskIdFromElement: function(element) {
+        const href = element?.getAttribute?.('href') || element?.closest?.('a')?.getAttribute?.('href') || '';
+        const hrefMatch = href.match(/\/tasks\/my-tasks\/(\d+)/);
+
+        if (hrefMatch?.[1]) {
+            return hrefMatch[1];
+        }
+
+        const row = element?.closest?.('tr');
+        const idElement = row?.querySelector?.('.task-id-number');
+        return idElement ? idElement.textContent.replace('#', '').trim() : '';
+    },
+
+    prefetchTaskDetail: function(taskId) {
+        if (!taskId || this.state.prefetchedTaskIds.has(taskId)) {
+            return;
+        }
+
+        this.state.prefetchedTaskIds.add(taskId);
+
+        const prefetchLink = document.createElement('link');
+        prefetchLink.rel = 'prefetch';
+        prefetchLink.as = 'document';
+        prefetchLink.href = `/tasks/my-tasks/${taskId}`;
+        document.head.appendChild(prefetchLink);
     },
 
     // Сброс всех фильтров
@@ -710,6 +1043,11 @@ const MyTasksApp = {
 
         // Обновляем статистику
         this.loadStatistics();
+
+        if (window.kanbanManager && window.kanbanManager.currentView === 'kanban') {
+            window.kanbanManager.clearCache();
+            window.kanbanManager.loadKanbanDataOptimized();
+        }
     },
 
     // Переключение детализации карточки

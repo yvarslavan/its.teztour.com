@@ -17,347 +17,272 @@
 <script src="{{ url_for('static', filename='js/task_detail_legacy.js') }}"></script>
 {% endblock %}
 
+{% macro render_task_facts_panel(task, status_name, status_tone, priority_name, priority_tone, panel_class='') %}
+<div class="task-facts-panel {{ panel_class }}">
+  <div class="task-panel-header">
+    <h2><i class="fas fa-layer-group"></i> Факты по задаче</h2>
+  </div>
+  <div class="task-panel-content">
+    <div class="task-facts-group">
+      <div class="task-facts-group-title">Кто</div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-user"></i> Автор</div>
+        <div class="task-fact-value">
+          {% if task.author %}
+            {{ task.author.name }}
+          {% else %}
+            <span class="task-muted">Не указан</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-user-cog"></i> Исполнитель</div>
+        <div class="task-fact-value">
+          {% if task.assigned_to %}
+            {{ task.assigned_to.name }}
+          {% else %}
+            <span class="task-muted">Не назначен</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="task-facts-group">
+      <div class="task-facts-group-title">Что</div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-flag"></i> Статус</div>
+        <div class="task-fact-value">
+          <span class="task-badge task-badge--status-{{ status_tone }}">{{ status_name }}</span>
+        </div>
+      </div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-exclamation-triangle"></i> Приоритет</div>
+        <div class="task-fact-value">
+          <span class="task-badge task-badge--{{ priority_tone }}">{{ priority_name }}</span>
+        </div>
+      </div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-folder"></i> Проект</div>
+        <div class="task-fact-value">{{ task.project.name if task.project else 'Без проекта' }}</div>
+      </div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-tags"></i> Трекер</div>
+        <div class="task-fact-value">{{ task.tracker.name if task.tracker else 'Не указан' }}</div>
+      </div>
+      {% if task.done_ratio is defined and task.done_ratio is not none %}
+      <div class="task-fact-item task-fact-item--progress">
+        <div class="task-fact-label"><i class="fas fa-chart-line"></i> Прогресс</div>
+        <div class="task-fact-value">
+          <div class="task-progress-inline" aria-label="Прогресс {{ task.done_ratio }}%">
+            <span class="task-progress-value">{{ task.done_ratio }}%</span>
+            <div class="task-progress-track">
+              <span class="task-progress-track-fill" style="width: {{ task.done_ratio or 0 }}%"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="task-facts-group">
+      <div class="task-facts-group-title">Когда</div>
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-calendar-plus"></i> Создана</div>
+        <div class="task-fact-value">{{ task.created_on.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+      {% if task.start_date %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-play-circle"></i> Начало</div>
+        <div class="task-fact-value">{{ task.start_date.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+      {% if task.due_date %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-calendar-times"></i> Срок</div>
+        <div class="task-fact-value">{{ task.due_date.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+      {% if task.closed_on %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-check-circle"></i> Закрыта</div>
+        <div class="task-fact-value">{{ task.closed_on.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+      {% else %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-sync"></i> Обновлена</div>
+        <div class="task-fact-value">{{ task.updated_on.strftime('%d.%m.%Y %H:%M') }}</div>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if task.easy_email_to or task.easy_email_cc %}
+    <div class="task-facts-group">
+      <div class="task-facts-group-title">Контакты</div>
+      {% if task.easy_email_to %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-envelope"></i> Email</div>
+        <div class="task-fact-value">
+          <a href="mailto:{{ task.easy_email_to }}" class="task-link-text">{{ task.easy_email_to }}</a>
+        </div>
+      </div>
+      {% endif %}
+      {% if task.easy_email_cc %}
+      <div class="task-fact-item">
+        <div class="task-fact-label"><i class="fas fa-envelope-open-text"></i> CC</div>
+        <div class="task-fact-value task-fact-value--compact">{{ task.easy_email_cc }}</div>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+{% endmacro %}
+
 {% block main_page %}
+{% set status_name = status_mapping.get(task.status.id, task.status.name) if task.status else 'Неизвестно' %}
+{% set status_tone = 'default' %}
+{% if status_name in ['Закрыта', 'Closed', 'Выполнена', 'Resolved', 'Протестирована'] %}
+  {% set status_tone = 'success' %}
+{% elif status_name in ['Новая', 'New', 'Открыта', 'Open'] %}
+  {% set status_tone = 'info' %}
+{% elif status_name in ['В работе', 'In Progress', 'На тестировании', 'В очереди'] %}
+  {% set status_tone = 'warning' %}
+{% elif status_name in ['Отклонена', 'Rejected', 'Заморожена'] %}
+  {% set status_tone = 'danger' %}
+{% elif status_name in ['Запрошено уточнение', 'Приостановлена', 'На согласовании'] %}
+  {% set status_tone = 'pending' %}
+{% endif %}
 
-<!-- CSS для функционала изменения статуса -->
+{% set priority_name = task.priority.name if task.priority else 'Не указан' %}
+{% set priority_position = task.priority.position if task.priority and task.priority.position is defined else none %}
+{% set priority_tone = 'default' %}
+{% if priority_name in ['Высокий', 'Срочный', 'Неотложный'] or (priority_position is not none and priority_position|int >= 7) %}
+  {% set priority_tone = 'danger' %}
+{% elif priority_name in ['Низкий', 'Низкая'] or (priority_position is not none and priority_position|int <= 3) %}
+  {% set priority_tone = 'info' %}
+{% endif %}
 
+{% set task_history_count = task.journals|length if task.journals else 0 %}
+{% set task_assignee_name = task.assigned_to.name if task.assigned_to else 'Не назначен' %}
 
 <div class="modern-task-detail compact-mode">
-  <!-- Compact Mode Toggle Button -->
-  <button class="compact-mode-toggle" id="compactModeToggle" title="Переключить компактный режим">
+  <button class="compact-mode-toggle" id="compactModeToggle" title="Переключить компактность вторичных секций">
     <i class="fas fa-compress-alt"></i>
   </button>
 
-  <!-- Floating Action Button -->
-  <!-- Hero Section -->
-  <div class="hero-section">
-    <div class="hero-content">
-      <div class="breadcrumb">
-       <a href="/tasks/my-tasks" class="breadcrumb-link">
-          <i class="fas fa-tasks"></i>
-          <span>Мои задачи</span>
-       </a>
-        <i class="fas fa-chevron-right breadcrumb-separator"></i>
-        <span class="breadcrumb-current">Задача #{{task.id}}</span>
-       <button class="hero-action-btn back-btn" id="go-back-btn" data-task-id="{{ task.id }}">
-          <i class="fas fa-arrow-left"></i>
-          <span>Назад к списку</span>
-        </button>
-      </div>
-
-      <div class="hero-main">
-        <div class="task-status-large">
-          {% set status_class = 'status-default' %}
-          {% set status_icon = 'fas fa-question-circle' %}
-          {% set status_color = '#6c757d' %}
-          {% set status_name = status_mapping.get(task.status.id, task.status.name) if task.status else 'Неизвестно' %}
-
-          {% if status_name in ['Новая', 'New', 'Открыта', 'Open'] %}
-            {% set status_class = 'status-open' %}
-            {% set status_icon = 'fas fa-folder-open' %}
-            {% set status_color = '#007bff' %}
-          {% elif status_name in ['В работе', 'In Progress', 'На тестировании', 'В очереди'] %}
-            {% set status_class = 'status-progress' %}
-            {% set status_icon = 'fas fa-clock' %}
-            {% set status_color = '#ffc107' %}
-          {% elif status_name in ['Закрыта', 'Closed', 'Выполнена', 'Resolved', 'Протестирована'] %}
-            {% set status_class = 'status-closed' %}
-            {% set status_icon = 'fas fa-check-circle' %}
-            {% set status_color = '#28a745' %}
-          {% elif status_name in ['Отклонена', 'Rejected', 'Заморожена'] %}
-            {% set status_class = 'status-rejected' %}
-            {% set status_icon = 'fas fa-times-circle' %}
-            {% set status_color = '#dc3545' %}
-          {% elif status_name in ['Запрошено уточнение', 'Приостановлена', 'На согласовании'] %}
-            {% set status_class = 'status-pending' %}
-            {% set status_icon = 'fas fa-pause-circle' %}
-            {% set status_color = '#6f42c1' %}
-          {% elif status_name in ['Перенаправлена'] %}
-            {% set status_class = 'status-registered' %}
-            {% set status_icon = 'fas fa-file-check' %}
-            {% set status_color = '#17a2b8' %}
-          {% endif %}
-
-          <div class="status-indicator {{ status_class }}" style="--status-color: {{ status_color }}">
-            <i class="{{ status_icon }}"></i>
-          </div>
-        </div>
-
-        <div class="hero-text">
-          <h1 class="hero-title">{{task.subject}}</h1>
-          <p class="hero-subtitle">Задача #{{task.id}} • {{ status_name }}</p>
-        </div>
-      </div>
-
-      <div class="hero-actions">
-        <button class="hero-action-btn primary" onclick="window.print()">
-          <i class="fas fa-print"></i>
-          <span>Печать</span>
-        </button>
-        <button class="hero-action-btn secondary" onclick="copyTaskLink()">
-          <i class="fas fa-link"></i>
-          <span>Копировать ссылку</span>
-        </button>
-        <a href="https://helpdesk.teztour.com/issues/{{ task.id }}" class="hero-action-btn secondary" target="_blank" rel="noopener noreferrer">
-          <i class="fas fa-external-link-alt"></i>
-          <span>Открыть в Redmine</span>
-        </a>
-      </div>
+  <div class="task-page-header">
+    <div class="breadcrumb-nav">
+      <a href="/tasks/my-tasks?return=1" class="breadcrumb-link" id="go-back-btn" data-task-id="{{ task.id }}">
+        <i class="fas fa-arrow-left"></i>
+        <span>Назад к списку</span>
+      </a>
+    </div>
+    <div class="task-header-actions">
+      <button class="task-header-btn" type="button" onclick="window.print()">
+        <i class="fas fa-print"></i>
+        <span>Печать</span>
+      </button>
+      <button class="task-header-btn" type="button" onclick="copyTaskLink()">
+        <i class="fas fa-link"></i>
+        <span>Копировать ссылку</span>
+      </button>
     </div>
   </div>
 
-  <!-- Main Content Grid -->
-  <div class="content-grid">
-
-    <!-- Task Details Card -->
-    <div class="card main-card">
-      <div class="card-header collapsible" onclick="toggleCard('details')">
-        <div class="card-title">
-          <i class="fas fa-info-circle"></i>
-          <h2>Сведения о задаче</h2>
+  <section class="task-hero">
+    <div class="task-hero-main">
+      <div class="task-hero-topline">
+        <span class="task-kicker">Мои задачи / Задача #{{ task.id }}</span>
+        <div class="task-hero-badges">
+          <span class="task-badge task-badge--status-{{ status_tone }}">
+            <i class="fas fa-circle"></i>
+            {{ status_name }}
+          </span>
+          <span class="task-badge task-badge--{{ priority_tone }}">
+            <i class="fas fa-flag"></i>
+            {{ priority_name }}
+          </span>
         </div>
-        <i class="fas fa-chevron-up toggle-icon" id="details-toggle"></i>
       </div>
 
-      <div class="card-content" id="details-content">
-        <div class="details-grid">
-          <!-- Primary Info -->
-          <div class="detail-section">
-            <h3 class="section-title">Основное</h3>
-            <div class="detail-items">
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Приоритет</span>
-                  <div class="detail-value priority-badge">
-                    {% if task.priority and task.priority.id %}
-                      {% set pos = task.priority.position if task.priority.position is defined else None %}
-                      {% if pos is not none and (pos|int) >= 7 %}
-                        <span class="badge high">{{ task.priority.name }}</span>
-                      {% elif pos is not none and (pos|int) <= 3 %}
-                        <span class="badge low">{{ task.priority.name }}</span>
-                      {% else %}
-                        <span class="badge normal">{{ task.priority.name }}</span>
-                      {% endif %}
-                    {% else %}
-                      <span class="badge">{{ task.priority.name if task.priority else 'Не указан' }}</span>
-                    {% endif %}
-                  </div>
-                </div>
-              </div>
+      <h1 class="task-title-text">{{ task.subject }}</h1>
 
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-folder"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Проект</span>
-                  <span class="detail-value">{{ task.project.name if task.project else 'Без проекта' }}</span>
-                </div>
-              </div>
-
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-tags"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Трекер</span>
-                  <span class="detail-value">{{ task.tracker.name if task.tracker else 'Не указан' }}</span>
-                </div>
-              </div>
-
-              {% if task.done_ratio is defined %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-percentage"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Прогресс</span>
-                  <div class="progress-container">
-                    <div class="progress-bar">
-                      <div class="progress-fill" id="progress-fill" data-done-ratio="{{ task.done_ratio or 0 }}"></div>
-                    </div>
-                    <span class="progress-text">{{task.done_ratio}}%</span>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Status and Priority Management Section -->
-          <div class="detail-section">
-            <h3 class="section-title">
-              <i class="fas fa-sync-alt"></i>
-              Управление статусом и приоритетом
-            </h3>
-            <div class="detail-items">
-              <div class="detail-item status-management">
-                <div class="detail-icon">
-                  <i class="fas fa-flag"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Статус задачи</span>
-                  <div id="task-status-container">
-                    <!-- Здесь будет вставлен функционал изменения статуса через JavaScript -->
-                    <div class="loading-placeholder">
-                      <i class="fas fa-spinner fa-spin"></i>
-                      <span>Загрузка...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div class="detail-item priority-management">
-                <div class="detail-icon">
-                  <i class="fas fa-exclamation-triangle"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Приоритет задачи</span>
-                  <div id="task-priority-container">
-                    <!-- Здесь будет вставлен функционал изменения приоритета через JavaScript -->
-                    <div class="loading-placeholder">
-                      <i class="fas fa-spinner fa-spin"></i>
-                      <span>Загрузка...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- People -->
-          <div class="detail-section">
-            <h3 class="section-title">Участники</h3>
-            <div class="detail-items">
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-user-edit"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Автор</span>
-                  {% if task.author %}
-                    <div class="user-avatar">
-                      <div class="avatar-circle">{{ task.author.name[0] if task.author.name else 'U' }}</div>
-                      <span class="user-name">{{ task.author.name }}</span>
-                    </div>
-                  {% else %}
-                    <span class="detail-value no-data">Нет данных</span>
-                  {% endif %}
-                </div>
-              </div>
-
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-user-cog"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Исполнитель</span>
-                  <div id="task-assignee-container">
-                    <!-- Здесь будет вставлен функционал изменения исполнителя через JavaScript -->
-                    <div class="loading-placeholder">
-                      <i class="fas fa-spinner fa-spin"></i>
-                      <span>Загрузка...</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {% if task.easy_email_to %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-envelope"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Email to</span>
-                  <a href="mailto:{{ task.easy_email_to }}" class="email-link">{{ task.easy_email_to }}</a>
-                </div>
-              </div>
-              {% endif %}
-
-              {% if task.easy_email_cc %}
-              <div class="detail-item">
-                <div class="detail-icon">
-                  <i class="fas fa-envelope-square"></i>
-                </div>
-                <div class="detail-content">
-                  <span class="detail-label">Email cc</span>
-                  <span class="email-cc">{{ task.easy_email_cc }}</span>
-                </div>
-              </div>
-              {% endif %}
-            </div>
-          </div>
-
-          <!-- Timeline -->
-          <div class="detail-section">
-            <h3 class="section-title">Временная шкала</h3>
-            <div class="timeline-items">
-              <div class="timeline-item">
-                <div class="timeline-dot created"></div>
-                <div class="timeline-content">
-                  <span class="timeline-label">Создана</span>
-                  <div class="timeline-date">
-                    <span class="date-main">{{task.created_on.strftime('%d %B %Y')}}</span>
-                    <span class="date-time">{{task.created_on.strftime('%H:%M')}}</span>
-                  </div>
-                </div>
-              </div>
-
-              {% if task.start_date %}
-              <div class="timeline-item">
-                <div class="timeline-dot started"></div>
-                <div class="timeline-content">
-                  <span class="timeline-label">Начало</span>
-                  <div class="timeline-date">
-                    <span class="date-main">{{ task.start_date.strftime('%d %B %Y') }}</span>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-
-              {% if task.due_date %}
-              <div class="timeline-item">
-                <div class="timeline-dot deadline"></div>
-                <div class="timeline-content">
-                  <span class="timeline-label">Окончание</span>
-                  <div class="timeline-date">
-                    <span class="date-main">{{ task.due_date.strftime('%d %B %Y') }}</span>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-
-              {% if task.closed_on %}
-              <div class="timeline-item">
-                <div class="timeline-dot closed"></div>
-                <div class="timeline-content">
-                  <span class="timeline-label">Закрыто</span>
-                  <div class="timeline-date">
-                    <span class="date-main">{{ task.closed_on.strftime('%d %B %Y') }}</span>
-                    <span class="date-time">{{ task.closed_on.strftime('%H:%M') }}</span>
-                  </div>
-                </div>
-              </div>
-              {% endif %}
-
-              <div class="timeline-item">
-                <div class="timeline-dot updated"></div>
-                <div class="timeline-content">
-                  <span class="timeline-label">Обновлена</span>
-                  <div class="timeline-date">
-                    <span class="date-main">{{task.updated_on.strftime('%d %B %Y')}}</span>
-                    <span class="date-time">{{task.updated_on.strftime('%H:%M')}}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <div class="task-hero-summary">
+        <div class="task-summary-item">
+          <span class="task-summary-label">Последнее обновление</span>
+          <span class="task-summary-value">{{ task.updated_on.strftime('%d.%m.%Y %H:%M') }}</span>
+        </div>
+        <div class="task-summary-item">
+          <span class="task-summary-label">Исполнитель</span>
+          <span class="task-summary-value">{{ task_assignee_name }}</span>
+        </div>
+        <div class="task-summary-item">
+          <span class="task-summary-label">Записей в истории</span>
+          <span class="task-summary-value">{{ task_history_count }}</span>
         </div>
       </div>
     </div>
+
+    <div class="task-hero-link">
+      <a href="https://helpdesk.teztour.com/issues/{{ task.id }}" class="task-hero-link-btn" target="_blank" rel="noopener noreferrer">
+        <i class="fas fa-external-link-alt"></i>
+        <span>Открыть в Redmine</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="task-two-column-layout">
+    <div class="task-main-column">
+      <section class="task-surface-card task-actions-card is-open" data-task-section="actions">
+        <div class="task-surface-header clickable" onclick="toggleTaskSection('actions')">
+          <div>
+            <h2><i class="fas fa-sliders-h"></i> Действия по задаче</h2>
+            <p class="task-panel-subtitle">Изменяйте статус, приоритет и исполнителя отдельно от блока фактов.</p>
+          </div>
+          <i class="fas fa-chevron-down task-surface-toggle" id="task-actions-toggle"></i>
+        </div>
+        <div class="task-surface-content" id="task-actions-content">
+          <div class="task-actions-grid">
+            <article class="task-action-module">
+              <div class="task-action-module-header">
+                <h3>Статус</h3>
+                <p>Текущее состояние и перевод задачи между статусами.</p>
+              </div>
+              <div id="task-status-container">
+                <div class="loading-placeholder">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Загрузка...</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="task-action-module">
+              <div class="task-action-module-header">
+                <h3>Приоритет</h3>
+                <p>Отдельная смена срочности без перегрузки блока деталей.</p>
+              </div>
+              <div id="task-priority-container">
+                <div class="loading-placeholder">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Загрузка...</span>
+                </div>
+              </div>
+            </article>
+
+            <article class="task-action-module">
+              <div class="task-action-module-header">
+                <h3>Исполнитель</h3>
+                <p>Переназначение задачи в отдельном рабочем модуле.</p>
+              </div>
+              <div id="task-assignee-container">
+                <div class="loading-placeholder">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <span>Загрузка...</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
 
     <!-- Description Card -->
     {% if task.description %}
@@ -729,6 +654,13 @@
       </div>
     </div>
     {% endif %}
+    </div>
+
+    <aside class="task-side-column">
+      <div class="task-sidebar-sticky">
+        {{ render_task_facts_panel(task, status_name, status_tone, priority_name, priority_tone) }}
+      </div>
+    </aside>
   </div>
 </div>
 

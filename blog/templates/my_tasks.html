@@ -206,6 +206,13 @@
             <i class="fas fa-times"></i>
         </button>
     </div>
+
+    <div class="reset-filter-container">
+        <button class="btn btn-secondary filters-reset-btn" id="reset-filters-btn" type="button">
+            <i class="fas fa-undo-alt"></i>
+            <span>Сбросить фильтры</span>
+        </button>
+    </div>
 </div>
 
 <!-- Переключатель видов -->
@@ -225,7 +232,17 @@
 <!-- Kanban доска -->
 <section class="kanban-board" id="kanban-board" style="display: none;">
     <div class="kanban-header">
-        <h2><i class="fas fa-columns"></i> Kanban доска</h2>
+        <div class="kanban-header-copy">
+            <span class="kanban-eyebrow">Рабочий поток</span>
+            <div class="kanban-title-row">
+                <h2><i class="fas fa-columns"></i> Kanban доска</h2>
+                <span class="kanban-flow-chip">1 статус = 1 колонка</span>
+            </div>
+            <p class="kanban-subtitle">
+                Колонки сгруппированы по этапам процесса, карточка целиком открывает задачу,
+                а перенос выполняется через отдельный drag-handle.
+            </p>
+        </div>
         <div class="kanban-summary">
             <div class="kanban-stats">
                 <div class="stat-card active">
@@ -243,6 +260,20 @@
                     <span class="stat-value" id="kanban-overdue-count">0</span>
                     <span class="stat-label">Просрочено</span>
                 </div>
+            </div>
+            <div class="kanban-phase-legend" aria-label="Группы статусов kanban">
+                <span class="kanban-legend-item" data-phase="active">
+                    <span class="kanban-legend-dot" aria-hidden="true"></span>
+                    <span>Активные</span>
+                </span>
+                <span class="kanban-legend-item" data-phase="exceptions">
+                    <span class="kanban-legend-dot" aria-hidden="true"></span>
+                    <span>Исключения и паузы</span>
+                </span>
+                <span class="kanban-legend-item" data-phase="terminal">
+                    <span class="kanban-legend-dot" aria-hidden="true"></span>
+                    <span>Терминальные</span>
+                </span>
             </div>
         </div>
     </div>
@@ -320,14 +351,6 @@
     </div>
 </div>
 
-<!-- Состояние пустого списка -->
-<div class="empty-state" id="empty-state" style="display: none;">
-    <i class="fas fa-inbox empty-icon"></i>
-    <h3>Задач не найдено</h3>
-    <p>По вашим критериям поиска задачи не найдены</p>
-    <button class="btn btn-secondary" id="reset-filters-btn">Сбросить фильтры</button>
-</div>
-
 <!-- Состояние ошибки -->
 <div class="error-state" id="error-state" style="display: none;">
     <i class="fas fa-exclamation-triangle error-icon"></i>
@@ -375,7 +398,6 @@
 <script defer src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTips.js') }}?v={{ cache_buster or '1' }}"></script>
 <script defer src="{{ url_for('static', filename='js/pages/tasks/components/KanbanTooltips.js') }}?v={{ cache_buster or '1' }}"></script>
 <script defer src="{{ url_for('static', filename='js/pages/tasks/components/KanbanManager.js') }}?v={{ cache_buster or '1' }}"></script>
-<script defer src="{{ url_for('static', filename='js/pages/tasks/components/DashboardManager.js') }}?v={{ cache_buster or '1' }}"></script>
 
 <script type="text/javascript">
 // Глобальная переменная с настройкой показа баннера Kanban
@@ -425,8 +447,8 @@ window.checkClickHandlers = function() {
     const kanbanCardIds = document.querySelectorAll('.kanban-card-id');
     __inlineTasksDebugLog('🔧 Количество элементов .kanban-card-id:', kanbanCardIds.length);
 
-    __inlineTasksDebugLog('ℹ️ ПРИМЕЧАНИЕ: Детали задачи открываются только при клике по номеру задачи (.kanban-card-id)');
-    __inlineTasksDebugLog('ℹ️ Клики по остальной части карточки игнорируются');
+    __inlineTasksDebugLog('ℹ️ ПРИМЕЧАНИЕ: Вся карточка задачи открывает детали в новой вкладке');
+    __inlineTasksDebugLog('ℹ️ Перетаскивание запускается только через .kanban-card-drag-handle');
 
     __inlineTasksDebugLog('=== КОНЕЦ ДИАГНОСТИКИ ===');
 };
@@ -508,19 +530,17 @@ function initializeMyTasksPage() {
         return;
     }
 
-    // Очищаем sessionStorage только если это не возврат от детализации
-    // Проверяем, есть ли в URL параметр, указывающий на возврат
     const urlParams = new URLSearchParams(window.location.search);
-    const isReturnFromTask = urlParams.has('return') || document.referrer.includes('/tasks/');
+    const navigationEntry = performance.getEntriesByType('navigation')[0];
+    const isReturnFromTask = urlParams.has('return')
+        || document.referrer.includes('/tasks/my-tasks/')
+        || navigationEntry?.type === 'back_forward';
 
-    if (!isReturnFromTask) {
-        // Это первоначальная загрузка - очищаем sessionStorage
-        sessionStorage.removeItem('return_from_task_id');
-        sessionStorage.removeItem('return_from_task_page');
-        __inlineTasksDebugLog('🧹 Очищен sessionStorage (первоначальная загрузка)');
-    } else {
-        __inlineTasksDebugLog('🔄 Возврат от детализации - сохраняем sessionStorage для подсветки');
-    }
+    __inlineTasksDebugLog(
+        isReturnFromTask
+            ? '🔄 Возврат от детализации - контекст будет восстановлен MyTasksApp'
+            : '📄 Обычная загрузка страницы списка задач'
+    );
 
     // Запускаем анимацию загрузки
     initLoadingAnimation();

@@ -75,6 +75,59 @@ def _parse_bool_query_param(value, default=False):
         return False
     return default
 
+
+def _tasks_debug_enabled():
+    return bool(current_app.config.get('TASKS_DEBUG', False))
+
+
+def _tasks_debug_log(level, message, *args, **kwargs):
+    if not _tasks_debug_enabled():
+        return
+
+    log_method = getattr(current_app.logger, level, None)
+    if callable(log_method):
+        log_method(message, *args, **kwargs)
+
+
+def _get_query_filter_values(param_name):
+    values = request.args.getlist(f"{param_name}[]")
+    if not values:
+        raw_value = request.args.get(param_name, '')
+        if raw_value:
+            values = str(raw_value).split(',')
+
+    return [str(value).strip() for value in values if str(value).strip()]
+
+
+def _append_sql_in_filter(where_clauses, params, column_name, values):
+    if not values:
+        return
+
+    placeholders = ', '.join(['%s'] * len(values))
+    where_clauses.append(f"{column_name} IN ({placeholders})")
+    params.extend(values)
+
+
+def _get_direct_sql_cache_store():
+    cache_store = getattr(current_app, '_tasks_direct_sql_cache', None)
+    if cache_store is None:
+        cache_store = {}
+        current_app._tasks_direct_sql_cache = cache_store
+    return cache_store
+
+
+def _prune_direct_sql_cache(cache_store, ttl_seconds):
+    if not cache_store:
+        return
+
+    now = time.time()
+    expired_keys = [
+        key for key, value in cache_store.items()
+        if now - value.get('ts', 0) >= ttl_seconds
+    ]
+    for key in expired_keys:
+        cache_store.pop(key, None)
+
 def get_support_email():
     """
     Получает email службы технической поддержки из конфига
@@ -275,7 +328,9 @@ def task_detail(task_id):
     """Оптимизированная версия страницы деталей задачи"""
 
     start_time = time.time()
-    current_app.logger.info(f"🚀 [PERFORMANCE] Загрузка задачи {task_id} - начало")
+    debug_tasks = current_app.config.get("TASKS_DEBUG", False)
+    if debug_tasks:
+        current_app.logger.info(f"🚀 [PERFORMANCE] Загрузка задачи {task_id} - начало")
 
     if not current_user.is_redmine_user:
         flash("У вас нет доступа к этой функциональности.", "warning")
@@ -290,7 +345,8 @@ def task_detail(task_id):
 
     # Получаем email службы технической поддержки
     support_email = get_support_email()
-    current_app.logger.info(f"📧 [TASK_DETAIL] support_email для задачи {task_id}: {support_email}")
+    if debug_tasks:
+        current_app.logger.info(f"📧 [TASK_DETAIL] support_email для задачи {task_id}: {support_email}")
 
     try:
         # Получаем коннектор Redmine, используя локально сохранённый синхронный ERP-пароль
@@ -312,7 +368,7 @@ def task_detail(task_id):
         # Получаем детали задачи (без изменений)
         task = redmine_conn_obj.redmine.issue.get(
             task_id,
-            include=['status', 'priority', 'project', 'tracker', 'author', 'assigned_to', 'journals', 'done_ratio', 'attachments', 'relations', 'watchers', 'changesets', 'start_date', 'due_date', 'closed_on', 'easy_email_to', 'easy_email_cc']
+            include=['status', 'priority', 'project', 'tracker', 'author', 'assigned_to', 'journals', 'done_ratio', 'attachments', 'start_date', 'due_date', 'closed_on', 'easy_email_to', 'easy_email_cc']
         )
 
         # 🔧 Приводим old_value/new_value к строкам для безопасности шаблона
@@ -328,7 +384,8 @@ def task_detail(task_id):
 
         # ✅ НОВОЕ: Собираем все ID для пакетной загрузки
         ids_data = collect_ids_from_task_history(task)
-        current_app.logger.info(f"🔍 [PERFORMANCE] Собрано ID: users={len(ids_data['user_ids'])}, statuses={len(ids_data['status_ids'])}, projects={len(ids_data['project_ids'])}, priorities={len(ids_data['priority_ids'])}")
+        if debug_tasks:
+            current_app.logger.info(f"🔍 [PERFORMANCE] Собрано ID: users={len(ids_data['user_ids'])}, statuses={len(ids_data['status_ids'])}, projects={len(ids_data['project_ids'])}, priorities={len(ids_data['priority_ids'])}")
 
         # ✅ НОВОЕ: Создаем ОДНО соединение для всех запросов
         connection = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name, port=db_redmine_port)
@@ -345,12 +402,14 @@ def task_detail(task_id):
             status_names = get_multiple_status_names(connection, ids_data['status_ids'])
             priority_names = get_multiple_priority_names(connection, ids_data['priority_ids'])
 
-            current_app.logger.info(f"✅ [PERFORMANCE] Загружено данных: users={len(user_names)}, projects={len(project_names)}, statuses={len(status_names)}, priorities={len(priority_names)}")
+            if debug_tasks:
+                current_app.logger.info(f"✅ [PERFORMANCE] Загружено данных: users={len(user_names)}, projects={len(project_names)}, statuses={len(status_names)}, priorities={len(priority_names)}")
 
         finally:
             # ✅ ВАЖНО: Закрываем соединение
             connection.close()
-            current_app.logger.info("🔒 [PERFORMANCE] Соединение с MySQL закрыто")
+            if debug_tasks:
+                current_app.logger.info("🔒 [PERFORMANCE] Соединение с MySQL закрыто")
 
         # Получаем все статусы для создания словаря ID -> название (без изменений)
         status_mapping = {}
@@ -358,14 +417,16 @@ def task_detail(task_id):
             redmine_statuses = redmine_conn_obj.redmine.issue_status.all()
             for status in redmine_statuses:
                 status_mapping[status.id] = status.name
-            current_app.logger.info(f"✅ Получено {len(status_mapping)} статусов для преобразования")
+            if debug_tasks:
+                current_app.logger.info(f"✅ Получено {len(status_mapping)} статусов для преобразования")
         except Exception as status_error:
             current_app.logger.error(f"❌ Не удалось получить статусы: {status_error}")
             status_mapping = {}
 
         # Время выполнения
         execution_time = time.time() - start_time
-        current_app.logger.info(f"🚀 [PERFORMANCE] Задача {task_id} загружена за {execution_time:.3f}с")
+        if debug_tasks:
+            current_app.logger.info(f"🚀 [PERFORMANCE] Задача {task_id} загружена за {execution_time:.3f}с")
 
         # ✅ НОВОЕ: Оптимизированная функция описания изменений без дополнительных подключений к БД
         def get_property_name_fast(property_name, prop_key, old_value, value):
@@ -454,8 +515,6 @@ def task_detail(task_id):
 @weekend_performance_optimizer
 def get_my_tasks_paginated_api():
     """API для получения задач с пагинацией (совместимый URL)"""
-    current_app.logger.info(f"Запрос /tasks/get-my-tasks-paginated для {current_user.username} с параметрами: {request.args}")
-
     # Замеряем время выполнения запроса
     start_time = time.time()
 
@@ -469,7 +528,6 @@ def get_my_tasks_paginated_api():
         per_page = request.args.get("length", 25, type=int)
 
         search_value = request.args.get("search[value]", "", type=str).strip()
-        current_app.logger.debug(f"🔍 ПОИСК API: получен search_value='{search_value}' от пользователя {current_user.username}")
 
         order_column_index = request.args.get('order[0][column]', 0, type=int)
         order_column_name_dt = request.args.get(f'columns[{order_column_index}][data]', 'updated_on', type=str)
@@ -491,9 +549,10 @@ def get_my_tasks_paginated_api():
         }
         sort_column_redmine = column_mapping.get(order_column_name_dt, 'updated_on')
 
-        status_ids = request.args.getlist("status_id[]")
-        project_ids = request.args.getlist("project_id[]")
-        priority_ids = request.args.getlist("priority_id[]")
+        status_ids = _get_query_filter_values("status_id")
+        project_ids = _get_query_filter_values("project_id")
+        priority_ids = _get_query_filter_values("priority_id")
+        include_description = request.args.get('with_description') == '1'
 
         # Создаем коннектор Redmine
         redmine_connector_instance = create_redmine_connector(
@@ -508,19 +567,16 @@ def get_my_tasks_paginated_api():
 
         # Используем ID из SQLite вместо Redmine API (для производительности и корректности)
         redmine_user_id = current_user.id_redmine_user
-        current_app.logger.info(f"🔍 [API] Используем redmine_user_id из SQLite: {redmine_user_id} для пользователя {current_user.username}")
 
         # Получаем параметры для оптимизации загрузки
         force_load = request.args.get('force_load', '0') == '1'
         exclude_completed = request.args.get('exclude_completed', '0') == '1'
         is_kanban_view = request.args.get('view') == 'kanban'
-        current_app.logger.debug(f"🔍 [API] Параметры: force_load={force_load}, exclude_completed={exclude_completed}, is_kanban_view={is_kanban_view}")
 
         # Оптимизация для Kanban: уменьшаем количество загружаемых задач
         if is_kanban_view:
             # Для Kanban загружаем меньше задач, но с лучшей оптимизацией
             per_page = min(per_page, 500)  # Ограничиваем до 500 задач для Kanban
-            current_app.logger.debug(f"🔍 [API] Kanban оптимизация: per_page={per_page}")
 
         issues_list, total_count = get_user_assigned_tasks_paginated_optimized(
             redmine_connector_instance,
@@ -538,7 +594,7 @@ def get_my_tasks_paginated_api():
         )
 
         # Преобразуем задачи в JSON
-        tasks_data = [task_to_dict(issue) for issue in issues_list]
+        tasks_data = [task_to_dict(issue, include_description=include_description) for issue in issues_list]
 
         # Для Kanban доски применяем специальную логику для закрытых задач
         if is_kanban_view:
@@ -546,26 +602,14 @@ def get_my_tasks_paginated_api():
             active_tasks = []
             closed_tasks = []
 
-            # Отладочная информация: собираем все уникальные статусы
-            unique_statuses = set()
             for task in tasks_data:
-                status_name = task.get('status_name', '')
-                status_id = task.get('status_id', '')
-                unique_statuses.add(f"ID:{status_id} - '{status_name}'")
-
-            current_app.logger.info(f"🔍 [KANBAN DEBUG] Все уникальные статусы в данных: {sorted(unique_statuses)}")
-
-            for task in tasks_data:
-                status_name = task.get('status_name', '')
                 status_id = task.get('status_id', '')
 
                 # Считаем закрытой по ID статуса (реальные ID хранятся в MySQL локализации)
                 if str(status_id) in {'5', '6', '14'}:
                     closed_tasks.append(task)
-                    current_app.logger.debug(f"[KANBAN] Closed task {task.get('id')} (status_id={status_id}, status_name='{status_name}')")
                 else:
                     active_tasks.append(task)
-                    current_app.logger.debug(f"[KANBAN] Active task {task.get('id')} (status_id={status_id}, status_name='{status_name}')")
 
             # Объединяем активные задачи с ограниченными закрытыми
             tasks_data = active_tasks + closed_tasks
@@ -573,8 +617,15 @@ def get_my_tasks_paginated_api():
 
         # Определяем start_time для расчета времени выполнения
         execution_time = time.time() - start_time
-        current_app.logger.info(
-            f"Запрос /tasks/get-my-tasks-paginated для {current_user.username} выполнен за {execution_time:.4f}с. Найдено задач: {len(tasks_data)}, всего: {total_count}"
+        _tasks_debug_log(
+            'info',
+            "get-my-tasks-paginated completed in %.4fs for user=%s, page=%s, per_page=%s, rows=%s, total=%s",
+            execution_time,
+            current_user.username,
+            page,
+            per_page,
+            len(tasks_data),
+            total_count,
         )
 
         return jsonify({
@@ -1852,12 +1903,11 @@ def edit_task_comment_api(task_id, journal_id):
 @login_required
 @weekend_performance_optimizer
 def get_completed_tasks():
-    """
-    API для получения 5 завершённых задач, отсортированных по убыванию даты обновления
-    """
-    current_app.logger.info(f"Запрос /tasks/get-completed-tasks для {current_user.username}")
-    start_time = time.time()
+    """Deprecated compatibility endpoint for legacy clients.
 
+    Внутренний runtime страницы его больше не использует.
+    Оставляем только лёгкую SQL-реализацию вместо тяжёлой загрузки через Redmine API.
+    """
     try:
         if not current_user.is_redmine_user:
             return jsonify({
@@ -1866,142 +1916,84 @@ def get_completed_tasks():
                 "data": []
             }), 403
 
-        # Проверяем наличие необходимых атрибутов
-        if not hasattr(current_user, 'id_redmine_user') or not current_user.id_redmine_user:
-            current_app.logger.error(f"У пользователя {current_user.username} отсутствует id_redmine_user")
+        if not getattr(current_user, 'id_redmine_user', None):
             return jsonify({
                 "error": "Ошибка: отсутствует ID пользователя Redmine",
                 "success": False,
                 "data": []
             }), 500
 
-        # Создаем коннектор Redmine
-        redmine_connector = create_redmine_connector(
-            is_redmine_user=current_user.is_redmine_user,
-            user_login=current_user.username,
-            password=current_user.password
+        limit = max(1, min(request.args.get('limit', 25, type=int), 50))
+        mysql_conn = get_connection(
+            db_redmine_host,
+            db_redmine_user_name,
+            db_redmine_password,
+            db_redmine_name,
+            port=db_redmine_port
         )
-
-        if not redmine_connector:
+        if not mysql_conn:
             return jsonify({
-                "error": "Ошибка подключения к Redmine",
+                "error": "Не удалось подключиться к базе данных",
                 "success": False,
                 "data": []
             }), 500
 
+        cursor = mysql_conn.cursor()
         try:
-            # 🔧 ПРОСТОЙ ЗАПРОС: Получаем 5 завершённых задач, отсортированных по убыванию
-            # Получаем список всех закрытых статусов из u_statuses
-            mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name, port=db_redmine_port)
-            closed_status_ids = []
-
-            if mysql_conn:
-                try:
-                    cursor = mysql_conn.cursor()
-                    cursor.execute("""
-                        SELECT id FROM u_statuses
-                        WHERE name LIKE '%закрыт%' OR name LIKE '%отклонен%' OR name LIKE '%выполнен%'
-                        OR name LIKE '%перенаправлен%' OR name LIKE '%завершен%'
-                        ORDER BY id
-                    """)
-                    closed_status_ids = [str(row['id']) for row in cursor.fetchall()]
-                    cursor.close()
-                except Exception as e:
-                    current_app.logger.error(f"Ошибка получения закрытых статусов: {e}")
-                finally:
-                    mysql_conn.close()
-
-            # Если не удалось получить из БД, используем статический список
-            if not closed_status_ids:
-                closed_status_ids = ['5', '6', '14']
-                current_app.logger.warning("⚠️ Используем статический список закрытых статусов")
-
-            current_app.logger.info(f"📋 Закрытые статусы для запроса: {closed_status_ids}")
-
-            filter_params = {
-                'assigned_to_id': current_user.id_redmine_user,
-                'status_id': '|'.join(closed_status_ids),  # Динамический список закрытых статусов
-                'sort': 'updated_on:desc',
-                'limit': 1000,  # Все закрытые задачи
-                'include': ['status', 'priority', 'project', 'tracker', 'author', 'description', 'easy_email_to']
-            }
-
-            current_app.logger.info(f"🔧 ПРОСТОЙ ЗАПРОС: {filter_params}")
-
-                                    # Выполняем запрос к Redmine API
-            issues_page = redmine_connector.redmine.issue.filter(**filter_params)
-            issues_list = list(issues_page)
-
-            # 🔧 ДОПОЛНИТЕЛЬНАЯ СОРТИРОВКА НА PYTHON СТОРОНЕ
-            issues_list.sort(key=lambda x: x.updated_on, reverse=True)
-
-            current_app.logger.info(f"✅ Получено завершённых задач: {len(issues_list)}")
-            current_app.logger.info(f"✅ Сортировка применена")
-
-                        # Проверяем сортировку
-            if len(issues_list) >= 2:
-                first_date = issues_list[0].updated_on
-                second_date = issues_list[1].updated_on
-                if first_date >= second_date:
-                    current_app.logger.info("✅ Сортировка работает правильно")
-                else:
-                    current_app.logger.warning("⚠️ Сортировка неправильная")
-
-            # Формируем данные для ответа
-            tasks_data = []
-            for issue in issues_list:
-                task_data = {
-                    'id': issue.id,
-                    'subject': issue.subject,
-                    'status_name': issue.status.name if issue.status else 'Неизвестен',
-                    'status_id': issue.status.id if issue.status else 1,  # Добавляем status_id
-                    'priority_name': issue.priority.name if issue.priority else 'Обычный',
-                    'project_name': issue.project.name if issue.project else 'Без проекта',
-                    'assigned_to_name': issue.assigned_to.name if issue.assigned_to else 'Не назначен',
-                    'created_on': issue.created_on.isoformat() if issue.created_on else None,
-                    'updated_on': issue.updated_on.isoformat() if issue.updated_on else None,
-                    'easy_email_to': getattr(issue, 'easy_email_to', None)
-                }
-                tasks_data.append(task_data)
-
-                # Логируем каждую задачу для отладки
-                current_app.logger.info(f"📋 Завершённая задача: ID={issue.id}, Статус='{task_data['status_name']}' (ID: {task_data['status_id']})")
-
-            current_app.logger.info(f"✅ Подготовлено задач для ответа: {len(tasks_data)}")
-
-            # Проверяем финальную сортировку
-            if len(tasks_data) >= 2:
-                first_task_date = tasks_data[0]['updated_on']
-                second_task_date = tasks_data[1]['updated_on']
-                if first_task_date >= second_task_date:
-                    current_app.logger.info("✅ Финальная сортировка работает правильно")
-                else:
-                    current_app.logger.warning("⚠️ Финальная сортировка неправильная")
-
-            response_data = {
-                "success": True,
-                "data": tasks_data,
-                "total": len(tasks_data),
-                "limit": 1000,
-                "offset": 0,
-                "has_more": False  # Больше нет пагинации
-            }
-
-            execution_time = time.time() - start_time
-            current_app.logger.info(
-                f"✅ Запрос /tasks/get-completed-tasks для {current_user.username} выполнен за {execution_time:.4f}с. "
-                f"Загружено: {len(tasks_data)} задач"
+            cursor.execute(
+                """
+                SELECT
+                    i.id,
+                    i.subject,
+                    i.status_id,
+                    COALESCE(us.name, ist.name) AS status_name,
+                    i.priority_id,
+                    COALESCE(up.name, e.name) AS priority_name,
+                    p.name AS project_name,
+                    CONCAT(ua.firstname, ' ', ua.lastname) AS assigned_to_name,
+                    i.created_on,
+                    i.updated_on
+                FROM issues i
+                LEFT JOIN issue_statuses ist ON i.status_id = ist.id
+                LEFT JOIN u_statuses us ON i.status_id = us.id
+                LEFT JOIN projects p ON i.project_id = p.id
+                LEFT JOIN enumerations e ON i.priority_id = e.id AND e.type = 'IssuePriority'
+                LEFT JOIN u_Priority up ON e.id = up.id
+                LEFT JOIN users ua ON i.assigned_to_id = ua.id
+                WHERE i.assigned_to_id = %s
+                  AND ist.is_closed = 1
+                ORDER BY i.updated_on DESC
+                LIMIT %s
+                """,
+                (current_user.id_redmine_user, limit)
             )
+            tasks_data = [
+                {
+                    'id': row['id'],
+                    'subject': row['subject'],
+                    'status_name': row['status_name'] or 'Неизвестен',
+                    'status_id': row['status_id'],
+                    'priority_name': row['priority_name'] or 'Обычный',
+                    'project_name': row['project_name'] or 'Без проекта',
+                    'assigned_to_name': row['assigned_to_name'] or 'Не назначен',
+                    'created_on': row['created_on'].isoformat() if row['created_on'] else None,
+                    'updated_on': row['updated_on'].isoformat() if row['updated_on'] else None,
+                }
+                for row in cursor.fetchall()
+            ]
+        finally:
+            cursor.close()
+            mysql_conn.close()
 
-            return jsonify(response_data)
-
-        except Exception as redmine_error:
-            current_app.logger.error(f"Ошибка получения завершённых задач для {current_user.username}: {str(redmine_error)}")
-            return jsonify({
-                "error": f"Ошибка получения данных из Redmine: {str(redmine_error)}",
-                "success": False,
-                "data": []
-            }), 500
+        return jsonify({
+            "success": True,
+            "deprecated": True,
+            "data": tasks_data,
+            "total": len(tasks_data),
+            "limit": limit,
+            "offset": 0,
+            "has_more": False
+        })
 
     except Exception as e:
         current_app.logger.error(f"Критическая ошибка в /tasks/get-completed-tasks для {current_user.username}: {str(e)}. Traceback: {traceback.format_exc()}")
@@ -2100,11 +2092,23 @@ def get_my_tasks_direct_sql():
         # Получаем параметры
         length = request.args.get('length', 100, type=int)
         start = request.args.get('start', 0, type=int)
-        force_load = _parse_bool_query_param(request.args.get('force_load'), default=False)
         view = request.args.get('view', 'table')
         exclude_completed = _parse_bool_query_param(request.args.get('exclude_completed'), default=False)
         kanban_limit_per_status = request.args.get('kanban_limit_per_status', 10, type=int)
         kanban_limit_per_status = max(1, min(kanban_limit_per_status, 50))
+        status_filter_values = _get_query_filter_values('status_id')
+        project_filter_values = _get_query_filter_values('project_id')
+        priority_filter_values = _get_query_filter_values('priority_id')
+
+        cache_ttl_seconds = 10 if view == 'kanban' else 0
+        cache_key = None
+        if cache_ttl_seconds:
+            cache_store = _get_direct_sql_cache_store()
+            _prune_direct_sql_cache(cache_store, cache_ttl_seconds)
+            cache_key = (current_user.id, bytes(request.query_string))
+            cache_entry = cache_store.get(cache_key)
+            if cache_entry and time.time() - cache_entry.get('ts', 0) < cache_ttl_seconds:
+                return jsonify(cache_entry['data'])
 
         # Подключаемся к базе данных
         mysql_conn = get_connection(db_redmine_host, db_redmine_user_name, db_redmine_password, db_redmine_name, port=db_redmine_port)
@@ -2113,12 +2117,13 @@ def get_my_tasks_direct_sql():
 
         cursor = mysql_conn.cursor()
         try:
+            where_clauses = ["i.assigned_to_id = %s"]
+            params = [current_user.id_redmine_user]
             # Базовый SQL запрос
             base_select = """
                 SELECT
                     i.id,
                     i.subject,
-                    i.description,
                     i.status_id,
                     i.assigned_to_id,
                     i.author_id,
@@ -2144,17 +2149,21 @@ def get_my_tasks_direct_sql():
                     LEFT JOIN u_Priority up ON e.id = up.id
                     LEFT JOIN users ua ON i.assigned_to_id = ua.id
                     LEFT JOIN users uau ON i.author_id = uau.id
-                    WHERE i.assigned_to_id = %s
             """
 
-            # Добавляем фильтры в зависимости от параметров
-            params = [current_user.id_redmine_user]
             kanban_status_counts = {}
             used_window_kanban_query = False
 
             if exclude_completed:
                 # Исключаем статусы, помеченные как закрытые в issue_statuses
-                base_select += " AND ist.is_closed = 0"
+                where_clauses.append("ist.is_closed = 0")
+
+            _append_sql_in_filter(where_clauses, params, "i.status_id", status_filter_values)
+            _append_sql_in_filter(where_clauses, params, "i.project_id", project_filter_values)
+            _append_sql_in_filter(where_clauses, params, "i.priority_id", priority_filter_values)
+
+            where_sql = " WHERE " + " AND ".join(where_clauses)
+            base_query_body = base_select + where_sql
 
             if view == 'kanban':
                 # Для Kanban ограничиваем задачи по каждому статусу прямо в SQL (быстрее и меньше данных)
@@ -2165,7 +2174,7 @@ def get_my_tasks_direct_sql():
                             base.*,
                             ROW_NUMBER() OVER (PARTITION BY base.status_id ORDER BY base.updated_on DESC) AS status_rank
                         FROM (
-                            {base_select}
+                            {base_query_body}
                         ) AS base
                     ) AS ranked
                     WHERE ranked.status_rank <= %s
@@ -2183,12 +2192,9 @@ def get_my_tasks_direct_sql():
                         SELECT i.status_id, COUNT(*) AS total_count
                         FROM issues i
                         LEFT JOIN issue_statuses ist ON i.status_id = ist.id
-                        WHERE i.assigned_to_id = %s
                     """
-                    counts_params = [current_user.id_redmine_user]
-                    if exclude_completed:
-                        counts_query += " AND ist.is_closed = 0"
-                    counts_query += " GROUP BY i.status_id"
+                    counts_query += where_sql + " GROUP BY i.status_id"
+                    counts_params = list(params)
 
                     cursor.execute(counts_query, counts_params)
                     for row in cursor.fetchall():
@@ -2201,16 +2207,14 @@ def get_my_tasks_direct_sql():
                     current_app.logger.warning(
                         f"⚠️ [DIRECT SQL] Window-функция недоступна, fallback на legacy режим: {window_query_error}"
                     )
-                    fallback_query = base_select + " ORDER BY i.updated_on DESC"
+                    fallback_query = base_query_body + " ORDER BY i.updated_on DESC"
                     cursor.execute(fallback_query, params)
                     rows = cursor.fetchall()
             else:
-                base_query = base_select + " ORDER BY i.updated_on DESC LIMIT %s OFFSET %s"
-                params.extend([length, start])
-                cursor.execute(base_query, params)
+                base_query = base_query_body + " ORDER BY i.updated_on DESC LIMIT %s OFFSET %s"
+                paged_params = [*params, length, start]
+                cursor.execute(base_query, paged_params)
                 rows = cursor.fetchall()
-
-            current_app.logger.info(f"🔍 [DIRECT SQL] Получено строк из БД: {len(rows)}")
 
             # Преобразуем результаты в формат для фронтенда
             tasks = []
@@ -2223,7 +2227,6 @@ def get_my_tasks_direct_sql():
                 task = {
                     'id': row['id'],
                     'subject': row['subject'],
-                    'description': row['description'],
                     'status_id': row['status_id'],
                     'status_name': row['status_name'],
                     'status_is_closed': bool(row.get('status_is_closed', 0)),
@@ -2243,8 +2246,6 @@ def get_my_tasks_direct_sql():
                     'closed_on': row['closed_on'].isoformat() if row['closed_on'] else None
                 }
                 tasks.append(task)
-
-            current_app.logger.info(f"🔍 [DIRECT SQL] Получено задач: {len(tasks)}")
 
             # Для Kanban в fallback-режиме ограничиваем задачи по статусам в Python
             if view == 'kanban' and not used_window_kanban_query:
@@ -2275,7 +2276,6 @@ def get_my_tasks_direct_sql():
                         'total': len(status_tasks)
                     }
 
-                current_app.logger.info(f"🔍 [DIRECT SQL] Ограничили задачи по статусам: {status_counts}")
                 tasks = limited_tasks
                 kanban_status_counts = status_counts
             elif view == 'kanban':
@@ -2293,6 +2293,13 @@ def get_my_tasks_direct_sql():
             # Добавляем информацию о количестве задач для Kanban
             if view == 'kanban':
                 response_data["status_counts"] = kanban_status_counts
+
+            if cache_ttl_seconds and cache_key is not None:
+                cache_store = _get_direct_sql_cache_store()
+                cache_store[cache_key] = {
+                    'ts': time.time(),
+                    'data': response_data
+                }
 
             return jsonify(response_data)
 
